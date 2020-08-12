@@ -22,15 +22,11 @@ import java.util.List;
 import java.util.UUID;
 
 public interface OAuth2ClientRegistrationDao extends Dao<OAuth2ClientRegistration> {
-    OAuth2ClientRegistration findByRegistrationId(String registrationId);
-
     List<OAuth2ClientRegistration> findAll();
 
     List<OAuth2ClientRegistration> findByTenantId(UUID tenantId);
 
     List<OAuth2ClientRegistration> findByDomainName(String domainName);
-
-    boolean removeByRegistrationId(String registrationId);
 
     int removeByTenantId(UUID tenantId);
 }

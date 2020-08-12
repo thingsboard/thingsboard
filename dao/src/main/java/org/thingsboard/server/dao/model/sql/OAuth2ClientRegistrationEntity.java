@@ -39,8 +39,6 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
     @Column(name = ModelConstants.OAUTH2_TENANT_ID_PROPERTY, columnDefinition = "uuid")
     private UUID tenantId;
 
-    @Column(name = ModelConstants.OAUTH2_CLIENT_REGISTRATION_ID_PROPERTY)
-    private String registrationId;
     @Column(name = ModelConstants.OAUTH2_DOMAIN_NAME_PROPERTY)
     private String domainName;
     @Column(name = ModelConstants.OAUTH2_CLIENT_ID_PROPERTY)
@@ -111,7 +109,6 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
         }
         this.domainName = clientRegistration.getDomainName();
         this.createdTime = clientRegistration.getCreatedTime();
-        this.registrationId = clientRegistration.getRegistrationId();
         this.clientId = clientRegistration.getClientId();
         this.clientSecret = clientRegistration.getClientSecret();
         this.authorizationUri = clientRegistration.getAuthorizationUri();
@@ -154,7 +151,6 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
         OAuth2ClientRegistration clientRegistration = new OAuth2ClientRegistration();
         clientRegistration.setId(new OAuth2ClientRegistrationId(id));
         clientRegistration.setTenantId(new TenantId(tenantId));
-        clientRegistration.setRegistrationId(registrationId);
         clientRegistration.setDomainName(domainName);
         clientRegistration.setCreatedTime(createdTime);
         clientRegistration.setMapperConfig(

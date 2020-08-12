@@ -32,7 +32,6 @@ import java.util.List;
 public class OAuth2ClientRegistration extends BaseData<OAuth2ClientRegistrationId> implements HasTenantId, HasName {
 
     private TenantId tenantId;
-    private String registrationId;
     private String domainName;
     private String redirectUriTemplate;
     private OAuth2MapperConfig mapperConfig;
@@ -51,7 +50,6 @@ public class OAuth2ClientRegistration extends BaseData<OAuth2ClientRegistrationI
     public OAuth2ClientRegistration(OAuth2ClientRegistration clientRegistration) {
         super(clientRegistration);
         this.tenantId = clientRegistration.getTenantId();
-        this.registrationId = clientRegistration.getRegistrationId();
         this.domainName = clientRegistration.getDomainName();
         this.redirectUriTemplate = clientRegistration.getRedirectUriTemplate();
         this.mapperConfig = clientRegistration.mapperConfig;

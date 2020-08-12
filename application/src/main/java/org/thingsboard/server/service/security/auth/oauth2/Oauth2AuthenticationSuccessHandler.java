@@ -36,6 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 @Component(value = "oauth2AuthenticationSuccessHandler")
 public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
@@ -65,7 +66,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
 
-            OAuth2ClientRegistration clientRegistration = oAuth2Service.findClientRegistrationByRegistrationId(token.getAuthorizedClientRegistrationId());
+            OAuth2ClientRegistration clientRegistration = oAuth2Service.findClientRegistration(UUID.fromString(token.getAuthorizedClientRegistrationId()));
             OAuth2ClientMapper mapper = oauth2ClientMapperProvider.getOAuth2ClientMapperByType(clientRegistration.getMapperConfig().getType());
             SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(token, clientRegistration.getTenantId(), clientRegistration.getMapperConfig());
 

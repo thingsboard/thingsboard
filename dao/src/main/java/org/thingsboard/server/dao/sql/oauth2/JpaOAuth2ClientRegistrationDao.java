@@ -46,12 +46,6 @@ public class JpaOAuth2ClientRegistrationDao extends JpaAbstractDao<OAuth2ClientR
     }
 
     @Override
-    public OAuth2ClientRegistration findByRegistrationId(String registrationId) {
-        Optional<OAuth2ClientRegistrationEntity> entity = repository.findByRegistrationId(registrationId);
-        return DaoUtil.getData(entity);
-    }
-
-    @Override
     public List<OAuth2ClientRegistration> findAll() {
         Iterable<OAuth2ClientRegistrationEntity> entities = repository.findAll();
         List<OAuth2ClientRegistration> result = new ArrayList<>();
@@ -71,12 +65,6 @@ public class JpaOAuth2ClientRegistrationDao extends JpaAbstractDao<OAuth2ClientR
     public List<OAuth2ClientRegistration> findByDomainName(String domainName) {
         List<OAuth2ClientRegistrationEntity> entities = repository.findAllByDomainName(domainName);
         return entities.stream().map(DaoUtil::getData).collect(Collectors.toList());
-    }
-
-    @Override
-    public boolean removeByRegistrationId(String registrationId) {
-        repository.deleteByRegistrationId(registrationId);
-        return !repository.existsByRegistrationId(registrationId);
     }
 
     @Override

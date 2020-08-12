@@ -24,6 +24,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.oauth2.ExtendedOAuth2ClientRegistration;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
 
+import java.util.UUID;
+
 @Component
 public class HybridClientRegistrationRepository implements ClientRegistrationRepository {
 
@@ -32,14 +34,15 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
 
     @Override
     public ClientRegistration findByRegistrationId(String registrationId) {
-        OAuth2ClientRegistration oAuth2ClientRegistration = oAuth2Service.findClientRegistrationByRegistrationId(registrationId);
+        OAuth2ClientRegistration oAuth2ClientRegistration = oAuth2Service.findClientRegistration(UUID.fromString(registrationId));
         return oAuth2ClientRegistration == null ?
                 null : toSpringClientRegistration(oAuth2ClientRegistration);
     }
 
     private ClientRegistration toSpringClientRegistration(OAuth2ClientRegistration localClientRegistration){
-        return ClientRegistration.withRegistrationId(localClientRegistration.getRegistrationId())
-                .clientName(localClientRegistration.getRegistrationId())
+        String registrationId = localClientRegistration.getUuidId().toString();
+        return ClientRegistration.withRegistrationId(registrationId)
+                .clientName(localClientRegistration.getName())
                 .clientId(localClientRegistration.getClientId())
                 .authorizationUri(localClientRegistration.getAuthorizationUri())
                 .clientSecret(localClientRegistration.getClientSecret())

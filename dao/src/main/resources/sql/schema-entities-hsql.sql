@@ -296,7 +296,6 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration (
     created_time bigint NOT NULL,
     additional_info varchar,
     tenant_id uuid,
-    registration_id varchar(255),
     domain_name varchar(255),
     client_id varchar(255),
     client_secret varchar(255),
@@ -323,6 +322,5 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration (
     basic_always_full_screen boolean,
     custom_url varchar(255),
     custom_username varchar(255),
-    custom_password varchar(255),
-    CONSTRAINT oauth2_registration_id_unq_key UNIQUE (registration_id)
+    custom_password varchar(255)
 );

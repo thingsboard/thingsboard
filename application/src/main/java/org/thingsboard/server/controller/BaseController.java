@@ -540,7 +540,7 @@ public abstract class BaseController {
     OAuth2ClientRegistration checkOAuth2ClientRegistrationId(OAuth2ClientRegistrationId clientRegistrationId, Operation operation) throws ThingsboardException {
         try {
             validateId(clientRegistrationId, "Incorrect oAuth2ClientRegistrationId " + clientRegistrationId);
-            OAuth2ClientRegistration clientRegistration = oAuth2Service.findClientRegistrationById(getCurrentUser().getTenantId(), clientRegistrationId);
+            OAuth2ClientRegistration clientRegistration = oAuth2Service.findClientRegistration(clientRegistrationId.getId());
             checkNotNull(clientRegistration);
             accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION, operation, clientRegistrationId, clientRegistration);
             return clientRegistration;

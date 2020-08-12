@@ -46,7 +46,6 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Service {
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CLIENT_REGISTRATION_ID = "Incorrect clientRegistrationId ";
-    public static final String INCORRECT_REGISTRATION_ID = "Incorrect registrationId ";
     public static final String INCORRECT_DOMAIN_NAME = "Incorrect domainName ";
 
     @Autowired
@@ -68,18 +67,7 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
     public OAuth2ClientRegistration saveClientRegistration(OAuth2ClientRegistration clientRegistration) {
         log.trace("Executing saveClientRegistration [{}]", clientRegistration);
         clientRegistrationValidator.validate(clientRegistration, OAuth2ClientRegistration::getTenantId);
-        OAuth2ClientRegistration savedClientRegistration;
-        try {
-            savedClientRegistration = clientRegistrationDao.save(clientRegistration.getTenantId(), clientRegistration);
-        } catch (Exception t) {
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("oauth2_registration_id_unq_key")) {
-                throw new DataValidationException("Client registration with such registrationId already exists!");
-            } else {
-                throw t;
-            }
-        }
-        return savedClientRegistration;
+        return clientRegistrationDao.save(clientRegistration.getTenantId(), clientRegistration);
     }
 
     @Override
@@ -90,17 +78,10 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
     }
 
     @Override
-    public OAuth2ClientRegistration findClientRegistrationByRegistrationId(String registrationId) {
-        log.trace("Executing findClientRegistrationByRegistrationId [{}]", registrationId);
-        validateString(registrationId, INCORRECT_REGISTRATION_ID + registrationId);
-        return clientRegistrationDao.findByRegistrationId(registrationId);
-    }
-
-    @Override
-    public OAuth2ClientRegistration findClientRegistrationById(TenantId tenantId, OAuth2ClientRegistrationId id) {
-        log.trace("Executing findClientRegistrationById [{}]", id);
+    public OAuth2ClientRegistration findClientRegistration(UUID id) {
+        log.trace("Executing findClientRegistration [{}]", id);
         validateId(id, INCORRECT_CLIENT_REGISTRATION_ID + id);
-        return clientRegistrationDao.findById(tenantId, id.getId());
+        return clientRegistrationDao.findById(null, id);
     }
 
     @Override
@@ -138,7 +119,7 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
         }
     }
 
-    private DataValidator<OAuth2ClientRegistration> clientRegistrationValidator =
+    private final DataValidator<OAuth2ClientRegistration> clientRegistrationValidator =
             new DataValidator<OAuth2ClientRegistration>() {
 
                 @Override
@@ -151,9 +132,6 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
 
                 @Override
                 protected void validateDataImpl(TenantId tenantId, OAuth2ClientRegistration clientRegistration) {
-                    if (StringUtils.isEmpty(clientRegistration.getRegistrationId())) {
-                        throw new DataValidationException("Registration ID should be specified!");
-                    }
                     if (StringUtils.isEmpty(clientRegistration.getDomainName())) {
                         throw new DataValidationException("Domain name should be specified!");
                     }

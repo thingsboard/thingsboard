@@ -359,7 +359,6 @@ public class ModelConstants {
      */
     public static final String OAUTH2_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String OAUTH2_CLIENT_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_client_registration";
-    public static final String OAUTH2_CLIENT_REGISTRATION_ID_PROPERTY = "registration_id";
     public static final String OAUTH2_DOMAIN_NAME_PROPERTY = "domain_name";
     public static final String OAUTH2_CLIENT_ID_PROPERTY = "client_id";
     public static final String OAUTH2_CLIENT_SECRET_PROPERTY = "client_secret";

@@ -30,9 +30,7 @@ public interface OAuth2Service {
 
     List<OAuth2ClientRegistration> findClientRegistrationsByTenantId(TenantId tenantId);
 
-    OAuth2ClientRegistration findClientRegistrationByRegistrationId(String registrationId);
-
-    OAuth2ClientRegistration findClientRegistrationById(TenantId tenantId, OAuth2ClientRegistrationId id);
+    OAuth2ClientRegistration findClientRegistration(UUID id);
 
     List<OAuth2ClientRegistration> findAllClientRegistrations();
 

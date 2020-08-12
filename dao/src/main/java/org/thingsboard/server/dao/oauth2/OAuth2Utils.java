@@ -29,7 +29,7 @@ public class OAuth2Utils {
     public static OAuth2ClientInfo toClientInfo(OAuth2ClientRegistration clientRegistration) {
         OAuth2ClientInfo client = new OAuth2ClientInfo();
         client.setName(clientRegistration.getLoginButtonLabel());
-        client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getRegistrationId()));
+        client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getUuidId().toString()));
         client.setIcon(clientRegistration.getLoginButtonIcon());
         return client;
     }
