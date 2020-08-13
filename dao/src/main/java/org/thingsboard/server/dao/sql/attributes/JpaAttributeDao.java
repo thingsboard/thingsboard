@@ -26,14 +26,15 @@ import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
-import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.annotation.PostConstruct;
@@ -41,6 +42,7 @@ import javax.annotation.PreDestroy;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
@@ -59,6 +61,9 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Autowired
     private AttributeKvInsertRepository attributeKvInsertRepository;
 
+    @Autowired
+    private StatsFactory statsFactory;
+
     @Value("${sql.attributes.batch_size:1000}")
     private int batchSize;
 
@@ -68,7 +73,10 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Value("${sql.attributes.stats_print_interval_ms:1000}")
     private long statsPrintIntervalMs;
 
-    private TbSqlBlockingQueue<AttributeKvEntity> queue;
+    @Value("${sql.attributes.batch_threads:4}")
+    private int batchThreads;
+
+    private TbSqlBlockingQueueWrapper<AttributeKvEntity> queue;
 
     @PostConstruct
     private void init() {
@@ -77,8 +85,11 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 .batchSize(batchSize)
                 .maxDelay(maxDelay)
                 .statsPrintIntervalMs(statsPrintIntervalMs)
+                .statsNamePrefix("attributes")
                 .build();
-        queue = new TbSqlBlockingQueue<>(params);
+
+        Function<AttributeKvEntity, Integer> hashcodeFunction = entity -> entity.getId().getEntityId().hashCode();
+        queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads, statsFactory);
         queue.init(logExecutor, v -> attributeKvInsertRepository.saveOrUpdate(v));
     }
 

@@ -94,6 +94,21 @@ public class BaseEventService implements EventService {
         return eventDao.findLatestEvents(tenantId.getId(), entityId, eventType, limit);
     }
 
+    @Override
+    public void removeEvents(TenantId tenantId, EntityId entityId) {
+        TimePageData<Event> eventPageData;
+        TimePageLink eventPageLink = new TimePageLink(1000);
+        do {
+            eventPageData = findEvents(tenantId, entityId, eventPageLink);
+            for (Event event : eventPageData.getData()) {
+                eventDao.removeById(tenantId, event.getUuidId());
+            }
+            if (eventPageData.hasNext()) {
+                eventPageLink = eventPageData.getNextPageLink();
+            }
+        } while (eventPageData.hasNext());
+    }
+
     private DataValidator<Event> eventValidator =
             new DataValidator<Event>() {
                 @Override

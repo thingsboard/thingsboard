@@ -143,6 +143,7 @@ public class JsonV1MqttAdaptor implements MqttTransportAdaptor {
         try {
             return new JsonParser().parse(payload);
         } catch (JsonSyntaxException ex) {
+            log.warn("Payload is in incorrect format: {}", payload);
             throw new AdaptorException(ex);
         }
     }
@@ -224,7 +225,7 @@ public class JsonV1MqttAdaptor implements MqttTransportAdaptor {
         return new MqttPublishMessage(mqttFixedHeader, header, payload);
     }
 
-    protected Set<String> toStringSet(JsonElement requestBody, String name) {
+    private Set<String> toStringSet(JsonElement requestBody, String name) {
         JsonElement element = requestBody.getAsJsonObject().get(name);
         if (element != null) {
             return new HashSet<>(Arrays.asList(element.getAsString().split(",")));
@@ -233,7 +234,7 @@ public class JsonV1MqttAdaptor implements MqttTransportAdaptor {
         }
     }
 
-    protected static String validatePayload(UUID sessionId, ByteBuf payloadData, boolean isEmptyPayloadAllowed) throws AdaptorException {
+    private static String validatePayload(UUID sessionId, ByteBuf payloadData, boolean isEmptyPayloadAllowed) throws AdaptorException {
         String payload = payloadData.toString(UTF8);
         if (payload == null) {
             log.warn("[{}] Payload is empty!", sessionId);

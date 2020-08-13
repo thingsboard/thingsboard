@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
@@ -41,8 +42,8 @@ import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
-import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
 import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
@@ -52,7 +53,10 @@ import org.thingsboard.server.dao.timeseries.SimpleListenableFuture;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,7 +86,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     @Autowired
     private TsKvDictionaryRepository dictionaryRepository;
 
-    private TbSqlBlockingQueue<TsKvLatestEntity> tsLatestQueue;
+    private TbSqlBlockingQueueWrapper<TsKvLatestEntity> tsLatestQueue;
 
     @Value("${sql.ts_latest.batch_size:1000}")
     private int tsLatestBatchSize;
@@ -93,8 +97,14 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     @Value("${sql.ts_latest.stats_print_interval_ms:1000}")
     private long tsLatestStatsPrintIntervalMs;
 
+    @Value("${sql.ts_latest.batch_threads:4}")
+    private int tsLatestBatchThreads;
+
     @Autowired
     protected ScheduledLogExecutorComponent logExecutor;
+
+    @Autowired
+    private StatsFactory statsFactory;
 
     @Value("${sql.ts.batch_size:1000}")
     protected int tsBatchSize;
@@ -105,6 +115,12 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     @Value("${sql.ts.stats_print_interval_ms:1000}")
     protected long tsStatsPrintIntervalMs;
 
+    @Value("${sql.ts.batch_threads:4}")
+    protected int tsBatchThreads;
+
+    @Value("${sql.timescale.batch_threads:4}")
+    protected int timescaleBatchThreads;
+
     @PostConstruct
     protected void init() {
         TbSqlBlockingQueueParams tsLatestParams = TbSqlBlockingQueueParams.builder()
@@ -112,9 +128,24 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
                 .batchSize(tsLatestBatchSize)
                 .maxDelay(tsLatestMaxDelay)
                 .statsPrintIntervalMs(tsLatestStatsPrintIntervalMs)
+                .statsNamePrefix("ts.latest")
                 .build();
-        tsLatestQueue = new TbSqlBlockingQueue<>(tsLatestParams);
-        tsLatestQueue.init(logExecutor, v -> insertLatestTsRepository.saveOrUpdate(v));
+
+        java.util.function.Function<TsKvLatestEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
+        tsLatestQueue = new TbSqlBlockingQueueWrapper<>(tsLatestParams, hashcodeFunction, tsLatestBatchThreads, statsFactory);
+
+        tsLatestQueue.init(logExecutor, v -> {
+            Map<TsKey, TsKvLatestEntity> trueLatest = new HashMap<>();
+            v.forEach(ts -> {
+                TsKey key = new TsKey(ts.getEntityId(), ts.getKey());
+                TsKvLatestEntity old = trueLatest.get(key);
+                if (old == null || old.getTs() < ts.getTs()) {
+                    trueLatest.put(key, ts);
+                }
+            });
+            List<TsKvLatestEntity> latestEntities = new ArrayList<>(trueLatest.values());
+            insertLatestTsRepository.saveOrUpdate(latestEntities);
+        });
     }
 
     @PreDestroy
