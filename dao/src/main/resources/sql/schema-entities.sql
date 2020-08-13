@@ -337,7 +337,8 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration (
     basic_always_full_screen boolean,
     custom_url varchar(255),
     custom_username varchar(255),
-    custom_password varchar(255)
+    custom_password varchar(255),
+    custom_send_token boolean
 );
 
 CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (

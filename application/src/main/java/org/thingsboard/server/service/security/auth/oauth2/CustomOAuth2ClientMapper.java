@@ -32,21 +32,26 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 @Service(value = "customOAuth2ClientMapper")
 @Slf4j
 public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper implements OAuth2ClientMapper {
+    private static final String PROVIDER_ACCESS_TOKEN = "provider-access-token";
 
     private static final ObjectMapper json = new ObjectMapper();
 
     private RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, TenantId parentTenantId, OAuth2MapperConfig config) {
-        OAuth2User oauth2User = getOAuth2User(token, config.getCustom());
+    public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, String providerAccessToken, TenantId parentTenantId, OAuth2MapperConfig config) {
+        OAuth2User oauth2User = getOAuth2User(token, providerAccessToken, config.getCustom());
         return getOrCreateSecurityUserFromOAuth2User(parentTenantId, oauth2User, config.isAllowUserCreation(), config.isActivateUser());
     }
 
-    private synchronized OAuth2User getOAuth2User(OAuth2AuthenticationToken token, OAuth2CustomMapperConfig custom) {
+    private synchronized OAuth2User getOAuth2User(OAuth2AuthenticationToken token, String providerAccessToken, OAuth2CustomMapperConfig custom) {
         if (!StringUtils.isEmpty(custom.getUsername()) && !StringUtils.isEmpty(custom.getPassword())) {
             restTemplateBuilder = restTemplateBuilder.basicAuthentication(custom.getUsername(), custom.getPassword());
         }
+        if (custom.isSendToken() && !StringUtils.isEmpty(providerAccessToken)) {
+            restTemplateBuilder = restTemplateBuilder.defaultHeader(PROVIDER_ACCESS_TOKEN, providerAccessToken);
+        }
+
         RestTemplate restTemplate = restTemplateBuilder.build();
         String request;
         try {

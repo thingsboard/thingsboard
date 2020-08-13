@@ -35,7 +35,7 @@ public class BasicOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
     private static final String END_PLACEHOLDER_PREFIX = "}";
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, TenantId parentTenantId, OAuth2MapperConfig config) {
+    public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, String providerAccessToken, TenantId parentTenantId, OAuth2MapperConfig config) {
         OAuth2User oauth2User = new OAuth2User();
         Map<String, Object> attributes = token.getPrincipal().getAttributes();
         String email = getStringAttributeByKey(attributes, config.getBasic().getEmailAttributeKey());

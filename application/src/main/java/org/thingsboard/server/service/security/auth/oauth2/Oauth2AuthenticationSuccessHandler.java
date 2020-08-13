@@ -15,14 +15,13 @@
  */
 package org.thingsboard.server.service.security.auth.oauth2;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
@@ -45,16 +44,19 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final RefreshTokenRepository refreshTokenRepository;
     private final OAuth2ClientMapperProvider oauth2ClientMapperProvider;
     private final OAuth2Service oAuth2Service;
+    private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
 
     @Autowired
     public Oauth2AuthenticationSuccessHandler(final JwtTokenFactory tokenFactory,
                                               final RefreshTokenRepository refreshTokenRepository,
                                               final OAuth2ClientMapperProvider oauth2ClientMapperProvider,
-                                              final OAuth2Service oAuth2Service) {
+                                              final OAuth2Service oAuth2Service,
+                                              final OAuth2AuthorizedClientService oAuth2AuthorizedClientService) {
         this.tokenFactory = tokenFactory;
         this.refreshTokenRepository = refreshTokenRepository;
         this.oauth2ClientMapperProvider = oauth2ClientMapperProvider;
         this.oAuth2Service = oAuth2Service;
+        this.oAuth2AuthorizedClientService = oAuth2AuthorizedClientService;
     }
 
     @Override
@@ -67,8 +69,12 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
 
             OAuth2ClientRegistration clientRegistration = oAuth2Service.findClientRegistration(UUID.fromString(token.getAuthorizedClientRegistrationId()));
+            OAuth2AuthorizedClient oAuth2AuthorizedClient = oAuth2AuthorizedClientService.loadAuthorizedClient(
+                    token.getAuthorizedClientRegistrationId(),
+                    token.getPrincipal().getName());
             OAuth2ClientMapper mapper = oauth2ClientMapperProvider.getOAuth2ClientMapperByType(clientRegistration.getMapperConfig().getType());
-            SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(token, clientRegistration.getTenantId(), clientRegistration.getMapperConfig());
+            SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(token, oAuth2AuthorizedClient.getAccessToken().getTokenValue(),
+                    clientRegistration.getTenantId(), clientRegistration.getMapperConfig());
 
             JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
             JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);

@@ -388,6 +388,7 @@ public class ModelConstants {
     public static final String OAUTH2_MAPPER_URL_PROPERTY = "custom_url";
     public static final String OAUTH2_MAPPER_USERNAME_PROPERTY = "custom_username";
     public static final String OAUTH2_MAPPER_PASSWORD_PROPERTY = "custom_password";
+    public static final String OAUTH2_MAPPER_SEND_TOKEN_PROPERTY = "custom_send_token";
     public static final String OAUTH2_TEMPLATE_COMMENT_PROPERTY = "comment";
 
     /**

@@ -159,9 +159,6 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
                     if (StringUtils.isEmpty(clientRegistration.getUserNameAttributeName())) {
                         throw new DataValidationException("User name attribute name should be specified!");
                     }
-                    if (StringUtils.isEmpty(clientRegistration.getJwkSetUri())) {
-                        throw new DataValidationException("Jwk set uri should be specified!");
-                    }
                     if (StringUtils.isEmpty(clientRegistration.getClientAuthenticationMethod())) {
                         throw new DataValidationException("Client authentication method should be specified!");
                     }

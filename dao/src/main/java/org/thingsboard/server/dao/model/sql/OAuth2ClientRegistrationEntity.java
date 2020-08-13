@@ -95,6 +95,8 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
     private String username;
     @Column(name = ModelConstants.OAUTH2_MAPPER_PASSWORD_PROPERTY)
     private String password;
+    @Column(name = ModelConstants.OAUTH2_MAPPER_SEND_TOKEN_PROPERTY)
+    private Boolean sendToken;
 
     public OAuth2ClientRegistrationEntity() {
         super();
@@ -142,6 +144,7 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
                 this.url = customConfig.getUrl();
                 this.username = customConfig.getUsername();
                 this.password = customConfig.getPassword();
+                this.sendToken = customConfig.isSendToken();
             }
         }
     }
@@ -178,6 +181,7 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
                                                 .url(url)
                                                 .username(username)
                                                 .password(password)
+                                                .sendToken(sendToken)
                                                 .build()
                                         : null
                         )
