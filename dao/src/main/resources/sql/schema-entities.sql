@@ -360,6 +360,7 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
     basic_customer_name_pattern varchar(255),
     basic_default_dashboard_name varchar(255),
     basic_always_full_screen boolean,
+    comment varchar,
     CONSTRAINT oauth2_template_provider_id_unq_key UNIQUE (provider_id)
 );
 

@@ -74,6 +74,8 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
     private String defaultDashboardName;
     @Column(name = ModelConstants.OAUTH2_ALWAYS_FULL_SCREEN_PROPERTY)
     private Boolean alwaysFullScreen;
+    @Column(name = ModelConstants.OAUTH2_TEMPLATE_COMMENT_PROPERTY)
+    private String comment;
 
     public OAuth2ClientRegistrationTemplateEntity() {
     }
@@ -94,6 +96,7 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
         this.userNameAttributeName = clientRegistrationTemplate.getUserNameAttributeName();
         this.jwkSetUri = clientRegistrationTemplate.getJwkSetUri();
         this.clientAuthenticationMethod = clientRegistrationTemplate.getClientAuthenticationMethod();
+        this.comment = clientRegistrationTemplate.getComment();
         OAuth2BasicMapperConfig basicConfig = clientRegistrationTemplate.getBasic();
         if (basicConfig != null) {
             this.emailAttributeKey = basicConfig.getEmailAttributeKey();
@@ -134,6 +137,7 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
         clientRegistrationTemplate.setUserNameAttributeName(userNameAttributeName);
         clientRegistrationTemplate.setJwkSetUri(jwkSetUri);
         clientRegistrationTemplate.setClientAuthenticationMethod(clientAuthenticationMethod);
+        clientRegistrationTemplate.setComment(comment);
         return clientRegistrationTemplate;
     }
 }

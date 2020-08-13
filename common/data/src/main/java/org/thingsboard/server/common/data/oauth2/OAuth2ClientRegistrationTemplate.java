@@ -43,6 +43,7 @@ public class OAuth2ClientRegistrationTemplate extends BaseData<OAuth2ClientRegis
     private String userNameAttributeName;
     private String jwkSetUri;
     private String clientAuthenticationMethod;
+    private String comment;
 
     public OAuth2ClientRegistrationTemplate(OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
         super(clientRegistrationTemplate);
@@ -56,6 +57,7 @@ public class OAuth2ClientRegistrationTemplate extends BaseData<OAuth2ClientRegis
         this.userNameAttributeName = clientRegistrationTemplate.userNameAttributeName;
         this.jwkSetUri = clientRegistrationTemplate.jwkSetUri;
         this.clientAuthenticationMethod = clientRegistrationTemplate.clientAuthenticationMethod;
+        this.comment = clientRegistrationTemplate.comment;
     }
 
     @Override
