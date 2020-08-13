@@ -18,12 +18,13 @@ import { IStateControllerComponent, StateControllerState } from '@home/pages/das
 import { IDashboardController } from '../dashboard-page.models';
 import { DashboardState } from '@app/shared/models/dashboard.models';
 import { Subscription } from 'rxjs';
-import { NgZone, OnDestroy, OnInit } from '@angular/core';
+import { NgZone, OnDestroy, OnInit, Directive } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { StatesControllerService } from '@home/pages/dashboard/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { StateObject, StateParams } from '@app/core/api/widget-api.models';
 
+@Directive()
 export abstract class StateControllerComponent implements IStateControllerComponent, OnInit, OnDestroy {
 
   stateObject: StateControllerState = [];

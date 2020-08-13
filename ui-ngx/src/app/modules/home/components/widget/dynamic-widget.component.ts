@@ -15,7 +15,7 @@
 ///
 
 import { PageComponent } from '@shared/components/page.component';
-import { Inject, Injector, OnDestroy, OnInit } from '@angular/core';
+import { Inject, Injector, OnDestroy, OnInit, Directive } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { IDynamicWidgetComponent, WidgetContext } from '@home/models/widget-component.models';
@@ -42,6 +42,7 @@ import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
+@Directive()
 export class DynamicWidgetComponent extends PageComponent implements IDynamicWidgetComponent, OnInit, OnDestroy {
 
   executingRpcRequest: boolean;
