@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
@@ -76,6 +78,14 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
     private Boolean alwaysFullScreen;
     @Column(name = ModelConstants.OAUTH2_TEMPLATE_COMMENT_PROPERTY)
     private String comment;
+    @Column(name = ModelConstants.OAUTH2_TEMPLATE_ICON_PROPERTY)
+    private String icon;
+    @Column(name = ModelConstants.OAUTH2_TEMPLATE_HELP_LINK_PROPERTY)
+    private String helpLink;
+
+    @Type(type = "json")
+    @Column(name = ModelConstants.OAUTH2_TEMPLATE_ADDITIONAL_INFO_PROPERTY)
+    private JsonNode additionalInfo;
 
     public OAuth2ClientRegistrationTemplateEntity() {
     }
@@ -97,6 +107,9 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
         this.jwkSetUri = clientRegistrationTemplate.getJwkSetUri();
         this.clientAuthenticationMethod = clientRegistrationTemplate.getClientAuthenticationMethod();
         this.comment = clientRegistrationTemplate.getComment();
+        this.icon = clientRegistrationTemplate.getIcon();
+        this.helpLink = clientRegistrationTemplate.getHelpLink();
+        this.additionalInfo = clientRegistrationTemplate.getAdditionalInfo();
         OAuth2BasicMapperConfig basicConfig = clientRegistrationTemplate.getBasic();
         if (basicConfig != null) {
             this.emailAttributeKey = basicConfig.getEmailAttributeKey();
@@ -116,6 +129,7 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
         clientRegistrationTemplate.setId(new OAuth2ClientRegistrationTemplateId(id));
         clientRegistrationTemplate.setTenantId(new TenantId(tenantId));
         clientRegistrationTemplate.setCreatedTime(createdTime);
+        clientRegistrationTemplate.setAdditionalInfo(additionalInfo);
 
         clientRegistrationTemplate.setProviderId(providerId);
         clientRegistrationTemplate.setBasic(
@@ -138,6 +152,8 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
         clientRegistrationTemplate.setJwkSetUri(jwkSetUri);
         clientRegistrationTemplate.setClientAuthenticationMethod(clientAuthenticationMethod);
         clientRegistrationTemplate.setComment(comment);
+        clientRegistrationTemplate.setIcon(icon);
+        clientRegistrationTemplate.setHelpLink(helpLink);
         return clientRegistrationTemplate;
     }
 }

@@ -56,6 +56,7 @@ DROP TABLE IF EXISTS oauth2_client_registration_template;
 CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
     id uuid NOT NULL CONSTRAINT oauth2_client_registration_template_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
+    additional_info varchar,
     tenant_id uuid,
     provider_id varchar(255),
     authorization_uri varchar(255),
@@ -74,5 +75,7 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
     basic_default_dashboard_name varchar(255),
     basic_always_full_screen boolean,
     comment varchar,
+    icon varchar(255),
+    help_link varchar(255),
     CONSTRAINT oauth2_template_provider_id_unq_key UNIQUE (provider_id)
 );

@@ -15,13 +15,13 @@
  */
 package org.thingsboard.server.common.data.oauth2;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.*;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -44,6 +44,16 @@ public class OAuth2ClientRegistrationTemplate extends BaseData<OAuth2ClientRegis
     private String jwkSetUri;
     private String clientAuthenticationMethod;
     private String comment;
+    private String icon;
+    private String helpLink;
+
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private transient JsonNode additionalInfo;
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    @JsonIgnore
+    private byte[] additionalInfoBytes;
 
     public OAuth2ClientRegistrationTemplate(OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
         super(clientRegistrationTemplate);
@@ -58,6 +68,17 @@ public class OAuth2ClientRegistrationTemplate extends BaseData<OAuth2ClientRegis
         this.jwkSetUri = clientRegistrationTemplate.jwkSetUri;
         this.clientAuthenticationMethod = clientRegistrationTemplate.clientAuthenticationMethod;
         this.comment = clientRegistrationTemplate.comment;
+        this.icon = clientRegistrationTemplate.icon;
+        this.helpLink = clientRegistrationTemplate.helpLink;
+        this.additionalInfo = clientRegistrationTemplate.additionalInfo;
+    }
+
+    public JsonNode getAdditionalInfo() {
+        return SearchTextBasedWithAdditionalInfo.getJson(() -> additionalInfo, () -> additionalInfoBytes);
+    }
+
+    public void setAdditionalInfo(JsonNode addInfo) {
+        SearchTextBasedWithAdditionalInfo.setJson(addInfo, json -> this.additionalInfo = json, bytes -> this.additionalInfoBytes = bytes);
     }
 
     @Override

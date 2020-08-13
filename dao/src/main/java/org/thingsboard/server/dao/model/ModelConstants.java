@@ -390,6 +390,9 @@ public class ModelConstants {
     public static final String OAUTH2_MAPPER_PASSWORD_PROPERTY = "custom_password";
     public static final String OAUTH2_MAPPER_SEND_TOKEN_PROPERTY = "custom_send_token";
     public static final String OAUTH2_TEMPLATE_COMMENT_PROPERTY = "comment";
+    public static final String OAUTH2_TEMPLATE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String OAUTH2_TEMPLATE_ICON_PROPERTY = "icon";
+    public static final String OAUTH2_TEMPLATE_HELP_LINK_PROPERTY = "help_link";
 
     /**
      * Cassandra attributes and timeseries constants.

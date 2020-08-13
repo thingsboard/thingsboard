@@ -125,6 +125,8 @@ public class BaseOAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
         clientRegistrationTemplate.setJwkSetUri("jwkSetUri");
         clientRegistrationTemplate.setClientAuthenticationMethod("clientAuthenticationMethod");
         clientRegistrationTemplate.setComment("comment");
+        clientRegistrationTemplate.setIcon("icon");
+        clientRegistrationTemplate.setHelpLink("helpLink");
         return clientRegistrationTemplate;
     }
 }
