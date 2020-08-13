@@ -87,7 +87,6 @@
               "node_modules/systemjs/dist/system.js",
               "node_modules/jstree/dist/jstree.min.js"
             ],
-            "es5BrowserSupport": true,
             "customWebpackConfig": {
               "path": "./extra-webpack.config.js"
             }

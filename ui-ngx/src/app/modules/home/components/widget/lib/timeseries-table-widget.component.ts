@@ -187,7 +187,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.sorts.forEach((sort, index) => {
       const paginator = this.displayPagination ? this.paginators.toArray()[index] : null;
       sort.sortChange.subscribe(() => this.paginators.toArray()[index].pageIndex = 0);
-      (this.displayPagination ? merge(sort.sortChange, paginator.page) : sort.sortChange)
+      ((this.displayPagination ? merge(sort.sortChange, paginator.page) : sort.sortChange) as Observable<any>)
         .pipe(
           tap(() => this.updateData(sort, paginator, index))
         )
