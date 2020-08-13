@@ -122,8 +122,16 @@ export default abstract class LeafletMap {
             });
             const dragListener = (e: L.DragEndEvent) => {
                 if (e.type === 'dragend' && mousePositionOnMap) {
-                    const icon = new L.Icon.Default();
-                    icon.options.shadowSize = [0, 0];
+                    const icon = L.icon({
+                      iconRetinaUrl: 'marker-icon-2x.png',
+                      iconUrl: 'marker-icon.png',
+                      shadowUrl: 'marker-shadow.png',
+                      iconSize: [25, 41],
+                      iconAnchor: [12, 41],
+                      popupAnchor: [1, -34],
+                      tooltipAnchor: [16, -28],
+                      shadowSize: [41, 41]
+                    });
                     const newMarker = L.marker(mousePositionOnMap, { icon }).addTo(this.map);
                     const datasourcesList = document.createElement('div');
                     const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
@@ -195,8 +203,6 @@ export default abstract class LeafletMap {
       });
       const dragListener = (e: L.DragEndEvent) => {
         if (e.type === 'dragend' && mousePositionOnMap) {
-          const icon = new L.Icon.Default();
-          icon.options.shadowSize = [0, 0];
           const newPolygon = L.polygon(mousePositionOnMap).addTo(this.map);
           const datasourcesList = document.createElement('div');
           const customLatLng = {[this.options.polygonKeyName]: this.convertToPolygonFormat(mousePositionOnMap)};

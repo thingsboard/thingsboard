@@ -28,7 +28,10 @@
               { "glob": "worker-html.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" },
               { "glob": "worker-css.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" },
               { "glob": "worker-json.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" },
-              { "glob": "worker-javascript.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" }
+              { "glob": "worker-javascript.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" },
+              { "glob": "marker-icon-2x.png", "input": "node_modules/leaflet/dist/images/", "output": "/" },
+              { "glob": "marker-icon.png", "input": "node_modules/leaflet/dist/images/", "output": "/" },
+              { "glob": "marker-shadow.png", "input": "node_modules/leaflet/dist/images/", "output": "/" }
             ],
             "styles": [
               "src/styles.scss",
