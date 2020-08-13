@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,9 +37,13 @@ import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MSetSecurityS
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBootstrapSessionManager;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
+
 import java.io.File;
 import java.util.List;
+
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.MODEL_DEFAULT_RESOURCE_PATH;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.modelPaths;
 
 @Slf4j
 @ComponentScan("org.thingsboard.server.transport.lwm2m.server")
@@ -73,31 +77,10 @@ public class LwM2MTransportBootstrapServerConfiguration {
         return getLeshanBootstrapServer(contextBs.getBootstrapPort(), contextBs.getBootstrapSecurePort(), RPK);
     }
 
-    public LeshanBootstrapServer getLeshanBootstrapServer(Integer bootstrapPort, Integer bootstrapSecurePort, LwM2MSecurityMode dtlsMode){
+    public LeshanBootstrapServer getLeshanBootstrapServer(Integer bootstrapPort, Integer bootstrapSecurePort, LwM2MSecurityMode dtlsMode) {
         LeshanBootstrapServerBuilder builder = new LeshanBootstrapServerBuilder();
-       builder.setLocalAddress(contextBs.getBootstrapHost(), bootstrapPort);
+        builder.setLocalAddress(contextBs.getBootstrapHost(), bootstrapPort);
         builder.setLocalSecureAddress(contextBs.getBootstrapSecureHost(), bootstrapSecurePort);
-
-        /**  ConfigStore */
-        builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);
-
-        /** SecurityStore */
-        builder.setSecurityStore(lwM2MBootstrapSecurityStore);
-
-        /** Create Models */
-        List<ObjectModel> models = ObjectLoader.loadDefault();
-        if (contextS.getModelFolderPath() != null) {
-            models.addAll(ObjectLoader.loadObjectsFromDir(new File(contextS.getModelFolderPath())));
-        }
-        builder.setModel(new StaticModel(models));
-
-        /** Create and Set DTLS Config */
-        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setRecommendedCipherSuitesOnly(contextS.isSupportDeprecatedCiphersEnable());
-        builder.setDtlsConfig(dtlsConfig);
-
-        /**  Create credentials */
-        new LwM2MSetSecurityStoreBootstrap(builder, contextBs, contextS, dtlsMode);
 
         /** Create CoAP Config */
         NetworkConfig coapConfig;
@@ -110,6 +93,35 @@ public class LwM2MTransportBootstrapServerConfiguration {
             coapConfig.store(configFile);
         }
         builder.setCoapConfig(coapConfig);
+
+        /**  ConfigStore */
+        builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);
+
+        /** SecurityStore */
+        builder.setSecurityStore(lwM2MBootstrapSecurityStore);
+
+        /** Define model provider (Create Models )*/
+        List<ObjectModel> models = ObjectLoader.loadDefault();
+        if (contextS.getModelPathFile() != null && !contextS.getModelPathFile().isEmpty()) {
+            models.addAll(ObjectLoader.loadObjectsFromDir(new File(contextS.getModelPathFile())));
+        }
+        else {
+            try {
+                List<ObjectModel> listModels = ObjectLoader.loadDdfResources(MODEL_DEFAULT_RESOURCE_PATH, modelPaths);
+                models.addAll(listModels);
+            } catch (java.lang.IllegalStateException e) {
+                log.error(e.toString());
+            }
+        }
+        builder.setModel(new StaticModel(models));
+
+        /** Create and Set DTLS Config */
+        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
+        dtlsConfig.setRecommendedCipherSuitesOnly(contextS.isSupportDeprecatedCiphersEnable());
+        builder.setDtlsConfig(dtlsConfig);
+
+        /**  Create credentials */
+        new LwM2MSetSecurityStoreBootstrap(builder, contextBs, contextS, dtlsMode);
 
         /**
          *

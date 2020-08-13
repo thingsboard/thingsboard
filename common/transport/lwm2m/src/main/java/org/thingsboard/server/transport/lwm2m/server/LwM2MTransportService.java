@@ -223,15 +223,19 @@ public class LwM2MTransportService {
                     LwM2mNode content = observeResponse.getContent();
                     Map<Integer, LwM2mObjectInstance> instances = ((LwM2mObject) content).getInstances();
                     ObjectModel objectModel = lwServer.getModelProvider().getObjectModel(registration).getObjectModel(objectId);
-                    ModelObject modelObject = new ModelObject(objectModel.id, instances, objectModel, null);
-                    modelClient.getModelObjects().add(modelObject);
-                    if (clientObserves != null && clientObserves.size() > 0) {
-                        clientObserves.forEach(val -> {
-                            if (Integer.valueOf(val.getAsString().split("/")[1])==objectId && val.getAsString().split("/").length > 3) {
-//                                log.info("{}", val);
-                                modelObject.getObjectObserves().add(val.getAsString());
-                            }
-                        });
+                    if (objectModel != null) {
+                        ModelObject modelObject = new ModelObject(objectModel.id, instances, objectModel, null);
+                        modelClient.getModelObjects().add(modelObject);
+                        if (clientObserves != null && clientObserves.size() > 0) {
+                            clientObserves.forEach(val -> {
+                                if (Integer.valueOf(val.getAsString().split("/")[1]) == objectId && val.getAsString().split("/").length > 3) {
+                                    modelObject.getObjectObserves().add(val.getAsString());
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        log.error("[{}] - error getModelProvider", objects[1]);
                     }
                     //  cancel observation : active way
                     Observation observation = observeResponse.getObservation();

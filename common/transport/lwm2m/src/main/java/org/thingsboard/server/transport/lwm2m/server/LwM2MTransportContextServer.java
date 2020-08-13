@@ -36,8 +36,8 @@ public class LwM2MTransportContextServer extends TransportContext {
     private Long timeout;
 
     @Getter
-    @Value("${transport.lwm2m.model_folder_path:}")
-    private String modelFolderPath;
+    @Value("${transport.lwm2m.model_path_file:}")
+    private String modelPathFile;
 
     @Getter
     @Value("${transport.lwm2m.support_deprecated_ciphers_enable:}")
@@ -52,7 +52,7 @@ public class LwM2MTransportContextServer extends TransportContext {
     private String keyStorePathFile;
 
    @Getter
-    @Value("${transport.lwm2m.secure.key_store_path_resource:}")
+    @Value("${transport.lwm2m.secure.key_store_path_resource: credentials/serverKeyStore.jks}")
     private String keyStorePathResource;
 
     @Getter

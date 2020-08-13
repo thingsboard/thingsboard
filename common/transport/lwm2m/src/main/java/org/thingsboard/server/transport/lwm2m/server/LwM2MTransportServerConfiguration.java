@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,8 +37,10 @@ import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSetSecurityStoreServer;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
+
 import java.io.*;
 import java.util.List;
+
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
 
@@ -57,18 +59,18 @@ public class LwM2MTransportServerConfiguration {
 
     @Primary
     @Bean(name = "leshanServerCert")
-    public LeshanServer getLeshanServerCert()  {
+    public LeshanServer getLeshanServerCert() {
         log.info("Starting LwM2M transport ServerCert... PostConstruct");
         return getLeshanServer(context.getServerPortCert(), context.getServerSecurePortCert(), X509);
     }
 
     @Bean(name = "leshanServerNoSecPskRpk")
-    public LeshanServer getLeshanServerNoSecPskRpk()  {
+    public LeshanServer getLeshanServerNoSecPskRpk() {
         log.info("Starting LwM2M transport ServerNoSecPskRpk... PostConstruct");
         return getLeshanServer(context.getServerPort(), context.getServerSecurePort(), RPK);
     }
 
-    private LeshanServer getLeshanServer(Integer serverPort, Integer serverSecurePort, LwM2MSecurityMode dtlsMode)  {
+    private LeshanServer getLeshanServer(Integer serverPort, Integer serverSecurePort, LwM2MSecurityMode dtlsMode) {
 
         LeshanServerBuilder builder = new LeshanServerBuilder();
         builder.setLocalAddress(context.getServerHost(), serverPort);
@@ -90,12 +92,18 @@ public class LwM2MTransportServerConfiguration {
         }
         builder.setCoapConfig(coapConfig);
 
-        /** Define model provider */
+        /** Define model provider (Create Models )*/
         List<ObjectModel> models = ObjectLoader.loadDefault();
-        List<ObjectModel> listModels = ObjectLoader.loadDdfResources(MODEL_DEFAULT_RESOURCE_PATH, modelPaths);
-        models.addAll(listModels);
-        if (context.getModelFolderPath() != null) {
-            models.addAll(ObjectLoader.loadObjectsFromDir(new File(context.getModelFolderPath())));
+        if (context.getModelPathFile() != null && !context.getModelPathFile().isEmpty()) {
+            models.addAll(ObjectLoader.loadObjectsFromDir(new File(context.getModelPathFile())));
+        }
+        else {
+            try {
+                List<ObjectModel> listModels = ObjectLoader.loadDdfResources(MODEL_DEFAULT_RESOURCE_PATH, modelPaths);
+                models.addAll(listModels);
+            } catch (java.lang.IllegalStateException e) {
+                log.error(e.toString());
+            }
         }
         LwM2mModelProvider modelProvider = new VersionedModelProvider(models);
         builder.setObjectModelProvider(modelProvider);

@@ -578,7 +578,7 @@ transport:
     # Enable/disable lvm2m transport protocol.
     enabled: "${LWM2M_ENABLED:true}"
     timeout: "${LWM2M_TIMEOUT:10000}"
-    model_folder_path: "${LWM2M_MODEL_FOLDER_PATH:}"
+    model_path_file: "${LWM2M_MODEL_PATH_FILE:}"
     support_deprecated_ciphers_enable: "${LWM2M_SUPPORT_DEPRECATED_CIPHERS_ENABLED:true}"
     secure:
       # Only Certificate_x509:
@@ -587,7 +587,7 @@ transport:
       key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
       # key_store_type: "${LWM2M_KEYSTORE_TYPE:PKCS12}"
       key_store_path_file: "${KEY_STORE_PATH_FILE:}"
-      key_store_path_resource: "credentials/serverKeyStore.jks"
+      key_store_path_resource: "${KEY_STORE_PATH_RESOURCE:}"
       key_store_password: "${LWM2M_KEYSTORE_PASSWORD_SERVER:server_ks_password}"
       root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
       enable_gen_psk_rpk: "${ENABLE_GEN_PSK_RPK:true}"
