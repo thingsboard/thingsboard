@@ -32,6 +32,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.RandomStringUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
@@ -376,6 +377,9 @@ public final class EdgeGrpcSession implements Closeable {
                 break;
             case WIDGET_TYPE:
                 processWidgetType(edgeEvent, msgType, edgeEventAction);
+                break;
+            case ADMIN_SETTINGS:
+                processAdminSettings(edgeEvent);
                 break;
         }
     }
@@ -730,6 +734,16 @@ public final class EdgeGrpcSession implements Closeable {
                     .setEntityUpdateMsg(entityUpdateMsg)
                     .build());
         }
+    }
+
+    private void processAdminSettings(EdgeEvent edgeEvent) {
+        AdminSettings adminSettings = mapper.convertValue(edgeEvent.getEntityBody(), AdminSettings.class);
+        EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                .setAdminSettingsUpdateMsg(ctx.getAdminSettingsUpdateMsgConstructor().constructAdminSettingsUpdateMsg(adminSettings))
+                .build();
+        outputStream.onNext(ResponseMsg.newBuilder()
+                .setEntityUpdateMsg(entityUpdateMsg)
+                .build());
     }
 
     private UpdateMsgType getResponseMsgType(ActionType actionType) {
