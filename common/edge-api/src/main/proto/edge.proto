@@ -61,6 +61,7 @@ message EntityUpdateMsg {
   RelationUpdateMsg relationUpdateMsg = 12;
   WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = 13;
   WidgetTypeUpdateMsg widgetTypeUpdateMsg = 14;
+  AdminSettingsUpdateMsg adminSettingsUpdateMsg = 15;
 }
 
 enum RequestMsgType {
@@ -289,6 +290,13 @@ message WidgetTypeUpdateMsg {
   string name = 6;
   string descriptorJson = 7;
   bool isSystem = 8;
+}
+
+message AdminSettingsUpdateMsg {
+  int64 idMSB = 1;
+  int64 idLSB = 2;
+  string key = 3;
+  string jsonValue = 4;
 }
 
 message UserCredentialsUpdateMsg {

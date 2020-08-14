@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -64,6 +65,7 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -120,6 +122,9 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     private WidgetTypeService widgetTypeService;
 
     @Autowired
+    private AdminSettingsService adminSettingsService;
+
+    @Autowired
     private DbCallbackExecutorService dbCallbackExecutorService;
 
     @Override
@@ -132,6 +137,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
             syncEntityViews(edge);
             syncDashboards(edge);
             syncWidgetsBundleAndWidgetTypes(edge);
+            syncAdminSettings(edge);
         } catch (Exception e) {
             log.error("Exception during sync process", e);
         }
@@ -288,6 +294,15 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
             }
         } catch (Exception e) {
             log.error("Exception during loading widgets bundle(s) and widget type(s) on sync!", e);
+        }
+    }
+
+    private void syncAdminSettings(Edge edge) {
+        try {
+            AdminSettings mailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
+            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, ActionType.UPDATED, null, mapper.valueToTree(mailSettings));
+        } catch (Exception e) {
+            log.error("Can't load admin settings", e);
         }
     }
 

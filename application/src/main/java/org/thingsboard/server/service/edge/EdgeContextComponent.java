@@ -39,6 +39,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
+import org.thingsboard.server.service.edge.rpc.constructor.AdminSettingsUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.AlarmUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.AssetUpdateMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.CustomerUpdateMsgConstructor;
@@ -187,6 +188,10 @@ public class EdgeContextComponent {
     @Lazy
     @Autowired
     private WidgetTypeUpdateMsgConstructor widgetTypeUpdateMsgConstructor;
+
+    @Lazy
+    @Autowired
+    private AdminSettingsUpdateMsgConstructor adminSettingsUpdateMsgConstructor;
 
     @Lazy
     @Autowired

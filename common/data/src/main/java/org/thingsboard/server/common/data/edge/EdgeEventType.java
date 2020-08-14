@@ -29,5 +29,6 @@ public enum EdgeEventType {
     RELATION,
     TENANT,
     WIDGETS_BUNDLE,
-    WIDGET_TYPE
+    WIDGET_TYPE,
+    ADMIN_SETTINGS
 }
