@@ -16,7 +16,7 @@
 
 import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
-import comingSoon from '../../../../assets/coming-soon.jpg';
+import comingSoon from '@assets/coming-soon.jpg';
 
 @Component({
   selector: 'tb-todo-dialog',

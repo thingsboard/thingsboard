@@ -33,6 +33,7 @@
       "@modules/*": ["src/app/modules/*"],
       "@shared/*": ["src/app/shared/*"],
       "@home/*": ["src/app/modules/home/*"],
+      "@assets/*": ["src/assets/*"],
       "jszip": [
         "node_modules/jszip/dist/jszip.min.js"
       ]
