@@ -3,7 +3,7 @@
   "version": "3.1.1",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --host 0.0.0.0 --open",
+    "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --host 0.0.0.0 --open",
     "build": "ng build",
     "build:prod": "ng build --prod --vendor-chunk",
     "test": "ng test",

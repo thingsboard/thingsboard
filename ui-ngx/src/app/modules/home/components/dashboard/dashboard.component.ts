@@ -35,7 +35,7 @@ import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Timewindow, toHistoryTimewindow } from '@shared/models/time/time.models';
 import { TimeService } from '@core/services/time.service';
-import { GridsterComponent, GridsterConfig } from 'angular-gridster2';
+import { GridsterComponent, GridsterConfig, GridType } from 'angular-gridster2';
 import {
   DashboardCallbacks,
   DashboardWidget,
@@ -183,7 +183,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       this.dashboardTimewindow = this.timeService.defaultTimewindow();
     }
     this.gridsterOpts = {
-      gridType: 'scrollVertical',
+      gridType: GridType.ScrollVertical,
       keepFixedHeightInMobile: true,
       disableWarnings: false,
       disableAutoPositionOnConflict: false,
@@ -288,7 +288,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   ngAfterViewInit(): void {
     this.gridsterResize$ = new ResizeObserver(() => {
-      this.onGridsterParentResize()
+      this.onGridsterParentResize();
     });
     this.gridsterResize$.observe(this.gridster.el);
   }
@@ -473,9 +473,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     this.isMobileSize = this.checkIsMobileSize();
     const autofillHeight = this.isAutofillHeight();
     if (autofillHeight) {
-      this.gridsterOpts.gridType = this.isMobileSize ? 'fixed' : 'fit';
+      this.gridsterOpts.gridType = this.isMobileSize ? GridType.Fixed : GridType.Fit;
     } else {
-      this.gridsterOpts.gridType = this.isMobileSize ? 'fixed' : 'scrollVertical';
+      this.gridsterOpts.gridType = this.isMobileSize ? GridType.Fixed : GridType.ScrollVertical;
     }
     const mobileBreakPoint = this.isMobileSize ? 20000 : 0;
     this.gridsterOpts.mobileBreakpoint = mobileBreakPoint;

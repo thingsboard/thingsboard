@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ruleNodeUiforwardHost = "localhost";
-const ruleNodeUiforwardPort = 8080;
+
+const forwardUrl = "https://demo.thingsboard.io";
+const wsForwardUrl = "wss://demo.thingsboard.io";
+const ruleNodeUiforwardUrl = forwardUrl;
 
 const PROXY_CONFIG = {
   "/api": {
-    "target": "http://localhost:8080",
+    "target": forwardUrl,
     "secure": false,
   },
   "/static/rulenode": {
-    "target": `http://${ruleNodeUiforwardHost}:${ruleNodeUiforwardPort}`,
+    "target": ruleNodeUiforwardUrl,
     "secure": false,
   },
   "/static": {
-    "target": "http://localhost:8080",
+    "target": forwardUrl,
     "secure": false,
   },
   "/api/ws": {
-    "target": "ws://localhost:8080",
+    "target": wsForwardUrl,
     "ws": true,
+    "secure": false
   },
 };
 

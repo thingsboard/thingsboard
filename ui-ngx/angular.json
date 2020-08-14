@@ -98,7 +98,12 @@
               "react-ace",
               "schema-inspector",
               "@flowjs/flow.js",
-              "mousetrap"
+              "mousetrap",
+              "prop-types",
+              "react-is",
+              "hoist-non-react-statics",
+              "classnames",
+              "raf"
             ]
           },
           "configurations": {
