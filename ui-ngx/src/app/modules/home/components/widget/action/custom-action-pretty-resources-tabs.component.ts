@@ -34,7 +34,6 @@ import { AppState } from '@core/core.state';
 import { CustomActionDescriptor } from '@shared/models/widget.models';
 import * as ace from 'ace-builds';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { css_beautify, html_beautify } from 'js-beautify';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { CustomPrettyActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
 
@@ -93,7 +92,6 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
 
   ngOnChanges(changes: SimpleChanges): void {
     for (const propName of Object.keys(changes)) {
-      const change = changes[propName];
       if (propName === 'action') {
         if (this.aceEditors.length) {
           this.setAceEditorValues();
@@ -136,7 +134,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   }
 
   public beautifyCss(): void {
-    const res = css_beautify(this.action.customCss, {indent_size: 4});
+    const res = js_beautify.css_beautify(this.action.customCss, {indent_size: 4});
     if (this.action.customCss !== res) {
       this.action.customCss = res;
       this.cssEditor.setValue(this.action.customCss ? this.action.customCss : '', -1);
@@ -145,7 +143,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   }
 
   public beautifyHtml(): void {
-    const res = html_beautify(this.action.customHtml, {indent_size: 4, wrap_line_length: 60});
+    const res = js_beautify.html_beautify(this.action.customHtml, {indent_size: 4, wrap_line_length: 60});
     if (this.action.customHtml !== res) {
       this.action.customHtml = res;
       this.htmlEditor.setValue(this.action.customHtml ? this.action.customHtml : '', -1);
@@ -158,7 +156,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
       entries.forEach((entry) => {
         const editor = this.aceEditors.find(aceEditor => aceEditor.container === entry.target);
         this.onAceEditorResize(editor);
-      })
+      });
     });
     this.htmlEditor = this.createAceEditor(this.htmlInputElmRef, 'html');
     this.htmlEditor.on('input', () => {

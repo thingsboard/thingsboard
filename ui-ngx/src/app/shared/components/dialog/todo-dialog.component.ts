@@ -16,6 +16,7 @@
 
 import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
+import comingSoon from '../../../../assets/coming-soon.jpg';
 
 @Component({
   selector: 'tb-todo-dialog',
@@ -24,7 +25,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 })
 export class TodoDialogComponent {
 
-  comingSoon = require('../../../../assets/coming-soon.jpg').default;
+  comingSoon = comingSoon;
 
   constructor(public dialogRef: MatDialogRef<TodoDialogComponent>) {
   }

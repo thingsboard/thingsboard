@@ -20,7 +20,7 @@ import reactCSS from 'reactcss';
 import TextField from '@material-ui/core/TextField';
 import IconButton from '@material-ui/core/IconButton';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
-import ClearIcon from '@material-ui/icons/Clear';
+import { Clear } from '@material-ui/icons';
 import Icon from '@material-ui/core/Icon';
 import Tooltip from '@material-ui/core/Tooltip';
 
@@ -63,7 +63,7 @@ class ThingsboardIcon extends React.Component<JsonFormFieldProps, ThingsboardIco
         });
     }
 
-    componentWillUnmount () {
+    componentWillUnmount() {
         const node = ReactDOM.findDOMNode(this);
         const iconContainer = $(node).children('#icon-container');
         iconContainer.off( 'click' );
@@ -150,7 +150,7 @@ class ThingsboardIcon extends React.Component<JsonFormFieldProps, ThingsboardIco
                         onBlur={this.onBlur}
                         style={ styles.iconText } />
                  </div>
-                 <Tooltip title='Clear' placement='top'><IconButton onClick={this.onClear}><ClearIcon/></IconButton></Tooltip>
+                 <Tooltip title='Clear' placement='top'><IconButton onClick={this.onClear}><Clear/></IconButton></Tooltip>
             </div>
         );
     }

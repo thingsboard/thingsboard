@@ -19,8 +19,7 @@ import ThingsboardBaseComponent from './json-form-base-component';
 import Button from '@material-ui/core/Button';
 import _ from 'lodash';
 import IconButton from '@material-ui/core/IconButton';
-import ClearIcon from '@material-ui/icons/Clear';
-import AddIcon from '@material-ui/icons/Add';
+import { Clear, Add } from '@material-ui/icons';
 import Tooltip from '@material-ui/core/Tooltip';
 import {
   JsonFormData,
@@ -138,7 +137,7 @@ class ThingsboardArray extends React.Component<JsonFormFieldProps, ThingsboardAr
             let removeButton: JSX.Element = null;
             if (!this.props.form.readonly) {
                 const boundOnDelete = this.onDelete.bind(this, i);
-                removeButton = <Tooltip title='Remove'><IconButton onClick={boundOnDelete}><ClearIcon/></IconButton></Tooltip>;
+                removeButton = <Tooltip title='Remove'><IconButton onClick={boundOnDelete}><Clear/></IconButton></Tooltip>;
             }
             const forms = (this.props.form.items as JsonFormData[]).map((form, index) => {
                 const copy = this.copyWithIndex(form, i);
@@ -156,7 +155,7 @@ class ThingsboardArray extends React.Component<JsonFormFieldProps, ThingsboardAr
         if (!this.props.form.readonly) {
             addButton = <Button variant='contained'
                                 color='primary'
-                                startIcon={<AddIcon/>}
+                                startIcon={<Add/>}
                                 style={{marginBottom: '8px'}}
                                 onClick={this.onAppend}>{this.props.form.add || 'New'}</Button>;
         }

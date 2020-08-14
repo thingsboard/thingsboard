@@ -18,7 +18,7 @@ import Dropzone from 'react-dropzone';
 import ThingsboardBaseComponent from './json-form-base-component';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 import IconButton from '@material-ui/core/IconButton';
-import ClearIcon from '@material-ui/icons/Clear';
+import { Clear } from '@material-ui/icons';
 import Tooltip from '@material-ui/core/Tooltip';
 
 interface ThingsboardImageState extends JsonFormFieldState {
@@ -87,7 +87,7 @@ class ThingsboardImage extends React.Component<JsonFormFieldProps, ThingsboardIm
                     <div className='tb-image-preview-container'>{previewComponent}</div>
                     <div className='tb-image-clear-container'>
                         <Tooltip title='Clear' placement='top'>
-                          <IconButton className='tb-image-clear-btn' onClick={this.onClear}><ClearIcon/></IconButton>
+                          <IconButton className='tb-image-clear-btn' onClick={this.onClear}><Clear/></IconButton>
                         </Tooltip>
                     </div>
                     <Dropzone onDrop={this.onDrop}

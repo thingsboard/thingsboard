@@ -15,7 +15,6 @@
  */
 import * as React from 'react';
 import ThingsboardAceEditor from './json-form-ace-editor';
-import { html_beautify } from 'js-beautify';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 
 class ThingsboardHtml extends React.Component<JsonFormFieldProps, JsonFormFieldState> {
@@ -26,7 +25,7 @@ class ThingsboardHtml extends React.Component<JsonFormFieldProps, JsonFormFieldS
     }
 
     onTidyHtml(html: string): string {
-        return html_beautify(html, {indent_size: 4});
+        return js_beautify.html_beautify(html, {indent_size: 4});
     }
 
     render() {

@@ -89,7 +89,17 @@
             ],
             "customWebpackConfig": {
               "path": "./extra-webpack.config.js"
-            }
+            },
+            "allowedCommonJsDependencies": [
+              "hammerjs",
+              "react",
+              "react-dom",
+              "reactcss",
+              "react-ace",
+              "schema-inspector",
+              "@flowjs/flow.js",
+              "mousetrap"
+            ]
           },
           "configurations": {
             "production": {
