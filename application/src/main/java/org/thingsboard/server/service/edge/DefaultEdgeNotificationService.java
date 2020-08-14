@@ -157,8 +157,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             TenantId tenantId = new TenantId(new UUID(edgeNotificationMsg.getTenantIdMSB(), edgeNotificationMsg.getTenantIdLSB()));
             EdgeEventType edgeEventType = EdgeEventType.valueOf(edgeNotificationMsg.getEdgeEventType());
             switch (edgeEventType) {
-                // TODO: voba - handle edge updates
-                // case EDGE:
+                case EDGE:
+                    processEdge(tenantId, edgeNotificationMsg);
+                    break;
                 case USER:
                 case ASSET:
                 case DEVICE:
@@ -183,6 +184,44 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             log.error("Can't push to edge updates, edgeNotificationMsg [{}]", edgeNotificationMsg, e);
         } finally {
             callback.onSuccess();
+        }
+    }
+
+    private void processEdge(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+        // TODO: voba - handle edge updates
+        try {
+            ActionType edgeEventActionType = ActionType.valueOf(edgeNotificationMsg.getEdgeEventAction());
+            EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
+            switch (edgeEventActionType) {
+                case ASSIGNED_TO_CUSTOMER:
+                case UNASSIGNED_FROM_CUSTOMER:
+                    CustomerId customerId = mapper.readValue(edgeNotificationMsg.getEntityBody(), CustomerId.class);
+                    ListenableFuture<Edge> edgeFuture = edgeService.findEdgeByIdAsync(tenantId, edgeId);
+                    Futures.addCallback(edgeFuture, new FutureCallback<Edge>() {
+                        @Override
+                        public void onSuccess(@Nullable Edge edge) {
+                            if (edge != null && customerId != null && !EntityId.NULL_UUID.equals(customerId.getId())) {
+                                ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER.equals(edgeEventActionType) ? ActionType.ADDED : ActionType.DELETED;
+                                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.CUSTOMER, actionType, customerId, null);
+                                TextPageData<User> pageData = userService.findCustomerUsers(tenantId, customerId, new TextPageLink(Integer.MAX_VALUE));
+                                if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                                    log.trace("[{}] [{}] user(s) are going to be {} to edge.", edge.getId(), pageData.getData().size(), actionType.name());
+                                    for (User user : pageData.getData()) {
+                                        saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, actionType, user.getId(), null);
+                                    }
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            log.error("Can't find edge by id [{}]", edgeNotificationMsg, t);
+                        }
+                    }, dbCallbackExecutorService);
+                    break;
+            }
+        } catch (Exception e) {
+            log.error("Exception during processing edge event", e);
         }
     }
 

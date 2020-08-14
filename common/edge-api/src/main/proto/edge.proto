@@ -261,11 +261,13 @@ message UserUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string email = 4;
-  string authority = 5;
-  string firstName = 6;
-  string lastName = 7;
-  string additionalInfo = 8;
+  int64 customerIdMSB = 4;
+  int64 customerIdLSB = 5;
+  string email = 6;
+  string authority = 7;
+  string firstName = 8;
+  string lastName = 9;
+  string additionalInfo = 10;
 }
 
 message WidgetsBundleUpdateMsg {

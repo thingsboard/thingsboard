@@ -30,6 +30,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.RandomStringUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -82,6 +83,7 @@ import org.thingsboard.server.gen.edge.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectResponseCode;
 import org.thingsboard.server.gen.edge.ConnectResponseMsg;
+import org.thingsboard.server.gen.edge.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
@@ -348,6 +350,9 @@ public final class EdgeGrpcSession implements Closeable {
             case DASHBOARD:
                 processDashboard(edgeEvent, msgType, edgeEventAction);
                 break;
+            case CUSTOMER:
+                processCustomer(edgeEvent, msgType, edgeEventAction);
+                break;
             case RULE_CHAIN:
                 processRuleChain(edgeEvent, msgType, edgeEventAction);
                 break;
@@ -500,6 +505,36 @@ public final class EdgeGrpcSession implements Closeable {
                         ctx.getDashboardUpdateMsgConstructor().constructDashboardDeleteMsg(dashboardId);
                 entityUpdateMsg = EntityUpdateMsg.newBuilder()
                         .setDashboardUpdateMsg(dashboardUpdateMsg)
+                        .build();
+                break;
+        }
+        if (entityUpdateMsg != null) {
+            outputStream.onNext(ResponseMsg.newBuilder()
+                    .setEntityUpdateMsg(entityUpdateMsg)
+                    .build());
+        }
+    }
+
+    private void processCustomer(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType edgeEventAction) {
+        CustomerId customerId = new CustomerId(edgeEvent.getEntityId());
+        EntityUpdateMsg entityUpdateMsg = null;
+        switch (edgeEventAction) {
+            case ADDED:
+            case UPDATED:
+                Customer customer = ctx.getCustomerService().findCustomerById(edgeEvent.getTenantId(), customerId);
+                if (customer != null) {
+                    CustomerUpdateMsg customerUpdateMsg =
+                            ctx.getCustomerUpdateMsgConstructor().constructCustomerUpdatedMsg(msgType, customer);
+                    entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                            .setCustomerUpdateMsg(customerUpdateMsg)
+                            .build();
+                }
+                break;
+            case DELETED:
+                CustomerUpdateMsg customerUpdateMsg =
+                        ctx.getCustomerUpdateMsgConstructor().constructCustomerDeleteMsg(customerId);
+                entityUpdateMsg = EntityUpdateMsg.newBuilder()
+                        .setCustomerUpdateMsg(customerUpdateMsg)
                         .build();
                 break;
         }

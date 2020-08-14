@@ -264,6 +264,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
             TextPageData<User> pageData = userService.findTenantAdmins(edge.getTenantId(), new TextPageLink(Integer.MAX_VALUE));
             pushUsersToEdge(pageData, edge);
             if (edge.getCustomerId() != null && !EntityId.NULL_UUID.equals(edge.getCustomerId().getId())) {
+                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.CUSTOMER, ActionType.ADDED, edge.getCustomerId(), null);
                 pageData = userService.findCustomerUsers(edge.getTenantId(), edge.getCustomerId(), new TextPageLink(Integer.MAX_VALUE));
                 pushUsersToEdge(pageData, edge);
             }

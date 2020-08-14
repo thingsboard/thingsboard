@@ -718,6 +718,14 @@ public abstract class BaseController {
         return result;
     }
 
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, CustomerId customerId, ActionType edgeEventAction) {
+        try {
+            sendNotificationMsgToEdgeService(tenantId, edgeId, null, json.writeValueAsString(customerId), EdgeEventType.EDGE, edgeEventAction);
+        } catch (Exception e) {
+            log.warn("Failed to push assign/unassign to/from customer to core: {}", customerId, e);
+        }
+    }
+
     protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityRelation relation, ActionType edgeEventAction) {
         try {
             if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&

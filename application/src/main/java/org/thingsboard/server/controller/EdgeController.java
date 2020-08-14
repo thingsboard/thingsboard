@@ -178,6 +178,9 @@ public class EdgeController extends BaseController {
                     savedEdge.getCustomerId(),
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strEdgeId, strCustomerId, customer.getName());
 
+            sendNotificationMsgToEdgeService(savedEdge.getTenantId(), savedEdge.getId(),
+                    customerId, ActionType.ASSIGNED_TO_CUSTOMER);
+
             return savedEdge;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.EDGE), null,
@@ -205,6 +208,9 @@ public class EdgeController extends BaseController {
             logEntityAction(edgeId, edge,
                     edge.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strEdgeId, customer.getId().toString(), customer.getName());
+
+            sendNotificationMsgToEdgeService(savedEdge.getTenantId(), savedEdge.getId(),
+                    edge.getCustomerId(), ActionType.UNASSIGNED_FROM_CUSTOMER);
 
             return savedEdge;
         } catch (Exception e) {
