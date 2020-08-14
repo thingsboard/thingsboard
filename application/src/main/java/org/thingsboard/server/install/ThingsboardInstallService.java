@@ -176,6 +176,8 @@ public class ThingsboardInstallService {
                         case "3.1.0":
                             log.info("Upgrading ThingsBoard from version 3.1.0 to 3.2.0 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.1.0");
+                            log.info("Updating system data...");
+                            systemDataLoaderService.createOAuth2Templates();
                             break;
                         default:
                             throw new RuntimeException("Unable to upgrade ThingsBoard, unsupported fromVersion: " + upgradeFromVersion);
@@ -207,6 +209,7 @@ public class ThingsboardInstallService {
                 systemDataLoaderService.createSysAdmin();
                 systemDataLoaderService.createAdminSettings();
                 systemDataLoaderService.loadSystemWidgets();
+                systemDataLoaderService.createOAuth2Templates();
 //                systemDataLoaderService.loadSystemPlugins();
 //                systemDataLoaderService.loadSystemRules();
 

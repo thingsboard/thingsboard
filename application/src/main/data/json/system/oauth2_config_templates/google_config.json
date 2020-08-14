@@ -1,0 +1,20 @@
+{
+  "providerId": "Google",
+  "additionalInfo": null,
+  "accessTokenUri": "https://oauth2.googleapis.com/token",
+  "authorizationUri": "https://accounts.google.com/o/oauth2/v2/auth",
+  "scope": ["email","openid","profile"],
+  "jwkSetUri": "https://www.googleapis.com/oauth2/v3/certs",
+  "userInfoUri": "https://openidconnect.googleapis.com/v1/userinfo",
+  "clientAuthenticationMethod": "basic",
+  "userNameAttributeName": "email",
+  "basic": {
+    "emailAttributeKey": "email",
+    "firstNameAttributeKey": "given_name",
+    "lastNameAttributeKey": "family_name",
+    "tenantNameStrategy": "DOMAIN"
+  },
+  "comment": null,
+  "icon": "mdi:google",
+  "helpLink": "https://developers.google.com/adwords/api/docs/guides/authentication"
+}
