@@ -20,7 +20,7 @@ import reactCSS from 'reactcss';
 import TextField from '@material-ui/core/TextField';
 import IconButton from '@material-ui/core/IconButton';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
-import { Clear } from '@material-ui/icons';
+import Clear from '@material-ui/icons/Clear';
 import Icon from '@material-ui/core/Icon';
 import Tooltip from '@material-ui/core/Tooltip';
 

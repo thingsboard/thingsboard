@@ -72,6 +72,7 @@
     "ngx-hm-carousel": "^2.0.0-rc.1",
     "ngx-translate-messageformat-compiler": "^4.8.0",
     "objectpath": "^2.0.0",
+    "prettier": "^2.0.5",
     "prop-types": "^15.7.2",
     "raphael": "^2.3.0",
     "rc-select": "^11.1.3",

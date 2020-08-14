@@ -21,7 +21,7 @@ import * as tinycolor_ from 'tinycolor2';
 import TextField from '@material-ui/core/TextField';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 import IconButton from '@material-ui/core/IconButton';
-import { Clear } from '@material-ui/icons';
+import Clear from '@material-ui/icons/Clear';
 import Tooltip from '@material-ui/core/Tooltip';
 
 const tinycolor = tinycolor_;

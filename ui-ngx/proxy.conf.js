@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-const forwardUrl = "https://demo.thingsboard.io";
-const wsForwardUrl = "wss://demo.thingsboard.io";
+const forwardUrl = "http://localhost:8080";
+const wsForwardUrl = "ws://localhost:8080";
 const ruleNodeUiforwardUrl = forwardUrl;
 
 const PROXY_CONFIG = {

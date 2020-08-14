@@ -18,7 +18,7 @@ import Dropzone from 'react-dropzone';
 import ThingsboardBaseComponent from './json-form-base-component';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 import IconButton from '@material-ui/core/IconButton';
-import { Clear } from '@material-ui/icons';
+import Clear from '@material-ui/icons/Clear';
 import Tooltip from '@material-ui/core/Tooltip';
 
 interface ThingsboardImageState extends JsonFormFieldState {

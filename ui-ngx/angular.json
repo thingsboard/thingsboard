@@ -101,6 +101,8 @@
               "react-ace",
               "schema-inspector",
               "@flowjs/flow.js",
+              "@material-ui/icons/Add",
+              "@material-ui/icons/Clear",
               "js-beautify",
               "mousetrap",
               "prop-types",

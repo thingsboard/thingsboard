@@ -19,7 +19,8 @@ import ThingsboardBaseComponent from './json-form-base-component';
 import Button from '@material-ui/core/Button';
 import _ from 'lodash';
 import IconButton from '@material-ui/core/IconButton';
-import { Clear, Add } from '@material-ui/icons';
+import Clear from '@material-ui/icons/Clear';
+import Add from '@material-ui/icons/Add';
 import Tooltip from '@material-ui/core/Tooltip';
 import {
   JsonFormData,
