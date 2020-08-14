@@ -17,7 +17,9 @@ package org.thingsboard.server.service.edge.rpc;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -66,6 +68,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -602,6 +605,9 @@ public final class EdgeGrpcSession implements Closeable {
             case ASSIGNED_TO_EDGE:
                 User user = ctx.getUserService().findUserById(edgeEvent.getTenantId(), userId);
                 if (user != null) {
+                    boolean fullAccess = Authority.TENANT_ADMIN.equals(user.getAuthority());
+                    setFullAccess(user, fullAccess);
+
                     entityUpdateMsg = EntityUpdateMsg.newBuilder()
                             .setUserUpdateMsg(ctx.getUserUpdateMsgConstructor().constructUserUpdatedMsg(msgType, user))
                             .build();
@@ -615,7 +621,7 @@ public final class EdgeGrpcSession implements Closeable {
                 break;
             case CREDENTIALS_UPDATED:
                 UserCredentials userCredentialsByUserId = ctx.getUserService().findUserCredentialsByUserId(edge.getTenantId(), userId);
-                if (userCredentialsByUserId != null) {
+                if (userCredentialsByUserId != null && userCredentialsByUserId.isEnabled()) {
                     UserCredentialsUpdateMsg userCredentialsUpdateMsg =
                             ctx.getUserUpdateMsgConstructor().constructUserCredentialsUpdatedMsg(userCredentialsByUserId);
                     entityUpdateMsg = EntityUpdateMsg.newBuilder()
@@ -628,6 +634,15 @@ public final class EdgeGrpcSession implements Closeable {
                     .setEntityUpdateMsg(entityUpdateMsg)
                     .build());
         }
+    }
+
+    private void setFullAccess(User user, boolean isFullAccess) {
+        JsonNode additionalInfo = user.getAdditionalInfo();
+        if (additionalInfo == null || additionalInfo instanceof NullNode) {
+            additionalInfo = mapper.createObjectNode();
+        }
+        ((ObjectNode) additionalInfo).put("isFullAccess", isFullAccess);
+        user.setAdditionalInfo(additionalInfo);
     }
 
     private void processRelation(EdgeEvent edgeEvent, UpdateMsgType msgType) {
