@@ -34,6 +34,7 @@ import { AppState } from '@core/core.state';
 import { CustomActionDescriptor } from '@shared/models/widget.models';
 import * as ace from 'ace-builds';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
+import { css_beautify, html_beautify } from 'js-beautify';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { CustomPrettyActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
 
@@ -134,7 +135,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   }
 
   public beautifyCss(): void {
-    const res = js_beautify.css_beautify(this.action.customCss, {indent_size: 4});
+    const res = css_beautify(this.action.customCss, {indent_size: 4});
     if (this.action.customCss !== res) {
       this.action.customCss = res;
       this.cssEditor.setValue(this.action.customCss ? this.action.customCss : '', -1);
@@ -143,7 +144,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   }
 
   public beautifyHtml(): void {
-    const res = js_beautify.html_beautify(this.action.customHtml, {indent_size: 4, wrap_line_length: 60});
+    const res = html_beautify(this.action.customHtml, {indent_size: 4, wrap_line_length: 60});
     if (this.action.customHtml !== res) {
       this.action.customHtml = res;
       this.htmlEditor.setValue(this.action.customHtml ? this.action.customHtml : '', -1);

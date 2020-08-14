@@ -33,6 +33,7 @@ import { Hotkey } from 'angular2-hotkeys';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentIsLoading } from '@app/core/interceptors/load.selectors';
 import * as ace from 'ace-builds';
+import { css_beautify, html_beautify } from 'js-beautify';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { WINDOW } from '@core/services/window.service';
 import { WindowMessage } from '@shared/models/window-message.model';
@@ -576,7 +577,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   beautifyCss(): void {
-    const res = js_beautify.css_beautify(this.widget.templateCss, {indent_size: 4});
+    const res = css_beautify(this.widget.templateCss, {indent_size: 4});
     if (this.widget.templateCss !== res) {
       this.isDirty = true;
       this.widget.templateCss = res;
@@ -585,7 +586,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   beautifyHtml(): void {
-    const res = js_beautify.html_beautify(this.widget.templateHtml, {indent_size: 4, wrap_line_length: 60});
+    const res = html_beautify(this.widget.templateHtml, {indent_size: 4, wrap_line_length: 60});
     if (this.widget.templateHtml !== res) {
       this.isDirty = true;
       this.widget.templateHtml = res;

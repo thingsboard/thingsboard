@@ -98,6 +98,7 @@
               "react-ace",
               "schema-inspector",
               "@flowjs/flow.js",
+              "js-beautify",
               "mousetrap",
               "prop-types",
               "react-is",
