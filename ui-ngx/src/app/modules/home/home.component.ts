@@ -30,7 +30,6 @@ import { MatSidenav } from '@angular/material/sidenav';
 import { AuthState } from '@core/auth/auth.models';
 import { WINDOW } from '@core/services/window.service';
 import { instanceOfSearchableComponent, ISearchableComponent } from '@home/models/searchable-component.models';
-import logo from '../../../assets/logo_title_white.svg';
 
 const screenfull = _screenfull as _screenfull.Screenfull;
 
@@ -51,7 +50,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   sidenavMode: 'over' | 'push' | 'side' = 'side';
   sidenavOpened = true;
 
-  logo = logo;
+  logo = require('../../../assets/logo_title_white.svg').default;
 
   @ViewChild('sidenav')
   sidenav: MatSidenav;
