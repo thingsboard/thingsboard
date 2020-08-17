@@ -1261,13 +1261,6 @@
     rxjs "6.5.5"
     webpack-sources "1.4.3"
 
-"@ngx-share/core@^7.1.4":
-  version "7.1.4"
-  resolved "https://registry.yarnpkg.com/@ngx-share/core/-/core-7.1.4.tgz#00843416fadc8e61aa0e5a53c4820198db28a3bd"
-  integrity sha512-N6j1/7/I27Wfz1Uoy15uQ8fpRkPZXF1g9+dKrkEh6yi9jKmqNjr1hHB59DHfxrTGivxAgEEFgZMgnPzTd+2kcQ==
-  dependencies:
-    tslib "^1.9.0"
-
 "@ngx-translate/core@^13.0.0":
   version "13.0.0"
   resolved "https://registry.yarnpkg.com/@ngx-translate/core/-/core-13.0.0.tgz#60547cb8a0845a2a0abfde6b0bf5ec6516a63fd6"
@@ -6446,6 +6439,13 @@ ngx-hm-carousel@^2.0.0-rc.1:
   dependencies:
     hammerjs "^2.0.8"
     resize-observer-polyfill "^1.5.1"
+
+ngx-sharebuttons@^8.0.1:
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/ngx-sharebuttons/-/ngx-sharebuttons-8.0.1.tgz#f48d86ec88360efd64d2beb0a8885b542ec4c2eb"
+  integrity sha512-oht6OZj+9KKyupI+MWmXI6g9jVi/INSUjy8Ym8eo3L7N4/UuWNnXkafj345OhucnWzye3LYdVUM08XZrVWnHnw==
+  dependencies:
+    tslib "^2.0.0"
 
 ngx-translate-messageformat-compiler@^4.8.0:
   version "4.8.0"

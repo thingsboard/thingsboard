@@ -35,7 +35,7 @@
     "@ngrx/effects": "^10.0.0",
     "@ngrx/store": "^10.0.0",
     "@ngrx/store-devtools": "^10.0.0",
-    "@ngx-share/core": "^7.1.4",
+    "ngx-sharebuttons": "^8.0.1",
     "@ngx-translate/core": "^13.0.0",
     "@ngx-translate/http-loader": "^6.0.0",
     "ace-builds": "^1.4.12",
