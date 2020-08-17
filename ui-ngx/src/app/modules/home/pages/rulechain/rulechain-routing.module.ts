@@ -14,9 +14,7 @@
 /// limitations under the License.
 ///
 
-import * as AngularCore from '@angular/core';
-import { Injectable, NgModule } from '@angular/core';
-import * as AngularRouter from '@angular/router';
+import { Inject, Injectable, NgModule, Optional } from '@angular/core';
 import {
   ActivatedRouteSnapshot,
   CanActivate,
@@ -31,52 +29,15 @@ import {
 import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
 import { RuleChainsTableConfigResolver } from '@modules/home/pages/rulechain/rulechains-table-config.resolver';
-import * as RxJs from 'rxjs';
 import { Observable } from 'rxjs';
-import * as RxJsOperators from 'rxjs/operators';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import { ResolvedRuleChainMetaData, RuleChain } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
 import { RuleNodeComponentDescriptor } from '@shared/models/rule-node.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
-
-import * as AngularCommon from '@angular/common';
-import * as AngularForms from '@angular/forms';
-import * as AngularCdkCoercion from '@angular/cdk/coercion';
-import * as AngularCdkKeycodes from '@angular/cdk/keycodes';
-import * as AngularMaterialChips from '@angular/material/chips';
-import * as AngularMaterialAutocomplete from '@angular/material/autocomplete';
-import * as AngularMaterialDialog from '@angular/material/dialog';
-import * as NgrxStore from '@ngrx/store';
-import * as TranslateCore from '@ngx-translate/core';
-import * as TbCore from '@core/public-api';
 import { ItemBufferService } from '@core/public-api';
-import * as TbShared from '@shared/public-api';
-import * as TbHomeComponents from '@home/components/public-api';
-import * as _moment from 'moment';
-
-declare const SystemJS;
-
-const ruleNodeConfigResourcesModulesMap = {
-  '@angular/core': SystemJS.newModule(AngularCore),
-  '@angular/common': SystemJS.newModule(AngularCommon),
-  '@angular/forms': SystemJS.newModule(AngularForms),
-  '@angular/router': SystemJS.newModule(AngularRouter),
-  '@angular/cdk/keycodes': SystemJS.newModule(AngularCdkKeycodes),
-  '@angular/cdk/coercion': SystemJS.newModule(AngularCdkCoercion),
-  '@angular/material/chips': SystemJS.newModule(AngularMaterialChips),
-  '@angular/material/autocomplete': SystemJS.newModule(AngularMaterialAutocomplete),
-  '@angular/material/dialog': SystemJS.newModule(AngularMaterialDialog),
-  '@ngrx/store': SystemJS.newModule(NgrxStore),
-  rxjs: SystemJS.newModule(RxJs),
-  'rxjs/operators': SystemJS.newModule(RxJsOperators),
-  '@ngx-translate/core': SystemJS.newModule(TranslateCore),
-  '@core/public-api': SystemJS.newModule(TbCore),
-  '@shared/public-api': SystemJS.newModule(TbShared),
-  '@home/components/public-api': SystemJS.newModule(TbHomeComponents),
-  moment: SystemJS.newModule(_moment)
-};
+import { MODULES_MAP } from '@shared/public-api';
 
 @Injectable()
 export class RuleChainResolver implements Resolve<RuleChain> {
@@ -105,11 +66,12 @@ export class ResolvedRuleChainMetaDataResolver implements Resolve<ResolvedRuleCh
 @Injectable()
 export class RuleNodeComponentsResolver implements Resolve<Array<RuleNodeComponentDescriptor>> {
 
-  constructor(private ruleChainService: RuleChainService) {
+  constructor(private ruleChainService: RuleChainService,
+              @Optional() @Inject(MODULES_MAP) private modulesMap: {[key: string]: any}) {
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<Array<RuleNodeComponentDescriptor>> {
-    return this.ruleChainService.getRuleNodeComponents(ruleNodeConfigResourcesModulesMap);
+    return this.ruleChainService.getRuleNodeComponents(this.modulesMap);
   }
 }
 

@@ -14,6 +14,8 @@
 /// limitations under the License.
 ///
 
+import { InjectionToken } from '@angular/core';
+
 export const Constants = {
   serverErrorCode: {
     general: 2,
@@ -214,3 +216,5 @@ export const contentTypesMap = new Map<ContentType, ContentTypeData>(
 );
 
 export const customTranslationsPrefix = 'custom.';
+
+export const MODULES_MAP = new InjectionToken<{[key: string]: any}>('ModulesMap');
