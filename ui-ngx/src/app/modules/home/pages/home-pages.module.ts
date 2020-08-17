@@ -29,46 +29,8 @@ import { EntityViewModule } from '@modules/home/pages/entity-view/entity-view.mo
 import { RuleChainModule } from '@modules/home/pages/rulechain/rulechain.module';
 import { WidgetLibraryModule } from '@modules/home/pages/widget/widget-library.module';
 import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module';
-import * as AngularCore from '@angular/core';
-import * as AngularCommon from '@angular/common';
-import * as AngularForms from '@angular/forms';
-import * as AngularRouter from '@angular/router';
-import * as AngularCdkKeycodes from '@angular/cdk/keycodes';
-import * as AngularCdkCoercion from '@angular/cdk/coercion';
-import * as AngularMaterialChips from '@angular/material/chips';
-import * as AngularMaterialAutocomplete from '@angular/material/autocomplete';
-import * as AngularMaterialDialog from '@angular/material/dialog';
-import * as NgrxStore from '@ngrx/store';
-import * as RxJs from 'rxjs';
-import * as RxJsOperators from 'rxjs/operators';
-import * as TranslateCore from '@ngx-translate/core';
-import * as TbCore from '@core/public-api';
-import * as TbShared from '@shared/public-api';
-import * as TbHomeComponents from '@home/components/public-api';
-import * as _moment from 'moment';
 import { MODULES_MAP } from '@shared/public-api';
-
-declare const SystemJS;
-
-const modulesMap: {[key: string]: any} = {
-  '@angular/core': SystemJS.newModule(AngularCore),
-  '@angular/common': SystemJS.newModule(AngularCommon),
-  '@angular/forms': SystemJS.newModule(AngularForms),
-  '@angular/router': SystemJS.newModule(AngularRouter),
-  '@angular/cdk/keycodes': SystemJS.newModule(AngularCdkKeycodes),
-  '@angular/cdk/coercion': SystemJS.newModule(AngularCdkCoercion),
-  '@angular/material/chips': SystemJS.newModule(AngularMaterialChips),
-  '@angular/material/autocomplete': SystemJS.newModule(AngularMaterialAutocomplete),
-  '@angular/material/dialog': SystemJS.newModule(AngularMaterialDialog),
-  '@ngrx/store': SystemJS.newModule(NgrxStore),
-  rxjs: SystemJS.newModule(RxJs),
-  'rxjs/operators': SystemJS.newModule(RxJsOperators),
-  '@ngx-translate/core': SystemJS.newModule(TranslateCore),
-  '@core/public-api': SystemJS.newModule(TbCore),
-  '@shared/public-api': SystemJS.newModule(TbShared),
-  '@home/components/public-api': SystemJS.newModule(TbHomeComponents),
-  moment: SystemJS.newModule(_moment)
-};
+import { modulesMap } from '../../common/modules-map';
 
 @NgModule({
   exports: [
