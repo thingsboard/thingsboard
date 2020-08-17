@@ -123,16 +123,16 @@
 						</md-input-container>
 						<md-input-container class="md-block">
 							<label translate>admin.proxy-password</label>
-							<input name="proxyPassword" ng-model="vm.settings.jsonValue.proxyPassword">
+							<input name="proxyPassword" type="password" autocomplete="new-password" ng-model="vm.settings.jsonValue.proxyPassword">
 						</md-input-container>
 					</section>
 					<md-input-container class="md-block">
 						<label translate>common.username</label>
-						<input name="username" placeholder="{{ 'common.enter-username' | translate }}" ng-model="vm.settings.jsonValue.username">
+						<input placeholder="{{ 'common.enter-username' | translate }}" ng-model="vm.settings.jsonValue.username" autocomplete="new-username" >
 					</md-input-container>				
 					<md-input-container class="md-block">
 						<label translate>common.password</label>
-						<input name="password" placeholder="{{ 'common.enter-password' | translate }}" type="password" ng-model="vm.settings.jsonValue.password">
+						<input placeholder="{{ 'common.enter-password' | translate }}" type="password" ng-model="vm.settings.jsonValue.password" autocomplete="new-password">
 					</md-input-container>				
 					<div layout="row" layout-align="end center" width="100%" layout-wrap>
 						<md-button ng-disabled="$root.loading || vm.settingsForm.$invalid" ng-click="vm.sendTestMail()" class="md-raised">{{'admin.send-test-mail' | translate}}</md-button>
