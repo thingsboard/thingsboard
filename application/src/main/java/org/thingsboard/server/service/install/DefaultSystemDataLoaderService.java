@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -49,6 +50,7 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -83,6 +85,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     private TenantService tenantService;
 
     @Autowired
+    private TenantProfileService tenantProfileService;
+
+    @Autowired
     private CustomerService customerService;
 
     @Autowired
@@ -108,6 +113,11 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Override
     public void createSysAdmin() {
         createUser(Authority.SYS_ADMIN, null, null, "sysadmin@thingsboard.org", "sysadmin");
+    }
+
+    @Override
+    public void createDefaultTenantProfile() throws Exception {
+        tenantProfileService.findOrCreateDefaultTenantProfile(TenantId.SYS_TENANT_ID);
     }
 
     @Override

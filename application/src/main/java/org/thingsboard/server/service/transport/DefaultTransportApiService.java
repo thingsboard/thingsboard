@@ -28,6 +28,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -40,6 +41,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
@@ -76,6 +78,9 @@ public class DefaultTransportApiService implements TransportApiService {
     //TODO: Constructor dependencies;
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private TenantProfileService tenantProfileService;
 
     @Autowired
     private DeviceService deviceService;
@@ -168,10 +173,13 @@ public class DefaultTransportApiService implements TransportApiService {
 
     private ListenableFuture<TransportApiResponseMsg> handle(GetTenantRoutingInfoRequestMsg requestMsg) {
         TenantId tenantId = new TenantId(new UUID(requestMsg.getTenantIdMSB(), requestMsg.getTenantIdLSB()));
-        ListenableFuture<Tenant> tenantFuture = tenantService.findTenantByIdAsync(TenantId.SYS_TENANT_ID, tenantId);
-        return Futures.transform(tenantFuture, tenant -> TransportApiResponseMsg.newBuilder()
-                .setGetTenantRoutingInfoResponseMsg(GetTenantRoutingInfoResponseMsg.newBuilder().setIsolatedTbCore(tenant.isIsolatedTbCore())
-                        .setIsolatedTbRuleEngine(tenant.isIsolatedTbRuleEngine()).build()).build(), dbCallbackExecutorService);
+        // TODO: Tenant Profile from cache
+        ListenableFuture<TenantProfile> tenantProfileFuture =
+                Futures.transform(tenantService.findTenantByIdAsync(TenantId.SYS_TENANT_ID, tenantId), tenant ->
+                        tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, tenant.getTenantProfileId()), dbCallbackExecutorService);
+        return Futures.transform(tenantProfileFuture, tenantProfile -> TransportApiResponseMsg.newBuilder()
+                .setGetTenantRoutingInfoResponseMsg(GetTenantRoutingInfoResponseMsg.newBuilder().setIsolatedTbCore(tenantProfile.isIsolatedTbCore())
+                        .setIsolatedTbRuleEngine(tenantProfile.isIsolatedTbRuleEngine()).build()).build(), dbCallbackExecutorService);
     }
 
     private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId, DeviceCredentials credentials) {

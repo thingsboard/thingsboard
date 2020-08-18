@@ -58,6 +58,7 @@ import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateExecutor;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
@@ -136,6 +137,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private TenantService tenantService;
+
+    @Autowired
+    @Getter
+    private TenantProfileService tenantProfileService;
 
     @Autowired
     @Getter

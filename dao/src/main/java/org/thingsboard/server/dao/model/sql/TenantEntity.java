@@ -21,7 +21,9 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
@@ -30,6 +32,7 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -71,15 +74,12 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
     @Column(name = ModelConstants.EMAIL_PROPERTY)
     private String email;
 
-    @Column(name = ModelConstants.TENANT_ISOLATED_TB_CORE)
-    private boolean isolatedTbCore;
-
-    @Column(name = ModelConstants.TENANT_ISOLATED_TB_RULE_ENGINE)
-    private boolean isolatedTbRuleEngine;
-
     @Type(type = "json")
     @Column(name = ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
+
+    @Column(name = ModelConstants.TENANT_TENANT_PROFILE_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID tenantProfileId;
 
     public TenantEntity() {
         super();
@@ -101,8 +101,9 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
         this.phone = tenant.getPhone();
         this.email = tenant.getEmail();
         this.additionalInfo = tenant.getAdditionalInfo();
-        this.isolatedTbCore = tenant.isIsolatedTbCore();
-        this.isolatedTbRuleEngine = tenant.isIsolatedTbRuleEngine();
+        if (tenant.getTenantProfileId() != null) {
+            this.tenantProfileId = tenant.getTenantProfileId().getId();
+        }
     }
 
     @Override
@@ -134,8 +135,9 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
         tenant.setPhone(phone);
         tenant.setEmail(email);
         tenant.setAdditionalInfo(additionalInfo);
-        tenant.setIsolatedTbCore(isolatedTbCore);
-        tenant.setIsolatedTbRuleEngine(isolatedTbRuleEngine);
+        if (tenantProfileId != null) {
+            tenant.setTenantProfileId(new TenantProfileId(tenantProfileId));
+        }
         return tenant;
     }
 

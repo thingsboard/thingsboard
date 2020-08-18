@@ -20,14 +20,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
@@ -52,6 +56,9 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     private TenantDao tenantDao;
 
     @Autowired
+    private TenantProfileService tenantProfileService;
+
+    @Autowired
     private UserService userService;
 
     @Autowired
@@ -62,6 +69,9 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private DeviceProfileService deviceProfileService;
 
     @Autowired
     private EntityViewService entityViewService;
@@ -93,8 +103,16 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     public Tenant saveTenant(Tenant tenant) {
         log.trace("Executing saveTenant [{}]", tenant);
         tenant.setRegion(DEFAULT_TENANT_REGION);
+        if (tenant.getTenantProfileId() == null) {
+            TenantProfile tenantProfile = this.tenantProfileService.findOrCreateDefaultTenantProfile(TenantId.SYS_TENANT_ID);
+            tenant.setTenantProfileId(tenantProfile.getId());
+        }
         tenantValidator.validate(tenant, Tenant::getId);
-        return tenantDao.save(tenant.getId(), tenant);
+        Tenant savedTenant = tenantDao.save(tenant.getId(), tenant);
+        if (tenant.getId() == null) {
+            deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());
+        }
+        return savedTenant;
     }
 
     @Override
@@ -107,6 +125,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
         entityViewService.deleteEntityViewsByTenantId(tenantId);
         assetService.deleteAssetsByTenantId(tenantId);
         deviceService.deleteDevicesByTenantId(tenantId);
+        deviceProfileService.deleteDeviceProfilesByTenantId(tenantId);
         userService.deleteTenantAdmins(tenantId);
         ruleChainService.deleteRuleChainsByTenantId(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());
@@ -143,11 +162,13 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
                     Tenant old = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
                     if (old == null) {
                         throw new DataValidationException("Can't update non existing tenant!");
-                    } else if (old.isIsolatedTbRuleEngine() != tenant.isIsolatedTbRuleEngine()) {
+                    }
+                    // TODO: Move validation to tenant profile
+                    /* else if (old.isIsolatedTbRuleEngine() != tenant.isIsolatedTbRuleEngine()) {
                         throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
                     } else if (old.isIsolatedTbCore() != tenant.isIsolatedTbCore()) {
                         throw new DataValidationException("Can't update isolatedTbCore property!");
-                    }
+                    } */
                 }
             };
 

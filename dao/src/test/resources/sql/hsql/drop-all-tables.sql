@@ -20,4 +20,6 @@ DROP TABLE IF EXISTS widgets_bundle;
 DROP TABLE IF EXISTS rule_node;
 DROP TABLE IF EXISTS rule_chain;
 DROP TABLE IF EXISTS entity_view;
+DROP TABLE IF EXISTS device_profile;
+DROP TABLE IF EXISTS tenant_profile;
 DROP FUNCTION IF EXISTS to_uuid;

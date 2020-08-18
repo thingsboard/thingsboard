@@ -144,12 +144,26 @@ CREATE TABLE IF NOT EXISTS device (
     created_time bigint NOT NULL,
     additional_info varchar,
     customer_id uuid,
+    device_profile_id uuid NOT NULL,
     type varchar(255),
     name varchar(255),
     label varchar(255),
     search_text varchar(255),
     tenant_id uuid,
     CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS device_profile (
+    id uuid NOT NULL CONSTRAINT device_profile_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    name varchar(255),
+    profile_data varchar,
+    description varchar,
+    search_text varchar(255),
+    is_default boolean,
+    tenant_id uuid,
+    default_rule_chain_id uuid,
+    CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (
@@ -211,6 +225,7 @@ CREATE TABLE IF NOT EXISTS tenant (
     id uuid NOT NULL CONSTRAINT tenant_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     additional_info varchar,
+    tenant_profile_id uuid NOT NULL,
     address varchar,
     address2 varchar,
     city varchar(255),
@@ -224,6 +239,19 @@ CREATE TABLE IF NOT EXISTS tenant (
     zip varchar(255),
     isolated_tb_core boolean,
     isolated_tb_rule_engine boolean
+);
+
+CREATE TABLE IF NOT EXISTS tenant_profile (
+    id uuid NOT NULL CONSTRAINT tenant_profile_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    name varchar(255),
+    profile_data varchar,
+    description varchar,
+    search_text varchar(255),
+    is_default boolean,
+    isolated_tb_core boolean,
+    isolated_tb_rule_engine boolean,
+    CONSTRAINT tenant_profile_name_unq_key UNIQUE (name)
 );
 
 CREATE TABLE IF NOT EXISTS user_credentials (

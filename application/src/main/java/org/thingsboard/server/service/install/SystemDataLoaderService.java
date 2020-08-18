@@ -19,6 +19,8 @@ public interface SystemDataLoaderService {
 
     void createSysAdmin() throws Exception;
 
+    void createDefaultTenantProfile() throws Exception;
+
     void createAdminSettings() throws Exception;
 
     void loadSystemWidgets() throws Exception;

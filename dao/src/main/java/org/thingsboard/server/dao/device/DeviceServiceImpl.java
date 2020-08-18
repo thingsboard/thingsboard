@@ -34,6 +34,8 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -41,6 +43,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -94,6 +97,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
+
+    @Autowired
+    private DeviceProfileService deviceProfileService;
 
     @Autowired
     private EntityViewService entityViewService;
@@ -159,6 +165,10 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         deviceValidator.validate(device, Device::getTenantId);
         Device savedDevice;
         try {
+            if (device.getDeviceProfileId() == null) {
+                EntityInfo deviceProfile = this.deviceProfileService.findDefaultDeviceProfileInfo(device.getTenantId());
+                device.setDeviceProfileId(new DeviceProfileId(deviceProfile.getId().getId()));
+            }
             savedDevice = deviceDao.save(device.getTenantId(), device);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);

@@ -23,6 +23,7 @@ import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -61,6 +62,9 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
     @Column(name = ModelConstants.DEVICE_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
+    @Column(name = ModelConstants.DEVICE_DEVICE_PROFILE_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID deviceProfileId;
+
     public AbstractDeviceEntity() {
         super();
     }
@@ -76,6 +80,9 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         if (device.getCustomerId() != null) {
             this.customerId = device.getCustomerId().getId();
         }
+        if (device.getDeviceProfileId() != null) {
+            this.deviceProfileId = device.getDeviceProfileId().getId();
+        }
         this.name = device.getName();
         this.type = device.getType();
         this.label = device.getLabel();
@@ -87,6 +94,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         this.setCreatedTime(deviceEntity.getCreatedTime());
         this.tenantId = deviceEntity.getTenantId();
         this.customerId = deviceEntity.getCustomerId();
+        this.deviceProfileId = deviceEntity.getDeviceProfileId();
         this.type = deviceEntity.getType();
         this.name = deviceEntity.getName();
         this.label = deviceEntity.getLabel();
@@ -112,6 +120,9 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         }
         if (customerId != null) {
             device.setCustomerId(new CustomerId(customerId));
+        }
+        if (deviceProfileId != null) {
+            device.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
         }
         device.setName(name);
         device.setType(type);

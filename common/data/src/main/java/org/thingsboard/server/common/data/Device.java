@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @EqualsAndHashCode(callSuper = true)
@@ -30,6 +31,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
     private String name;
     private String type;
     private String label;
+    private DeviceProfileId deviceProfileId;
 
     public Device() {
         super();
@@ -46,6 +48,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.name = device.getName();
         this.type = device.getType();
         this.label = device.getLabel();
+        this.deviceProfileId = device.getDeviceProfileId();
     }
 
     public TenantId getTenantId() {
@@ -89,6 +92,14 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.label = label;
     }
 
+    public DeviceProfileId getDeviceProfileId() {
+        return deviceProfileId;
+    }
+
+    public void setDeviceProfileId(DeviceProfileId deviceProfileId) {
+        this.deviceProfileId = deviceProfileId;
+    }
+
     @Override
     public String getSearchText() {
         return getName();
@@ -107,6 +118,8 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         builder.append(type);
         builder.append(", label=");
         builder.append(label);
+        builder.append(", deviceProfileId=");
+        builder.append(deviceProfileId);
         builder.append(", additionalInfo=");
         builder.append(getAdditionalInfo());
         builder.append(", createdTime=");

@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -41,6 +42,7 @@ import org.thingsboard.server.dao.component.ComponentDescriptorService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
@@ -48,6 +50,7 @@ import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
@@ -125,7 +128,13 @@ public abstract class AbstractServiceTest {
     @Autowired
     private ComponentDescriptorService componentDescriptorService;
 
-    class IdComparator<D extends BaseData<? extends UUIDBased>> implements Comparator<D> {
+    @Autowired
+    protected TenantProfileService tenantProfileService;
+
+    @Autowired
+    protected DeviceProfileService deviceProfileService;
+
+    class IdComparator<D extends HasId> implements Comparator<D> {
         @Override
         public int compare(D o1, D o2) {
             return o1.getId().getId().compareTo(o2.getId().getId());

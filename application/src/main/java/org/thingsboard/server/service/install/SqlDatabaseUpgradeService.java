@@ -303,6 +303,14 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.info("Schema updated.");
                 }
                 break;
+            case "3.1.1":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.1", SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile, conn);
+                    log.info("Schema updated.");
+                }
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }

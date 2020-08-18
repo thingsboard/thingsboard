@@ -15,9 +15,27 @@
  */
 package org.thingsboard.server.common.data;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, TENANT_PROFILE, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, DEVICE_PROFILE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.HasId;
+
+import java.util.UUID;
+
+@Data
+public class EntityInfo implements HasId<EntityId>, HasName {
+
+    private final EntityId id;
+    private final String name;
+
+    public EntityInfo(EntityId id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public EntityInfo(UUID uuid, String type, String name) {
+        this.id = EntityIdFactory.getByTypeAndUuid(type, uuid);
+        this.name = name;
+    }
+
 }
