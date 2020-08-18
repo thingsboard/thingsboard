@@ -140,7 +140,12 @@ public class LwM2MSetSecurityStoreBootstrap {
     }
 
     private KeyStore getKeyStoreServer() {
-        KeyStore keyStoreServer = getInKeyStore(contextS);
+        KeyStore keyStoreServer = null;
+        try {
+            keyStoreServer = (contextS.getKeyStoreValue() != null && contextS.getKeyStoreValue().size() > 0) ? contextS.getKeyStoreValue() : getInKeyStore(contextS);
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        }
         /**
          * For deb => KeyStorePathFile == yml or commandline: KEY_STORE_PATH_FILE
          * For idea => KeyStorePathResource == common/transport/lwm2m/src/main/resources/credentials: in LwM2MTransportContextServer: credentials/serverKeyStore.jks

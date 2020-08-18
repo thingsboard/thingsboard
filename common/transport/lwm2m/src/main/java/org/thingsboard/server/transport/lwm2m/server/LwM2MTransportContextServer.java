@@ -18,12 +18,15 @@ package org.thingsboard.server.transport.lwm2m.server;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.security.KeyStore;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -40,6 +43,10 @@ public class LwM2MTransportContextServer extends TransportContext {
     private String modelPathFile;
 
     @Getter
+    @Setter
+    private List<ObjectModel> modelsValue;
+
+    @Getter
     @Value("${transport.lwm2m.support_deprecated_ciphers_enable:}")
     private boolean supportDeprecatedCiphersEnable;
 
@@ -50,6 +57,10 @@ public class LwM2MTransportContextServer extends TransportContext {
     @Getter
     @Value("${transport.lwm2m.secure.key_store_path_file:}")
     private String keyStorePathFile;
+
+    @Getter
+    @Setter
+    private KeyStore keyStoreValue;
 
     @Getter
     @Value("${transport.lwm2m.secure.key_store_password:}")

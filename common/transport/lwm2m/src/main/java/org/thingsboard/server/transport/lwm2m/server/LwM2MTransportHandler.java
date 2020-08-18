@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.util.List;
 
 @Component("LwM2MTransportHandler")
@@ -145,18 +146,26 @@ public class LwM2MTransportHandler {
 
     public static KeyStore getInKeyStore(LwM2MTransportContextServer context) {
         KeyStore keyStoreServer = null;
+        try {
+            if (context.getKeyStoreValue() != null && context.getKeyStoreValue().size() > 0)
+                return context.getKeyStoreValue();
+        }
+        catch (KeyStoreException e) {
+        }
         try (InputStream inKeyStore = context.getKeyStorePathFile().isEmpty() ?
                 ClassLoader.getSystemResourceAsStream(KEY_STORE_DEFAULT_RESOURCE_PATH) : new FileInputStream(new File(context.getKeyStorePathFile()))) {
             keyStoreServer = KeyStore.getInstance(context.getKeyStoreType());
             keyStoreServer.load(inKeyStore, context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
         } catch (Exception ex) {
             log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
-            return null;
         }
+
+        context.setKeyStoreValue(keyStoreServer);
         return keyStoreServer;
     }
 
     public static List<ObjectModel> getModels(LwM2MTransportContextServer context) {
+        if (context.getModelsValue() != null && context.getModelsValue().size() > 0) return context.getModelsValue();
         List<ObjectModel> models = ObjectLoader.loadDefault();
         if (context.getModelPathFile() != null && !context.getModelPathFile().isEmpty()) {
             models.addAll(ObjectLoader.loadObjectsFromDir(new File(context.getModelPathFile())));
@@ -168,10 +177,11 @@ public class LwM2MTransportHandler {
                 log.error(e.toString());
             }
         }
+        context.setModelsValue(models);
         return models;
     }
 
-    public static NetworkConfig  getCoapConfig () {
+    public static NetworkConfig getCoapConfig() {
         NetworkConfig coapConfig;
         File configFile = new File(NetworkConfig.DEFAULT_FILE_NAME);
         if (configFile.isFile()) {

@@ -42,6 +42,7 @@ import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurit
 import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResultAttrTel;
 
 
+import java.security.KeyStoreException;
 import java.util.*;
 
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.*;
@@ -226,7 +227,7 @@ public class LwM2MTransportService {
             }, new ErrorCallback() {
                 @Override
                 public void onError(Exception e) {
-                    log.error("getCObservationObjectsTest: \nError observe response: {}", e.toString());
+                    log.error("getCObservationObjectsTest: \nssh lwm2mError observe response: {}", e.toString());
                 }
             });
         }
