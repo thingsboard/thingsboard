@@ -23,9 +23,11 @@ public class ReadResultAttrTel {
 
     JsonObject postAttribute;
     JsonObject postTelemetry;
+    JsonObject postObserve;
 
     public ReadResultAttrTel() {
         postAttribute = new JsonObject();
         postTelemetry = new JsonObject();
+        postObserve = new JsonObject();
     }
 }
