@@ -34,7 +34,6 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.mqtt.MqttTopics;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
-import java.util.Arrays;
 import java.util.Optional;
 
 @Component
@@ -88,11 +87,9 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     @Override
     public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(MqttDeviceAwareSessionContext ctx, MqttPublishMessage mqttMsg) throws AdaptorException {
         byte[] bytes = toBytes(mqttMsg);
-        String topicName = mqttMsg.variableHeader().topicName();
-        int requestId = getRequestId(topicName, MqttTopics.DEVICE_RPC_RESPONSE_TOPIC_V2_PROTO);
         try {
-            return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId).setPayload(Arrays.toString(bytes)).build();
-        } catch (RuntimeException e) {
+            return TransportProtos.ToDeviceRpcResponseMsg.parseFrom(bytes);
+        } catch (RuntimeException | InvalidProtocolBufferException e) {
             log.warn("Failed to decode Rpc response", e);
             throw new AdaptorException(e);
         }

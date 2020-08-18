@@ -233,7 +233,6 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
             mqttMessage.setPayload(payloadStr.getBytes());
             client.publish(topic, mqttMessage);
             callback.getLatch().await(3, TimeUnit.SECONDS);
-            // TODO: 6/4/20 why qos 1 when subscribe with 0?
             assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getQoS());
             String expectedRequestPayload = "{\"id\":1,\"device\":\"" + deviceName + "\",\"values\":{\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}},\"attribute4\":73,\"attribute1\":\"value1\",\"attribute3\":42.0,\"attribute2\":true}}";
             assertEquals(expectedRequestPayload, new String(callback.getPayloadBytes(), StandardCharsets.UTF_8));
@@ -242,7 +241,6 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
             TransportApiProtos.GatewayAttributesRequestMsg gatewayAttributesRequestMsg = getGatewayAttributesRequestMsg(deviceName, keys, true);
             client.publish(topic, new MqttMessage(gatewayAttributesRequestMsg.toByteArray()));
             callback.getLatch().await(3, TimeUnit.SECONDS);
-            // TODO: 6/4/20 why qos 1 when subscribe with 0?
             assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getQoS());
             TransportApiProtos.GatewayAttributeResponseMsg expectedGatewayAttributeResponseMsg = getExpectedGatewayAttributeResponseMsg(deviceName, true);
             TransportApiProtos.GatewayAttributeResponseMsg actualGatewayAttributeResponseMsg = TransportApiProtos.GatewayAttributeResponseMsg.parseFrom(callback.getPayloadBytes());
@@ -265,7 +263,6 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
             mqttMessage.setPayload(payloadStr.getBytes());
             client.publish(topic, mqttMessage);
             callback.getLatch().await(3, TimeUnit.SECONDS);
-            // TODO: 6/4/20 why qos 1 when subscribe with 0?
             assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getQoS());
             if (!checkForDeleted) {
                 String expectedRequestPayload = "{\"id\":1,\"device\":\"" + deviceName + "\",\"values\":{\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}},\"attribute4\":73,\"attribute1\":\"value1\",\"attribute3\":42.0,\"attribute2\":true}}";
@@ -279,7 +276,6 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
             TransportApiProtos.GatewayAttributesRequestMsg gatewayAttributesRequestMsg = getGatewayAttributesRequestMsg(deviceName, keys, false);
             client.publish(topic, new MqttMessage(gatewayAttributesRequestMsg.toByteArray()));
             callback.getLatch().await(3, TimeUnit.SECONDS);
-            // TODO: 6/4/20 why qos 1 when subscribe with 0?
             assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getQoS());
             TransportApiProtos.GatewayAttributeResponseMsg expectedGatewayAttributeResponseMsg = getExpectedGatewayAttributeResponseMsg(deviceName, false);
             TransportApiProtos.GatewayAttributeResponseMsg actualGatewayAttributeResponseMsg = TransportApiProtos.GatewayAttributeResponseMsg.parseFrom(callback.getPayloadBytes());
