@@ -348,11 +348,12 @@ message UplinkMsg {
   repeated DeviceUpdateMsg deviceUpdateMsg = 3;
   repeated DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 4;
   repeated AlarmUpdateMsg alarmUpdateMsg = 5;
-  repeated RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg = 6;
-  repeated AttributesRequestMsg attributesRequestMsg = 7;
-  repeated RelationRequestMsg relationRequestMsg = 8;
-  repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 9;
-  repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 10;
+  repeated RelationUpdateMsg relationUpdateMsg = 6;
+  repeated RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg = 7;
+  repeated AttributesRequestMsg attributesRequestMsg = 8;
+  repeated RelationRequestMsg relationRequestMsg = 9;
+  repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 10;
+  repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 11;
 }
 
 message UplinkResponseMsg {

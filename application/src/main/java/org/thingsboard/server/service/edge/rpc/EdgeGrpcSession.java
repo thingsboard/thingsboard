@@ -47,6 +47,8 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -54,6 +56,7 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -98,6 +101,7 @@ import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.edge.EntityUpdateMsg;
 import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.RelationRequestMsg;
+import org.thingsboard.server.gen.edge.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.RequestMsg;
 import org.thingsboard.server.gen.edge.RequestMsgType;
 import org.thingsboard.server.gen.edge.ResponseMsg;
@@ -813,6 +817,11 @@ public final class EdgeGrpcSession implements Closeable {
                     onAlarmUpdate(alarmUpdateMsg);
                 }
             }
+            if (uplinkMsg.getRelationUpdateMsgList() != null && !uplinkMsg.getRelationUpdateMsgList().isEmpty()) {
+                for (RelationUpdateMsg relationUpdateMsg: uplinkMsg.getRelationUpdateMsgList()) {
+                    onRelationUpdate(relationUpdateMsg);
+                }
+            }
             if (uplinkMsg.getRuleChainMetadataRequestMsgList() != null && !uplinkMsg.getRuleChainMetadataRequestMsgList().isEmpty()) {
                 for (RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg : uplinkMsg.getRuleChainMetadataRequestMsgList()) {
                     ctx.getSyncEdgeService().processRuleChainMetadataRequestMsg(edge, ruleChainMetadataRequestMsg);
@@ -1161,6 +1170,60 @@ public final class EdgeGrpcSession implements Closeable {
             } catch (Exception e) {
                 log.error("Error during finding existent alarm", e);
             }
+        }
+    }
+
+    private void onRelationUpdate(RelationUpdateMsg relationUpdateMsg) {
+        log.info("onRelationUpdate {}", relationUpdateMsg);
+        try {
+            EntityRelation entityRelation = new EntityRelation();
+
+            UUID fromUUID = new UUID(relationUpdateMsg.getFromIdMSB(), relationUpdateMsg.getFromIdLSB());
+            EntityId fromId = EntityIdFactory.getByTypeAndUuid(EntityType.valueOf(relationUpdateMsg.getFromEntityType()), fromUUID);
+            entityRelation.setFrom(fromId);
+
+            UUID toUUID = new UUID(relationUpdateMsg.getToIdMSB(), relationUpdateMsg.getToIdLSB());
+            EntityId toId = EntityIdFactory.getByTypeAndUuid(EntityType.valueOf(relationUpdateMsg.getToEntityType()), toUUID);
+            entityRelation.setTo(toId);
+
+            entityRelation.setType(relationUpdateMsg.getType());
+            entityRelation.setTypeGroup(RelationTypeGroup.valueOf(relationUpdateMsg.getTypeGroup()));
+            entityRelation.setAdditionalInfo(mapper.readTree(relationUpdateMsg.getAdditionalInfo()));
+            switch (relationUpdateMsg.getMsgType()) {
+                case ENTITY_CREATED_RPC_MESSAGE:
+                case ENTITY_UPDATED_RPC_MESSAGE:
+                    if (isEntityExists(edge.getTenantId(), entityRelation.getTo())
+                            && isEntityExists(edge.getTenantId(), entityRelation.getFrom())) {
+                        ctx.getRelationService().saveRelationAsync(edge.getTenantId(), entityRelation);
+                    }
+                    break;
+                case ENTITY_DELETED_RPC_MESSAGE:
+                    ctx.getRelationService().deleteRelation(edge.getTenantId(), entityRelation);
+                    break;
+                case UNRECOGNIZED:
+                    log.error("Unsupported msg type");
+            }
+        } catch (Exception e) {
+            log.error("Error during relation update msg", e);
+        }
+    }
+
+    private boolean isEntityExists(TenantId tenantId, EntityId entityId) throws ThingsboardException {
+        switch (entityId.getEntityType()) {
+            case DEVICE:
+                return ctx.getDeviceService().findDeviceById(tenantId, new DeviceId(entityId.getId())) != null;
+            case ASSET:
+                return ctx.getAssetService().findAssetById(tenantId, new AssetId(entityId.getId())) != null;
+            case ENTITY_VIEW:
+                return ctx.getEntityViewService().findEntityViewById(tenantId, new EntityViewId(entityId.getId())) != null;
+            case CUSTOMER:
+                return ctx.getCustomerService().findCustomerById(tenantId, new CustomerId(entityId.getId())) != null;
+            case USER:
+                return ctx.getUserService().findUserById(tenantId, new UserId(entityId.getId())) != null;
+            case DASHBOARD:
+                return ctx.getDashboardService().findDashboardById(tenantId, new DashboardId(entityId.getId())) != null;
+            default:
+                throw new ThingsboardException("Unsupported entity type " + entityId.getEntityType(), ThingsboardErrorCode.INVALID_ARGUMENTS);
         }
     }
 
