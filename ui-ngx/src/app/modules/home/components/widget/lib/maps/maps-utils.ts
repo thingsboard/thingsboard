@@ -31,9 +31,9 @@ import {
 } from '@core/utils';
 
 export function createTooltip(target: L.Layer,
-    settings: MarkerSettings | PolylineSettings | PolygonSettings,
-    datasource: Datasource,
-    content?: string | HTMLElement
+                              settings: MarkerSettings | PolylineSettings | PolygonSettings,
+                              datasource: Datasource,
+                              content?: string | HTMLElement
 ): L.Popup {
     const popup = L.popup();
     popup.setContent(content);
@@ -87,7 +87,7 @@ export function interpolateOnLineSegment(
 }
 
 export function findAngle(startPoint: FormattedData, endPoint: FormattedData, latKeyName: string, lngKeyName: string): number {
-  if(isUndefined(startPoint) || isUndefined(endPoint)){
+  if (isUndefined(startPoint) || isUndefined(endPoint)) {
     return 0;
   }
   let angle = -Math.atan2(endPoint[latKeyName] - startPoint[latKeyName], endPoint[lngKeyName] - startPoint[lngKeyName]);
@@ -97,11 +97,13 @@ export function findAngle(startPoint: FormattedData, endPoint: FormattedData, la
 
 
 export function getDefCenterPosition(position) {
-    if (typeof (position) === 'string')
-        return position.split(',');
-    if (typeof (position) === 'object')
-        return position;
-    return [0, 0];
+  if (typeof (position) === 'string') {
+    return position.split(',');
+  }
+  if (typeof (position) === 'object') {
+    return position;
+  }
+  return [0, 0];
 }
 
 
@@ -123,7 +125,7 @@ function imageLoader(imageUrl: string): Observable<HTMLImageElement> {
       document.body.removeChild(image);
       observer.complete();
     };
-    document.body.appendChild(image)
+    document.body.appendChild(image);
     image.src = imageUrl;
   });
 }
@@ -135,11 +137,11 @@ export function aspectCache(imageUrl: string): Observable<number> {
     if (aspect) {
       return of(aspect);
     }
-    else return imageLoader(imageUrl).pipe(map(image => {
+    return imageLoader(imageUrl).pipe(map(image => {
       aspect = image.width / image.height;
       imageAspectMap[hash] = aspect;
       return aspect;
-    }))
+    }));
   }
 }
 
@@ -221,7 +223,7 @@ function parseTemplate(template: string, data: { $datasource?: Datasource, [key:
     // res = compiled(data);
     res = template;
   } catch (ex) {
-    console.log(ex, template)
+    console.log(ex, template);
   }
   return res;
 }
@@ -263,7 +265,7 @@ export function processPattern(template: string, data: { $datasource?: Datasourc
       match = reg.exec(template);
     }
   } catch (ex) {
-    console.log(ex, template)
+    console.log(ex, template);
   }
   return replaceInfo;
 }
@@ -271,7 +273,7 @@ export function processPattern(template: string, data: { $datasource?: Datasourc
 export function fillPattern(markerLabelText: string, replaceInfoLabelMarker: Array<ReplaceInfo>, data: FormattedData) {
   let text = createLabelFromDatasource(data.$datasource, markerLabelText);
   if (replaceInfoLabelMarker) {
-    for(const variableInfo of replaceInfoLabelMarker) {
+    for (const variableInfo of replaceInfoLabelMarker) {
       let txtVal = '';
       if (variableInfo.dataKeyName && isDefinedAndNotNull(data[variableInfo.dataKeyName])) {
         const varData = data[variableInfo.dataKeyName];
@@ -334,7 +336,7 @@ export const parseWithTranslation = {
   setTranslate(translateFn: TranslateFunc) {
     this.translateFn = translateFn;
   }
-}
+};
 
 export function parseData(input: DatasourceData[]): FormattedData[] {
   return _(input).groupBy(el => el?.datasource?.entityName)
@@ -361,7 +363,7 @@ export function parseData(input: DatasourceData[]): FormattedData[] {
 
 export function parseArray(input: DatasourceData[]): FormattedData[][] {
   return _(input).groupBy(el => el?.datasource?.entityName)
-    .values().value().map((entityArray, dsIndex) =>
+    .values().value().map((entityArray) =>
       entityArray[0].data.map((el, i) => {
         const obj: FormattedData = {
           entityName: entityArray[0]?.datasource?.entityName,

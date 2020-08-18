@@ -26,10 +26,11 @@ export class OpenStreetMap extends LeafletMap {
           editable: !!options.editablePolygon
         }).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
         let tileLayer;
-        if (options.useCustomProvider)
-            tileLayer = L.tileLayer(options.customProviderTileUrl);
-        else
-            tileLayer = (L.tileLayer as any).provider(options.mapProvider || 'OpenStreetMap.Mapnik');
+        if (options.useCustomProvider) {
+          tileLayer = L.tileLayer(options.customProviderTileUrl);
+        } else {
+          tileLayer = (L.tileLayer as any).provider(options.mapProvider || 'OpenStreetMap.Mapnik');
+        }
         tileLayer.addTo(map);
         super.initSettings(options);
         super.setMap(map);

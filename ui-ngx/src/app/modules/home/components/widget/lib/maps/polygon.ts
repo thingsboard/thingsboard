@@ -70,18 +70,19 @@ export class Polygon {
     }
 
     updatePolygon(data: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
-        this.data = data;
-        this.dataSources = dataSources;
-        if (settings.editablePolygon) {
-          this.leafletPoly.disableEdit();
-        }
-        this.leafletPoly.setLatLngs(data[this.settings.polygonKeyName]);
+      this.data = data;
+      this.dataSources = dataSources;
+      if (settings.editablePolygon) {
+        this.leafletPoly.disableEdit();
+      }
+      this.leafletPoly.setLatLngs(data[this.settings.polygonKeyName]);
       if (settings.editablePolygon) {
         this.leafletPoly.enableEdit(this.map);
       }
-        if (settings.showPolygonTooltip)
-            this.updateTooltip(this.data);
-        this.updatePolygonColor(settings);
+      if (settings.showPolygonTooltip) {
+        this.updateTooltip(this.data);
+      }
+      this.updatePolygonColor(settings);
     }
 
     removePolygon() {
