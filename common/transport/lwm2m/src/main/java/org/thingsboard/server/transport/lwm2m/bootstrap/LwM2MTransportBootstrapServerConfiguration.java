@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,8 +42,7 @@ import java.io.File;
 import java.util.List;
 
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.MODEL_DEFAULT_RESOURCE_PATH;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.modelPaths;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
 
 @Slf4j
 @ComponentScan("org.thingsboard.server.transport.lwm2m.server")
@@ -83,16 +82,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
         builder.setLocalSecureAddress(contextBs.getBootstrapSecureHost(), bootstrapSecurePort);
 
         /** Create CoAP Config */
-        NetworkConfig coapConfig;
-        File configFile = new File(NetworkConfig.DEFAULT_FILE_NAME);
-        if (configFile.isFile()) {
-            coapConfig = new NetworkConfig();
-            coapConfig.load(configFile);
-        } else {
-            coapConfig = LeshanServerBuilder.createDefaultNetworkConfig();
-            coapConfig.store(configFile);
-        }
-        builder.setCoapConfig(coapConfig);
+        builder.setCoapConfig(getCoapConfig ());
 
         /**  ConfigStore */
         builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);
@@ -101,19 +91,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
         builder.setSecurityStore(lwM2MBootstrapSecurityStore);
 
         /** Define model provider (Create Models )*/
-        List<ObjectModel> models = ObjectLoader.loadDefault();
-        if (contextS.getModelPathFile() != null && !contextS.getModelPathFile().isEmpty()) {
-            models.addAll(ObjectLoader.loadObjectsFromDir(new File(contextS.getModelPathFile())));
-        }
-        else {
-            try {
-                List<ObjectModel> listModels = ObjectLoader.loadDdfResources(MODEL_DEFAULT_RESOURCE_PATH, modelPaths);
-                models.addAll(listModels);
-            } catch (java.lang.IllegalStateException e) {
-                log.error(e.toString());
-            }
-        }
-        builder.setModel(new StaticModel(models));
+        builder.setModel(new StaticModel(getModels(contextS)));
 
         /** Create and Set DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();

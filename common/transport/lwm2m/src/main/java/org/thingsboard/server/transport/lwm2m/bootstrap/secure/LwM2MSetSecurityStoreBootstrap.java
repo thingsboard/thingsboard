@@ -36,6 +36,8 @@ import java.security.spec.*;
 import java.util.Arrays;
 
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.KEY_STORE_DEFAULT_RESOURCE_PATH;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getInKeyStore;
 
 @Slf4j
 @Data
@@ -69,7 +71,8 @@ public class LwM2MSetSecurityStoreBootstrap {
                 setRPK();
                 break;
             case X509:
-                setServerWithX509Cert(X509.code);;
+                setServerWithX509Cert(X509.code);
+                ;
                 break;
             /** Use X509_EST only */
             case X509_EST:
@@ -137,24 +140,23 @@ public class LwM2MSetSecurityStoreBootstrap {
     }
 
     private KeyStore getKeyStoreServer() {
-        KeyStore keyStoreServer = null;
+        KeyStore keyStoreServer = getInKeyStore(contextS);
         /**
          * For deb => KeyStorePathFile == yml or commandline: KEY_STORE_PATH_FILE
          * For idea => KeyStorePathResource == common/transport/lwm2m/src/main/resources/credentials: in LwM2MTransportContextServer: credentials/serverKeyStore.jks
          */
-        try (InputStream inServer = contextS.getKeyStorePathFile().isEmpty() ?
-                ClassLoader.getSystemResourceAsStream(contextS.getKeyStorePathResource()) : new FileInputStream(new File(contextS.getKeyStorePathFile()))) {
-            keyStoreServer = KeyStore.getInstance(contextS.getKeyStoreType());
-            keyStoreServer.load(inServer, contextS.getKeyStorePasswordServer() == null ? null : contextS.getKeyStorePasswordServer().toCharArray());
-            this.certificate = (X509Certificate) keyStoreServer.getCertificate(contextBS.getBootstrapAlias());
-            this.privateKey = (PrivateKey) keyStoreServer.getKey(contextBS.getBootstrapAlias(), contextS.getKeyStorePasswordServer() == null ? null : contextS.getKeyStorePasswordServer().toCharArray());
-            if (this.privateKey != null && this.privateKey.getEncoded().length > 0) {
-                this.builder.setPrivateKey(this.privateKey);
-            }
-            if (this.certificate != null) {
-                this.builder.setCertificateChain(new X509Certificate[]{this.certificate});
-                this.contextBS.setBootstrapCertificate(this.certificate);
-                getParamsX509();
+        try {
+            if (keyStoreServer != null) {
+                this.certificate = (X509Certificate) keyStoreServer.getCertificate(contextBS.getBootstrapAlias());
+                this.privateKey = (PrivateKey) keyStoreServer.getKey(contextBS.getBootstrapAlias(), contextS.getKeyStorePasswordServer() == null ? null : contextS.getKeyStorePasswordServer().toCharArray());
+                if (this.privateKey != null && this.privateKey.getEncoded().length > 0) {
+                    this.builder.setPrivateKey(this.privateKey);
+                }
+                if (this.certificate != null) {
+                    this.builder.setCertificateChain(new X509Certificate[]{this.certificate});
+                    this.contextBS.setBootstrapCertificate(this.certificate);
+                    getParamsX509();
+                }
             }
         } catch (Exception ex) {
             log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());

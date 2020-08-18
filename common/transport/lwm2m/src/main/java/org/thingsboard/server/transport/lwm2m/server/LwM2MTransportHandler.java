@@ -19,13 +19,23 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.network.config.NetworkConfig;
+import org.eclipse.leshan.core.model.ObjectLoader;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.server.californium.LeshanServer;
+import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.transport.TransportContext;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.util.List;
 
 @Component("LwM2MTransportHandler")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
@@ -43,6 +53,11 @@ public class LwM2MTransportHandler {
     private static final String FORMAT_PARAM = "format";
     private static final String TIMEOUT_PARAM = "timeout";
     private static final String REPLACE_PARAM = "replace";
+
+    /**
+     * The default key store FolderPath for reading Certificates from resource
+     */
+    public static final String KEY_STORE_DEFAULT_RESOURCE_PATH = "credentials/serverKeyStore.jks";
 
     /**
      * The default modelFolderPath for reading ObjectModel from resource
@@ -128,6 +143,46 @@ public class LwM2MTransportHandler {
         this.lhServerNoSecPskRpk.getObservationService().addListener(lwM2mServerListener.observationListener);
     }
 
+    public static KeyStore getInKeyStore(LwM2MTransportContextServer context) {
+        KeyStore keyStoreServer = null;
+        try (InputStream inKeyStore = context.getKeyStorePathFile().isEmpty() ?
+                ClassLoader.getSystemResourceAsStream(KEY_STORE_DEFAULT_RESOURCE_PATH) : new FileInputStream(new File(context.getKeyStorePathFile()))) {
+            keyStoreServer = KeyStore.getInstance(context.getKeyStoreType());
+            keyStoreServer.load(inKeyStore, context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
+        } catch (Exception ex) {
+            log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
+            return null;
+        }
+        return keyStoreServer;
+    }
+
+    public static List<ObjectModel> getModels(LwM2MTransportContextServer context) {
+        List<ObjectModel> models = ObjectLoader.loadDefault();
+        if (context.getModelPathFile() != null && !context.getModelPathFile().isEmpty()) {
+            models.addAll(ObjectLoader.loadObjectsFromDir(new File(context.getModelPathFile())));
+        } else {
+            try {
+                List<ObjectModel> listModels = ObjectLoader.loadDdfResources(MODEL_DEFAULT_RESOURCE_PATH, modelPaths);
+                models.addAll(listModels);
+            } catch (java.lang.IllegalStateException e) {
+                log.error(e.toString());
+            }
+        }
+        return models;
+    }
+
+    public static NetworkConfig  getCoapConfig () {
+        NetworkConfig coapConfig;
+        File configFile = new File(NetworkConfig.DEFAULT_FILE_NAME);
+        if (configFile.isFile()) {
+            coapConfig = new NetworkConfig();
+            coapConfig.load(configFile);
+        } else {
+            coapConfig = LeshanServerBuilder.createDefaultNetworkConfig();
+            coapConfig.store(configFile);
+        }
+        return coapConfig;
+    }
 
     public JsonObject validateJson(String jsonStr) {
         JsonObject object = null;

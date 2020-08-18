@@ -43,6 +43,8 @@ import java.security.spec.*;
 import java.util.Arrays;
 
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.KEY_STORE_DEFAULT_RESOURCE_PATH;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getInKeyStore;
 
 @Slf4j
 @Data
@@ -77,7 +79,7 @@ public class LwM2MSetSecurityStoreServer {
             case RPK:
                 generatePSK_RPK();
                 if (this.publicKey != null && this.publicKey.getEncoded().length > 0 &&
-                    this.privateKey != null && this.privateKey.getEncoded().length > 0) {
+                        this.privateKey != null && this.privateKey.getEncoded().length > 0) {
                     builder.setPublicKey(this.publicKey);
                     builder.setPrivateKey(this.privateKey);
                     getParamsRPK();
@@ -169,8 +171,7 @@ public class LwM2MSetSecurityStoreServer {
                 X509Certificate[] trustedCertificates = new X509Certificate[1];
                 trustedCertificates[0] = rootCAX509Cert;
                 builder.setTrustedCertificates(trustedCertificates);
-            }
-            else {
+            } else {
                 /** by default trust all */
                 builder.setTrustedCertificates(new X509Certificate[0]);
             }
@@ -180,19 +181,18 @@ public class LwM2MSetSecurityStoreServer {
     }
 
     private KeyStore getKeyStoreServer() {
-        KeyStore keyStoreServer = null;
+        KeyStore keyStoreServer = getInKeyStore(context);
         /**
          * For deb => KeyStorePathFile == yml or commandline: KEY_STORE_PATH_FILE
          * For idea => KeyStorePathResource == common/transport/lwm2m/src/main/resources/credentials: in LwM2MTransportContextServer: credentials/serverKeyStore.jks
          */
-        try (InputStream inServer = context.getKeyStorePathFile().isEmpty() ?
-                ClassLoader.getSystemResourceAsStream(context.getKeyStorePathResource()) : new FileInputStream(new File(context.getKeyStorePathFile()))) {
-            keyStoreServer = KeyStore.getInstance(context.getKeyStoreType());
-            keyStoreServer.load(inServer, context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
-            X509Certificate serverCertificate = (X509Certificate) keyStoreServer.getCertificate(context.getServerAlias());
-            PrivateKey privateKey = (PrivateKey) keyStoreServer.getKey(context.getServerAlias(), context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
-            this.builder.setPrivateKey(privateKey);
-            this.builder.setCertificateChain(new X509Certificate[]{serverCertificate});
+        try {
+           if (keyStoreServer != null) {
+               X509Certificate serverCertificate = (X509Certificate) keyStoreServer.getCertificate(context.getServerAlias());
+               PrivateKey privateKey = (PrivateKey) keyStoreServer.getKey(context.getServerAlias(), context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
+               this.builder.setPrivateKey(privateKey);
+               this.builder.setCertificateChain(new X509Certificate[]{serverCertificate});
+           }
         } catch (Exception ex) {
             log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
         }
@@ -218,7 +218,7 @@ public class LwM2MSetSecurityStoreServer {
                 y = Arrays.copyOfRange(y, 1, y.length);
 
             /** Get Curves params */
-            String params = ((ECPublicKey)this.publicKey).getParams().toString();
+            String params = ((ECPublicKey) this.publicKey).getParams().toString();
             log.info(
                     " \nServer uses RPK : \n Elliptic Curve parameters  : [{}] \n Public x coord : [{}] \n Public y coord : [{}] \n Public Key (Hex): [{}] \n Private Key (Hex): [{}]",
                     params, Hex.encodeHexString(x), Hex.encodeHexString(y),

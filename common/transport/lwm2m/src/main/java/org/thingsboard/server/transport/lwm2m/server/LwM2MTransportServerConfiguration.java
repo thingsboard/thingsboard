@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -81,31 +81,10 @@ public class LwM2MTransportServerConfiguration {
         builder.setEncoder(new DefaultLwM2mNodeEncoder(new LwM2mValueConverterImpl()));
 
         /** Create CoAP Config */
-        NetworkConfig coapConfig;
-        File configFile = new File(NetworkConfig.DEFAULT_FILE_NAME);
-        if (configFile.isFile()) {
-            coapConfig = new NetworkConfig();
-            coapConfig.load(configFile);
-        } else {
-            coapConfig = LeshanServerBuilder.createDefaultNetworkConfig();
-            coapConfig.store(configFile);
-        }
-        builder.setCoapConfig(coapConfig);
+        builder.setCoapConfig(getCoapConfig ());
 
         /** Define model provider (Create Models )*/
-        List<ObjectModel> models = ObjectLoader.loadDefault();
-        if (context.getModelPathFile() != null && !context.getModelPathFile().isEmpty()) {
-            models.addAll(ObjectLoader.loadObjectsFromDir(new File(context.getModelPathFile())));
-        }
-        else {
-            try {
-                List<ObjectModel> listModels = ObjectLoader.loadDdfResources(MODEL_DEFAULT_RESOURCE_PATH, modelPaths);
-                models.addAll(listModels);
-            } catch (java.lang.IllegalStateException e) {
-                log.error(e.toString());
-            }
-        }
-        LwM2mModelProvider modelProvider = new VersionedModelProvider(models);
+        LwM2mModelProvider modelProvider = new VersionedModelProvider(getModels(context));
         builder.setObjectModelProvider(modelProvider);
 
         /** Create DTLS Config */

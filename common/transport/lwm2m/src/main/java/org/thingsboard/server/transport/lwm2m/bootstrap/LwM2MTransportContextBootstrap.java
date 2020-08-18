@@ -33,36 +33,36 @@ import java.util.Map;
 public class LwM2MTransportContextBootstrap extends TransportContext {
 
     @Getter
-    @Value("#{${transport.lwm2m.bootstrap.bind_address} ?: localhost}")
+    @Value("${transport.lwm2m.bootstrap.bind_address:}")
     private String bootstrapHost;
 
     @Getter
-    @Value("#{${transport.lwm2m.bootstrap.bind_port} ?: 5689}")
+    @Value("${transport.lwm2m.bootstrap.bind_port:}")
     private Integer bootstrapPort;
 
     @Getter
-    @Value("#{${transport.lwm2m.bootstrap.bind_port_cert} ?: 5691}")
+    @Value("${transport.lwm2m.bootstrap.bind_port_cert:}")
     private Integer bootstrapPortCert;
 
 
     @Getter
-    @Value("#{${transport.lwm2m.bootstrap.secure.start_all} ?: true}")
+    @Value("${transport.lwm2m.bootstrap.secure.start_all:}")
     private boolean bootstrapStartAll;
 
     @Getter
-    @Value("#{${transport.lwm2m.bootstrap.secure.dtls_mode} ?: 3}")
+    @Value("${transport.lwm2m.bootstrap.secure.dtls_mode:}")
     private Integer bootStrapDtlsMode;
 
     @Getter
-    @Value("#{${transport.lwm2m.bootstrap.secure.bind_address} ?: localhost}")
+    @Value("${transport.lwm2m.bootstrap.secure.bind_address:}")
     private String bootstrapSecureHost;
 
     @Getter
-    @Value("#{${transport.lwm2m.bootstrap.secure.bind_port} ?: 5690}")
+    @Value("${transport.lwm2m.bootstrap.secure.bind_port:}")
     private Integer bootstrapSecurePort;
 
     @Getter
-    @Value("#{${transport.lwm2m.bootstrap.secure.bind_port_cert} ?: 5692}")
+    @Value("${transport.lwm2m.bootstrap.secure.bind_port_cert:}")
     private Integer bootstrapSecurePortCert;
 
     @Getter

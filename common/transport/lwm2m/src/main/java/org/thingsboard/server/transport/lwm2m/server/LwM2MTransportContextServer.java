@@ -51,10 +51,6 @@ public class LwM2MTransportContextServer extends TransportContext {
     @Value("${transport.lwm2m.secure.key_store_path_file:}")
     private String keyStorePathFile;
 
-   @Getter
-    @Value("${transport.lwm2m.secure.key_store_path_resource: credentials/serverKeyStore.jks}")
-    private String keyStorePathResource;
-
     @Getter
     @Value("${transport.lwm2m.secure.key_store_password:}")
     private String keyStorePasswordServer;
@@ -68,39 +64,39 @@ public class LwM2MTransportContextServer extends TransportContext {
     private Boolean enableGenPskRpk;
 
     @Getter
-    @Value("#{${transport.lwm2m.server.bind_address} ?: localhost}")
+    @Value("${transport.lwm2m.server.bind_address:}")
     private String serverHost;
 
     @Getter
-    @Value("#{${transport.lwm2m.server.bind_port} ?: 5685}")
+    @Value("${transport.lwm2m.server.bind_port:}")
     private Integer serverPort;
 
     @Getter
-    @Value("#{${transport.lwm2m.server.bind_port_cert} ?: 5687}")
+    @Value("${transport.lwm2m.server.bind_port_cert:}")
     private Integer serverPortCert;
 
     @Getter
-    @Value("#{${transport.lwm2m.server.secure.start_all} ?: true}")
+    @Value("${transport.lwm2m.server.secure.start_all:}")
     private boolean serverStartAll;
 
     @Getter
-    @Value("#{${transport.lwm2m.server.secure.dtls_mode} ?: 3}")
+    @Value("${transport.lwm2m.server.secure.dtls_mode:}")
     private Integer serverDtlsMode;
 
     @Getter
-    @Value("#{${transport.lwm2m.server.secure.bind_address} ?: localhost}")
+    @Value("${transport.lwm2m.server.secure.bind_address:}")
     private String serverSecureHost;
 
     @Getter
-    @Value("#{${transport.lwm2m.server.secure.bind_port} ?: 5686}")
+    @Value("${transport.lwm2m.server.secure.bind_port:}")
     private Integer serverSecurePort;
 
     @Getter
-    @Value("#{${transport.lwm2m.server.secure.bind_port_cert} ?: 5688}")
+    @Value("${transport.lwm2m.server.secure.bind_port_cert:}")
     private Integer serverSecurePortCert;
 
     @Getter
-    @Value("#{${transport.lwm2m.server.secure.create_rpk} ?: false}")
+    @Value("${transport.lwm2m.server.secure.create_rpk:}")
     private Boolean serverCreateRPK;
 
     @Getter
@@ -120,7 +116,7 @@ public class LwM2MTransportContextServer extends TransportContext {
     private String serverAlias;
 
     @Getter
-    @Value("#{${transport.lwm2m.bootstrap.enable} ?: false}")
+    @Value("${transport.lwm2m.bootstrap.enable:}")
     private Boolean bootstrapEnable;
 
     @Getter
