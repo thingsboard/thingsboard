@@ -55,7 +55,7 @@ export class Polygon {
             this.leafletPoly.on('click', (event: LeafletMouseEvent) => {
                 for (const action in this.settings.polygonClick) {
                     if (typeof (this.settings.polygonClick[action]) === 'function') {
-                        this.settings.polygonClick[action](event.originalEvent, polyData.datasource);
+                        this.settings.polygonClick[action](event.originalEvent, polyData.$datasource);
                     }
                 }
             });

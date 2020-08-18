@@ -417,25 +417,25 @@ export default abstract class LeafletMap {
         };
     }
 
-  convertToPolygonFormat(points: Array<any>): Array<any> {
-    if (points.length) {
-      return points.map(point => {
-        if (point.length) {
-          return this.convertToPolygonFormat(point);
-        } else {
-          return [point.lat, point.lng];
-        }
-      });
-    } else {
-      return [];
+    convertToPolygonFormat(points: Array<any>): Array<any> {
+      if (points.length) {
+        return points.map(point => {
+          if (point.length) {
+            return this.convertToPolygonFormat(point);
+          } else {
+            return [point.lat, point.lng];
+          }
+        });
+      } else {
+        return [];
+      }
     }
-  }
 
-  convertPolygonToCustomFormat(expression: any[][]): object {
-    return {
-      [this.options.polygonKeyName] : this.convertToPolygonFormat(expression)
-    };
-  }
+    convertPolygonToCustomFormat(expression: any[][]): object {
+      return {
+        [this.options.polygonKeyName] : this.convertToPolygonFormat(expression)
+      };
+    }
 
     updateData(drawRoutes: boolean, showPolygon: boolean) {
       this.drawRoutes = drawRoutes;
@@ -592,11 +592,10 @@ export default abstract class LeafletMap {
     }
 
     deletePolygon(key: string) {
-      let polygon = this.polygons.get(key)?.leafletPoly;
+      const polygon = this.polygons.get(key)?.leafletPoly;
       if (polygon) {
         this.map.removeLayer(polygon);
         this.polygons.delete(key);
-        polygon = null;
       }
       return polygon;
     }
