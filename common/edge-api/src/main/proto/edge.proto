@@ -37,31 +37,13 @@ message RequestMsg {
   RequestMsgType msgType = 1;
   ConnectRequestMsg connectRequestMsg = 2;
   UplinkMsg uplinkMsg = 3;
+  DownlinkResponseMsg downlinkResponseMsg = 4;
 }
 
 message ResponseMsg {
   ConnectResponseMsg connectResponseMsg = 1;
   UplinkResponseMsg uplinkResponseMsg = 2;
-  EntityUpdateMsg entityUpdateMsg = 3;
-  DownlinkMsg downlinkMsg = 4;
-}
-
-message EntityUpdateMsg {
-  DeviceUpdateMsg deviceUpdateMsg = 1;
-  DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 2;
-  RuleChainUpdateMsg ruleChainUpdateMsg = 3;
-  RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 4;
-  DashboardUpdateMsg dashboardUpdateMsg = 5;
-  AssetUpdateMsg assetUpdateMsg = 6;
-  EntityViewUpdateMsg entityViewUpdateMsg = 7;
-  AlarmUpdateMsg alarmUpdateMsg = 8;
-  UserUpdateMsg userUpdateMsg = 9;
-  UserCredentialsUpdateMsg userCredentialsUpdateMsg = 10;
-  CustomerUpdateMsg customerUpdateMsg = 11;
-  RelationUpdateMsg relationUpdateMsg = 12;
-  WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = 13;
-  WidgetTypeUpdateMsg widgetTypeUpdateMsg = 14;
-  AdminSettingsUpdateMsg adminSettingsUpdateMsg = 15;
+  DownlinkMsg downlinkMsg = 3;
 }
 
 enum RequestMsgType {
@@ -360,9 +342,30 @@ message UplinkResponseMsg {
   string errorMsg = 2;
 }
 
+message DownlinkResponseMsg {
+  bool success = 1;
+  string errorMsg = 2;
+}
+
 message DownlinkMsg {
   int32 downlinkMsgId = 1;
   repeated EntityDataProto entityData = 2;
   repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 3;
+  repeated DeviceUpdateMsg deviceUpdateMsg = 4;
+  repeated DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 5;
+  repeated RuleChainUpdateMsg ruleChainUpdateMsg = 6;
+  repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 7;
+  repeated DashboardUpdateMsg dashboardUpdateMsg = 8;
+  repeated AssetUpdateMsg assetUpdateMsg = 9;
+  repeated EntityViewUpdateMsg entityViewUpdateMsg = 10;
+  repeated AlarmUpdateMsg alarmUpdateMsg = 11;
+  repeated UserUpdateMsg userUpdateMsg = 12;
+  repeated UserCredentialsUpdateMsg userCredentialsUpdateMsg = 13;
+  repeated CustomerUpdateMsg customerUpdateMsg = 14;
+  repeated RelationUpdateMsg relationUpdateMsg = 15;
+  repeated WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = 16;
+  repeated WidgetTypeUpdateMsg widgetTypeUpdateMsg = 17;
+  repeated AdminSettingsUpdateMsg adminSettingsUpdateMsg = 18;
+
 }
 
