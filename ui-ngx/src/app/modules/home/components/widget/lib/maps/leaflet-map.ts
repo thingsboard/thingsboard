@@ -30,6 +30,7 @@ import 'leaflet.markercluster/dist/leaflet.markercluster';
 import {
   defaultSettings,
   FormattedData,
+  MapProviders,
   MapSettings,
   MarkerSettings,
   PolygonSettings,
@@ -74,6 +75,8 @@ export default abstract class LeafletMap {
     drawRoutes: boolean;
     showPolygon: boolean;
     updatePending = false;
+    addMarkers: L.Marker[] = [];
+    addPolygons: L.Polygon[] = [];
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
@@ -133,6 +136,7 @@ export default abstract class LeafletMap {
                       shadowSize: [41, 41]
                     });
                     const newMarker = L.marker(mousePositionOnMap, { icon }).addTo(this.map);
+                    this.addMarkers.push(newMarker);
                     const datasourcesList = document.createElement('div');
                     const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
                     const header = document.createElement('p');
@@ -147,6 +151,10 @@ export default abstract class LeafletMap {
                             const updatedEnttity = { ...ds, ...customLatLng };
                             this.saveMarkerLocation(updatedEnttity).subscribe(() => {
                               this.map.removeLayer(newMarker);
+                              const markerIndex = this.addMarkers.indexOf(newMarker);
+                              if (markerIndex > -1) {
+                                this.addMarkers.splice(markerIndex, 1);
+                              }
                               this.deleteMarker(ds.entityName);
                               this.createMarker(ds.entityName, updatedEnttity, this.datasources, this.options);
                             });
@@ -158,6 +166,10 @@ export default abstract class LeafletMap {
                     deleteBtn.appendChild(document.createTextNode('Discard changes'));
                     deleteBtn.onclick = () => {
                         this.map.removeLayer(newMarker);
+                        const markerIndex = this.addMarkers.indexOf(newMarker);
+                        if (markerIndex > -1) {
+                          this.addMarkers.splice(markerIndex, 1);
+                        }
                     };
                     datasourcesList.append(deleteBtn);
                     const popup = L.popup();
@@ -196,14 +208,16 @@ export default abstract class LeafletMap {
       let mousePositionOnMap: L.LatLng[];
       let addPolygon: L.Control;
       this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
+        const polygonOffset = this.options.provider === MapProviders.image ? 10 : 0.01;
         const latlng1 = e.latlng;
-        const latlng2 = L.latLng(e.latlng.lat, e.latlng.lng + 10);
-        const latlng3 = L.latLng(e.latlng.lat - 10, e.latlng.lng);
+        const latlng2 = L.latLng(e.latlng.lat, e.latlng.lng + polygonOffset);
+        const latlng3 = L.latLng(e.latlng.lat - polygonOffset, e.latlng.lng);
         mousePositionOnMap = [latlng1, latlng2, latlng3];
       });
       const dragListener = (e: L.DragEndEvent) => {
         if (e.type === 'dragend' && mousePositionOnMap) {
           const newPolygon = L.polygon(mousePositionOnMap).addTo(this.map);
+          this.addPolygons.push(newPolygon);
           const datasourcesList = document.createElement('div');
           const customLatLng = {[this.options.polygonKeyName]: this.convertToPolygonFormat(mousePositionOnMap)};
           const header = document.createElement('p');
@@ -218,6 +232,10 @@ export default abstract class LeafletMap {
               const updatedEnttity = { ...ds, ...customLatLng };
               this.savePolygonLocation(updatedEnttity).subscribe(() => {
                 this.map.removeLayer(newPolygon);
+                const polygonIndex = this.addPolygons.indexOf(newPolygon);
+                if (polygonIndex > -1) {
+                  this.addPolygons.splice(polygonIndex, 1);
+                }
                 this.deletePolygon(ds.entityName);
               });
             };
@@ -228,6 +246,10 @@ export default abstract class LeafletMap {
           deleteBtn.appendChild(document.createTextNode('Discard changes'));
           deleteBtn.onclick = () => {
             this.map.removeLayer(newPolygon);
+            const polygonIndex = this.addPolygons.indexOf(newPolygon);
+            if (polygonIndex > -1) {
+              this.addPolygons.splice(polygonIndex, 1);
+            }
           };
           datasourcesList.append(deleteBtn);
           const popup = L.popup();

@@ -26,7 +26,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { isDefinedAndNotNull, isEmptyStr } from '@core/utils';
 
-const maxZoom = 4;// ?
+const maxZoom = 4; // ?
 
 export class ImageMap extends LeafletMap {
 
@@ -162,52 +162,64 @@ export class ImageMap extends LeafletMap {
     }
 
     onResize(updateImage?: boolean) {
-        let width = this.$container.clientWidth;
-        if (width > 0 && this.aspect) {
-            let height = width / this.aspect;
-            const imageMapHeight = this.$container.clientHeight;
-            if (imageMapHeight > 0 && height > imageMapHeight) {
-                height = imageMapHeight;
-                width = height * this.aspect;
-            }
-            width *= maxZoom;
-            const prevWidth = this.width;
-            const prevHeight = this.height;
-            if (this.width !== width || updateImage) {
-                this.width = width;
-                this.height = width / this.aspect;
-                if (!this.map) {
-                    this.initMap(updateImage);
-                } else {
-                    const lastCenterPos = this.latLngToPoint(this.map.getCenter());
-                    lastCenterPos.x /= prevWidth;
-                    lastCenterPos.y /= prevHeight;
-                    this.updateBounds(updateImage, lastCenterPos);
-                    this.map.invalidateSize(true);
-                    this.updateMarkers(this.markersData);
-                    this.updatePolygons(this.polygonsData);
-                }
-            }
+      let width = this.$container.clientWidth;
+      if (width > 0 && this.aspect) {
+        let height = width / this.aspect;
+        const imageMapHeight = this.$container.clientHeight;
+        if (imageMapHeight > 0 && height > imageMapHeight) {
+          height = imageMapHeight;
+          width = height * this.aspect;
         }
+        width *= maxZoom;
+        const prevWidth = this.width;
+        const prevHeight = this.height;
+        if (this.width !== width || updateImage) {
+          this.width = width;
+          this.height = width / this.aspect;
+          if (!this.map) {
+            this.initMap(updateImage);
+          } else {
+            const lastCenterPos = this.latLngToPoint(this.map.getCenter());
+            lastCenterPos.x /= prevWidth;
+            lastCenterPos.y /= prevHeight;
+            this.updateBounds(updateImage, lastCenterPos);
+            this.map.invalidateSize(true);
+            this.updateMarkers(this.markersData);
+            if (this.options.draggableMarker && this.addMarkers.length) {
+              this.addMarkers.forEach((marker) => {
+                const prevPoint = this.convertToCustomFormat(marker.getLatLng(), prevWidth, prevHeight);
+                marker.setLatLng(this.convertPosition(prevPoint));
+              });
+            }
+            this.updatePolygons(this.polygonsData);
+            if (this.options.showPolygon && this.options.editablePolygon && this.addPolygons.length) {
+              this.addPolygons.forEach((polygon) => {
+                const prevPolygonPoint = this.convertToPolygonFormat(polygon.getLatLngs(), prevWidth, prevHeight);
+                polygon.setLatLngs(this.convertPositionPolygon(prevPolygonPoint));
+              });
+            }
+          }
+        }
+      }
     }
 
     fitBounds(bounds: LatLngBounds, padding?: LatLngTuple) { }
 
     initMap(updateImage?: boolean) {
-        if (!this.map && this.aspect > 0) {
-            const center = this.pointToLatLng(this.width / 2, this.height / 2);
-          this.map = L.map(this.$container, {
-                minZoom: 1,
-                maxZoom,
-                scrollWheelZoom: !this.options.disableScrollZooming,
-                center,
-                zoom: 1,
-                crs: L.CRS.Simple,
-                attributionControl: false,
-                editable: !!this.options.editablePolygon
-            });
-            this.updateBounds(updateImage);
-        }
+      if (!this.map && this.aspect > 0) {
+        const center = this.pointToLatLng(this.width / 2, this.height / 2);
+        this.map = L.map(this.$container, {
+          minZoom: 1,
+          maxZoom,
+          scrollWheelZoom: !this.options.disableScrollZooming,
+          center,
+          zoom: 1,
+          crs: L.CRS.Simple,
+          attributionControl: false,
+          editable: !!this.options.editablePolygon
+        });
+        this.updateBounds(updateImage);
+      }
     }
 
     convertPosition(expression): L.LatLng {
@@ -227,13 +239,14 @@ export class ImageMap extends LeafletMap {
         if (!Array.isArray(el[0]) && !Array.isArray(el[1]) && el.length === 2) {
           return this.pointToLatLng(
             el[0] * this.width,
-            el[1] * this.height)
+            el[1] * this.height
+          );
         } else if (Array.isArray(el) && el.length) {
           return this.convertPositionPolygon(el as LatLngTuple[] | LatLngTuple[][]);
         } else {
           return null;
         }
-      }).filter(el => !!el)
+      }).filter(el => !!el);
     }
 
     pointToLatLng(x, y): L.LatLng {
@@ -244,32 +257,32 @@ export class ImageMap extends LeafletMap {
         return L.CRS.Simple.latLngToPoint(latLng, maxZoom - 1);
     }
 
-    convertToCustomFormat(position: L.LatLng): object {
-        const point = this.latLngToPoint(position);
-        return {
-            [this.options.xPosKeyName]: calculateNewPointCoordinate(point.x, this.width),
-            [this.options.yPosKeyName]: calculateNewPointCoordinate(point.y, this.height)
-        }
+    convertToCustomFormat(position: L.LatLng, width = this.width, height = this.height): object {
+      const point = this.latLngToPoint(position);
+      return {
+        [this.options.xPosKeyName]: calculateNewPointCoordinate(point.x, width),
+        [this.options.yPosKeyName]: calculateNewPointCoordinate(point.y, height)
+      };
     }
 
-    convertToPolygonFormat(points: Array<any>): Array<any> {
+    convertToPolygonFormat(points: Array<any>, width = this.width, height = this.height): Array<any> {
       if (points.length) {
-        return points.map(point=> {
+        return points.map(point => {
           if (point.length) {
-            return this.convertToPolygonFormat(point);
+            return this.convertToPolygonFormat(point, width, height);
           } else {
             const pos = this.latLngToPoint(point);
-            return [calculateNewPointCoordinate(pos.x, this.width), calculateNewPointCoordinate(pos.y, this.height)];
+            return [calculateNewPointCoordinate(pos.x, width), calculateNewPointCoordinate(pos.y, height)];
           }
-        })
+        });
       } else {
-        return []
+        return [];
       }
     }
 
     convertPolygonToCustomFormat(expression: any[][]): object {
       return {
         [this.options.polygonKeyName] : this.convertToPolygonFormat(expression)
-      }
+      };
     }
 }
