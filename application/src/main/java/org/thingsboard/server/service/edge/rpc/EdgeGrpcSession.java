@@ -253,11 +253,13 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private void sendResponseMsg(ResponseMsg responseMsg) {
-        try {
-            responseMsgLock.lock();
-            outputStream.onNext(responseMsg);
-        } finally {
-            responseMsgLock.unlock();
+        if (isConnected()) {
+            try {
+                responseMsgLock.lock();
+                outputStream.onNext(responseMsg);
+            } finally {
+                responseMsgLock.unlock();
+            }
         }
     }
 
