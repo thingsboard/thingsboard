@@ -126,7 +126,7 @@ public class AuthController extends BaseController {
             userCredentials.setPassword(passwordEncoder.encode(newPassword));
             userService.replaceUserCredentials(securityUser.getTenantId(), userCredentials);
 
-            sendNotificationMsgToEdgeService(getTenantId(), null, userCredentials.getUserId(), EdgeEventType.USER, ActionType.CREDENTIALS_UPDATED);
+            sendNotificationMsgToEdgeService(getTenantId(), userCredentials.getUserId(), ActionType.CREDENTIALS_UPDATED);
 
         } catch (Exception e) {
             throw handleException(e);

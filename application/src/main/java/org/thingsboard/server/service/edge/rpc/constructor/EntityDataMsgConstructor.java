@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -41,7 +42,12 @@ public class EntityDataMsgConstructor {
         switch (actionType) {
             case TIMESERIES_UPDATED:
                 try {
-                    builder.setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(entityData));
+                    JsonObject data = entityData.getAsJsonObject();
+                    long ts = System.currentTimeMillis();
+                    if (data.get("ts") != null && !data.get("ts").isJsonNull()) {
+                        ts = data.getAsJsonObject("ts").getAsLong();
+                    }
+                    builder.setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(data.getAsJsonObject("data"), ts));
                 } catch (Exception e) {
                     log.warn("Can't convert to telemetry proto, entityData [{}]", entityData, e);
                 }

@@ -37,28 +37,13 @@ message RequestMsg {
   RequestMsgType msgType = 1;
   ConnectRequestMsg connectRequestMsg = 2;
   UplinkMsg uplinkMsg = 3;
+  DownlinkResponseMsg downlinkResponseMsg = 4;
 }
 
 message ResponseMsg {
   ConnectResponseMsg connectResponseMsg = 1;
   UplinkResponseMsg uplinkResponseMsg = 2;
-  EntityUpdateMsg entityUpdateMsg = 3;
-  DownlinkMsg downlinkMsg = 4;
-}
-
-message EntityUpdateMsg {
-  DeviceUpdateMsg deviceUpdateMsg = 1;
-  DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 2;
-  RuleChainUpdateMsg ruleChainUpdateMsg = 3;
-  RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 4;
-  DashboardUpdateMsg dashboardUpdateMsg = 5;
-  AssetUpdateMsg assetUpdateMsg = 6;
-  EntityViewUpdateMsg entityViewUpdateMsg = 7;
-  AlarmUpdateMsg alarmUpdateMsg = 8;
-  UserUpdateMsg userUpdateMsg = 9;
-  UserCredentialsUpdateMsg userCredentialsUpdateMsg = 10;
-  CustomerUpdateMsg customerUpdateMsg = 11;
-  RelationUpdateMsg relationUpdateMsg = 12;
+  DownlinkMsg downlinkMsg = 3;
 }
 
 enum RequestMsgType {
@@ -259,11 +244,41 @@ message UserUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string email = 4;
-  string authority = 5;
-  string firstName = 6;
-  string lastName = 7;
-  string additionalInfo = 8;
+  int64 customerIdMSB = 4;
+  int64 customerIdLSB = 5;
+  string email = 6;
+  string authority = 7;
+  string firstName = 8;
+  string lastName = 9;
+  string additionalInfo = 10;
+}
+
+message WidgetsBundleUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string title = 4;
+  string alias = 5;
+  bytes image = 6;
+  bool isSystem = 7;
+}
+
+message WidgetTypeUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string bundleAlias = 4;
+  string alias = 5;
+  string name = 6;
+  string descriptorJson = 7;
+  bool isSystem = 8;
+}
+
+message AdminSettingsUpdateMsg {
+  int64 idMSB = 1;
+  int64 idLSB = 2;
+  string key = 3;
+  string jsonValue = 4;
 }
 
 message UserCredentialsUpdateMsg {
@@ -315,14 +330,20 @@ message UplinkMsg {
   repeated DeviceUpdateMsg deviceUpdateMsg = 3;
   repeated DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 4;
   repeated AlarmUpdateMsg alarmUpdateMsg = 5;
-  repeated RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg = 6;
-  repeated AttributesRequestMsg attributesRequestMsg = 7;
-  repeated RelationRequestMsg relationRequestMsg = 8;
-  repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 9;
-  repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 10;
+  repeated RelationUpdateMsg relationUpdateMsg = 6;
+  repeated RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg = 7;
+  repeated AttributesRequestMsg attributesRequestMsg = 8;
+  repeated RelationRequestMsg relationRequestMsg = 9;
+  repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 10;
+  repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 11;
 }
 
 message UplinkResponseMsg {
+  bool success = 1;
+  string errorMsg = 2;
+}
+
+message DownlinkResponseMsg {
   bool success = 1;
   string errorMsg = 2;
 }
@@ -331,5 +352,21 @@ message DownlinkMsg {
   int32 downlinkMsgId = 1;
   repeated EntityDataProto entityData = 2;
   repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 3;
+  repeated DeviceUpdateMsg deviceUpdateMsg = 4;
+  repeated DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 5;
+  repeated RuleChainUpdateMsg ruleChainUpdateMsg = 6;
+  repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 7;
+  repeated DashboardUpdateMsg dashboardUpdateMsg = 8;
+  repeated AssetUpdateMsg assetUpdateMsg = 9;
+  repeated EntityViewUpdateMsg entityViewUpdateMsg = 10;
+  repeated AlarmUpdateMsg alarmUpdateMsg = 11;
+  repeated UserUpdateMsg userUpdateMsg = 12;
+  repeated UserCredentialsUpdateMsg userCredentialsUpdateMsg = 13;
+  repeated CustomerUpdateMsg customerUpdateMsg = 14;
+  repeated RelationUpdateMsg relationUpdateMsg = 15;
+  repeated WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = 16;
+  repeated WidgetTypeUpdateMsg widgetTypeUpdateMsg = 17;
+  repeated AdminSettingsUpdateMsg adminSettingsUpdateMsg = 18;
+
 }
 

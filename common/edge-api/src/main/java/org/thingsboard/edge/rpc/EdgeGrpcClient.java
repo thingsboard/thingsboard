@@ -28,9 +28,9 @@ import org.thingsboard.server.gen.edge.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectResponseCode;
 import org.thingsboard.server.gen.edge.ConnectResponseMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
+import org.thingsboard.server.gen.edge.DownlinkResponseMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.EdgeRpcServiceGrpc;
-import org.thingsboard.server.gen.edge.EntityUpdateMsg;
 import org.thingsboard.server.gen.edge.RequestMsg;
 import org.thingsboard.server.gen.edge.RequestMsgType;
 import org.thingsboard.server.gen.edge.ResponseMsg;
@@ -41,6 +41,7 @@ import javax.net.ssl.SSLException;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 @Service
@@ -62,12 +63,13 @@ public class EdgeGrpcClient implements EdgeRpcClient {
 
     private StreamObserver<RequestMsg> inputStream;
 
+    private static final ReentrantLock uplinkMsgLock = new ReentrantLock();
+
     @Override
     public void connect(String edgeKey,
                         String edgeSecret,
                         Consumer<UplinkResponseMsg> onUplinkResponse,
                         Consumer<EdgeConfiguration> onEdgeUpdate,
-                        Consumer<EntityUpdateMsg> onEntityUpdate,
                         Consumer<DownlinkMsg> onDownlink,
                         Consumer<Exception> onError) {
         NettyChannelBuilder builder = NettyChannelBuilder.forAddress(rpcHost, rpcPort).usePlaintext();
@@ -83,7 +85,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
         channel = builder.build();
         EdgeRpcServiceGrpc.EdgeRpcServiceStub stub = EdgeRpcServiceGrpc.newStub(channel);
         log.info("[{}] Sending a connect request to the TB!", edgeKey);
-        this.inputStream = stub.handleMsgs(initOutputStream(edgeKey, onUplinkResponse, onEdgeUpdate, onEntityUpdate, onDownlink, onError));
+        this.inputStream = stub.handleMsgs(initOutputStream(edgeKey, onUplinkResponse, onEdgeUpdate, onDownlink, onError));
         this.inputStream.onNext(RequestMsg.newBuilder()
                 .setMsgType(RequestMsgType.CONNECT_RPC_MESSAGE)
                 .setConnectRequestMsg(ConnectRequestMsg.newBuilder().setEdgeRoutingKey(edgeKey).setEdgeSecret(edgeSecret).build())
@@ -110,16 +112,33 @@ public class EdgeGrpcClient implements EdgeRpcClient {
 
     @Override
     public void sendUplinkMsg(UplinkMsg msg) {
-        this.inputStream.onNext(RequestMsg.newBuilder()
-                .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
-                .setUplinkMsg(msg)
-                .build());
+        try {
+            uplinkMsgLock.lock();
+            this.inputStream.onNext(RequestMsg.newBuilder()
+                    .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
+                    .setUplinkMsg(msg)
+                    .build());
+        } finally {
+            uplinkMsgLock.unlock();
+        }
+    }
+
+    @Override
+    public void sendDownlinkResponseMsg(DownlinkResponseMsg downlinkResponseMsg) {
+        try {
+            uplinkMsgLock.lock();
+            this.inputStream.onNext(RequestMsg.newBuilder()
+                    .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
+                    .setDownlinkResponseMsg(downlinkResponseMsg)
+                    .build());
+        } finally {
+            uplinkMsgLock.unlock();
+        }
     }
 
     private StreamObserver<ResponseMsg> initOutputStream(String edgeKey,
                                                          Consumer<UplinkResponseMsg> onUplinkResponse,
                                                          Consumer<EdgeConfiguration> onEdgeUpdate,
-                                                         Consumer<EntityUpdateMsg> onEntityUpdate,
                                                          Consumer<DownlinkMsg> onDownlink,
                                                          Consumer<Exception> onError) {
         return new StreamObserver<ResponseMsg>() {
@@ -137,9 +156,6 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 } else if (responseMsg.hasUplinkResponseMsg()) {
                     log.debug("[{}] Uplink response message received {}", edgeKey, responseMsg.getUplinkResponseMsg());
                     onUplinkResponse.accept(responseMsg.getUplinkResponseMsg());
-                } else if (responseMsg.hasEntityUpdateMsg()) {
-                    log.debug("[{}] Entity update message received {}", edgeKey, responseMsg.getEntityUpdateMsg());
-                    onEntityUpdate.accept(responseMsg.getEntityUpdateMsg());
                 } else if (responseMsg.hasDownlinkMsg()) {
                     log.debug("[{}] Downlink message received {}", edgeKey, responseMsg.getDownlinkMsg());
                     onDownlink.accept(responseMsg.getDownlinkMsg());

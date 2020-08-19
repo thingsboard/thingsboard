@@ -36,6 +36,10 @@ public class UserUpdateMsgConstructor {
                 .setIdLSB(user.getId().getId().getLeastSignificantBits())
                 .setEmail(user.getEmail())
                 .setAuthority(user.getAuthority().name());
+        if (user.getCustomerId() != null) {
+            builder.setCustomerIdMSB(user.getCustomerId().getId().getMostSignificantBits());
+            builder.setCustomerIdLSB(user.getCustomerId().getId().getLeastSignificantBits());
+        }
         if (user.getFirstName() != null) {
             builder.setFirstName(user.getFirstName());
         }
