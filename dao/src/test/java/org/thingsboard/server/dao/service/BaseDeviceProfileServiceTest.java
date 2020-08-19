@@ -71,9 +71,7 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         savedDeviceProfile.setName("New device profile");
         deviceProfileService.saveDeviceProfile(savedDeviceProfile);
         DeviceProfile foundDeviceProfile = deviceProfileService.findDeviceProfileById(tenantId, savedDeviceProfile.getId());
-        Assert.assertEquals(foundDeviceProfile.getName(), savedDeviceProfile.getName());
-
-        deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
+        Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfile.getName());
     }
 
     @Test
@@ -83,8 +81,7 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         DeviceProfile foundDeviceProfile = deviceProfileService.findDeviceProfileById(tenantId, savedDeviceProfile.getId());
         Assert.assertNotNull(foundDeviceProfile);
         Assert.assertEquals(savedDeviceProfile, foundDeviceProfile);
-        deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
-    }
+   }
 
     @Test
     public void testFindDeviceProfileInfoById() {
@@ -94,7 +91,6 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(foundDeviceProfileInfo);
         Assert.assertEquals(savedDeviceProfile.getId(), foundDeviceProfileInfo.getId());
         Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfileInfo.getName());
-        deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
     }
 
     @Test
@@ -131,8 +127,6 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         defaultDeviceProfile = deviceProfileService.findDefaultDeviceProfile(tenantId);
         Assert.assertNotNull(defaultDeviceProfile);
         Assert.assertEquals(savedDeviceProfile2.getId(), defaultDeviceProfile.getId());
-        deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile1.getId());
-        deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile2.getId());
     }
 
     @Test(expected = DataValidationException.class)

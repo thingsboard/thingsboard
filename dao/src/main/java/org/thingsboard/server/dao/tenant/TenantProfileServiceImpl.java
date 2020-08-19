@@ -19,6 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -33,6 +36,10 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
+import java.util.Arrays;
+import java.util.Collections;
+
+import static org.thingsboard.server.common.data.CacheConstants.TENANT_PROFILE_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
@@ -44,6 +51,10 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
     @Autowired
     private TenantProfileDao tenantProfileDao;
 
+    @Autowired
+    private CacheManager cacheManager;
+
+    @Cacheable(cacheNames = TENANT_PROFILE_CACHE, key = "{#tenantProfileId}")
     @Override
     public TenantProfile findTenantProfileById(TenantId tenantId, TenantProfileId tenantProfileId) {
         log.trace("Executing findTenantProfileById [{}]", tenantProfileId);
@@ -51,6 +62,7 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
         return tenantProfileDao.findById(tenantId, tenantProfileId.getId());
     }
 
+    @Cacheable(cacheNames = TENANT_PROFILE_CACHE, key = "{'info', #tenantProfileId}")
     @Override
     public EntityInfo findTenantProfileInfoById(TenantId tenantId, TenantProfileId tenantProfileId) {
         log.trace("Executing findTenantProfileInfoById [{}]", tenantProfileId);
@@ -73,6 +85,13 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
                 throw t;
             }
         }
+        Cache cache = cacheManager.getCache(TENANT_PROFILE_CACHE);
+        cache.evict(Collections.singletonList(savedTenantProfile.getId()));
+        cache.evict(Arrays.asList("info", savedTenantProfile.getId()));
+        if (savedTenantProfile.isDefault()) {
+            cache.evict(Collections.singletonList("default"));
+            cache.evict(Arrays.asList("default", "info"));
+        }
         return savedTenantProfile;
     }
 
@@ -80,8 +99,19 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
     public void deleteTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId) {
         log.trace("Executing deleteTenantProfile [{}]", tenantProfileId);
         validateId(tenantId, INCORRECT_TENANT_PROFILE_ID + tenantProfileId);
+        TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenantProfileId.getId());
+        if (tenantProfile != null && tenantProfile.isDefault()) {
+            throw new DataValidationException("Deletion of Default Tenant Profile is prohibited!");
+        }
+        this.removeTenantProfile(tenantId, tenantProfileId);
+    }
+
+    private void removeTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId) {
         deleteEntityRelations(tenantId, tenantProfileId);
         tenantProfileDao.removeById(tenantId, tenantProfileId.getId());
+        Cache cache = cacheManager.getCache(TENANT_PROFILE_CACHE);
+        cache.evict(Collections.singletonList(tenantProfileId.getId()));
+        cache.evict(Arrays.asList("info", tenantProfileId.getId()));
     }
 
     @Override
@@ -115,12 +145,14 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
         return defaultTenantProfile;
     }
 
+    @Cacheable(cacheNames = TENANT_PROFILE_CACHE, key = "{'default'}")
     @Override
     public TenantProfile findDefaultTenantProfile(TenantId tenantId) {
         log.trace("Executing findDefaultTenantProfile");
         return tenantProfileDao.findDefaultTenantProfile(tenantId);
     }
 
+    @Cacheable(cacheNames = TENANT_PROFILE_CACHE, key = "{'default', 'info'}")
     @Override
     public EntityInfo findDefaultTenantProfileInfo(TenantId tenantId) {
         log.trace("Executing findDefaultTenantProfileInfo");
@@ -133,17 +165,28 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
         validateId(tenantId, INCORRECT_TENANT_PROFILE_ID + tenantProfileId);
         TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenantProfileId.getId());
         if (!tenantProfile.isDefault()) {
+            Cache cache = cacheManager.getCache(TENANT_PROFILE_CACHE);
             tenantProfile.setDefault(true);
             TenantProfile previousDefaultTenantProfile = findDefaultTenantProfile(tenantId);
+            boolean changed = false;
             if (previousDefaultTenantProfile == null) {
                 tenantProfileDao.save(tenantId, tenantProfile);
-                return true;
+                changed = true;
             } else if (!previousDefaultTenantProfile.getId().equals(tenantProfile.getId())) {
                 previousDefaultTenantProfile.setDefault(false);
                 tenantProfileDao.save(tenantId, previousDefaultTenantProfile);
                 tenantProfileDao.save(tenantId, tenantProfile);
-                return true;
+                cache.evict(Collections.singletonList(previousDefaultTenantProfile.getId()));
+                cache.evict(Arrays.asList("info", previousDefaultTenantProfile.getId()));
+                changed = true;
             }
+            if (changed) {
+                cache.evict(Collections.singletonList(tenantProfile.getId()));
+                cache.evict(Arrays.asList("info", tenantProfile.getId()));
+                cache.evict(Collections.singletonList("default"));
+                cache.evict(Arrays.asList("default", "info"));
+            }
+            return changed;
         }
         return false;
     }
@@ -180,7 +223,7 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
 
                 @Override
                 protected void removeEntity(TenantId tenantId, TenantProfile entity) {
-                    deleteTenantProfile(tenantId, new TenantProfileId(entity.getUuidId()));
+                    removeTenantProfile(tenantId, entity.getId());
                 }
             };
 
