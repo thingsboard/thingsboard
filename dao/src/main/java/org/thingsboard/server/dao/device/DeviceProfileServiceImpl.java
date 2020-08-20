@@ -60,7 +60,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     @Autowired
     private CacheManager cacheManager;
 
-    @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{#deviceProfileId}")
+    @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{#deviceProfileId.id}")
     @Override
     public DeviceProfile findDeviceProfileById(TenantId tenantId, DeviceProfileId deviceProfileId) {
         log.trace("Executing findDeviceProfileById [{}]", deviceProfileId);
@@ -68,7 +68,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         return deviceProfileDao.findById(tenantId, deviceProfileId.getId());
     }
 
-    @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{'info', #deviceProfileId}")
+    @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{'info', #deviceProfileId.id}")
     @Override
     public EntityInfo findDeviceProfileInfoById(TenantId tenantId, DeviceProfileId deviceProfileId) {
         log.trace("Executing findDeviceProfileById [{}]", deviceProfileId);
@@ -92,11 +92,11 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
             }
         }
         Cache cache = cacheManager.getCache(DEVICE_PROFILE_CACHE);
-        cache.evict(Collections.singletonList(savedDeviceProfile.getId()));
-        cache.evict(Arrays.asList("info", savedDeviceProfile.getId()));
+        cache.evict(Collections.singletonList(savedDeviceProfile.getId().getId()));
+        cache.evict(Arrays.asList("info", savedDeviceProfile.getId().getId()));
         if (savedDeviceProfile.isDefault()) {
-            cache.evict(Arrays.asList("default", savedDeviceProfile.getTenantId()));
-            cache.evict(Arrays.asList("default", "info", savedDeviceProfile.getTenantId()));
+            cache.evict(Arrays.asList("default", savedDeviceProfile.getTenantId().getId()));
+            cache.evict(Arrays.asList("default", "info", savedDeviceProfile.getTenantId().getId()));
         }
         return savedDeviceProfile;
     }
@@ -149,7 +149,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         return saveDeviceProfile(deviceProfile);
     }
 
-    @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{'default', #tenantId}")
+    @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{'default', #tenantId.id}")
     @Override
     public DeviceProfile findDefaultDeviceProfile(TenantId tenantId) {
         log.trace("Executing findDefaultDeviceProfile tenantId [{}]", tenantId);
@@ -157,7 +157,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         return deviceProfileDao.findDefaultDeviceProfile(tenantId);
     }
 
-    @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{'default', 'info', #tenantId}")
+    @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{'default', 'info', #tenantId.id}")
     @Override
     public EntityInfo findDefaultDeviceProfileInfo(TenantId tenantId) {
         log.trace("Executing findDefaultDeviceProfileInfo tenantId [{}]", tenantId);
@@ -182,13 +182,13 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 previousDefaultDeviceProfile.setDefault(false);
                 deviceProfileDao.save(tenantId, previousDefaultDeviceProfile);
                 deviceProfileDao.save(tenantId, deviceProfile);
-                cache.evict(Collections.singletonList(previousDefaultDeviceProfile.getId()));
-                cache.evict(Arrays.asList("info", previousDefaultDeviceProfile.getId()));
+                cache.evict(Collections.singletonList(previousDefaultDeviceProfile.getId().getId()));
+                cache.evict(Arrays.asList("info", previousDefaultDeviceProfile.getId().getId()));
                 changed = true;
             }
             if (changed) {
-                cache.evict(Collections.singletonList(deviceProfile.getId()));
-                cache.evict(Arrays.asList("info", deviceProfile.getId()));
+                cache.evict(Collections.singletonList(deviceProfile.getId().getId()));
+                cache.evict(Arrays.asList("info", deviceProfile.getId().getId()));
                 cache.evict(Arrays.asList("default", tenantId));
                 cache.evict(Arrays.asList("default", "info", tenantId));
             }

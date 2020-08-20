@@ -28,7 +28,7 @@ import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalIn
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName {
+public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName, HasTenantId {
 
     private TenantId tenantId;
     private String name;

@@ -60,8 +60,6 @@ public class BaseTenantProfileServiceTest extends AbstractServiceTest {
         tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile);
         TenantProfile foundTenantProfile = tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, savedTenantProfile.getId());
         Assert.assertEquals(foundTenantProfile.getName(), savedTenantProfile.getName());
-
-        tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
     }
 
     @Test
@@ -71,7 +69,6 @@ public class BaseTenantProfileServiceTest extends AbstractServiceTest {
         TenantProfile foundTenantProfile = tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, savedTenantProfile.getId());
         Assert.assertNotNull(foundTenantProfile);
         Assert.assertEquals(savedTenantProfile, foundTenantProfile);
-        tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
     }
 
     @Test
@@ -82,7 +79,6 @@ public class BaseTenantProfileServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(foundTenantProfileInfo);
         Assert.assertEquals(savedTenantProfile.getId(), foundTenantProfileInfo.getId());
         Assert.assertEquals(savedTenantProfile.getName(), foundTenantProfileInfo.getName());
-        tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
     }
 
     @Test
@@ -93,7 +89,6 @@ public class BaseTenantProfileServiceTest extends AbstractServiceTest {
         TenantProfile foundDefaultTenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
         Assert.assertNotNull(foundDefaultTenantProfile);
         Assert.assertEquals(savedTenantProfile, foundDefaultTenantProfile);
-        tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
     }
 
     @Test
@@ -105,7 +100,6 @@ public class BaseTenantProfileServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(foundDefaultTenantProfileInfo);
         Assert.assertEquals(savedTenantProfile.getId(), foundDefaultTenantProfileInfo.getId());
         Assert.assertEquals(savedTenantProfile.getName(), foundDefaultTenantProfileInfo.getName());
-        tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
     }
 
     @Test
@@ -126,7 +120,6 @@ public class BaseTenantProfileServiceTest extends AbstractServiceTest {
         defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
         Assert.assertNotNull(defaultTenantProfile);
         Assert.assertEquals(savedTenantProfile2.getId(), defaultTenantProfile.getId());
-        tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
     }
 
     @Test(expected = DataValidationException.class)

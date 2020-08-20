@@ -58,8 +58,7 @@ public class TenantController extends BaseController {
         checkParameter("tenantId", strTenantId);
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
-            checkTenantId(tenantId, Operation.READ);
-            return checkNotNull(tenantService.findTenantById(tenantId));
+            return checkTenantId(tenantId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }

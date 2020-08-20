@@ -61,6 +61,7 @@ import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -486,7 +487,7 @@ public abstract class AbstractWebTest {
         return mapper.readerFor(type).readValue(content);
     }
 
-    public class IdComparator<D extends BaseData<? extends UUIDBased>> implements Comparator<D> {
+    public class IdComparator<D extends HasId> implements Comparator<D> {
         @Override
         public int compare(D o1, D o2) {
             return o1.getId().getId().compareTo(o2.getId().getId());

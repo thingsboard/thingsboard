@@ -54,7 +54,7 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
     @Autowired
     private CacheManager cacheManager;
 
-    @Cacheable(cacheNames = TENANT_PROFILE_CACHE, key = "{#tenantProfileId}")
+    @Cacheable(cacheNames = TENANT_PROFILE_CACHE, key = "{#tenantProfileId.id}")
     @Override
     public TenantProfile findTenantProfileById(TenantId tenantId, TenantProfileId tenantProfileId) {
         log.trace("Executing findTenantProfileById [{}]", tenantProfileId);
@@ -62,7 +62,7 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
         return tenantProfileDao.findById(tenantId, tenantProfileId.getId());
     }
 
-    @Cacheable(cacheNames = TENANT_PROFILE_CACHE, key = "{'info', #tenantProfileId}")
+    @Cacheable(cacheNames = TENANT_PROFILE_CACHE, key = "{'info', #tenantProfileId.id}")
     @Override
     public EntityInfo findTenantProfileInfoById(TenantId tenantId, TenantProfileId tenantProfileId) {
         log.trace("Executing findTenantProfileInfoById [{}]", tenantProfileId);
@@ -86,8 +86,8 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
             }
         }
         Cache cache = cacheManager.getCache(TENANT_PROFILE_CACHE);
-        cache.evict(Collections.singletonList(savedTenantProfile.getId()));
-        cache.evict(Arrays.asList("info", savedTenantProfile.getId()));
+        cache.evict(Collections.singletonList(savedTenantProfile.getId().getId()));
+        cache.evict(Arrays.asList("info", savedTenantProfile.getId().getId()));
         if (savedTenantProfile.isDefault()) {
             cache.evict(Collections.singletonList("default"));
             cache.evict(Arrays.asList("default", "info"));
@@ -176,13 +176,13 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
                 previousDefaultTenantProfile.setDefault(false);
                 tenantProfileDao.save(tenantId, previousDefaultTenantProfile);
                 tenantProfileDao.save(tenantId, tenantProfile);
-                cache.evict(Collections.singletonList(previousDefaultTenantProfile.getId()));
-                cache.evict(Arrays.asList("info", previousDefaultTenantProfile.getId()));
+                cache.evict(Collections.singletonList(previousDefaultTenantProfile.getId().getId()));
+                cache.evict(Arrays.asList("info", previousDefaultTenantProfile.getId().getId()));
                 changed = true;
             }
             if (changed) {
-                cache.evict(Collections.singletonList(tenantProfile.getId()));
-                cache.evict(Arrays.asList("info", tenantProfile.getId()));
+                cache.evict(Collections.singletonList(tenantProfile.getId().getId()));
+                cache.evict(Arrays.asList("info", tenantProfile.getId().getId()));
                 cache.evict(Collections.singletonList("default"));
                 cache.evict(Arrays.asList("default", "info"));
             }
