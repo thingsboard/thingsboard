@@ -189,8 +189,8 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
             if (changed) {
                 cache.evict(Collections.singletonList(deviceProfile.getId().getId()));
                 cache.evict(Arrays.asList("info", deviceProfile.getId().getId()));
-                cache.evict(Arrays.asList("default", tenantId));
-                cache.evict(Arrays.asList("default", "info", tenantId));
+                cache.evict(Arrays.asList("default", tenantId.getId()));
+                cache.evict(Arrays.asList("default", "info", tenantId.getId()));
             }
             return changed;
         }
