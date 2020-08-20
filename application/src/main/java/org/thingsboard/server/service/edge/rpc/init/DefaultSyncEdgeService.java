@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc.init;
 
+import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -22,8 +23,12 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -37,6 +42,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -76,11 +82,15 @@ import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.UserCredentialsRequestMsg;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -299,11 +309,69 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     private void syncAdminSettings(Edge edge) {
         try {
-            AdminSettings mailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
-            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, ActionType.UPDATED, null, mapper.valueToTree(mailSettings));
+            AdminSettings systemMailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
+            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, ActionType.UPDATED, null, mapper.valueToTree(systemMailSettings));
+            AdminSettings tenantMailSettings = convertToTenantAdminSettings(systemMailSettings.getKey(), (ObjectNode) systemMailSettings.getJsonValue());
+            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, ActionType.UPDATED, null, mapper.valueToTree(tenantMailSettings));
+            AdminSettings systemMailTemplates = loadMailTemplates();
+            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, ActionType.UPDATED, null, mapper.valueToTree(systemMailTemplates));
+            AdminSettings tenantMailTemplates = convertToTenantAdminSettings(systemMailTemplates.getKey(), (ObjectNode) systemMailTemplates.getJsonValue());
+            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, ActionType.UPDATED, null, mapper.valueToTree(tenantMailTemplates));
         } catch (Exception e) {
             log.error("Can't load admin settings", e);
         }
+    }
+
+    private AdminSettings loadMailTemplates() throws Exception {
+        Map<String, Object> mailTemplates = new HashMap<>();
+        Pattern startPattern = Pattern.compile("<div class=\"content\".*?>");
+        Pattern endPattern = Pattern.compile("<div class=\"footer\".*?>");
+        File[] files = new DefaultResourceLoader().getResource("classpath:/templates/").getFile().listFiles();
+        for (File file: files) {
+            Map<String, String> mailTemplate = new HashMap<>();
+            String name = validateName(file.getName());
+            String stringTemplate = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+            Matcher start = startPattern.matcher(stringTemplate);
+            Matcher end = endPattern.matcher(stringTemplate);
+            if (start.find() && end.find()) {
+                String body = StringUtils.substringBetween(stringTemplate, start.group(), end.group()).replaceAll("\t", "");
+                String subject = StringUtils.substringBetween(body, "<h2>", "</h2>");
+                mailTemplate.put("subject", subject);
+                mailTemplate.put("body", body);
+                mailTemplates.put(name, mailTemplate);
+            } else {
+                log.error("Can't load mail template from file {}", file.getName());
+            }
+        }
+        AdminSettings adminSettings = new AdminSettings();
+        adminSettings.setId(new AdminSettingsId(UUIDs.timeBased()));
+        adminSettings.setKey("mailTemplates");
+        adminSettings.setJsonValue(mapper.convertValue(mailTemplates, JsonNode.class));
+        return adminSettings;
+    }
+
+    private String validateName(String name) throws Exception {
+        StringBuilder nameBuilder = new StringBuilder();
+        name = name.replace(".vm", "");
+        String[] nameParts = name.split("\\.");
+        if (nameParts.length >= 1) {
+            nameBuilder.append(nameParts[0]);
+            for (int i = 1; i < nameParts.length; i++) {
+                String word = WordUtils.capitalize(nameParts[i]);
+                nameBuilder.append(word);
+            }
+            return nameBuilder.toString();
+        } else {
+            throw new Exception("Error during filename validation");
+        }
+    }
+
+    private AdminSettings convertToTenantAdminSettings(String key, ObjectNode jsonValue) {
+        AdminSettings tenantMailSettings = new AdminSettings();
+        jsonValue.put("useSystemMailSettings", true);
+        tenantMailSettings.setJsonValue(jsonValue);
+        tenantMailSettings.setKey(key);
+        return tenantMailSettings;
     }
 
     private void pushUsersToEdge(TextPageData<User> pageData, Edge edge) {

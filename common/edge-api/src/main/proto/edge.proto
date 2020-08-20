@@ -275,10 +275,9 @@ message WidgetTypeUpdateMsg {
 }
 
 message AdminSettingsUpdateMsg {
-  int64 idMSB = 1;
-  int64 idLSB = 2;
-  string key = 3;
-  string jsonValue = 4;
+  bool isSystem = 1;
+  string key = 2;
+  string jsonValue = 3;
 }
 
 message UserCredentialsUpdateMsg {
