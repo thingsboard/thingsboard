@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -234,6 +235,21 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         doPost("/api/customer/" + Uuids.timeBased().toString()
                 + "/device/" + savedDevice.getId().getId().toString())
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testSaveSameDeviceWithDifferentDeviceProfileId() throws Exception {
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        DeviceProfile deviceProfile2 = this.createDeviceProfile("Device Profile 2");
+        DeviceProfile savedDeviceProfile2 = doPost("/api/deviceProfile", deviceProfile2, DeviceProfile.class);
+
+        savedDevice.setDeviceProfileId(savedDeviceProfile2.getId());
+
+        doPost("/api/device/", savedDevice).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Changing device profile is prohibited")));
     }
 
     @Test

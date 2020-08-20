@@ -16,16 +16,20 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 
-import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.getJson;
-import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.setJson;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
+import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.mapper;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Slf4j
 public class TenantProfile extends SearchTextBased<TenantProfileId> implements HasName {
 
     private String name;
@@ -33,7 +37,7 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
     private boolean isDefault;
     private boolean isolatedTbCore;
     private boolean isolatedTbRuleEngine;
-    private transient JsonNode profileData;
+    private transient TenantProfileData profileData;
     @JsonIgnore
     private byte[] profileDataBytes;
 
@@ -65,12 +69,31 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
         return name;
     }
 
-    public JsonNode getProfileData() {
-        return getJson(() -> profileData, () -> profileDataBytes);
+    public TenantProfileData getProfileData() {
+        if (profileData != null) {
+            return profileData;
+        } else {
+            if (profileDataBytes != null) {
+                try {
+                    profileData = mapper.readValue(new ByteArrayInputStream(profileDataBytes), TenantProfileData.class);
+                } catch (IOException e) {
+                    log.warn("Can't deserialize tenant profile data: ", e);
+                    return null;
+                }
+                return profileData;
+            } else {
+                return null;
+            }
+        }
     }
 
-    public void setProfileData(JsonNode data) {
-        setJson(data, json -> this.profileData = json, bytes -> this.profileDataBytes = bytes);
+    public void setProfileData(TenantProfileData data) {
+        this.profileData = data;
+        try {
+            this.profileDataBytes = data != null ? mapper.writeValueAsBytes(data) : null;
+        } catch (JsonProcessingException e) {
+            log.warn("Can't serialize tenant profile data: ", e);
+        }
     }
 
 }

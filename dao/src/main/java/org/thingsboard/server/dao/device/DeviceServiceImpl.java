@@ -41,6 +41,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
+import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -168,6 +170,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             if (device.getDeviceProfileId() == null) {
                 EntityInfo deviceProfile = this.deviceProfileService.findDefaultDeviceProfileInfo(device.getTenantId());
                 device.setDeviceProfileId(new DeviceProfileId(deviceProfile.getId().getId()));
+                DeviceData deviceData = new DeviceData();
+                deviceData.setConfiguration(new DefaultDeviceConfiguration());
+                device.setDeviceData(deviceData);
             }
             savedDevice = deviceDao.save(device.getTenantId(), device);
         } catch (Exception t) {
@@ -411,6 +416,12 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
                 @Override
                 protected void validateUpdate(TenantId tenantId, Device device) {
+                    Device old = deviceDao.findById(device.getTenantId(), device.getId().getId());
+                    if (old == null) {
+                        throw new DataValidationException("Can't update non existing device!");
+                    } else if (!old.getDeviceProfileId().equals(device.getDeviceProfileId())) {
+                        throw new DataValidationException("Changing device profile is prohibited!");
+                    }
                 }
 
                 @Override

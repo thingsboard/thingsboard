@@ -23,8 +23,10 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.TenantProfileData;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -107,8 +109,17 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
     }
 
     private void removeTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId) {
+        try {
+            tenantProfileDao.removeById(tenantId, tenantProfileId.getId());
+        } catch (Exception t) {
+            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_tenant_profile")) {
+                throw new DataValidationException("The tenant profile referenced by the tenants cannot be deleted!");
+            } else {
+                throw t;
+            }
+        }
         deleteEntityRelations(tenantId, tenantProfileId);
-        tenantProfileDao.removeById(tenantId, tenantProfileId.getId());
         Cache cache = cacheManager.getCache(TENANT_PROFILE_CACHE);
         cache.evict(Collections.singletonList(tenantProfileId.getId()));
         cache.evict(Arrays.asList("info", tenantProfileId.getId()));
@@ -136,7 +147,7 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
             defaultTenantProfile = new TenantProfile();
             defaultTenantProfile.setDefault(true);
             defaultTenantProfile.setName("Default");
-            defaultTenantProfile.setProfileData(JacksonUtil.OBJECT_MAPPER.createObjectNode());
+            defaultTenantProfile.setProfileData(new TenantProfileData());
             defaultTenantProfile.setDescription("Default tenant profile");
             defaultTenantProfile.setIsolatedTbCore(false);
             defaultTenantProfile.setIsolatedTbRuleEngine(false);
@@ -209,6 +220,18 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
                         if (defaultTenantProfile != null && !defaultTenantProfile.getId().equals(tenantProfile.getId())) {
                             throw new DataValidationException("Another default tenant profile is present!");
                         }
+                    }
+                }
+
+                @Override
+                protected void validateUpdate(TenantId tenantId, TenantProfile tenantProfile) {
+                    TenantProfile old = tenantProfileDao.findById(TenantId.SYS_TENANT_ID, tenantProfile.getId().getId());
+                    if (old == null) {
+                        throw new DataValidationException("Can't update non existing tenant profile!");
+                    } else if (old.isIsolatedTbRuleEngine() != tenantProfile.isIsolatedTbRuleEngine()) {
+                        throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
+                    } else if (old.isIsolatedTbCore() != tenantProfile.isIsolatedTbCore()) {
+                        throw new DataValidationException("Can't update isolatedTbCore property!");
                     }
                 }
             };

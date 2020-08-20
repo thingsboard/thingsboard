@@ -16,21 +16,27 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import java.util.UUID;
 
@@ -46,6 +52,10 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
 
     @Column(name = ModelConstants.DEVICE_PROFILE_NAME_PROPERTY)
     private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.DEVICE_PROFILE_TYPE_PROPERTY)
+    private DeviceProfileType type;
 
     @Column(name = ModelConstants.DEVICE_PROFILE_DESCRIPTION_PROPERTY)
     private String description;
@@ -76,9 +86,10 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         }
         this.setCreatedTime(deviceProfile.getCreatedTime());
         this.name = deviceProfile.getName();
+        this.type = deviceProfile.getType();
         this.description = deviceProfile.getDescription();
         this.isDefault = deviceProfile.isDefault();
-        this.profileData = deviceProfile.getProfileData();
+        this.profileData = JacksonUtil.convertValue(deviceProfile.getProfileData(), ObjectNode.class);
         if (deviceProfile.getDefaultRuleChainId() != null) {
             this.defaultRuleChainId = deviceProfile.getDefaultRuleChainId().getId();
         }
@@ -106,9 +117,10 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
             deviceProfile.setTenantId(new TenantId(tenantId));
         }
         deviceProfile.setName(name);
+        deviceProfile.setType(type);
         deviceProfile.setDescription(description);
         deviceProfile.setDefault(isDefault);
-        deviceProfile.setProfileData(profileData);
+        deviceProfile.setProfileData(JacksonUtil.convertValue(profileData, DeviceProfileData.class));
         if (defaultRuleChainId != null) {
             deviceProfile.setDefaultRuleChainId(new RuleChainId(defaultRuleChainId));
         }

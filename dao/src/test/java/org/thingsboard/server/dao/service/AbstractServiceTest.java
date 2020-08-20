@@ -28,10 +28,15 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -185,6 +190,21 @@ public abstract class AbstractServiceTest {
             mask.put(entityType.name().toLowerCase(), AuditLogLevelMask.RW.name());
         }
         return new AuditLogLevelFilter(mask);
+    }
+
+    protected DeviceProfile createDeviceProfile(TenantId tenantId, String name) {
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setTenantId(tenantId);
+        deviceProfile.setName(name);
+        deviceProfile.setType(DeviceProfileType.DEFAULT);
+        deviceProfile.setDescription(name + " Test");
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
+        deviceProfileData.setConfiguration(configuration);
+        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.setDefault(false);
+        deviceProfile.setDefaultRuleChainId(new RuleChainId(Uuids.timeBased()));
+        return deviceProfile;
     }
 
 }

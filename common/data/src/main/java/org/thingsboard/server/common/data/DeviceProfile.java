@@ -16,26 +16,32 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.getJson;
-import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.setJson;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
+import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.mapper;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Slf4j
 public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName, HasTenantId {
 
     private TenantId tenantId;
     private String name;
     private String description;
     private boolean isDefault;
+    private DeviceProfileType type;
     private RuleChainId defaultRuleChainId;
-    private transient JsonNode profileData;
+    private transient DeviceProfileData profileData;
     @JsonIgnore
     private byte[] profileDataBytes;
 
@@ -67,12 +73,31 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         return name;
     }
 
-    public JsonNode getProfileData() {
-        return getJson(() -> profileData, () -> profileDataBytes);
+    public DeviceProfileData getProfileData() {
+        if (profileData != null) {
+            return profileData;
+        } else {
+            if (profileDataBytes != null) {
+                try {
+                    profileData = mapper.readValue(new ByteArrayInputStream(profileDataBytes), DeviceProfileData.class);
+                } catch (IOException e) {
+                    log.warn("Can't deserialize device profile data: ", e);
+                    return null;
+                }
+                return profileData;
+            } else {
+                return null;
+            }
+        }
     }
 
-    public void setProfileData(JsonNode data) {
-        setJson(data, json -> this.profileData = json, bytes -> this.profileDataBytes = bytes);
+    public void setProfileData(DeviceProfileData data) {
+        this.profileData = data;
+        try {
+            this.profileDataBytes = data != null ? mapper.writeValueAsBytes(data) : null;
+        } catch (JsonProcessingException e) {
+            log.warn("Can't serialize device profile data: ", e);
+        }
     }
 
 }

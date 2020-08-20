@@ -16,15 +16,18 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.TenantProfileData;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
@@ -74,7 +77,7 @@ public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> impl
         this.isDefault = tenantProfile.isDefault();
         this.isolatedTbCore = tenantProfile.isIsolatedTbCore();
         this.isolatedTbRuleEngine = tenantProfile.isIsolatedTbRuleEngine();
-        this.profileData = tenantProfile.getProfileData();
+        this.profileData = JacksonUtil.convertValue(tenantProfile.getProfileData(), ObjectNode.class);
     }
 
     @Override
@@ -100,9 +103,8 @@ public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> impl
         tenantProfile.setDefault(isDefault);
         tenantProfile.setIsolatedTbCore(isolatedTbCore);
         tenantProfile.setIsolatedTbRuleEngine(isolatedTbRuleEngine);
-        tenantProfile.setProfileData(profileData);
+        tenantProfile.setProfileData(JacksonUtil.convertValue(profileData, TenantProfileData.class));
         return tenantProfile;
     }
-
 
 }

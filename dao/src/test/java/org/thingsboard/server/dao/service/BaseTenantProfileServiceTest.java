@@ -19,7 +19,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.TenantProfileData;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -136,6 +138,37 @@ public class BaseTenantProfileServiceTest extends AbstractServiceTest {
         tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile2);
     }
 
+    @Test(expected = DataValidationException.class)
+    public void testSaveSameTenantProfileWithDifferentIsolatedTbRuleEngine() {
+        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
+        TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
+        savedTenantProfile.setIsolatedTbRuleEngine(true);
+        tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile);
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testSaveSameTenantProfileWithDifferentIsolatedTbCore() {
+        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
+        TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
+        savedTenantProfile.setIsolatedTbCore(true);
+        tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile);
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testDeleteTenantProfileWithExistingTenant() {
+        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
+        TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Test tenant");
+        tenant.setTenantProfileId(savedTenantProfile.getId());
+        tenant = tenantService.saveTenant(tenant);
+        try {
+            tenantProfileService.deleteTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile.getId());
+        } finally {
+            tenantService.deleteTenant(tenant.getId());
+        }
+    }
+
     @Test
     public void testDeleteTenantProfile() {
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
@@ -230,7 +263,7 @@ public class BaseTenantProfileServiceTest extends AbstractServiceTest {
         TenantProfile tenantProfile = new TenantProfile();
         tenantProfile.setName(name);
         tenantProfile.setDescription(name + " Test");
-        tenantProfile.setProfileData(JacksonUtil.OBJECT_MAPPER.createObjectNode());
+        tenantProfile.setProfileData(new TenantProfileData());
         tenantProfile.setDefault(false);
         tenantProfile.setIsolatedTbCore(false);
         tenantProfile.setIsolatedTbRuleEngine(false);

@@ -20,16 +20,14 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.TenantProfileData;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,7 +46,9 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
     private TenantProfileService tenantProfileService;
 
     @After
-    public void after() {
+    @Override
+    public void teardown() throws Exception {
+        super.teardown();
         tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
     }
 
@@ -131,6 +131,45 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
         TenantProfile tenantProfile2 = this.createTenantProfile("Tenant Profile");
         doPost("/api/tenantProfile", tenantProfile2).andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Tenant profile with such name already exists")));
+    }
+
+    @Test
+    public void testSaveSameTenantProfileWithDifferentIsolatedTbRuleEngine() throws Exception {
+        loginSysAdmin();
+        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
+        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+        savedTenantProfile.setIsolatedTbRuleEngine(true);
+        doPost("/api/tenantProfile", savedTenantProfile).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Can't update isolatedTbRuleEngine property")));
+    }
+
+    @Test
+    public void testSaveSameTenantProfileWithDifferentIsolatedTbCore() throws Exception {
+        loginSysAdmin();
+        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
+        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+        savedTenantProfile.setIsolatedTbCore(true);
+        doPost("/api/tenantProfile", savedTenantProfile).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Can't update isolatedTbCore property")));
+    }
+
+    @Test
+    public void testDeleteTenantProfileWithExistingTenant() throws Exception {
+        loginSysAdmin();
+        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
+        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant with tenant profile");
+        tenant.setTenantProfileId(savedTenantProfile.getId());
+        Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+
+        doDelete("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString())
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("The tenant profile referenced by the tenants cannot be deleted")));
+
+        doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -246,7 +285,7 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
         TenantProfile tenantProfile = new TenantProfile();
         tenantProfile.setName(name);
         tenantProfile.setDescription(name + " Test");
-        tenantProfile.setProfileData(JacksonUtil.OBJECT_MAPPER.createObjectNode());
+        tenantProfile.setProfileData(new TenantProfileData());
         tenantProfile.setDefault(false);
         tenantProfile.setIsolatedTbCore(false);
         tenantProfile.setIsolatedTbRuleEngine(false);

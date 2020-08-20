@@ -24,8 +24,11 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -113,8 +116,17 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     }
 
     private void removeDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId) {
+        try {
+            deviceProfileDao.removeById(tenantId, deviceProfileId.getId());
+        } catch (Exception t) {
+            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_device_profile")) {
+                throw new DataValidationException("The device profile referenced by the devices cannot be deleted!");
+            } else {
+                throw t;
+            }
+        }
         deleteEntityRelations(tenantId, deviceProfileId);
-        deviceProfileDao.removeById(tenantId, deviceProfileId.getId());
         Cache cache = cacheManager.getCache(DEVICE_PROFILE_CACHE);
         cache.evict(Collections.singletonList(deviceProfileId.getId()));
         cache.evict(Arrays.asList("info", deviceProfileId.getId()));
@@ -144,8 +156,12 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         deviceProfile.setTenantId(tenantId);
         deviceProfile.setDefault(true);
         deviceProfile.setName("Default");
+        deviceProfile.setType(DeviceProfileType.DEFAULT);
         deviceProfile.setDescription("Default device profile");
-        deviceProfile.setProfileData(JacksonUtil.OBJECT_MAPPER.createObjectNode());
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
+        deviceProfileData.setConfiguration(configuration);
+        deviceProfile.setProfileData(deviceProfileData);
         return saveDeviceProfile(deviceProfile);
     }
 
@@ -224,6 +240,16 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                         if (defaultDeviceProfile != null && !defaultDeviceProfile.getId().equals(deviceProfile.getId())) {
                             throw new DataValidationException("Another default device profile is present in scope of current tenant!");
                         }
+                    }
+                }
+
+                @Override
+                protected void validateUpdate(TenantId tenantId, DeviceProfile deviceProfile) {
+                    DeviceProfile old = deviceProfileDao.findById(deviceProfile.getTenantId(), deviceProfile.getId().getId());
+                    if (old == null) {
+                        throw new DataValidationException("Can't update non existing device profile!");
+                    } else if (!old.getType().equals(deviceProfile.getType())) {
+                        throw new DataValidationException("Changing type of device profile is prohibited!");
                     }
                 }
             };

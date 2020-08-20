@@ -163,12 +163,6 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
                     if (old == null) {
                         throw new DataValidationException("Can't update non existing tenant!");
                     }
-                    // TODO: Move validation to tenant profile
-                    /* else if (old.isIsolatedTbRuleEngine() != tenant.isIsolatedTbRuleEngine()) {
-                        throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
-                    } else if (old.isIsolatedTbCore() != tenant.isIsolatedTbCore()) {
-                        throw new DataValidationException("Can't update isolatedTbCore property!");
-                    } */
                 }
             };
 

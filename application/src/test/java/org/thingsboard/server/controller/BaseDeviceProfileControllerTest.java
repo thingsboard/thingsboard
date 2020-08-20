@@ -15,21 +15,20 @@
  */
 package org.thingsboard.server.controller;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -149,6 +148,32 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     }
 
     @Test
+    public void testSaveSameDeviceProfileWithDifferentType() throws Exception {
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
+        DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        savedDeviceProfile.setType(DeviceProfileType.LWM2M);
+        doPost("/api/deviceProfile", savedDeviceProfile).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Changing type of device profile is prohibited")));
+    }
+
+    @Test
+    public void testDeleteDeviceProfileWithExistingDevice() throws Exception {
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
+        DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+
+        Device device = new Device();
+        device.setName("Test device");
+        device.setType("default");
+        device.setDeviceProfileId(savedDeviceProfile.getId());
+
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        doDelete("/api/deviceProfile/" + savedDeviceProfile.getId().getId().toString())
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("The device profile referenced by the devices cannot be deleted")));
+    }
+
+    @Test
     public void testDeleteDeviceProfile() throws Exception {
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
@@ -254,13 +279,4 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Assert.assertEquals(1, pageData.getTotalElements());
     }
 
-    private DeviceProfile createDeviceProfile(String name) {
-        DeviceProfile deviceProfile = new DeviceProfile();
-        deviceProfile.setName(name);
-        deviceProfile.setDescription(name + " Test");
-        deviceProfile.setProfileData(JacksonUtil.OBJECT_MAPPER.createObjectNode());
-        deviceProfile.setDefault(false);
-        deviceProfile.setDefaultRuleChainId(new RuleChainId(Uuids.timeBased()));
-        return deviceProfile;
-    }
 }
