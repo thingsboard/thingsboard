@@ -24,7 +24,7 @@ import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
 import { Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
-import { objToBase64 } from '@core/utils';
+import { objToBase64URI } from '@core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { Widget } from '@app/shared/models/widget.models';
@@ -205,7 +205,7 @@ export class AddWidgetToDashboardDialogComponent extends
               id: targetState,
               params: {}
             };
-            const state = objToBase64([ stateObject ]);
+            const state = objToBase64URI([ stateObject ]);
             url = `/dashboards/${theDashboard.id.id}?state=${state}`;
           } else {
             url = `/dashboards/${theDashboard.id.id}`;
