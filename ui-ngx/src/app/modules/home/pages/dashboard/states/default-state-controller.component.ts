@@ -23,7 +23,7 @@ import { StateControllerComponent } from './state-controller.component';
 import { StatesControllerService } from '@home/pages/dashboard/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { UtilsService } from '@core/services/utils.service';
-import { base64toObj, objToBase64 } from '@app/core/utils';
+import { base64toObj, objToBase64URI } from '@app/core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 
@@ -237,7 +237,7 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
 
   private updateLocation() {
     if (this.stateObject[0].id) {
-      const newState = objToBase64(this.stateObject);
+      const newState = objToBase64URI(this.stateObject);
       this.updateStateParam(newState);
     }
   }

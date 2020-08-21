@@ -29,16 +29,16 @@ import LeafletMap from '@home/components/widget/lib/maps/leaflet-map';
 import { JsonSettingsSchema } from '@shared/models/widget.models';
 
 interface IProvider {
-  MapClass: Type<LeafletMap>,
-  schema: JsonSettingsSchema,
-  name: string
+  MapClass: Type<LeafletMap>;
+  schema: JsonSettingsSchema;
+  name: string;
 }
 
 export const providerSets: { [key: string]: IProvider } = {
   'openstreet-map': {
     MapClass: OpenStreetMap,
     schema: openstreetMapSettingsSchema,
-    name: 'openstreet-map',
+    name: 'openstreet-map'
   },
   'tencent-map': {
     MapClass: TencentMap,
