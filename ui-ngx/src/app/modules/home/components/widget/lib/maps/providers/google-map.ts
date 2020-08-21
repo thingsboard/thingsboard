@@ -49,7 +49,7 @@ export class GoogleMap extends LeafletMap {
 
   private loadGoogle(callback, apiKey = 'AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q') {
     if (gmGlobals[apiKey]) {
-      callback()
+      callback();
     } else {
       this.resource.loadResource(`https://maps.googleapis.com/maps/api/js?key=${apiKey}`).subscribe(
         () => {

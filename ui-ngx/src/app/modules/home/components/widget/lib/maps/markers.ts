@@ -81,7 +81,7 @@ export class Marker {
     }
 
     updateMarkerTooltip(data: FormattedData) {
-      if(!this.map.markerTooltipText || this.settings.useTooltipFunction) {
+      if (!this.map.markerTooltipText || this.settings.useTooltipFunction) {
         const pattern = this.settings.useTooltipFunction ?
           safeExecute(this.settings.tooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.tooltipPattern;
         this.map.markerTooltipText = parseWithTranslation.prepareProcessPattern(pattern, true);
@@ -103,7 +103,7 @@ export class Marker {
     updateMarkerLabel(settings: MarkerSettings) {
         this.leafletMarker.unbindTooltip();
         if (settings.showLabel) {
-            if(!this.map.markerLabelText || settings.useLabelFunction) {
+            if (!this.map.markerLabelText || settings.useLabelFunction) {
               const pattern = settings.useLabelFunction ?
                 safeExecute(settings.labelFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.label;
               this.map.markerLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);

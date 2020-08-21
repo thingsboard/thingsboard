@@ -1068,31 +1068,31 @@ export const tripAnimationSchema = {
         key: 'labelFunction',
         type: 'javascript'
     }, 'showTooltip', {
-            key: 'tooltipColor',
-            type: 'color'
-        }, {
-            key: 'tooltipFontColor',
-            type: 'color'
-        }, 'tooltipOpacity', {
-            key: 'tooltipPattern',
-            type: 'textarea'
-        }, 'useTooltipFunction', {
-            key: 'tooltipFunction',
-            type: 'javascript'
-        }, 'autocloseTooltip', {
-            key: 'markerImage',
-            type: 'image'
-        }, 'markerImageSize', 'rotationAngle', 'useMarkerImageFunction',
-        {
-            key: 'markerImageFunction',
-            type: 'javascript'
-        }, {
-            key: 'markerImages',
-            items: [
-                {
-                    key: 'markerImages[]',
-                    type: 'image'
-                }
-            ]
-        }]
-}
+        key: 'tooltipColor',
+        type: 'color'
+    }, {
+        key: 'tooltipFontColor',
+        type: 'color'
+    }, 'tooltipOpacity', {
+        key: 'tooltipPattern',
+        type: 'textarea'
+    }, 'useTooltipFunction', {
+        key: 'tooltipFunction',
+        type: 'javascript'
+    }, 'autocloseTooltip', {
+        key: 'markerImage',
+        type: 'image'
+    }, 'markerImageSize', 'rotationAngle', 'useMarkerImageFunction',
+    {
+        key: 'markerImageFunction',
+        type: 'javascript'
+    }, {
+        key: 'markerImages',
+        items: [
+            {
+                key: 'markerImages[]',
+                type: 'image'
+            }
+        ]
+    }]
+};

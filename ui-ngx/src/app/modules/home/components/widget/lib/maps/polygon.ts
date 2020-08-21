@@ -55,7 +55,7 @@ export class Polygon {
             this.leafletPoly.on('click', (event: LeafletMouseEvent) => {
                 for (const action in this.settings.polygonClick) {
                     if (typeof (this.settings.polygonClick[action]) === 'function') {
-                        this.settings.polygonClick[action](event.originalEvent, polyData.datasource);
+                        this.settings.polygonClick[action](event.originalEvent, polyData.$datasource);
                     }
                 }
             });
@@ -70,18 +70,19 @@ export class Polygon {
     }
 
     updatePolygon(data: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
-        this.data = data;
-        this.dataSources = dataSources;
-        if (settings.editablePolygon) {
-          this.leafletPoly.disableEdit();
-        }
-        this.leafletPoly.setLatLngs(data[this.settings.polygonKeyName]);
+      this.data = data;
+      this.dataSources = dataSources;
+      if (settings.editablePolygon) {
+        this.leafletPoly.disableEdit();
+      }
+      this.leafletPoly.setLatLngs(data[this.settings.polygonKeyName]);
       if (settings.editablePolygon) {
         this.leafletPoly.enableEdit(this.map);
       }
-        if (settings.showPolygonTooltip)
-            this.updateTooltip(this.data);
-        this.updatePolygonColor(settings);
+      if (settings.showPolygonTooltip) {
+        this.updateTooltip(this.data);
+      }
+      this.updatePolygonColor(settings);
     }
 
     removePolygon() {
