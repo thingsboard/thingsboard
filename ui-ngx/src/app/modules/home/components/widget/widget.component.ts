@@ -35,7 +35,6 @@ import {
 } from '@angular/core';
 import { DashboardWidget } from '@home/models/dashboard-component.models';
 import {
-  Datasource,
   defaultLegendConfig,
   LegendConfig,
   LegendData,
@@ -55,7 +54,7 @@ import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { UtilsService } from '@core/services/utils.service';
 import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
-import { deepClone, isDefined, objToBase64 } from '@core/utils';
+import { deepClone, isDefined, objToBase64URI } from '@core/utils';
 import {
   IDynamicWidgetComponent,
   WidgetContext,
@@ -68,7 +67,8 @@ import {
   StateObject,
   StateParams,
   SubscriptionEntityInfo,
-  SubscriptionInfo, SubscriptionMessage,
+  SubscriptionInfo,
+  SubscriptionMessage,
   WidgetSubscriptionContext,
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
@@ -80,11 +80,9 @@ import { catchError, switchMap } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TimeService } from '@core/services/time.service';
 import { DeviceService } from '@app/core/http/device.service';
-import { AlarmService } from '@app/core/http/alarm.service';
 import { ExceptionData } from '@shared/models/error.models';
 import { WidgetComponentService } from './widget-component.service';
 import { Timewindow } from '@shared/models/time/time.models';
-import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import { WidgetSubscription } from '@core/api/widget-subscription';
@@ -688,7 +686,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
   private destroyDynamicWidgetComponent() {
     if (this.widgetContext.$containerParent && this.widgetResize$) {
-      this.widgetResize$.disconnect()
+      this.widgetResize$.disconnect();
     }
     if (this.dynamicWidgetComponentRef) {
       this.dynamicWidgetComponentRef.destroy();
@@ -1023,7 +1021,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         if (targetDashboardStateId) {
           stateObject.id = targetDashboardStateId;
         }
-        const state = objToBase64([ stateObject ]);
+        const state = objToBase64URI([ stateObject ]);
         const isSinglePage = this.route.snapshot.data.singlePageMode;
         let url;
         if (isSinglePage) {
