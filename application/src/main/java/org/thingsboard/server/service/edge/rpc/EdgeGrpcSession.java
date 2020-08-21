@@ -33,6 +33,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.RandomStringUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -64,6 +65,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
@@ -88,6 +90,7 @@ import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.edge.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.AssetUpdateMsg;
+import org.thingsboard.server.gen.edge.AttributeDeleteMsg;
 import org.thingsboard.server.gen.edge.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectResponseCode;
@@ -125,11 +128,12 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -382,7 +386,7 @@ public final class EdgeGrpcSession implements Closeable {
         ctx.getAttributesService().save(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, attributes);
     }
 
-    private DownlinkMsg processTelemetryMessage(EdgeEvent edgeEvent) throws IOException {
+    private DownlinkMsg processTelemetryMessage(EdgeEvent edgeEvent) {
         log.trace("Executing processTelemetryMessage, edgeEvent [{}]", edgeEvent);
         EntityId entityId = null;
         switch (edgeEvent.getEdgeEventType()) {
@@ -823,6 +827,9 @@ public final class EdgeGrpcSession implements Closeable {
                             result.add(processPostTelemetry(entityId, entityData.getPostTelemetryMsg(), metaData));
                         }
                     }
+                    if (entityData.hasAttributeDeleteMsg()) {
+                        result.add(processAttributeDeleteMsg(entityId, entityData.getAttributeDeleteMsg(), entityData.getEntityType()));
+                    }
                 }
             }
 
@@ -945,6 +952,26 @@ public final class EdgeGrpcSession implements Closeable {
         TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), entityId, metaData, gson.toJson(json));
         // TODO: voba - verify that null callback is OK
         ctx.getTbClusterService().pushMsgToRuleEngine(edge.getTenantId(), tbMsg.getOriginator(), tbMsg, null);
+        return Futures.immediateFuture(null);
+    }
+
+    private ListenableFuture<Void> processAttributeDeleteMsg(EntityId entityId, AttributeDeleteMsg attributeDeleteMsg, String entityType) {
+        try {
+            String scope = attributeDeleteMsg.getScope();
+            List<String> attributeNames = attributeDeleteMsg.getAttributeNamesList();
+            ctx.getAttributesService().removeAll(edge.getTenantId(), entityId, scope, attributeNames);
+            if (EntityType.DEVICE.name().equals(entityType)) {
+                Set<AttributeKey> attributeKeys = new HashSet<>();
+                for (String attributeName : attributeNames) {
+                    attributeKeys.add(new AttributeKey(scope, attributeName));
+                }
+                ctx.getTbClusterService().pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(
+                        edge.getTenantId(), (DeviceId) entityId, attributeKeys), null);
+            }
+        } catch (Exception e) {
+            log.error("Can't process attribute delete msg [{}]", attributeDeleteMsg, e);
+            return Futures.immediateFailedFuture(new RuntimeException("Can't process attribute delete msg " + attributeDeleteMsg, e));
+        }
         return Futures.immediateFuture(null);
     }
 
