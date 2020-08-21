@@ -20,17 +20,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 
 import java.util.UUID;
 
 public interface DeviceProfileRepository extends PagingAndSortingRepository<DeviceProfileEntity, UUID> {
 
-    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(d.id, 'DEVICE_PROFILE', d.name) " +
+    @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.name, d.type) " +
             "FROM DeviceProfileEntity d " +
             "WHERE d.id = :deviceProfileId")
-    EntityInfo findDeviceProfileInfoById(@Param("deviceProfileId") UUID deviceProfileId);
+    DeviceProfileInfo findDeviceProfileInfoById(@Param("deviceProfileId") UUID deviceProfileId);
 
     @Query("SELECT d FROM DeviceProfileEntity d WHERE " +
             "d.tenantId = :tenantId AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
@@ -38,19 +38,19 @@ public interface DeviceProfileRepository extends PagingAndSortingRepository<Devi
                                                  @Param("textSearch") String textSearch,
                                                  Pageable pageable);
 
-    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(d.id, 'DEVICE_PROFILE', d.name) " +
+    @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.name, d.type) " +
             "FROM DeviceProfileEntity d WHERE " +
             "d.tenantId = :tenantId AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
-    Page<EntityInfo> findDeviceProfileInfos(@Param("tenantId") UUID tenantId,
-                                            @Param("textSearch") String textSearch,
-                                            Pageable pageable);
+    Page<DeviceProfileInfo> findDeviceProfileInfos(@Param("tenantId") UUID tenantId,
+                                                   @Param("textSearch") String textSearch,
+                                                   Pageable pageable);
 
     @Query("SELECT d FROM DeviceProfileEntity d " +
             "WHERE d.tenantId = :tenantId AND d.isDefault = true")
     DeviceProfileEntity findByDefaultTrueAndTenantId(@Param("tenantId") UUID tenantId);
 
-    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(d.id, 'DEVICE_PROFILE', d.name) " +
+    @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.name, d.type) " +
             "FROM DeviceProfileEntity d " +
             "WHERE d.tenantId = :tenantId AND d.isDefault = true")
-    EntityInfo findDefaultDeviceProfileInfo(@Param("tenantId") UUID tenantId);
+    DeviceProfileInfo findDefaultDeviceProfileInfo(@Param("tenantId") UUID tenantId);
 }

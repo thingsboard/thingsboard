@@ -209,7 +209,7 @@ public class ThingsboardInstallService {
                 componentDiscoveryService.discoverComponents();
 
                 systemDataLoaderService.createSysAdmin();
-                systemDataLoaderService.createDefaultTenantProfile();
+                systemDataLoaderService.createDefaultTenantProfiles();
                 systemDataLoaderService.createAdminSettings();
                 systemDataLoaderService.loadSystemWidgets();
 //                systemDataLoaderService.loadSystemPlugins();

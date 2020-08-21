@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -59,6 +60,19 @@ public class TenantController extends BaseController {
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
             return checkTenantId(tenantId, Operation.READ);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/info/{tenantId}", method = RequestMethod.GET)
+    @ResponseBody
+    public TenantInfo getTenantInfoById(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
+        checkParameter("tenantId", strTenantId);
+        try {
+            TenantId tenantId = new TenantId(toUUID(strTenantId));
+            return checkTenantInfoId(tenantId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -109,6 +123,22 @@ public class TenantController extends BaseController {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return checkNotNull(tenantService.findTenants(pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/tenantInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<TenantInfo> getTenantInfos(@RequestParam int pageSize,
+                                               @RequestParam int page,
+                                               @RequestParam(required = false) String textSearch,
+                                               @RequestParam(required = false) String sortProperty,
+                                               @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            return checkNotNull(tenantService.findTenantInfos(pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }

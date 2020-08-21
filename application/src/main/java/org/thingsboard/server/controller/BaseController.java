@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -316,6 +317,18 @@ public abstract class BaseController {
         try {
             validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
             Tenant tenant = tenantService.findTenantById(tenantId);
+            checkNotNull(tenant);
+            accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, operation, tenantId, tenant);
+            return tenant;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    TenantInfo checkTenantInfoId(TenantId tenantId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+            TenantInfo tenant = tenantService.findTenantInfoById(tenantId);
             checkNotNull(tenant);
             accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, operation, tenantId, tenant);
             return tenant;

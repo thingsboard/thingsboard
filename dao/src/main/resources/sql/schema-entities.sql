@@ -25,7 +25,7 @@ CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
 $$
 BEGIN
     IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
-        INSERT INTO tb_schema_settings (schema_version) VALUES (3001000);
+        INSERT INTO tb_schema_settings (schema_version) VALUES (3002000);
     END IF;
 END;
 $$;
@@ -254,8 +254,6 @@ CREATE TABLE IF NOT EXISTS tenant (
     state varchar(255),
     title varchar(255),
     zip varchar(255),
-    isolated_tb_core boolean,
-    isolated_tb_rule_engine boolean,
     CONSTRAINT fk_tenant_profile FOREIGN KEY (tenant_profile_id) REFERENCES tenant_profile(id)
 );
 

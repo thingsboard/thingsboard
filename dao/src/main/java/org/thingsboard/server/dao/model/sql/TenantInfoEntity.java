@@ -17,31 +17,33 @@ package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.TypeDef;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.common.data.TenantInfo;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Entity
-@TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.TENANT_COLUMN_FAMILY_NAME)
-public final class TenantEntity extends AbstractTenantEntity<Tenant> {
+public class TenantInfoEntity extends AbstractTenantEntity<TenantInfo> {
 
-    public TenantEntity() {
+    public static final Map<String,String> tenantInfoColumnMap = new HashMap<>();
+    static {
+        tenantInfoColumnMap.put("tenantProfileName", "p.name");
+    }
+
+    private String tenantProfileName;
+
+    public TenantInfoEntity() {
         super();
     }
 
-    public TenantEntity(Tenant tenant) {
-        super(tenant);
+    public TenantInfoEntity(TenantEntity tenantEntity, String tenantProfileName) {
+        super(tenantEntity);
+        this.tenantProfileName = tenantProfileName;
     }
 
     @Override
-    public Tenant toData() {
-        return super.toTenant();
+    public TenantInfo toData() {
+        return new TenantInfo(super.toTenant(), this.tenantProfileName);
     }
 }

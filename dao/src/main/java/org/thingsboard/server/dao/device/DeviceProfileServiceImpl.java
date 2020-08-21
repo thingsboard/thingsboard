@@ -24,8 +24,8 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileType;
-import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -39,7 +39,6 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -73,7 +72,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
     @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{'info', #deviceProfileId.id}")
     @Override
-    public EntityInfo findDeviceProfileInfoById(TenantId tenantId, DeviceProfileId deviceProfileId) {
+    public DeviceProfileInfo findDeviceProfileInfoById(TenantId tenantId, DeviceProfileId deviceProfileId) {
         log.trace("Executing findDeviceProfileById [{}]", deviceProfileId);
         Validator.validateId(deviceProfileId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
         return deviceProfileDao.findDeviceProfileInfoById(tenantId, deviceProfileId.getId());
@@ -141,11 +140,21 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     }
 
     @Override
-    public PageData<EntityInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink) {
+    public PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findDeviceProfileInfos tenantId [{}], pageLink [{}]", tenantId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validatePageLink(pageLink);
         return deviceProfileDao.findDeviceProfileInfos(tenantId, pageLink);
+    }
+
+    @Override
+    public DeviceProfile findOrCreateDefaultDeviceProfile(TenantId tenantId) {
+        log.trace("Executing findOrCreateDefaultDeviceProfile");
+        DeviceProfile deviceProfile = findDefaultDeviceProfile(tenantId);
+        if (deviceProfile == null) {
+            deviceProfile = this.createDefaultDeviceProfile(tenantId);
+        }
+        return deviceProfile;
     }
 
     @Override
@@ -175,7 +184,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
     @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{'default', 'info', #tenantId.id}")
     @Override
-    public EntityInfo findDefaultDeviceProfileInfo(TenantId tenantId) {
+    public DeviceProfileInfo findDefaultDeviceProfileInfo(TenantId tenantId) {
         log.trace("Executing findDefaultDeviceProfileInfo tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return deviceProfileDao.findDefaultDeviceProfileInfo(tenantId);

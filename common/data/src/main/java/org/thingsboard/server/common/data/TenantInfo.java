@@ -16,27 +16,24 @@
 package org.thingsboard.server.common.data;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
-public class DeviceInfo extends Device {
+public class TenantInfo extends Tenant {
 
-    private String customerTitle;
-    private boolean customerIsPublic;
-    private String deviceProfileName;
+    private String tenantProfileName;
 
-    public DeviceInfo() {
+    public TenantInfo() {
         super();
     }
 
-    public DeviceInfo(DeviceId deviceId) {
-        super(deviceId);
+    public TenantInfo(TenantId tenantId) {
+        super(tenantId);
     }
 
-    public DeviceInfo(Device device, String customerTitle, boolean customerIsPublic, String deviceProfileName) {
-        super(device);
-        this.customerTitle = customerTitle;
-        this.customerIsPublic = customerIsPublic;
-        this.deviceProfileName = deviceProfileName;
+    public TenantInfo(Tenant tenant, String tenantProfileName) {
+        super(tenant);
+        this.tenantProfileName = tenantProfileName;
     }
+
 }

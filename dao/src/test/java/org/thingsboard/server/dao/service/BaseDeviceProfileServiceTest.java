@@ -21,8 +21,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileType;
-import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
     private IdComparator<DeviceProfile> idComparator = new IdComparator<>();
-    private IdComparator<EntityInfo> deviceProfileInfoIdComparator = new IdComparator<>();
+    private IdComparator<DeviceProfileInfo> deviceProfileInfoIdComparator = new IdComparator<>();
 
     private TenantId tenantId;
 
@@ -86,10 +86,11 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
     public void testFindDeviceProfileInfoById() {
         DeviceProfile deviceProfile = this.createDeviceProfile(tenantId,"Device Profile");
         DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
-        EntityInfo foundDeviceProfileInfo = deviceProfileService.findDeviceProfileInfoById(tenantId, savedDeviceProfile.getId());
+        DeviceProfileInfo foundDeviceProfileInfo = deviceProfileService.findDeviceProfileInfoById(tenantId, savedDeviceProfile.getId());
         Assert.assertNotNull(foundDeviceProfileInfo);
         Assert.assertEquals(savedDeviceProfile.getId(), foundDeviceProfileInfo.getId());
         Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfileInfo.getName());
+        Assert.assertEquals(savedDeviceProfile.getType(), foundDeviceProfileInfo.getType());
     }
 
     @Test
@@ -102,10 +103,11 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindDefaultDeviceProfileInfo() {
-        EntityInfo foundDefaultDeviceProfileInfo = deviceProfileService.findDefaultDeviceProfileInfo(tenantId);
+        DeviceProfileInfo foundDefaultDeviceProfileInfo = deviceProfileService.findDefaultDeviceProfileInfo(tenantId);
         Assert.assertNotNull(foundDefaultDeviceProfileInfo);
         Assert.assertNotNull(foundDefaultDeviceProfileInfo.getId());
         Assert.assertNotNull(foundDefaultDeviceProfileInfo.getName());
+        Assert.assertNotNull(foundDefaultDeviceProfileInfo.getType());
     }
 
     @Test
@@ -230,9 +232,9 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
             deviceProfiles.add(deviceProfileService.saveDeviceProfile(deviceProfile));
         }
 
-        List<EntityInfo> loadedDeviceProfileInfos = new ArrayList<>();
+        List<DeviceProfileInfo> loadedDeviceProfileInfos = new ArrayList<>();
         pageLink = new PageLink(17);
-        PageData<EntityInfo> pageData;
+        PageData<DeviceProfileInfo> pageData;
         do {
             pageData = deviceProfileService.findDeviceProfileInfos(tenantId, pageLink);
             loadedDeviceProfileInfos.addAll(pageData.getData());
@@ -245,8 +247,8 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         Collections.sort(deviceProfiles, idComparator);
         Collections.sort(loadedDeviceProfileInfos, deviceProfileInfoIdComparator);
 
-        List<EntityInfo> deviceProfileInfos = deviceProfiles.stream().map(deviceProfile -> new EntityInfo(deviceProfile.getId(),
-                deviceProfile.getName())).collect(Collectors.toList());
+        List<DeviceProfileInfo> deviceProfileInfos = deviceProfiles.stream().map(deviceProfile -> new DeviceProfileInfo(deviceProfile.getId(),
+                deviceProfile.getName(), deviceProfile.getType())).collect(Collectors.toList());
 
         Assert.assertEquals(deviceProfileInfos, loadedDeviceProfileInfos);
 
@@ -261,7 +263,4 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
     }
-
-
-
 }

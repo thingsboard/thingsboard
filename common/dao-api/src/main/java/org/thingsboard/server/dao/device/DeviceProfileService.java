@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.device;
 
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -26,7 +27,7 @@ public interface DeviceProfileService {
 
     DeviceProfile findDeviceProfileById(TenantId tenantId, DeviceProfileId deviceProfileId);
 
-    EntityInfo findDeviceProfileInfoById(TenantId tenantId, DeviceProfileId deviceProfileId);
+    DeviceProfileInfo findDeviceProfileInfoById(TenantId tenantId, DeviceProfileId deviceProfileId);
 
     DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile);
 
@@ -34,13 +35,15 @@ public interface DeviceProfileService {
 
     PageData<DeviceProfile> findDeviceProfiles(TenantId tenantId, PageLink pageLink);
 
-    PageData<EntityInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink);
+    PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink);
+
+    DeviceProfile findOrCreateDefaultDeviceProfile(TenantId tenantId);
 
     DeviceProfile createDefaultDeviceProfile(TenantId tenantId);
 
     DeviceProfile findDefaultDeviceProfile(TenantId tenantId);
 
-    EntityInfo findDefaultDeviceProfileInfo(TenantId tenantId);
+    DeviceProfileInfo findDefaultDeviceProfileInfo(TenantId tenantId);
 
     boolean setDefaultDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId);
 

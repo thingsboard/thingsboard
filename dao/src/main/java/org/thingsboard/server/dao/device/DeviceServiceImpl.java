@@ -35,7 +35,6 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -43,6 +42,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
+import org.thingsboard.server.common.data.device.data.Lwm2mDeviceConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -168,10 +168,17 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         Device savedDevice;
         try {
             if (device.getDeviceProfileId() == null) {
-                EntityInfo deviceProfile = this.deviceProfileService.findDefaultDeviceProfileInfo(device.getTenantId());
+                DeviceProfile deviceProfile = this.deviceProfileService.findOrCreateDefaultDeviceProfile(device.getTenantId());
                 device.setDeviceProfileId(new DeviceProfileId(deviceProfile.getId().getId()));
                 DeviceData deviceData = new DeviceData();
-                deviceData.setConfiguration(new DefaultDeviceConfiguration());
+                switch (deviceProfile.getType()) {
+                    case DEFAULT:
+                        deviceData.setConfiguration(new DefaultDeviceConfiguration());
+                        break;
+                    case LWM2M:
+                        deviceData.setConfiguration(new Lwm2mDeviceConfiguration());
+                        break;
+                }
                 device.setDeviceData(deviceData);
             }
             savedDevice = deviceDao.save(device.getTenantId(), device);

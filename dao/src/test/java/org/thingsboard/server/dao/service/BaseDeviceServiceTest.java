@@ -287,7 +287,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             device.setName(name);
             device.setType("default");
-            devicesTitle1.add(new DeviceInfo(deviceService.saveDevice(device), null, false));
+            devicesTitle1.add(new DeviceInfo(deviceService.saveDevice(device), null, false, "Default"));
         }
         String title2 = "Device title 2";
         List<DeviceInfo> devicesTitle2 = new ArrayList<>();
@@ -299,7 +299,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             device.setName(name);
             device.setType("default");
-            devicesTitle2.add(new DeviceInfo(deviceService.saveDevice(device), null, false));
+            devicesTitle2.add(new DeviceInfo(deviceService.saveDevice(device), null, false, "Default"));
         }
         
         List<DeviceInfo> loadedDevicesTitle1 = new ArrayList<>();
@@ -452,7 +452,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             device.setName("Device"+i);
             device.setType("default");
             device = deviceService.saveDevice(device);
-            devices.add(new DeviceInfo(deviceService.assignDeviceToCustomer(tenantId, device.getId(), customerId), customer.getTitle(), customer.isPublic()));
+            devices.add(new DeviceInfo(deviceService.assignDeviceToCustomer(tenantId, device.getId(), customerId), customer.getTitle(), customer.isPublic(), "Default"));
         }
         
         List<DeviceInfo> loadedDevices = new ArrayList<>();

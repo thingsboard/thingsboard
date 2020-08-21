@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -60,7 +60,7 @@ public class DeviceProfileController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileInfo/{deviceProfileId}", method = RequestMethod.GET)
     @ResponseBody
-    public EntityInfo getDeviceProfileInfoById(@PathVariable("deviceProfileId") String strDeviceProfileId) throws ThingsboardException {
+    public DeviceProfileInfo getDeviceProfileInfoById(@PathVariable("deviceProfileId") String strDeviceProfileId) throws ThingsboardException {
         checkParameter("deviceProfileId", strDeviceProfileId);
         try {
             DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
@@ -73,7 +73,7 @@ public class DeviceProfileController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileInfo/default", method = RequestMethod.GET)
     @ResponseBody
-    public EntityInfo getDefaultDeviceProfileInfo() throws ThingsboardException {
+    public DeviceProfileInfo getDefaultDeviceProfileInfo() throws ThingsboardException {
         try {
             return checkNotNull(deviceProfileService.findDefaultDeviceProfileInfo(getTenantId()));
         } catch (Exception e) {
@@ -177,7 +177,7 @@ public class DeviceProfileController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public PageData<EntityInfo> getDeviceProfileInfos(@RequestParam int pageSize,
+    public PageData<DeviceProfileInfo> getDeviceProfileInfos(@RequestParam int pageSize,
                                                       @RequestParam int page,
                                                       @RequestParam(required = false) String textSearch,
                                                       @RequestParam(required = false) String sortProperty,

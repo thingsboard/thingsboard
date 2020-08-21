@@ -22,8 +22,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileType;
-import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.page.PageData;
@@ -41,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public abstract class BaseDeviceProfileControllerTest extends AbstractControllerTest {
 
     private IdComparator<DeviceProfile> idComparator = new IdComparator<>();
-    private IdComparator<EntityInfo> deviceProfileInfoIdComparator = new IdComparator<>();
+    private IdComparator<DeviceProfileInfo> deviceProfileInfoIdComparator = new IdComparator<>();
 
     private Tenant savedTenant;
     private User tenantAdmin;
@@ -104,18 +104,21 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     public void testFindDeviceProfileInfoById() throws Exception {
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
-        EntityInfo foundDeviceProfileInfo = doGet("/api/deviceProfileInfo/"+savedDeviceProfile.getId().getId().toString(), EntityInfo.class);
+        DeviceProfileInfo foundDeviceProfileInfo = doGet("/api/deviceProfileInfo/"+savedDeviceProfile.getId().getId().toString(), DeviceProfileInfo.class);
         Assert.assertNotNull(foundDeviceProfileInfo);
         Assert.assertEquals(savedDeviceProfile.getId(), foundDeviceProfileInfo.getId());
         Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfileInfo.getName());
+        Assert.assertEquals(savedDeviceProfile.getType(), foundDeviceProfileInfo.getType());
     }
 
     @Test
     public void testFindDefaultDeviceProfileInfo() throws Exception {
-        EntityInfo foundDefaultDeviceProfileInfo = doGet("/api/deviceProfileInfo/default", EntityInfo.class);
+        DeviceProfileInfo foundDefaultDeviceProfileInfo = doGet("/api/deviceProfileInfo/default", DeviceProfileInfo.class);
         Assert.assertNotNull(foundDefaultDeviceProfileInfo);
         Assert.assertNotNull(foundDefaultDeviceProfileInfo.getId());
         Assert.assertNotNull(foundDefaultDeviceProfileInfo.getName());
+        Assert.assertNotNull(foundDefaultDeviceProfileInfo.getType());
+        Assert.assertEquals(DeviceProfileType.DEFAULT, foundDefaultDeviceProfileInfo.getType());
         Assert.assertEquals("Default", foundDefaultDeviceProfileInfo.getName());
     }
 
@@ -125,10 +128,11 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         DeviceProfile defaultDeviceProfile = doPost("/api/deviceProfile/"+savedDeviceProfile.getId().getId().toString()+"/default", null, DeviceProfile.class);
         Assert.assertNotNull(defaultDeviceProfile);
-        EntityInfo foundDefaultDeviceProfile = doGet("/api/deviceProfileInfo/default", EntityInfo.class);
+        DeviceProfileInfo foundDefaultDeviceProfile = doGet("/api/deviceProfileInfo/default", DeviceProfileInfo.class);
         Assert.assertNotNull(foundDefaultDeviceProfile);
         Assert.assertEquals(savedDeviceProfile.getName(), foundDefaultDeviceProfile.getName());
         Assert.assertEquals(savedDeviceProfile.getId(), foundDefaultDeviceProfile.getId());
+        Assert.assertEquals(savedDeviceProfile.getType(), foundDefaultDeviceProfile.getType());
     }
 
     @Test
@@ -245,12 +249,12 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
             deviceProfiles.add(doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class));
         }
 
-        List<EntityInfo> loadedDeviceProfileInfos = new ArrayList<>();
+        List<DeviceProfileInfo> loadedDeviceProfileInfos = new ArrayList<>();
         pageLink = new PageLink(17);
-        PageData<EntityInfo> pageData;
+        PageData<DeviceProfileInfo> pageData;
         do {
             pageData = doGetTypedWithPageLink("/api/deviceProfileInfos?",
-                    new TypeReference<PageData<EntityInfo>>(){}, pageLink);
+                    new TypeReference<PageData<DeviceProfileInfo>>(){}, pageLink);
             loadedDeviceProfileInfos.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -260,8 +264,8 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Collections.sort(deviceProfiles, idComparator);
         Collections.sort(loadedDeviceProfileInfos, deviceProfileInfoIdComparator);
 
-        List<EntityInfo> deviceProfileInfos = deviceProfiles.stream().map(deviceProfile -> new EntityInfo(deviceProfile.getId(),
-                deviceProfile.getName())).collect(Collectors.toList());
+        List<DeviceProfileInfo> deviceProfileInfos = deviceProfiles.stream().map(deviceProfile -> new DeviceProfileInfo(deviceProfile.getId(),
+                deviceProfile.getName(), deviceProfile.getType())).collect(Collectors.toList());
 
         Assert.assertEquals(deviceProfileInfos, loadedDeviceProfileInfos);
 
@@ -274,7 +278,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
         pageLink = new PageLink(17);
         pageData = doGetTypedWithPageLink("/api/deviceProfileInfos?",
-                new TypeReference<PageData<EntityInfo>>(){}, pageLink);
+                new TypeReference<PageData<DeviceProfileInfo>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
     }

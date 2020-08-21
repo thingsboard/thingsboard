@@ -230,8 +230,6 @@ CREATE TABLE IF NOT EXISTS tenant (
     state varchar(255),
     title varchar(255),
     zip varchar(255),
-    isolated_tb_core boolean,
-    isolated_tb_rule_engine boolean,
     CONSTRAINT fk_tenant_profile FOREIGN KEY (tenant_profile_id) REFERENCES tenant_profile(id)
 );
 

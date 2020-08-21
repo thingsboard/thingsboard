@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -48,7 +48,7 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
     }
 
     @Override
-    public EntityInfo findDeviceProfileInfoById(TenantId tenantId, UUID deviceProfileId) {
+    public DeviceProfileInfo findDeviceProfileInfoById(TenantId tenantId, UUID deviceProfileId) {
         return deviceProfileRepository.findDeviceProfileInfoById(deviceProfileId);
     }
 
@@ -62,7 +62,7 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
     }
 
     @Override
-    public PageData<EntityInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink) {
+    public PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.pageToPageData(
                 deviceProfileRepository.findDeviceProfileInfos(
                         tenantId.getId(),
@@ -76,7 +76,7 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
     }
 
     @Override
-    public EntityInfo findDefaultDeviceProfileInfo(TenantId tenantId) {
+    public DeviceProfileInfo findDefaultDeviceProfileInfo(TenantId tenantId) {
         return deviceProfileRepository.findDefaultDeviceProfileInfo(tenantId.getId());
     }
 

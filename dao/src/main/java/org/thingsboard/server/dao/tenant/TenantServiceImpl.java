@@ -20,12 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -93,6 +92,13 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     }
 
     @Override
+    public TenantInfo findTenantInfoById(TenantId tenantId) {
+        log.trace("Executing findTenantInfoById [{}]", tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return tenantDao.findTenantInfoById(tenantId, tenantId.getId());
+    }
+
+    @Override
     public ListenableFuture<Tenant> findTenantByIdAsync(TenantId callerId, TenantId tenantId) {
         log.trace("Executing TenantIdAsync [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
@@ -137,6 +143,13 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
         log.trace("Executing findTenants pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink);
         return tenantDao.findTenantsByRegion(new TenantId(EntityId.NULL_UUID), DEFAULT_TENANT_REGION, pageLink);
+    }
+
+    @Override
+    public PageData<TenantInfo> findTenantInfos(PageLink pageLink) {
+        log.trace("Executing findTenantInfos pageLink [{}]", pageLink);
+        Validator.validatePageLink(pageLink);
+        return tenantDao.findTenantInfosByRegion(new TenantId(EntityId.NULL_UUID), DEFAULT_TENANT_REGION, pageLink);
     }
 
     @Override
