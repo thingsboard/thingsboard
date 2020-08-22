@@ -175,7 +175,7 @@ export function objToBase64URI(obj: any): string {
 }
 
 export function base64toObj(b64Encoded: string): any {
-  const json = decodeURIComponent(atob(decodeURIComponent(b64Encoded)).split('').map((c) => {
+  const json = decodeURIComponent(atob(b64Encoded).split('').map((c) => {
     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
   }).join(''));
   return JSON.parse(json);
