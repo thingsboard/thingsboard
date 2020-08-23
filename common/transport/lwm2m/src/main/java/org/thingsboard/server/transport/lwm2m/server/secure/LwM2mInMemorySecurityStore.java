@@ -188,5 +188,9 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         }
     }
 
+    public Map<String, ModelClient> getSessions () {
+        return  this.sessions;
+    }
+
 
 }

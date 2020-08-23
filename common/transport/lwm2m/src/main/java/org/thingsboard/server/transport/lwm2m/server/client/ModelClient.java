@@ -17,8 +17,12 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.core.node.LwM2mObject;
+import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.response.LwM2mResponse;
+import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
@@ -27,6 +31,8 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportService;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Data
@@ -54,6 +60,9 @@ public class ModelClient  implements Cloneable {
         this.attributes = (attributes != null && attributes.size()>0) ? attributes : new ConcurrentHashMap<String, String>();
         this.modelObjects =  (modelObjects != null && modelObjects.size()>0) ? modelObjects : new ConcurrentHashMap<Integer, ModelObject>();
         this.pendingRequests = ConcurrentHashMap.newKeySet();
+        /**
+         * Key <objectId>, response<Value -> instance -> resources: value...>
+         */
         this.responses = new ConcurrentHashMap<>();
     }
 
@@ -69,7 +78,7 @@ public class ModelClient  implements Cloneable {
             Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
             log.info("33_1)  setCancelObservationObjects endpoint: {} cancel: {}  observations: {}", registration.getEndpoint(), cancel, observations);
             initValue ();
-            this.transportService.getAttrTelemetryObserveFromModel(this.lwServer, this.endPoint);
+            this.transportService.getAttrTelemetryObserveFromModel(this.lwServer, this.registration.getId());
         }
     }
 
@@ -81,7 +90,18 @@ public class ModelClient  implements Cloneable {
     public void addPendingRequests(Integer request) {
         this.pendingRequests.add(request);
     }
+
     private void initValue () {
-        log.info("41)  initValue");
+        this.responses.forEach((key, resp) -> {
+            int objectId = ((LwM2mObject) ((ObserveResponse) resp).getContent()).getId();
+            ObjectModel objectModel = ((Collection<ObjectModel>)lwServer.getModelProvider().getObjectModel(registration).getObjectModels()).stream().filter(v -> v.id==objectId).collect(Collectors.toList()).get(0);
+            Map<Integer, LwM2mObjectInstance> instances =  new ConcurrentHashMap<>();
+            ((LwM2mObject) ((ObserveResponse) resp).getContent()).getInstances().entrySet().forEach(instance -> {
+                instances.put(instance.getKey(), instance.getValue());
+            });
+            ModelObject modelObject = new ModelObject(objectModel, instances);
+            this.modelObjects.put(objectId, modelObject);
+        });
     }
+
 }

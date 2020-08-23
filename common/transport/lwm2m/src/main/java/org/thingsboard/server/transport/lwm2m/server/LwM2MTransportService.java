@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.node.*;
@@ -111,7 +113,6 @@ public class LwM2MTransportService {
 //        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
         String lwm2mVersion = registration.getLwM2mVersion();
         setCancelAllObservation(lwServer, registration);
-        Collection<SecurityInfo> securityInfos = lwM2mInMemorySecurityStore.getAll();
         log.info("[{}]Received endpoint updated registration version event (next observe1), \nregistration.getId(): {}", endpointId, registration.getId());
 
 //        ModelClient modelClient = context.getSessions().get(registration.getEndpoint());
@@ -173,8 +174,17 @@ public class LwM2MTransportService {
     }
 
     @SneakyThrows
-    public void getAttrTelemetryObserveFromModel(LeshanServer lwServer, String clientEndpoint) {
-        log.info("51) etAttrTelemetryObserveFromModel clientEndpoint: {}", clientEndpoint);
+    public void getAttrTelemetryObserveFromModel(LeshanServer lwServer, String integrationId) {
+        log.info("51) getAttrTelemetryObserveFromModelintegratioId: {}", integrationId);
+                String credentials = (lwM2mInMemorySecurityStore.getSessions() != null && lwM2mInMemorySecurityStore.getSessions().size() > 0) ? lwM2mInMemorySecurityStore.getSessions().get(integrationId).getCredentialsResponse().getCredentialsBody() : null;
+        JsonObject objectMsg = (credentials != null) ? adaptor.validateJson(credentials) : null;
+        JsonObject clientObserveAttrTelemetry = (objectMsg != null &&
+                !objectMsg.isJsonNull() &&
+                objectMsg.has("observeAttr") &&
+                objectMsg.get("observeAttr").isJsonObject() &&
+                !objectMsg.get("observeAttr").isJsonNull()) ? objectMsg.get("observeAttr").getAsJsonObject() : null;
+        log.info("52) getAttrTelemetryObserveFromModelintegratioId: {}", clientObserveAttrTelemetry);
+
     }
 
     private void cancelAllObservation(LeshanServer lwServer, Registration registration) {
