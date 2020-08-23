@@ -47,7 +47,7 @@ public class LwM2MTransportServerInitializer {
     @PostConstruct
     public void init() {
         if (context.getEnableGenPskRpk()) new LWM2MGenerationPSkRPkECC();
-        this.context.setSessions(new ConcurrentHashMap<>());
+//        this.context.setSessions(new ConcurrentHashMap<>());
         if (this.context.isServerStartAll()) {
             this.lhServerCert.start();
             this.lhServerNoSecPskRpk.start();

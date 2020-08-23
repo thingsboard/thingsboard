@@ -19,14 +19,11 @@ import com.google.gson.JsonSyntaxException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ResourceModel;
-import org.eclipse.leshan.core.node.LwM2mNode;
-import org.eclipse.leshan.core.node.LwM2mSingleResource;
-import org.eclipse.leshan.core.node.ObjectLink;
+import org.eclipse.leshan.core.node.*;
+import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.*;
 import org.eclipse.leshan.core.request.exception.InvalidRequestException;
-import org.eclipse.leshan.core.response.ErrorCallback;
-import org.eclipse.leshan.core.response.LwM2mResponse;
-import org.eclipse.leshan.core.response.ResponseCallback;
+import org.eclipse.leshan.core.response.*;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.californium.LeshanServer;
@@ -34,6 +31,8 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.transport.lwm2m.server.client.ModelClient;
+
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.*;
@@ -50,14 +49,14 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportRequest {
     private final ExecutorService executorService;
-    private static final String RESPONSE_CHANNEL = "LESHAN_RESP";
+    private static final String RESPONSE_CHANNEL = "THINGSBOARD_RESP";
 
     @Autowired
     private LwM2MTransportContextServer context;
 
     public LwM2MTransportRequest() {
         executorService = Executors.newCachedThreadPool(
-                new NamedThreadFactory(String.format("Redis %s channel writer", RESPONSE_CHANNEL)));
+                new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
     }
 
 
@@ -74,34 +73,60 @@ public class LwM2MTransportRequest {
         return registrations;
     }
 
+    public void sendAllRequest (LeshanServer lwServer, Registration registration, String target, String typeOper, String contentFormatParam, ModelClient modelClient, Observation observation) {
+        String[] objects = (target.split("/").length > 0) ? target.split("/") : null;
+        if (registration != null && objects != null) {
+            DownlinkRequest request = null;
+
+            int objectId = (objects.length > 1) ? Integer.parseInt(objects[1]) : -1;
+            int instanceId = (objects.length > 2) ? Integer.parseInt(objects[2]) : -1;
+            int resoutceId = (objects.length > 3) ? Integer.parseInt(objects[2]) : -1;
+            switch (typeOper) {
+                case GET_TYPE_OPER_READ:
+                    /** get content format */
+                    ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
+                    /** create & process request */
+                    request = new ReadRequest(contentFormat, target);
+                    break;
+                case GET_TYPE_OPER_DISCOVER:
+
+                    break;
+                case GET_TYPE_OPER_OBSERVE:
+                    if (objectId > 0) {
+                        request = new ObserveRequest(objectId);
+                    }
+                    break;
+                case POST_TYPE_OPER_OBSERVE_CANCEL:
+                    request = new CancelObservationRequest(observation);
+                    break;
+                case POST_TYPE_OPER_EXECUTE:
+
+                    break;
+                case PUT_TYPE_OPER_UPDATE:
+
+                    break;
+                case PUT_TYPE_OPER_WRIGHT:
+
+                    break;
+                default:
+            }
+            if (request != null) sendRequest(lwServer, registration, request, modelClient);
+        }
+    }
+
     @SneakyThrows
-    public LwM2mResponse doGet(LeshanServer lwServer, String clientEndpoint, String target, String typeOper, String contentFormatParam) {
+    public LwM2mResponse doGet(LeshanServer lwServer, Registration registration, String target, String typeOper, String contentFormatParam) {
         /** all registered clients */
-        Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
+
         if (registration != null) {
-            final LwM2mResponse[] responseRez = new LwM2mResponse[1];
-            CountDownLatch respLatch = new CountDownLatch(1);
            if (typeOper.equals(GET_TYPE_OPER_DISCOVER)) {
                 try {
                     /** create & process request */
-                    DiscoverRequest request = new DiscoverRequest(target);
-//                    return lwServer.send(registration, request, context.getTimeout());
-                        lwServer.send(registration, request, (ResponseCallback) response -> {
-                            log.info("getCObservationObjectsTest: \nresponse: {}", response);
-                            responseRez[0] = response;
-                            respLatch.countDown();
-                        }, e -> {
-                            log.error("getCObservationObjectsTest: \nssh lwm2mError observe response: {}", e.toString());
-                            respLatch.countDown();
-                        });
-                        try {
-                            respLatch.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
-                        } catch (InterruptedException e) {
-
-                        }
+                    DownlinkRequest request = new DiscoverRequest(target);
+                    sendRequest(lwServer, registration, request, null);
 
                 } catch (RuntimeException  e) {
-                    log.error("EndPoint: get client/discover: with id [{}]: [{}]", clientEndpoint, e);
+                    log.error("EndPoint: get client/discover: with id [{}]: [{}]", registration.getEndpoint(), e.toString());
                 }
             }
             else if (typeOper.equals(GET_TYPE_OPER_READ)){
@@ -109,14 +134,17 @@ public class LwM2MTransportRequest {
                    /** get content format */
                    ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
                    /** create & process request */
-                   ReadRequest request = new ReadRequest(contentFormat, target);
-                   return lwServer.send(registration, request, context.getTimeout());
-               } catch (RuntimeException | InterruptedException e) {
-                   log.error("EndPoint: get client/read: with id [{}]: [{}]", clientEndpoint, e);
+                   DownlinkRequest request = new ReadRequest(contentFormat, target);
+                   sendRequest(lwServer, registration, request, null);
+                   return null;
+//                   return lwServer.send(registration, request, context.getTimeout());
+
+               } catch (RuntimeException e) {
+                   log.error("EndPoint: get client/read: with id [{}]: [{}]", registration.getEndpoint(), e.toString());
                }
            }
         } else {
-            log.warn("EndPoint: get: no registered client with id [{}]", clientEndpoint);
+            log.warn("EndPoint: get: no registered client with id [{}]", registration.getEndpoint());
         }
         return null;
     }
@@ -186,12 +214,114 @@ public class LwM2MTransportRequest {
         return null;
     }
 
-//    public LwM2mResponse getObserve(LeshanServer lwServer, Registration registration, ObserveRequest observeRequest ) {
+//    public LwM2mResponse sendRequestReturn(LeshanServer lwServer, Registration registration, DownlinkRequest request) {
 //        final LwM2mResponse[] responseRez = new LwM2mResponse[1];
 //        CountDownLatch respLatch = new CountDownLatch(1);
 //        if (registration != null) {
 //            log.info("2) getClientModelWithValue  start: \n observeResponse do");
-//            lwServer.send(registration, observeRequest, (ResponseCallback) response -> {
+//            lwServer.send(registration, request, (ResponseCallback<?>) response -> {
+//                log.info("5) getObserve: \nresponse: {}", response);
+//                responseRez[0] = response;
+//                respLatch.countDown();
+//            }, e -> {
+//                log.error("6) getCObservationObjectsTest: \nssh lwm2mError observe response: {}", e.toString());
+//                respLatch.countDown();
+//            });
+//            try {
+//                log.info("8) getCObservationObjectsTest: \nrespLatch.await: {}", DEFAULT_TIMEOUT*10);
+//                respLatch.await(DEFAULT_TIMEOUT*10, TimeUnit.MILLISECONDS);
+//            } catch (InterruptedException ex) {
+//                log.error("7) getCObservationObjectsTest: \nssh lwm2mError observe response: {}", ex.toString());
+//            }
+//        }
+//        return responseRez[0];
+//    }
+
+    private void sendRequest(LeshanServer lwServer, Registration registration, DownlinkRequest request, ModelClient modelClient) {
+        lwServer.send(registration, request, (ResponseCallback<?>) response -> {
+//            log.info("5) sendRequest: \nresponse: {}", response);
+            handleResponse(registration.getEndpoint(), request.getPath().toString(), response, modelClient);
+//            log.info("5) sendRequest: \nresponse: {}", response);
+        }, e -> {
+            log.error("6) sendRequest: \nerror: {}", e.toString());
+
+        });
+    }
+
+    public LwM2mResponse sendRequestAsync(LeshanServer lwServer, Registration registration, DownlinkRequest request) {
+        final LwM2mResponse[] responseRez = new LwM2mResponse[1];
+        CountDownLatch respLatch = new CountDownLatch(1);
+        if (registration != null) {
+            log.info("2) sendRequestAsync  start: \n observeResponse do");
+            Thread t = new Thread(() -> {
+                lwServer.send(registration, request, (ResponseCallback<?>) response -> {
+                    log.info("5) sendRequestAsync: \nresponse: {}", response);
+                    responseRez[0] = response;
+                    respLatch.countDown();
+                }, e -> {
+                    log.error("6) sendRequestAsync: \nerr: {}", e.toString());
+                    respLatch.countDown();
+                });
+            });
+            t.start();
+            try {
+                respLatch.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                log.error("7) sendRequestAsync: \nrespLatch err: {}", e.toString());
+            }
+        }
+        return responseRez[0];
+    }
+
+    private void handleResponse(String clientEndpoint, final String path, LwM2mResponse response, ModelClient modelClient) {
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+//                    log.info("8) executorService.submit: \nresponse: {}", response);
+                    sendResponse(path, response, modelClient);
+                } catch (RuntimeException t) {
+                    log.error("Unable to send response. \n endpoint: {} \n path: {}\n error: {}", clientEndpoint, path, t.toString());
+                }
+            }
+        });
+    }
+
+    private void sendResponse(String path, LwM2mResponse response, ModelClient modelClient) {
+        if (response instanceof ObserveResponse) {
+            if (modelClient != null) {
+                String[] objects = path.split("/");
+                if (objects.length > 1) {
+                    Integer objectId = Integer.parseInt(objects[1]);
+                    if ( modelClient.getPendingRequests().size() > 0) {
+                        modelClient.onSuccessHandler(objectId, response);
+                    }
+                }
+            }
+        }
+        else if (response  instanceof CancelObservationResponse) {
+            log.info("2_Send: Patn: {}\n CancelObservationResponse: {} ", path, response);
+        }
+        else if (response  instanceof ReadResponse) {
+            log.info("2_Send: Patn: {}\n ReadResponse: {} ", path, response);
+        }
+        else if (response  instanceof DeleteResponse) {
+            log.info("2_Send: Patn: {}\n DeleteResponse: {} ", path, response);
+        }
+        else if (response  instanceof DiscoverResponse) {
+            log.info("2_Send: Patn: {}\n DiscoverResponse: {} ", path, response);
+        }
+        else if (response  instanceof ExecuteResponse) {
+            log.info("2_Send: Patn: {}\n ExecuteResponse: {} ", path, response);
+        }
+    }
+
+//    public LwM2mResponse getObserve(LeshanServer lwServer, Registration registration, DownlinkRequest observeRequest ) {
+//        final LwM2mResponse[] responseRez = new LwM2mResponse[1];
+//        CountDownLatch respLatch = new CountDownLatch(1);
+//        if (registration != null) {
+//            log.info("2) getClientModelWithValue  start: \n observeResponse do");
+//            lwServer.send(registration, observeRequest, (ResponseCallback<?>) response -> {
 //                log.info("5) getObserve: \nresponse: {}", response);
 //                responseRez[0] = response;
 //                respLatch.countDown();
@@ -201,8 +331,8 @@ public class LwM2MTransportRequest {
 //            });
 //            try {
 //                respLatch.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
-//            } catch (InterruptedException e) {
-//
+//            } catch (InterruptedException ex) {
+//                log.error("7) getCObservationObjectsTest: \nssh lwm2mError observe response: {}", ex.toString());
 //            }
 //        }
 //        return responseRez[0];

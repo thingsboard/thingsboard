@@ -20,11 +20,13 @@ import lombok.Builder;
 import lombok.Data;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
 import org.eclipse.leshan.server.security.SecurityInfo;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.DEFAULT_MODE;
 
 @Data
 public class ReadResultSecurityStore {
+    private TransportProtos.ValidateDeviceCredentialsResponseMsg msg;
     private SecurityInfo securityInfo;
     @Builder.Default
     private int securityMode = DEFAULT_MODE.code;

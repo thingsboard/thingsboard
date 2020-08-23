@@ -37,7 +37,8 @@ public class LwM2mServerListener {
         this.service = service;
     }
 
-    public final RegistrationListener registrationListener = new RegistrationListener() {
+        public final RegistrationListener registrationListener = new RegistrationListener() {
+//    public SynchronousRegistrationListener registrationListener = new SynchronousRegistrationListener() {
         /**
          * Register – запрос, представленный в виде POST /rd?…
          */
@@ -54,7 +55,7 @@ public class LwM2mServerListener {
         @Override
         public void updated(RegistrationUpdate update, Registration updatedRegistration,
                             Registration previousRegistration) {
-            service.updatedReg(lhServer,  updatedRegistration);
+            service.updatedReg(lhServer, updatedRegistration);
         }
 
         /**
@@ -63,7 +64,7 @@ public class LwM2mServerListener {
         @Override
         public void unregistered(Registration registration, Collection<Observation> observations, boolean expired,
                                  Registration newReg) {
-            service.unReg(registration);
+            service.unReg(registration, observations);
         }
 
     };
@@ -85,12 +86,12 @@ public class LwM2mServerListener {
 
         @Override
         public void cancelled(Observation observation) {
-            log.debug("Received notification cancelled from [{}] ", observation.getPath());
+            log.info("Received notification cancelled from [{}] ", observation.getPath());
         }
 
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
-//            log.debug("Received notification onResponse from [{}] containing value [{}]", observation.getPath(), response.getContent().toString());
+            log.info("Received notification onResponse from [{}] containing value [{}]", observation.getPath(), response.getContent().toString());
             if (registration != null) {
                 service.observOnResponse(lhServer, observation, registration, response);
             }
@@ -103,7 +104,7 @@ public class LwM2mServerListener {
 
         @Override
         public void newObservation(Observation observation, Registration registration) {
-            log.debug("Received notification cancelled from [{}] endpoint  [{}] ", observation.getPath(), registration.getEndpoint());
+            log.info("Received notification cancelled from [{}] endpoint  [{}] ", observation.getPath(), registration.getEndpoint());
         }
     };
 }

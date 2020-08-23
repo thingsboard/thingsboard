@@ -115,6 +115,8 @@ public class LwM2MTransportHandler {
 
     public static final String GET_TYPE_OPER_READ = "read";
     public static final String GET_TYPE_OPER_DISCOVER = "discover";
+    public static final String GET_TYPE_OPER_OBSERVE = "observe";
+    public static final String POST_TYPE_OPER_OBSERVE_CANCEL = "observeCancel";
     public static final String POST_TYPE_OPER_EXECUTE = "execute";
     public static final String PUT_TYPE_OPER_UPDATE = "update";
     public static final String PUT_TYPE_OPER_WRIGHT = "wright";

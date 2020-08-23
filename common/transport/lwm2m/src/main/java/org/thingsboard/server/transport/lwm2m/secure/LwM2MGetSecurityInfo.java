@@ -30,6 +30,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBootstrap;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
+import org.thingsboard.server.transport.lwm2m.server.client.ModelClient;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
 import java.io.IOException;
@@ -62,13 +63,13 @@ public class LwM2MGetSecurityInfo {
                     @Override
                     public void onSuccess(TransportProtos.ValidateDeviceCredentialsResponseMsg msg) {
                         String ingfosStr = msg.getCredentialsBody();
-
                         resultSecurityStore[0] = putSecurityInfo(endPoint, msg.getDeviceInfo().getDeviceName(), ingfosStr, keyValue);
+                        resultSecurityStore[0].setMsg(msg);
 //                        if (resultSecurityStore[0].getSecurityMode() < DEFAULT_MODE.code && keyValue.equals(TypeServer.CLIENT)) {
-                        if (resultSecurityStore[0].getSecurityMode() < DEFAULT_MODE.code) {
-                            String endpoint = (resultSecurityStore[0].getSecurityMode()== PSK.code) ? resultSecurityStore[0].getSecurityInfo().getEndpoint(): endPoint;
-                            contextS.getSessions().put(endpoint, msg);
-                        }
+//                        if (resultSecurityStore[0].getSecurityMode() < DEFAULT_MODE.code) {
+//                            String endpoint = (resultSecurityStore[0].getSecurityMode()== PSK.code) ? resultSecurityStore[0].getSecurityInfo().getEndpoint(): endPoint;
+//                            contextS.getSessions().put(endpoint, new ModelClient(msg, null, null ));
+//                        }
                         latch.countDown();
                     }
 

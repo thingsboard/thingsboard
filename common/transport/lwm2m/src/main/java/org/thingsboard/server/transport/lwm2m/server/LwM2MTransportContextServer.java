@@ -24,6 +24,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.lwm2m.server.client.ModelClient;
 
 import java.security.KeyStore;
 import java.util.List;
@@ -134,7 +135,7 @@ public class LwM2MTransportContextServer extends TransportContext {
     @Value("${transport.lwm2m.secure.redis_url:}")
     private String redisUrl;
 
-    @Getter
-    @Setter
-    private Map<String /** clientEndPoint */, TransportProtos.ValidateDeviceCredentialsResponseMsg> sessions;
+//    @Getter
+//    @Setter
+//    private Map<String /** clientEndPoint */, ModelClient> sessions;
 }

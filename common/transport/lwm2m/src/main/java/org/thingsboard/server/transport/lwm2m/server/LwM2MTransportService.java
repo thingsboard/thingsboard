@@ -15,18 +15,16 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.node.*;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.*;
 import org.eclipse.leshan.core.response.*;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
+import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -37,7 +35,6 @@ import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 import org.thingsboard.server.transport.lwm2m.server.client.ModelClient;
-import org.thingsboard.server.transport.lwm2m.server.client.ModelObject;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResultAttrTel;
 
@@ -75,25 +72,155 @@ public class LwM2MTransportService {
     LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
 
     public void onRegistered(LeshanServer lwServer, Registration registration, Collection<Observation> previousObsersations) {
-        String endPoint = registration.getEndpoint();
+        /**
+         * Info about start registration device
+         */
+        log.info("Received endpoint registration version event: \nendPoint: {}\nregistration.getId(): {}\npreviousObsersations {}", registration.getEndpoint(), registration.getId(), previousObsersations);
+        /**
+         * Create session: Map<String <registrationId >, ModelClient>
+         * Add Model (Entity) for client (from registration & observe) by registration.getId
+         * Remove from sessions Model by enpPoint
+         * !! Update / add information based on query results later
+         */
+
+        ModelClient modelClient = lwM2mInMemorySecurityStore.replaceNewRegistration(lwServer, registration, this);
+        if (modelClient != null) {
+            setModelClient(lwServer, registration, modelClient);
+        }
+
+        /**
+         * Get urls resources device only possible Observerable === or atrr or telemetry
+         * Not Observe without  or atrr or telemetry
+         */
+
+        /**
+         * set observation fromSessionInfoProto
+         */
+
+        /**
+         * upgrade attr/telemetry to thingsboard -> device
+         */
+
+        /**
+         * start observe to thingsboard -> device
+         */
+    }
+
+    public void updatedReg(LeshanServer lwServer, Registration registration) {
+        String endpointId = registration.getEndpoint();
+//        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
         String lwm2mVersion = registration.getLwM2mVersion();
-//        lwM2MTransportRequest.doPutResource(lwServer, registration, 1, 0, 1, "400");
-//        log.info("Received endpoint registration \ncontext: {}", context);
-        log.info("[{}] [{}] Received endpoint registration version event", endPoint, lwm2mVersion);
-//        this.getObserve(lwServer, registration, new ObserveRequest(1));
-//        this.getObserve(lwServer, registration, new ObserveRequest(3));
-//        this.getObserve(lwServer, registration, new ObserveRequest(6));
-        getStartObsrerveObjects(lwServer, registration);
-//        log.info("[{}] Received endpoint registration previousObsersations", previousObsersations);
-//        ModelClient modelClient = getClientModelWithValue(lwServer, registration);
-//        setCancelObservationObjects(lwServer, registration);
-//        ModelClient modelClient = getClientModelWithValue(lwServer, registration);
-//        String endpointId = registration.getEndpoint();
+        setCancelAllObservation(lwServer, registration);
+        Collection<SecurityInfo> securityInfos = lwM2mInMemorySecurityStore.getAll();
+        log.info("[{}]Received endpoint updated registration version event (next observe1), \nregistration.getId(): {}", endpointId, registration.getId());
+
+//        ModelClient modelClient = context.getSessions().get(registration.getEndpoint());
+//        ModelClient modelClient = lwM2mInMemorySecurityStore.getByModelClient(registration.getEndpoint());
+//        setModelClient(lwServer, registration, modelClient);
+
+//        Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
+//        log.info("[{}] [{}] Received endpoint observations updatedReg", registration.getEndpoint(), observations);
+
+//        getObservResource(lwServer, registration);
+
 //        ReadResultAttrTel readResultAttrTel = doGetAttributsTelemetryObserve(lwServer, endpointId);
 //        processDevicePublish(readResultAttrTel.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
 //        processDevicePublish(readResultAttrTel.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
-//        startTriggerServer(lwServer, endPoint);
     }
+
+    public void unReg(Registration registration, Collection<Observation> observations) {
+//        SecurityInfo securityInfo = lwM2mInMemorySecurityStore.remove(registration, false);
+        lwM2mInMemorySecurityStore.setRemoveSessions (registration.getId());
+        lwM2mInMemorySecurityStore.remove();
+        log.info("[{}] Received endpoint un registration version event, registration.getId(): {}", registration.getEndpoint(), registration.getId());
+    }
+
+    public void onSleepingDev(Registration registration) {
+        String endpointId = registration.getEndpoint();
+        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
+        String lwm2mVersion = registration.getLwM2mVersion();
+        log.info("[{}] [{}] Received endpoint Sleeping version event", endpointId, lwm2mVersion);
+        //TODO: associate endpointId with device information.
+    }
+
+    public void onAwakeDev(Registration registration) {
+        String endpointId = registration.getEndpoint();
+        String lwm2mVersion = registration.getLwM2mVersion();
+        log.info("[{}] [{}] Received endpoint Awake version event", endpointId, lwm2mVersion);
+        //TODO: associate endpointId with device information.
+    }
+
+    private void setModelClient(LeshanServer lwServer, Registration registration, ModelClient modelClient) {
+        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+            String[] objects = url.getUrl().split("/");
+            if (objects.length == 3) {
+                int objectId = Integer.parseInt(objects[1]);
+                modelClient.addPendingRequests((Integer) objectId);
+            }
+        });
+        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+            String[] objects = url.getUrl().split("/");
+            if (objects.length == 3) {
+                String target = "/" + objects[1];
+//                log.info("22) setModelClient: objectId {}", target);
+                this.sendAllRequest(lwServer, registration, target, GET_TYPE_OPER_OBSERVE, null, modelClient, null);
+            }
+        });
+    }
+
+    public void sendAllRequest(LeshanServer lwServer, Registration registration, String target, String typeOper, String contentFormatParam, ModelClient modelClient, Observation observation) {
+        lwM2MTransportRequest.sendAllRequest(lwServer, registration, target, GET_TYPE_OPER_OBSERVE, null, modelClient, null);
+    }
+
+    @SneakyThrows
+    public void getAttrTelemetryObserveFromModel(LeshanServer lwServer, String clientEndpoint) {
+        log.info("51) etAttrTelemetryObserveFromModel clientEndpoint: {}", clientEndpoint);
+    }
+
+    private void cancelAllObservation(LeshanServer lwServer, Registration registration) {
+        /**
+         * cancel observation : active way
+         * forech HashMap observe response
+         *
+         */
+
+        Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
+        observations.forEach(observation -> {
+            CancelObservationRequest request = new CancelObservationRequest((observation));
+        });
+
+//
+//                });
+//        Observation observation = observeResponse.getObservation();
+//        CancelObservationResponse cancelResponse = lwServer.send(registration, new CancelObservationRequest(observation));
+//        log.info("cancelResponse: {}", cancelResponse);
+        /**
+         * active cancellation does not remove observation from store : it should be done manually using
+         */
+//        lwServer.getObservationService().cancelObservation(observation);
+    }
+
+    private void getStartObsrerveObjects(LeshanServer lwServer, Registration registration) {
+        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+            String[] objects = url.getUrl().split("/");
+            if (objects.length > 2) {
+                int objectId = Integer.parseInt(objects[1]);
+                new ObserveRequest(objectId, 0);
+//                lwM2MTransportRequest.sendRequest(lwServer, registration, new ObserveRequest(objectId));
+                log.info("9) getStartObsrerveObjects: do \n objectId: {}", objectId);
+//                if (objectId != 1 && objectId !=6) {
+//                    DiscoverRequest request = new DiscoverRequest(objectId);
+////                    ObserveRequest request = new ObserveRequest(objectId);
+//                    LwM2mResponse oResponse = lwM2MTransportRequest.sendRequest(lwServer, registration, request);
+                LwM2mResponse response = lwM2MTransportRequest.doGet(lwServer, registration, "/" + objectId, GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
+
+                log.info("10) getStartObsrerveObjects: \n objectId: {} \n oRequest : {}", objectId, response);
+//                }
+
+            }
+        });
+    }
+
 
     private <T> TransportServiceCallback<Void> getPubAckCallback(final int msgId, final T msg) {
         return new TransportServiceCallback<Void>() {
@@ -111,7 +238,8 @@ public class LwM2MTransportService {
 
     private TransportProtos.SessionInfoProto getValidateSessionInfo(String endpointId) {
         TransportProtos.SessionInfoProto sessionInfo = null;
-        TransportProtos.ValidateDeviceCredentialsResponseMsg msg = context.getSessions().get(endpointId);
+//        TransportProtos.ValidateDeviceCredentialsResponseMsg msg = context.getSessions().get(endpointId).getCredentialsResponse();
+        TransportProtos.ValidateDeviceCredentialsResponseMsg msg = lwM2mInMemorySecurityStore.getByModelClient(endpointId, null).getCredentialsResponse();
         if (msg == null || msg.getDeviceInfo() == null) {
             log.warn("[{}] [{}]", endpointId, CONNECTION_REFUSED_NOT_AUTHORIZED.toString());
         } else {
@@ -132,61 +260,24 @@ public class LwM2MTransportService {
         return sessionInfo;
     }
 
-    public void updatedReg(LeshanServer lwServer, Registration registration) {
-        String endpointId = registration.getEndpoint();
-//        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
-        String lwm2mVersion = registration.getLwM2mVersion();
-        log.info("[{}] [{}] Received endpoint updated registration version event (next observe1)", endpointId, lwm2mVersion);
+//    private ObserveResponse setObservResource(LeshanServer lwServer, Registration registration, Integer objectId, Integer instanceId, Integer resourceId) {
+//        log.info("Endpoint: [{}] Object: [{}] Instnce: [{}] Resoutce: [{}] Received endpoint ObserveResponse", registration.getEndpoint(), objectId, instanceId, resourceId);
+//
+//        ObserveResponse observeResponse = null;
+//        // observe device timezone
+//        observeResponse = (ObserveResponse) this.getObserve(lwServer, registration, new ObserveRequest(objectId, instanceId, resourceId));
+//        Observation observation = observeResponse.getObservation();
 //        Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
-//        log.info("[{}] [{}] Received endpoint observations updatedReg", registration.getEndpoint(), observations);
-
-//        getObservResource(lwServer, registration);
-
-//        ReadResultAttrTel readResultAttrTel = doGetAttributsTelemetryObserve(lwServer, endpointId);
-//        processDevicePublish(readResultAttrTel.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
-//        processDevicePublish(readResultAttrTel.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
-    }
-
-    public void unReg(Registration registration) {
-        String endpointId = registration.getEndpoint();
-        log.info("[{}] Received endpoint un registration version event", endpointId);
-        lwM2mInMemorySecurityStore.remove(endpointId, false);
-        context.getSessions().remove(endpointId);
-    }
-
-    public void onSleepingDev(Registration registration) {
-        String endpointId = registration.getEndpoint();
-        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
-        String lwm2mVersion = registration.getLwM2mVersion();
-        log.info("[{}] [{}] Received endpoint Sleeping version event", endpointId, lwm2mVersion);
-        //TODO: associate endpointId with device information.
-    }
-
-    public void onAwakeDev(Registration registration) {
-        String endpointId = registration.getEndpoint();
-        String lwm2mVersion = registration.getLwM2mVersion();
-        log.info("[{}] [{}] Received endpoint Awake version event", endpointId, lwm2mVersion);
-        //TODO: associate endpointId with device information.
-    }
-
-    private ObserveResponse setObservResource(LeshanServer lwServer, Registration registration, Integer objectId, Integer instanceId, Integer resourceId) {
-        log.info("Endpoint: [{}] Object: [{}] Instnce: [{}] Resoutce: [{}] Received endpoint ObserveResponse", registration.getEndpoint(), objectId, instanceId, resourceId);
-
-        ObserveResponse observeResponse = null;
-        // observe device timezone
-        observeResponse = (ObserveResponse) this.getObserve(lwServer, registration, new ObserveRequest(objectId, instanceId, resourceId));
-        Observation observation = observeResponse.getObservation();
-        Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
-        LwM2mSingleResource resource = (LwM2mSingleResource) observeResponse.getContent();
-        Object value = (resource != null) ? resource.getValue() : null;
-        LwM2mPath path = (observeResponse.getObservation() != null) ? observeResponse.getObservation().getPath() : null;
-        log.info("Endpoint: [{}] Path: [{}] Value: [{}] Received endpoint ObserveResponse", registration.getEndpoint(), path, value);
-//            log.info("[{}] [{}] Received endpoint observation", registration.getEndpoint(), observation);
-//            log.info("[{}] [{}] Received endpoint observations", registration.getEndpoint(), observations);
-
-
-        return observeResponse;
-    }
+//        LwM2mSingleResource resource = (LwM2mSingleResource) observeResponse.getContent();
+//        Object value = (resource != null) ? resource.getValue() : null;
+//        LwM2mPath path = (observeResponse.getObservation() != null) ? observeResponse.getObservation().getPath() : null;
+//        log.info("Endpoint: [{}] Path: [{}] Value: [{}] Received endpoint ObserveResponse", registration.getEndpoint(), path, value);
+////            log.info("[{}] [{}] Received endpoint observation", registration.getEndpoint(), observation);
+////            log.info("[{}] [{}] Received endpoint observations", registration.getEndpoint(), observations);
+//
+//
+//        return observeResponse;
+//    }
 
     private ObserveResponse setObservInstance(LeshanServer lwServer, Registration registration, Integer objectId, Integer instanceId, Integer resourceId) {
         log.info("Endpoint: [{}] Object: [{}] Instnce: [{}] Resoutce: [{}] Received endpoint ObserveResponse", registration.getEndpoint(), objectId, instanceId, resourceId);
@@ -208,81 +299,100 @@ public class LwM2MTransportService {
         return observeResponse;
     }
 
-    private void setCancelObservationObjects(LeshanServer lwServer, Registration registration) {
-        if (registration != null) {
-            Arrays.stream(registration.getObjectLinks()).forEach(url -> {
-                String[] objects = url.getUrl().split("/");
-                if (objects.length > 2) {
-                    String target = "/" + objects[1];
-                    lwServer.getObservationService().cancelObservations(registration, target);
-                }
-            });
-        }
+    public void setCancelAllObservation(LeshanServer lwServer, Registration registration) {
+        log.info("33)  setCancelObservationObjects endpoint: {}", registration.getEndpoint());
+        int cancel = lwServer.getObservationService().cancelObservations(registration);
+        Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
+//        if (registration != null) {
+//            observations.forEach(observation -> {
+        log.info("33_1)  setCancelObservationObjects endpoint: {} cancel: {}", registration.getEndpoint(), cancel);
+//                this.sendAllRequest(lwServer, registration, observation.getPath().toString(), POST_TYPE_OPER_OBSERVE_CANCEL, null, null, observation);
+//                log.info("33_2)  setCancelObservationObjects endpoint: {}", registration.getEndpoint());
+//                lwServer.getObservationService().cancelObservation(observation);
+//                log.info("33_3)  setCancelObservationObjects endpoint: {}", registration.getEndpoint());
+//                /**
+//                 * active cancellation does not remove observation from store : it should be done manually using
+//                 */
+//                lwServer.getObservationService().cancelObservations(registration, observation.getPath().toString());
+//                log.info("33_4)  setCancelObservationObjects endpoint: {}/\n target {}", registration.getEndpoint(), observation.getPath().toString());
+//            });
+//        }
+//        if (registration != null) {
+////            CountDownLatch cancelLatch = new CountDownLatch(1);
+//            Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+//                String[] objects = url.getUrl().split("/");
+//                if (objects.length > 2) {
+//                    String target = "/" + objects[1];
+//
+////                    CancelObservationResponse cancelResponse = lwServer.send(registration, new CancelObservationRequest(observation));
+////                    log.info("cancelResponse: {}", cancelResponse);
+//                    /**
+//                     * active cancellation does not remove observation from store : it should be done manually using
+//                     */
+//                    lwServer.getObservationService().cancelObservations(registration, target);
+//                    log.info("33_1)  setCancelObservationObjects endpoint: {}/\n target {}", registration.getEndpoint(), target);
+//                }
+//            });
+//            cancelLatch.countDown();
+//            try {
+//                cancelLatch.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
+//            } catch (InterruptedException e) {
+//
+//            }
+//        }
     }
 
-    private void getStartObsrerveObjects(LeshanServer lwServer, Registration registration) {
-        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
-            String[] objects = url.getUrl().split("/");
-            if (objects.length > 2) {
-                int objectId = Integer.parseInt(objects[1]);
-                log.info("1) getStartObsrerveObjects  start do: \n objectId : {}", objectId);
-                this.getObserveObject(lwServer, registration, objectId);
-                log.info("2) getStartObsrerveObjects  start after: \n objectId : {}", objectId);
-            }
-        });
-    }
-
-    private ModelClient getClientModelWithValue(LeshanServer lwServer, Registration registration) {
-        log.info("1) getClientModelWithValue  start: \n registration: {}", registration);
-        ModelClient modelClient = new ModelClient(registration.getAdditionalRegistrationAttributes());
-        String credentials = (context.getSessions() != null && context.getSessions().size() > 0) ? context.getSessions().get(registration.getEndpoint()).getCredentialsBody() : null;
-        JsonObject objectMsg = (credentials != null) ? adaptor.validateJson(credentials) : null;
-        JsonArray clientObserves = (objectMsg != null &&
-                !objectMsg.isJsonNull() &&
-                objectMsg.has("observe") &&
-                objectMsg.get("observe").isJsonArray() &&
-                !objectMsg.get("observe").isJsonNull()) ? objectMsg.get("observe").getAsJsonArray() : null;
-
-        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
-            String[] objects = url.getUrl().split("/");
-            try {
-                if (objects.length > 2) {
-                    int objectId = Integer.parseInt(objects[1]);
-                    log.info("2) getClientModelWithValue  start: \n observeResponse do");
-                    ObserveResponse observeResponse = (ObserveResponse) this.getObserve(lwServer, registration, new ObserveRequest(objectId));
-                    log.info("3) getClientModelWithValue  start: \n observeResponse after");
-                    LwM2mNode content = observeResponse.getContent();
-
-                    Map<Integer, LwM2mObjectInstance> instances = ((LwM2mObject) content).getInstances();
-                    ObjectModel objectModel = lwServer.getModelProvider().getObjectModel(registration).getObjectModel(objectId);
-                    if (objectModel != null) {
-                        ModelObject modelObject = new ModelObject(objectModel.id, instances, objectModel, null);
-                        modelClient.getModelObjects().add(modelObject);
-                        if (clientObserves != null && clientObserves.size() > 0) {
-                            clientObserves.forEach(val -> {
-                                if (Integer.valueOf(val.getAsString().split("/")[1]) == objectId && val.getAsString().split("/").length > 3) {
-                                    modelObject.getObjectObserves().add(val.getAsString());
-                                }
-                            });
-                        }
-                    } else {
-                        log.error("[{}] - error getModelProvider", objects[1]);
-                    }
-//                      cancel observation : active way
-                    Observation observation = observeResponse.getObservation();
-                    CancelObservationResponse cancelResponse = lwServer.send(registration, new CancelObservationRequest(observation));
-                    log.info("cancelResponse: {}", cancelResponse);
-                    /**
-                     * active cancellation does not remove observation from store : it should be done manually using
-                     */
-                    lwServer.getObservationService().cancelObservation(observation);
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-        return modelClient;
-    }
+//    private ModelClient getClientModelWithValue(LeshanServer lwServer, Registration registration) {
+//        log.info("1) getClientModelWithValue  start: \n registration: {}", registration);
+//        ModelClient modelClient = new ModelClient(registration.getAdditionalRegistrationAttributes());
+//        String credentials = (context.getSessions() != null && context.getSessions().size() > 0) ? context.getSessions().get(registration.getEndpoint()).getCredentialsBody() : null;
+//        JsonObject objectMsg = (credentials != null) ? adaptor.validateJson(credentials) : null;
+//        JsonArray clientObserves = (objectMsg != null &&
+//                !objectMsg.isJsonNull() &&
+//                objectMsg.has("observe") &&
+//                objectMsg.get("observe").isJsonArray() &&
+//                !objectMsg.get("observe").isJsonNull()) ? objectMsg.get("observe").getAsJsonArray() : null;
+//
+//        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+//            String[] objects = url.getUrl().split("/");
+//            try {
+//                if (objects.length > 2) {
+//                    int objectId = Integer.parseInt(objects[1]);
+//                    log.info("2) getClientModelWithValue  start: \n observeResponse do");
+//                    ObserveResponse observeResponse = (ObserveResponse) this.getObserve(lwServer, registration, new ObserveRequest(objectId));
+//                    log.info("3) getClientModelWithValue  start: \n observeResponse after");
+//                    LwM2mNode content = observeResponse.getContent();
+//
+//                    Map<Integer, LwM2mObjectInstance> instances = ((LwM2mObject) content).getInstances();
+//                    ObjectModel objectModel = lwServer.getModelProvider().getObjectModel(registration).getObjectModel(objectId);
+//                    if (objectModel != null) {
+//                        ModelObject modelObject = new ModelObject(objectModel.id, instances, objectModel, null);
+//                        modelClient.getModelObjects().add(modelObject);
+//                        if (clientObserves != null && clientObserves.size() > 0) {
+//                            clientObserves.forEach(val -> {
+//                                if (Integer.valueOf(val.getAsString().split("/")[1]) == objectId && val.getAsString().split("/").length > 3) {
+//                                    modelObject.getObjectObserves().add(val.getAsString());
+//                                }
+//                            });
+//                        }
+//                    } else {
+//                        log.error("[{}] - error getModelProvider", objects[1]);
+//                    }
+////                      cancel observation : active way
+//                    Observation observation = observeResponse.getObservation();
+//                    CancelObservationResponse cancelResponse = lwServer.send(registration, new CancelObservationRequest(observation));
+//                    log.info("cancelResponse: {}", cancelResponse);
+//                    /**
+//                     * active cancellation does not remove observation from store : it should be done manually using
+//                     */
+//                    lwServer.getObservationService().cancelObservation(observation);
+//                }
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        });
+//        return modelClient;
+//    }
 
     private LwM2mNode getLvM2mNodeToObject(LwM2mNode content) {
         if (content instanceof LwM2mObject) {
@@ -300,7 +410,10 @@ public class LwM2MTransportService {
     public void observOnResponse(LeshanServer lhServer, Observation observation, Registration registration, ObserveResponse response) {
         if (response.getContent() instanceof LwM2mObject) {
             LwM2mObject content = (LwM2mObject) response.getContent();
-            log.info("Endpoint: [{}] \nobject: {} \n observation: {} \n registration: {}", registration.getEndpoint(), content.getId(), observation, registration);
+            log.info("observOnResponse: \nEndpoint: [{}] object: {} \n observation: {} \n content: {}", registration.getEndpoint(), content.getId(), observation, content);
+            String target = "/" + content.getId();
+            log.info("observOnResponseCancel: \n target {}", target);
+////            lhServer.getObservationService().cancelObservations(registration, target);
         } else if (response.getContent() instanceof LwM2mObjectInstance) {
             LwM2mObjectInstance content = (LwM2mObjectInstance) response.getContent();
             log.info("[{}] \ninstanve: {}", registration.getEndpoint(), content.getId());
@@ -344,6 +457,7 @@ public class LwM2MTransportService {
 //    public Registration getRegistration(LeshanServer lwServer, String clientEndpoint) {
 //        return lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
 //    }
+
 
     @SneakyThrows
     public ReadResultAttrTel doGetAttributsTelemetryObserve(LeshanServer lwServer, String clientEndpoint) {
@@ -406,7 +520,7 @@ public class LwM2MTransportService {
         });
         lwServer.getModelProvider().getObjectModel(registration).getObjectModels().forEach(om -> {
             String idObj = String.valueOf(om.id);
-            LwM2mResponse cResponse = lwM2MTransportRequest.doGet(lwServer, clientEndpoint, "/" + idObj, GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
+            LwM2mResponse cResponse = lwM2MTransportRequest.doGet(lwServer, registration, "/" + idObj, GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
             log.info("GET cResponse: {} \n target: {}", cResponse, idObj);
             if (cResponse != null) {
                 LwM2mNode content = ((ReadResponse) cResponse).getContent();
@@ -448,22 +562,22 @@ public class LwM2MTransportService {
     /**
      * Trigger
      */
-    private void startTriggerServer(LeshanServer lwServer, String endPoint) {
-        LwM2mResponse cResponse = this.lwM2MTransportRequest.doGet(lwServer, endPoint, "/1", GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
+    private void startTriggerServer(LeshanServer lwServer, Registration registration) {
+        LwM2mResponse cResponse = this.lwM2MTransportRequest.doGet(lwServer, registration, "/1", GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
         log.info("cResponse1: [{}]", cResponse);
         String target = "/1/0/8";
-        cResponse = doTriggerServer(lwServer, endPoint, target, null);
+        cResponse = doTriggerServer(lwServer, registration, target, null);
         log.info("cResponse2: [{}]", cResponse);
         if (cResponse == null || cResponse.getCode().getCode() == 500) {
             target = "/3/0/5";
-            cResponse = doTriggerServer(lwServer, endPoint, target, null);
+            cResponse = doTriggerServer(lwServer, registration, target, null);
             log.info("cResponse3: [{}]", cResponse);
         }
     }
 
-    public LwM2mResponse doTriggerServer(LeshanServer lwServer, String clientEndpoint, String target, String param) {
+    public LwM2mResponse doTriggerServer(LeshanServer lwServer, Registration registration, String target, String param) {
         param = param != null ? param : "";
-        return lwM2MTransportRequest.doPost(lwServer, clientEndpoint, target, POST_TYPE_OPER_EXECUTE, ContentFormat.TLV.getName(), param);
+        return lwM2MTransportRequest.doPost(lwServer, registration.getEndpoint(), target, POST_TYPE_OPER_EXECUTE, ContentFormat.TLV.getName(), param);
     }
 
     private String getResourceValueToString(LwM2mResource resource) {
@@ -476,45 +590,32 @@ public class LwM2MTransportService {
         return String.valueOf(resValue);
     }
 
-    public void getObserveObject(LeshanServer lwServer, Registration registration, int objectId) {
-        lwServer.send(registration, new ObserveRequest(objectId), new ResponseCallback() {
-            @Override
-            public void onResponse(LwM2mResponse response) {
-                log.info("5)getObserveObject: \nresponse: {}", response);
-            }
-        }, new ErrorCallback() {
-            @Override
-            public void onError(Exception e) {
-                log.error("6)getObserveObject: \nendPoint: {} \nrerr: {}", registration.getEndpoint(), e.toString());
-            }
-        });
-    }
-    public void getObserveObject1(LeshanServer lwServer, Registration registration, int objectId) {
-        CountDownLatch respLatch = new CountDownLatch(1);
-        if (registration != null) {
-            log.info("2) getObserve  start: \n observeResponse do");
-            lwServer.send(registration, new ObserveRequest(objectId), (ResponseCallback) response -> {
-                log.info("5) getObserve: \nresponse: {}", response);
-                respLatch.countDown();
-            }, e -> {
-                log.error("6) getCObservationObjectsTest: \nssh lwm2mError observe response: {}", e.toString());
-                respLatch.countDown();
-            });
-            try {
-                respLatch.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-
-            }
-        }
-    }
+//    public LwM2mResponse getObserveObject1(LeshanServer lwServer, Registration registration, int objectId) {
+//        final LwM2mResponse[] responseRez = new LwM2mResponse[1];
+//        CountDownLatch respLatch = new CountDownLatch(1);
+//        if (registration != null) {
+//            log.info("2) getObserve  start: \n observeResponse do");
+//            lwServer.send(registration, new ObserveRequest(objectId), (ResponseCallback) response -> {
+//                log.info("5) getObserve: \nresponse: {}", response);
+//                respLatch.countDown();
+//            }, e -> {
+//                log.error("6) getCObservationObjectsTest: \nssh lwm2mError observe response: {}", e.toString());
+//                respLatch.countDown();
+//            });
+//            try {
+//                respLatch.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
+//            } catch (InterruptedException e) {
+//
+//            }
+//        }
+//        return responseRez[0];
+//    }
 
     public LwM2mResponse getObserve(LeshanServer lwServer, Registration registration, ObserveRequest observeRequest) {
         final LwM2mResponse[] responseRez = new LwM2mResponse[1];
         CountDownLatch respLatch = new CountDownLatch(1);
         if (registration != null) {
-            log.info("2) getObserve  start: \n observeResponse do");
             lwServer.send(registration, observeRequest, (ResponseCallback) response -> {
-                log.info("5) getObserve: \nresponse: {}", response);
                 responseRez[0] = response;
                 respLatch.countDown();
             }, e -> {

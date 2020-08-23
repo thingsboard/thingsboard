@@ -15,27 +15,27 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.client;
 
-import lombok.Data;
-import org.eclipse.leshan.core.model.ObjectModel;
-import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 
-import java.util.HashSet;
-import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
+import org.eclipse.leshan.core.node.LwM2mObjectInstance;
+import org.eclipse.leshan.core.node.LwM2mResource;
+
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Data
-public class ModelObject {
-    /**
-     * model one on all instance
-     * for each instance only id resource with parameters of resources (observe, attr, telemetry)
-     */
-    private ObjectModel objectModel;
-    private Map<Integer, LwM2mObjectInstance> instances;
 
-    public ModelObject(ObjectModel objectModel, Map<Integer, LwM2mObjectInstance> instances) {
-        this.objectModel = objectModel;
-        this.instances = instances;
+public class ModelInstance extends LwM2mObjectInstance {
+    /**
+     * Map<idResource, boolean[observe, attr, telemetry]>
+     */
+    @Getter
+    @Setter
+    private Map<Integer, boolean[]> paramResources;
+
+    public ModelInstance(Collection<LwM2mResource> resources, Map<Integer, boolean[]> paramResources) {
+        super(resources);
+        this.paramResources = (paramResources != null && paramResources.size()>0) ? paramResources : new ConcurrentHashMap<Integer, boolean[]>();
     }
 }

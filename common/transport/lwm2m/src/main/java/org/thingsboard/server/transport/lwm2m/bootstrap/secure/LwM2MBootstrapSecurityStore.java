@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 @Slf4j
 @Component("LwM2MBootstrapSecurityStore")
@@ -57,6 +58,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     @Override
     public List<SecurityInfo> getAllByEndpoint(String endPoint) {
         String endPointKey = endPoint;
+//        CountDownLatch latch = new CountDownLatch(1);
         ReadResultSecurityStore store = lwM2MGetSecurityInfo.getSecurityInfo(endPointKey, TypeServer.BOOTSTRAP);
         if (store.getBootstrapJson() != null) {
             /** add value to store  from BootstrapJson */

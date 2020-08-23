@@ -14,57 +14,179 @@
  * limitations under the License.
  */
 package org.thingsboard.server.transport.lwm2m.server.secure;
+
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.server.californium.LeshanServer;
+import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.InMemorySecurityStore;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
+import org.eclipse.leshan.server.security.SecurityStoreListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MGetSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportService;
+import org.thingsboard.server.transport.lwm2m.server.client.ModelClient;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
-import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
+
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
 
 @Slf4j
 @Component("LwM2mInMemorySecurityStore")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
+    // lock for the two maps
+    protected final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    protected final Lock readLock = readWriteLock.readLock();
+    protected final Lock writeLock = readWriteLock.writeLock();
+    private final boolean infosAreCompromised = false;
+
+    protected Map<String /** registrationId */, ModelClient> sessions = new ConcurrentHashMap<>();
+    protected Set<String> removeSessions = ConcurrentHashMap.newKeySet();
+    private SecurityStoreListener listener;
 
     @Autowired
     LwM2MGetSecurityInfo lwM2MGetSecurityInfo;
 
     @Override
-    public SecurityInfo getByEndpoint(String endpoint) {
-        SecurityInfo info = securityByEp.get(endpoint);
-        if (info == null) {
-            info = addNew(endpoint);
+    public SecurityInfo getByEndpoint(String endPoint) {
+        readLock.lock();
+        try {
+            String integrationId = getByIntegrationId(endPoint, null);
+            return (integrationId != null) ? sessions.get(integrationId).getInfo() : add(endPoint);
+        } finally {
+            readLock.unlock();
         }
-        return info;
     }
 
     @Override
     public SecurityInfo getByIdentity(String identity) {
-        SecurityInfo info = securityByIdentity.get(identity);
-        if (info == null) {
-            info = addNew(identity);
+        readLock.lock();
+        try {
+            String integrationId = getByIntegrationId(null, identity);
+            return (integrationId != null) ? sessions.get(integrationId).getInfo() : add(identity);
+        } finally {
+            readLock.unlock();
         }
-        return info;
     }
 
-    private SecurityInfo addNew(String identity) {
+    @Override
+    public Collection<SecurityInfo> getAll() {
+        readLock.lock();
+        try {
+            return Collections.unmodifiableCollection(this.sessions.entrySet().stream().map(model -> model.getValue().getInfo()).collect(Collectors.toList()));
+        } finally {
+            readLock.unlock();
+        }
+    }
+
+    public void setRemoveSessions(String registrationId) {
+        removeSessions.add(registrationId);
+    }
+
+    public void remove() {
+        try {
+            removeSessions.stream().forEach(regId -> {
+                removeOne(regId);
+                removeSessions.remove(regId);
+            });
+        } finally {
+        }
+    }
+
+    private SecurityInfo removeOne(String registrationId) {
+        writeLock.lock();
+        try {
+            ModelClient modelClient = (sessions.get(registrationId) != null) ? sessions.get(registrationId) : null;
+            SecurityInfo info = null;
+            if (modelClient != null) {
+                info = modelClient.getInfo();
+                if (listener != null) {
+                    listener.securityInfoRemoved(infosAreCompromised, info);
+
+                }
+                sessions.remove(registrationId);
+            }
+            return info;
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    @Override
+    public void setListener(SecurityStoreListener listener) {
+        this.listener = listener;
+    }
+
+    public ModelClient getByModelClient(String endPoint, String identity) {
+        List<String> integrationIds = this.sessions.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndPoint())).map(model -> model.getKey()).collect(Collectors.toList());
+        Map.Entry<String, ModelClient> modelClients = (endPoint != null) ?
+                this.sessions.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndPoint())).findAny().orElse(null) :
+                this.sessions.entrySet().stream().filter(model -> identity.equals(model.getValue().getIdentity())).findAny().orElse(null);
+        return (modelClients != null) ? modelClients.getValue() : null;
+    }
+
+    private String getByIntegrationId(String endPoint, String identity) {
+        List<String> integrationIds = (endPoint != null) ?
+                this.sessions.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndPoint())).map(model -> model.getKey()).collect(Collectors.toList()) :
+                this.sessions.entrySet().stream().filter(model -> identity.equals(model.getValue().getIdentity())).map(model -> model.getKey()).collect(Collectors.toList());
+        return (integrationIds != null && integrationIds.size() > 0) ? integrationIds.get(0) : null;
+    }
+
+    private SecurityInfo getByModelClientSecurityInfo(String endPoint, String identity) {
+        ModelClient modelClient = getByModelClient(endPoint, identity);
+        return (modelClient != null) ? modelClient.getInfo() : null;
+    }
+
+    private SecurityInfo add(String identity) {
         ReadResultSecurityStore store = lwM2MGetSecurityInfo.getSecurityInfo(identity, TypeServer.CLIENT);
         if (store.getSecurityInfo() != null) {
-            try {
-                add(store.getSecurityInfo());
-            } catch (NonUniqueSecurityInfoException e) {
-                log.error("[{}] FAILED registration endpointId: [{}]", identity, e.getMessage());
+            //                add(store.getSecurityInfo());
+            if (store.getSecurityMode() < DEFAULT_MODE.code) {
+                String endpoint = store.getSecurityInfo().getEndpoint();
+                sessions.put(endpoint, new ModelClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getMsg(), null, null));
             }
-        }
-        else {
-            if (store.getSecurityMode() != NO_SEC.code) log.error("Registration failed: FORBIDDEN, endpointId: [{}]", identity);
+        } else {
+            if (store.getSecurityMode() == NO_SEC.code)
+                sessions.put(identity, new ModelClient(identity, null, null, store.getMsg(), null, null));
+            else log.error("Registration failed: FORBIDDEN, endpointId: [{}]", identity);
         }
         return store.getSecurityInfo();
     }
+
+    @SneakyThrows
+    public ModelClient replaceNewRegistration(LeshanServer lwServer, Registration registration, LwM2MTransportService transportService) {
+        writeLock.lock();
+        try {
+            ModelClient modelClient = null;
+            if (this.sessions.get(registration.getEndpoint()) == null) {
+                SecurityInfo info = (registration.getIdentity().isPSK()) ? getByIdentity(registration.getIdentity().getPskIdentity()) :
+                        getByEndpoint(registration.getEndpoint());
+            }
+            if (this.sessions.get(registration.getEndpoint()) != null &&
+                    this.sessions.get(registration.getEndpoint()).clone() != null) {
+                modelClient = (ModelClient) this.sessions.get(registration.getEndpoint()).clone();
+                modelClient.setRegistrationParam(lwServer, registration);
+                modelClient.setAttributes(registration.getAdditionalRegistrationAttributes());
+                modelClient.setTransportService(transportService);
+                this.sessions.put(registration.getId(), modelClient);
+                this.sessions.remove(registration.getEndpoint());
+            }
+            return modelClient;
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+
 }
