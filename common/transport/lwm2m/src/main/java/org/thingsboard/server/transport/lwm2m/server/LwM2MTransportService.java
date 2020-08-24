@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,7 +26,6 @@ import org.eclipse.leshan.core.request.*;
 import org.eclipse.leshan.core.response.*;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
-import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -37,6 +36,7 @@ import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 import org.thingsboard.server.transport.lwm2m.server.client.ModelClient;
+import org.thingsboard.server.transport.lwm2m.server.client.ModelObject;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResultAttrTel;
 
@@ -111,27 +111,14 @@ public class LwM2MTransportService {
     public void updatedReg(LeshanServer lwServer, Registration registration) {
         String endpointId = registration.getEndpoint();
 //        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
-        String lwm2mVersion = registration.getLwM2mVersion();
-        setCancelAllObservation(lwServer, registration);
+//        String lwm2mVersion = registration.getLwM2mVersion();
+//        setCancelAllObservation(lwServer, registration);
         log.info("[{}]Received endpoint updated registration version event (next observe1), \nregistration.getId(): {}", endpointId, registration.getId());
-
-//        ModelClient modelClient = context.getSessions().get(registration.getEndpoint());
-//        ModelClient modelClient = lwM2mInMemorySecurityStore.getByModelClient(registration.getEndpoint());
-//        setModelClient(lwServer, registration, modelClient);
-
-//        Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
-//        log.info("[{}] [{}] Received endpoint observations updatedReg", registration.getEndpoint(), observations);
-
-//        getObservResource(lwServer, registration);
-
-//        ReadResultAttrTel readResultAttrTel = doGetAttributsTelemetryObserve(lwServer, endpointId);
-//        processDevicePublish(readResultAttrTel.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, endpointId);
-//        processDevicePublish(readResultAttrTel.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, endpointId);
     }
 
     public void unReg(Registration registration, Collection<Observation> observations) {
 //        SecurityInfo securityInfo = lwM2mInMemorySecurityStore.remove(registration, false);
-        lwM2mInMemorySecurityStore.setRemoveSessions (registration.getId());
+        lwM2mInMemorySecurityStore.setRemoveSessions(registration.getId());
         lwM2mInMemorySecurityStore.remove();
         log.info("[{}] Received endpoint un registration version event, registration.getId(): {}", registration.getEndpoint(), registration.getId());
     }
@@ -174,18 +161,145 @@ public class LwM2MTransportService {
     }
 
     @SneakyThrows
-    public void getAttrTelemetryObserveFromModel(LeshanServer lwServer, String integrationId) {
-        log.info("51) getAttrTelemetryObserveFromModelintegratioId: {}", integrationId);
-                String credentials = (lwM2mInMemorySecurityStore.getSessions() != null && lwM2mInMemorySecurityStore.getSessions().size() > 0) ? lwM2mInMemorySecurityStore.getSessions().get(integrationId).getCredentialsResponse().getCredentialsBody() : null;
+    public void getAttrTelemetryObserveFromModel(LeshanServer lwServer, String registrationId, ModelClient modelClient) {
+        log.info("51) getAttrTelemetryObserveFromModelintegratioId: {}", registrationId);
+        String credentials = (lwM2mInMemorySecurityStore.getSessions() != null && lwM2mInMemorySecurityStore.getSessions().size() > 0) ? lwM2mInMemorySecurityStore.getSessions().get(registrationId).getCredentialsResponse().getCredentialsBody() : null;
         JsonObject objectMsg = (credentials != null) ? adaptor.validateJson(credentials) : null;
+
+        /**
+         * Example: with pathResource (use only pathResource)
+         *{"observe":["/2/0","/2/0/0","/4/0/2"],
+         * "attribute":["/2/0/1","/3/0/9"],
+         * "telemetry":["/1/0/1","/2/0/1","/6/0/1"]}
+         */
         JsonObject clientObserveAttrTelemetry = (objectMsg != null &&
                 !objectMsg.isJsonNull() &&
-                objectMsg.has("observeAttr") &&
-                objectMsg.get("observeAttr").isJsonObject() &&
-                !objectMsg.get("observeAttr").isJsonNull()) ? objectMsg.get("observeAttr").getAsJsonObject() : null;
-        log.info("52) getAttrTelemetryObserveFromModelintegratioId: {}", clientObserveAttrTelemetry);
+                objectMsg.has(OBSERVE_ATTRIBUTE_TELEMETRY) &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonObject() &&
+                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonNull()) ? objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject() : null;
+
+        /**
+         * Add info from clientObserveAttrTelemetry(credentials) to ModelClient
+         */
+        modelClient.setClientObserveAttrTelemetry(clientObserveAttrTelemetry);
+
+        /**
+         * Client`s starting info  to  send to thingsboard
+         */
+        ReadResultAttrTel readResultAttrTel = doGetAttributsTelemetryObserve(lwServer, modelClient);
+        processDevicePublish(readResultAttrTel.getPostAttribute(), DEVICE_ATTRIBUTES_TOPIC, -1, registrationId);
+        processDevicePublish(readResultAttrTel.getPostTelemetry(), DEVICE_TELEMETRY_TOPIC, -1, registrationId);
+    }
+
+    @SneakyThrows
+    public ReadResultAttrTel doGetAttributsTelemetryObserve(LeshanServer lwServer, ModelClient modelClient) {
+        ReadResultAttrTel readResultAttrTel = new ReadResultAttrTel();
+        log.info("52) getAttrTelemetryObserve From ModelintegratioId: {}", modelClient.getClientObserveAttrTelemetry());
+        JsonArray attributes = modelClient.getClientObserveAttrTelemetry().get(ATTRIBUTE).getAsJsonArray();
+        JsonArray telemetrys = modelClient.getClientObserveAttrTelemetry().get(TELEMETRY).getAsJsonArray();
+        JsonArray observes = modelClient.getClientObserveAttrTelemetry().get(OBSERVE).getAsJsonArray();
+        Registration registration = lwServer.getRegistrationService().getByEndpoint(modelClient.getEndPoint());
+        registration.getAdditionalRegistrationAttributes().entrySet().forEach(entry -> {
+            log.info("Attributes: Key : [{}] Value : [{}]", entry.getKey(), entry.getValue());
+            readResultAttrTel.getPostAttribute().addProperty(entry.getKey(), entry.getValue());
+        });
+        setAttrTelemtryResources(attributes, modelClient, readResultAttrTel, ATTRIBUTE);
+        setAttrTelemtryResources(telemetrys, modelClient, readResultAttrTel, TELEMETRY);
+        observes.forEach(path -> {
+            if (getValidateObserve(readResultAttrTel, path.getAsString().toString()))
+                readResultAttrTel.getPostObserve().add(path.getAsString().toString());
+        });
+        return readResultAttrTel;
+    }
+
+    @SneakyThrows
+    private void setAttrTelemtryResources(JsonArray params, ModelClient modelClient, ReadResultAttrTel readResultAttrTel, String type) {
+        params.forEach(param -> {
+            String path = param.getAsString().toString();
+            String[] paths = path.split("/");
+            if (paths.length > 3) {
+                int objId = Integer.parseInt(paths[1]);
+                int insId = Integer.parseInt(paths[2]);
+                int resId = Integer.parseInt(paths[3]);
+                if (modelClient.getModelObjects().get(objId) != null) {
+                    ModelObject modelObject = modelClient.getModelObjects().get(objId);
+                    String resName = modelObject.getObjectModel().resources.get(resId).name;
+//                String attrTelName = om.name + "_" + instanceId + "_" + om.resources.get(resourceId).name;
+                    if (modelObject.getInstances().get(insId) != null) {
+                        LwM2mObjectInstance instance = modelObject.getInstances().get(insId);
+                        if (instance.getResource(resId) != null) {
+                            String resValue = (instance.getResource(resId).isMultiInstances()) ?
+                                    instance.getResource(resId).getValues().toString() :
+                                    instance.getResource(resId).getValue().toString();
+                            if (resName != null && !resName.isEmpty() && resValue != null) {
+                                switch (type) {
+                                    case ATTRIBUTE:
+                                        readResultAttrTel.getPostAttribute().addProperty(resName, resValue);
+                                        readResultAttrTel.getPathResAttrTelemetry().add(path);
+                                        break;
+                                    case TELEMETRY:
+                                        readResultAttrTel.getPostTelemetry().addProperty(resName, resValue);
+                                        readResultAttrTel.getPathResAttrTelemetry().add(path);
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private boolean getValidateObserve(ReadResultAttrTel readResultAttrTel, String path) {
+        return (Arrays.stream(readResultAttrTel.getPathResAttrTelemetry().stream().toArray()).filter(pathRes ->
+                path.equals(pathRes)).findAny().orElse(null) != null);
 
     }
+
+
+    public void processDevicePublish(JsonElement msg, String topicName, int msgId, String registrationId) {
+        TransportProtos.SessionInfoProto sessionInfo = getValidateSessionInfo(registrationId);
+        if (sessionInfo != null) {
+            try {
+                if (topicName.equals(LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC)) {
+                    TransportProtos.PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
+                    transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(msgId, postTelemetryMsg));
+                } else if (topicName.equals(LwM2MTransportHandler.DEVICE_ATTRIBUTES_TOPIC)) {
+                    TransportProtos.PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
+                    transportService.process(sessionInfo, postAttributeMsg, getPubAckCallback(msgId, postAttributeMsg));
+                }
+            } catch (AdaptorException e) {
+                log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
+                log.info("[{}] Closing current session due to invalid publish msg [{}][{}]", sessionId, topicName, msgId);
+
+            }
+        }
+    }
+
+    private TransportProtos.SessionInfoProto getValidateSessionInfo(String registrationId) {
+        TransportProtos.SessionInfoProto sessionInfo = null;
+        ModelClient modelClient = lwM2mInMemorySecurityStore.getByModelClient(registrationId);
+        TransportProtos.ValidateDeviceCredentialsResponseMsg msg = modelClient.getCredentialsResponse();
+        if (msg == null || msg.getDeviceInfo() == null) {
+            log.warn("[{}] [{}]", modelClient.getEndPoint(), CONNECTION_REFUSED_NOT_AUTHORIZED.toString());
+        } else {
+            sessionInfo = TransportProtos.SessionInfoProto.newBuilder()
+                    .setNodeId(context.getNodeId())
+                    .setSessionIdMSB(sessionId.getMostSignificantBits())
+                    .setSessionIdLSB(sessionId.getLeastSignificantBits())
+                    .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
+                    .setDeviceIdLSB(msg.getDeviceInfo().getDeviceIdLSB())
+                    .setTenantIdMSB(msg.getDeviceInfo().getTenantIdMSB())
+                    .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
+                    .setDeviceName(msg.getDeviceInfo().getDeviceName())
+                    .setDeviceType(msg.getDeviceInfo().getDeviceType())
+                    .build();
+            transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
+            log.info("[{}] Client connected!", sessionId);
+        }
+        return sessionInfo;
+    }
+
 
     private void cancelAllObservation(LeshanServer lwServer, Registration registration) {
         /**
@@ -222,7 +336,7 @@ public class LwM2MTransportService {
 //                    DiscoverRequest request = new DiscoverRequest(objectId);
 ////                    ObserveRequest request = new ObserveRequest(objectId);
 //                    LwM2mResponse oResponse = lwM2MTransportRequest.sendRequest(lwServer, registration, request);
-                LwM2mResponse response = lwM2MTransportRequest.doGet(lwServer, registration, "/" + objectId, GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
+                LwM2mResponse response = lwM2MTransportRequest.doGet(lwServer, registration, "/" + objectId, LwM2MTransportHandler.GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
 
                 log.info("10) getStartObsrerveObjects: \n objectId: {} \n oRequest : {}", objectId, response);
 //                }
@@ -246,29 +360,6 @@ public class LwM2MTransportService {
         };
     }
 
-    private TransportProtos.SessionInfoProto getValidateSessionInfo(String endpointId) {
-        TransportProtos.SessionInfoProto sessionInfo = null;
-//        TransportProtos.ValidateDeviceCredentialsResponseMsg msg = context.getSessions().get(endpointId).getCredentialsResponse();
-        TransportProtos.ValidateDeviceCredentialsResponseMsg msg = lwM2mInMemorySecurityStore.getByModelClient(endpointId, null).getCredentialsResponse();
-        if (msg == null || msg.getDeviceInfo() == null) {
-            log.warn("[{}] [{}]", endpointId, CONNECTION_REFUSED_NOT_AUTHORIZED.toString());
-        } else {
-            sessionInfo = TransportProtos.SessionInfoProto.newBuilder()
-                    .setNodeId(context.getNodeId())
-                    .setSessionIdMSB(sessionId.getMostSignificantBits())
-                    .setSessionIdLSB(sessionId.getLeastSignificantBits())
-                    .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
-                    .setDeviceIdLSB(msg.getDeviceInfo().getDeviceIdLSB())
-                    .setTenantIdMSB(msg.getDeviceInfo().getTenantIdMSB())
-                    .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
-                    .setDeviceName(msg.getDeviceInfo().getDeviceName())
-                    .setDeviceType(msg.getDeviceInfo().getDeviceType())
-                    .build();
-            transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
-            log.info("[{}] Client connected!", sessionId);
-        }
-        return sessionInfo;
-    }
 
 //    private ObserveResponse setObservResource(LeshanServer lwServer, Registration registration, Integer objectId, Integer instanceId, Integer resourceId) {
 //        log.info("Endpoint: [{}] Object: [{}] Instnce: [{}] Resoutce: [{}] Received endpoint ObserveResponse", registration.getEndpoint(), objectId, instanceId, resourceId);
@@ -445,24 +536,6 @@ public class LwM2MTransportService {
     }
 
 
-    public void processDevicePublish(JsonElement msg, String topicName, int msgId, String clientEndpoint) {
-        TransportProtos.SessionInfoProto sessionInfo = getValidateSessionInfo(clientEndpoint);
-        if (sessionInfo != null) {
-            try {
-                if (topicName.equals(DEVICE_TELEMETRY_TOPIC)) {
-                    TransportProtos.PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
-                    transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(msgId, postTelemetryMsg));
-                } else if (topicName.equals(DEVICE_ATTRIBUTES_TOPIC)) {
-                    TransportProtos.PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
-                    transportService.process(sessionInfo, postAttributeMsg, getPubAckCallback(msgId, postAttributeMsg));
-                }
-            } catch (AdaptorException e) {
-                log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-                log.info("[{}] Closing current session due to invalid publish msg [{}][{}]", sessionId, topicName, msgId);
-
-            }
-        }
-    }
 //
 //    public Registration getRegistration(LeshanServer lwServer, String clientEndpoint) {
 //        return lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
@@ -470,7 +543,7 @@ public class LwM2MTransportService {
 
 
     @SneakyThrows
-    public ReadResultAttrTel doGetAttributsTelemetryObserve(LeshanServer lwServer, String clientEndpoint) {
+    public ReadResultAttrTel doGetAttributsTelemetryObserve1(LeshanServer lwServer, String clientEndpoint) {
         ReadResultAttrTel readResultAttrTel = new ReadResultAttrTel();
         Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
         registration.getAdditionalRegistrationAttributes().entrySet().forEach(entry -> {
@@ -530,7 +603,7 @@ public class LwM2MTransportService {
         });
         lwServer.getModelProvider().getObjectModel(registration).getObjectModels().forEach(om -> {
             String idObj = String.valueOf(om.id);
-            LwM2mResponse cResponse = lwM2MTransportRequest.doGet(lwServer, registration, "/" + idObj, GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
+            LwM2mResponse cResponse = lwM2MTransportRequest.doGet(lwServer, registration, "/" + idObj, LwM2MTransportHandler.GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
             log.info("GET cResponse: {} \n target: {}", cResponse, idObj);
             if (cResponse != null) {
                 LwM2mNode content = ((ReadResponse) cResponse).getContent();
@@ -573,7 +646,7 @@ public class LwM2MTransportService {
      * Trigger
      */
     private void startTriggerServer(LeshanServer lwServer, Registration registration) {
-        LwM2mResponse cResponse = this.lwM2MTransportRequest.doGet(lwServer, registration, "/1", GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
+        LwM2mResponse cResponse = this.lwM2MTransportRequest.doGet(lwServer, registration, "/1", LwM2MTransportHandler.GET_TYPE_OPER_READ, ContentFormat.TLV.getName());
         log.info("cResponse1: [{}]", cResponse);
         String target = "/1/0/8";
         cResponse = doTriggerServer(lwServer, registration, target, null);
@@ -587,7 +660,7 @@ public class LwM2MTransportService {
 
     public LwM2mResponse doTriggerServer(LeshanServer lwServer, Registration registration, String target, String param) {
         param = param != null ? param : "";
-        return lwM2MTransportRequest.doPost(lwServer, registration.getEndpoint(), target, POST_TYPE_OPER_EXECUTE, ContentFormat.TLV.getName(), param);
+        return lwM2MTransportRequest.doPost(lwServer, registration.getEndpoint(), target, LwM2MTransportHandler.POST_TYPE_OPER_EXECUTE, ContentFormat.TLV.getName(), param);
     }
 
     private String getResourceValueToString(LwM2mResource resource) {

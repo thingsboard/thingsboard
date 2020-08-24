@@ -22,20 +22,9 @@ import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mResource;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 
 public class ModelInstance extends LwM2mObjectInstance {
-    /**
-     * Map<idResource, boolean[observe, attr, telemetry]>
-     */
-    @Getter
-    @Setter
-    private Map<Integer, boolean[]> paramResources;
-
-    public ModelInstance(Collection<LwM2mResource> resources, Map<Integer, boolean[]> paramResources) {
+    public ModelInstance(Collection<LwM2mResource> resources) {
         super(resources);
-        this.paramResources = (paramResources != null && paramResources.size()>0) ? paramResources : new ConcurrentHashMap<Integer, boolean[]>();
     }
 }

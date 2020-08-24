@@ -43,17 +43,22 @@ import java.util.List;
 @Slf4j
 public class LwM2MTransportHandler {
 
-    private static final String EVENT_DEREGISTRATION = "DEREGISTRATION";
-    private static final String EVENT_UPDATED = "UPDATED";
-    private static final String EVENT_REGISTRATION = "REGISTRATION";
+    public static final String EVENT_DEREGISTRATION = "DEREGISTRATION";
+    public static final String EVENT_UPDATED = "UPDATED";
+    public static final String EVENT_REGISTRATION = "REGISTRATION";
 
-    private static final String EVENT_SLEEPING = "SLEEPING";
-    private static final String EVENT_NOTIFICATION = "NOTIFICATION";
-    private static final String EVENT_COAP_LOG = "COAPLOG";
-    private static final String QUERY_PARAM_ENDPOINT = "ep";
-    private static final String FORMAT_PARAM = "format";
-    private static final String TIMEOUT_PARAM = "timeout";
-    private static final String REPLACE_PARAM = "replace";
+    public static final String EVENT_SLEEPING = "SLEEPING";
+    public static final String EVENT_NOTIFICATION = "NOTIFICATION";
+    public static final String EVENT_COAP_LOG = "COAPLOG";
+    public static final String QUERY_PARAM_ENDPOINT = "ep";
+    public static final String FORMAT_PARAM = "format";
+    public static final String TIMEOUT_PARAM = "timeout";
+    public static final String REPLACE_PARAM = "replace";
+
+    public static final String OBSERVE_ATTRIBUTE_TELEMETRY = "observeAttr";
+    public static final String OBSERVE = "observe";
+    public static final String ATTRIBUTE = "attribute";
+    public static final String TELEMETRY = "telemetry";
 
     /**
      * The default key store FolderPath for reading Certificates from resource

@@ -15,19 +15,25 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.adaptors;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import lombok.Data;
+
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 public class ReadResultAttrTel {
 
     JsonObject postAttribute;
     JsonObject postTelemetry;
-    JsonObject postObserve;
+    Set <String> postObserve;
+    Set <String> pathResAttrTelemetry;
 
     public ReadResultAttrTel() {
         postAttribute = new JsonObject();
         postTelemetry = new JsonObject();
-        postObserve = new JsonObject();
+        postObserve = ConcurrentHashMap.newKeySet();
+        pathResAttrTelemetry = ConcurrentHashMap.newKeySet();
     }
 }

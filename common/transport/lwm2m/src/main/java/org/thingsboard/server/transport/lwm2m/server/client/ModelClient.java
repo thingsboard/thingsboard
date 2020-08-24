@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.client;
 
+import com.google.gson.JsonObject;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectModel;
@@ -48,6 +49,7 @@ public class ModelClient  implements Cloneable {
     private Map<Integer, LwM2mResponse> responses;
     private LeshanServer lwServer;
     private Registration registration;
+    private JsonObject clientObserveAttrTelemetry;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
@@ -75,10 +77,10 @@ public class ModelClient  implements Cloneable {
              * Cancel All observation
              */
             int cancel = lwServer.getObservationService().cancelObservations(registration);
-            Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
-            log.info("33_1)  setCancelObservationObjects endpoint: {} cancel: {}  observations: {}", registration.getEndpoint(), cancel, observations);
-            initValue ();
-            this.transportService.getAttrTelemetryObserveFromModel(this.lwServer, this.registration.getId());
+//            Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
+//            log.info("33_1)  setCancelObservationObjects endpoint: {} cancel: {}  observations: {}", registration.getEndpoint(), cancel, observations);
+            this.initValue ();
+            this.transportService.getAttrTelemetryObserveFromModel(this.lwServer, this.registration.getId(), this);
         }
     }
 

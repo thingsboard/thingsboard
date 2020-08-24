@@ -214,6 +214,7 @@ public class LwM2MTransportRequest {
         return null;
     }
 
+
 //    public LwM2mResponse sendRequestReturn(LeshanServer lwServer, Registration registration, DownlinkRequest request) {
 //        final LwM2mResponse[] responseRez = new LwM2mResponse[1];
 //        CountDownLatch respLatch = new CountDownLatch(1);

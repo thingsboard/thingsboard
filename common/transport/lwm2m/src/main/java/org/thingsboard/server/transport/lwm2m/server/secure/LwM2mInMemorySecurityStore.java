@@ -129,11 +129,15 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     }
 
     public ModelClient getByModelClient(String endPoint, String identity) {
-        List<String> integrationIds = this.sessions.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndPoint())).map(model -> model.getKey()).collect(Collectors.toList());
+//        List<String> integrationIds = this.sessions.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndPoint())).map(model -> model.getKey()).collect(Collectors.toList());
         Map.Entry<String, ModelClient> modelClients = (endPoint != null) ?
                 this.sessions.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndPoint())).findAny().orElse(null) :
                 this.sessions.entrySet().stream().filter(model -> identity.equals(model.getValue().getIdentity())).findAny().orElse(null);
         return (modelClients != null) ? modelClients.getValue() : null;
+    }
+
+    public ModelClient getByModelClient(String registrationId) {
+        return this.sessions.get(registrationId);
     }
 
     private String getByIntegrationId(String endPoint, String identity) {
