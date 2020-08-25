@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executor;
 
 public interface EdgeService {
 
@@ -76,7 +75,7 @@ public interface EdgeService {
 
     ListenableFuture<List<Edge>> findEdgesByTenantIdAndDashboardId(TenantId tenantId, DashboardId dashboardId);
 
-    ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, Executor executorService);
+    ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId);
 }
 
 

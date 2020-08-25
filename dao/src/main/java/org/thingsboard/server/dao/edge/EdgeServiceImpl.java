@@ -67,7 +67,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.EDGE_CACHE;
@@ -429,7 +428,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     };
 
     @Override
-    public ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, Executor executorService) {
+    public ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId) {
         switch (entityId.getEntityType()) {
             case DEVICE:
             case ASSET:
@@ -442,11 +441,11 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                     } else {
                         return Collections.emptyList();
                     }
-                }, executorService);
+                }, MoreExecutors.directExecutor());
             case DASHBOARD:
-                return convertToEdgeIds(findEdgesByTenantIdAndDashboardId(tenantId, new DashboardId(entityId.getId())), executorService);
+                return convertToEdgeIds(findEdgesByTenantIdAndDashboardId(tenantId, new DashboardId(entityId.getId())));
             case RULE_CHAIN:
-                return convertToEdgeIds(findEdgesByTenantIdAndRuleChainId(tenantId, new RuleChainId(entityId.getId())), executorService);
+                return convertToEdgeIds(findEdgesByTenantIdAndRuleChainId(tenantId, new RuleChainId(entityId.getId())));
             case USER:
                 User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
                 TextPageData<Edge> edges;
@@ -455,20 +454,20 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                 } else {
                     edges = findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), new TextPageLink(Integer.MAX_VALUE));
                 }
-                return convertToEdgeIds(Futures.immediateFuture(edges.getData()), executorService);
+                return convertToEdgeIds(Futures.immediateFuture(edges.getData()));
             default:
                 return Futures.immediateFuture(Collections.emptyList());
         }
     }
 
-    private ListenableFuture<List<EdgeId>> convertToEdgeIds(ListenableFuture<List<Edge>> future, Executor executorService) {
+    private ListenableFuture<List<EdgeId>> convertToEdgeIds(ListenableFuture<List<Edge>> future) {
         return Futures.transform(future, edges -> {
             if (edges != null && !edges.isEmpty()) {
                 return edges.stream().map(IdBased::getId).collect(Collectors.toList());
             } else {
                 return Collections.emptyList();
             }
-        }, executorService);
+        }, MoreExecutors.directExecutor());
     }
 
 }

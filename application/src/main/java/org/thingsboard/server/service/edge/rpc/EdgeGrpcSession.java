@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -937,42 +938,71 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private ListenableFuture<Void> processPostTelemetry(EntityId entityId, TransportProtos.PostTelemetryMsg msg, TbMsgMetaData metaData) {
+        SettableFuture<Void> futureToSet = SettableFuture.create();
         for (TransportProtos.TsKvListProto tsKv : msg.getTsKvListList()) {
             JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
             metaData.putValue("ts", tsKv.getTs() + "");
             TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), entityId, metaData, gson.toJson(json));
-            // TODO: voba - verify that null callback is OK
-            ctx.getTbClusterService().pushMsgToRuleEngine(edge.getTenantId(), tbMsg.getOriginator(), tbMsg, null);
+            ctx.getTbClusterService().pushMsgToRuleEngine(edge.getTenantId(), tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
+                @Override
+                public void onSuccess(TbQueueMsgMetadata metadata) {
+                    futureToSet.set(null);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.error("Can't process post telemetry [{}]", msg, t);
+                    futureToSet.setException(t);
+                }
+            });
         }
-        return Futures.immediateFuture(null);
+        return futureToSet;
     }
 
     private ListenableFuture<Void> processPostAttributes(EntityId entityId, TransportProtos.PostAttributeMsg msg, TbMsgMetaData metaData) {
+        SettableFuture<Void> futureToSet = SettableFuture.create();
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), entityId, metaData, gson.toJson(json));
-        // TODO: voba - verify that null callback is OK
-        ctx.getTbClusterService().pushMsgToRuleEngine(edge.getTenantId(), tbMsg.getOriginator(), tbMsg, null);
-        return Futures.immediateFuture(null);
+        ctx.getTbClusterService().pushMsgToRuleEngine(edge.getTenantId(), tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
+            @Override
+            public void onSuccess(TbQueueMsgMetadata metadata) {
+                futureToSet.set(null);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("Can't process post attributes [{}]", msg, t);
+                futureToSet.setException(t);
+            }
+        });
+        return futureToSet;
     }
 
     private ListenableFuture<Void> processAttributeDeleteMsg(EntityId entityId, AttributeDeleteMsg attributeDeleteMsg, String entityType) {
-        try {
-            String scope = attributeDeleteMsg.getScope();
-            List<String> attributeNames = attributeDeleteMsg.getAttributeNamesList();
-            ctx.getAttributesService().removeAll(edge.getTenantId(), entityId, scope, attributeNames);
-            if (EntityType.DEVICE.name().equals(entityType)) {
-                Set<AttributeKey> attributeKeys = new HashSet<>();
-                for (String attributeName : attributeNames) {
-                    attributeKeys.add(new AttributeKey(scope, attributeName));
-                }
-                ctx.getTbClusterService().pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(
-                        edge.getTenantId(), (DeviceId) entityId, attributeKeys), null);
+        SettableFuture<Void> futureToSet = SettableFuture.create();
+        String scope = attributeDeleteMsg.getScope();
+        List<String> attributeNames = attributeDeleteMsg.getAttributeNamesList();
+        ctx.getAttributesService().removeAll(edge.getTenantId(), entityId, scope, attributeNames);
+        if (EntityType.DEVICE.name().equals(entityType)) {
+            Set<AttributeKey> attributeKeys = new HashSet<>();
+            for (String attributeName : attributeNames) {
+                attributeKeys.add(new AttributeKey(scope, attributeName));
             }
-        } catch (Exception e) {
-            log.error("Can't process attribute delete msg [{}]", attributeDeleteMsg, e);
-            return Futures.immediateFailedFuture(new RuntimeException("Can't process attribute delete msg " + attributeDeleteMsg, e));
+            ctx.getTbClusterService().pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(
+                    edge.getTenantId(), (DeviceId) entityId, attributeKeys), new TbQueueCallback() {
+                @Override
+                public void onSuccess(TbQueueMsgMetadata metadata) {
+                    futureToSet.set(null);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.error("Can't process attribute delete msg [{}]", attributeDeleteMsg, t);
+                    futureToSet.setException(t);
+                }
+            });
         }
-        return Futures.immediateFuture(null);
+        return futureToSet;
     }
 
     private ListenableFuture<Void> onDeviceUpdate(DeviceUpdateMsg deviceUpdateMsg) {
