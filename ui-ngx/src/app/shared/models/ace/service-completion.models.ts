@@ -135,20 +135,19 @@ export function observableArrayReturnType(objectType: string): FunctionArgType {
   };
 }
 
-export function observableBaseDataReturnType(objectType: string): FunctionArgType {
+export function observableBaseDataReturnType(): FunctionArgType {
   return {
-    type: `Observable&lt;${baseDataHref}&lt;${objectType}&gt;&gt;`,
-    description: `An <code>Observable</code> of page result as a <code>${baseDataHref}</code> holding array of <code>${objectType}</code> objects.`
+    type: `Observable&lt;${baseDataHref}&lt;${entityIdHref}&gt;&gt;`,
+    description: `An <code>Observable</code> of <code>${baseDataHref}</code> object.`
   };
 }
 
-export function observableArrayBaseDataReturnType(objectType: string): FunctionArgType {
+export function observableArrayBaseDataReturnType(): FunctionArgType {
   return {
-    type: `Observable&lt;Array&lt;${baseDataHref}&lt;${objectType}&gt;&gt;&gt;`,
-    description: `An <code>Observable</code> of page result as a <code>${baseDataHref}</code> holding array of <code>${objectType}</code> objects.`
+    type: `Observable&lt;Array&lt;${baseDataHref}&lt;${entityIdHref}&gt;&gt;&gt;`,
+    description: `An <code>Observable</code> of array of <code>${baseDataHref}</code> objects.`
   };
 }
-
 
 export function observablePageDataReturnType(objectType: string): FunctionArgType {
   return {
@@ -156,8 +155,6 @@ export function observablePageDataReturnType(objectType: string): FunctionArgTyp
     description: `An <code>Observable</code> of page result as a <code>${pageDataHref}</code> holding array of <code>${objectType}</code> objects.`
   };
 }
-
-
 
 export const serviceCompletions: TbEditorCompletions = {
   deviceService: {
@@ -668,7 +665,8 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'tenantId', type: 'string', description: 'Id of the tenant'},
-          pageLinkArg
+          pageLinkArg,
+          requestConfigArg
         ],
         return: observablePageDataReturnType(dashboardInfoHref)
       },
@@ -729,7 +727,7 @@ export const serviceCompletions: TbEditorCompletions = {
         return: observableReturnType(dashboardHref)
       },
       unassignDashboardFromCustomer: {
-        description: 'Unassign dashboard from any customer',
+        description: 'Unassign dashboard from specific customer',
         meta: 'function',
         args: [
           {name: 'customerId', type: 'string', description: 'Id of the customer'},
@@ -784,7 +782,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'customerIds', type: `Array&lt;string&gt;`, description: 'Id of the customers'},
           requestConfigArg
         ],
-        return: observableArrayReturnType(dashboardHref)
+        return: observableReturnType(dashboardHref)
       },
       getPublicDashboardLink: {
         description: 'Get public dashboard link',
@@ -855,6 +853,7 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'user', type: userHref, description: 'User object to save'},
+          {name: 'sendActivationMail', type: 'boolean', description: 'Send activation email', optional: true},
           requestConfigArg
         ],
         return: observableReturnType(userHref)
@@ -876,7 +875,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'userCredentialsEnabled', type: 'boolean', description: 'User credentials enabled'},
           requestConfigArg
         ],
-        return: observableReturnType(userHref)
+        return: observableReturnTypeVariable('any')
       },
       getActivationLink: {
         description: 'Get activation link by id',
@@ -929,7 +928,6 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'entityId', type: entityIdHref, description: 'Entity Id'},
-          {name: 'relationType', type: 'string', description: 'Relation type'},
           requestConfigArg
         ],
         return: observableVoid()
@@ -1044,7 +1042,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           {name: 'entityId', type: entityIdHref, description: 'Id of the entity'},
           {name: 'attributeScope', type: attributeScopeHref, description: 'Attribute scope'},
-          {name: 'attributes', type: `array&lt;${attributeDataHref}&gt;`, description: 'Array of the attributes'},
+          {name: 'attributes', type: `array&lt;${attributeDataHref}&gt;`, description: 'Array of the attributes data'},
           requestConfigArg
         ],
         return: observableReturnTypeVariable('any')
@@ -1054,7 +1052,7 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'entityId', type: entityIdHref, description: 'Id of the entity'},
-          {name: 'timeseries', type: `Array&lt;${attributeDataHref}&gt;>`, description: 'Array of the timeseries'},
+          {name: 'timeseries', type: `Array&lt;${attributeDataHref}&gt;>`, description: 'Array of the timeseries data'},
           {name: 'deleteAllDataForKeys', type: 'boolean', optional: true, description: 'Delete all data for keys'},
           requestConfigArg
         ],
@@ -1066,7 +1064,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           {name: 'entityId', type: entityIdHref, description: 'Id of the entity'},
           {name: 'attributeScope', type: attributeScopeHref, description: 'Attribute scope'},
-          {name: 'attributes', type: 'Array&lt;${attributeDataHref}&gt;>', description: 'Array of the attributes'},
+          {name: 'attributes', type: 'Array&lt;${attributeDataHref}&gt;>', description: 'Array of the attributes data'},
           requestConfigArg
         ],
         return: observableReturnTypeVariable('any')
@@ -1077,7 +1075,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           {name: 'entityId', type: entityIdHref, description: 'Id of the entity'},
           {name: 'timeseriesScope', type: 'string', description: 'Timeseries scope'},
-          {name: 'timeseries', type: `Array&lt;attributeDataHref&gt;`, description: 'Array of the timeseries'},
+          {name: 'timeseries', type: `Array&lt;attributeDataHref&gt;`, description: 'Array of the timeseries data'},
           requestConfigArg
         ],
         return: observableReturnTypeVariable('any')
@@ -1098,7 +1096,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'entityId', type: 'string', description: 'Id of the entity'},
           requestConfigArg
         ],
-        return: observableBaseDataReturnType(entityIdHref)
+        return: observableBaseDataReturnType()
       },
       getEntities: {
         description: 'Get entities by ids',
@@ -1108,7 +1106,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'entityIds', type: `Array&lt;string&gt;`, description: 'Ids of the entities'},
           requestConfigArg
         ],
-        return: observableArrayBaseDataReturnType(entityIdHref)
+        return: observableArrayBaseDataReturnType()
       },
       getEntitiesByNameFilter: {
         description: 'Get entities by name filter',
@@ -1120,7 +1118,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'subType', type: 'string', optional: true, description: 'Subtype'},
           requestConfigArg
         ],
-        return: observableArrayBaseDataReturnType(entityIdHref)
+        return: observableArrayBaseDataReturnType()
       },
       findEntityDataByQuery: {
         description: 'Find entity data by query',
@@ -1155,7 +1153,6 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'filter', type: entityFilterHref, description: 'Filter for the entity'},
-          {name: 'searchText', type: 'string', description: 'Search text'},
           requestConfigArg
         ],
         return: observableReturnType(entityInfoHref)
@@ -1164,8 +1161,7 @@ export const serviceCompletions: TbEditorCompletions = {
         description: 'Get alias filter types by entity types',
         meta: 'function',
         args: [
-          {name: 'entityTypes', type: `Array&lt;${entityTypeHref}|${aliasEntityTypeHref}&gt;`, description: 'Entity types'},
-          {name: 'searchText', type: 'string', description: 'Search text'}
+          {name: 'entityTypes', type: `Array&lt;${entityTypeHref}|${aliasEntityTypeHref}&gt;`, description: 'Entity types'}
         ],
         return: {
           type: `Array&lt;${aliasFilterTypeHref}$gt;`,
@@ -1354,7 +1350,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           {name: 'template', type: 'string', description: 'Template'},
           {name: 'controller', type: customDialogComponentHref, description: 'Controller'},
-          {name: 'data', type: 'any', description: 'Data'},
+          {name: 'data', type: 'any', description: 'Data', optional: true},
         ],
         return: observableReturnTypeVariable('any')
       },
