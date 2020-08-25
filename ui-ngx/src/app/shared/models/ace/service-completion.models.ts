@@ -24,7 +24,7 @@ export const alarmDataHref = '<a href="https://github.com/thingsboard/thingsboar
 
 export const  alarmDataQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L558">Alarm data query</a>';
 
-export  const  attributeScopeHref ='<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L37">Attribute scope</a>';
+export  const  attributeScopeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L37">Attribute scope</a>';
 
 export const entityTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L36">EntityType</a>';
 
@@ -32,7 +32,7 @@ export const pageDataHref = '<a href="https://github.com/thingsboard/thingsboard
 
 export const deviceInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L33">DeviceInfo</a>';
 
-export  const  assetInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L32">AssetInfo</a>'
+export  const  assetInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L32">AssetInfo</a>';
 
 export const entityViewInfoHref = '<a href = "https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-view.models.ts#L47">EntityViewInfo</a>';
 
@@ -84,15 +84,15 @@ export const stateParamsHref = '<a href="https://github.com/thingsboard/thingsbo
 
 export const aliasInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/core/api/widget-api.models.ts#L88">Alias info</a>';
 
-export const entityAliasFilterHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/alias.models.ts#L134">Entity alias filter</a>'
+export const entityAliasFilterHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/alias.models.ts#L134">Entity alias filter</a>';
 
-export const entityAliasFilterResultHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/alias.models.ts#L158">Entity alias filter result</a>'
+export const entityAliasFilterResultHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/alias.models.ts#L158">Entity alias filter result</a>';
 
-export const importEntityDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L28">Import entity data</a>'
+export const importEntityDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L28">Import entity data</a>';
 
-export const importEntitiesResultInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L42">Import entities result info</a>'
+export const importEntitiesResultInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L42">Import entities result info</a>';
 
-export const customDialogComponentHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.component.ts#L48">CustomDialogComponent</a>'
+export const customDialogComponentHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.component.ts#L48">CustomDialogComponent</a>';
 
 export const pageLinkArg: FunctionArg = {
   name: 'pageLink',
@@ -885,7 +885,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'userId', type: 'string', description: 'Id of the user'},
           requestConfigArg
         ],
-        return:observableReturnTypeVariable('string')
+        return: observableReturnTypeVariable('string')
       },
       sendActivationEmail: {
         description: 'Send activation email',
@@ -1033,7 +1033,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           {name: 'entityId', type: entityIdHref, description: 'Id of the entity'},
           {name: 'attributeScope', type: attributeScopeHref, description: 'Atribute scope'},
-          {name: 'keys', type:`Array&lt;string&gt;`, description: 'Array of the keys'},
+          {name: 'keys', type: `Array&lt;string&gt;`, description: 'Array of the keys'},
           requestConfigArg
         ],
         return: observableArrayReturnType(attributeDataHref)
@@ -1055,10 +1055,10 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           {name: 'entityId', type: entityIdHref, description: 'Id of the entity'},
           {name: 'timeseries', type: `Array&lt;${attributeDataHref}&gt;>`, description: 'Array of the timeseries'},
-          {name: 'deleteAllDataForKeys', type: 'boolean',optional: true, description: 'Delete all data for keys'},
+          {name: 'deleteAllDataForKeys', type: 'boolean', optional: true, description: 'Delete all data for keys'},
           requestConfigArg
         ],
-        return:observableReturnTypeVariable('any')
+        return: observableReturnTypeVariable('any')
       },
       saveEntityAttributes: {
         description: 'Save entity attributes',
@@ -1080,7 +1080,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'timeseries', type: `Array&lt;attributeDataHref&gt;`, description: 'Array of the timeseries'},
           requestConfigArg
         ],
-        return:observableReturnTypeVariable('any')
+        return: observableReturnTypeVariable('any')
       },
     }
   },
@@ -1098,7 +1098,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'entityId', type: 'string', description: 'Id of the entity'},
           requestConfigArg
         ],
-        return:observableBaseDataReturnType(entityIdHref)
+        return: observableBaseDataReturnType(entityIdHref)
       },
       getEntities: {
         description: 'Get entities by ids',
@@ -1108,7 +1108,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'entityIds', type: `Array&lt;string&gt;`, description: 'Ids of the entities'},
           requestConfigArg
         ],
-        return:observableArrayBaseDataReturnType(entityIdHref)
+        return: observableArrayBaseDataReturnType(entityIdHref)
       },
       getEntitiesByNameFilter: {
         description: 'Get entities by name filter',
@@ -1117,10 +1117,10 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'entityType', type: entityTypeHref, description: 'Entity type'},
           {name: 'entityNameFilter', type: 'string', description: 'Name filter of the entity'},
           {name: 'pageSize', type: 'number', description: 'Size of the page'},
-          {name: 'subType', type: 'string',optional: true, description: 'Subtype'},
+          {name: 'subType', type: 'string', optional: true, description: 'Subtype'},
           requestConfigArg
         ],
-        return:observableArrayBaseDataReturnType(entityIdHref)
+        return: observableArrayBaseDataReturnType(entityIdHref)
       },
       findEntityDataByQuery: {
         description: 'Find entity data by query',
@@ -1130,7 +1130,7 @@ export const serviceCompletions: TbEditorCompletions = {
 
           requestConfigArg
         ],
-        return:observablePageDataReturnType(entityDataHref)
+        return: observablePageDataReturnType(entityDataHref)
       },
       findAlarmDataByQuery: {
         description: 'Find alarm data by query',
@@ -1139,7 +1139,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'query', type: alarmDataQueryHref, description: 'Query'},
           requestConfigArg
         ],
-        return:observablePageDataReturnType(alarmDataHref)
+        return: observablePageDataReturnType(alarmDataHref)
       },
       findEntityInfosByFilterAndName: {
         description: 'Find entity infos by filter and name',
@@ -1149,7 +1149,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'searchText', type: 'string', description: 'Search text'},
           requestConfigArg
         ],
-        return:observablePageDataReturnType(entityInfoHref)
+        return: observablePageDataReturnType(entityInfoHref)
       },
       findSingleEntityInfoByEntityFilter: {
         description: 'Find single entity infos by filter of the entity ',
@@ -1159,56 +1159,56 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'searchText', type: 'string', description: 'search text'},
           requestConfigArg
         ],
-        return:observableReturnType(entityInfoHref)
+        return: observableReturnType(entityInfoHref)
       },
       getAliasFilterTypesByEntityTypes: {
         description: 'Get alias filter types  by entity type',
         meta: 'function',
         args: [
-          {name: 'entityTypes', type:`Array&lt;${entityTypeHref}|${aliasEntityTypeHref}&gt;`, description: 'Entity types'},
+          {name: 'entityTypes', type: `Array&lt;${entityTypeHref}|${aliasEntityTypeHref}&gt;`, description: 'Entity types'},
           {name: 'searchText', type: 'string', description: 'Search text'}
         ],
-        return:{
-          type:`Array&lt;${aliasFilterTypeHref}$gt;`,
-          description:`Array of ${aliasFilterTypeHref} objects`
+        return: {
+          type: `Array&lt;${aliasFilterTypeHref}$gt;`,
+          description: `Array of ${aliasFilterTypeHref} objects`
         }
       },
       filterAliasByEntityTypes: {
         description: 'Filter alias by entity type',
         meta: 'function',
         args: [
-          {name: 'entityAlias', type:entityAliasHref, description: 'Alias of the entity'},
-          {name: 'entityTypes', type:`Array&lt;${entityTypeHref}|${aliasEntityTypeHref}&gt;`, description: 'Entity types'}
+          {name: 'entityAlias', type: entityAliasHref, description: 'Alias of the entity'},
+          {name: 'entityTypes', type: `Array&lt;${entityTypeHref}|${aliasEntityTypeHref}&gt;`, description: 'Entity types'}
         ],
-        return:{
-          type:'boolean',
-          description:`Returns <code>boolean</code> variable based on the filter`
+        return: {
+          type: 'boolean',
+          description: `Returns <code>boolean</code> variable based on the filter`
         }
       },
       prepareAllowedEntityTypesList: {
         description: 'Prepare allowed types of the entity list',
         meta: 'function',
         args: [
-          {name: 'allowedEntityTypes', type:`Array&lt;${entityTypeHref}|${aliasEntityTypeHref}&gt;`, description: 'Entity types'},
-          {name: 'useAliasEntityTypes', type:'boolean', description: 'Use alias entity types'},
+          {name: 'allowedEntityTypes', type: `Array&lt;${entityTypeHref}|${aliasEntityTypeHref}&gt;`, description: 'Entity types'},
+          {name: 'useAliasEntityTypes', type: 'boolean', description: 'Use alias entity types'},
         ],
-        return:{
-          type:`Array&lt;${entityTypeHref}|${aliasEntityTypeHref}&gt;`,
-          description:`Returns entity types array`
+        return: {
+          type: `Array&lt;${entityTypeHref}|${aliasEntityTypeHref}&gt;`,
+          description: `Returns entity types array`
         }
       },
       getEntityKeys: {
         description: 'Get entity keys by id',
         meta: 'function',
         args: [
-          {name: 'entityId', type:entityIdHref, description: 'id of the entity'},
-          {name: 'query', type:'string', description: 'Query'},
-          {name: 'type', type:dataKeyTypeHref, description: 'Query'},
+          {name: 'entityId', type: entityIdHref, description: 'id of the entity'},
+          {name: 'query', type: 'string', description: 'Query'},
+          {name: 'type', type: dataKeyTypeHref, description: 'Query'},
           requestConfigArg
         ],
-        return:{
-          type:`Observable&lt;Array&lt;string&gt;&gt;`,
-          description:`An <code>Observable</code> of <code>string</code> variable.`
+        return: {
+          type: `Observable&lt;Array&lt;string&gt;&gt;`,
+          description: `An <code>Observable</code> of <code>string</code> variable.`
         }
         // observableArrayReturnType('string')
       },
@@ -1216,71 +1216,71 @@ export const serviceCompletions: TbEditorCompletions = {
         description: 'Create database from subscriptions info',
         meta: 'function',
         args: [
-          {name: 'subscriptionsInfo', type:'array<subscriptionInfoHref>', description: 'Subscriptions info'}
+          {name: 'subscriptionsInfo', type: 'array<subscriptionInfoHref>', description: 'Subscriptions info'}
         ],
-        return:{
-          type:`Array&lt;${dataSourceHref}&gt;`,
-          description:`Array of <code>${dataSourceHref}</code> objects`
+        return: {
+          type: `Array&lt;${dataSourceHref}&gt;`,
+          description: `Array of <code>${dataSourceHref}</code> objects`
         }
       },
       createAlarmSourceFromSubscriptionInfo: {
         description: 'Create alarm source from subscriptions info',
         meta: 'function',
         args: [
-          {name: 'subscriptionInfo', type:subscriptionInfoHref, description: 'Subscription info'}
+          {name: 'subscriptionInfo', type: subscriptionInfoHref, description: 'Subscription info'}
         ],
-        return:{
-          type:`${dataSourceHref}`,
-          description:`<code>${dataSourceHref}</code> object`
+        return: {
+          type: `${dataSourceHref}`,
+          description: `<code>${dataSourceHref}</code> object`
         }
       },
       resolveAlias: {
         description: 'Resolve alias',
         meta: 'function',
         args: [
-          {name: 'entityAlias', type:entityAliasHref, description: 'Alias of the entity'},
-          {name: 'stateParams', type:stateParamsHref, description: 'State params'},
+          {name: 'entityAlias', type: entityAliasHref, description: 'Alias of the entity'},
+          {name: 'stateParams', type: stateParamsHref, description: 'State params'},
         ],
-        return:observableReturnType(aliasInfoHref)
+        return: observableReturnType(aliasInfoHref)
       },
       resolveAliasFilter: {
         description: 'Resolve alias filter',
         meta: 'function',
         args: [
-          {name: 'filter', type:entityAliasFilterHref, description: 'Entity alias filter'},
-          {name: 'stateParams', type:stateParamsHref, description: 'State params'},
+          {name: 'filter', type: entityAliasFilterHref, description: 'Entity alias filter'},
+          {name: 'stateParams', type: stateParamsHref, description: 'State params'},
         ],
-        return:observableReturnType(entityAliasFilterResultHref)
+        return: observableReturnType(entityAliasFilterResultHref)
       },
       checkEntityAlias: {
         description: 'Check entity alias',
         meta: 'function',
         args: [
-          {name: 'entityAlias', type:entityAliasHref, description: 'Alias of the entity'},
+          {name: 'entityAlias', type: entityAliasHref, description: 'Alias of the entity'},
         ],
-        return:observableReturnTypeVariable('boolean')
+        return: observableReturnTypeVariable('boolean')
           // observableReturnType('boolean')
       },
       saveEntityParameters: {
         description: 'Save entity parameters',
         meta: 'function',
         args: [
-          {name: 'entityType', type:entityTypeHref, description: 'Entity type'},
-          {name: 'entityData', type:importEntityDataHref, description: 'Data of the entity'},
-          {name: 'update', type:'boolean', description: 'Update'},
+          {name: 'entityType', type: entityTypeHref, description: 'Entity type'},
+          {name: 'entityData', type: importEntityDataHref, description: 'Data of the entity'},
+          {name: 'update', type: 'boolean', description: 'Update'},
           requestConfigArg
         ],
-        return:observableReturnType(importEntitiesResultInfoHref)
+        return: observableReturnType(importEntitiesResultInfoHref)
       },
       saveEntityData: {
         description: 'Save entity data',
         meta: 'function',
         args: [
-          {name: 'entityId', type:entityIdHref, description: 'Id of the entity'},
-          {name: 'entityData', type:importEntityDataHref, description: 'Data of the entity'},
+          {name: 'entityId', type: entityIdHref, description: 'Id of the entity'},
+          {name: 'entityData', type: importEntityDataHref, description: 'Data of the entity'},
           requestConfigArg
         ],
-        return:observableReturnTypeVariable('any')
+        return: observableReturnTypeVariable('any')
 
         // observableReturnType('any')
       },
@@ -1296,54 +1296,54 @@ export const serviceCompletions: TbEditorCompletions = {
         description: 'Confirm',
         meta: 'function',
         args: [
-          {name: 'title', type:'string', description: 'Title'},
-          {name: 'message', type:'string', description: 'Message'},
-          {name: 'cancel', type:'string',optional: true, description: 'Cancel'},
-          {name: 'ok', type:'string',optional: true, description: 'Ok'},
-          {name: 'fullscreen', type:'boolean',optional: true, description: 'Fullscreen'},
+          {name: 'title', type: 'string', description: 'Title'},
+          {name: 'message', type: 'string', description: 'Message'},
+          {name: 'cancel', type: 'string', optional: true, description: 'Cancel'},
+          {name: 'ok', type: 'string', optional: true, description: 'Ok'},
+          {name: 'fullscreen', type: 'boolean', optional: true, description: 'Fullscreen'},
         ],
-        return:observableReturnTypeVariable('boolean')
+        return: observableReturnTypeVariable('boolean')
       },
       alert: {
         description: 'Alert',
         meta: 'function',
         args: [
-          {name: 'title', type:'string', description: 'Title'},
-          {name: 'message', type:'string', description: 'Message'},
-          {name: 'ok', type:'string',optional: true, description: 'Ok'},
-          {name: 'fullscreen', type:'boolean',optional: true, description: 'Fullscreen'},
+          {name: 'title', type: 'string', description: 'Title'},
+          {name: 'message', type: 'string', description: 'Message'},
+          {name: 'ok', type: 'string', optional: true, description: 'Ok'},
+          {name: 'fullscreen', type: 'boolean', optional: true, description: 'Fullscreen'},
         ],
-        return:observableReturnTypeVariable('boolean')
+        return: observableReturnTypeVariable('boolean')
       },
       colorPicker: {
         description: 'Color picker',
         meta: 'function',
         args: [
-          {name: 'color', type:'string', description: 'Сolor'},
+          {name: 'color', type: 'string', description: 'Сolor'},
         ],
-        return:observableReturnTypeVariable('string')
+        return: observableReturnTypeVariable('string')
       },
       materialIconPicker: {
         description: 'Material icon picker',
         meta: 'function',
         args: [
-          {name: 'icon', type:'string', description: 'Icon'},
+          {name: 'icon', type: 'string', description: 'Icon'},
         ],
-        return:observableReturnTypeVariable('string')
+        return: observableReturnTypeVariable('string')
       },
       forbidden: {
         description: 'Forbidden',
         meta: 'function',
         args: [
         ],
-        return:observableReturnTypeVariable('boolean')
+        return: observableReturnTypeVariable('boolean')
       },
       todo: {
         description: 'To do',
         meta: 'function',
         args: [
         ],
-        return:observableReturnTypeVariable('any')
+        return: observableReturnTypeVariable('any')
       },
     }
   },
@@ -1352,16 +1352,16 @@ export const serviceCompletions: TbEditorCompletions = {
       'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.service.ts#L33">CustomDialogService</a> for API reference.',
     meta: 'service',
     type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.service.ts#L33">CustomDialogService</a>',
-    children:{
+    children: {
       customDialog: {
         description: 'Custom Dialog',
         meta: 'function',
         args: [
-          {name: 'template', type:'string', description: 'Template'},
-          {name: 'controller', type:customDialogComponentHref, description: 'Controller'},
-          {name: 'data', type:'any', description: 'Data'},
+          {name: 'template', type: 'string', description: 'Template'},
+          {name: 'controller', type: customDialogComponentHref, description: 'Controller'},
+          {name: 'data', type: 'any', description: 'Data'},
         ],
-        return:observableReturnTypeVariable('any')
+        return: observableReturnTypeVariable('any')
       },
     }
   },
@@ -1389,4 +1389,4 @@ export const serviceCompletions: TbEditorCompletions = {
     meta: 'service',
     type: '<a href="https://angular.io/api/platform-browser/DomSanitizer">DomSanitizer</a>'
   }
-}
+};
