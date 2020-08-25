@@ -951,6 +951,7 @@ public final class EdgeGrpcSession implements Closeable {
 
                 @Override
                 public void onFailure(Throwable t) {
+                    log.error("Can't process post telemetry [{}]", msg, t);
                     futureToSet.setException(t);
                 }
             });
@@ -970,6 +971,7 @@ public final class EdgeGrpcSession implements Closeable {
 
             @Override
             public void onFailure(Throwable t) {
+                log.error("Can't process post attributes [{}]", msg, t);
                 futureToSet.setException(t);
             }
         });
@@ -978,31 +980,27 @@ public final class EdgeGrpcSession implements Closeable {
 
     private ListenableFuture<Void> processAttributeDeleteMsg(EntityId entityId, AttributeDeleteMsg attributeDeleteMsg, String entityType) {
         SettableFuture<Void> futureToSet = SettableFuture.create();
-        try {
-            String scope = attributeDeleteMsg.getScope();
-            List<String> attributeNames = attributeDeleteMsg.getAttributeNamesList();
-            ctx.getAttributesService().removeAll(edge.getTenantId(), entityId, scope, attributeNames);
-            if (EntityType.DEVICE.name().equals(entityType)) {
-                Set<AttributeKey> attributeKeys = new HashSet<>();
-                for (String attributeName : attributeNames) {
-                    attributeKeys.add(new AttributeKey(scope, attributeName));
-                }
-                ctx.getTbClusterService().pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(
-                        edge.getTenantId(), (DeviceId) entityId, attributeKeys), new TbQueueCallback() {
-                    @Override
-                    public void onSuccess(TbQueueMsgMetadata metadata) {
-                        futureToSet.set(null);
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        futureToSet.setException(t);
-                    }
-                });
+        String scope = attributeDeleteMsg.getScope();
+        List<String> attributeNames = attributeDeleteMsg.getAttributeNamesList();
+        ctx.getAttributesService().removeAll(edge.getTenantId(), entityId, scope, attributeNames);
+        if (EntityType.DEVICE.name().equals(entityType)) {
+            Set<AttributeKey> attributeKeys = new HashSet<>();
+            for (String attributeName : attributeNames) {
+                attributeKeys.add(new AttributeKey(scope, attributeName));
             }
-        } catch (Exception e) {
-            log.error("Can't process attribute delete msg [{}]", attributeDeleteMsg, e);
-            return Futures.immediateFailedFuture(new RuntimeException("Can't process attribute delete msg " + attributeDeleteMsg, e));
+            ctx.getTbClusterService().pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(
+                    edge.getTenantId(), (DeviceId) entityId, attributeKeys), new TbQueueCallback() {
+                @Override
+                public void onSuccess(TbQueueMsgMetadata metadata) {
+                    futureToSet.set(null);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.error("Can't process attribute delete msg [{}]", attributeDeleteMsg, t);
+                    futureToSet.setException(t);
+                }
+            });
         }
         return futureToSet;
     }
