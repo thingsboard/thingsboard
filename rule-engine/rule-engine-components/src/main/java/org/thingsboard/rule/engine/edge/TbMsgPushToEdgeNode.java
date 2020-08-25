@@ -232,14 +232,7 @@ public class TbMsgPushToEdgeNode implements TbNode {
             TextPageData<Edge> edgesByTenantId = ctx.getEdgeService().findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
             return Futures.immediateFuture(edgesByTenantId.getData().stream().map(IdBased::getId).collect(Collectors.toList()));
         } else {
-            ListenableFuture<List<EntityRelation>> future = ctx.getRelationService().findByToAndTypeAsync(tenantId, originatorId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
-            return Futures.transform(future, relations -> {
-                List<EdgeId> result = new ArrayList<>();
-                if (relations != null && relations.size() > 0) {
-                    result.add(new EdgeId(relations.get(0).getFrom().getId()));
-                }
-                return result;
-            }, ctx.getDbCallbackExecutor());
+            return ctx.getEdgeService().findRelatedEdgeIdsByEntityId(tenantId, originatorId, ctx.getDbCallbackExecutor());
         }
     }
 

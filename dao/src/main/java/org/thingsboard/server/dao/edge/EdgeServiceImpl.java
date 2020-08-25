@@ -31,31 +31,35 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.common.data.page.TimePageData;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.user.UserService;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -63,6 +67,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.EDGE_CACHE;
@@ -90,6 +95,9 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Autowired
     private CustomerDao customerDao;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private CacheManager cacheManager;
@@ -419,5 +427,48 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
             unassignEdgeFromCustomer(tenantId, new EdgeId(entity.getUuidId()));
         }
     };
+
+    @Override
+    public ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, Executor executorService) {
+        switch (entityId.getEntityType()) {
+            case DEVICE:
+            case ASSET:
+            case ENTITY_VIEW:
+                ListenableFuture<List<EntityRelation>> originatorEdgeRelationsFuture =
+                        relationService.findByToAndTypeAsync(tenantId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
+                return Futures.transform(originatorEdgeRelationsFuture, originatorEdgeRelations -> {
+                    if (originatorEdgeRelations != null && originatorEdgeRelations.size() > 0) {
+                        return Collections.singletonList(new EdgeId(originatorEdgeRelations.get(0).getFrom().getId()));
+                    } else {
+                        return Collections.emptyList();
+                    }
+                }, executorService);
+            case DASHBOARD:
+                return convertToEdgeIds(findEdgesByTenantIdAndDashboardId(tenantId, new DashboardId(entityId.getId())), executorService);
+            case RULE_CHAIN:
+                return convertToEdgeIds(findEdgesByTenantIdAndRuleChainId(tenantId, new RuleChainId(entityId.getId())), executorService);
+            case USER:
+                User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
+                TextPageData<Edge> edges;
+                if (userById.getCustomerId() == null || userById.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                    edges = findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
+                } else {
+                    edges = findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), new TextPageLink(Integer.MAX_VALUE));
+                }
+                return convertToEdgeIds(Futures.immediateFuture(edges.getData()), executorService);
+            default:
+                return Futures.immediateFuture(Collections.emptyList());
+        }
+    }
+
+    private ListenableFuture<List<EdgeId>> convertToEdgeIds(ListenableFuture<List<Edge>> future, Executor executorService) {
+        return Futures.transform(future, edges -> {
+            if (edges != null && !edges.isEmpty()) {
+                return edges.stream().map(IdBased::getId).collect(Collectors.toList());
+            } else {
+                return Collections.emptyList();
+            }
+        }, executorService);
+    }
 
 }
