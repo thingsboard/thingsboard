@@ -19,5 +19,7 @@ public interface TbQueueAdmin {
 
     void createTopicIfNotExists(String topic);
 
+    void deleteTopic(String topic);
+
     void destroy();
 }

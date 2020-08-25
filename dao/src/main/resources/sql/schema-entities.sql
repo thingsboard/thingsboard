@@ -223,7 +223,9 @@ CREATE TABLE IF NOT EXISTS tenant (
     title varchar(255),
     zip varchar(255),
     isolated_tb_core boolean,
-    isolated_tb_rule_engine boolean
+    isolated_tb_rule_engine boolean,
+    max_number_of_queues int ,
+    max_number_of_partitions_per_queue int
 );
 
 CREATE TABLE IF NOT EXISTS user_credentials (
@@ -294,6 +296,19 @@ CREATE TABLE IF NOT EXISTS entity_view (
     end_ts bigint,
     search_text varchar(255),
     additional_info varchar
+);
+
+CREATE TABLE IF NOT EXISTS queue(
+    id uuid NOT NULL CONSTRAINT queue_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid,
+    name varchar(255),
+    topic varchar(255),
+    poll_interval int,
+    partitions int,
+    pack_processing_timeout bigint,
+    submit_strategy varchar(255),
+    processing_strategy varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS ts_kv_latest

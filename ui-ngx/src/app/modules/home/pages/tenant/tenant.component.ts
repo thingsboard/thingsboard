@@ -53,6 +53,8 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
         title: [entity ? entity.title : '', [Validators.required]],
         isolatedTbCore: [entity ? entity.isolatedTbCore : false, []],
         isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
+        maxNumberOfQueues: [entity ? entity.maxNumberOfQueues : 1, [Validators.required, Validators.min(1)]],
+        maxNumberOfPartitionsPerQueue: [entity ? entity.maxNumberOfPartitionsPerQueue : 1, [Validators.required, Validators.min(1)]],
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : '']
@@ -66,7 +68,21 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
     this.entityForm.patchValue({title: entity.title});
     this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore});
     this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine});
+    this.entityForm.patchValue({maxNumberOfQueues: entity.maxNumberOfQueues});
+    this.entityForm.patchValue({maxNumberOfPartitionsPerQueue: entity.maxNumberOfPartitionsPerQueue});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
+  }
+
+  showQueueParams(): boolean {
+    let isolatedTbRuleEngine: boolean = this.entityForm.get('isolatedTbRuleEngine').value;
+    if (isolatedTbRuleEngine) {
+      this.entityForm.controls['maxNumberOfQueues'].enable();
+      this.entityForm.controls['maxNumberOfPartitionsPerQueue'].enable();
+    } else {
+      this.entityForm.controls['maxNumberOfQueues'].disable();
+      this.entityForm.controls['maxNumberOfPartitionsPerQueue'].disable();
+    }
+    return isolatedTbRuleEngine;
   }
 
   updateFormState() {
@@ -76,6 +92,8 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
         if (!this.isAdd) {
           this.entityForm.get('isolatedTbCore').disable({emitEvent: false});
           this.entityForm.get('isolatedTbRuleEngine').disable({emitEvent: false});
+          this.entityForm.get('maxNumberOfQueues').disable({emitEvent: false});
+          this.entityForm.get('maxNumberOfPartitionsPerQueue').disable({emitEvent: false});
         }
       } else {
         this.entityForm.disable({emitEvent: false});

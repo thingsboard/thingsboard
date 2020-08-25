@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public final class InMemoryStorage {
@@ -50,7 +49,7 @@ public final class InMemoryStorage {
         return storage.computeIfAbsent(topic, (t) -> new LinkedBlockingQueue<>()).add(msg);
     }
 
-    public <T extends TbQueueMsg> List<T> get(String topic) throws InterruptedException {
+    public <T extends TbQueueMsg> List<T> get(String topic) {
         if (storage.containsKey(topic)) {
             List<T> entities;
             T first = (T) storage.get(topic).poll();

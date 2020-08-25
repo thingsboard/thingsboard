@@ -20,17 +20,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 @EqualsAndHashCode(callSuper = true)
 public class Tenant extends ContactBased<TenantId> implements HasTenantId {
 
     private static final long serialVersionUID = 8057243243859922101L;
-    
+
     private String title;
     private String region;
     private boolean isolatedTbCore;
     private boolean isolatedTbRuleEngine;
+    private int maxNumberOfQueues;
+    private int maxNumberOfPartitionsPerQueue;
 
     public Tenant() {
         super();
@@ -39,7 +39,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
     public Tenant(TenantId id) {
         super(id);
     }
-    
+
     public Tenant(Tenant tenant) {
         super(tenant);
         this.title = tenant.getTitle();
@@ -90,6 +90,22 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
         this.isolatedTbRuleEngine = isolatedTbRuleEngine;
     }
 
+    public int getMaxNumberOfQueues() {
+        return maxNumberOfQueues;
+    }
+
+    public void setMaxNumberOfQueues(int maxNumberOfQueues) {
+        this.maxNumberOfQueues = maxNumberOfQueues;
+    }
+
+    public int getMaxNumberOfPartitionsPerQueue() {
+        return maxNumberOfPartitionsPerQueue;
+    }
+
+    public void setMaxNumberOfPartitionsPerQueue(int maxNumberOfPartitionsPerQueue) {
+        this.maxNumberOfPartitionsPerQueue = maxNumberOfPartitionsPerQueue;
+    }
+
     @Override
     public String getSearchText() {
         return getTitle();
@@ -106,6 +122,10 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
         builder.append(isolatedTbCore);
         builder.append(", isolatedTbRuleEngine=");
         builder.append(isolatedTbRuleEngine);
+        builder.append(", maxNumberOfQueues=");
+        builder.append(maxNumberOfQueues);
+        builder.append(", maxNumberOfPartitionsPerQueue=");
+        builder.append(maxNumberOfPartitionsPerQueue);
         builder.append(", additionalInfo=");
         builder.append(getAdditionalInfo());
         builder.append(", country=");

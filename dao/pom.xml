@@ -53,6 +53,10 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard.common</groupId>
+            <artifactId>queue-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
             <artifactId>util</artifactId>
         </dependency>
         <dependency>

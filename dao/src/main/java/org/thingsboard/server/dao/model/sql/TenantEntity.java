@@ -77,6 +77,12 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
     @Column(name = ModelConstants.TENANT_ISOLATED_TB_RULE_ENGINE)
     private boolean isolatedTbRuleEngine;
 
+    @Column(name = ModelConstants.TENANT_MAX_NUMBER_OF_QUEUES)
+    private int maxNumberOfQueues;
+
+    @Column(name = ModelConstants.TENANT_MAX_NUMBER_OF_PARTITIONS_PER_QUEUE)
+    private int maxNumberOfPartitionsPerQueue;
+
     @Type(type = "json")
     @Column(name = ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
@@ -103,6 +109,8 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
         this.additionalInfo = tenant.getAdditionalInfo();
         this.isolatedTbCore = tenant.isIsolatedTbCore();
         this.isolatedTbRuleEngine = tenant.isIsolatedTbRuleEngine();
+        this.maxNumberOfQueues = tenant.getMaxNumberOfQueues();
+        this.maxNumberOfPartitionsPerQueue = tenant.getMaxNumberOfPartitionsPerQueue();
     }
 
     @Override
@@ -136,6 +144,8 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
         tenant.setAdditionalInfo(additionalInfo);
         tenant.setIsolatedTbCore(isolatedTbCore);
         tenant.setIsolatedTbRuleEngine(isolatedTbRuleEngine);
+        tenant.setMaxNumberOfQueues(maxNumberOfQueues);
+        tenant.setMaxNumberOfPartitionsPerQueue(maxNumberOfPartitionsPerQueue);
         return tenant;
     }
 

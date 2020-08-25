@@ -23,4 +23,6 @@ export interface Tenant extends ContactBased<TenantId> {
   isolatedTbCore: boolean;
   isolatedTbRuleEngine: boolean;
   additionalInfo?: any;
+  maxNumberOfQueues: number;
+  maxNumberOfPartitionsPerQueue: number;
 }

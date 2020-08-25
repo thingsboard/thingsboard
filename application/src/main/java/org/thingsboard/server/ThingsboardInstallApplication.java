@@ -30,6 +30,7 @@ import java.util.Arrays;
         "org.thingsboard.server.service.component",
         "org.thingsboard.server.service.install",
         "org.thingsboard.server.dao",
+        "org.thingsboard.server.queue.settings",
         "org.thingsboard.server.common.stats"})
 public class ThingsboardInstallApplication {
 

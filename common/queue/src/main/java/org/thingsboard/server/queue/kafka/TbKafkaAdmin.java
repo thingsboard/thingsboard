@@ -21,6 +21,7 @@ import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.settings.TbKafkaSettings;
 
 import java.util.Collections;
 import java.util.Map;
@@ -74,6 +75,23 @@ public class TbKafkaAdmin implements TbQueueAdmin {
             throw new RuntimeException(e);
         }
 
+    }
+
+    @Override
+    public void deleteTopic(String topic) {
+        if (topics.contains(topic)) {
+            client.deleteTopics(Collections.singletonList(topic));
+        } else {
+            try {
+                if (client.listTopics().names().get().contains(topic)) {
+                    client.deleteTopics(Collections.singletonList(topic));
+                } else {
+                    log.warn("Kafka topic [{}] does not exist.", topic);
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                log.error("Failed to delete kafka topic [{}].", topic, e);
+            }
+        }
     }
 
     @Override

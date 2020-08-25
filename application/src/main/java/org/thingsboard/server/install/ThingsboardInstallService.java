@@ -208,6 +208,7 @@ public class ThingsboardInstallService {
                 systemDataLoaderService.createSysAdmin();
                 systemDataLoaderService.createAdminSettings();
                 systemDataLoaderService.loadSystemWidgets();
+                systemDataLoaderService.createQueues();
 //                systemDataLoaderService.loadSystemPlugins();
 //                systemDataLoaderService.loadSystemRules();
 

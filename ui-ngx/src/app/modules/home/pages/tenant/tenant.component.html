@@ -65,6 +65,36 @@
           <div>{{ 'tenant.isolated-tb-rule-engine' | translate }}</div>
           <div class="tb-hint">{{'tenant.isolated-tb-rule-engine-details' | translate}}</div>
         </mat-checkbox>
+        <mat-form-field class="mat-block" *ngIf="showQueueParams()">
+          <mat-label translate>tenant.max-number-of-queues</mat-label>
+          <input matInput
+                 type="number"
+                 step="1"
+                 min="1"
+                 required
+                 formControlName="maxNumberOfQueues"/>
+          <mat-error *ngIf="entityForm.get('maxNumberOfQueues').hasError('required')">
+            {{ 'tenant.max-number-of-queues-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="entityForm.get('maxNumberOfQueues').hasError('min')">
+            {{ 'tenant.max-number-of-queues-min-length' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block" *ngIf="showQueueParams()">
+          <mat-label translate>tenant.max-number-of-partitions-per-queue</mat-label>
+          <input matInput
+                 type="number"
+                 step="1"
+                 min="1"
+                 required
+                 formControlName="maxNumberOfPartitionsPerQueue"/>
+          <mat-error *ngIf="entityForm.get('maxNumberOfPartitionsPerQueue').hasError('required')">
+            {{ 'tenant.max-number-of-partitions-per-queue-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="entityForm.get('maxNumberOfPartitionsPerQueue').hasError('min')">
+            {{ 'tenant.max-number-of-partitions-per-queue-min-length' | translate }}
+          </mat-error>
+        </mat-form-field>
       </div>
     </fieldset>
   </form>
