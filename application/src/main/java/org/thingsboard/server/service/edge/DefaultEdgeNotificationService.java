@@ -242,7 +242,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                         }
                     }
                 } else {
-                    ListenableFuture<List<EdgeId>> edgeIdsFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, dbCallbackExecutorService);
+                    ListenableFuture<List<EdgeId>> edgeIdsFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId);
                     Futures.transform(edgeIdsFuture, edgeIds -> {
                         if (edgeIds != null && !edgeIds.isEmpty()) {
                             for (EdgeId edgeId : edgeIds) {
@@ -321,7 +321,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             if (alarm != null) {
                 EdgeEventType edgeEventType = getEdgeQueueTypeByEntityType(alarm.getOriginator().getEntityType());
                 if (edgeEventType != null) {
-                    ListenableFuture<List<EdgeId>> relatedEdgeIdsByEntityIdFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, alarm.getOriginator(), dbCallbackExecutorService);
+                    ListenableFuture<List<EdgeId>> relatedEdgeIdsByEntityIdFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, alarm.getOriginator());
                     Futures.transform(relatedEdgeIdsByEntityIdFuture, relatedEdgeIdsByEntityId -> {
                         if (relatedEdgeIdsByEntityId != null) {
                             for (EdgeId edgeId : relatedEdgeIdsByEntityId) {
@@ -346,8 +346,8 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
         if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
                 !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
             List<ListenableFuture<List<EdgeId>>> futures = new ArrayList<>();
-            futures.add(edgeService.findRelatedEdgeIdsByEntityId(tenantId, relation.getTo(), dbCallbackExecutorService));
-            futures.add(edgeService.findRelatedEdgeIdsByEntityId(tenantId, relation.getFrom(), dbCallbackExecutorService));
+            futures.add(edgeService.findRelatedEdgeIdsByEntityId(tenantId, relation.getTo()));
+            futures.add(edgeService.findRelatedEdgeIdsByEntityId(tenantId, relation.getFrom()));
             ListenableFuture<List<List<EdgeId>>> combinedFuture = Futures.allAsList(futures);
             Futures.transform(combinedFuture, listOfListsEdgeIds -> {
                 Set<EdgeId> uniqueEdgeIds = new HashSet<>();
