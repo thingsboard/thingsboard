@@ -48,7 +48,6 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
 
     private static final String MQTT_URL = "tcp://localhost:1883";
     protected static final String CUSTOMER_USER_PASSWORD = "customerUser123!";
-    protected static final String CLAIM_REQUEST_WITH_SECRET_AND_DURATION = "{\"secretKey\":\"value\", \"durationMs\":60000}";
 
     private Tenant savedTenant;
     private User tenantAdmin;
@@ -118,73 +117,61 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
         }
     }
 
-//    @Ignore
     @Test
     public void testClaimingDeviceV1Json() throws Exception {
         processTestClaimingDevice("Test claiming device V1 Json", MqttTopics.DEVICE_CLAIM_TOPIC_V1_JSON, false);
     }
 
-//    @Ignore
     @Test
     public void testClaimingDeviceV2Json() throws Exception {
         processTestClaimingDevice("Test claiming device V2 Json", MqttTopics.DEVICE_CLAIM_TOPIC_V2_JSON, false);
     }
 
-//    @Ignore
     @Test
     public void testClaimingDeviceV2Proto() throws Exception {
         processTestClaimingDevice("Test claiming device V2 Proto", MqttTopics.DEVICE_CLAIM_TOPIC_V2_PROTO, false);
     }
 
-//    @Ignore
     @Test
     public void testClaimingDeviceV1JsonWithoutSecretAndDuration() throws Exception {
         processTestClaimingDevice("Test claiming device empty payload V1 Json", MqttTopics.DEVICE_CLAIM_TOPIC_V1_JSON, true);
     }
 
-//    @Ignore
     @Test
     public void testClaimingDeviceV2JsonWithoutSecretAndDuration() throws Exception {
         processTestClaimingDevice("Test claiming device empty payload V2 Json", MqttTopics.DEVICE_CLAIM_TOPIC_V2_JSON, true);
     }
 
-//    @Ignore
     @Test
     public void testClaimingDeviceV2ProtoWithoutSecretAndDuration() throws Exception {
         processTestClaimingDevice("Test claiming device empty payload V2 Proto", MqttTopics.DEVICE_CLAIM_TOPIC_V2_PROTO, true);
     }
 
-//    @Ignore
     @Test
     public void testGatewayClaimingDeviceV1Json() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device V1 Json", MqttTopics.GATEWAY_CLAIM_TOPIC_V1_JSON, false);
     }
 
-//    @Ignore
     @Test
     public void testGatewayClaimingDeviceV2Json() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device V2 Json", MqttTopics.GATEWAY_CLAIM_TOPIC_V2_JSON, false);
     }
 
-//    @Ignore
     @Test
     public void testGatewayClaimingDeviceV2Proto() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device V2 Proto", MqttTopics.GATEWAY_CLAIM_TOPIC_V2_PROTO, false);
     }
 
-//    @Ignore
     @Test
     public void testGatewayClaimingDeviceV1JsonWithoutSecretAndDuration() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device empty payload V1 Json", MqttTopics.GATEWAY_CLAIM_TOPIC_V1_JSON, true);
     }
 
-//    @Ignore
     @Test
     public void testGatewayClaimingDeviceV2JsonWithoutSecretAndDuration() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device empty payload V2 Json", MqttTopics.GATEWAY_CLAIM_TOPIC_V2_JSON, true);
     }
 
-//    @Ignore
     @Test
     public void testGatewayClaimingDeviceV2ProtoWithoutSecretAndDuration() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device empty payload V2 Proto", MqttTopics.GATEWAY_CLAIM_TOPIC_V2_PROTO, true);
@@ -223,6 +210,8 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
         }
         client.publish(topic, new MqttMessage(failurePayloadBytes));
 
+        Thread.sleep(1000);
+
         loginUser(customerAdmin.getName(), CUSTOMER_USER_PASSWORD);
         ClaimRequest claimRequest;
         if (!emptyPayload) {
@@ -236,7 +225,7 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
 
         client.publish(topic, new MqttMessage(payloadBytes));
 
-        Thread.sleep(2000);
+        Thread.sleep(1000);
 
         ClaimResult claimResult = doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResult.class, status().isOk());
         assertEquals(claimResult.getResponse(), ClaimResponse.SUCCESS);
@@ -246,6 +235,9 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
         assertEquals(customerAdmin.getCustomerId(), claimedDevice.getCustomerId());
 
         client.publish(topic, new MqttMessage(payloadBytes));
+
+        Thread.sleep(1000);
+
         claimResponse = doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest());
         assertEquals(claimResponse, ClaimResponse.CLAIMED);
     }
@@ -292,7 +284,7 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
 
         client.publish(topic, new MqttMessage(payloadBytes));
 
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         ClaimResult claimResult = doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResult.class, status().isOk());
         assertEquals(claimResult.getResponse(), ClaimResponse.SUCCESS);
