@@ -266,10 +266,13 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 List<String> clientAttributesKeys = clientAttributeKvEntries.stream().map(AttributeKvEntry::getKey).collect(Collectors.toList());
                 List<String> sharedAttributesKeys = sharedAttributeKvEntries.stream().map(AttributeKvEntry::getKey).collect(Collectors.toList());
 
-                if (CollectionUtils.isNotEmpty(clientAttributeNamesList) || CollectionUtils.isNotEmpty(sharedAttributeNamesList)) {
+                if (CollectionUtils.isNotEmpty(clientAttributeNamesList)) {
                     Set<String> deletedClientKeys = clientAttributeNamesList.stream().filter(key -> !clientAttributesKeys.contains(key)).collect(Collectors.toSet());
-                    Set<String> deletedSharedKeys = sharedAttributeNamesList.stream().filter(key -> !sharedAttributesKeys.contains(key)).collect(Collectors.toSet());
                     deletedKeys.addAll(deletedClientKeys);
+                }
+
+                if (CollectionUtils.isNotEmpty(sharedAttributeNamesList)) {
+                    Set<String> deletedSharedKeys = sharedAttributeNamesList.stream().filter(key -> !sharedAttributesKeys.contains(key)).collect(Collectors.toSet());
                     deletedKeys.addAll(deletedSharedKeys);
                 }
 
