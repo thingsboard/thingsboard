@@ -375,70 +375,75 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.notifyDataLoaded();
       return of(null);
     }
-    if (this.comparisonEnabled) {
-      const additionalDatasources: Datasource[] = [];
-      this.configuredDatasources.forEach((datasource, datasourceIndex) => {
-        const additionalDataKeys: DataKey[] = [];
-        datasource.dataKeys.forEach((dataKey, dataKeyIndex) => {
-          if (dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
-            const additionalDataKey = deepClone(dataKey);
-            additionalDataKey.isAdditional = true;
-            additionalDataKey.origDataKeyIndex = dataKeyIndex;
-            additionalDataKeys.push(additionalDataKey);
+    if (this.configuredDatasources.length) {
+      if (this.comparisonEnabled) {
+        const additionalDatasources: Datasource[] = [];
+        this.configuredDatasources.forEach((datasource, datasourceIndex) => {
+          const additionalDataKeys: DataKey[] = [];
+          datasource.dataKeys.forEach((dataKey, dataKeyIndex) => {
+            if (dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
+              const additionalDataKey = deepClone(dataKey);
+              additionalDataKey.isAdditional = true;
+              additionalDataKey.origDataKeyIndex = dataKeyIndex;
+              additionalDataKeys.push(additionalDataKey);
+            }
+          });
+          if (additionalDataKeys.length) {
+            const additionalDatasource: Datasource = deepClone(datasource);
+            additionalDatasource.dataKeys = additionalDataKeys;
+            additionalDatasource.isAdditional = true;
+            additionalDatasource.origDatasourceIndex = datasourceIndex;
+            additionalDatasources.push(additionalDatasource);
           }
         });
-        if (additionalDataKeys.length) {
-          const additionalDatasource: Datasource = deepClone(datasource);
-          additionalDatasource.dataKeys = additionalDataKeys;
-          additionalDatasource.isAdditional = true;
-          additionalDatasource.origDatasourceIndex = datasourceIndex;
-          additionalDatasources.push(additionalDatasource);
-        }
+        this.configuredDatasources = this.configuredDatasources.concat(additionalDatasources);
+      }
+      const resolveResultObservables = this.configuredDatasources.map((datasource, index) => {
+        const listener: EntityDataListener = {
+          subscriptionType: this.type,
+          configDatasource: datasource,
+          configDatasourceIndex: index,
+          dataLoaded: (pageData, data1, datasourceIndex, pageLink) => {
+            this.dataLoaded(pageData, data1, datasourceIndex, pageLink, true)
+          },
+          initialPageDataChanged: this.initialPageDataChanged.bind(this),
+          dataUpdated: this.dataUpdated.bind(this),
+          updateRealtimeSubscription: () => {
+            if (this.comparisonEnabled && datasource.isAdditional) {
+              return this.updateSubscriptionForComparison();
+            } else {
+              return this.updateRealtimeSubscription();
+            }
+          },
+          setRealtimeSubscription: (subscriptionTimewindow) => {
+            if (this.comparisonEnabled && datasource.isAdditional) {
+              this.updateSubscriptionForComparison(subscriptionTimewindow);
+            } else {
+              this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
+            }
+          }
+        };
+        this.entityDataListeners.push(listener);
+        return this.ctx.entityDataService.prepareSubscription(listener);
       });
-      this.configuredDatasources = this.configuredDatasources.concat(additionalDatasources);
+      return forkJoin(resolveResultObservables).pipe(
+        map((resolveResults) => {
+          resolveResults.forEach((resolveResult) => {
+            if (resolveResult) {
+              this.dataLoaded(resolveResult.pageData, resolveResult.data, resolveResult.datasourceIndex, resolveResult.pageLink, false);
+            }
+          });
+          this.configureLoadedData();
+          this.hasResolvedData = this.datasources.length > 0;
+          this.updateDataTimewindow();
+          this.notifyDataLoaded();
+          this.onDataUpdated(true);
+        })
+      );
+    } else {
+      this.notifyDataLoaded();
+      return of(null);
     }
-    const resolveResultObservables = this.configuredDatasources.map((datasource, index) => {
-      const listener: EntityDataListener = {
-        subscriptionType: this.type,
-        configDatasource: datasource,
-        configDatasourceIndex: index,
-        dataLoaded: (pageData, data1, datasourceIndex, pageLink) => {
-          this.dataLoaded(pageData, data1, datasourceIndex, pageLink, true)
-        },
-        initialPageDataChanged: this.initialPageDataChanged.bind(this),
-        dataUpdated: this.dataUpdated.bind(this),
-        updateRealtimeSubscription: () => {
-          if (this.comparisonEnabled && datasource.isAdditional) {
-            return this.updateSubscriptionForComparison();
-          } else {
-            return this.updateRealtimeSubscription();
-          }
-        },
-        setRealtimeSubscription: (subscriptionTimewindow) => {
-          if (this.comparisonEnabled && datasource.isAdditional) {
-            this.updateSubscriptionForComparison(subscriptionTimewindow);
-          } else {
-            this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
-          }
-        }
-      };
-      this.entityDataListeners.push(listener);
-      return this.ctx.entityDataService.prepareSubscription(listener);
-    });
-    return forkJoin(resolveResultObservables).pipe(
-      map((resolveResults) => {
-        resolveResults.forEach((resolveResult) => {
-          if (resolveResult) {
-            this.dataLoaded(resolveResult.pageData, resolveResult.data, resolveResult.datasourceIndex, resolveResult.pageLink, false);
-          }
-        });
-        this.configureLoadedData();
-        this.hasResolvedData = this.datasources.length > 0;
-        this.updateDataTimewindow();
-        this.notifyDataLoaded();
-        this.onDataUpdated(true);
-      })
-    );
   }
 
   private resetData() {

@@ -321,40 +321,44 @@ export class AliasController implements IAliasController {
   }
 
   resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean): Observable<Array<Datasource>> {
-    const toResolve = singleEntity ? [datasources[0]] : datasources;
-    const observables = new Array<Observable<Datasource>>();
-    toResolve.forEach((datasource) => {
-      observables.push(this.resolveDatasource(datasource));
-    });
-    return forkJoin(observables).pipe(
-      map((result) => {
-        let functionIndex = 0;
-        result.forEach((datasource) => {
-          if (datasource.type === DatasourceType.function) {
-            let name: string;
-            if (datasource.name && datasource.name.length) {
-              name = datasource.name;
+    if (datasources.length) {
+      const toResolve = singleEntity ? [datasources[0]] : datasources;
+      const observables = new Array<Observable<Datasource>>();
+      toResolve.forEach((datasource) => {
+        observables.push(this.resolveDatasource(datasource));
+      });
+      return forkJoin(observables).pipe(
+        map((result) => {
+          let functionIndex = 0;
+          result.forEach((datasource) => {
+            if (datasource.type === DatasourceType.function) {
+              let name: string;
+              if (datasource.name && datasource.name.length) {
+                name = datasource.name;
+              } else {
+                functionIndex++;
+                name = DatasourceType.function;
+                if (functionIndex > 1) {
+                  name += ' ' + functionIndex;
+                }
+              }
+              datasource.name = name;
+              datasource.aliasName = name;
+              datasource.entityName = name;
             } else {
-              functionIndex++;
-              name = DatasourceType.function;
-              if (functionIndex > 1) {
-                name += ' ' + functionIndex;
+              if (singleEntity) {
+                datasource.pageLink = deepClone(singleEntityDataPageLink);
+              } else if (!datasource.pageLink) {
+                datasource.pageLink = deepClone(defaultEntityDataPageLink);
               }
             }
-            datasource.name = name;
-            datasource.aliasName = name;
-            datasource.entityName = name;
-          } else {
-            if (singleEntity) {
-              datasource.pageLink = deepClone(singleEntityDataPageLink);
-            } else if (!datasource.pageLink) {
-              datasource.pageLink = deepClone(defaultEntityDataPageLink);
-            }
-          }
-        });
-        return result;
-      })
-    );
+          });
+          return result;
+        })
+      );
+    } else {
+      return of([]);
+    }
   }
 
   getInstantAliasInfo(aliasId: string): AliasInfo {
