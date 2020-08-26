@@ -22,6 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.*;
+import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +39,9 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 @Component("LwM2MTransportHandler")
@@ -43,6 +49,9 @@ import java.util.List;
 @Slf4j
 public class LwM2MTransportHandler {
 
+    // We choose a default timeout a bit higher to the MAX_TRANSMIT_WAIT(62-93s) which is the time from starting to
+    // send a Confirmable message to the time when an acknowledgement is no longer expected.
+    public static final long DEFAULT_TIMEOUT = 2 * 60 * 1000l; // 2min in ms
     public static final String EVENT_DEREGISTRATION = "DEREGISTRATION";
     public static final String EVENT_UPDATED = "UPDATED";
     public static final String EVENT_REGISTRATION = "REGISTRATION";
@@ -124,7 +133,8 @@ public class LwM2MTransportHandler {
     public static final String POST_TYPE_OPER_OBSERVE_CANCEL = "observeCancel";
     public static final String POST_TYPE_OPER_EXECUTE = "execute";
     public static final String PUT_TYPE_OPER_UPDATE = "update";
-    public static final String PUT_TYPE_OPER_WRIGHT = "wright";
+    public static final String PUT_TYPE_OPER_WRITE = "write";
+    public static final String PUT_TYPE_OPER_WRITE_ATTRIBUTES = "wright-attributes";
 
     public static final String EVENT_AWAKE = "AWAKE";
 
@@ -199,6 +209,41 @@ public class LwM2MTransportHandler {
             coapConfig.store(configFile);
         }
         return coapConfig;
+    }
+
+    public static String getValueTypeToString (Object value, ResourceModel.Type type) {
+        switch (type) {
+            case STRING:    // String
+            case OBJLNK:    // ObjectLink
+                return value.toString();
+            case INTEGER:   // Long
+                return Long.toString((long) value);
+            case BOOLEAN:   // Boolean
+                return Boolean.toString((Boolean) value);
+            case FLOAT:     // Double
+                return Double.toString((Float)value);
+            case TIME:      // Date
+                String DATE_FORMAT = "MMM d, yyyy HH:mm a";
+                DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
+                return formatter.format(new Date((Long) Integer.toUnsignedLong(Integer.valueOf((Integer) value))));
+            case OPAQUE:    // byte[] value, base64
+                return Hex.encodeHexString((byte[])value);
+            default:
+                return null;
+        }
+    }
+
+    public static LwM2mNode getLvM2mNodeToObject(LwM2mNode content) {
+        if (content instanceof LwM2mObject) {
+            return (LwM2mObject) content;
+        } else if (content instanceof LwM2mObjectInstance) {
+            return (LwM2mObjectInstance) content;
+        } else if (content instanceof LwM2mSingleResource) {
+            return (LwM2mSingleResource) content;
+        } else if (content instanceof LwM2mMultipleResource) {
+            return (LwM2mMultipleResource) content;
+        }
+        return null;
     }
 
     public JsonObject validateJson(String jsonStr) {

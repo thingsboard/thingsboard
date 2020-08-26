@@ -36,7 +36,7 @@ import java.util.Map;
 public class LwM2MTransportContextServer extends TransportContext {
 
     @Getter
-    @Value("${transport.lwm2m.timeout:5000}")
+    @Value("${transport.lwm2m.timeout:}")
     private Long timeout;
 
     @Getter

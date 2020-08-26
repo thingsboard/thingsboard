@@ -18,12 +18,8 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.Data;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
-
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+
 
 @Data
 public class ModelObject {
@@ -34,8 +30,13 @@ public class ModelObject {
     private ObjectModel objectModel;
     private Map<Integer, LwM2mObjectInstance> instances;
 
-    public ModelObject(ObjectModel objectModel, Map<Integer, LwM2mObjectInstance> instances) {
+     public ModelObject(ObjectModel objectModel, Map<Integer, LwM2mObjectInstance> instances) {
         this.objectModel = objectModel;
         this.instances = instances;
+    }
+
+    public boolean removeInstance (int id ) {
+        LwM2mObjectInstance instance = this.instances.get(id);
+         return this.instances.remove(id, instance);
     }
 }

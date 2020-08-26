@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.response.ObserveResponse;
+import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.observation.ObservationListener;
 import org.eclipse.leshan.server.queue.PresenceListener;
@@ -91,9 +92,9 @@ public class LwM2mServerListener {
 
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
-            log.info("Received notification onResponse from [{}] containing value [{}]", observation.getPath(), response.getContent().toString());
+//            log.info("Received notification onResponse from [{}] containing value [{}]", observation.getPath(), response.getContent().toString());
             if (registration != null) {
-                service.observOnResponse(lhServer, observation, registration, response);
+                service.setValue(registration, observation.getPath().toString(), response);
             }
         }
 
@@ -104,7 +105,7 @@ public class LwM2mServerListener {
 
         @Override
         public void newObservation(Observation observation, Registration registration) {
-            log.info("Received notification cancelled from [{}] endpoint  [{}] ", observation.getPath(), registration.getEndpoint());
+            log.info("Received newObservation from [{}] endpoint  [{}] ", observation.getPath(), registration.getEndpoint());
         }
     };
 }

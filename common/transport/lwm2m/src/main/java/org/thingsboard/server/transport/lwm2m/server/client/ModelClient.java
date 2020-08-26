@@ -24,11 +24,13 @@ import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.core.response.ObserveResponse;
+import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportService;
+import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResultAttrTel;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,11 +47,12 @@ public class ModelClient  implements Cloneable {
     private TransportProtos.ValidateDeviceCredentialsResponseMsg credentialsResponse;
     private Map<String, String> attributes;
     private Map<Integer, ModelObject> modelObjects;
-    private Set<Integer> pendingRequests;
-    private Map<Integer, LwM2mResponse> responses;
+    private Set<String> pendingRequests;
+    private Map<String, LwM2mResponse> responses;
     private LeshanServer lwServer;
     private Registration registration;
     private JsonObject clientObserveAttrTelemetry;
+    private ReadResultAttrTel readResultAttrTel;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
@@ -62,25 +65,26 @@ public class ModelClient  implements Cloneable {
         this.attributes = (attributes != null && attributes.size()>0) ? attributes : new ConcurrentHashMap<String, String>();
         this.modelObjects =  (modelObjects != null && modelObjects.size()>0) ? modelObjects : new ConcurrentHashMap<Integer, ModelObject>();
         this.pendingRequests = ConcurrentHashMap.newKeySet();
+        this.readResultAttrTel = new ReadResultAttrTel();
         /**
          * Key <objectId>, response<Value -> instance -> resources: value...>
          */
         this.responses = new ConcurrentHashMap<>();
     }
 
-    public void onSuccessHandler (Integer objectId, LwM2mResponse response) {
-        this.responses.put(objectId, response);
-        this.pendingRequests.remove(objectId);
+    public void onSuccessHandler (String path, LwM2mResponse response) {
+        this.responses.put(path, response);
+        this.pendingRequests.remove(path);
         if (this.pendingRequests.size() == 0) {
-            log.info("19) model: finish: objectId: {} \n this.pendingRequests.size() {}", objectId, this.pendingRequests.size());
-            /**
-             * Cancel All observation
-             */
-            int cancel = lwServer.getObservationService().cancelObservations(registration);
+            log.info("19) model: finish: path: {} \n this.pendingRequests.size() {}", path, this.pendingRequests.size());
+//            /**
+//             * Cancel All observation
+//             */
+//            int cancel = lwServer.getObservationService().cancelObservations(registration);
 //            Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
 //            log.info("33_1)  setCancelObservationObjects endpoint: {} cancel: {}  observations: {}", registration.getEndpoint(), cancel, observations);
             this.initValue ();
-            this.transportService.getAttrTelemetryObserveFromModel(this.lwServer, this.registration.getId(), this);
+            this.transportService.getAttrTelemetryObserveFromModel(this.lwServer, this.registration, this);
         }
     }
 
@@ -89,20 +93,30 @@ public class ModelClient  implements Cloneable {
         this.registration = registration;
     }
 
-    public void addPendingRequests(Integer request) {
-        this.pendingRequests.add(request);
+    public void addPendingRequests(String path) {
+        this.pendingRequests.add(path);
     }
 
     private void initValue () {
         this.responses.forEach((key, resp) -> {
-            int objectId = ((LwM2mObject) ((ObserveResponse) resp).getContent()).getId();
+            int objectId  = Integer.valueOf(key.split("/")[1]);
             ObjectModel objectModel = ((Collection<ObjectModel>)lwServer.getModelProvider().getObjectModel(registration).getObjectModels()).stream().filter(v -> v.id==objectId).collect(Collectors.toList()).get(0);
-            Map<Integer, LwM2mObjectInstance> instances =  new ConcurrentHashMap<>();
-            ((LwM2mObject) ((ObserveResponse) resp).getContent()).getInstances().entrySet().forEach(instance -> {
-                instances.put(instance.getKey(), instance.getValue());
-            });
-            ModelObject modelObject = new ModelObject(objectModel, instances);
-            this.modelObjects.put(objectId, modelObject);
+            if (this.modelObjects.get(objectId) != null) {
+                this.modelObjects.get(objectId).getInstances().put(((ReadResponse) resp).getContent().getId(), (LwM2mObjectInstance)((ReadResponse) resp).getContent());
+            }
+            else {
+                Map<Integer, LwM2mObjectInstance> instances = new ConcurrentHashMap<>();
+                instances.put(((ReadResponse) resp).getContent().getId(), (LwM2mObjectInstance)((ReadResponse) resp).getContent());
+                ModelObject modelObject =   new ModelObject(objectModel, instances);
+                this.modelObjects.put(objectId, modelObject);
+            }
+
+//            instances.put(resp.getC)
+
+//            ((LwM2mObject) ((ReadResponse) resp).getContent()).getInstances().entrySet().forEach(instance -> {
+//                instances.put(instance.getKey(), instance.getValue());
+//            });
+
         });
     }
 
