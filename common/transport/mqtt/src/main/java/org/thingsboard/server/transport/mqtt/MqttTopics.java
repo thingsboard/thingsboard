@@ -28,7 +28,6 @@ public class MqttTopics {
     public static final String ATTRIBUTES_RESPONSE = "/attributes/response/";
     public static final String ATTRIBUTES_REQUEST = "/attributes/request/";
     public static final String TELEMETRY = "/telemetry";
-    private static final String ARRAY = "/array";
     public static final String ATTRIBUTES = "/attributes";
     public static final String CLAIM = "/claim";
     public static final String SUB_TOPIC = "+";

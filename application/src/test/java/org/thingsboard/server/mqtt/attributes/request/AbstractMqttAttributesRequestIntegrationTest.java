@@ -129,7 +129,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
     private void processTestGatewayRequestAttributesValuesFromTheServer(String deviceName,
                                                                         String topicToPostAttributes,
-                                                                        String topicToSubscribeForAttributesValues,
+                                                                        String topicToSubscribeForGetAttributes,
                                                                         String topicToRequestAttributesValues) throws Exception {
 
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
@@ -144,7 +144,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
         Thread.sleep(1000);
 
-        client.subscribe(topicToSubscribeForAttributesValues, MqttQoS.AT_LEAST_ONCE.value());
+        client.subscribe(topicToSubscribeForGetAttributes, MqttQoS.AT_LEAST_ONCE.value());
 
         TestMqttCallback clientAttributesCallback = getTestMqttCallback();
         client.setCallback(clientAttributesCallback);

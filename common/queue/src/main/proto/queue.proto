@@ -70,7 +70,6 @@ enum KeyValueType {
   DOUBLE_V = 3;
   STRING_V = 4;
   JSON_V = 5;
-  BYTES_V = 6;
 }
 
 message KeyValueProto {
@@ -81,7 +80,6 @@ message KeyValueProto {
   double double_v = 5;
   string string_v = 6;
   string json_v = 7;
-  bytes bytes_v = 8; // added simetrycally with byte type
 }
 
 message TsKvProto {

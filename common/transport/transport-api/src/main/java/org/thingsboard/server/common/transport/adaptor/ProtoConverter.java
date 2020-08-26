@@ -32,7 +32,7 @@ import java.util.List;
 @Slf4j
 public class ProtoConverter {
 
-    public static final JsonParser parser = new JsonParser();
+    public static final JsonParser JSON_PARSER = new JsonParser();
 
     public static TransportProtos.PostTelemetryMsg convertToTelemetryProto(byte[] payload) throws InvalidProtocolBufferException, IllegalArgumentException {
         TransportProtos.TsKvListProto protoPayload = TransportProtos.TsKvListProto.parseFrom(payload);
@@ -55,7 +55,7 @@ public class ProtoConverter {
             postTelemetryMsgBuilder.addAllTsKvList(tsKvListProtos);
             return postTelemetryMsgBuilder.build();
         } else {
-            throw new IllegalArgumentException("TsKv List is empty!");
+            throw new IllegalArgumentException("TsKv list is empty!");
         }
     }
 
@@ -68,7 +68,7 @@ public class ProtoConverter {
             result.addAllKv(keyValueProtos);
             return result.build();
         } else {
-            throw new IllegalArgumentException("KeyValue List is empty!");
+            throw new IllegalArgumentException("KeyValue list is empty!");
         }
     }
 
@@ -126,7 +126,7 @@ public class ProtoConverter {
             tsKvListBuilder.addAllKv(keyValueListProtos);
             return tsKvListBuilder.build();
         } else {
-            throw new IllegalArgumentException("KeyValue List is empty!");
+            throw new IllegalArgumentException("KeyValue list is empty!");
         }
     }
 
@@ -142,22 +142,22 @@ public class ProtoConverter {
                 case BOOLEAN_V:
                 case LONG_V:
                 case DOUBLE_V:
-                case BYTES_V:
                     break;
                 case STRING_V:
                     if (StringUtils.isEmpty(keyValueProto.getStringV())) {
-                        throw new IllegalArgumentException("Value is empty for Key: " + key + "!");
+                        throw new IllegalArgumentException("Value is empty for key: " + key + "!");
                     }
                     break;
                 case JSON_V:
-                    // TODO: 6/3/20 add validation of invalid json format
-                    if (StringUtils.isEmpty(keyValueProto.getJsonV())) {
-                        throw new IllegalArgumentException("Value is empty for Key: " + key + "!");
+                    try {
+                        JSON_PARSER.parse(keyValueProto.getJsonV());
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException("Can't parse value: " + keyValueProto.getJsonV() + " for key: " + key + "!");
                     }
                     break;
                 case UNRECOGNIZED:
                 case UNKNOWN:
-                    throw new IllegalArgumentException("Unsupported KeyValueType: " + type + "!");
+                    throw new IllegalArgumentException("Unsupported keyValueType: " + type + "!");
             }
         });
         return kvList;

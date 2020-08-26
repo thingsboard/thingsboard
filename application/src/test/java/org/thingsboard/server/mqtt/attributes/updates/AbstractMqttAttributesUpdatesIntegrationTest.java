@@ -120,6 +120,8 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
 
         client.subscribe(topicToSubscribeForAttributesUpdates, MqttQoS.AT_MOST_ONCE.value());
 
+        Thread.sleep(1000);
+
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         onUpdateCallback.getLatch().await(5, TimeUnit.SECONDS);
 
@@ -200,6 +202,8 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
         assertNotNull(savedDevice);
 
         client.subscribe(topicToSubscribeForAttributesUpdates, MqttQoS.AT_MOST_ONCE.value());
+
+        Thread.sleep(1000);
 
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         onUpdateCallback.getLatch().await(3, TimeUnit.SECONDS);

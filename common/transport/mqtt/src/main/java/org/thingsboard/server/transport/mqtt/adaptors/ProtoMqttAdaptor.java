@@ -80,6 +80,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         try {
             return ProtoConverter.convertToGetAttributeRequestMessage(bytes, requestId);
         } catch (InvalidProtocolBufferException e) {
+            log.warn("Failed to decode get attributes request", e);
             throw new AdaptorException(e);
         }
     }
