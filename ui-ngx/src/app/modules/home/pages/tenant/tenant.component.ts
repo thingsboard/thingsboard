@@ -18,7 +18,7 @@ import { Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Tenant } from '@app/shared/models/tenant.model';
+import { Tenant, TenantInfo } from '@app/shared/models/tenant.model';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { ContactBasedComponent } from '../../components/entity/contact-based.component';
@@ -29,12 +29,12 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
   templateUrl: './tenant.component.html',
   styleUrls: ['./tenant.component.scss']
 })
-export class TenantComponent extends ContactBasedComponent<Tenant> {
+export class TenantComponent extends ContactBasedComponent<TenantInfo> {
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              @Inject('entity') protected entityValue: Tenant,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Tenant>,
+              @Inject('entity') protected entityValue: TenantInfo,
+              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<TenantInfo>,
               protected fb: FormBuilder) {
     super(store, fb, entityValue, entitiesTableConfigValue);
   }
@@ -47,12 +47,13 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
     }
   }
 
-  buildEntityForm(entity: Tenant): FormGroup {
+  buildEntityForm(entity: TenantInfo): FormGroup {
     return this.fb.group(
       {
         title: [entity ? entity.title : '', [Validators.required]],
-        isolatedTbCore: [entity ? entity.isolatedTbCore : false, []],
-        isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
+        tenantProfileId: [entity ? entity.tenantProfileId : null, [Validators.required]],
+        // isolatedTbCore: [entity ? entity.isolatedTbCore : false, []],
+        // isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : '']
@@ -64,8 +65,9 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
 
   updateEntityForm(entity: Tenant) {
     this.entityForm.patchValue({title: entity.title});
-    this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore});
-    this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine});
+    this.entityForm.patchValue({tenantProfileId: entity.tenantProfileId});
+    // this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore});
+    // this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
   }
 
@@ -73,10 +75,10 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
     if (this.entityForm) {
       if (this.isEditValue) {
         this.entityForm.enable({emitEvent: false});
-        if (!this.isAdd) {
+        /* if (!this.isAdd) {
           this.entityForm.get('isolatedTbCore').disable({emitEvent: false});
           this.entityForm.get('isolatedTbRuleEngine').disable({emitEvent: false});
-        }
+        } */
       } else {
         this.entityForm.disable({emitEvent: false});
       }

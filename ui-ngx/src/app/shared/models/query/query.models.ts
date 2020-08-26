@@ -50,7 +50,7 @@ export function entityKeyTypeToDataKeyType(entityKeyType: EntityKeyType): DataKe
     case EntityKeyType.CLIENT_ATTRIBUTE:
     case EntityKeyType.SHARED_ATTRIBUTE:
     case EntityKeyType.SERVER_ATTRIBUTE:
-      return DataKeyType.attribute
+      return DataKeyType.attribute;
     case EntityKeyType.TIME_SERIES:
       return DataKeyType.timeseries;
     case EntityKeyType.ENTITY_FIELD:
@@ -81,11 +81,10 @@ export interface EntityKey {
 }
 
 export function dataKeyToEntityKey(dataKey: DataKey): EntityKey {
-  const entityKey: EntityKey = {
+  return {
     key: dataKey.name,
     type: dataKeyTypeToEntityKeyType(dataKey.type)
   };
-  return entityKey;
 }
 
 export enum EntityKeyValueType {
@@ -287,26 +286,26 @@ export interface FilterPredicateValue<T> {
 }
 
 export interface StringFilterPredicate {
-  type: FilterPredicateType.STRING,
+  type: FilterPredicateType.STRING;
   operation: StringOperation;
   value: FilterPredicateValue<string>;
   ignoreCase: boolean;
 }
 
 export interface NumericFilterPredicate {
-  type: FilterPredicateType.NUMERIC,
+  type: FilterPredicateType.NUMERIC;
   operation: NumericOperation;
   value: FilterPredicateValue<number>;
 }
 
 export interface BooleanFilterPredicate {
-  type: FilterPredicateType.BOOLEAN,
+  type: FilterPredicateType.BOOLEAN;
   operation: BooleanOperation;
   value: FilterPredicateValue<boolean>;
 }
 
 export interface BaseComplexFilterPredicate<T extends KeyFilterPredicate | KeyFilterPredicateInfo> {
-  type: FilterPredicateType.COMPLEX,
+  type: FilterPredicateType.COMPLEX;
   operation: ComplexOperation;
   predicates: Array<T>;
 }
@@ -481,7 +480,7 @@ export interface Filter extends FilterInfo {
 }
 
 export interface Filters {
-  [id: string]: Filter
+  [id: string]: Filter;
 }
 
 export interface EntityFilter extends EntityFilters {
@@ -535,7 +534,7 @@ export function createDefaultEntityDataPageLink(pageSize: number): EntityDataPag
       },
       direction: Direction.DESC
     }
-  }
+  };
 }
 
 export const singleEntityDataPageLink: EntityDataPageLink = createDefaultEntityDataPageLink(1);

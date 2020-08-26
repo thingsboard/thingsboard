@@ -20,6 +20,62 @@ import { TenantId } from '@shared/models/id/tenant-id';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { DeviceCredentialsId } from '@shared/models/id/device-credentials-id';
 import { EntitySearchQuery } from '@shared/models/relation.models';
+import { DeviceProfileId } from '@shared/models/id/device-profile-id';
+import { RuleChainId } from '@shared/models/id/rule-chain-id';
+import { EntityInfoData } from '@shared/models/entity.models';
+
+export enum DeviceProfileType {
+  DEFAULT = 'DEFAULT',
+  LWM2M = 'LWM2M'
+}
+
+export interface DefaultDeviceProfileConfiguration {
+  [key: string]: any;
+}
+export interface Lwm2mDeviceProfileConfiguration {
+  [key: string]: any;
+}
+
+export type DeviceProfileConfigurations = DefaultDeviceProfileConfiguration & Lwm2mDeviceProfileConfiguration;
+
+export interface DeviceProfileConfiguration extends DeviceProfileConfigurations {
+  type: DeviceProfileType;
+}
+
+export interface DeviceProfileData {
+  configuration: DeviceProfileConfiguration;
+}
+
+export interface DeviceProfile extends BaseData<DeviceProfileId> {
+  tenantId?: TenantId;
+  name: string;
+  description?: string;
+  isDefault: boolean;
+  type: DeviceProfileType;
+  defaultRuleChainId?: RuleChainId;
+  profileData: DeviceProfileData;
+}
+
+export interface DeviceProfileInfo extends EntityInfoData {
+  type: DeviceProfileType;
+}
+
+export interface DefaultDeviceConfiguration {
+  [key: string]: any;
+}
+export interface Lwm2mDeviceConfiguration {
+  [key: string]: any;
+}
+
+export type DeviceConfigurations = DefaultDeviceConfiguration & Lwm2mDeviceConfiguration;
+
+export interface DeviceConfiguration extends DeviceConfigurations {
+  type: DeviceProfileType;
+}
+
+export interface DeviceData {
+  configuration: DeviceConfiguration;
+}
 
 export interface Device extends BaseData<DeviceId> {
   tenantId?: TenantId;
@@ -27,12 +83,15 @@ export interface Device extends BaseData<DeviceId> {
   name: string;
   type: string;
   label: string;
+  deviceProfileId: DeviceProfileId;
+  deviceData: DeviceData;
   additionalInfo?: any;
 }
 
 export interface DeviceInfo extends Device {
   customerTitle: string;
   customerIsPublic: boolean;
+  deviceProfileName: string;
 }
 
 export enum DeviceCredentialsType {
@@ -69,6 +128,6 @@ export enum ClaimResponse {
 }
 
 export interface ClaimResult {
-  device: Device,
-  response: ClaimResponse
+  device: Device;
+  response: ClaimResponse;
 }

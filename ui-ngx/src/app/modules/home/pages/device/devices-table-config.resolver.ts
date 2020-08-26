@@ -150,13 +150,14 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
   configureColumns(deviceScope: string): Array<EntityTableColumn<DeviceInfo>> {
     const columns: Array<EntityTableColumn<DeviceInfo>> = [
       new DateEntityTableColumn<DeviceInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<DeviceInfo>('name', 'device.name', '25%'),
-      new EntityTableColumn<DeviceInfo>('type', 'device.device-type', '25%'),
-      new EntityTableColumn<DeviceInfo>('label', 'device.label', '25%')
+      new EntityTableColumn<DeviceInfo>('name', 'device.name', '20%'),
+      new EntityTableColumn<DeviceInfo>('deviceProfileName', 'device-profile.device-profile', '20%'),
+      new EntityTableColumn<DeviceInfo>('type', 'device.device-type', '20%'),
+      new EntityTableColumn<DeviceInfo>('label', 'device.label', '20%')
     ];
     if (deviceScope === 'tenant') {
       columns.push(
-        new EntityTableColumn<DeviceInfo>('customerTitle', 'customer.customer', '25%'),
+        new EntityTableColumn<DeviceInfo>('customerTitle', 'customer.customer', '20%'),
         new EntityTableColumn<DeviceInfo>('customerIsPublic', 'device.public', '60px',
           entity => {
             return checkBoxCell(entity.customerIsPublic);

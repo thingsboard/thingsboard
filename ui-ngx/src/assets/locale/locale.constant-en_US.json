@@ -750,6 +750,15 @@
         "search": "Search devices",
         "selected-devices": "{ count, plural, 1 {1 device} other {# devices} } selected"
     },
+    "device-profile": {
+        "device-profile": "Device profile",
+        "device-profiles": "Device profiles",
+        "add": "Add device profile",
+        "device-profile-details": "Device profile details",
+        "no-device-profiles-text": "No device profiles found",
+        "search": "Search device profiles",
+        "selected-device-profiles": "{ count, plural, 1 {1 device profile} other {# device profiles} } selected"
+    },
     "dialog": {
         "close": "Close dialog"
     },
@@ -806,6 +815,10 @@
         "type-devices": "Devices",
         "list-of-devices": "{ count, plural, 1 {One device} other {List of # devices} }",
         "device-name-starts-with": "Devices whose names start with '{{prefix}}'",
+        "type-device-profile": "Device profile",
+        "type-device-profiles": "Device profiles",
+        "list-of-device-profiles": "{ count, plural, 1 {One device profile} other {List of # device profiles} }",
+        "device-profile-name-starts-with": "Device profiles whose names start with '{{prefix}}'",
         "type-asset": "Asset",
         "type-assets": "Assets",
         "list-of-assets": "{ count, plural, 1 {One asset} other {List of # assets} }",
@@ -826,6 +839,10 @@
         "type-tenants": "Tenants",
         "list-of-tenants": "{ count, plural, 1 {One tenant} other {List of # tenants} }",
         "tenant-name-starts-with": "Tenants whose names start with '{{prefix}}'",
+        "type-tenant-profile": "Tenant profile",
+        "type-tenant-profiles": "Tenant profiles",
+        "list-of-tenant-profiles": "{ count, plural, 1 {One tenant profile} other {List of # tenant profiles} }",
+        "tenant-profile-name-starts-with": "Tenant profiles whose names start with '{{prefix}}'",
         "type-customer": "Customer",
         "type-customers": "Customers",
         "list-of-customers": "{ count, plural, 1 {One customer} other {List of # customers} }",
@@ -1659,6 +1676,15 @@
         "isolated-tb-core-details": "Requires separate microservice(s) per isolated Tenant",
         "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant"
     },
+    "tenant-profile": {
+        "tenant-profile": "Tenant profile",
+        "tenant-profiles": "Tenant profiles",
+        "add": "Add tenant profile",
+        "tenant-profile-details": "Tenant profile details",
+        "no-tenant-profiles-text": "No tenant profiles found",
+        "search": "Search tenant profiles",
+        "selected-tenant-profiles": "{ count, plural, 1 {1 tenant profile} other {# tenant profiles} } selected"
+    },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",
         "minutes-interval": "{ minutes, plural, 1 {1 minute} other {# minutes} }",
@@ -2059,4 +2085,4 @@
             "ka_GE": "ქართული"
         }
     }
-}
+},
