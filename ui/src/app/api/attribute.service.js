@@ -228,7 +228,7 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
         }
         var deleteEntityAttributesPromise;
         if (deleteAttributes.length) {
-            deleteEntityAttributesPromise = deleteEntityAttributes(entityType, entityId, attributeScope, deleteAttributes);
+            deleteEntityAttributesPromise = deleteEntityAttributes(entityType, entityId, attributeScope, deleteAttributes, config);
         }
         if (Object.keys(attributesData).length) {
             var url = '/api/plugins/telemetry/' + entityType + '/' + entityId + '/' + attributeScope;
