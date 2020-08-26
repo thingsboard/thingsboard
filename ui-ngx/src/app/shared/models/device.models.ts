@@ -83,8 +83,8 @@ export interface Device extends BaseData<DeviceId> {
   name: string;
   type: string;
   label: string;
-  deviceProfileId: DeviceProfileId;
-  deviceData: DeviceData;
+  deviceProfileId?: DeviceProfileId;
+  deviceData?: DeviceData;
   additionalInfo?: any;
 }
 

@@ -51,8 +51,8 @@ export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<Ten
 
     this.config.columns.push(
       new DateEntityTableColumn<TenantInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<TenantInfo>('title', 'tenant-profile.tenant-profile', '20%'),
-      new EntityTableColumn<TenantInfo>('tenantProfileName', 'tenant.title', '20%'),
+      new EntityTableColumn<TenantInfo>('title', 'tenant.title', '20%'),
+      new EntityTableColumn<TenantInfo>('tenantProfileName', 'tenant-profile.tenant-profile', '20%'),
       new EntityTableColumn<TenantInfo>('email', 'contact.email', '20%'),
       new EntityTableColumn<TenantInfo>('country', 'contact.country', '20%'),
       new EntityTableColumn<TenantInfo>('city', 'contact.city', '20%')
