@@ -25,5 +25,5 @@
           'info-toast': notification.type === 'info'
      }">
   <div class="toast-text" [innerHTML]="notification.message"></div>
-  <button #actionButton mat-button (click)="action()">{{ 'action.close' | translate }}</button>
+  <button #actionButton type="button" mat-button (click)="action()">{{ 'action.close' | translate }}</button>
 </div>
