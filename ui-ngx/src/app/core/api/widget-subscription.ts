@@ -375,57 +375,57 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.notifyDataLoaded();
       return of(null);
     }
-    if (this.configuredDatasources.length) {
-      if (this.comparisonEnabled) {
-        const additionalDatasources: Datasource[] = [];
-        this.configuredDatasources.forEach((datasource, datasourceIndex) => {
-          const additionalDataKeys: DataKey[] = [];
-          datasource.dataKeys.forEach((dataKey, dataKeyIndex) => {
-            if (dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
-              const additionalDataKey = deepClone(dataKey);
-              additionalDataKey.isAdditional = true;
-              additionalDataKey.origDataKeyIndex = dataKeyIndex;
-              additionalDataKeys.push(additionalDataKey);
-            }
-          });
-          if (additionalDataKeys.length) {
-            const additionalDatasource: Datasource = deepClone(datasource);
-            additionalDatasource.dataKeys = additionalDataKeys;
-            additionalDatasource.isAdditional = true;
-            additionalDatasource.origDatasourceIndex = datasourceIndex;
-            additionalDatasources.push(additionalDatasource);
+    if (this.comparisonEnabled) {
+      const additionalDatasources: Datasource[] = [];
+      this.configuredDatasources.forEach((datasource, datasourceIndex) => {
+        const additionalDataKeys: DataKey[] = [];
+        datasource.dataKeys.forEach((dataKey, dataKeyIndex) => {
+          if (dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
+            const additionalDataKey = deepClone(dataKey);
+            additionalDataKey.isAdditional = true;
+            additionalDataKey.origDataKeyIndex = dataKeyIndex;
+            additionalDataKeys.push(additionalDataKey);
           }
         });
-        this.configuredDatasources = this.configuredDatasources.concat(additionalDatasources);
-      }
-      const resolveResultObservables = this.configuredDatasources.map((datasource, index) => {
-        const listener: EntityDataListener = {
-          subscriptionType: this.type,
-          configDatasource: datasource,
-          configDatasourceIndex: index,
-          dataLoaded: (pageData, data1, datasourceIndex, pageLink) => {
-            this.dataLoaded(pageData, data1, datasourceIndex, pageLink, true)
-          },
-          initialPageDataChanged: this.initialPageDataChanged.bind(this),
-          dataUpdated: this.dataUpdated.bind(this),
-          updateRealtimeSubscription: () => {
-            if (this.comparisonEnabled && datasource.isAdditional) {
-              return this.updateSubscriptionForComparison();
-            } else {
-              return this.updateRealtimeSubscription();
-            }
-          },
-          setRealtimeSubscription: (subscriptionTimewindow) => {
-            if (this.comparisonEnabled && datasource.isAdditional) {
-              this.updateSubscriptionForComparison(subscriptionTimewindow);
-            } else {
-              this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
-            }
-          }
-        };
-        this.entityDataListeners.push(listener);
-        return this.ctx.entityDataService.prepareSubscription(listener);
+        if (additionalDataKeys.length) {
+          const additionalDatasource: Datasource = deepClone(datasource);
+          additionalDatasource.dataKeys = additionalDataKeys;
+          additionalDatasource.isAdditional = true;
+          additionalDatasource.origDatasourceIndex = datasourceIndex;
+          additionalDatasources.push(additionalDatasource);
+        }
       });
+      this.configuredDatasources = this.configuredDatasources.concat(additionalDatasources);
+    }
+    const resolveResultObservables = this.configuredDatasources.map((datasource, index) => {
+      const listener: EntityDataListener = {
+        subscriptionType: this.type,
+        configDatasource: datasource,
+        configDatasourceIndex: index,
+        dataLoaded: (pageData, data1, datasourceIndex, pageLink) => {
+          this.dataLoaded(pageData, data1, datasourceIndex, pageLink, true)
+        },
+        initialPageDataChanged: this.initialPageDataChanged.bind(this),
+        dataUpdated: this.dataUpdated.bind(this),
+        updateRealtimeSubscription: () => {
+          if (this.comparisonEnabled && datasource.isAdditional) {
+            return this.updateSubscriptionForComparison();
+          } else {
+            return this.updateRealtimeSubscription();
+          }
+        },
+        setRealtimeSubscription: (subscriptionTimewindow) => {
+          if (this.comparisonEnabled && datasource.isAdditional) {
+            this.updateSubscriptionForComparison(subscriptionTimewindow);
+          } else {
+            this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
+          }
+        }
+      };
+      this.entityDataListeners.push(listener);
+      return this.ctx.entityDataService.prepareSubscription(listener);
+    });
+    if (resolveResultObservables.length) {
       return forkJoin(resolveResultObservables).pipe(
         map((resolveResults) => {
           resolveResults.forEach((resolveResult) => {
