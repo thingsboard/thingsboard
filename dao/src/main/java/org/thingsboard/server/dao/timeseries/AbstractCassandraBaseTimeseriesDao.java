@@ -31,6 +31,7 @@ import org.thingsboard.server.dao.nosql.CassandraAbstractAsyncDao;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 public abstract class AbstractCassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao {
@@ -83,6 +84,24 @@ public abstract class AbstractCassandraBaseTimeseriesDao extends CassandraAbstra
         String key = row.getString(ModelConstants.KEY_COLUMN);
         long ts = row.getLong(ModelConstants.TS_COLUMN);
         return new BasicTsKvEntry(ts, toKvEntry(row, key));
+    }
+
+    protected TsKvEntry convertResultToTsKvEntry(String key, Row row) {
+        if (row != null) {
+            Optional<String> foundKeyOpt = getKey(row);
+            long ts = row.getLong(ModelConstants.TS_COLUMN);
+            return new BasicTsKvEntry(ts, toKvEntry(row, foundKeyOpt.orElse(key)));
+        } else {
+            return new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
+        }
+    }
+
+    private Optional<String> getKey(Row row){
+       try{
+           return Optional.ofNullable(row.getString(ModelConstants.KEY_COLUMN));
+       } catch (IllegalArgumentException e){
+           return Optional.empty();
+       }
     }
 
 }
