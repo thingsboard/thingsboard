@@ -29,6 +29,7 @@
 				on-manage-assets="vm.openCustomerAssets(event, vm.grid.detailsConfig.currentItem)"
 				on-manage-devices="vm.openCustomerDevices(event, vm.grid.detailsConfig.currentItem)"
 				on-manage-dashboards="vm.openCustomerDashboards(event, vm.grid.detailsConfig.currentItem)"
+			 	on-manage-edges="vm.openCustomerEdges(event, vm.grid.detailsConfig.currentItem)"
 				on-delete-customer="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-customer>
 		</md-tab>
 		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.attributes' | translate }}">
