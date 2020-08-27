@@ -55,6 +55,7 @@ export default function CustomerDirective($compile, $templateCache, $translate, 
             onManageAssets: '&',
             onManageDevices: '&',
             onManageDashboards: '&',
+            onManageEdges: '&',
             onDeleteCustomer: '&'
         }
     };

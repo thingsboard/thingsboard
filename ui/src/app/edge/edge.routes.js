@@ -161,5 +161,28 @@ export default function EdgeRoutes($stateProvider, types) {
             ncyBreadcrumb: {
                 label: '{"icon": "dashboard", "label": "{{ vm.dashboard.title }}", "translate": "false"}'
             }
+        })
+        .state('home.customers.edges', {
+            url: '/:customerId/edges',
+            params: {'topIndex': 0},
+            module: 'private',
+            auth: ['TENANT_ADMIN'],
+            views: {
+                "content@home": {
+                    templateUrl: edgesTemplate,
+                    controllerAs: 'vm',
+                    controller: 'EdgeController'
+                }
+            },
+            data: {
+                edgesType: 'customer',
+                searchEnabled: true,
+                searchByEntitySubtype: true,
+                searchEntityType: types.entityType.edge,
+                pageTitle: 'customer.edges'
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "router", "label": "{{ vm.customerEdgesTitle }}", "translate": "false"}'
+            }
         });
 }
