@@ -14,18 +14,25 @@
 /// limitations under the License.
 ///
 
-import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
-import { HasUUID } from '@shared/models/id/has-uuid';
-import { isDefinedAndNotNull } from '@core/utils';
+import { Component } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
+import { TenantProfile } from '@shared/models/tenant.model';
 
-export interface EntityId extends HasUUID {
-  entityType: EntityType | AliasEntityType;
-}
+@Component({
+  selector: 'tb-tenant-profile-tabs',
+  templateUrl: './tenant-profile-tabs.component.html',
+  styleUrls: []
+})
+export class TenantProfileTabsComponent extends EntityTabsComponent<TenantProfile> {
 
-export function entityIdEquals(entityId1: EntityId, entityId2: EntityId): boolean {
-  if (isDefinedAndNotNull(entityId1) && isDefinedAndNotNull(entityId2)) {
-    return entityId1.id === entityId2.id && entityId1.entityType === entityId2.entityType;
-  } else {
-    return entityId1 === entityId2;
+  constructor(protected store: Store<AppState>) {
+    super(store);
   }
+
+  ngOnInit() {
+    super.ngOnInit();
+  }
+
 }

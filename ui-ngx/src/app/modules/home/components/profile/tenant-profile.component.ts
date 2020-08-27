@@ -14,27 +14,30 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, Input } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Tenant, TenantInfo } from '@app/shared/models/tenant.model';
+import { TenantProfile } from '@app/shared/models/tenant.model';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
-import { ContactBasedComponent } from '../../components/entity/contact-based.component';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { EntityComponent } from '../entity/entity.component';
 
 @Component({
-  selector: 'tb-tenant',
-  templateUrl: './tenant.component.html',
-  styleUrls: []
+  selector: 'tb-tenant-profile',
+  templateUrl: './tenant-profile.component.html',
+  styleUrls: ['./tenant-profile.component.scss']
 })
-export class TenantComponent extends ContactBasedComponent<TenantInfo> {
+export class TenantProfileComponent extends EntityComponent<TenantProfile> {
+
+  @Input()
+  standalone = false;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              @Inject('entity') protected entityValue: TenantInfo,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<TenantInfo>,
+              @Inject('entity') protected entityValue: TenantProfile,
+              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<TenantProfile>,
               protected fb: FormBuilder) {
     super(store, fb, entityValue, entitiesTableConfigValue);
   }
@@ -47,40 +50,42 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
     }
   }
 
-  buildEntityForm(entity: TenantInfo): FormGroup {
+  buildForm(entity: TenantProfile): FormGroup {
     return this.fb.group(
       {
-        title: [entity ? entity.title : '', [Validators.required]],
-        tenantProfileId: [entity ? entity.tenantProfileId : null, [Validators.required]],
-        additionalInfo: this.fb.group(
-          {
-            description: [entity && entity.additionalInfo ? entity.additionalInfo.description : '']
-          }
-        )
+        name: [entity ? entity.name : '', [Validators.required]],
+        isolatedTbCore: [entity ? entity.isolatedTbCore : false, []],
+        isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
+        description: [entity ? entity.description : '', []],
       }
     );
   }
 
-  updateEntityForm(entity: Tenant) {
-    this.entityForm.patchValue({title: entity.title});
-    this.entityForm.patchValue({tenantProfileId: entity.tenantProfileId});
-    this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
+  updateForm(entity: TenantProfile) {
+    this.entityForm.patchValue({name: entity.name});
+    this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore});
+    this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine});
+    this.entityForm.patchValue({description: entity.description});
   }
 
   updateFormState() {
     if (this.entityForm) {
       if (this.isEditValue) {
         this.entityForm.enable({emitEvent: false});
+        if (!this.isAdd) {
+          this.entityForm.get('isolatedTbCore').disable({emitEvent: false});
+          this.entityForm.get('isolatedTbRuleEngine').disable({emitEvent: false});
+        }
       } else {
         this.entityForm.disable({emitEvent: false});
       }
     }
   }
 
-  onTenantIdCopied(event) {
+  onTenantProfileIdCopied(event) {
     this.store.dispatch(new ActionNotificationShow(
       {
-        message: this.translate.instant('tenant.idCopiedMessage'),
+        message: this.translate.instant('tenant-profile.idCopiedMessage'),
         type: 'success',
         duration: 750,
         verticalPosition: 'bottom',

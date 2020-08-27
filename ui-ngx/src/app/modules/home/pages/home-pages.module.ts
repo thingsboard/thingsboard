@@ -29,6 +29,7 @@ import { EntityViewModule } from '@modules/home/pages/entity-view/entity-view.mo
 import { RuleChainModule } from '@modules/home/pages/rulechain/rulechain.module';
 import { WidgetLibraryModule } from '@modules/home/pages/widget/widget-library.module';
 import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module';
+import { TenantProfileModule } from './tenant-profile/tenant-profile.module';
 import { MODULES_MAP } from '@shared/public-api';
 import { modulesMap } from '../../common/modules-map';
 
@@ -37,6 +38,7 @@ import { modulesMap } from '../../common/modules-map';
     AdminModule,
     HomeLinksModule,
     ProfileModule,
+    TenantProfileModule,
     TenantModule,
     DeviceModule,
     AssetModule,

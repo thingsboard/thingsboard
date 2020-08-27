@@ -15,27 +15,27 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons" fxLayout.xs="column">
+<div class="tb-details-buttons" fxLayout.xs="column" *ngIf="!standalone">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'manageTenantAdmins')"
-          [fxShow]="!isEdit">
-    {{'tenant.manage-tenant-admins' | translate }}
+          (click)="onEntityAction($event, 'setDefault')"
+          [fxShow]="!isEdit && !entity?.default">
+    {{'tenant-profile.set-default' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [fxShow]="!hideDelete() && !isEdit">
-    {{'tenant.delete' | translate }}
+    {{'tenant-profile.delete' | translate }}
   </button>
   <div fxLayout="row" fxLayout.xs="column">
     <button mat-raised-button
             ngxClipboard
-            (cbOnSuccess)="onTenantIdCopied($event)"
+            (cbOnSuccess)="onTenantProfileIdCopied($event)"
             [cbContent]="entity?.id?.id"
             [fxShow]="!isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      <span translate>tenant.copyId</span>
+      <span translate>tenant-profile.copyId</span>
     </button>
   </div>
 </div>
@@ -43,24 +43,26 @@
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
-        <mat-label translate>tenant.title</mat-label>
-        <input matInput formControlName="title" required/>
-        <mat-error *ngIf="entityForm.get('title').hasError('required')">
-          {{ 'tenant.title-required' | translate }}
+        <mat-label translate>tenant-profile.name</mat-label>
+        <input matInput formControlName="name" required/>
+        <mat-error *ngIf="entityForm.get('name').hasError('required')">
+          {{ 'tenant-profile.name-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-tenant-profile-autocomplete
-        [selectDefaultProfile]="isAdd"
-        required
-        formControlName="tenantProfileId">
-      </tb-tenant-profile-autocomplete>
-      <div formGroupName="additionalInfo" fxLayout="column">
-        <mat-form-field class="mat-block">
-          <mat-label translate>tenant.description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
-        </mat-form-field>
+      <div fxLayout="column">
+        <mat-checkbox class="hinted-checkbox" formControlName="isolatedTbCore">
+          <div>{{ 'tenant.isolated-tb-core' | translate }}</div>
+          <div class="tb-hint">{{'tenant.isolated-tb-core-details' | translate}}</div>
+        </mat-checkbox>
+        <mat-checkbox class="hinted-checkbox" formControlName="isolatedTbRuleEngine">
+          <div>{{ 'tenant.isolated-tb-rule-engine' | translate }}</div>
+          <div class="tb-hint">{{'tenant.isolated-tb-rule-engine-details' | translate}}</div>
+        </mat-checkbox>
       </div>
-      <tb-contact [parentForm]="entityForm" [isEdit]="isEdit"></tb-contact>
+      <mat-form-field class="mat-block">
+        <mat-label translate>tenant-profile.description</mat-label>
+        <textarea matInput formControlName="description" rows="2"></textarea>
+      </mat-form-field>
     </fieldset>
   </form>
 </div>

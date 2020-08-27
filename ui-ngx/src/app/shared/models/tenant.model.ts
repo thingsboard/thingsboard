@@ -26,7 +26,7 @@ export interface TenantProfileData {
 export interface TenantProfile extends BaseData<TenantProfileId> {
   name: string;
   description: string;
-  isDefault: boolean;
+  default: boolean;
   isolatedTbCore: boolean;
   isolatedTbRuleEngine: boolean;
   profileData: TenantProfileData;

@@ -86,6 +86,13 @@ export class MenuService {
         icon: 'supervisor_account'
       },
       {
+        name: 'tenant-profile.tenant-profiles',
+        type: 'link',
+        path: '/tenantProfiles',
+        icon: 'mdi:alpha-t-box',
+        isMdiIcon: true
+      },
+      {
         name: 'widget.widget-library',
         type: 'link',
         path: '/widgets-bundles',
@@ -132,7 +139,13 @@ export class MenuService {
             name: 'tenant.tenants',
             icon: 'supervisor_account',
             path: '/tenants'
-          }
+          },
+          {
+            name: 'tenant-profile.tenant-profiles',
+            icon: 'mdi:alpha-t-box',
+            isMdiIcon: true,
+            path: '/tenantProfiles'
+          },
         ]
       },
       {

@@ -84,6 +84,8 @@ import { UserFilterDialogComponent } from '@home/components/filter/user-filter-d
 import { FilterUserInfoComponent } from './filter/filter-user-info.component';
 import { FilterUserInfoDialogComponent } from './filter/filter-user-info-dialog.component';
 import { FilterPredicateValueComponent } from './filter/filter-predicate-value.component';
+import { TenantProfileAutocompleteComponent } from './profile/tenant-profile-autocomplete.component';
+import { TenantProfileComponent } from './profile/tenant-profile.component';
 
 @NgModule({
   declarations:
@@ -150,7 +152,9 @@ import { FilterPredicateValueComponent } from './filter/filter-predicate-value.c
       UserFilterDialogComponent,
       FilterUserInfoComponent,
       FilterUserInfoDialogComponent,
-      FilterPredicateValueComponent
+      FilterPredicateValueComponent,
+      TenantProfileAutocompleteComponent,
+      TenantProfileComponent
     ],
   imports: [
     CommonModule,
@@ -206,7 +210,9 @@ import { FilterPredicateValueComponent } from './filter/filter-predicate-value.c
     FiltersDialogComponent,
     FilterSelectComponent,
     FiltersEditComponent,
-    UserFilterDialogComponent
+    UserFilterDialogComponent,
+    TenantProfileAutocompleteComponent,
+    TenantProfileComponent
   ],
   providers: [
     WidgetComponentService,
