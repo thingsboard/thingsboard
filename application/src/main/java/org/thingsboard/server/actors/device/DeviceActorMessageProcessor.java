@@ -28,6 +28,7 @@ import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -79,8 +80,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.DataConstants.CLIENT_SCOPE;
-import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
 /**
  * @author Andrew Shvayka
@@ -257,10 +256,32 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<List<List<AttributeKvEntry>>>() {
             @Override
             public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
+                ArrayList<String> clientAttributeNamesList = new ArrayList<>(request.getClientAttributeNamesList());
+                ArrayList<String> sharedAttributeNamesList = new ArrayList<>(request.getSharedAttributeNamesList());
+
+                List<AttributeKvEntry> clientAttributeKvEntries = result.get(0);
+                List<AttributeKvEntry> sharedAttributeKvEntries = result.get(1);
+                Set<String> deletedKeys = new HashSet<>();
+
+                List<String> clientAttributesKeys = clientAttributeKvEntries.stream().map(AttributeKvEntry::getKey).collect(Collectors.toList());
+                List<String> sharedAttributesKeys = sharedAttributeKvEntries.stream().map(AttributeKvEntry::getKey).collect(Collectors.toList());
+
+                if (CollectionUtils.isNotEmpty(clientAttributeNamesList)) {
+                    Set<String> deletedClientKeys = clientAttributeNamesList.stream().filter(key -> !clientAttributesKeys.contains(key)).collect(Collectors.toSet());
+                    deletedKeys.addAll(deletedClientKeys);
+                }
+
+                if (CollectionUtils.isNotEmpty(sharedAttributeNamesList)) {
+                    Set<String> deletedSharedKeys = sharedAttributeNamesList.stream().filter(key -> !sharedAttributesKeys.contains(key)).collect(Collectors.toSet());
+                    deletedKeys.addAll(deletedSharedKeys);
+
+                }
+
                 GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
                         .setRequestId(requestId)
-                        .addAllClientAttributeList(toTsKvProtos(result.get(0)))
-                        .addAllSharedAttributeList(toTsKvProtos(result.get(1)))
+                        .addAllClientAttributeList(toTsKvProtos(clientAttributeKvEntries))
+                        .addAllSharedAttributeList(toTsKvProtos(sharedAttributeKvEntries))
+                        .addAllDeletedAttributeKeys(deletedKeys)
                         .build();
                 sendToTransport(responseMsg, sessionInfo);
             }
@@ -279,17 +300,17 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture;
         ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
         if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
-            clientAttributesFuture = findAllAttributesByScope(CLIENT_SCOPE);
-            sharedAttributesFuture = findAllAttributesByScope(SHARED_SCOPE);
+            clientAttributesFuture = findAllAttributesByScope(DataConstants.CLIENT_SCOPE);
+            sharedAttributesFuture = findAllAttributesByScope(DataConstants.SHARED_SCOPE);
         } else if (!CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
-            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), CLIENT_SCOPE);
-            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), SHARED_SCOPE);
+            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), DataConstants.CLIENT_SCOPE);
+            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), DataConstants.SHARED_SCOPE);
         } else if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
             clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), SHARED_SCOPE);
+            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), DataConstants.SHARED_SCOPE);
         } else {
             sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), CLIENT_SCOPE);
+            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), DataConstants.CLIENT_SCOPE);
         }
         return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
     }
@@ -316,7 +337,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             AttributeUpdateNotificationMsg.Builder notification = AttributeUpdateNotificationMsg.newBuilder();
             if (msg.isDeleted()) {
                 List<String> sharedKeys = msg.getDeletedKeys().stream()
-                        .filter(key -> SHARED_SCOPE.equals(key.getScope()))
+                        .filter(key -> DataConstants.SHARED_SCOPE.equals(key.getScope()))
                         .map(AttributeKey::getAttributeKey)
                         .collect(Collectors.toList());
                 if (!sharedKeys.isEmpty()) {
@@ -324,7 +345,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     hasNotificationData = true;
                 }
             } else {
-                if (SHARED_SCOPE.equals(msg.getScope())) {
+                if (DataConstants.SHARED_SCOPE.equals(msg.getScope())) {
                     List<AttributeKvEntry> attributes = new ArrayList<>(msg.getValues());
                     if (attributes.size() > 0) {
                         List<TsKvProto> sharedUpdated = msg.getValues().stream().map(this::toTsKvProto)
@@ -334,7 +355,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                             hasNotificationData = true;
                         }
                     } else {
-                        log.debug("[{}] No public server side attributes changed!", deviceId);
+                        log.debug("[{}] No public shared side attributes changed!", deviceId);
                     }
                 }
             }
