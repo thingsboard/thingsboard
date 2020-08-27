@@ -256,36 +256,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<List<List<AttributeKvEntry>>>() {
             @Override
             public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
-                ArrayList<String> clientAttributeNamesList = new ArrayList<>(request.getClientAttributeNamesList());
-                ArrayList<String> sharedAttributeNamesList = new ArrayList<>(request.getSharedAttributeNamesList());
-
-                List<AttributeKvEntry> clientAttributeKvEntries = result.get(0);
-                List<AttributeKvEntry> sharedAttributeKvEntries = result.get(1);
-                List<String> deletedKeys = new ArrayList<>();
-
-                List<String> clientAttributesKeys = clientAttributeKvEntries.stream().map(AttributeKvEntry::getKey).collect(Collectors.toList());
-                List<String> sharedAttributesKeys = sharedAttributeKvEntries.stream().map(AttributeKvEntry::getKey).collect(Collectors.toList());
-
-                if (CollectionUtils.isNotEmpty(clientAttributeNamesList) && CollectionUtils.isNotEmpty(sharedAttributeNamesList)) {
-                    List<String> deletedClientKeys = clientAttributeNamesList.stream().filter(key -> !clientAttributesKeys.contains(key)).map(s -> "cs_" + s).collect(Collectors.toList());
-                    deletedKeys.addAll(deletedClientKeys);
-                    List<String> deletedSharedKeys = sharedAttributeNamesList.stream().filter(key -> !sharedAttributesKeys.contains(key)).map(s -> "sh_" + s).collect(Collectors.toList());
-                    deletedKeys.addAll(deletedSharedKeys);
-                } else {
-                    if (CollectionUtils.isNotEmpty(clientAttributeNamesList)) {
-                        List<String> deletedClientKeys = clientAttributeNamesList.stream().filter(key -> !clientAttributesKeys.contains(key)).collect(Collectors.toList());
-                        deletedKeys.addAll(deletedClientKeys);
-                    } else {
-                        List<String> deletedSharedKeys = sharedAttributeNamesList.stream().filter(key -> !sharedAttributesKeys.contains(key)).collect(Collectors.toList());
-                        deletedKeys.addAll(deletedSharedKeys);
-                    }
-                }
-
                 GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
                         .setRequestId(requestId)
-                        .addAllClientAttributeList(toTsKvProtos(clientAttributeKvEntries))
-                        .addAllSharedAttributeList(toTsKvProtos(sharedAttributeKvEntries))
-                        .addAllDeletedAttributeKeys(deletedKeys)
+                        .addAllClientAttributeList(toTsKvProtos(result.get(0)))
+                        .addAllSharedAttributeList(toTsKvProtos(result.get(1)))
                         .build();
                 sendToTransport(responseMsg, sessionInfo);
             }
