@@ -31,7 +31,7 @@ public class TbOriginatorTypeFilterNodeConfiguration implements NodeConfiguratio
     public TbOriginatorTypeFilterNodeConfiguration defaultConfiguration() {
         TbOriginatorTypeFilterNodeConfiguration configuration = new TbOriginatorTypeFilterNodeConfiguration();
         configuration.setOriginatorTypes(Arrays.asList(
-                EntityType.DEVICE
+                EntityType.ALARM
         ));
         return configuration;
     }
