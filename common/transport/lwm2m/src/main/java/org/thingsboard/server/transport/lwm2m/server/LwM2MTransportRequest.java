@@ -220,22 +220,36 @@ public class LwM2MTransportRequest {
         });
     }
 
+    /**
+     * processing a response from a client
+     * @param registration
+     * @param path
+     * @param response
+     * @param modelClient
+     */
     private void sendResponse(Registration registration, String path, LwM2mResponse response, ModelClient modelClient) {
         if (response instanceof ObserveResponse) {
-            log.info("2_Send: Path: {}\n ObserveResponse: {} ", path, response);
+            service.setValue(registration, path, (ReadResponse) response);
         } else if (response instanceof CancelObservationResponse) {
             log.info("2_Send: Path: {}\n CancelObservationResponse: {} ", path, response);
-        } else if (response instanceof ReadResponse) {
+        }
+        else if (response instanceof ReadResponse) {
+            /**
+             * Use only at the first start after registration
+             * Fill with data -> Model client
+             */
             if (modelClient != null) {
                 if (modelClient.getPendingRequests().size() > 0) {
                     modelClient.onSuccessHandler(path, response);
                 }
             }
+            /**
+             * Use after registration on request
+             */
             else {
                 log.info("2_Send: Path: {}\n ReadResponse: {} ", path, response);
                 service.setValue(registration, path, (ReadResponse)response);
             }
-
         } else if (response instanceof DeleteResponse) {
             log.info("2_Send: Path: {}\n DeleteResponse: {} ", path, response);
         } else if (response instanceof DiscoverResponse) {

@@ -577,9 +577,9 @@ transport:
   lwm2m:
     # Enable/disable lvm2m transport protocol.
     enabled: "${LWM2M_ENABLED:true}"
-    #   // We choose a default timeout a bit higher to the MAX_TRANSMIT_WAIT(62-93s) which is the time from starting to
-    #    // send a Confirmable message to the time when an acknowledgement is no longer expected.
-    #    DEFAULT_TIMEOUT = 2 * 60 * 1000l; // 2min in ms
+    #   We choose a default timeout a bit higher to the MAX_TRANSMIT_WAIT(62-93s) which is the time from starting to
+    #   send a Confirmable message to the time when an acknowledgement is no longer expected.
+    #   DEFAULT_TIMEOUT = 2 * 60 * 1000l; 2 min in ms
     timeout: "${LWM2M_TIMEOUT:120000}"
     model_path_file: "${LWM2M_MODEL_PATH_FILE:}"
     support_deprecated_ciphers_enable: "${LWM2M_SUPPORT_DEPRECATED_CIPHERS_ENABLED:true}"

@@ -77,15 +77,18 @@ public class LwM2MTransportService {
         log.info("Received endpoint registration version event: \nendPoint: {}\nregistration.getId(): {}\npreviousObsersations {}", registration.getEndpoint(), registration.getId(), previousObsersations);
         /**
          * Create session: Map<String <registrationId >, ModelClient>
-         * Add Model (Entity) for client (from registration & observe) by registration.getId
-         * Remove from sessions Model by enpPoint
-         * !! Update / add information based on query results later
+         * 1. replaceNewRegistration -> (solving the problem of incorrect termination of the previous session with this endpoint)
+         * 1.1 When we initialize the registration, we register the session by endpoint.
+         * 1.2 If the server has incomplete requests (canceling the registration of the previous session),
+         *     delete the previous session only by the previous registration.getId
+         * 1.2 Add Model (Entity) for client (from registration & observe) by registration.getId
+         * 1.2 Remove from sessions Model by enpPoint
+         * Next ->  Create new ModelClient for current session -> setModelClient...
          */
         ModelClient modelClient = lwM2mInMemorySecurityStore.replaceNewRegistration(lwServer, registration, this);
         if (modelClient != null) {
             setModelClient(lwServer, registration, modelClient);
         }
-
     }
 
     public void updatedReg(LeshanServer lwServer, Registration registration) {
@@ -114,13 +117,27 @@ public class LwM2MTransportService {
         //TODO: associate endpointId with device information.
     }
 
+    /**
+     * Create new ModelClient for current session -> setModelClient...
+     * @param lwServer
+     * @param registration
+     * @param modelClient
+     */
     private void setModelClient(LeshanServer lwServer, Registration registration, ModelClient modelClient) {
+        /**
+         * Add all ObjectLinks (instance) to control the process of executing requests to the client
+         * to get the client model with current values
+         */
         Arrays.stream(registration.getObjectLinks()).forEach(url -> {
             String[] objects = url.getUrl().split("/");
             if (objects.length == 3) {
                 modelClient.addPendingRequests(url.getUrl());
             }
         });
+        /**
+         * get the client model with current values
+         * Analyze the response in -> lwM2MTransportRequest.sendResponse
+         */
         Arrays.stream(registration.getObjectLinks()).forEach(url -> {
             String[] objects = url.getUrl().split("/");
             if (objects.length == 3) {
@@ -131,6 +148,13 @@ public class LwM2MTransportService {
         });
     }
 
+    /**
+     * add attribute telemetry information from credentials to client model and start observe
+     * !!! if the resource has an observation, but no telemetry or attribute - the observation will not use
+     * @param lwServer
+     * @param registration
+     * @param modelClient
+     */
     @SneakyThrows
     public void getAttrTelemetryObserveFromModel(LeshanServer lwServer, Registration registration, ModelClient modelClient) {
         log.info("51) getAttrTelemetryObserveFromModelintegratioId: {}", registration.getId());
@@ -157,8 +181,12 @@ public class LwM2MTransportService {
 
         /**
          * Client`s starting info  to  send to thingsboard
+         *
          */
         doGetAttributsTelemetryObserve(lwServer, modelClient);
+        /**
+         * Sending Attribute Telemetry with value to thingsboard only once at the start of the connection
+         */
         this.setAttrTelemtryToThingsboard(registration);
         /**
          * Start observe
@@ -176,6 +204,12 @@ public class LwM2MTransportService {
                 DEVICE_TELEMETRY_TOPIC, -1, registration.getId());
     }
 
+    /**
+     * Client`s add info  about Attribute Telemetry Observe to Model Client
+     * @param lwServer
+     * @param modelClient
+     * @return
+     */
     @SneakyThrows
     public ReadResultAttrTel doGetAttributsTelemetryObserve(LeshanServer lwServer, ModelClient modelClient) {
         log.info("52) getAttrTelemetryObserve From ModelintegratioId: {}", modelClient.getClientObserveAttrTelemetry());
@@ -240,6 +274,14 @@ public class LwM2MTransportService {
 
     }
 
+    /**
+     * Start observe
+     * Analyze the response in ->
+     * 1. First: lwM2MTransportRequest.sendResponse, ObservationListener.newObservation
+     * 2. Next: ObservationListener.onResponse
+     * @param registration
+     * @return
+     */
     public ModelClient getModelClient(Registration registration) {
         return lwM2mInMemorySecurityStore.getSessions().get(registration.getId());
     }
@@ -301,6 +343,13 @@ public class LwM2MTransportService {
         return sessionInfo;
     }
 
+    /**
+     * Sending observe value to thingsboard
+     * @param registration
+     * @param path
+     * @param response
+     */
+    @SneakyThrows
     public void setValue(Registration registration, String path, ReadResponse response) {
         if (response.getContent() instanceof LwM2mObject) {
             LwM2mObject content = (LwM2mObject) response.getContent();
@@ -314,25 +363,35 @@ public class LwM2MTransportService {
         } else if (response.getContent() instanceof LwM2mSingleResource) {
             LwM2mSingleResource content = (LwM2mSingleResource) response.getContent();
             this.setResourcesValue(registration, content.getValue(), null, path);
-            this.setAttrTelemtryToThingsboard (registration);
         } else if (response.getContent() instanceof LwM2mMultipleResource) {
             LwM2mSingleResource content = (LwM2mSingleResource) response.getContent();
             this.setResourcesValue(registration, null, content.getValues(), path);
-            this.setAttrTelemtryToThingsboard (registration);
         }
     }
 
+    /**
+     * Sending observe value of resources to thingsboard
+     * 1. Create new resources with a new observation resource value
+     * 2. Create the new instance where the resources are located with new resources
+     * 3. Change old instance to new instance (actual value in Model Client))
+     * 4. Update value in PostAttribute and PostTelemetry (Model Client)
+     * 5. Update value in thingsboard: PostAttribute and PostTelemetry
+     * @param registration
+     * @param value
+     * @param values
+     * @param path
+     */
+    @SneakyThrows
     private void setResourcesValue(Registration registration, Object value, Map<Integer, ?> values, String path) {
-        log.info("92) [{}] \n Resource: {}, path: {}", registration.getEndpoint(), value, path);
         ResultIds resultIds = new ResultIds(path);
         ModelClient modelClient = getModelClient(registration);
         ModelObject modelObject = modelClient.getModelObjects().get(resultIds.getObjectId());
         Map<Integer, LwM2mObjectInstance> instances = modelObject.getInstances();
         LwM2mObjectInstance instanceOld = (instances.get(resultIds.instanceId) != null) ? instances.get(resultIds.instanceId) : null;
         Map<Integer, LwM2mResource> resourcesOld = (instanceOld != null) ? instanceOld.getResources() : null;
-        Map<Integer, LwM2mResource> resourcesNew = new HashMap<>(resourcesOld);
         LwM2mResource resourceOld = (resourcesOld != null && resourcesOld.get(resultIds.getResourceId()) != null) ? resourcesOld.get(resultIds.getResourceId()) : null;
         if (resourceOld != null) {
+            Map<Integer, LwM2mResource> resourcesNew = new HashMap<>(resourcesOld);
             CountDownLatch respLatch = new CountDownLatch(1);
             getModelClient(registration).getModelObjects().get(resultIds.getObjectId()).removeInstance(resultIds.instanceId);
             instances.remove(instanceOld);
@@ -356,7 +415,7 @@ public class LwM2MTransportService {
             resourcesNew.put(resultIds.getResourceId(), resourceNew );
             LwM2mObjectInstance instanceNew = new LwM2mObjectInstance(resultIds.instanceId, resourcesNew.values());
             instances.put(resultIds.instanceId, instanceNew);
-
+            this.setAttrTelemtryToThingsboard (registration);
         }
     }
 

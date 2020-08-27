@@ -72,17 +72,15 @@ public class ModelClient  implements Cloneable {
         this.responses = new ConcurrentHashMap<>();
     }
 
+    /**
+     *  Fill with data -> Model client
+     * @param path
+     * @param response
+     */
     public void onSuccessHandler (String path, LwM2mResponse response) {
         this.responses.put(path, response);
         this.pendingRequests.remove(path);
         if (this.pendingRequests.size() == 0) {
-            log.info("19) model: finish: path: {} \n this.pendingRequests.size() {}", path, this.pendingRequests.size());
-//            /**
-//             * Cancel All observation
-//             */
-//            int cancel = lwServer.getObservationService().cancelObservations(registration);
-//            Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
-//            log.info("33_1)  setCancelObservationObjects endpoint: {} cancel: {}  observations: {}", registration.getEndpoint(), cancel, observations);
             this.initValue ();
             this.transportService.getAttrTelemetryObserveFromModel(this.lwServer, this.registration, this);
         }
