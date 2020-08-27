@@ -242,7 +242,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                         }
                     }
                 } else {
-                    ListenableFuture<List<EdgeId>> edgeIdsFuture = findRelatedEdgeIdsByEntityId(tenantId, entityId);
+                    ListenableFuture<List<EdgeId>> edgeIdsFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId);
                     Futures.transform(edgeIdsFuture, edgeIds -> {
                         if (edgeIds != null && !edgeIds.isEmpty()) {
                             for (EdgeId edgeId : edgeIds) {
@@ -321,7 +321,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             if (alarm != null) {
                 EdgeEventType edgeEventType = getEdgeQueueTypeByEntityType(alarm.getOriginator().getEntityType());
                 if (edgeEventType != null) {
-                    ListenableFuture<List<EdgeId>> relatedEdgeIdsByEntityIdFuture = findRelatedEdgeIdsByEntityId(tenantId, alarm.getOriginator());
+                    ListenableFuture<List<EdgeId>> relatedEdgeIdsByEntityIdFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, alarm.getOriginator());
                     Futures.transform(relatedEdgeIdsByEntityIdFuture, relatedEdgeIdsByEntityId -> {
                         if (relatedEdgeIdsByEntityId != null) {
                             for (EdgeId edgeId : relatedEdgeIdsByEntityId) {
@@ -346,8 +346,8 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
         if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
                 !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
             List<ListenableFuture<List<EdgeId>>> futures = new ArrayList<>();
-            futures.add(findRelatedEdgeIdsByEntityId(tenantId, relation.getTo()));
-            futures.add(findRelatedEdgeIdsByEntityId(tenantId, relation.getFrom()));
+            futures.add(edgeService.findRelatedEdgeIdsByEntityId(tenantId, relation.getTo()));
+            futures.add(edgeService.findRelatedEdgeIdsByEntityId(tenantId, relation.getFrom()));
             ListenableFuture<List<List<EdgeId>>> combinedFuture = Futures.allAsList(futures);
             Futures.transform(combinedFuture, listOfListsEdgeIds -> {
                 Set<EdgeId> uniqueEdgeIds = new HashSet<>();
@@ -371,48 +371,6 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                 return null;
             }, dbCallbackExecutorService);
         }
-    }
-
-    private ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId) {
-        switch (entityId.getEntityType()) {
-            case DEVICE:
-            case ASSET:
-            case ENTITY_VIEW:
-                ListenableFuture<List<EntityRelation>> originatorEdgeRelationsFuture =
-                        relationService.findByToAndTypeAsync(tenantId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
-                return Futures.transform(originatorEdgeRelationsFuture, originatorEdgeRelations -> {
-                    if (originatorEdgeRelations != null && originatorEdgeRelations.size() > 0) {
-                        return Collections.singletonList(new EdgeId(originatorEdgeRelations.get(0).getFrom().getId()));
-                    } else {
-                        return Collections.emptyList();
-                    }
-                }, dbCallbackExecutorService);
-            case DASHBOARD:
-                return convertToEdgeIds(edgeService.findEdgesByTenantIdAndDashboardId(tenantId, new DashboardId(entityId.getId())));
-            case RULE_CHAIN:
-                return convertToEdgeIds(edgeService.findEdgesByTenantIdAndRuleChainId(tenantId, new RuleChainId(entityId.getId())));
-            case USER:
-                User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
-                TextPageData<Edge> edges;
-                if (userById.getCustomerId() == null || userById.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                    edges = edgeService.findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
-                } else {
-                    edges = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), new TextPageLink(Integer.MAX_VALUE));
-                }
-                return convertToEdgeIds(Futures.immediateFuture(edges.getData()));
-            default:
-                return Futures.immediateFuture(Collections.emptyList());
-        }
-    }
-
-    private ListenableFuture<List<EdgeId>> convertToEdgeIds(ListenableFuture<List<Edge>> future) {
-        return Futures.transform(future, edges -> {
-            if (edges != null && !edges.isEmpty()) {
-                return edges.stream().map(IdBased::getId).collect(Collectors.toList());
-            } else {
-                return Collections.emptyList();
-            }
-        }, dbCallbackExecutorService);
     }
 
     private EdgeEventType getEdgeQueueTypeByEntityType(EntityType entityType) {

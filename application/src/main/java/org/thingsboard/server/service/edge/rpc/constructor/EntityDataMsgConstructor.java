@@ -43,9 +43,11 @@ public class EntityDataMsgConstructor {
             case TIMESERIES_UPDATED:
                 try {
                     JsonObject data = entityData.getAsJsonObject();
-                    long ts = System.currentTimeMillis();
+                    long ts;
                     if (data.get("ts") != null && !data.get("ts").isJsonNull()) {
-                        ts = data.getAsJsonObject("ts").getAsLong();
+                        ts = data.getAsJsonPrimitive("ts").getAsLong();
+                    } else {
+                        ts = System.currentTimeMillis();
                     }
                     builder.setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(data.getAsJsonObject("data"), ts));
                 } catch (Exception e) {
