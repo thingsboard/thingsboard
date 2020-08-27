@@ -552,7 +552,7 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
             $event.stopPropagation();
         }
         var pageSize = 10;
-        ruleChainService.getRuleChains({limit: pageSize, textSearch: ''}).then(
+        ruleChainService.getEdgesRuleChains({limit: pageSize, textSearch: ''}).then(
             function success(_ruleChains) {
                 var ruleChains = {
                     pageSize: pageSize,

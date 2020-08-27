@@ -284,13 +284,6 @@ function DashboardService($rootScope, $http, $q, $location, $filter) {
             }
             dashboard.assignedCustomersText = assignedCustomersTitles.join(', ');
         }
-        dashboard.assignedEdgesIds = [];
-        if (dashboard.assignedEdges && dashboard.assignedEdges.length) {
-            for (var j = 0; j < dashboard.assignedEdges.length; j++) {
-                var assignedEdge = dashboard.assignedEdges[j];
-                dashboard.assignedEdgesIds.push(assignedEdge.edgeId.id);
-            }
-        }
         return dashboard;
     }
 
@@ -298,7 +291,6 @@ function DashboardService($rootScope, $http, $q, $location, $filter) {
         delete dashboard.publicCustomerId;
         delete dashboard.assignedCustomersText;
         delete dashboard.assignedCustomersIds;
-        delete dashboard.assignedEdgesIds;
         return dashboard;
     }
 

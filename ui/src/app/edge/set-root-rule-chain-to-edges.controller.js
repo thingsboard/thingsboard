@@ -53,7 +53,7 @@ export default function SetRootRuleChainToEdgesController(ruleChainService, edge
         fetchMoreItems_: function () {
             if (vm.ruleChains.hasNext && !vm.ruleChains.pending) {
                 vm.ruleChains.pending = true;
-                ruleChainService.getRuleChains(vm.ruleChains.nextPageLink).then(
+                ruleChainService.getEdgesRuleChains(vm.ruleChains.nextPageLink).then(
                     function success(ruleChains) {
                         vm.ruleChains.data = vm.ruleChains.data.concat(ruleChains.data);
                         vm.ruleChains.nextPageLink = ruleChains.nextPageLink;
