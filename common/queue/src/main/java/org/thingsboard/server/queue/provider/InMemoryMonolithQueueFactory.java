@@ -49,6 +49,7 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
+    private final InMemoryStorage storage;
 
     public InMemoryMonolithQueueFactory(PartitionService partitionService, TbQueueCoreSettings coreSettings,
                                         TbQueueRuleEngineSettings ruleEngineSettings,
@@ -61,6 +62,7 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
         this.ruleEngineSettings = ruleEngineSettings;
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
+        this.storage = InMemoryStorage.getInstance();
     }
 
     @Override
@@ -125,6 +127,6 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
 
     @Scheduled(fixedRateString = "${queue.in_memory.stats.print-interval-ms:60000}")
     private void printInMemoryStats() {
-        InMemoryStorage.getInstance().printStats();
+        storage.printStats();
     }
 }
