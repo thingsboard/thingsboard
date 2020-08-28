@@ -46,6 +46,7 @@ public class JpaHsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
         entity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
+        entity.setJsonValue(tsKvEntry.getJsonValue().orElse(null));
         log.trace("Saving entity: {}", entity);
         return tsQueue.add(entity);
     }
