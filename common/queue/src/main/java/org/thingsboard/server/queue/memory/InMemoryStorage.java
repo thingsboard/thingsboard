@@ -37,7 +37,7 @@ public final class InMemoryStorage {
     private InMemoryStorage() {
         storage = new ConcurrentHashMap<>();
         statExecutor = Executors.newSingleThreadScheduledExecutor();
-        statExecutor.scheduleAtFixedRate(this::printStats, 30, 30, TimeUnit.SECONDS);
+        statExecutor.scheduleAtFixedRate(this::printStats, 60, 60, TimeUnit.SECONDS);
     }
 
     private void printStats() {
