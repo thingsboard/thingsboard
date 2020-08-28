@@ -26,7 +26,6 @@ import {
 import { DOCUMENT } from '@angular/common';
 import { forkJoin, Observable, ReplaySubject, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { objToBase64 } from '@core/utils';
 
 declare const SystemJS;
 

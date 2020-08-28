@@ -186,15 +186,6 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
                 rows -> this.convertResultToTsKvEntryList(rows), readResultsProcessingExecutor);
     }
 
-    private TsKvEntry convertResultToTsKvEntry(String key, Row row) {
-        if (row != null) {
-            long ts = row.getLong(ModelConstants.TS_COLUMN);
-            return new BasicTsKvEntry(ts, toKvEntry(row, key));
-        } else {
-            return new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
-        }
-    }
-
     private PreparedStatement getLatestStmt() {
         if (latestInsertStmt == null) {
             latestInsertStmt = prepare(INSERT_INTO + ModelConstants.TS_KV_LATEST_CF +

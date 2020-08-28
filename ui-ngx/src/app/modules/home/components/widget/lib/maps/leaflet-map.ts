@@ -30,6 +30,7 @@ import 'leaflet.markercluster/dist/leaflet.markercluster';
 import {
   defaultSettings,
   FormattedData,
+  MapProviders,
   MapSettings,
   MarkerSettings,
   PolygonSettings,
@@ -74,6 +75,8 @@ export default abstract class LeafletMap {
     drawRoutes: boolean;
     showPolygon: boolean;
     updatePending = false;
+    addMarkers: L.Marker[] = [];
+    addPolygons: L.Polygon[] = [];
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
@@ -122,9 +125,18 @@ export default abstract class LeafletMap {
             });
             const dragListener = (e: L.DragEndEvent) => {
                 if (e.type === 'dragend' && mousePositionOnMap) {
-                    const icon = new L.Icon.Default();
-                    icon.options.shadowSize = [0, 0];
+                    const icon = L.icon({
+                      iconRetinaUrl: 'marker-icon-2x.png',
+                      iconUrl: 'marker-icon.png',
+                      shadowUrl: 'marker-shadow.png',
+                      iconSize: [25, 41],
+                      iconAnchor: [12, 41],
+                      popupAnchor: [1, -34],
+                      tooltipAnchor: [16, -28],
+                      shadowSize: [41, 41]
+                    });
                     const newMarker = L.marker(mousePositionOnMap, { icon }).addTo(this.map);
+                    this.addMarkers.push(newMarker);
                     const datasourcesList = document.createElement('div');
                     const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
                     const header = document.createElement('p');
@@ -139,10 +151,14 @@ export default abstract class LeafletMap {
                             const updatedEnttity = { ...ds, ...customLatLng };
                             this.saveMarkerLocation(updatedEnttity).subscribe(() => {
                               this.map.removeLayer(newMarker);
+                              const markerIndex = this.addMarkers.indexOf(newMarker);
+                              if (markerIndex > -1) {
+                                this.addMarkers.splice(markerIndex, 1);
+                              }
                               this.deleteMarker(ds.entityName);
                               this.createMarker(ds.entityName, updatedEnttity, this.datasources, this.options);
                             });
-                        }
+                        };
                         datasourcesList.append(dsItem);
                     });
                     datasourcesList.append(document.createElement('br'));
@@ -150,14 +166,18 @@ export default abstract class LeafletMap {
                     deleteBtn.appendChild(document.createTextNode('Discard changes'));
                     deleteBtn.onclick = () => {
                         this.map.removeLayer(newMarker);
-                    }
+                        const markerIndex = this.addMarkers.indexOf(newMarker);
+                        if (markerIndex > -1) {
+                          this.addMarkers.splice(markerIndex, 1);
+                        }
+                    };
                     datasourcesList.append(deleteBtn);
                     const popup = L.popup();
                     popup.setContent(datasourcesList);
                     newMarker.bindPopup(popup).openPopup();
                 }
-                addMarker.setPosition('topright')
-            }
+                addMarker.setPosition('topright');
+            };
             L.Control.AddMarker = L.Control.extend({
                 onAdd() {
                     const img = L.DomUtil.create('img') as any;
@@ -169,7 +189,7 @@ export default abstract class LeafletMap {
                     img.draggable = true;
                     const draggableImg = new L.Draggable(img);
                     draggableImg.enable();
-                    draggableImg.on('dragend', dragListener)
+                    draggableImg.on('dragend', dragListener);
                     return img;
                 },
                 onRemove() {
@@ -178,7 +198,7 @@ export default abstract class LeafletMap {
             } as any);
             L.control.addMarker = (opts) => {
                 return new L.Control.AddMarker(opts);
-            }
+            };
             addMarker = L.control.addMarker({ position: 'topright' }).addTo(this.map);
         }
     }
@@ -188,16 +208,16 @@ export default abstract class LeafletMap {
       let mousePositionOnMap: L.LatLng[];
       let addPolygon: L.Control;
       this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
+        const polygonOffset = this.options.provider === MapProviders.image ? 10 : 0.01;
         const latlng1 = e.latlng;
-        const latlng2 = L.latLng(e.latlng.lat, e.latlng.lng + 10);
-        const latlng3 = L.latLng(e.latlng.lat-10, e.latlng.lng);
-        mousePositionOnMap = [latlng1,latlng2, latlng3 ];
+        const latlng2 = L.latLng(e.latlng.lat, e.latlng.lng + polygonOffset);
+        const latlng3 = L.latLng(e.latlng.lat - polygonOffset, e.latlng.lng);
+        mousePositionOnMap = [latlng1, latlng2, latlng3];
       });
       const dragListener = (e: L.DragEndEvent) => {
         if (e.type === 'dragend' && mousePositionOnMap) {
-          const icon = new L.Icon.Default();
-          icon.options.shadowSize = [0, 0];
           const newPolygon = L.polygon(mousePositionOnMap).addTo(this.map);
+          this.addPolygons.push(newPolygon);
           const datasourcesList = document.createElement('div');
           const customLatLng = {[this.options.polygonKeyName]: this.convertToPolygonFormat(mousePositionOnMap)};
           const header = document.createElement('p');
@@ -212,9 +232,13 @@ export default abstract class LeafletMap {
               const updatedEnttity = { ...ds, ...customLatLng };
               this.savePolygonLocation(updatedEnttity).subscribe(() => {
                 this.map.removeLayer(newPolygon);
+                const polygonIndex = this.addPolygons.indexOf(newPolygon);
+                if (polygonIndex > -1) {
+                  this.addPolygons.splice(polygonIndex, 1);
+                }
                 this.deletePolygon(ds.entityName);
               });
-            }
+            };
             datasourcesList.append(dsItem);
           });
           datasourcesList.append(document.createElement('br'));
@@ -222,14 +246,18 @@ export default abstract class LeafletMap {
           deleteBtn.appendChild(document.createTextNode('Discard changes'));
           deleteBtn.onclick = () => {
             this.map.removeLayer(newPolygon);
-          }
+            const polygonIndex = this.addPolygons.indexOf(newPolygon);
+            if (polygonIndex > -1) {
+              this.addPolygons.splice(polygonIndex, 1);
+            }
+          };
           datasourcesList.append(deleteBtn);
           const popup = L.popup();
           popup.setContent(datasourcesList);
           newPolygon.bindPopup(popup).openPopup();
         }
-        addPolygon.setPosition('topright')
-      }
+        addPolygon.setPosition('topright');
+      };
       L.Control.AddPolygon = L.Control.extend({
         onAdd() {
           const img = L.DomUtil.create('img') as any;
@@ -241,7 +269,7 @@ export default abstract class LeafletMap {
           img.draggable = true;
           const draggableImg = new L.Draggable(img);
           draggableImg.enable();
-          draggableImg.on('dragend', dragListener)
+          draggableImg.on('dragend', dragListener);
           return img;
         },
         onRemove() {
@@ -250,7 +278,7 @@ export default abstract class LeafletMap {
       } as any);
       L.control.addPolygon = (opts) => {
         return new L.Control.AddPolygon(opts);
-      }
+      };
       addPolygon = L.control.addPolygon({ position: 'topright' }).addTo(this.map);
     }
   }
@@ -274,10 +302,11 @@ export default abstract class LeafletMap {
     public setMap(map: L.Map) {
         this.map = map;
         if (this.options.useDefaultCenterPosition) {
-            this.map.panTo(this.options.defaultCenterPosition);
-            this.bounds = map.getBounds();
+          this.map.panTo(this.options.defaultCenterPosition);
+          this.bounds = map.getBounds();
+        } else {
+          this.bounds = new L.LatLngBounds(null, null);
         }
-        else this.bounds = new L.LatLngBounds(null, null);
         if (this.options.draggableMarker) {
             this.addMarkerControl();
         }
@@ -293,11 +322,11 @@ export default abstract class LeafletMap {
         }
     }
 
-    public saveMarkerLocation(_e: FormattedData, lat?: number, lng?: number): Observable<any> {
+    public saveMarkerLocation(datasource: FormattedData, lat?: number, lng?: number): Observable<any> {
       return of(null);
     }
 
-    public savePolygonLocation(_e: FormattedData, coordinates?: Array<[number, number]>): Observable<any> {
+    public savePolygonLocation(datasource: FormattedData, coordinates?: Array<[number, number]>): Observable<any> {
       return of(null);
     }
 
@@ -358,7 +387,9 @@ export default abstract class LeafletMap {
     }
 
     convertPosition(expression: object): L.LatLng {
-      if (!expression) return null;
+      if (!expression) {
+        return null;
+      }
       const lat = expression[this.options.latKeyName];
       const lng = expression[this.options.lngKeyName];
       if (!isDefinedAndNotNull(lat) || isString(lat) || isNaN(lat) || !isDefinedAndNotNull(lng) || isString(lng) || isNaN(lng)) {
@@ -376,35 +407,35 @@ export default abstract class LeafletMap {
             } else {
               return null;
             }
-        }).filter(el => !!el)
+        }).filter(el => !!el);
     }
 
     convertToCustomFormat(position: L.LatLng): object {
         return {
             [this.options.latKeyName]: position.lat % 90,
             [this.options.lngKeyName]: position.lng % 180
-        }
+        };
     }
 
-  convertToPolygonFormat(points: Array<any>): Array<any> {
-    if (points.length) {
-      return points.map(point=> {
-        if (point.length) {
-          return this.convertToPolygonFormat(point);
-        } else {
-          return [point.lat, point.lng];
-        }
-      })
-    } else {
-      return []
+    convertToPolygonFormat(points: Array<any>): Array<any> {
+      if (points.length) {
+        return points.map(point => {
+          if (point.length) {
+            return this.convertToPolygonFormat(point);
+          } else {
+            return [point.lat, point.lng];
+          }
+        });
+      } else {
+        return [];
+      }
     }
-  }
 
-  convertPolygonToCustomFormat(expression: any[][]): object {
-    return {
-      [this.options.polygonKeyName] : this.convertToPolygonFormat(expression)
+    convertPolygonToCustomFormat(expression: any[][]): object {
+      return {
+        [this.options.polygonKeyName] : this.convertToPolygonFormat(expression)
+      };
     }
-  }
 
     updateData(drawRoutes: boolean, showPolygon: boolean) {
       this.drawRoutes = drawRoutes;
@@ -503,7 +534,7 @@ export default abstract class LeafletMap {
           this.markersCluster.addLayers(createdMarkers.map(marker => marker.leafletMarker));
         }
         if (updatedMarkers.length) {
-          this.markersCluster.refreshClusters(updatedMarkers.map(marker => marker.leafletMarker))
+          this.markersCluster.refreshClusters(updatedMarkers.map(marker => marker.leafletMarker));
         }
         if (deletedMarkers.length) {
           this.markersCluster.removeLayers(deletedMarkers.map(marker => marker.leafletMarker));
@@ -512,7 +543,9 @@ export default abstract class LeafletMap {
     }
 
     dragMarker = (e, data = {} as FormattedData) => {
-        if (e.type !== 'dragend') return;
+        if (e.type !== 'dragend') {
+          return;
+        }
         this.saveMarkerLocation({ ...data, ...this.convertToCustomFormat(e.target._latlng) }).subscribe();
     }
 
@@ -521,7 +554,7 @@ export default abstract class LeafletMap {
       const newMarker = new Marker(this, this.convertPosition(data), settings, data, dataSources, this.dragMarker);
       if (callback) {
         newMarker.leafletMarker.on('click', () => {
-          callback(data, true)
+          callback(data, true);
         });
       }
       if (this.bounds && updateBounds && !(this.options as MarkerSettings).useClusterMarkers) {
@@ -559,11 +592,10 @@ export default abstract class LeafletMap {
     }
 
     deletePolygon(key: string) {
-      let polygon = this.polygons.get(key)?.leafletPoly;
+      const polygon = this.polygons.get(key)?.leafletPoly;
       if (polygon) {
         this.map.removeLayer(polygon);
         this.polygons.delete(key);
-        polygon = null;
       }
       return polygon;
     }
@@ -678,7 +710,9 @@ export default abstract class LeafletMap {
   }
 
   dragPolygonVertex = (e?, data = {} as FormattedData) => {
-    if (e === undefined || (e.type !== 'editable:vertex:dragend' && e.type !== 'editable:vertex:deleted')) return;
+    if (e === undefined || (e.type !== 'editable:vertex:dragend' && e.type !== 'editable:vertex:deleted')) {
+      return;
+    }
     this.savePolygonLocation({ ...data, ...this.convertPolygonToCustomFormat(e.layer._latlngs) }).subscribe();
   }
 

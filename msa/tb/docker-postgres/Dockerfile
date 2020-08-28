@@ -35,6 +35,7 @@ RUN chmod a+x /tmp/*.sh \
     && mv /tmp/stop-db.sh /usr/bin
 
 RUN dpkg -i /tmp/${pkg.name}.deb
+RUN rm /tmp/${pkg.name}.deb
 
 RUN systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :
 

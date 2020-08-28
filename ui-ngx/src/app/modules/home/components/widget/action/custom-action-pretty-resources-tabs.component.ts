@@ -93,7 +93,6 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
 
   ngOnChanges(changes: SimpleChanges): void {
     for (const propName of Object.keys(changes)) {
-      const change = changes[propName];
       if (propName === 'action') {
         if (this.aceEditors.length) {
           this.setAceEditorValues();
@@ -158,7 +157,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
       entries.forEach((entry) => {
         const editor = this.aceEditors.find(aceEditor => aceEditor.container === entry.target);
         this.onAceEditorResize(editor);
-      })
+      });
     });
     this.htmlEditor = this.createAceEditor(this.htmlInputElmRef, 'html');
     this.htmlEditor.on('input', () => {

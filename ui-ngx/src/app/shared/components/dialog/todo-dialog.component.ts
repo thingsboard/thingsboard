@@ -23,9 +23,6 @@ import { MatDialogRef } from '@angular/material/dialog';
   styleUrls: ['./todo-dialog.component.scss']
 })
 export class TodoDialogComponent {
-
-  comingSoon = require('../../../../assets/coming-soon.jpg').default;
-
   constructor(public dialogRef: MatDialogRef<TodoDialogComponent>) {
   }
 }

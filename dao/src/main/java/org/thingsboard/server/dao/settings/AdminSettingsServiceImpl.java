@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.settings;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,13 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
     public AdminSettings saveAdminSettings(TenantId tenantId, AdminSettings adminSettings) {
         log.trace("Executing saveAdminSettings [{}]", adminSettings);
         adminSettingsValidator.validate(adminSettings, data -> tenantId);
+        if (adminSettings.getKey().equals("mail") && "".equals(adminSettings.getJsonValue().get("password").asText())) {
+            AdminSettings mailSettings = findAdminSettingsByKey(tenantId, "mail");
+            if (mailSettings != null) {
+                ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
+            }
+        }
+
         return adminSettingsDao.save(tenantId, adminSettings);
     }
     

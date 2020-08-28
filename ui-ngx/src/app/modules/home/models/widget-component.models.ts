@@ -247,9 +247,9 @@ export class WidgetContext {
   }
 
   showInfoToast(message: string,
-                  verticalPosition: NotificationVerticalPosition = 'bottom',
-                  horizontalPosition: NotificationHorizontalPosition = 'left',
-                  target?: string) {
+                verticalPosition: NotificationVerticalPosition = 'bottom',
+                horizontalPosition: NotificationHorizontalPosition = 'left',
+                target?: string) {
     this.showToast('info', message, undefined, verticalPosition, horizontalPosition, target);
   }
 
@@ -325,7 +325,7 @@ export class WidgetContext {
 
   pageLink(pageSize: number, page: number = 0, textSearch: string = null, sortOrder: SortOrder = null): PageLink {
     return new PageLink(pageSize, page, textSearch, sortOrder);
-  };
+  }
 }
 
 export interface IDynamicWidgetComponent {

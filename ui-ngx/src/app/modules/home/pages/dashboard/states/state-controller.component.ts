@@ -18,12 +18,13 @@ import { IStateControllerComponent, StateControllerState } from '@home/pages/das
 import { IDashboardController } from '../dashboard-page.models';
 import { DashboardState } from '@app/shared/models/dashboard.models';
 import { Subscription } from 'rxjs';
-import { NgZone, OnDestroy, OnInit } from '@angular/core';
+import { NgZone, OnDestroy, OnInit, Directive } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { StatesControllerService } from '@home/pages/dashboard/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { StateObject, StateParams } from '@app/core/api/widget-api.models';
 
+@Directive()
 export abstract class StateControllerComponent implements IStateControllerComponent, OnInit, OnDestroy {
 
   stateObject: StateControllerState = [];
@@ -99,7 +100,7 @@ export abstract class StateControllerComponent implements IStateControllerCompon
     this.rxSubscriptions.push(this.route.queryParamMap.subscribe((paramMap) => {
       const dashboardId = this.route.snapshot.params.dashboardId;
       if (this.dashboardId === dashboardId) {
-        const newState = paramMap.get('state');
+        const newState = this.decodeStateParam(paramMap.get('state'));
         if (this.currentState !== newState) {
           this.currentState = newState;
           if (this.inited) {
@@ -146,8 +147,13 @@ export abstract class StateControllerComponent implements IStateControllerCompon
   }
 
   public reInit() {
-    this.currentState = this.route.snapshot.queryParamMap.get('state');
+    this.preservedState = null;
+    this.currentState = this.decodeStateParam(this.route.snapshot.queryParamMap.get('state'));
     this.init();
+  }
+
+  private decodeStateParam(stateURI: string): string{
+    return stateURI !== null ? decodeURIComponent(stateURI) : null;
   }
 
   protected abstract init();

@@ -33,7 +33,7 @@ import {
 import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
 import { addCondition, addGroupInfo, addToSchema, initSchema, mergeSchemes } from '@core/schema-utils';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import { getDefCenterPosition, parseData, parseFunction, parseWithTranslation } from './maps-utils';
+import { getDefCenterPosition, parseFunction, parseWithTranslation } from './maps-utils';
 import { Datasource, DatasourceData, JsonSettingsSchema, WidgetActionDescriptor } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
@@ -102,8 +102,9 @@ export class MapWidgetController implements MapWidgetInterface {
 
     public static getProvidersSchema(mapProvider: MapProviders, ignoreImageMap = false) {
         const providerSchema = _.cloneDeep(mapProviderSchema);
-        if (mapProvider)
-            providerSchema.schema.properties.provider.default = mapProvider;
+        if (mapProvider) {
+          providerSchema.schema.properties.provider.default = mapProvider;
+        }
         if (ignoreImageMap) {
             providerSchema.form[0].items = providerSchema.form[0]?.items.filter(item => item.value !== 'image-map');
         }
@@ -129,7 +130,7 @@ export class MapWidgetController implements MapWidgetInterface {
         } else {
             const clusteringSchema = mergeSchemes([markerClusteringSettingsSchema,
                 addCondition(markerClusteringSettingsSchemaLeaflet,
-                    `model.useClusterMarkers === true && model.provider !== "image-map"`)])
+                    `model.useClusterMarkers === true && model.provider !== "image-map"`)]);
             addToSchema(schema, clusteringSchema);
             addGroupInfo(schema, 'Markers Clustering Settings');
         }
@@ -154,10 +155,11 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     translate = (key: string, defaultTranslation?: string): string => {
-        if (key)
-            return (this.ctx.$injector.get(UtilsService).customTranslation(key, defaultTranslation || key)
-                || this.ctx.$injector.get(TranslateService).instant(key));
-        else return '';
+      if (key) {
+        return (this.ctx.$injector.get(UtilsService).customTranslation(key, defaultTranslation || key)
+          || this.ctx.$injector.get(TranslateService).instant(key));
+      }
+      return '';
     }
 
     getDescriptors(name: string): { [name: string]: ($event: Event, datasource: Datasource) => void } {
@@ -211,10 +213,10 @@ export class MapWidgetController implements MapWidgetInterface {
             }
             if (value) {
               if (key.type === DataKeyType.attribute) {
-                attributes.push(value)
+                attributes.push(value);
               }
               if (key.type === DataKeyType.timeseries) {
-                timeseries.push(value)
+                timeseries.push(value);
               }
             }
         });
@@ -253,7 +255,7 @@ export class MapWidgetController implements MapWidgetInterface {
     const coordinatesProperties =  this.settings.polygonKeyName;
     e.$datasource.dataKeys.forEach(key => {
       let value;
-      if (coordinatesProperties == key.name) {
+      if (coordinatesProperties === key.name) {
         value = {
           key: key.name,
           value: isDefined(coordinates) ? coordinates : e[key.name]
@@ -261,10 +263,10 @@ export class MapWidgetController implements MapWidgetInterface {
       }
       if (value) {
         if (key.type === DataKeyType.attribute) {
-          attributes.push(value)
+          attributes.push(value);
         }
         if (key.type === DataKeyType.timeseries) {
-          timeseries.push(value)
+          timeseries.push(value);
         }
       }
     });
@@ -294,9 +296,11 @@ export class MapWidgetController implements MapWidgetInterface {
         const functionParams = ['data', 'dsData', 'dsIndex'];
         this.provider = settings.provider || this.mapProvider;
         if (this.provider === MapProviders.here && !settings.mapProviderHere) {
-            if (settings.mapProvider && hereProviders.includes(settings.mapProvider))
-                settings.mapProviderHere = settings.mapProvider
-            else settings.mapProviderHere = hereProviders[0];
+          if (settings.mapProvider && hereProviders.includes(settings.mapProvider)) {
+            settings.mapProviderHere = settings.mapProvider;
+          } else {
+            settings.mapProviderHere = hereProviders[0];
+          }
         }
         const customOptions = {
             provider: this.provider,
@@ -317,14 +321,14 @@ export class MapWidgetController implements MapWidgetInterface {
                 url: settings.markerImage,
                 size: settings.markerImageSize || 34
             } : null
-        }
+        };
         if (isEditMap && !settings.hasOwnProperty('draggableMarker')) {
             settings.draggableMarker = true;
         }
         if (isEditMap && !settings.hasOwnProperty('editablePolygon')) {
             settings.editablePolygon = true;
         }
-        return { ...defaultSettings, ...settings, ...customOptions, }
+        return { ...defaultSettings, ...settings, ...customOptions, };
     }
 
     update() {
