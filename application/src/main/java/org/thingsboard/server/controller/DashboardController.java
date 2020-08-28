@@ -117,8 +117,9 @@ public class DashboardController extends BaseController {
                     null,
                     dashboard.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
-            sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(),
-                    dashboard.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+            if (dashboard.getId() != null) {
+                sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), ActionType.UPDATED);
+            }
 
             return savedDashboard;
         } catch (Exception e) {
@@ -175,6 +176,7 @@ public class DashboardController extends BaseController {
                     customerId,
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strDashboardId, strCustomerId, customer.getName());
 
+            sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, ActionType.ASSIGNED_TO_CUSTOMER);
 
             return savedDashboard;
         } catch (Exception e) {
@@ -205,6 +207,8 @@ public class DashboardController extends BaseController {
             logEntityAction(dashboardId, dashboard,
                     customerId,
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customer.getId().toString(), customer.getName());
+
+            sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, ActionType.UNASSIGNED_FROM_CUSTOMER);
 
             return savedDashboard;
         } catch (Exception e) {
@@ -261,6 +265,7 @@ public class DashboardController extends BaseController {
                     logEntityAction(dashboardId, savedDashboard,
                             customerId,
                             ActionType.ASSIGNED_TO_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
+                    sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, ActionType.ASSIGNED_TO_CUSTOMER);
                 }
                 for (CustomerId customerId : removedCustomerIds) {
                     ShortCustomerInfo customerInfo = dashboard.getAssignedCustomerInfo(customerId);
@@ -268,7 +273,7 @@ public class DashboardController extends BaseController {
                     logEntityAction(dashboardId, dashboard,
                             customerId,
                             ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
-
+                    sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, ActionType.UNASSIGNED_FROM_CUSTOMER);
                 }
                 return savedDashboard;
             }
@@ -312,6 +317,7 @@ public class DashboardController extends BaseController {
                     logEntityAction(dashboardId, savedDashboard,
                             customerId,
                             ActionType.ASSIGNED_TO_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
+                    sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, ActionType.ASSIGNED_TO_CUSTOMER);
                 }
                 return savedDashboard;
             }
@@ -355,7 +361,7 @@ public class DashboardController extends BaseController {
                     logEntityAction(dashboardId, dashboard,
                             customerId,
                             ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
-
+                    sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, ActionType.UNASSIGNED_FROM_CUSTOMER);
                 }
                 return savedDashboard;
             }

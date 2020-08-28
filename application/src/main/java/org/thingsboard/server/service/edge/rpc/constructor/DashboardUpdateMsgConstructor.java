@@ -18,7 +18,9 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
@@ -27,13 +29,17 @@ import org.thingsboard.server.gen.edge.UpdateMsgType;
 @Slf4j
 public class DashboardUpdateMsgConstructor {
 
-    public DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard) {
+    public DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard, CustomerId customerId) {
         DashboardUpdateMsg.Builder builder = DashboardUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(dashboard.getId().getId().getMostSignificantBits())
                 .setIdLSB(dashboard.getId().getId().getLeastSignificantBits())
                 .setTitle(dashboard.getTitle())
                 .setConfiguration(JacksonUtil.toString(dashboard.getConfiguration()));
+        if (customerId != null) {
+            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
+            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+        }
         return builder.build();
     }
 

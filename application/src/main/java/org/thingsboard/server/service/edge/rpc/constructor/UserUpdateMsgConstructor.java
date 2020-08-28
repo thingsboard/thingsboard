@@ -18,6 +18,8 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
@@ -25,20 +27,22 @@ import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.gen.edge.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.UserUpdateMsg;
 
+import java.util.UUID;
+
 @Component
 @Slf4j
 public class UserUpdateMsgConstructor {
 
-    public UserUpdateMsg constructUserUpdatedMsg(UpdateMsgType msgType, User user) {
+    public UserUpdateMsg constructUserUpdatedMsg(UpdateMsgType msgType, User user, CustomerId customerId) {
         UserUpdateMsg.Builder builder = UserUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(user.getId().getId().getMostSignificantBits())
                 .setIdLSB(user.getId().getId().getLeastSignificantBits())
                 .setEmail(user.getEmail())
                 .setAuthority(user.getAuthority().name());
-        if (user.getCustomerId() != null) {
-            builder.setCustomerIdMSB(user.getCustomerId().getId().getMostSignificantBits());
-            builder.setCustomerIdLSB(user.getCustomerId().getId().getLeastSignificantBits());
+        if (customerId != null) {
+            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
+            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
         }
         if (user.getFirstName() != null) {
             builder.setFirstName(user.getFirstName());

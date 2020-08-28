@@ -305,6 +305,18 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         if (!edge.getTenantId().getId().equals(entityView.getTenantId().getId())) {
             throw new DataValidationException("Can't assign entityView to edge from different tenant!");
         }
+
+        try {
+            Boolean relationExists = relationService.checkRelation(tenantId, edgeId, entityView.getEntityId(),
+                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE).get();
+            if (!relationExists) {
+                throw new DataValidationException("Can't assign entity view to edge because related device/asset doesn't assigned to edge!");
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("Exception during relation check", e);
+            throw new RuntimeException("Exception during relation check", e);
+        }
+
         try {
             createRelation(tenantId, new EntityRelation(edgeId, entityViewId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
         } catch (ExecutionException | InterruptedException e) {

@@ -154,17 +154,21 @@ message DashboardUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string title = 4;
-  string configuration = 5;
+  int64 customerIdMSB = 4;
+  int64 customerIdLSB = 5;
+  string title = 6;
+  string configuration = 7;
 }
 
 message DeviceUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string name = 4;
-  string type = 5;
-  string label = 6;
+  int64 customerIdMSB = 4;
+  int64 customerIdLSB = 5;
+  string name = 6;
+  string type = 7;
+  string label = 8;
 }
 
 message DeviceCredentialsUpdateMsg {
@@ -179,20 +183,24 @@ message AssetUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string name = 4;
-  string type = 5;
-  string label = 6;
+  int64 customerIdMSB = 4;
+  int64 customerIdLSB = 5;
+  string name = 6;
+  string type = 7;
+  string label = 8;
 }
 
 message EntityViewUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string name = 4;
-  string type = 5;
-  int64 entityIdMSB = 6;
-  int64 entityIdLSB = 7;
-  EdgeEntityType entityType = 8;
+  int64 customerIdMSB = 4;
+  int64 customerIdLSB = 5;
+  string name = 6;
+  string type = 7;
+  int64 entityIdMSB = 8;
+  int64 entityIdLSB = 9;
+  EdgeEntityType entityType = 10;
 }
 
 message AlarmUpdateMsg {

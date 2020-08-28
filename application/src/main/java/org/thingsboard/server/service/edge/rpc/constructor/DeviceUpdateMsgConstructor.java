@@ -18,7 +18,9 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
@@ -28,7 +30,7 @@ import org.thingsboard.server.gen.edge.UpdateMsgType;
 @Slf4j
 public class DeviceUpdateMsgConstructor {
 
-    public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device) {
+    public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device, CustomerId customerId) {
         DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(device.getId().getId().getMostSignificantBits())
@@ -37,6 +39,10 @@ public class DeviceUpdateMsgConstructor {
                 .setType(device.getType());
         if (device.getLabel() != null) {
             builder.setLabel(device.getLabel());
+        }
+        if (customerId != null) {
+            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
+            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
         }
         return builder.build();
     }

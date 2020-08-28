@@ -108,8 +108,9 @@ public class DeviceController extends BaseController {
             tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(savedDevice.getTenantId(),
                     savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
 
-            sendNotificationMsgToEdgeService(savedDevice.getTenantId(), savedDevice.getId(),
-                    device.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+            if (device.getId() != null) {
+                sendNotificationMsgToEdgeService(savedDevice.getTenantId(), savedDevice.getId(),ActionType.UPDATED);
+            }
 
             logEntityAction(savedDevice.getId(), savedDevice,
                     savedDevice.getCustomerId(),
@@ -174,6 +175,9 @@ public class DeviceController extends BaseController {
                     savedDevice.getCustomerId(),
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strDeviceId, strCustomerId, customer.getName());
 
+            sendNotificationMsgToEdgeService(savedDevice.getTenantId(), savedDevice.getId(),
+                    customerId, ActionType.ASSIGNED_TO_CUSTOMER);
+
             return savedDevice;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), null,
@@ -201,6 +205,9 @@ public class DeviceController extends BaseController {
             logEntityAction(deviceId, device,
                     device.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDeviceId, customer.getId().toString(), customer.getName());
+
+            sendNotificationMsgToEdgeService(savedDevice.getTenantId(), savedDevice.getId(),
+                    customer.getId(), ActionType.UNASSIGNED_FROM_CUSTOMER);
 
             return savedDevice;
         } catch (Exception e) {

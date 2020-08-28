@@ -84,7 +84,7 @@ public class AssetController extends BaseController {
         try {
             asset.setTenantId(getCurrentUser().getTenantId());
 
-           checkEntity(asset.getId(), asset, Resource.ASSET);
+            checkEntity(asset.getId(), asset, Resource.ASSET);
 
             Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
 
@@ -92,8 +92,9 @@ public class AssetController extends BaseController {
                     savedAsset.getCustomerId(),
                     asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
-            sendNotificationMsgToEdgeService(getTenantId(), savedAsset.getId(),
-                    asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+            if (asset.getId() != null) {
+                sendNotificationMsgToEdgeService(savedAsset.getTenantId(), savedAsset.getId(), ActionType.UPDATED);
+            }
 
             return savedAsset;
         } catch (Exception e) {
@@ -147,6 +148,9 @@ public class AssetController extends BaseController {
                     savedAsset.getCustomerId(),
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strAssetId, strCustomerId, customer.getName());
 
+            sendNotificationMsgToEdgeService(savedAsset.getTenantId(), savedAsset.getId(),
+                    customerId, ActionType.ASSIGNED_TO_CUSTOMER);
+
             return savedAsset;
         } catch (Exception e) {
 
@@ -177,6 +181,9 @@ public class AssetController extends BaseController {
             logEntityAction(assetId, asset,
                     asset.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strAssetId, customer.getId().toString(), customer.getName());
+
+            sendNotificationMsgToEdgeService(savedAsset.getTenantId(), savedAsset.getId(),
+                    customer.getId(), ActionType.UNASSIGNED_FROM_CUSTOMER);
 
             return savedAsset;
         } catch (Exception e) {

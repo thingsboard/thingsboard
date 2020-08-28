@@ -104,7 +104,10 @@ public class EdgeGrpcClient implements EdgeRpcClient {
 
     @Override
     public void disconnect() throws InterruptedException {
-        inputStream.onCompleted();
+        try {
+            inputStream.onCompleted();
+        } catch (Exception e) {
+        }
         if (channel != null) {
             channel.shutdown().awaitTermination(timeoutSecs, TimeUnit.SECONDS);
         }
@@ -151,6 +154,11 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                         onEdgeUpdate.accept(connectResponseMsg.getConfiguration());
                     } else {
                         log.error("[{}] Failed to establish the connection! Code: {}. Error message: {}.", edgeKey, connectResponseMsg.getResponseCode(), connectResponseMsg.getErrorMsg());
+                        try {
+                            EdgeGrpcClient.this.disconnect();
+                        } catch (InterruptedException e) {
+                            log.error("[{}] Got interruption during disconnect!", edgeKey, e);
+                        }
                         onError.accept(new EdgeConnectionException("Failed to establish the connection! Response code: " + connectResponseMsg.getResponseCode().name()));
                     }
                 } else if (responseMsg.hasUplinkResponseMsg()) {

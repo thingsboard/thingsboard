@@ -174,6 +174,9 @@ public class EdgeController extends BaseController {
 
             Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(getCurrentUser().getTenantId(), edgeId, customerId));
 
+            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+                    ComponentLifecycleEvent.UPDATED);
+
             logEntityAction(edgeId, savedEdge,
                     savedEdge.getCustomerId(),
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strEdgeId, strCustomerId, customer.getName());
@@ -205,12 +208,15 @@ public class EdgeController extends BaseController {
 
             Edge savedEdge = checkNotNull(edgeService.unassignEdgeFromCustomer(getCurrentUser().getTenantId(), edgeId));
 
+            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+                    ComponentLifecycleEvent.UPDATED);
+
             logEntityAction(edgeId, edge,
                     edge.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strEdgeId, customer.getId().toString(), customer.getName());
 
             sendNotificationMsgToEdgeService(savedEdge.getTenantId(), savedEdge.getId(),
-                    edge.getCustomerId(), ActionType.UNASSIGNED_FROM_CUSTOMER);
+                    customer.getId(), ActionType.UNASSIGNED_FROM_CUSTOMER);
 
             return savedEdge;
         } catch (Exception e) {

@@ -140,14 +140,14 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     @Override
     public void sync(Edge edge) {
         try {
-            syncUsers(edge);
+            syncWidgetsBundleAndWidgetTypes(edge);
+            syncAdminSettings(edge);
             syncRuleChains(edge);
+            syncUsers(edge);
             syncDevices(edge);
             syncAssets(edge);
             syncEntityViews(edge);
             syncDashboards(edge);
-            syncWidgetsBundleAndWidgetTypes(edge);
-            syncAdminSettings(edge);
         } catch (Exception e) {
             log.error("Exception during sync process", e);
         }

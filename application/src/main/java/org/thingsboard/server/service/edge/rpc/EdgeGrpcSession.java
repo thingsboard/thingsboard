@@ -17,14 +17,13 @@ package org.thingsboard.server.service.edge.rpc;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -40,6 +39,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -73,7 +73,6 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -138,8 +137,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static org.thingsboard.server.gen.edge.UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
-
 @Slf4j
 @Data
 public final class EdgeGrpcSession implements Closeable {
@@ -185,13 +182,14 @@ public final class EdgeGrpcSession implements Closeable {
             public void onNext(RequestMsg requestMsg) {
                 if (!connected && requestMsg.getMsgType().equals(RequestMsgType.CONNECT_RPC_MESSAGE)) {
                     ConnectResponseMsg responseMsg = processConnect(requestMsg.getConnectRequestMsg());
-                    sendResponseMsg(ResponseMsg.newBuilder()
+                    outputStream.onNext(ResponseMsg.newBuilder()
                             .setConnectResponseMsg(responseMsg)
                             .build());
                     if (ConnectResponseCode.ACCEPTED != responseMsg.getResponseCode()) {
                         outputStream.onError(new RuntimeException(responseMsg.getErrorMsg()));
                     }
                     if (ConnectResponseCode.ACCEPTED == responseMsg.getResponseCode()) {
+                        connected = true;
                         ctx.getSyncEdgeService().sync(edge);
                     }
                 }
@@ -212,6 +210,7 @@ public final class EdgeGrpcSession implements Closeable {
 
             @Override
             public void onCompleted() {
+                connected = false;
                 sessionCloseListener.accept(edge.getId());
                 outputStream.onCompleted();
             }
@@ -257,6 +256,10 @@ public final class EdgeGrpcSession implements Closeable {
             try {
                 responseMsgLock.lock();
                 outputStream.onNext(responseMsg);
+            } catch (Exception e) {
+                log.error("Failed to send response message [{}]", responseMsg, e);
+                connected = false;
+                sessionCloseListener.accept(edge.getId());
             } finally {
                 responseMsgLock.unlock();
             }
@@ -337,14 +340,16 @@ public final class EdgeGrpcSession implements Closeable {
                 switch (edgeEventAction) {
                     case UPDATED:
                     case ADDED:
-                    case ASSIGNED_TO_EDGE:
                     case DELETED:
+                    case ASSIGNED_TO_EDGE:
                     case UNASSIGNED_FROM_EDGE:
                     case ALARM_ACK:
                     case ALARM_CLEAR:
                     case CREDENTIALS_UPDATED:
                     case RELATION_ADD_OR_UPDATE:
                     case RELATION_DELETED:
+                    case ASSIGNED_TO_CUSTOMER:
+                    case UNASSIGNED_FROM_CUSTOMER:
                         downlinkMsg = processEntityMessage(edgeEvent, edgeEventAction);
                         break;
                     case ATTRIBUTES_UPDATED:
@@ -464,10 +469,13 @@ public final class EdgeGrpcSession implements Closeable {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
+            case ASSIGNED_TO_CUSTOMER:
+            case UNASSIGNED_FROM_CUSTOMER:
                 Device device = ctx.getDeviceService().findDeviceById(edgeEvent.getTenantId(), deviceId);
                 if (device != null) {
+                    CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(device);
                     DeviceUpdateMsg deviceUpdateMsg =
-                            ctx.getDeviceUpdateMsgConstructor().constructDeviceUpdatedMsg(msgType, device);
+                            ctx.getDeviceUpdateMsgConstructor().constructDeviceUpdatedMsg(msgType, device, customerId);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .addAllDeviceUpdateMsg(Collections.singletonList(deviceUpdateMsg))
                             .build();
@@ -502,10 +510,13 @@ public final class EdgeGrpcSession implements Closeable {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
+            case ASSIGNED_TO_CUSTOMER:
+            case UNASSIGNED_FROM_CUSTOMER:
                 Asset asset = ctx.getAssetService().findAssetById(edgeEvent.getTenantId(), assetId);
                 if (asset != null) {
+                    CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(asset);
                     AssetUpdateMsg assetUpdateMsg =
-                            ctx.getAssetUpdateMsgConstructor().constructAssetUpdatedMsg(msgType, asset);
+                            ctx.getAssetUpdateMsgConstructor().constructAssetUpdatedMsg(msgType, asset, customerId);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .addAllAssetUpdateMsg(Collections.singletonList(assetUpdateMsg))
                             .build();
@@ -530,10 +541,13 @@ public final class EdgeGrpcSession implements Closeable {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
+            case ASSIGNED_TO_CUSTOMER:
+            case UNASSIGNED_FROM_CUSTOMER:
                 EntityView entityView = ctx.getEntityViewService().findEntityViewById(edgeEvent.getTenantId(), entityViewId);
                 if (entityView != null) {
+                    CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(entityView);
                     EntityViewUpdateMsg entityViewUpdateMsg =
-                            ctx.getEntityViewUpdateMsgConstructor().constructEntityViewUpdatedMsg(msgType, entityView);
+                            ctx.getEntityViewUpdateMsgConstructor().constructEntityViewUpdatedMsg(msgType, entityView, customerId);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .addAllEntityViewUpdateMsg(Collections.singletonList(entityViewUpdateMsg))
                             .build();
@@ -558,10 +572,16 @@ public final class EdgeGrpcSession implements Closeable {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
+            case ASSIGNED_TO_CUSTOMER:
+            case UNASSIGNED_FROM_CUSTOMER:
                 Dashboard dashboard = ctx.getDashboardService().findDashboardById(edgeEvent.getTenantId(), dashboardId);
                 if (dashboard != null) {
+                    CustomerId customerId = null;
+                    if (!edge.getCustomerId().isNullUid() && dashboard.isAssignedToCustomer(edge.getCustomerId())) {
+                        customerId = edge.getCustomerId();
+                    }
                     DashboardUpdateMsg dashboardUpdateMsg =
-                            ctx.getDashboardUpdateMsgConstructor().constructDashboardUpdatedMsg(msgType, dashboard);
+                            ctx.getDashboardUpdateMsgConstructor().constructDashboardUpdatedMsg(msgType, dashboard, customerId);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .addAllDashboardUpdateMsg(Collections.singletonList(dashboardUpdateMsg))
                             .build();
@@ -654,19 +674,15 @@ public final class EdgeGrpcSession implements Closeable {
         switch (edgeActionType) {
             case ADDED:
             case UPDATED:
-            case ASSIGNED_TO_EDGE:
                 User user = ctx.getUserService().findUserById(edgeEvent.getTenantId(), userId);
                 if (user != null) {
-                    boolean fullAccess = Authority.TENANT_ADMIN.equals(user.getAuthority());
-                    setFullAccess(user, fullAccess);
-
+                    CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(user);
                     downlinkMsg = DownlinkMsg.newBuilder()
-                            .addAllUserUpdateMsg(Collections.singletonList(ctx.getUserUpdateMsgConstructor().constructUserUpdatedMsg(msgType, user)))
+                            .addAllUserUpdateMsg(Collections.singletonList(ctx.getUserUpdateMsgConstructor().constructUserUpdatedMsg(msgType, user, customerId)))
                             .build();
                 }
                 break;
             case DELETED:
-            case UNASSIGNED_FROM_EDGE:
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .addAllUserUpdateMsg(Collections.singletonList(ctx.getUserUpdateMsgConstructor().constructUserDeleteMsg(userId)))
                         .build();
@@ -684,13 +700,12 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private void setFullAccess(User user, boolean isFullAccess) {
-        JsonNode additionalInfo = user.getAdditionalInfo();
-        if (additionalInfo == null || additionalInfo instanceof NullNode) {
-            additionalInfo = mapper.createObjectNode();
+    private CustomerId getCustomerIdIfEdgeAssignedToCustomer(HasCustomerId hasCustomerIdEntity) {
+        if (!edge.getCustomerId().isNullUid() && edge.getCustomerId().equals(hasCustomerIdEntity.getCustomerId())) {
+            return edge.getCustomerId();
+        } else {
+            return null;
         }
-        ((ObjectNode) additionalInfo).put("isFullAccess", isFullAccess);
-        user.setAdditionalInfo(additionalInfo);
     }
 
     private DownlinkMsg processRelation(EdgeEvent edgeEvent, UpdateMsgType msgType) {
@@ -781,11 +796,13 @@ public final class EdgeGrpcSession implements Closeable {
         switch (actionType) {
             case UPDATED:
             case CREDENTIALS_UPDATED:
+            case ASSIGNED_TO_CUSTOMER:
+            case UNASSIGNED_FROM_CUSTOMER:
                 return UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
             case ADDED:
             case ASSIGNED_TO_EDGE:
             case RELATION_ADD_OR_UPDATE:
-                return ENTITY_CREATED_RPC_MESSAGE;
+                return UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
             case DELETED:
             case UNASSIGNED_FROM_EDGE:
             case RELATION_DELETED:
@@ -923,6 +940,8 @@ public final class EdgeGrpcSession implements Closeable {
                 return new TenantId(new UUID(entityData.getEntityIdMSB(), entityData.getEntityIdLSB()));
             case CUSTOMER:
                 return new CustomerId(new UUID(entityData.getEntityIdMSB(), entityData.getEntityIdLSB()));
+            case USER:
+                return new UserId(new UUID(entityData.getEntityIdMSB(), entityData.getEntityIdLSB()));
             default:
                 log.warn("Unsupported entity type [{}] during construct of entity id. EntityDataProto [{}]", entityData.getEntityType(), entityData);
                 return null;
@@ -930,14 +949,24 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private ListenableFuture<Void> processPostTelemetry(EntityId entityId, TransportProtos.PostTelemetryMsg msg, TbMsgMetaData metaData) {
+        SettableFuture<Void> futureToSet = SettableFuture.create();
         for (TransportProtos.TsKvListProto tsKv : msg.getTsKvListList()) {
             JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
             metaData.putValue("ts", tsKv.getTs() + "");
             TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), entityId, metaData, gson.toJson(json));
-            // TODO: voba - verify that null callback is OK
-            ctx.getTbClusterService().pushMsgToRuleEngine(edge.getTenantId(), tbMsg.getOriginator(), tbMsg, null);
+            ctx.getTbClusterService().pushMsgToRuleEngine(edge.getTenantId(), tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
+                @Override
+                public void onSuccess(TbQueueMsgMetadata metadata) {
+                    futureToSet.set(null);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    futureToSet.setException(t);
+                }
+            });
         }
-        return Futures.immediateFuture(null);
+        return futureToSet;
     }
 
     private ListenableFuture<Void> processPostAttributes(EntityId entityId, TransportProtos.PostAttributeMsg msg, TbMsgMetaData metaData) {
@@ -957,7 +986,8 @@ public final class EdgeGrpcSession implements Closeable {
                 if (device != null) {
                     // device with this name already exists on the cloud - update ID on the edge
                     if (!device.getId().equals(edgeDeviceId)) {
-                        DeviceUpdateMsg d = ctx.getDeviceUpdateMsgConstructor().constructDeviceUpdatedMsg(UpdateMsgType.DEVICE_CONFLICT_RPC_MESSAGE, device);
+                        CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(device);
+                        DeviceUpdateMsg d = ctx.getDeviceUpdateMsgConstructor().constructDeviceUpdatedMsg(UpdateMsgType.DEVICE_CONFLICT_RPC_MESSAGE, device, customerId);
                         DownlinkMsg downlinkMsg = DownlinkMsg.newBuilder()
                                 .addAllDeviceUpdateMsg(Collections.singletonList(d))
                                 .build();
@@ -970,7 +1000,8 @@ public final class EdgeGrpcSession implements Closeable {
                     if (deviceById != null) {
                         // this ID already used by other device - create new device and update ID on the edge
                         device = createDevice(deviceUpdateMsg);
-                        DeviceUpdateMsg d = ctx.getDeviceUpdateMsgConstructor().constructDeviceUpdatedMsg(UpdateMsgType.DEVICE_CONFLICT_RPC_MESSAGE, device);
+                        CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(device);
+                        DeviceUpdateMsg d = ctx.getDeviceUpdateMsgConstructor().constructDeviceUpdatedMsg(UpdateMsgType.DEVICE_CONFLICT_RPC_MESSAGE, device, customerId);
                         DownlinkMsg downlinkMsg = DownlinkMsg.newBuilder()
                                 .addAllDeviceUpdateMsg(Collections.singletonList(d))
                                 .build();
@@ -1250,7 +1281,6 @@ public final class EdgeGrpcSession implements Closeable {
             edge = optional.get();
             try {
                 if (edge.getSecret().equals(request.getEdgeSecret())) {
-                    connected = true;
                     sessionOpenListener.accept(edge.getId(), this);
                     return ConnectResponseMsg.newBuilder()
                             .setResponseCode(ConnectResponseCode.ACCEPTED)
