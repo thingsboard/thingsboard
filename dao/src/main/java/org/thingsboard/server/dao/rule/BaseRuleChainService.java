@@ -446,17 +446,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    public void unassignEdgeRuleChains(TenantId tenantId, EdgeId edgeId) {
-        log.trace("Executing unassignEdgeRuleChains, edgeId [{}]", edgeId);
-        Validator.validateId(edgeId, "Incorrect edgeId " + edgeId);
-        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
-        if (edge == null) {
-            throw new DataValidationException("Can't unassign ruleChains from non-existent edge!");
-        }
-        new EdgeRuleChainsUnassigner(edge).removeEntities(tenantId, edge);
-    }
-
-    @Override
     public ListenableFuture<TimePageData<RuleChain>> findRuleChainsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
         log.trace("Executing findRuleChainsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
@@ -603,28 +592,4 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     checkRuleNodesAndDelete(tenantId, entity.getId());
                 }
             };
-
-    private class EdgeRuleChainsUnassigner extends TimePaginatedRemover<Edge, RuleChain> {
-
-        private Edge edge;
-
-        EdgeRuleChainsUnassigner(Edge edge) {
-            this.edge = edge;
-        }
-
-        @Override
-        protected List<RuleChain> findEntities(TenantId tenantId, Edge edge, TimePageLink pageLink) {
-            try {
-                return ruleChainDao.findRuleChainsByTenantIdAndEdgeId(edge.getTenantId().getId(), edge.getId().getId(), pageLink).get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("Failed to get ruleChains by tenantId [{}] and edgeId [{}].", edge.getTenantId().getId(), edge.getId().getId());
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        protected void removeEntity(TenantId tenantId, RuleChain entity) {
-            unassignRuleChainFromEdge(edge.getTenantId(), new RuleChainId(entity.getUuidId()), this.edge.getId(), true);
-        }
-    }
 }

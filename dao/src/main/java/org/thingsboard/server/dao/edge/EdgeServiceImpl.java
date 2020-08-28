@@ -105,18 +105,6 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     private CacheManager cacheManager;
 
     @Autowired
-    private AssetService assetService;
-
-    @Autowired
-    private DeviceService deviceService;
-
-    @Autowired
-    private EntityViewService entityViewService;
-
-    @Autowired
-    private DashboardService dashboardService;
-
-    @Autowired
     private RuleChainService ruleChainService;
 
     @Autowired
@@ -180,10 +168,6 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
 
         Edge edge = edgeDao.findById(tenantId, edgeId.getId());
-
-        dashboardService.unassignEdgeDashboards(tenantId, edgeId);
-        // TODO: validate that rule chains are removed by deleteEntityRelations(tenantId, edgeId); call
-        ruleChainService.unassignEdgeRuleChains(tenantId, edgeId);
 
         List<Object> list = new ArrayList<>();
         list.add(edge.getTenantId());

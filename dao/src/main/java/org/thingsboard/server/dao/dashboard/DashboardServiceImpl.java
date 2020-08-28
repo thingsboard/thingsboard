@@ -261,17 +261,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
-    public void unassignEdgeDashboards(TenantId tenantId, EdgeId edgeId) {
-        log.trace("Executing unassignEdgeDashboards, edgeId [{}]", edgeId);
-        Validator.validateId(edgeId, "Incorrect edgeId " + edgeId);
-        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
-        if (edge == null) {
-            throw new DataValidationException("Can't unassign dashboards from non-existent edge!");
-        }
-        new EdgeDashboardsUnassigner(edge).removeEntities(tenantId, edge);
-    }
-
-    @Override
     public ListenableFuture<TimePageData<DashboardInfo>> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
         log.trace("Executing findDashboardsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
@@ -366,31 +355,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         @Override
         protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
             updateAssignedCustomer(customer.getTenantId(), new DashboardId(entity.getUuidId()), this.customer);
-        }
-
-    }
-
-    private class EdgeDashboardsUnassigner extends TimePaginatedRemover<Edge, DashboardInfo> {
-
-        private Edge edge;
-
-        EdgeDashboardsUnassigner(Edge edge) {
-            this.edge = edge;
-        }
-
-        @Override
-        protected List<DashboardInfo> findEntities(TenantId tenantId, Edge edge, TimePageLink pageLink) {
-            try {
-                return dashboardInfoDao.findDashboardsByTenantIdAndEdgeId(edge.getTenantId().getId(), edge.getId().getId(), pageLink).get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("Failed to get dashboards by tenantId [{}] and edgeId [{}].", edge.getTenantId().getId(), edge.getId().getId());
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
-            unassignDashboardFromEdge(edge.getTenantId(), new DashboardId(entity.getUuidId()), this.edge.getId());
         }
 
     }
