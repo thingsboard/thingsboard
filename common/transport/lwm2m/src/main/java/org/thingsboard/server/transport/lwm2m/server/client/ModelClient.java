@@ -19,22 +19,18 @@ import com.google.gson.JsonObject;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectModel;
-import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
-import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.response.LwM2mResponse;
-import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportService;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResultAttrTel;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -44,7 +40,7 @@ public class ModelClient  implements Cloneable {
     private String identity;
     private SecurityInfo info;
     private LwM2MTransportService transportService;
-    private TransportProtos.ValidateDeviceCredentialsResponseMsg credentialsResponse;
+    private ValidateDeviceCredentialsResponseMsg credentialsResponse;
     private Map<String, String> attributes;
     private Map<Integer, ModelObject> modelObjects;
     private Set<String> pendingRequests;
@@ -57,7 +53,7 @@ public class ModelClient  implements Cloneable {
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
-    public ModelClient(String endPoint, String identity, SecurityInfo info, TransportProtos.ValidateDeviceCredentialsResponseMsg credentialsResponse, Map<String, String> attributes, Map<Integer, ModelObject> modelObjects) {
+    public ModelClient(String endPoint, String identity, SecurityInfo info, ValidateDeviceCredentialsResponseMsg credentialsResponse, Map<String, String> attributes, Map<Integer, ModelObject> modelObjects) {
         this.endPoint = endPoint;
         this.identity = identity;
         this.info = info;
@@ -108,13 +104,6 @@ public class ModelClient  implements Cloneable {
                 ModelObject modelObject =   new ModelObject(objectModel, instances);
                 this.modelObjects.put(objectId, modelObject);
             }
-
-//            instances.put(resp.getC)
-
-//            ((LwM2mObject) ((ReadResponse) resp).getContent()).getInstances().entrySet().forEach(instance -> {
-//                instances.put(instance.getKey(), instance.getValue());
-//            });
-
         });
     }
 

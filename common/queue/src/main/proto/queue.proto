@@ -197,6 +197,11 @@ message SessionCloseNotificationProto {
   string message = 1;
 }
 
+message ToTransportUpdateCredentialsProto {
+  repeated string message = 1;
+}
+
+
 message SubscribeToAttributeUpdatesMsg {
   bool unsubscribe = 1;
 }
@@ -435,4 +440,5 @@ message ToTransportMsg {
   AttributeUpdateNotificationMsg attributeUpdateNotification = 5;
   ToDeviceRpcRequestMsg toDeviceRequest = 6;
   ToServerRpcResponseMsg toServerResponse = 7;
+  ToTransportUpdateCredentialsProto toTransportUpdateCredentialsNotification = 8;
 }

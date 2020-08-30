@@ -529,6 +529,9 @@ public class DefaultTransportService implements TransportService {
                 if (toSessionMsg.hasSessionCloseNotification()) {
                     listener.onRemoteSessionCloseCommand(toSessionMsg.getSessionCloseNotification());
                 }
+                if (toSessionMsg.hasToTransportUpdateCredentialsNotification()) {
+                    listener.onToTransportUpdateCredentials(toSessionMsg.getToTransportUpdateCredentialsNotification());
+                }
                 if (toSessionMsg.hasToDeviceRequest()) {
                     listener.onToDeviceRpcRequest(toSessionMsg.getToDeviceRequest());
                 }

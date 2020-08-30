@@ -583,4 +583,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             log.trace("[{}] Failed to convert device RPC commandto MQTT msg", sessionId, e);
         }
     }
+
+    @Override
+    public void onToTransportUpdateCredentials(TransportProtos.ToTransportUpdateCredentialsProto toTransportUpdateCredentials) {
+
+    }
+
 }

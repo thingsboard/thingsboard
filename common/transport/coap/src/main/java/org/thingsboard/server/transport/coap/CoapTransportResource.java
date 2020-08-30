@@ -428,6 +428,10 @@ public class CoapTransportResource extends CoapResource {
             }
         }
 
+        @Override
+        public void onToTransportUpdateCredentials(TransportProtos.ToTransportUpdateCredentialsProto toTransportUpdateCredentials) {
+
+        }
         public int getNextSeqNumber() {
             return seqNumber.getAndIncrement();
         }

@@ -34,6 +34,10 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 import org.thingsboard.server.transport.lwm2m.server.client.ModelClient;
 import org.thingsboard.server.transport.lwm2m.server.client.ModelObject;
@@ -62,7 +66,7 @@ public class LwM2MTransportService {
     private TransportService transportService;
 
     @Autowired
-    private LwM2MTransportContextServer context;
+    public LwM2MTransportContextServer context;
 
     @Autowired
     private LwM2MTransportRequest lwM2MTransportRequest;
@@ -88,6 +92,9 @@ public class LwM2MTransportService {
         ModelClient modelClient = lwM2mInMemorySecurityStore.replaceNewRegistration(lwServer, registration, this);
         if (modelClient != null) {
             setModelClient(lwServer, registration, modelClient);
+            SessionInfoProto sessionInfo =  getValidateSessionInfo(registration.getId());
+            transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
+            transportService.registerAsyncSession(sessionInfo, new LwM2MSessionMsgListener(sessionId));
         }
     }
 
@@ -242,7 +249,6 @@ public class LwM2MTransportService {
                 if (modelClient.getModelObjects().get(objId) != null) {
                     ModelObject modelObject = modelClient.getModelObjects().get(objId);
                     String resName = modelObject.getObjectModel().resources.get(resId).name;
-//                String attrTelName = om.name + "_" + instanceId + "_" + om.resources.get(resourceId).name;
                     if (modelObject.getInstances().get(insId) != null) {
                         LwM2mObjectInstance instance = modelObject.getInstances().get(insId);
                         if (instance.getResource(resId) != null) {
@@ -288,14 +294,14 @@ public class LwM2MTransportService {
 
 
     public void processDevicePublish(JsonElement msg, String topicName, int msgId, String registrationId) {
-        TransportProtos.SessionInfoProto sessionInfo = getValidateSessionInfo(registrationId);
+        SessionInfoProto sessionInfo = getValidateSessionInfo(registrationId);
         if (sessionInfo != null) {
             try {
                 if (topicName.equals(LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC)) {
-                    TransportProtos.PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
+                    PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
                     transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(msgId, postTelemetryMsg));
                 } else if (topicName.equals(LwM2MTransportHandler.DEVICE_ATTRIBUTES_TOPIC)) {
-                    TransportProtos.PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
+                    PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
                     transportService.process(sessionInfo, postAttributeMsg, getPubAckCallback(msgId, postAttributeMsg));
                 }
             } catch (AdaptorException e) {
@@ -320,14 +326,14 @@ public class LwM2MTransportService {
         };
     }
 
-    private TransportProtos.SessionInfoProto getValidateSessionInfo(String registrationId) {
-        TransportProtos.SessionInfoProto sessionInfo = null;
+    private SessionInfoProto getValidateSessionInfo(String registrationId) {
+        SessionInfoProto sessionInfo = null;
         ModelClient modelClient = lwM2mInMemorySecurityStore.getByModelClient(registrationId);
-        TransportProtos.ValidateDeviceCredentialsResponseMsg msg = modelClient.getCredentialsResponse();
+        ValidateDeviceCredentialsResponseMsg msg = modelClient.getCredentialsResponse();
         if (msg == null || msg.getDeviceInfo() == null) {
             log.warn("[{}] [{}]", modelClient.getEndPoint(), CONNECTION_REFUSED_NOT_AUTHORIZED.toString());
         } else {
-            sessionInfo = TransportProtos.SessionInfoProto.newBuilder()
+            sessionInfo = SessionInfoProto.newBuilder()
                     .setNodeId(context.getNodeId())
                     .setSessionIdMSB(sessionId.getMostSignificantBits())
                     .setSessionIdLSB(sessionId.getLeastSignificantBits())
@@ -338,7 +344,8 @@ public class LwM2MTransportService {
                     .setDeviceName(msg.getDeviceInfo().getDeviceName())
                     .setDeviceType(msg.getDeviceInfo().getDeviceType())
                     .build();
-            transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
+//            transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
+
         }
         return sessionInfo;
     }

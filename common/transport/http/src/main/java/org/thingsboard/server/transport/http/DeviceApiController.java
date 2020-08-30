@@ -309,6 +309,13 @@ public class DeviceApiController {
         public void onToServerRpcResponse(ToServerRpcResponseMsg msg) {
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
         }
+
+        @Override
+        public void onToTransportUpdateCredentials(TransportProtos.ToTransportUpdateCredentialsProto toTransportUpdateCredentials) {
+
+        }
+
+
     }
 
     private void reportActivity(SessionInfoProto sessionInfo) {

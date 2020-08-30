@@ -31,6 +31,7 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.transport.lwm2m.server.client.ModelClient;
 
 import javax.annotation.PostConstruct;
@@ -48,11 +49,13 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 public class LwM2MTransportRequest {
     private final ExecutorService executorService;
     private static final String RESPONSE_CHANNEL = "THINGSBOARD_RESP";
+//    private final TransportService transportService;
 
     @Autowired
     LwM2MTransportService service;
 
     public LwM2MTransportRequest() {
+//        this.transportService = service.context.getTransportService();
         executorService = Executors.newCachedThreadPool(
                 new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
     }
