@@ -294,15 +294,6 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 } catch (Exception e) {
                     log.error("Failed updating schema!!!", e);
                 }
-            case "3.1.0":
-                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                    log.info("Updating schema ...");
-                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.0", "schema_update.sql");
-                    loadSql(schemaUpdateFile, conn);
-                    log.info("Schema updated.");
-                } catch (Exception e) {
-                    log.error("Failed updating schema!!!", e);
-                }
                 break;
             case "3.1.0":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
@@ -310,6 +301,16 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.0", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
                     log.info("Schema updated.");
+                }
+                break;
+            case "3.1.1":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.1", "schema_update.sql");
+                    loadSql(schemaUpdateFile, conn);
+                    log.info("Schema updated.");
+                } catch (Exception e) {
+                    log.error("Failed updating schema!!!", e);
                 }
                 break;
             default:
