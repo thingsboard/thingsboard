@@ -79,3 +79,5 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
     help_link varchar(255),
     CONSTRAINT oauth2_template_provider_id_unq_key UNIQUE (provider_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_alarm_tenant_alarm_type_created_time ON alarm(tenant_id, type, created_time DESC);

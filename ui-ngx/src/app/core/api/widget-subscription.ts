@@ -455,6 +455,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     let entityId: EntityId;
     let entityName: string;
     let entityLabel: string;
+    let entityDescription: string;
     if (this.type === widgetType.rpc) {
       if (this.targetDeviceId) {
         entityId = {
@@ -474,6 +475,18 @@ export class WidgetSubscription implements IWidgetSubscription {
           if (labelValue) {
             entityLabel = labelValue.value;
           }
+          const additionalInfoValue = entityFields.additionalInfo;
+          if (additionalInfoValue) {
+            const additionalInfo = additionalInfoValue.value;
+            if (additionalInfo && additionalInfo.length) {
+              try {
+                const additionalInfoJson = JSON.parse(additionalInfo);
+                if (additionalInfoJson && additionalInfoJson.description) {
+                  entityDescription = additionalInfoJson.description;
+                }
+              } catch (e) {}
+            }
+          }
         }
       }
     } else {
@@ -485,6 +498,7 @@ export class WidgetSubscription implements IWidgetSubscription {
           };
           entityName = datasource.entityName;
           entityLabel = datasource.entityLabel;
+          entityDescription = datasource.entityDescription;
           break;
         }
       }
@@ -493,7 +507,8 @@ export class WidgetSubscription implements IWidgetSubscription {
       return {
         entityId,
         entityName,
-        entityLabel
+        entityLabel,
+        entityDescription
       };
     } else {
       return null;

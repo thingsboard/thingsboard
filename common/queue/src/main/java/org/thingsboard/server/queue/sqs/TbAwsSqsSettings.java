@@ -27,6 +27,9 @@ import org.springframework.stereotype.Component;
 @Data
 public class TbAwsSqsSettings {
 
+    @Value("${queue.aws_sqs.use_default_credential_provider_chain}")
+    private Boolean useDefaultCredentialProviderChain;
+
     @Value("${queue.aws_sqs.access_key_id}")
     private String accessKeyId;
 

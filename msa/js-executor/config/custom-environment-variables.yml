@@ -26,6 +26,12 @@ kafka:
     servers: "TB_KAFKA_SERVERS"
   replication_factor: "TB_QUEUE_KAFKA_REPLICATION_FACTOR"
   topic_properties: "TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES"
+  use_confluent_cloud: "TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD"
+  confluent:
+    sasl:
+      mechanism: "TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM"
+    username: "TB_QUEUE_KAFKA_CONFLUENT_USERNAME"
+    password: "TB_QUEUE_KAFKA_CONFLUENT_PASSWORD"
 
 pubsub:
   project_id: "TB_QUEUE_PUBSUB_PROJECT_ID"

@@ -18,11 +18,14 @@ package org.thingsboard.server.service.telemetry;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -36,6 +39,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
@@ -47,14 +51,20 @@ import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -65,16 +75,19 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     private final AttributesService attrService;
     private final TimeseriesService tsService;
+    private final EntityViewService entityViewService;
 
     private ExecutorService tsCallBackExecutor;
 
     public DefaultTelemetrySubscriptionService(AttributesService attrService,
                                                TimeseriesService tsService,
+                                               EntityViewService entityViewService,
                                                TbClusterService clusterService,
                                                PartitionService partitionService) {
         super(clusterService, partitionService);
         this.attrService = attrService;
         this.tsService = tsService;
+        this.entityViewService = entityViewService;
     }
 
     @PostConstruct
@@ -106,6 +119,54 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         ListenableFuture<List<Void>> saveFuture = tsService.save(tenantId, entityId, ts, ttl);
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+        if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
+            Futures.addCallback(this.entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
+                    new FutureCallback<List<EntityView>>() {
+                        @Override
+                        public void onSuccess(@Nullable List<EntityView> result) {
+                            if (result != null) {
+                                Map<String, List<TsKvEntry>> tsMap = new HashMap<>();
+                                for (TsKvEntry entry : ts) {
+                                    tsMap.computeIfAbsent(entry.getKey(), s -> new ArrayList<>()).add(entry);
+                                }
+                                for (EntityView entityView : result) {
+                                    List<String> keys = entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null ?
+                                            entityView.getKeys().getTimeseries() : new ArrayList<>(tsMap.keySet());
+                                    List<TsKvEntry> entityViewLatest = new ArrayList<>();
+                                    long startTs = entityView.getStartTimeMs();
+                                    long endTs = entityView.getEndTimeMs() == 0 ? Long.MAX_VALUE : entityView.getEndTimeMs();
+                                    for (String key : keys) {
+                                        List<TsKvEntry> entries = tsMap.get(key);
+                                        if (entries != null) {
+                                            Optional<TsKvEntry> tsKvEntry = entries.stream()
+                                                    .filter(entry -> entry.getTs() > startTs && entry.getTs() <= endTs)
+                                                    .max(Comparator.comparingLong(TsKvEntry::getTs));
+                                            if (tsKvEntry.isPresent()) {
+                                                entityViewLatest.add(tsKvEntry.get());
+                                            }
+                                        }
+                                    }
+                                    if (!entityViewLatest.isEmpty()) {
+                                        saveLatestAndNotify(tenantId, entityView.getId(), entityViewLatest, new FutureCallback<Void>() {
+                                            @Override
+                                            public void onSuccess(@Nullable Void tmp) {
+                                            }
+
+                                            @Override
+                                            public void onFailure(Throwable t) {
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            log.error("Error while finding entity views by tenantId and entityId", t);
+                        }
+                    }, MoreExecutors.directExecutor());
+        }
     }
 
     @Override
@@ -116,10 +177,39 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
+    public void saveLatestAndNotify(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Void> callback) {
+        ListenableFuture<List<Void>> saveFuture = tsService.saveLatest(tenantId, entityId, ts);
+        addMainCallback(saveFuture, callback);
+        addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+    }
+
+    @Override
     public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
         ListenableFuture<List<Void>> deleteFuture = attrService.removeAll(tenantId, entityId, scope, keys);
         addMainCallback(deleteFuture, callback);
         addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys));
+    }
+
+    @Override
+    public void deleteLatest(TenantId tenantId, EntityId entityId, List<String> keys, FutureCallback<Void> callback) {
+        ListenableFuture<List<Void>> deleteFuture = tsService.removeLatest(tenantId, entityId, keys);
+        addMainCallback(deleteFuture, callback);
+    }
+
+    @Override
+    public void deleteAllLatest(TenantId tenantId, EntityId entityId, FutureCallback<Collection<String>> callback) {
+        ListenableFuture<Collection<String>> deleteFuture = tsService.removeAllLatest(tenantId, entityId);
+        Futures.addCallback(deleteFuture, new FutureCallback<Collection<String>>() {
+            @Override
+            public void onSuccess(@Nullable Collection<String> result) {
+                callback.onSuccess(result);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                callback.onFailure(t);
+            }
+        }, tsCallBackExecutor);
     }
 
     @Override
@@ -188,10 +278,10 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private void addMainCallback(ListenableFuture<List<Void>> saveFuture, final FutureCallback<Void> callback) {
-        Futures.addCallback(saveFuture, new FutureCallback<List<Void>>() {
+    private <S, R> void addMainCallback(ListenableFuture<S> saveFuture, final FutureCallback<R> callback) {
+        Futures.addCallback(saveFuture, new FutureCallback<S>() {
             @Override
-            public void onSuccess(@Nullable List<Void> result) {
+            public void onSuccess(@Nullable S result) {
                 callback.onSuccess(null);
             }
 

@@ -16,7 +16,7 @@
 
 -->
 <div fxLayout="column" fxLayoutAlign="center center" class="tb-web-camera" tb-fullscreen [fullscreen]="isShowCamera">
-  <div [fxShow]="isEntityDetected && dataKeyDetected && isCameraSupport && isDeviceDetect" fxFlexFill>
+  <div *ngIf="isEntityDetected && dataKeyDetected && isCameraSupport && isDeviceDetect" fxFlexFill>
     <div [fxShow]="!isShowCamera" fxLayout="column" fxLayoutAlign="space-between center" fxFlexFill>
       <div class="tb-web-camera__last-photo" fxFlex>
         <span [fxShow]="!lastPhoto" class="tb-web-camera__last-photo_text" translate>widgets.input-widgets.no-image</span>
@@ -59,16 +59,16 @@
       </div>
     </div>
   </div>
-  <div class="message-text" [fxHide]="isEntityDetected">
+  <div class="message-text" *ngIf="!isEntityDetected">
     {{ 'widgets.input-widgets.no-entity-selected' | translate }}
   </div>
-  <div class="message-text" [fxShow]="isEntityDetected && !dataKeyDetected">
+  <div class="message-text" *ngIf="isEntityDetected && !dataKeyDetected">
     {{ 'widgets.input-widgets.no-datakey-selected' | translate }}
   </div>
-  <div class="message-text" [fxShow]="isEntityDetected && dataKeyDetected && !isCameraSupport">
+  <div class="message-text" *ngIf="isEntityDetected && dataKeyDetected && !isCameraSupport">
     {{ 'widgets.input-widgets.no-support-web-camera' | translate }}
   </div>
-  <div class="message-text" [fxShow]="isEntityDetected && dataKeyDetected && isCameraSupport && !isDeviceDetect">
+  <div class="message-text" *ngIf="isEntityDetected && dataKeyDetected && isCameraSupport && !isDeviceDetect">
     {{ 'widgets.input-widgets.no-support-web-camera' | translate }}
   </div>
 </div>

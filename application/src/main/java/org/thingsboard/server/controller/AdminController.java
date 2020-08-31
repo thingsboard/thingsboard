@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -59,7 +60,11 @@ public class AdminController extends BaseController {
     public AdminSettings getAdminSettings(@PathVariable("key") String key) throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-            return checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key));
+            AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key));
+            if (adminSettings.getKey().equals("mail")) {
+                ((ObjectNode) adminSettings.getJsonValue()).put("password", "");
+            }
+            return adminSettings;
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -74,6 +79,7 @@ public class AdminController extends BaseController {
             adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
             if (adminSettings.getKey().equals("mail")) {
                 mailService.updateMailConfiguration();
+                ((ObjectNode) adminSettings.getJsonValue()).put("password", "");
             }
             return adminSettings;
         } catch (Exception e) {

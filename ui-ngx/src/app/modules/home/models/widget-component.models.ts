@@ -75,6 +75,7 @@ import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { PageLink } from '@shared/models/page/page-link';
 import { SortOrder } from '@shared/models/page/sort-order';
+import { DomSanitizer } from '@angular/platform-browser';
 
 export interface IWidgetAction {
   name: string;
@@ -155,6 +156,7 @@ export class WidgetContext {
   date: DatePipe;
   translate: TranslateService;
   http: HttpClient;
+  sanitizer: DomSanitizer;
 
   private changeDetectorValue: ChangeDetectorRef;
 
@@ -245,9 +247,9 @@ export class WidgetContext {
   }
 
   showInfoToast(message: string,
-                  verticalPosition: NotificationVerticalPosition = 'bottom',
-                  horizontalPosition: NotificationHorizontalPosition = 'left',
-                  target?: string) {
+                verticalPosition: NotificationVerticalPosition = 'bottom',
+                horizontalPosition: NotificationHorizontalPosition = 'left',
+                target?: string) {
     this.showToast('info', message, undefined, verticalPosition, horizontalPosition, target);
   }
 
@@ -323,7 +325,7 @@ export class WidgetContext {
 
   pageLink(pageSize: number, page: number = 0, textSearch: string = null, sortOrder: SortOrder = null): PageLink {
     return new PageLink(pageSize, page, textSearch, sortOrder);
-  };
+  }
 }
 
 export interface IDynamicWidgetComponent {

@@ -26,6 +26,8 @@ import { BaseData } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
 
 @Component({
   selector: 'tb-entity-autocomplete',
@@ -196,6 +198,18 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.noEntitiesMatchingText = 'customer.no-customers-matching';
           this.entityRequiredText = 'customer.default-customer-required';
           break;
+        case AliasEntityType.CURRENT_USER_OWNER:
+          const authUser =  getCurrentAuthUser(this.store);
+          if (authUser.authority === Authority.TENANT_ADMIN) {
+            this.entityText = 'tenant.tenant';
+            this.noEntitiesMatchingText = 'tenant.no-tenants-matching';
+            this.entityRequiredText = 'tenant.tenant-required';
+          } else {
+            this.entityText = 'customer.customer';
+            this.noEntitiesMatchingText = 'customer.no-customers-matching';
+            this.entityRequiredText = 'customer.customer-required';
+          }
+          break;
       }
     }
     const currentEntity = this.getCurrentEntity();
@@ -328,6 +342,13 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       return EntityType.TENANT;
     } else if (entityType === AliasEntityType.CURRENT_USER) {
       return EntityType.USER;
+    } else if (entityType === AliasEntityType.CURRENT_USER_OWNER) {
+      const authUser =  getCurrentAuthUser(this.store);
+      if (authUser.authority === Authority.TENANT_ADMIN) {
+        return EntityType.TENANT;
+      } else {
+        return EntityType.CUSTOMER;
+      }
     }
     return entityType;
   }

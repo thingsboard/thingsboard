@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Inject, Injectable, Type } from '@angular/core';
+import { Inject, Injectable, Optional, Type } from '@angular/core';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { WidgetService } from '@core/http/widget.service';
 import { forkJoin, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
@@ -41,43 +41,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetTypeId } from '@app/shared/models/id/widget-type-id';
 import { TenantId } from '@app/shared/models/id/tenant-id';
 import { SharedModule } from '@shared/shared.module';
-import * as AngularCore from '@angular/core';
-import * as AngularCommon from '@angular/common';
-import * as AngularForms from '@angular/forms';
-import * as AngularRouter from '@angular/router';
-import * as AngularCdkKeycodes from '@angular/cdk/keycodes';
-import * as AngularCdkCoercion from '@angular/cdk/coercion';
-import * as AngularMaterialChips from '@angular/material/chips';
-import * as AngularMaterialAutocomplete from '@angular/material/autocomplete';
-import * as AngularMaterialDialog from '@angular/material/dialog';
-import * as NgrxStore from '@ngrx/store';
-import * as RxJs from 'rxjs';
-import * as RxJsOperators from 'rxjs/operators';
-import * as TranslateCore from '@ngx-translate/core';
-import * as TbCore from '@core/public-api';
-import * as TbShared from '@shared/public-api';
-import * as _moment from 'moment';
-
-declare const SystemJS;
-
-const widgetResourcesModulesMap = {
-  '@angular/core': SystemJS.newModule(AngularCore),
-  '@angular/common': SystemJS.newModule(AngularCommon),
-  '@angular/forms': SystemJS.newModule(AngularForms),
-  '@angular/router': SystemJS.newModule(AngularRouter),
-  '@angular/cdk/keycodes': SystemJS.newModule(AngularCdkKeycodes),
-  '@angular/cdk/coercion': SystemJS.newModule(AngularCdkCoercion),
-  '@angular/material/chips': SystemJS.newModule(AngularMaterialChips),
-  '@angular/material/autocomplete': SystemJS.newModule(AngularMaterialAutocomplete),
-  '@angular/material/dialog': SystemJS.newModule(AngularMaterialDialog),
-  '@ngrx/store': SystemJS.newModule(NgrxStore),
-  rxjs: SystemJS.newModule(RxJs),
-  'rxjs/operators': SystemJS.newModule(RxJsOperators),
-  '@ngx-translate/core': SystemJS.newModule(TranslateCore),
-  '@core/public-api': SystemJS.newModule(TbCore),
-  '@shared/public-api': SystemJS.newModule(TbShared),
-  moment: SystemJS.newModule(_moment)
-};
+import { MODULES_MAP } from '@shared/public-api';
 
 // @dynamic
 @Injectable()
@@ -96,6 +60,7 @@ export class WidgetComponentService {
   private editingWidgetType: WidgetType;
 
   constructor(@Inject(WINDOW) private window: Window,
+              @Optional() @Inject(MODULES_MAP) private modulesMap: {[key: string]: any},
               private dynamicComponentFactoryService: DynamicComponentFactoryService,
               private widgetService: WidgetService,
               private utils: UtilsService,
@@ -260,7 +225,7 @@ export class WidgetComponentService {
       widgetInfo.resources.filter(r => r.isModule).forEach(
         (resource) => {
           modulesTasks.push(
-            this.resources.loadModules(resource.url, widgetResourcesModulesMap).pipe(
+            this.resources.loadModules(resource.url, this.modulesMap).pipe(
               catchError((e: Error) => of(e?.message ? e.message : `Failed to load widget resource module: '${resource.url}'`))
             )
           );
@@ -317,7 +282,7 @@ export class WidgetComponentService {
                 const errorMessage = `Failed to compile widget html. \n Error: ${details.message}`;
                 return of(errorMessage);
               })
-            )
+            );
           }
         }))
     );

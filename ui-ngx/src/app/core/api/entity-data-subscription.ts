@@ -193,6 +193,12 @@ export class EntityDataSubscription {
           key: 'label'
         });
       }
+      if (!entityFields.find(key => key.key === 'additionalInfo')) {
+        entityFields.push({
+          type: EntityKeyType.ENTITY_FIELD,
+          key: 'additionalInfo'
+        });
+      }
 
       this.attrFields = this.entityDataSubscriptionOptions.dataKeys.filter(dataKey => dataKey.type === DataKeyType.attribute).map(
         dataKey => ({ type: EntityKeyType.ATTRIBUTE, key: dataKey.name })
@@ -624,7 +630,7 @@ export class EntityDataSubscription {
   }
 
   private convertValue(val: string): any {
-    if (val && this.isNumeric(val)) {
+    if (val && this.isNumeric(val) && Number(val).toString() === val) {
       return Number(val);
     } else {
       return val;

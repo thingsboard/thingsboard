@@ -16,8 +16,10 @@
 package org.thingsboard.server.queue.sqs;
 
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
@@ -54,14 +56,18 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
         this.admin = admin;
         this.defaultTopic = defaultTopic;
 
-        AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
-        AWSStaticCredentialsProvider credProvider = new AWSStaticCredentialsProvider(awsCredentials);
+        AWSCredentialsProvider credentialsProvider;
+        if (sqsSettings.getUseDefaultCredentialProviderChain()) {
+            credentialsProvider = new DefaultAWSCredentialsProviderChain();
+        } else {
+            AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
+            credentialsProvider = new AWSStaticCredentialsProvider(awsCredentials);
+        }
 
-        this.sqsClient = AmazonSQSClientBuilder.standard()
-                .withCredentials(credProvider)
+        sqsClient = AmazonSQSClientBuilder.standard()
+                .withCredentials(credentialsProvider)
                 .withRegion(sqsSettings.getRegion())
                 .build();
-
         producerExecutor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
     }
 

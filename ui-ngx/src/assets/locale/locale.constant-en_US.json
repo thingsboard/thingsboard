@@ -908,6 +908,7 @@
         "type-current-customer": "Current Customer",
         "type-current-tenant": "Current Tenant",
         "type-current-user": "Current User",
+        "type-current-user-owner": "Current User Owner",
         "search": "Search entities",
         "selected-entities": "{ count, plural, 1 {1 entity} other {# entities} } selected",
         "entity-name": "Entity name",

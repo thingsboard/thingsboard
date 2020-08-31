@@ -14,6 +14,8 @@
 /// limitations under the License.
 ///
 
+import { InjectionToken } from '@angular/core';
+
 export const Constants = {
   serverErrorCode: {
     general: 2,
@@ -106,7 +108,7 @@ export const HelpLinks = {
     ruleNodeRestApiCall: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#rest-api-call-node',
     ruleNodeSendEmail: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-email-node',
     tenants: helpBaseUrl + '/docs/user-guide/ui/tenants',
-    customers: helpBaseUrl + '/docs/user-guide/customers',
+    customers: helpBaseUrl + '/docs/user-guide/ui/customers',
     users: helpBaseUrl + '/docs/user-guide/ui/users',
     devices: helpBaseUrl + '/docs/user-guide/ui/devices',
     assets: helpBaseUrl + '/docs/user-guide/ui/assets',
@@ -215,3 +217,5 @@ export const contentTypesMap = new Map<ContentType, ContentTypeData>(
 );
 
 export const customTranslationsPrefix = 'custom.';
+
+export const MODULES_MAP = new InjectionToken<{[key: string]: any}>('ModulesMap');

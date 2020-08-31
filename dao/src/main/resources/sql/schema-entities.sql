@@ -20,7 +20,17 @@ CREATE TABLE IF NOT EXISTS tb_schema_settings
     CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version)
 );
 
-INSERT INTO tb_schema_settings (schema_version) VALUES (3001000) ON CONFLICT (schema_version) DO UPDATE SET schema_version = 3001000;
+CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
+    LANGUAGE plpgsql AS
+$$
+BEGIN
+    IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
+        INSERT INTO tb_schema_settings (schema_version) VALUES (3001000);
+    END IF;
+END;
+$$;
+
+call insert_tb_schema_settings();
 
 CREATE TABLE IF NOT EXISTS admin_settings (
     id uuid NOT NULL CONSTRAINT admin_settings_pkey PRIMARY KEY,
