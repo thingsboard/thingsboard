@@ -515,7 +515,7 @@ js:
     # Specify thread pool size for JavaScript sandbox resource monitor
     monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
     # Maximum CPU time in milliseconds allowed for script execution
-    max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:10000}"
+    max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:8000}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${LOCAL_JS_SANDBOX_MAX_ERRORS:3}"
     # JS Eval max request timeout. 0 - no timeout
