@@ -24,14 +24,12 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
-import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
-import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
@@ -40,7 +38,6 @@ import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.query.AlarmQueryRepository;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -102,7 +99,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         Set<AlarmStatus> statusSet = null;
         if (query.getSearchStatus() != null) {
             statusSet = query.getSearchStatus().getStatuses();
-        } else if (query.getStatus() != null){
+        } else if (query.getStatus() != null) {
             statusSet = Collections.singleton(query.getStatus());
         }
         return DaoUtil.toPageData(
@@ -112,7 +109,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                         affectedEntity.getEntityType().name(),
                         query.getPageLink().getStartTime(),
                         query.getPageLink().getEndTime(),
-                        new ArrayList<>(statusSet),
+                        statusSet,
                         Objects.toString(query.getPageLink().getTextSearch(), ""),
                         DaoUtil.toPageable(query.getPageLink())
                 )
