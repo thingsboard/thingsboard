@@ -32,7 +32,7 @@ const tinycolor = tinycolor_;
 
 const analogueLinearGaugeSettingsSchemaValue = getAnalogueLinearGaugeSettingsSchema();
 
-export class TbAnalogueLinearGauge extends TbAnalogueGauge<AnalogueLinearGaugeSettings,LinearGaugeOptions>{
+export class TbAnalogueLinearGauge extends TbAnalogueGauge<AnalogueLinearGaugeSettings, LinearGaugeOptions>{
 
   static get settingsSchema(): JsonSettingsSchema {
     return analogueLinearGaugeSettingsSchemaValue;
