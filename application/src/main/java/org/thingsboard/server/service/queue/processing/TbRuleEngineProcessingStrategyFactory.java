@@ -62,7 +62,7 @@ public class TbRuleEngineProcessingStrategyFactory {
         private final boolean expPauseBetweenRetries;
 
         private long maxExpPauseBetweenRetries;
-        private int maxExpDegreeValue;
+        private double maxExpDegreeValue;
         private AtomicInteger expDegreeStep;
 
         private int initialTotalCount;
@@ -80,7 +80,7 @@ public class TbRuleEngineProcessingStrategyFactory {
             if (this.expPauseBetweenRetries) {
                 this.expDegreeStep = new AtomicInteger(1);
                 this.maxExpPauseBetweenRetries = configuration.getMaxExpPauseBetweenRetries();
-                this.maxExpDegreeValue = new Double(Math.log(maxExpPauseBetweenRetries) / Math.log(pauseBetweenRetries)).intValue();
+                this.maxExpDegreeValue = Math.log(maxExpPauseBetweenRetries) / Math.log(pauseBetweenRetries);
             }
         }
 
