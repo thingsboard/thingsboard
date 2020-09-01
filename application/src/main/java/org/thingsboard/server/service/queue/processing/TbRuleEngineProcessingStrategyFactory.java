@@ -27,6 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @Slf4j
@@ -58,6 +59,12 @@ public class TbRuleEngineProcessingStrategyFactory {
         private final double maxAllowedFailurePercentage;
         private final long pauseBetweenRetries;
 
+        private final boolean expPauseBetweenRetries;
+
+        private long maxExpPauseBetweenRetries;
+        private int maxExpDegreeValue;
+        private AtomicInteger expDegreeStep;
+
         private int initialTotalCount;
         private int retryCount;
 
@@ -69,6 +76,12 @@ public class TbRuleEngineProcessingStrategyFactory {
             this.maxRetries = configuration.getRetries();
             this.maxAllowedFailurePercentage = configuration.getFailurePercentage();
             this.pauseBetweenRetries = configuration.getPauseBetweenRetries();
+            this.expPauseBetweenRetries = configuration.isExpPauseBetweenRetries();
+            if (this.expPauseBetweenRetries) {
+                this.expDegreeStep = new AtomicInteger(1);
+                this.maxExpPauseBetweenRetries = configuration.getMaxExpPauseBetweenRetries();
+                this.maxExpDegreeValue = new Double(Math.log(maxExpPauseBetweenRetries) / Math.log(pauseBetweenRetries)).intValue();
+            }
         }
 
         @Override
@@ -103,10 +116,25 @@ public class TbRuleEngineProcessingStrategyFactory {
                         toReprocess.forEach((id, msg) -> log.trace("Going to reprocess [{}]: {}", id, TbMsg.fromBytes(result.getQueueName(), msg.getValue().getTbMsg().toByteArray(), TbMsgCallback.EMPTY)));
                     }
                     if (pauseBetweenRetries > 0) {
-                        try {
-                            Thread.sleep(TimeUnit.SECONDS.toMillis(pauseBetweenRetries));
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
+                        if (expPauseBetweenRetries) {
+                            long pause;
+                            if (maxExpDegreeValue > expDegreeStep.get()) {
+                                pause = new Double(Math.pow(pauseBetweenRetries, expDegreeStep.getAndIncrement())).longValue();
+                            } else {
+                                pause = maxExpPauseBetweenRetries;
+                            }
+                            try {
+                                Thread.sleep(TimeUnit.SECONDS.toMillis(
+                                        pause));
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        } else {
+                            try {
+                                Thread.sleep(TimeUnit.SECONDS.toMillis(pauseBetweenRetries));
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
                         }
                     }
                     return new TbRuleEngineProcessingDecision(false, toReprocess);
