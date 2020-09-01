@@ -76,6 +76,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { PageLink } from '@shared/models/page/page-link';
 import { SortOrder } from '@shared/models/page/sort-order';
 import { DomSanitizer } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 
 export interface IWidgetAction {
   name: string;
@@ -157,6 +158,7 @@ export class WidgetContext {
   translate: TranslateService;
   http: HttpClient;
   sanitizer: DomSanitizer;
+  router: Router;
 
   private changeDetectorValue: ChangeDetectorRef;
 

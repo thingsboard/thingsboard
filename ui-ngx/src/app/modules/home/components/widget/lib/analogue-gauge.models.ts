@@ -492,7 +492,7 @@ export const analogueGaugeSettingsSchema: JsonSettingsSchema = {
             },
             {
               value: '700',
-              label: '800'
+              label: '700'
             },
             {
               value: '800',
@@ -581,7 +581,7 @@ export const analogueGaugeSettingsSchema: JsonSettingsSchema = {
             },
             {
               value: '700',
-              label: '800'
+              label: '700'
             },
             {
               value: '800',
@@ -670,7 +670,7 @@ export const analogueGaugeSettingsSchema: JsonSettingsSchema = {
             },
             {
               value: '700',
-              label: '800'
+              label: '700'
             },
             {
               value: '800',
@@ -759,7 +759,7 @@ export const analogueGaugeSettingsSchema: JsonSettingsSchema = {
             },
             {
               value: '700',
-              label: '800'
+              label: '700'
             },
             {
               value: '800',
@@ -842,7 +842,7 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
   private gauge: BaseGauge;
 
   protected constructor(protected ctx: WidgetContext, canvasId: string) {
-    const gaugeElement = $('#'+canvasId, ctx.$container)[0];
+    const gaugeElement = $('#' + canvasId, ctx.$container)[0];
     const settings: S = ctx.settings;
     const gaugeData: O = this.createGaugeOptions(gaugeElement, settings);
     this.gauge = this.createGauge(gaugeData as O).draw();
@@ -859,7 +859,7 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
         const tvPair = cellData.data[cellData.data.length -
         1];
         const value = tvPair[1];
-        if(value !== this.gauge.value) {
+        if (value !== this.gauge.value) {
           this.gauge.value = value;
         }
       }
@@ -876,10 +876,10 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
   }
 }
 
-export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends GenericOptions> extends TbBaseGauge<S,O> {
+export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends GenericOptions> extends TbBaseGauge<S, O> {
 
   protected constructor(ctx: WidgetContext, canvasId: string) {
-    super(ctx,canvasId);
+    super(ctx, canvasId);
   }
 
   protected createGaugeOptions(gaugeElement: HTMLElement, settings: S): O {
@@ -891,26 +891,26 @@ export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends
     const keyColor = settings.defaultColor || dataKey.color;
 
     const majorTicksCount = settings.majorTicksCount || 10;
-    const total = maxValue-minValue;
-    let step = (total/majorTicksCount);
+    const total = maxValue - minValue;
+    let step = (total / majorTicksCount);
 
     const valueInt = settings.valueInt || 3;
 
     const valueDec = getValueDec(this.ctx, settings);
 
-    step = parseFloat(parseFloat(step+'').toFixed(valueDec));
+    step = parseFloat(parseFloat(step + '').toFixed(valueDec));
 
     const majorTicks: number[] = [];
     const highlights: Highlight[] = [];
     let tick = minValue;
 
-    while(tick<=maxValue) {
+    while (tick <= maxValue) {
       majorTicks.push(tick);
-      let nextTick = tick+step;
-      nextTick = parseFloat(parseFloat(nextTick+'').toFixed(valueDec));
-      if (tick<maxValue) {
+      let nextTick = tick + step;
+      nextTick = parseFloat(parseFloat(nextTick + '').toFixed(valueDec));
+      if (tick < maxValue) {
         const highlightColor = tinycolor(keyColor);
-        const percent = (tick-minValue)/total;
+        const percent = (tick - minValue) / total;
         highlightColor.setAlpha(percent);
         const highlight: Highlight = {
           from: tick,
