@@ -105,6 +105,7 @@ BEGIN
                                AND tablename like 'ts_kv_' || '%'
                                AND tablename != 'ts_kv_latest'
                                AND tablename != 'ts_kv_dictionary'
+                               AND tablename != 'ts_kv_indefinite'
                 LOOP
                     IF partition != partition_by_max_ttl_date THEN
                         IF partition_year IS NOT NULL THEN
