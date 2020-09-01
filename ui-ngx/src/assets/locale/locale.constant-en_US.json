@@ -1680,6 +1680,7 @@
         "tenant-profile": "Tenant profile",
         "tenant-profiles": "Tenant profiles",
         "add": "Add tenant profile",
+        "edit": "Edit tenant profile",
         "tenant-profile-details": "Tenant profile details",
         "no-tenant-profiles-text": "No tenant profiles found",
         "search": "Search tenant profiles",
@@ -1699,7 +1700,9 @@
         "delete-tenant-profiles-title": "Are you sure you want to delete { count, plural, 1 {1 tenant profile} other {# tenant profiles} }?",
         "delete-tenant-profiles-text": "Be careful, after the confirmation all selected tenant profiles will be removed and all related data will become unrecoverable.",
         "set-default-tenant-profile-title": "Are you sure you want to make the tenant profile '{{tenantProfileName}}' root?",
-        "set-default-tenant-profile-text": "After the confirmation the tenant profile will be marked as default and will be used for new tenants with no profile specified."
+        "set-default-tenant-profile-text": "After the confirmation the tenant profile will be marked as default and will be used for new tenants with no profile specified.",
+        "no-tenant-profiles-found": "No tenant profiles found.",
+        "create-new-tenant-profile": "Create a new one!"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",

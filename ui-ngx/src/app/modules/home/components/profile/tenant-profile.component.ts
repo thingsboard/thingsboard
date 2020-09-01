@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, Input } from '@angular/core';
+import { Component, Inject, Input, Optional } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -36,8 +36,8 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              @Inject('entity') protected entityValue: TenantProfile,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<TenantProfile>,
+              @Optional() @Inject('entity') protected entityValue: TenantProfile,
+              @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<TenantProfile>,
               protected fb: FormBuilder) {
     super(store, fb, entityValue, entitiesTableConfigValue);
   }
