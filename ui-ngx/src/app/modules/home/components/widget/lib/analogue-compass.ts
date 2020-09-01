@@ -43,7 +43,7 @@ export class TbAnalogueCompass extends TbBaseGauge<AnalogueCompassSettings, Radi
   protected createGaugeOptions(gaugeElement: HTMLElement, settings: AnalogueCompassSettings): RadialGaugeOptions {
 
     const majorTicks = (settings.majorTicks && settings.majorTicks.length > 0) ? deepClone(settings.majorTicks) :
-      ['N','NE','E','SE','S','SW','W','NW'];
+      ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
     majorTicks.push(majorTicks[0]);
 
     return {
