@@ -195,6 +195,12 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                     executeQuery(conn, "UPDATE tb_schema_settings SET schema_version = 2005001");
                 }
                 break;
+            case "3.1.1":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Load Drop Partitions functions ...");
+                    loadSql(conn, LOAD_DROP_PARTITIONS_FUNCTIONS_SQL);
+                }
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }

@@ -38,19 +38,15 @@ public abstract class AbstractCleanUpService {
     @Value("${spring.datasource.password}")
     protected String dbPassword;
 
-    protected long executeQuery(Connection conn, String query) {
-        long removed = 0L;
-        try {
-            Statement statement = conn.createStatement();
+    protected long executeQuery(Connection conn, String query) throws SQLException {
+        try (Statement statement = conn.createStatement()) {
             ResultSet resultSet = statement.executeQuery(query);
-            getWarnings(statement);
+            if (log.isDebugEnabled()) {
+                getWarnings(statement);
+            }
             resultSet.next();
-            removed = resultSet.getLong(1);
-            log.debug("Successfully executed query: {}", query);
-        } catch (SQLException e) {
-            log.debug("Failed to execute query: {} due to: {}", query, e.getMessage());
+            return resultSet.getLong(1);
         }
-        return removed;
     }
 
     protected void getWarnings(Statement statement) throws SQLException {
@@ -65,6 +61,6 @@ public abstract class AbstractCleanUpService {
         }
     }
 
-    protected abstract void doCleanUp(Connection connection);
+    protected abstract void doCleanUp(Connection connection) throws SQLException;
 
 }
