@@ -87,6 +87,7 @@ import { FilterPredicateValueComponent } from './filter/filter-predicate-value.c
 import { TenantProfileAutocompleteComponent } from './profile/tenant-profile-autocomplete.component';
 import { TenantProfileComponent } from './profile/tenant-profile.component';
 import { TenantProfileDialogComponent } from './profile/tenant-profile-dialog.component';
+import { TenantProfileDataComponent } from './profile/tenant-profile-data.component';
 
 @NgModule({
   declarations:
@@ -155,6 +156,7 @@ import { TenantProfileDialogComponent } from './profile/tenant-profile-dialog.co
       FilterUserInfoDialogComponent,
       FilterPredicateValueComponent,
       TenantProfileAutocompleteComponent,
+      TenantProfileDataComponent,
       TenantProfileComponent,
       TenantProfileDialogComponent
     ],
@@ -214,6 +216,7 @@ import { TenantProfileDialogComponent } from './profile/tenant-profile-dialog.co
     FiltersEditComponent,
     UserFilterDialogComponent,
     TenantProfileAutocompleteComponent,
+    TenantProfileDataComponent,
     TenantProfileComponent,
     TenantProfileDialogComponent
   ],

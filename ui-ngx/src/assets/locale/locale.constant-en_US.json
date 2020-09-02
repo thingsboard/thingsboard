@@ -1693,6 +1693,7 @@
         "copyId": "Copy tenant profile Id",
         "name": "Name",
         "name-required": "Name is required.",
+        "data": "Profile data",
         "description": "Description",
         "default": "Default",
         "delete-tenant-profile-title": "Are you sure you want to delete the tenant profile '{{tenantProfileName}}'?",

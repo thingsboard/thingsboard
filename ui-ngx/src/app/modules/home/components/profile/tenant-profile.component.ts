@@ -56,6 +56,7 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
         name: [entity ? entity.name : '', [Validators.required]],
         isolatedTbCore: [entity ? entity.isolatedTbCore : false, []],
         isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
+        profileData: [entity && !this.isAdd ? entity.profileData : {}, []],
         description: [entity ? entity.description : '', []],
       }
     );
@@ -65,6 +66,7 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore});
     this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine});
+    this.entityForm.patchValue({profileData: entity.profileData});
     this.entityForm.patchValue({description: entity.description});
   }
 
