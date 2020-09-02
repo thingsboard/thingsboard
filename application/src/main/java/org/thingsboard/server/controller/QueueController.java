@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,7 +27,6 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -40,9 +38,6 @@ import java.util.List;
 @TbCoreComponent
 @RequestMapping("/api")
 public class QueueController extends BaseController {
-
-    @Autowired
-    private TbServiceInfoProvider serviceInfoProvider;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, method = RequestMethod.GET)
@@ -92,8 +87,8 @@ public class QueueController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/queues/{queueId}", params = {"serviceType"}, method = RequestMethod.DELETE)
     @ResponseBody
-    public boolean deleteQueue(@RequestParam String serviceType,
-                               @PathVariable("queueId") String queueIdStr) throws ThingsboardException {
+    public void deleteQueue(@RequestParam String serviceType,
+                            @PathVariable("queueId") String queueIdStr) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
         checkParameter("queueId", queueIdStr);
         try {
@@ -102,9 +97,8 @@ public class QueueController extends BaseController {
             checkQueueId(queueId, Operation.DELETE);
             switch (type) {
                 case TB_RULE_ENGINE:
-                    return queueService.deleteQueue(getTenantId(), queueId);
-                default:
-                    return false;
+                    queueService.deleteQueue(getTenantId(), queueId);
+                    partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), Collections.emptyList());
             }
         } catch (Exception e) {
             throw handleException(e);

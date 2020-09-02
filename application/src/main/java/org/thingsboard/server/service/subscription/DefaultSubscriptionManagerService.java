@@ -40,12 +40,14 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
-import org.thingsboard.server.gen.transport.TransportProtos.*;
 import org.thingsboard.server.gen.transport.TransportProtos.LocalSubscriptionServiceMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmSubscriptionUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateValueListProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
@@ -101,6 +103,9 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
 
     @Autowired
     private TbClusterService clusterService;
+
+    @Autowired
+    private NotificationsTopicService notificationsTopicService;
 
     private final Map<EntityId, Set<TbSubscription>> subscriptionsByEntityId = new ConcurrentHashMap<>();
     private final Map<String, Map<Integer, TbSubscription>> subscriptionsByWsSessionId = new ConcurrentHashMap<>();
@@ -336,7 +341,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                         TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(s.getSubscriptionId(), subscriptionUpdate);
                         localSubscriptionService.onSubscriptionUpdate(s.getSessionId(), update, TbCallback.EMPTY);
                     } else {
-                        TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, s.getServiceId());
+                        TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, s.getServiceId());
                         toCoreNotificationsProducer.send(tpi, toProto(s, subscriptionUpdate), null);
                     }
                 }
@@ -359,7 +364,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                         AlarmSubscriptionUpdate update = new AlarmSubscriptionUpdate(s.getSubscriptionId(), alarm, deleted);
                         localSubscriptionService.onSubscriptionUpdate(s.getSessionId(), update, TbCallback.EMPTY);
                     } else {
-                        TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, s.getServiceId());
+                        TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, s.getServiceId());
                         toCoreNotificationsProducer.send(tpi, toProto(s, alarm, deleted), null);
                     }
                 }
@@ -405,7 +410,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                         }
                     });
                     if (!missedUpdates.isEmpty()) {
-                        TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, subscription.getServiceId());
+                        TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, subscription.getServiceId());
                         toCoreNotificationsProducer.send(tpi, toProto(subscription, missedUpdates), null);
                     }
                 },
@@ -435,7 +440,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
             DonAsynchron.withCallback(tsService.findAll(subscription.getTenantId(), subscription.getEntityId(), queries),
                     missedUpdates -> {
                         if (missedUpdates != null && !missedUpdates.isEmpty()) {
-                            TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, subscription.getServiceId());
+                            TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, subscription.getServiceId());
                             toCoreNotificationsProducer.send(tpi, toProto(subscription, missedUpdates), null);
                         }
                     },

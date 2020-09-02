@@ -19,6 +19,7 @@ import com.google.protobuf.util.JsonFormat;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -32,17 +33,16 @@ import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.azure.servicebus.TbServiceBusAdmin;
 import org.thingsboard.server.queue.azure.servicebus.TbServiceBusConsumerTemplate;
 import org.thingsboard.server.queue.azure.servicebus.TbServiceBusProducerTemplate;
-import org.thingsboard.server.queue.settings.TbServiceBusQueueConfigs;
-import org.thingsboard.server.queue.settings.TbServiceBusSettings;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
-import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
+import org.thingsboard.server.queue.settings.TbServiceBusQueueConfigs;
+import org.thingsboard.server.queue.settings.TbServiceBusSettings;
 
 import javax.annotation.PreDestroy;
 import java.nio.charset.StandardCharsets;
@@ -51,7 +51,7 @@ import java.nio.charset.StandardCharsets;
 @ConditionalOnExpression("'${queue.type:null}'=='service-bus' && '${service.type:null}'=='tb-rule-engine'")
 public class ServiceBusTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
 
-    private final PartitionService partitionService;
+    private final NotificationsTopicService notificationsTopicService;
     private final TbQueueCoreSettings coreSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
@@ -63,13 +63,14 @@ public class ServiceBusTbRuleEngineQueueFactory implements TbRuleEngineQueueFact
     private final TbQueueAdmin jsExecutorAdmin;
     private final TbQueueAdmin notificationAdmin;
 
-    public ServiceBusTbRuleEngineQueueFactory(PartitionService partitionService, TbQueueCoreSettings coreSettings,
+    public ServiceBusTbRuleEngineQueueFactory(NotificationsTopicService notificationsTopicService,
+                                              TbQueueCoreSettings coreSettings,
                                               TbQueueRuleEngineSettings ruleEngineSettings,
                                               TbServiceInfoProvider serviceInfoProvider,
                                               TbServiceBusSettings serviceBusSettings,
                                               TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                               TbServiceBusQueueConfigs serviceBusQueueConfigs) {
-        this.partitionService = partitionService;
+        this.notificationsTopicService = notificationsTopicService;
         this.coreSettings = coreSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.ruleEngineSettings = ruleEngineSettings;
@@ -108,7 +109,7 @@ public class ServiceBusTbRuleEngineQueueFactory implements TbRuleEngineQueueFact
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(TbRuleEngineQueueConfiguration configuration) {
+    public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(Queue configuration) {
         return new TbServiceBusConsumerTemplate<>(ruleEngineAdmin, serviceBusSettings, ruleEngineSettings.getTopic(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
@@ -116,7 +117,7 @@ public class ServiceBusTbRuleEngineQueueFactory implements TbRuleEngineQueueFact
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> createToRuleEngineNotificationsMsgConsumer() {
         return new TbServiceBusConsumerTemplate<>(notificationAdmin, serviceBusSettings,
-                partitionService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceInfoProvider.getServiceId()).getFullTopicName(),
+                notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceInfoProvider.getServiceId()).getFullTopicName(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToRuleEngineNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 

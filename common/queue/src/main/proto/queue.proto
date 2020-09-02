@@ -170,6 +170,17 @@ message GetTenantRoutingInfoResponseMsg {
   bool isolatedTbRuleEngine = 2;
 }
 
+message GetQueueRoutingInfoRequestMsg {
+}
+
+message GetQueueRoutingInfoResponseMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string queueName = 3;
+  string queueTopic = 4;
+  int32 partitions = 5;
+}
+
 message SessionCloseNotificationProto {
   string message = 1;
 }
@@ -409,6 +420,7 @@ message TransportApiRequestMsg {
   ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
   GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
   GetTenantRoutingInfoRequestMsg getTenantRoutingInfoRequestMsg = 4;
+  GetQueueRoutingInfoRequestMsg getQueueRoutingInfoRequestMsg = 5;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -416,6 +428,7 @@ message TransportApiResponseMsg {
   ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
   GetTenantRoutingInfoResponseMsg getTenantRoutingInfoResponseMsg = 4;
+  repeated GetQueueRoutingInfoResponseMsg getQueueRoutingInfoResponseMsgs = 5;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */

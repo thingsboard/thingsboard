@@ -39,8 +39,10 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
@@ -62,6 +64,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 05.10.18.
@@ -95,6 +98,9 @@ public class DefaultTransportApiService implements TransportApiService {
     @Autowired
     protected TbClusterService tbClusterService;
 
+    @Autowired
+    private QueueService queueService;
+
     private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentHashMap<>();
 
     @Override
@@ -110,6 +116,8 @@ public class DefaultTransportApiService implements TransportApiService {
             return Futures.transform(handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         } else if (transportApiRequestMsg.hasGetTenantRoutingInfoRequestMsg()) {
             return Futures.transform(handle(transportApiRequestMsg.getGetTenantRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
+        } else if (transportApiRequestMsg.hasGetQueueRoutingInfoRequestMsg()) {
+            return Futures.transform(handle(transportApiRequestMsg.getGetQueueRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         }
         return Futures.transform(getEmptyTransportApiResponseFuture(), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
     }
@@ -172,6 +180,21 @@ public class DefaultTransportApiService implements TransportApiService {
         return Futures.transform(tenantFuture, tenant -> TransportApiResponseMsg.newBuilder()
                 .setGetTenantRoutingInfoResponseMsg(GetTenantRoutingInfoResponseMsg.newBuilder().setIsolatedTbCore(tenant.isIsolatedTbCore())
                         .setIsolatedTbRuleEngine(tenant.isIsolatedTbRuleEngine()).build()).build(), dbCallbackExecutorService);
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetQueueRoutingInfoRequestMsg requestMsg) {
+        return Futures.immediateFuture(TransportApiResponseMsg.newBuilder()
+                .addAllGetQueueRoutingInfoResponseMsgs(
+                        queueService
+                                .findAllQueues()
+                                .stream()
+                                .map(queue -> TransportProtos.GetQueueRoutingInfoResponseMsg.newBuilder()
+                                        .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
+                                        .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
+                                        .setQueueName(queue.getName())
+                                        .setQueueTopic(queue.getTopic())
+                                        .setPartitions(queue.getPartitions())
+                                .build()).collect(Collectors.toList())).build());
     }
 
     private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId, DeviceCredentials credentials) {

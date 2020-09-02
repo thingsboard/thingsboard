@@ -20,17 +20,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoResponseMsg;
-import org.thingsboard.server.queue.discovery.TenantRoutingInfo;
-import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
+import org.thingsboard.server.gen.transport.TransportProtos.GetQueueRoutingInfoRequestMsg;
+import org.thingsboard.server.queue.discovery.QueueRoutingInfo;
+import org.thingsboard.server.queue.discovery.QueueRoutingInfoService;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport'")
-public class TransportTenantRoutingInfoService implements TenantRoutingInfoService {
+public class TransportQueueRoutingInfoService implements QueueRoutingInfoService {
 
     private TransportService transportService;
 
@@ -41,12 +42,8 @@ public class TransportTenantRoutingInfoService implements TenantRoutingInfoServi
     }
 
     @Override
-    public TenantRoutingInfo getRoutingInfo(TenantId tenantId) {
-        GetTenantRoutingInfoRequestMsg msg = GetTenantRoutingInfoRequestMsg.newBuilder()
-                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                .build();
-        GetTenantRoutingInfoResponseMsg routingInfo = transportService.getTenantRoutingInfo(msg);
-        return new TenantRoutingInfo(tenantId, routingInfo.getIsolatedTbCore(), routingInfo.getIsolatedTbRuleEngine());
+    public List<QueueRoutingInfo> getRoutingInfo() {
+        GetQueueRoutingInfoRequestMsg msg = GetQueueRoutingInfoRequestMsg.newBuilder().build();
+        return transportService.getQueueRoutingInfo(msg).stream().map(QueueRoutingInfo::new).collect(Collectors.toList());
     }
 }

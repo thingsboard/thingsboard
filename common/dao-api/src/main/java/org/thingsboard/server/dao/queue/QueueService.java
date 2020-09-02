@@ -26,7 +26,7 @@ public interface QueueService {
 
     Queue createOrUpdateQueue(Queue queue);
 
-    Boolean deleteQueue(TenantId tenantId, QueueId queueId);
+    void deleteQueue(TenantId tenantId, QueueId queueId);
 
     List<Queue> findQueues(TenantId tenantId);
 

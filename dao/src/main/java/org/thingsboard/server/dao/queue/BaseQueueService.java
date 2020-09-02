@@ -98,7 +98,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
 
     @Override
     @Transactional
-    public Boolean deleteQueue(TenantId tenantId, QueueId queueId) {
+    public void deleteQueue(TenantId tenantId, QueueId queueId) {
         log.trace("Executing deleteQueue, queueId: [{}]", queueId);
         Queue queue = findQueueById(tenantId, queueId);
         boolean result = queueDao.removeById(tenantId, queueId.getId());
@@ -107,7 +107,6 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                 tbQueueAdmin.deleteTopic(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
             }
         }
-        return result;
     }
 
     @Override

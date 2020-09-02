@@ -23,10 +23,18 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.queue.*;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
+import org.thingsboard.server.common.msg.queue.ServiceQueue;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
@@ -34,19 +42,33 @@ import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
-import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
-import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
-import org.thingsboard.server.service.queue.processing.*;
+import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
+import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingDecision;
+import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
+import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategy;
+import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategyFactory;
+import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategy;
+import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategyFactory;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.stats.RuleEngineStatisticsService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @TbRuleEngineComponent
@@ -66,38 +88,41 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private final TbRuleEngineSubmitStrategyFactory submitStrategyFactory;
     private final TbRuleEngineProcessingStrategyFactory processingStrategyFactory;
     private final TbRuleEngineQueueFactory tbRuleEngineQueueFactory;
-    private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final RuleEngineStatisticsService statisticsService;
     private final TbRuleEngineDeviceRpcService tbDeviceRpcService;
     private final ConcurrentMap<String, TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>>> consumers = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, TbRuleEngineQueueConfiguration> consumerConfigurations = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Queue> consumerConfigurations = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbRuleEngineConsumerStats> consumerStats = new ConcurrentHashMap<>();
     private ExecutorService submitExecutor;
+    private final QueueService queueService;
 
     public DefaultTbRuleEngineConsumerService(TbRuleEngineProcessingStrategyFactory processingStrategyFactory,
                                               TbRuleEngineSubmitStrategyFactory submitStrategyFactory,
-                                              TbQueueRuleEngineSettings ruleEngineSettings,
-                                              TbRuleEngineQueueFactory tbRuleEngineQueueFactory, RuleEngineStatisticsService statisticsService,
-                                              ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
+                                              TbRuleEngineQueueFactory tbRuleEngineQueueFactory,
+                                              RuleEngineStatisticsService statisticsService,
+                                              ActorSystemContext actorContext,
+                                              DataDecodingEncodingService encodingService,
                                               TbRuleEngineDeviceRpcService tbDeviceRpcService,
-                                              StatsFactory statsFactory) {
+                                              StatsFactory statsFactory,
+                                              QueueService queueService) {
         super(actorContext, encodingService, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
         this.statisticsService = statisticsService;
-        this.ruleEngineSettings = ruleEngineSettings;
         this.tbRuleEngineQueueFactory = tbRuleEngineQueueFactory;
         this.submitStrategyFactory = submitStrategyFactory;
         this.processingStrategyFactory = processingStrategyFactory;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.statsFactory = statsFactory;
+        this.queueService = queueService;
     }
 
     @PostConstruct
     public void init() {
         super.init("tb-rule-engine-consumer", "tb-rule-engine-notifications-consumer");
-        for (TbRuleEngineQueueConfiguration configuration : ruleEngineSettings.getQueues()) {
-            consumerConfigurations.putIfAbsent(configuration.getName(), configuration);
-            consumers.computeIfAbsent(configuration.getName(), queueName -> tbRuleEngineQueueFactory.createToRuleEngineMsgConsumer(configuration));
-            consumerStats.put(configuration.getName(), new TbRuleEngineConsumerStats(configuration.getName(), statsFactory));
+        TenantId tenantId = actorContext.getServiceInfoProvider().getIsolatedTenant().orElse(TenantId.SYS_TENANT_ID);
+        for (Queue queue : queueService.findQueues(tenantId)) {
+            consumerConfigurations.putIfAbsent(queue.getName(), queue);
+            consumers.computeIfAbsent(queue.getName(), queueName -> tbRuleEngineQueueFactory.createToRuleEngineMsgConsumer(queue));
+            consumerStats.put(queue.getName(), new TbRuleEngineConsumerStats(queue.getName(), statsFactory));
         }
         submitExecutor = Executors.newSingleThreadExecutor();
     }
@@ -108,7 +133,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         if (submitExecutor != null) {
             submitExecutor.shutdownNow();
         }
-        ruleEngineSettings.getQueues().forEach(config -> consumerConfigurations.put(config.getName(), config));
+
+        TenantId tenantId = actorContext.getServiceInfoProvider().getIsolatedTenant().orElse(TenantId.SYS_TENANT_ID);
+        queueService.findQueues(tenantId).forEach(config -> consumerConfigurations.put(config.getName(), config));
     }
 
     @Override
@@ -130,7 +157,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         consumers.values().forEach(TbQueueConsumer::unsubscribe);
     }
 
-    private void launchConsumer(TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer, TbRuleEngineQueueConfiguration configuration, TbRuleEngineConsumerStats stats) {
+    private void launchConsumer(TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer, Queue queue, TbRuleEngineConsumerStats stats) {
         consumersExecutor.execute(() -> {
             while (!stopped) {
                 try {
@@ -138,8 +165,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                     if (msgs.isEmpty()) {
                         continue;
                     }
-                    TbRuleEngineSubmitStrategy submitStrategy = submitStrategyFactory.newInstance(configuration.getName(), configuration.getSubmitStrategy());
-                    TbRuleEngineProcessingStrategy ackStrategy = processingStrategyFactory.newInstance(configuration.getName(), configuration.getProcessingStrategy());
+                    TbRuleEngineSubmitStrategy submitStrategy = submitStrategyFactory.newInstance(queue.getName(), queue.getSubmitStrategy());
+                    TbRuleEngineProcessingStrategy ackStrategy = processingStrategyFactory.newInstance(queue.getName(), queue.getProcessingStrategy());
 
                     submitStrategy.init(msgs);
 
@@ -154,7 +181,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                     new TbMsgPackCallback(id, tenantId, ctx);
                             try {
                                 if (toRuleEngineMsg.getTbMsg() != null && !toRuleEngineMsg.getTbMsg().isEmpty()) {
-                                    forwardToRuleEngineActor(configuration.getName(), tenantId, toRuleEngineMsg, callback);
+                                    forwardToRuleEngineActor(queue.getName(), tenantId, toRuleEngineMsg, callback);
                                 } else {
                                     callback.onSuccess();
                                 }
@@ -164,16 +191,16 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                         }));
 
                         boolean timeout = false;
-                        if (!ctx.await(configuration.getPackProcessingTimeout(), TimeUnit.MILLISECONDS)) {
+                        if (!ctx.await(queue.getPackProcessingTimeout(), TimeUnit.MILLISECONDS)) {
                             timeout = true;
                         }
 
-                        TbRuleEngineProcessingResult result = new TbRuleEngineProcessingResult(configuration.getName(), timeout, ctx);
+                        TbRuleEngineProcessingResult result = new TbRuleEngineProcessingResult(queue.getName(), timeout, ctx);
                         if (timeout) {
-                            printFirstOrAll(configuration, ctx, ctx.getPendingMap(), "Timeout");
+                            printFirstOrAll(queue, ctx, ctx.getPendingMap(), "Timeout");
                         }
                         if (!ctx.getFailedMap().isEmpty()) {
-                            printFirstOrAll(configuration, ctx, ctx.getFailedMap(), "Failed");
+                            printFirstOrAll(queue, ctx, ctx.getFailedMap(), "Failed");
                         }
                         TbRuleEngineProcessingDecision decision = ackStrategy.analyze(result);
                         if (statsEnabled) {
@@ -202,12 +229,12 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         });
     }
 
-    private void printFirstOrAll(TbRuleEngineQueueConfiguration configuration, TbMsgPackProcessingContext ctx, Map<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> map, String prefix) {
+    private void printFirstOrAll(Queue queue, TbMsgPackProcessingContext ctx, Map<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> map, String prefix) {
         boolean printAll = log.isTraceEnabled();
         log.info("{} to process [{}] messages", prefix, map.size());
         for (Map.Entry<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> pending : map.entrySet()) {
             ToRuleEngineMsg tmp = pending.getValue().getValue();
-            TbMsg tmpMsg = TbMsg.fromBytes(configuration.getName(), tmp.getTbMsg().toByteArray(), TbMsgCallback.EMPTY);
+            TbMsg tmpMsg = TbMsg.fromBytes(queue.getName(), tmp.getTbMsg().toByteArray(), TbMsgCallback.EMPTY);
             RuleNodeInfo ruleNodeInfo = ctx.getLastVisitedRuleNode(pending.getKey());
             if (printAll) {
                 log.trace("[{}] {} to process message: {}, Last Rule Node: {}", new TenantId(new UUID(tmp.getTenantIdMSB(), tmp.getTenantIdLSB())), prefix, tmpMsg, ruleNodeInfo);

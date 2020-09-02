@@ -54,8 +54,9 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     @Value("${service.tenant_id:}")
     private String tenantIdStr;
 
-    @Autowired(required = false)
-    private TbQueueRuleEngineSettings ruleEngineSettings;
+    @Autowired
+    private QueueRoutingInfoService queueRoutingInfoService;
+
 
     private List<ServiceType> serviceTypes;
     private ServiceInfo serviceInfo;
@@ -89,14 +90,29 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         builder.setTenantIdMSB(tenantId.getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getLeastSignificantBits());
 
-        if (serviceTypes.contains(ServiceType.TB_RULE_ENGINE) && ruleEngineSettings != null) {
-            for (TbRuleEngineQueueConfiguration queue : ruleEngineSettings.getQueues()) {
-                TransportProtos.QueueInfo queueInfo = TransportProtos.QueueInfo.newBuilder()
-                        .setName(queue.getName())
-                        .setTopic(queue.getTopic())
-                        .setPartitions(queue.getPartitions()).build();
-                builder.addRuleEngineQueues(queueInfo);
-            }
+        if (serviceTypes.contains(ServiceType.TB_RULE_ENGINE)) {
+
+
+            queueRoutingInfoService
+                    .getRoutingInfo()
+                    .stream()
+                    .filter(queue -> queue.getTenantId().equals(getIsolatedTenant().orElse(TenantId.SYS_TENANT_ID)))
+                    .forEach(queue -> {
+                        TransportProtos.QueueInfo queueInfo = TransportProtos.QueueInfo.newBuilder()
+                                .setName(queue.getQueueName())
+                                .setTopic(queue.getQueueTopic())
+                                .setPartitions(queue.getPartitions()).build();
+                        builder.addRuleEngineQueues(queueInfo);
+            });
+
+//
+//            for (QueueRoutingInfo queue : queueRoutingInfoService.getRoutingInfo()) {
+//                TransportProtos.QueueInfo queueInfo = TransportProtos.QueueInfo.newBuilder()
+//                        .setName(queue.getQueueName())
+//                        .setTopic(queue.getQueueTopic())
+//                        .setPartitions(queue.getPartitions()).build();
+//                builder.addRuleEngineQueues(queueInfo);
+//            }
         }
 
         serviceInfo = builder.build();

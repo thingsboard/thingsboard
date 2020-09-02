@@ -75,12 +75,12 @@ export class TenantComponent extends ContactBasedComponent<Tenant> {
 
   showQueueParams(): boolean {
     let isolatedTbRuleEngine: boolean = this.entityForm.get('isolatedTbRuleEngine').value;
-    if (isolatedTbRuleEngine) {
-      this.entityForm.controls['maxNumberOfQueues'].enable();
-      this.entityForm.controls['maxNumberOfPartitionsPerQueue'].enable();
+    if (isolatedTbRuleEngine && this.isAdd) {
+      this.entityForm.get('maxNumberOfQueues').enable({emitEvent: false});
+      this.entityForm.get('maxNumberOfPartitionsPerQueue').enable({emitEvent: false});
     } else {
-      this.entityForm.controls['maxNumberOfQueues'].disable();
-      this.entityForm.controls['maxNumberOfPartitionsPerQueue'].disable();
+      this.entityForm.get('maxNumberOfQueues').disable({emitEvent: false});
+      this.entityForm.get('maxNumberOfPartitionsPerQueue').disable({emitEvent: false});
     }
     return isolatedTbRuleEngine;
   }

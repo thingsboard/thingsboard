@@ -62,6 +62,8 @@ public class EntityIdFactory {
                 return new WidgetsBundleId(uuid);
             case WIDGET_TYPE:
                 return new WidgetTypeId(uuid);
+            case QUEUE:
+                return new QueueId(uuid);
         }
         throw new IllegalArgumentException("EntityType " + type + " is not supported!");
     }
