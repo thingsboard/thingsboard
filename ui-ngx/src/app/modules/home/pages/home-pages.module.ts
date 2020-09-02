@@ -32,6 +32,7 @@ import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module'
 import { TenantProfileModule } from './tenant-profile/tenant-profile.module';
 import { MODULES_MAP } from '@shared/public-api';
 import { modulesMap } from '../../common/modules-map';
+import { DeviceProfileModule } from './device-profile/device-profile.module';
 
 @NgModule({
   exports: [
@@ -40,6 +41,7 @@ import { modulesMap } from '../../common/modules-map';
     ProfileModule,
     TenantProfileModule,
     TenantModule,
+    DeviceProfileModule,
     DeviceModule,
     AssetModule,
     EntityViewModule,

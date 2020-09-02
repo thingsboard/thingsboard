@@ -88,6 +88,10 @@ import { TenantProfileAutocompleteComponent } from './profile/tenant-profile-aut
 import { TenantProfileComponent } from './profile/tenant-profile.component';
 import { TenantProfileDialogComponent } from './profile/tenant-profile-dialog.component';
 import { TenantProfileDataComponent } from './profile/tenant-profile-data.component';
+import { DefaultDeviceProfileConfigurationComponent } from './profile/device/default-device-profile-configuration.component';
+import { DeviceProfileConfigurationComponent } from './profile/device/device-profile-configuration.component';
+import { DeviceProfileDataComponent } from './profile/device-profile-data.component';
+import { DeviceProfileComponent } from './profile/device-profile.component';
 
 @NgModule({
   declarations:
@@ -158,7 +162,11 @@ import { TenantProfileDataComponent } from './profile/tenant-profile-data.compon
       TenantProfileAutocompleteComponent,
       TenantProfileDataComponent,
       TenantProfileComponent,
-      TenantProfileDialogComponent
+      TenantProfileDialogComponent,
+      DefaultDeviceProfileConfigurationComponent,
+      DeviceProfileConfigurationComponent,
+      DeviceProfileDataComponent,
+      DeviceProfileComponent
     ],
   imports: [
     CommonModule,
@@ -218,7 +226,11 @@ import { TenantProfileDataComponent } from './profile/tenant-profile-data.compon
     TenantProfileAutocompleteComponent,
     TenantProfileDataComponent,
     TenantProfileComponent,
-    TenantProfileDialogComponent
+    TenantProfileDialogComponent,
+    DefaultDeviceProfileConfigurationComponent,
+    DeviceProfileConfigurationComponent,
+    DeviceProfileDataComponent,
+    DeviceProfileComponent
   ],
   providers: [
     WidgetComponentService,

@@ -25,21 +25,36 @@ import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { EntityInfoData } from '@shared/models/entity.models';
 
 export enum DeviceProfileType {
-  DEFAULT = 'DEFAULT',
-  LWM2M = 'LWM2M'
+  DEFAULT = 'DEFAULT'
 }
+
+export const deviceProfileTypeTranslationMap = new Map<DeviceProfileType, string>(
+  [
+    [DeviceProfileType.DEFAULT, 'device-profile.type-default']
+  ]
+);
 
 export interface DefaultDeviceProfileConfiguration {
   [key: string]: any;
 }
-export interface Lwm2mDeviceProfileConfiguration {
-  [key: string]: any;
-}
 
-export type DeviceProfileConfigurations = DefaultDeviceProfileConfiguration & Lwm2mDeviceProfileConfiguration;
+export type DeviceProfileConfigurations = DefaultDeviceProfileConfiguration;
 
 export interface DeviceProfileConfiguration extends DeviceProfileConfigurations {
   type: DeviceProfileType;
+}
+
+export function createDeviceProfileConfiguration(type: DeviceProfileType): DeviceProfileConfiguration {
+  let configuration: DeviceProfileConfiguration = null;
+  if (type) {
+    switch (type) {
+      case DeviceProfileType.DEFAULT:
+        const defaultConfiguration: DefaultDeviceProfileConfiguration = {};
+        configuration = {...defaultConfiguration, type: DeviceProfileType.DEFAULT};
+        break;
+    }
+  }
+  return configuration;
 }
 
 export interface DeviceProfileData {
@@ -50,7 +65,7 @@ export interface DeviceProfile extends BaseData<DeviceProfileId> {
   tenantId?: TenantId;
   name: string;
   description?: string;
-  isDefault: boolean;
+  default: boolean;
   type: DeviceProfileType;
   defaultRuleChainId?: RuleChainId;
   profileData: DeviceProfileData;

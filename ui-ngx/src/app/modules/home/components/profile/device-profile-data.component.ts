@@ -19,21 +19,21 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Valida
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { TenantProfileData } from '@shared/models/tenant.model';
+import { DeviceProfileData } from '@shared/models/device.models';
 
 @Component({
-  selector: 'tb-tenant-profile-data',
-  templateUrl: './tenant-profile-data.component.html',
+  selector: 'tb-device-profile-data',
+  templateUrl: './device-profile-data.component.html',
   styleUrls: [],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => TenantProfileDataComponent),
+    useExisting: forwardRef(() => DeviceProfileDataComponent),
     multi: true
   }]
 })
-export class TenantProfileDataComponent implements ControlValueAccessor, OnInit {
+export class DeviceProfileDataComponent implements ControlValueAccessor, OnInit {
 
-  tenantProfileDataFormGroup: FormGroup;
+  deviceProfileDataFormGroup: FormGroup;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -61,10 +61,10 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit 
   }
 
   ngOnInit() {
-    this.tenantProfileDataFormGroup = this.fb.group({
-      tenantProfileData: [null, Validators.required]
+    this.deviceProfileDataFormGroup = this.fb.group({
+      configuration: [null, Validators.required]
     });
-    this.tenantProfileDataFormGroup.valueChanges.subscribe(() => {
+    this.deviceProfileDataFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
   }
@@ -72,22 +72,21 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.tenantProfileDataFormGroup.disable({emitEvent: false});
+      this.deviceProfileDataFormGroup.disable({emitEvent: false});
     } else {
-      this.tenantProfileDataFormGroup.enable({emitEvent: false});
+      this.deviceProfileDataFormGroup.enable({emitEvent: false});
     }
   }
 
-  writeValue(value: TenantProfileData | null): void {
-    this.tenantProfileDataFormGroup.get('tenantProfileData').patchValue(value, {emitEvent: false});
+  writeValue(value: DeviceProfileData | null): void {
+    this.deviceProfileDataFormGroup.patchValue({configuration: value?.configuration}, {emitEvent: false});
   }
 
   private updateModel() {
-    let tenantProfileData: TenantProfileData = null;
-    if (this.tenantProfileDataFormGroup.valid) {
-      tenantProfileData = this.tenantProfileDataFormGroup.getRawValue().profileData;
+    let deviceProfileData: DeviceProfileData = null;
+    if (this.deviceProfileDataFormGroup.valid) {
+      deviceProfileData = this.deviceProfileDataFormGroup.getRawValue();
     }
-    this.propagateChange(tenantProfileData);
+    this.propagateChange(deviceProfileData);
   }
-
 }
