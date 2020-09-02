@@ -20,12 +20,22 @@
          #tenantProfileInput
          formControlName="tenantProfile"
          [required]="required"
+         (keydown)="tenantProfileEnter($event)"
+         (keypress)="tenantProfileEnter($event)"
          [matAutocomplete]="tenantProfileAutocomplete">
   <button *ngIf="selectTenantProfileFormGroup.get('tenantProfile').value && !disabled"
           type="button"
           matSuffix mat-button mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
+  </button>
+  <button *ngIf="selectTenantProfileFormGroup.get('tenantProfile').value && !disabled"
+          type="button"
+          matSuffix mat-button mat-icon-button aria-label="Edit"
+          matTooltip="{{ 'tenant-profile.edit' | translate }}"
+          matTooltipPosition="above"
+          (click)="editTenantProfile($event)">
+    <mat-icon class="material-icons">edit</mat-icon>
   </button>
   <mat-autocomplete
     class="tb-autocomplete"
@@ -34,10 +44,21 @@
     <mat-option *ngFor="let tenantProfile of filteredTenantProfiles | async" [value]="tenantProfile">
       <span [innerHTML]="tenantProfile.name | highlight:searchText"></span>
     </mat-option>
-    <mat-option *ngIf="!(filteredTenantProfiles | async)?.length" [value]="null">
-      <span>
-          {{ translate.get('tenant-profile.no-tenant-profiles-matching', {entity: searchText}) | async }}
-      </span>
+    <mat-option *ngIf="!(filteredTenantProfiles | async)?.length" [value]="null" class="tb-not-found">
+      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+          <span translate>tenant-profile.no-tenant-profiles-found</span>
+        </div>
+        <ng-template #searchNotEmpty>
+          <span>
+              {{ translate.get('tenant-profile.no-tenant-profiles-matching',
+            {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+          </span>
+        </ng-template>
+        <span>
+          <a translate (click)="createTenantProfile($event, searchText)">tenant-profile.create-new-tenant-profile</a>
+        </span>
+      </div>
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="selectTenantProfileFormGroup.get('tenantProfile').hasError('required')">

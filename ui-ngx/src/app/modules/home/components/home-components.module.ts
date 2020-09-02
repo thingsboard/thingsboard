@@ -86,6 +86,12 @@ import { FilterUserInfoDialogComponent } from './filter/filter-user-info-dialog.
 import { FilterPredicateValueComponent } from './filter/filter-predicate-value.component';
 import { TenantProfileAutocompleteComponent } from './profile/tenant-profile-autocomplete.component';
 import { TenantProfileComponent } from './profile/tenant-profile.component';
+import { TenantProfileDialogComponent } from './profile/tenant-profile-dialog.component';
+import { TenantProfileDataComponent } from './profile/tenant-profile-data.component';
+import { DefaultDeviceProfileConfigurationComponent } from './profile/device/default-device-profile-configuration.component';
+import { DeviceProfileConfigurationComponent } from './profile/device/device-profile-configuration.component';
+import { DeviceProfileDataComponent } from './profile/device-profile-data.component';
+import { DeviceProfileComponent } from './profile/device-profile.component';
 
 @NgModule({
   declarations:
@@ -154,7 +160,13 @@ import { TenantProfileComponent } from './profile/tenant-profile.component';
       FilterUserInfoDialogComponent,
       FilterPredicateValueComponent,
       TenantProfileAutocompleteComponent,
-      TenantProfileComponent
+      TenantProfileDataComponent,
+      TenantProfileComponent,
+      TenantProfileDialogComponent,
+      DefaultDeviceProfileConfigurationComponent,
+      DeviceProfileConfigurationComponent,
+      DeviceProfileDataComponent,
+      DeviceProfileComponent
     ],
   imports: [
     CommonModule,
@@ -212,7 +224,13 @@ import { TenantProfileComponent } from './profile/tenant-profile.component';
     FiltersEditComponent,
     UserFilterDialogComponent,
     TenantProfileAutocompleteComponent,
-    TenantProfileComponent
+    TenantProfileDataComponent,
+    TenantProfileComponent,
+    TenantProfileDialogComponent,
+    DefaultDeviceProfileConfigurationComponent,
+    DeviceProfileConfigurationComponent,
+    DeviceProfileDataComponent,
+    DeviceProfileComponent
   ],
   providers: [
     WidgetComponentService,

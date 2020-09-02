@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
@@ -27,7 +27,12 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { TenantProfileId } from '@shared/models/id/tenant-profile-id';
 import { EntityInfoData } from '@shared/models/entity.models';
 import { TenantProfileService } from '@core/http/tenant-profile.service';
-import { entityIdEquals } from '../../../../shared/models/id/entity-id';
+import { entityIdEquals } from '@shared/models/id/entity-id';
+import { TruncatePipe } from '@shared//pipe/truncate.pipe';
+import { ENTER } from '@angular/cdk/keycodes';
+import { TenantProfile } from '@shared/models/tenant.model';
+import { MatDialog } from '@angular/material/dialog';
+import { TenantProfileDialogComponent, TenantProfileDialogData } from './tenant-profile-dialog.component';
 
 @Component({
   selector: 'tb-tenant-profile-autocomplete',
@@ -60,6 +65,9 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
   @Input()
   disabled: boolean;
 
+  @Output()
+  tenantProfileUpdated = new EventEmitter<TenantProfileId>();
+
   @ViewChild('tenantProfileInput', {static: true}) tenantProfileInput: ElementRef;
 
   filteredTenantProfiles: Observable<Array<EntityInfoData>>;
@@ -70,8 +78,10 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
 
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
+              public truncate: TruncatePipe,
               private tenantProfileService: TenantProfileService,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private dialog: MatDialog) {
     this.selectTenantProfileFormGroup = this.fb.group({
       tenantProfile: [null]
     });
@@ -168,4 +178,67 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
     }, 0);
   }
 
+  textIsNotEmpty(text: string): boolean {
+    return (text && text.length > 0);
+  }
+
+  tenantProfileEnter($event: KeyboardEvent) {
+    if ($event.keyCode === ENTER) {
+      $event.preventDefault();
+      if (!this.modelValue) {
+        this.createTenantProfile($event, this.searchText);
+      }
+    }
+  }
+
+  createTenantProfile($event: Event, profileName: string) {
+    $event.preventDefault();
+    const tenantProfile: TenantProfile = {
+      id: null,
+      name: profileName
+    };
+    this.openTenantProfileDialog(tenantProfile, true);
+  }
+
+  editTenantProfile($event: Event) {
+    $event.preventDefault();
+    this.tenantProfileService.getTenantProfile(this.modelValue.id).subscribe(
+      (tenantProfile) => {
+        this.openTenantProfileDialog(tenantProfile, false);
+      }
+    );
+  }
+
+  openTenantProfileDialog(tenantProfile: TenantProfile, isAdd: boolean) {
+    this.dialog.open<TenantProfileDialogComponent, TenantProfileDialogData,
+      TenantProfile>(TenantProfileDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        isAdd,
+        tenantProfile
+      }
+    }).afterClosed().subscribe(
+      (savedTenantProfile) => {
+        if (!savedTenantProfile) {
+          setTimeout(() => {
+            this.tenantProfileInput.nativeElement.blur();
+            this.tenantProfileInput.nativeElement.focus();
+          }, 0);
+        } else {
+          this.tenantProfileService.getTenantProfileInfo(savedTenantProfile.id.id).subscribe(
+            (profile) => {
+              this.modelValue = new TenantProfileId(profile.id.id);
+              this.selectTenantProfileFormGroup.get('tenantProfile').patchValue(profile, {emitEvent: true});
+              if (isAdd) {
+                this.propagateChange(this.modelValue);
+              } else {
+                this.tenantProfileUpdated.next(savedTenantProfile.id);
+              }
+            }
+          );
+        }
+      }
+    );
+  }
 }

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, Input } from '@angular/core';
+import { Component, Inject, Input, Optional } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -36,8 +36,8 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              @Inject('entity') protected entityValue: TenantProfile,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<TenantProfile>,
+              @Optional() @Inject('entity') protected entityValue: TenantProfile,
+              @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<TenantProfile>,
               protected fb: FormBuilder) {
     super(store, fb, entityValue, entitiesTableConfigValue);
   }
@@ -56,6 +56,7 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
         name: [entity ? entity.name : '', [Validators.required]],
         isolatedTbCore: [entity ? entity.isolatedTbCore : false, []],
         isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
+        profileData: [entity && !this.isAdd ? entity.profileData : {}, []],
         description: [entity ? entity.description : '', []],
       }
     );
@@ -65,6 +66,7 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore});
     this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine});
+    this.entityForm.patchValue({profileData: entity.profileData});
     this.entityForm.patchValue({description: entity.description});
   }
 

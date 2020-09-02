@@ -216,6 +216,13 @@ export class MenuService {
         icon: 'devices_other'
       },
       {
+        name: 'device-profile.device-profiles',
+        type: 'link',
+        path: '/deviceProfiles',
+        icon: 'mdi:alpha-d-box',
+        isMdiIcon: true
+      },
+      {
         name: 'entity-view.entity-views',
         type: 'link',
         path: '/entityViews',
@@ -283,6 +290,12 @@ export class MenuService {
             name: 'device.devices',
             icon: 'devices_other',
             path: '/devices'
+          },
+          {
+            name: 'device-profile.device-profiles',
+            icon: 'mdi:alpha-d-box',
+            isMdiIcon: true,
+            path: '/deviceProfiles'
           }
         ]
       },

@@ -59,6 +59,10 @@
           <div class="tb-hint">{{'tenant.isolated-tb-rule-engine-details' | translate}}</div>
         </mat-checkbox>
       </div>
+      <tb-tenant-profile-data
+        formControlName="profileData"
+        required>
+      </tb-tenant-profile-data>
       <mat-form-field class="mat-block">
         <mat-label translate>tenant-profile.description</mat-label>
         <textarea matInput formControlName="description" rows="2"></textarea>

@@ -52,7 +52,8 @@
       <tb-tenant-profile-autocomplete
         [selectDefaultProfile]="isAdd"
         required
-        formControlName="tenantProfileId">
+        formControlName="tenantProfileId"
+        (tenantProfileUpdated)="onTenantProfileUpdated()">
       </tb-tenant-profile-autocomplete>
       <div formGroupName="additionalInfo" fxLayout="column">
         <mat-form-field class="mat-block">
