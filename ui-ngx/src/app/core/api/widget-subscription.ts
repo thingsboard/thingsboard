@@ -403,7 +403,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         configDatasource: datasource,
         configDatasourceIndex: index,
         dataLoaded: (pageData, data1, datasourceIndex, pageLink) => {
-          this.dataLoaded(pageData, data1, datasourceIndex, pageLink, true)
+          this.dataLoaded(pageData, data1, datasourceIndex, pageLink, true);
         },
         initialPageDataChanged: this.initialPageDataChanged.bind(this),
         dataUpdated: this.dataUpdated.bind(this),
@@ -804,7 +804,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         configDatasourceIndex: datasourceIndex,
         subscriptionTimewindow: this.subscriptionTimewindow,
         dataLoaded: (pageData, data1, datasourceIndex1, pageLink1) => {
-          this.dataLoaded(pageData, data1, datasourceIndex1, pageLink1, true)
+          this.dataLoaded(pageData, data1, datasourceIndex1, pageLink1, true);
         },
         dataUpdated: this.dataUpdated.bind(this),
         updateRealtimeSubscription: () => {
@@ -1149,7 +1149,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         this.onSubscriptionMessage({
           severity: 'warn',
           message
-        })
+        });
       }
     }
     if (isUpdate) {
@@ -1226,9 +1226,6 @@ export class WidgetSubscription implements IWidgetSubscription {
         });
       });
     }
-    if (this.displayLegend) {
-      this.legendData.keys = this.legendData.keys.sort((key1, key2) => key1.dataKey.label.localeCompare(key2.dataKey.label));
-    }
     if (this.caulculateLegendData) {
       this.data.forEach((dataSetHolder, keyIndex) => {
         this.updateLegend(keyIndex, dataSetHolder.data, false);
@@ -1274,7 +1271,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     const configuredDatasource = this.configuredDatasources[datasourceIndex];
     const startIndex = configuredDatasource.dataKeyStartIndex;
     const dataKeysCount = configuredDatasource.dataKeys.length;
-    const index = startIndex + dataIndex*dataKeysCount + dataKeyIndex;
+    const index = startIndex + dataIndex * dataKeysCount + dataKeyIndex;
     let update = true;
     let currentData: DataSetHolder;
     if (this.displayLegend && this.legendData.keys[index].dataKey.hidden) {
