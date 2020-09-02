@@ -41,8 +41,10 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
-import org.thingsboard.server.common.data.device.data.Lwm2mDeviceConfiguration;
+import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -175,8 +177,14 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     case DEFAULT:
                         deviceData.setConfiguration(new DefaultDeviceConfiguration());
                         break;
+                }
+                switch (deviceProfile.getTransportType()){
+                    case DEFAULT:
+                        deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
+                    case MQTT:
+                        deviceData.setTransportConfiguration(new MqttDeviceTransportConfiguration());
                     case LWM2M:
-                        deviceData.setConfiguration(new Lwm2mDeviceConfiguration());
+                        deviceData.setTransportConfiguration(new Lwm2mDeviceTransportConfiguration());
                         break;
                 }
                 device.setDeviceData(deviceData);

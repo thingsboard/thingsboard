@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -151,11 +152,13 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 .andExpect(statusReason(containsString("Device profile with such name already exists")));
     }
 
+    @Ignore
     @Test
     public void testSaveSameDeviceProfileWithDifferentType() throws Exception {
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
-        savedDeviceProfile.setType(DeviceProfileType.LWM2M);
+        //TODO uncomment once we have other device types;
+        //savedDeviceProfile.setType(DeviceProfileType.LWM2M);
         doPost("/api/deviceProfile", savedDeviceProfile).andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Changing type of device profile is prohibited")));
     }
@@ -265,7 +268,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Collections.sort(loadedDeviceProfileInfos, deviceProfileInfoIdComparator);
 
         List<DeviceProfileInfo> deviceProfileInfos = deviceProfiles.stream().map(deviceProfile -> new DeviceProfileInfo(deviceProfile.getId(),
-                deviceProfile.getName(), deviceProfile.getType())).collect(Collectors.toList());
+                deviceProfile.getName(), deviceProfile.getType(), deviceProfile.getTransportType())).collect(Collectors.toList());
 
         Assert.assertEquals(deviceProfileInfos, loadedDeviceProfileInfos);
 

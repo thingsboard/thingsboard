@@ -128,6 +128,7 @@ CREATE TABLE IF NOT EXISTS device_profile (
     created_time bigint NOT NULL,
     name varchar(255),
     type varchar(255),
+    transport_type varchar(255),
     profile_data varchar,
     description varchar,
     search_text varchar(255),

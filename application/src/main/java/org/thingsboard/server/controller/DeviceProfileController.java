@@ -92,6 +92,8 @@ public class DeviceProfileController extends BaseController {
 
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
 
+            tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);
+
             logEntityAction(savedDeviceProfile.getId(), savedDeviceProfile,
                     null,
                     savedDeviceProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);

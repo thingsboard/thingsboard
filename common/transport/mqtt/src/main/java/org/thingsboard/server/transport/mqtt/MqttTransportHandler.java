@@ -520,6 +520,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
                     .setDeviceName(msg.getDeviceInfo().getDeviceName())
                     .setDeviceType(msg.getDeviceInfo().getDeviceType())
+                    .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileIdMSB())
+                    .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileIdLSB())
                     .build();
             transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), new TransportServiceCallback<Void>() {
                 @Override

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.encoding;
+package org.thingsboard.server.common.transport.util;
 
 import org.thingsboard.server.common.msg.TbActorMsg;
 
@@ -21,9 +21,9 @@ import java.util.Optional;
 
 public interface DataDecodingEncodingService {
 
-    Optional<TbActorMsg> decode(byte[] byteArray);
+    <T> Optional<T> decode(byte[] byteArray);
 
-    byte[] encode(TbActorMsg msq);
+    <T> byte[] encode(T msq);
 
 }
 

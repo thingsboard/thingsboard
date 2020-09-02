@@ -40,6 +40,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private String description;
     private boolean isDefault;
     private DeviceProfileType type;
+    private DeviceTransportType transportType;
     private RuleChainId defaultRuleChainId;
     private transient DeviceProfileData profileData;
     @JsonIgnore

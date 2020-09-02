@@ -17,13 +17,14 @@ package org.thingsboard.server.common.data.device.data;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 
 @Data
-public class Lwm2mDeviceConfiguration implements DeviceConfiguration {
+public class Lwm2mDeviceTransportConfiguration implements DeviceTransportConfiguration {
 
     @Override
-    public DeviceProfileType getType() {
-        return DeviceProfileType.LWM2M;
+    public DeviceTransportType getType() {
+        return DeviceTransportType.LWM2M;
     }
 
 }
