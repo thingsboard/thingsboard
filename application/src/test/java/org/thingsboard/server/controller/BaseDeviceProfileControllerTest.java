@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.page.PageData;
@@ -154,13 +155,32 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
     @Ignore
     @Test
-    public void testSaveSameDeviceProfileWithDifferentType() throws Exception {
+    public void testChangeDeviceProfileTypeWithExistingDevices() throws Exception {
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        Device device = new Device();
+        device.setName("Test device");
+        device.setType("default");
+        device.setDeviceProfileId(savedDeviceProfile.getId());
+        doPost("/api/device", device, Device.class);
         //TODO uncomment once we have other device types;
         //savedDeviceProfile.setType(DeviceProfileType.LWM2M);
         doPost("/api/deviceProfile", savedDeviceProfile).andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Changing type of device profile is prohibited")));
+                .andExpect(statusReason(containsString("Can't change device profile type because devices referenced it")));
+    }
+
+    @Test
+    public void testChangeDeviceProfileTransportTypeWithExistingDevices() throws Exception {
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
+        DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        Device device = new Device();
+        device.setName("Test device");
+        device.setType("default");
+        device.setDeviceProfileId(savedDeviceProfile.getId());
+        doPost("/api/device", device, Device.class);
+        savedDeviceProfile.setTransportType(DeviceTransportType.MQTT);
+        doPost("/api/deviceProfile", savedDeviceProfile).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Can't change device profile transport type because devices referenced it")));
     }
 
     @Test

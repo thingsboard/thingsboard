@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -148,11 +149,31 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
     @Ignore
     @Test(expected = DataValidationException.class)
-    public void testSaveSameDeviceProfileWithDifferentType() {
+    public void testChangeDeviceProfileTypeWithExistingDevices() {
         DeviceProfile deviceProfile = this.createDeviceProfile(tenantId,"Device Profile");
         DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("Test device");
+        device.setType("default");
+        device.setDeviceProfileId(savedDeviceProfile.getId());
+        deviceService.saveDevice(device);
         //TODO: once we have more profile types, we should test that we can not change profile type in runtime and uncomment the @Ignore.
 //        savedDeviceProfile.setType(DeviceProfileType.LWM2M);
+        deviceProfileService.saveDeviceProfile(savedDeviceProfile);
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testChangeDeviceProfileTransportTypeWithExistingDevices() {
+        DeviceProfile deviceProfile = this.createDeviceProfile(tenantId,"Device Profile");
+        DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("Test device");
+        device.setType("default");
+        device.setDeviceProfileId(savedDeviceProfile.getId());
+        deviceService.saveDevice(device);
+        savedDeviceProfile.setTransportType(DeviceTransportType.MQTT);
         deviceProfileService.saveDeviceProfile(savedDeviceProfile);
     }
 
