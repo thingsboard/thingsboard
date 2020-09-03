@@ -48,6 +48,8 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.DEVICE_PROFILE);
     this.config.entityResources = entityTypeResources.get(EntityType.DEVICE_PROFILE);
 
+    this.config.addDialogStyle = {width: '600px'};
+
     this.config.columns.push(
       new DateEntityTableColumn<DeviceProfile>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<DeviceProfile>('name', 'device-profile.name', '20%'),

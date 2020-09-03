@@ -85,7 +85,7 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit 
   private updateModel() {
     let tenantProfileData: TenantProfileData = null;
     if (this.tenantProfileDataFormGroup.valid) {
-      tenantProfileData = this.tenantProfileDataFormGroup.getRawValue().profileData;
+      tenantProfileData = this.tenantProfileDataFormGroup.getRawValue().tenantProfileData;
     }
     this.propagateChange(tenantProfileData);
   }

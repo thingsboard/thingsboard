@@ -96,7 +96,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
       };
     }
     profileData.configuration = createDeviceProfileConfiguration(deviceProfileType);
-    this.entityForm.patchValue({profileData});
+    form.patchValue({profileData});
   }
 
   updateForm(entity: DeviceProfile) {
