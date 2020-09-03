@@ -65,6 +65,17 @@
           {{ 'device-profile.type-required' | translate }}
         </mat-error>
       </mat-form-field>
+      <mat-form-field class="mat-block">
+        <mat-label translate>device-profile.transport-type</mat-label>
+        <mat-select formControlName="transportType" required>
+          <mat-option *ngFor="let type of deviceTransportTypes" [value]="type">
+            {{deviceTransportTypeTranslations.get(type) | translate}}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="entityForm.get('transportType').hasError('required')">
+          {{ 'device-profile.transport-type-required' | translate }}
+        </mat-error>
+      </mat-form-field>
       <tb-device-profile-data
         formControlName="profileData"
         required>

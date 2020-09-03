@@ -19,24 +19,25 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Valida
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { DeviceProfileConfiguration, DeviceProfileType } from '@shared/models/device.models';
-import { deepClone } from '@core/utils';
+import {
+  DefaultDeviceProfileTransportConfiguration,
+  DeviceProfileTransportConfiguration,
+  DeviceTransportType
+} from '@shared/models/device.models';
 
 @Component({
-  selector: 'tb-device-profile-configuration',
-  templateUrl: './device-profile-configuration.component.html',
+  selector: 'tb-default-device-profile-transport-configuration',
+  templateUrl: './default-device-profile-transport-configuration.component.html',
   styleUrls: [],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DeviceProfileConfigurationComponent),
+    useExisting: forwardRef(() => DefaultDeviceProfileTransportConfigurationComponent),
     multi: true
   }]
 })
-export class DeviceProfileConfigurationComponent implements ControlValueAccessor, OnInit {
+export class DefaultDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit {
 
-  deviceProfileType = DeviceProfileType;
-
-  deviceProfileConfigurationFormGroup: FormGroup;
+  defaultDeviceProfileTransportConfigurationFormGroup: FormGroup;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -49,8 +50,6 @@ export class DeviceProfileConfigurationComponent implements ControlValueAccessor
 
   @Input()
   disabled: boolean;
-
-  type: DeviceProfileType;
 
   private propagateChange = (v: any) => { };
 
@@ -66,10 +65,10 @@ export class DeviceProfileConfigurationComponent implements ControlValueAccessor
   }
 
   ngOnInit() {
-    this.deviceProfileConfigurationFormGroup = this.fb.group({
+    this.defaultDeviceProfileTransportConfigurationFormGroup = this.fb.group({
       configuration: [null, Validators.required]
     });
-    this.deviceProfileConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.defaultDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
   }
@@ -77,26 +76,21 @@ export class DeviceProfileConfigurationComponent implements ControlValueAccessor
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.deviceProfileConfigurationFormGroup.disable({emitEvent: false});
+      this.defaultDeviceProfileTransportConfigurationFormGroup.disable({emitEvent: false});
     } else {
-      this.deviceProfileConfigurationFormGroup.enable({emitEvent: false});
+      this.defaultDeviceProfileTransportConfigurationFormGroup.enable({emitEvent: false});
     }
   }
 
-  writeValue(value: DeviceProfileConfiguration | null): void {
-    this.type = value?.type;
-    const configuration = deepClone(value);
-    if (configuration) {
-      delete configuration.type;
-    }
-    this.deviceProfileConfigurationFormGroup.patchValue({configuration}, {emitEvent: false});
+  writeValue(value: DefaultDeviceProfileTransportConfiguration | null): void {
+    this.defaultDeviceProfileTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
   }
 
   private updateModel() {
-    let configuration: DeviceProfileConfiguration = null;
-    if (this.deviceProfileConfigurationFormGroup.valid) {
-      configuration = this.deviceProfileConfigurationFormGroup.getRawValue().configuration;
-      configuration.type = this.type;
+    let configuration: DeviceProfileTransportConfiguration = null;
+    if (this.defaultDeviceProfileTransportConfigurationFormGroup.valid) {
+      configuration = this.defaultDeviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
+      configuration.type = DeviceTransportType.DEFAULT;
     }
     this.propagateChange(configuration);
   }

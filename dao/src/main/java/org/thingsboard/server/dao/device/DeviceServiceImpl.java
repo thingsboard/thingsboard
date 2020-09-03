@@ -181,8 +181,10 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 switch (deviceProfile.getTransportType()){
                     case DEFAULT:
                         deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
+                        break;
                     case MQTT:
                         deviceData.setTransportConfiguration(new MqttDeviceTransportConfiguration());
+                        break;
                     case LWM2M:
                         deviceData.setTransportConfiguration(new Lwm2mDeviceTransportConfiguration());
                         break;

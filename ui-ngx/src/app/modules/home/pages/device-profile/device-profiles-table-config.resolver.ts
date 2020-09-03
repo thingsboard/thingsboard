@@ -27,7 +27,11 @@ import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { DialogService } from '@core/services/dialog.service';
-import { DeviceProfile, deviceProfileTypeTranslationMap } from '@shared/models/device.models';
+import {
+  DeviceProfile,
+  deviceProfileTypeTranslationMap,
+  deviceTransportTypeTranslationMap
+} from '@shared/models/device.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfileComponent } from '../../components/profile/device-profile.component';
 import { DeviceProfileTabsComponent } from './device-profile-tabs.component';
@@ -56,7 +60,10 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
       new EntityTableColumn<DeviceProfile>('type', 'device-profile.type', '20%', (deviceProfile) => {
         return this.translate.instant(deviceProfileTypeTranslationMap.get(deviceProfile.type));
       }),
-      new EntityTableColumn<DeviceProfile>('description', 'device-profile.description', '60%'),
+      new EntityTableColumn<DeviceProfile>('transportType', 'device-profile.transport-type', '20%', (deviceProfile) => {
+        return this.translate.instant(deviceTransportTypeTranslationMap.get(deviceProfile.transportType));
+      }),
+      new EntityTableColumn<DeviceProfile>('description', 'device-profile.description', '40%'),
       new EntityTableColumn<DeviceProfile>('isDefault', 'device-profile.default', '60px',
         entity => {
           return checkBoxCell(entity.default);

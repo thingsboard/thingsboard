@@ -27,7 +27,10 @@ import {
   DeviceProfile,
   DeviceProfileData,
   DeviceProfileType,
-  deviceProfileTypeTranslationMap
+  deviceProfileTypeTranslationMap,
+  DeviceTransportType,
+  deviceTransportTypeTranslationMap,
+  createDeviceProfileTransportConfiguration
 } from '@shared/models/device.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
@@ -47,6 +50,10 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
   deviceProfileTypes = Object.keys(DeviceProfileType);
 
   deviceProfileTypeTranslations = deviceProfileTypeTranslationMap;
+
+  deviceTransportTypes = Object.keys(DeviceTransportType);
+
+  deviceTransportTypeTranslations = deviceTransportTypeTranslationMap;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -68,7 +75,8 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     const form = this.fb.group(
       {
         name: [entity ? entity.name : '', [Validators.required]],
-        type: [entity ? entity.type : '', [Validators.required]],
+        type: [entity ? entity.type : null, [Validators.required]],
+        transportType: [entity ? entity.transportType : null, [Validators.required]],
         profileData: [entity && !this.isAdd ? entity.profileData : {}, []],
         defaultRuleChainId: [entity && entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null, []],
         description: [entity ? entity.description : '', []],
@@ -77,6 +85,9 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     form.get('type').valueChanges.subscribe(() => {
       this.deviceProfileTypeChanged(form);
     });
+    form.get('transportType').valueChanges.subscribe(() => {
+      this.deviceProfileTransportTypeChanged(form);
+    });
     this.checkIsNewDeviceProfile(entity, form);
     return form;
   }
@@ -84,6 +95,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
   private checkIsNewDeviceProfile(entity: DeviceProfile, form: FormGroup) {
     if (entity && !entity.id) {
       form.get('type').patchValue(DeviceProfileType.DEFAULT, {emitEvent: true});
+      form.get('transportType').patchValue(DeviceTransportType.DEFAULT, {emitEvent: true});
     }
   }
 
@@ -92,16 +104,31 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     let profileData: DeviceProfileData = form.getRawValue().profileData;
     if (!profileData) {
       profileData = {
-        configuration: null
+        configuration: null,
+        transportConfiguration: null
       };
     }
     profileData.configuration = createDeviceProfileConfiguration(deviceProfileType);
     form.patchValue({profileData});
   }
 
+  private deviceProfileTransportTypeChanged(form: FormGroup) {
+    const deviceTransportType: DeviceTransportType = form.get('transportType').value;
+    let profileData: DeviceProfileData = form.getRawValue().profileData;
+    if (!profileData) {
+      profileData = {
+        configuration: null,
+        transportConfiguration: null
+      };
+    }
+    profileData.transportConfiguration = createDeviceProfileTransportConfiguration(deviceTransportType);
+    form.patchValue({profileData});
+  }
+
   updateForm(entity: DeviceProfile) {
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({type: entity.type});
+    this.entityForm.patchValue({transportType: entity.transportType});
     this.entityForm.patchValue({profileData: entity.profileData});
     this.entityForm.patchValue({defaultRuleChainId: entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null});
     this.entityForm.patchValue({description: entity.description});

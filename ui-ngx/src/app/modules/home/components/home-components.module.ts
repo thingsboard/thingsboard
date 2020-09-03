@@ -92,6 +92,8 @@ import { DefaultDeviceProfileConfigurationComponent } from './profile/device/def
 import { DeviceProfileConfigurationComponent } from './profile/device/device-profile-configuration.component';
 import { DeviceProfileDataComponent } from './profile/device-profile-data.component';
 import { DeviceProfileComponent } from './profile/device-profile.component';
+import { DefaultDeviceProfileTransportConfigurationComponent } from './profile/device/default-device-profile-transport-configuration.component';
+import { DeviceProfileTransportConfigurationComponent } from './profile/device/device-profile-transport-configuration.component';
 
 @NgModule({
   declarations:
@@ -165,6 +167,8 @@ import { DeviceProfileComponent } from './profile/device-profile.component';
       TenantProfileDialogComponent,
       DefaultDeviceProfileConfigurationComponent,
       DeviceProfileConfigurationComponent,
+      DefaultDeviceProfileTransportConfigurationComponent,
+      DeviceProfileTransportConfigurationComponent,
       DeviceProfileDataComponent,
       DeviceProfileComponent
     ],
@@ -229,6 +233,8 @@ import { DeviceProfileComponent } from './profile/device-profile.component';
     TenantProfileDialogComponent,
     DefaultDeviceProfileConfigurationComponent,
     DeviceProfileConfigurationComponent,
+    DefaultDeviceProfileTransportConfigurationComponent,
+    DeviceProfileTransportConfigurationComponent,
     DeviceProfileDataComponent,
     DeviceProfileComponent
   ],

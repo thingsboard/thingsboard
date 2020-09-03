@@ -28,9 +28,23 @@ export enum DeviceProfileType {
   DEFAULT = 'DEFAULT'
 }
 
+export enum DeviceTransportType {
+  DEFAULT = 'DEFAULT',
+  MQTT = 'MQTT',
+  LWM2M = 'LWM2M'
+}
+
 export const deviceProfileTypeTranslationMap = new Map<DeviceProfileType, string>(
   [
     [DeviceProfileType.DEFAULT, 'device-profile.type-default']
+  ]
+);
+
+export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, string>(
+  [
+    [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default'],
+    [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt'],
+    [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
   ]
 );
 
@@ -42,6 +56,26 @@ export type DeviceProfileConfigurations = DefaultDeviceProfileConfiguration;
 
 export interface DeviceProfileConfiguration extends DeviceProfileConfigurations {
   type: DeviceProfileType;
+}
+
+export interface DefaultDeviceProfileTransportConfiguration {
+  [key: string]: any;
+}
+
+export interface MqttDeviceProfileTransportConfiguration {
+  [key: string]: any;
+}
+
+export interface Lwm2mDeviceProfileTransportConfiguration {
+  [key: string]: any;
+}
+
+export type DeviceProfileTransportConfigurations = DefaultDeviceProfileTransportConfiguration &
+                                                   MqttDeviceProfileTransportConfiguration &
+                                                   Lwm2mDeviceProfileTransportConfiguration;
+
+export interface DeviceProfileTransportConfiguration extends DeviceProfileTransportConfigurations {
+  type: DeviceTransportType;
 }
 
 export function createDeviceProfileConfiguration(type: DeviceProfileType): DeviceProfileConfiguration {
@@ -57,8 +91,30 @@ export function createDeviceProfileConfiguration(type: DeviceProfileType): Devic
   return configuration;
 }
 
+export function createDeviceProfileTransportConfiguration(type: DeviceTransportType): DeviceProfileTransportConfiguration {
+  let transportConfiguration: DeviceProfileTransportConfiguration = null;
+  if (type) {
+    switch (type) {
+      case DeviceTransportType.DEFAULT:
+        const defaultTransportConfiguration: DefaultDeviceProfileTransportConfiguration = {};
+        transportConfiguration = {...defaultTransportConfiguration, type: DeviceTransportType.DEFAULT};
+        break;
+      case DeviceTransportType.MQTT:
+        const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {};
+        transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
+        break;
+      case DeviceTransportType.LWM2M:
+        const lwm2mTransportConfiguration: Lwm2mDeviceProfileTransportConfiguration = {};
+        transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
+        break;
+    }
+  }
+  return transportConfiguration;
+}
+
 export interface DeviceProfileData {
   configuration: DeviceProfileConfiguration;
+  transportConfiguration: DeviceProfileTransportConfiguration;
 }
 
 export interface DeviceProfile extends BaseData<DeviceProfileId> {
@@ -67,29 +123,49 @@ export interface DeviceProfile extends BaseData<DeviceProfileId> {
   description?: string;
   default: boolean;
   type: DeviceProfileType;
+  transportType: DeviceTransportType;
   defaultRuleChainId?: RuleChainId;
   profileData: DeviceProfileData;
 }
 
 export interface DeviceProfileInfo extends EntityInfoData {
   type: DeviceProfileType;
+  transportType: DeviceTransportType;
 }
 
 export interface DefaultDeviceConfiguration {
   [key: string]: any;
 }
-export interface Lwm2mDeviceConfiguration {
-  [key: string]: any;
-}
 
-export type DeviceConfigurations = DefaultDeviceConfiguration & Lwm2mDeviceConfiguration;
+export type DeviceConfigurations = DefaultDeviceConfiguration;
 
 export interface DeviceConfiguration extends DeviceConfigurations {
   type: DeviceProfileType;
 }
 
+export interface DefaultDeviceTransportConfiguration {
+  [key: string]: any;
+}
+
+export interface MqttDeviceTransportConfiguration {
+  [key: string]: any;
+}
+
+export interface Lwm2mDeviceTransportConfiguration {
+  [key: string]: any;
+}
+
+export type DeviceTransportConfigurations = DefaultDeviceTransportConfiguration &
+  MqttDeviceTransportConfiguration &
+  Lwm2mDeviceTransportConfiguration;
+
+export interface DeviceTransportConfiguration extends DeviceTransportConfigurations {
+  type: DeviceTransportType;
+}
+
 export interface DeviceData {
   configuration: DeviceConfiguration;
+  transportConfiguration: DeviceTransportConfiguration;
 }
 
 export interface Device extends BaseData<DeviceId> {
