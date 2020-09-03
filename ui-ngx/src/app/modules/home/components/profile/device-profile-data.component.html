@@ -17,7 +17,7 @@
 -->
 <div [formGroup]="deviceProfileDataFormGroup" style="padding-bottom: 16px;">
   <mat-accordion multi="true">
-    <mat-expansion-panel [expanded]="true">
+    <mat-expansion-panel *ngIf="displayProfileConfiguration" [expanded]="true">
       <mat-expansion-panel-header>
         <mat-panel-title>
           <div translate>device-profile.profile-configuration</div>
@@ -28,7 +28,7 @@
         required>
       </tb-device-profile-configuration>
     </mat-expansion-panel>
-    <mat-expansion-panel [expanded]="true">
+    <mat-expansion-panel *ngIf="displayTransportConfiguration" [expanded]="true">
       <mat-expansion-panel-header>
         <mat-panel-title>
           <div translate>device-profile.transport-configuration</div>

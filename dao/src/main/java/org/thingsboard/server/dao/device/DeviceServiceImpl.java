@@ -436,8 +436,6 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     Device old = deviceDao.findById(device.getTenantId(), device.getId().getId());
                     if (old == null) {
                         throw new DataValidationException("Can't update non existing device!");
-                    } else if (!old.getDeviceProfileId().equals(device.getDeviceProfileId())) {
-                        throw new DataValidationException("Changing device profile is prohibited!");
                     }
                 }
 

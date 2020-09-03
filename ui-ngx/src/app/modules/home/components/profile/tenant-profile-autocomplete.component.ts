@@ -19,7 +19,7 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from 
 import { Observable } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { map, mergeMap, startWith, tap } from 'rxjs/operators';
+import { map, mergeMap, share, startWith, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -74,6 +74,8 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
 
   searchText = '';
 
+  private dirty = false;
+
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
@@ -106,9 +108,9 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
           }
           this.updateView(modelValue);
         }),
-        startWith<string | EntityInfoData>(''),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-        mergeMap(name => this.fetchTenantProfiles(name) )
+        mergeMap(name => this.fetchTenantProfiles(name) ),
+        share()
       );
   }
 
@@ -136,13 +138,21 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
       this.tenantProfileService.getTenantProfileInfo(value.id).subscribe(
         (profile) => {
           this.modelValue = new TenantProfileId(profile.id.id);
-          this.selectTenantProfileFormGroup.get('tenantProfile').patchValue(profile, {emitEvent: true});
+          this.selectTenantProfileFormGroup.get('tenantProfile').patchValue(profile, {emitEvent: false});
         }
       );
     } else {
       this.modelValue = null;
-      this.selectTenantProfileFormGroup.get('tenantProfile').patchValue(null, {emitEvent: true});
+      this.selectTenantProfileFormGroup.get('tenantProfile').patchValue(null, {emitEvent: false});
       this.selectDefaultTenantProfileIfNeeded();
+    }
+    this.dirty = true;
+  }
+
+  onFocus() {
+    if (this.dirty) {
+      this.selectTenantProfileFormGroup.get('tenantProfile').updateValueAndValidity({onlySelf: true, emitEvent: true});
+      this.dirty = false;
     }
   }
 

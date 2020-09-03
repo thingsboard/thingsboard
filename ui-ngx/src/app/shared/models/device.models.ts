@@ -34,9 +34,26 @@ export enum DeviceTransportType {
   LWM2M = 'LWM2M'
 }
 
+export interface DeviceConfigurationFormInfo {
+  hasProfileConfiguration: boolean;
+  hasDeviceConfiguration: boolean;
+}
+
 export const deviceProfileTypeTranslationMap = new Map<DeviceProfileType, string>(
   [
     [DeviceProfileType.DEFAULT, 'device-profile.type-default']
+  ]
+);
+
+export const deviceProfileTypeConfigurationInfoMap = new Map<DeviceProfileType, DeviceConfigurationFormInfo>(
+  [
+    [
+      DeviceProfileType.DEFAULT,
+      {
+        hasProfileConfiguration: false,
+        hasDeviceConfiguration: false,
+      }
+    ]
   ]
 );
 
@@ -45,6 +62,32 @@ export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, st
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt'],
     [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
+  ]
+);
+
+export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportType, DeviceConfigurationFormInfo>(
+  [
+    [
+      DeviceTransportType.DEFAULT,
+      {
+        hasProfileConfiguration: false,
+        hasDeviceConfiguration: false,
+      }
+    ],
+    [
+      DeviceTransportType.MQTT,
+      {
+        hasProfileConfiguration: true,
+        hasDeviceConfiguration: true,
+      }
+    ],
+    [
+      DeviceTransportType.LWM2M,
+      {
+        hasProfileConfiguration: true,
+        hasDeviceConfiguration: true,
+      }
+    ]
   ]
 );
 

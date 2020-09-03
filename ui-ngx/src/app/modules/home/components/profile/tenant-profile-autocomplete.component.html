@@ -19,6 +19,7 @@
   <input matInput type="text" placeholder="{{ 'tenant-profile.tenant-profile' | translate }}"
          #tenantProfileInput
          formControlName="tenantProfile"
+         (focusin)="onFocus()"
          [required]="required"
          (keydown)="tenantProfileEnter($event)"
          (keypress)="tenantProfileEnter($event)"

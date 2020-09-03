@@ -20,25 +20,23 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
-  DeviceProfileData,
-  DeviceProfileType,
-  deviceProfileTypeConfigurationInfoMap,
-  DeviceTransportType, deviceTransportTypeConfigurationInfoMap
+  DeviceTransportConfiguration,
+  DeviceTransportType, MqttDeviceTransportConfiguration
 } from '@shared/models/device.models';
 
 @Component({
-  selector: 'tb-device-profile-data',
-  templateUrl: './device-profile-data.component.html',
+  selector: 'tb-mqtt-device-transport-configuration',
+  templateUrl: './mqtt-device-transport-configuration.component.html',
   styleUrls: [],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DeviceProfileDataComponent),
+    useExisting: forwardRef(() => MqttDeviceTransportConfigurationComponent),
     multi: true
   }]
 })
-export class DeviceProfileDataComponent implements ControlValueAccessor, OnInit {
+export class MqttDeviceTransportConfigurationComponent implements ControlValueAccessor, OnInit {
 
-  deviceProfileDataFormGroup: FormGroup;
+  mqttDeviceTransportConfigurationFormGroup: FormGroup;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -51,9 +49,6 @@ export class DeviceProfileDataComponent implements ControlValueAccessor, OnInit 
 
   @Input()
   disabled: boolean;
-
-  displayProfileConfiguration: boolean;
-  displayTransportConfiguration: boolean;
 
   private propagateChange = (v: any) => { };
 
@@ -69,11 +64,10 @@ export class DeviceProfileDataComponent implements ControlValueAccessor, OnInit 
   }
 
   ngOnInit() {
-    this.deviceProfileDataFormGroup = this.fb.group({
-      configuration: [null, Validators.required],
-      transportConfiguration: [null, Validators.required]
+    this.mqttDeviceTransportConfigurationFormGroup = this.fb.group({
+      configuration: [null, Validators.required]
     });
-    this.deviceProfileDataFormGroup.valueChanges.subscribe(() => {
+    this.mqttDeviceTransportConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
   }
@@ -81,28 +75,22 @@ export class DeviceProfileDataComponent implements ControlValueAccessor, OnInit 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.deviceProfileDataFormGroup.disable({emitEvent: false});
+      this.mqttDeviceTransportConfigurationFormGroup.disable({emitEvent: false});
     } else {
-      this.deviceProfileDataFormGroup.enable({emitEvent: false});
+      this.mqttDeviceTransportConfigurationFormGroup.enable({emitEvent: false});
     }
   }
 
-  writeValue(value: DeviceProfileData | null): void {
-    const deviceProfileType = value?.configuration?.type;
-    this.displayProfileConfiguration = deviceProfileType &&
-      deviceProfileTypeConfigurationInfoMap.get(deviceProfileType).hasProfileConfiguration;
-    const deviceTransportType = value?.transportConfiguration?.type;
-    this.displayTransportConfiguration = deviceTransportType &&
-      deviceTransportTypeConfigurationInfoMap.get(deviceTransportType).hasProfileConfiguration;
-    this.deviceProfileDataFormGroup.patchValue({configuration: value?.configuration}, {emitEvent: false});
-    this.deviceProfileDataFormGroup.patchValue({transportConfiguration: value?.transportConfiguration}, {emitEvent: false});
+  writeValue(value: MqttDeviceTransportConfiguration | null): void {
+    this.mqttDeviceTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
   }
 
   private updateModel() {
-    let deviceProfileData: DeviceProfileData = null;
-    if (this.deviceProfileDataFormGroup.valid) {
-      deviceProfileData = this.deviceProfileDataFormGroup.getRawValue();
+    let configuration: DeviceTransportConfiguration = null;
+    if (this.mqttDeviceTransportConfigurationFormGroup.valid) {
+      configuration = this.mqttDeviceTransportConfigurationFormGroup.getRawValue().configuration;
+      configuration.type = DeviceTransportType.MQTT;
     }
-    this.propagateChange(deviceProfileData);
+    this.propagateChange(configuration);
   }
 }

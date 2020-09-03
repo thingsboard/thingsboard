@@ -96,6 +96,8 @@ import { DefaultDeviceProfileTransportConfigurationComponent } from './profile/d
 import { DeviceProfileTransportConfigurationComponent } from './profile/device/device-profile-transport-configuration.component';
 import { DeviceProfileDialogComponent } from './profile/device-profile-dialog.component';
 import { DeviceProfileAutocompleteComponent } from './profile/device-profile-autocomplete.component';
+import { MqttDeviceProfileTransportConfigurationComponent } from './profile/device/mqtt-device-profile-transport-configuration.component';
+import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/device/lwm2m-device-profile-transport-configuration.component';
 
 @NgModule({
   declarations:
@@ -171,6 +173,8 @@ import { DeviceProfileAutocompleteComponent } from './profile/device-profile-aut
       DefaultDeviceProfileConfigurationComponent,
       DeviceProfileConfigurationComponent,
       DefaultDeviceProfileTransportConfigurationComponent,
+      MqttDeviceProfileTransportConfigurationComponent,
+      Lwm2mDeviceProfileTransportConfigurationComponent,
       DeviceProfileTransportConfigurationComponent,
       DeviceProfileDataComponent,
       DeviceProfileComponent,
@@ -239,6 +243,8 @@ import { DeviceProfileAutocompleteComponent } from './profile/device-profile-aut
     DefaultDeviceProfileConfigurationComponent,
     DeviceProfileConfigurationComponent,
     DefaultDeviceProfileTransportConfigurationComponent,
+    MqttDeviceProfileTransportConfigurationComponent,
+    Lwm2mDeviceProfileTransportConfigurationComponent,
     DeviceProfileTransportConfigurationComponent,
     DeviceProfileDataComponent,
     DeviceProfileComponent,

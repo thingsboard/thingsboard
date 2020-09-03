@@ -129,23 +129,6 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
     }
 
     @Test(expected = DataValidationException.class)
-    public void testSaveSameDeviceWithDifferentDeviceProfileId() {
-        Device device = new Device();
-        device.setName("My device");
-        device.setType("default");
-        device.setTenantId(tenantId);
-        device = deviceService.saveDevice(device);
-        DeviceProfile deviceProfile2 = this.createDeviceProfile(tenantId,"Device Profile 2");
-        DeviceProfile savedDeviceProfile2 = deviceProfileService.saveDeviceProfile(deviceProfile2);
-        device.setDeviceProfileId(savedDeviceProfile2.getId());
-        try {
-            deviceService.saveDevice(device);
-        } finally {
-            deviceService.deleteDevice(tenantId, device.getId());
-        }
-    }
-    
-    @Test(expected = DataValidationException.class)
     public void testAssignDeviceToCustomerFromDifferentTenant() {
         Device device = new Device();
         device.setName("My device");

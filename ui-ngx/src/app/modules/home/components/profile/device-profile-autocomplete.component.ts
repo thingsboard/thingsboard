@@ -19,7 +19,7 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from 
 import { Observable } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { map, mergeMap, startWith, tap } from 'rxjs/operators';
+import { map, mergeMap, share, startWith, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -83,6 +83,8 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
 
   searchText = '';
 
+  private dirty = false;
+
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
@@ -115,9 +117,9 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
           }
           this.updateView(modelValue);
         }),
-        startWith<string | DeviceProfileInfo>(''),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-        mergeMap(name => this.fetchDeviceProfiles(name) )
+        mergeMap(name => this.fetchDeviceProfiles(name) ),
+        share()
       );
   }
 
@@ -144,13 +146,22 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
       this.deviceProfileService.getDeviceProfileInfo(value.id).subscribe(
         (profile) => {
           this.modelValue = new DeviceProfileId(profile.id.id);
-          this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(profile, {emitEvent: true});
+          this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(profile, {emitEvent: false});
+          this.deviceProfileChanged.emit(profile);
         }
       );
     } else {
       this.modelValue = null;
-      this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(null, {emitEvent: true});
+      this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(null, {emitEvent: false});
       this.selectDefaultDeviceProfileIfNeeded();
+    }
+    this.dirty = true;
+  }
+
+  onFocus() {
+    if (this.dirty) {
+      this.selectDeviceProfileFormGroup.get('deviceProfile').updateValueAndValidity({onlySelf: true, emitEvent: true});
+      this.dirty = false;
     }
   }
 

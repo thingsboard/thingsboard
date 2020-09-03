@@ -19,7 +19,11 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Valida
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { DeviceData } from '@shared/models/device.models';
+import {
+  DeviceData,
+  deviceProfileTypeConfigurationInfoMap,
+  deviceTransportTypeConfigurationInfoMap
+} from '@shared/models/device.models';
 
 @Component({
   selector: 'tb-device-data',
@@ -46,6 +50,9 @@ export class DeviceDataComponent implements ControlValueAccessor, OnInit {
 
   @Input()
   disabled: boolean;
+
+  displayDeviceConfiguration: boolean;
+  displayTransportConfiguration: boolean;
 
   private propagateChange = (v: any) => { };
 
@@ -80,6 +87,12 @@ export class DeviceDataComponent implements ControlValueAccessor, OnInit {
   }
 
   writeValue(value: DeviceData | null): void {
+    const deviceProfileType = value?.configuration?.type;
+    this.displayDeviceConfiguration = deviceProfileType &&
+      deviceProfileTypeConfigurationInfoMap.get(deviceProfileType).hasDeviceConfiguration;
+    const deviceTransportType = value?.transportConfiguration?.type;
+    this.displayTransportConfiguration = deviceTransportType &&
+      deviceTransportTypeConfigurationInfoMap.get(deviceTransportType).hasDeviceConfiguration;
     this.deviceDataFormGroup.patchValue({configuration: value?.configuration}, {emitEvent: false});
     this.deviceDataFormGroup.patchValue({transportConfiguration: value?.transportConfiguration}, {emitEvent: false});
   }
