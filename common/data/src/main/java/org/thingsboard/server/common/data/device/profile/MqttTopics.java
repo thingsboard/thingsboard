@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.mqtt;
+package org.thingsboard.server.common.data.device.profile;
 
 /**
  * Created by ashvayka on 19.01.17.

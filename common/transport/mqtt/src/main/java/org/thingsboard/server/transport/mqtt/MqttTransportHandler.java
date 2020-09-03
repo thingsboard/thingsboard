@@ -39,9 +39,9 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.SessionMsgListener;
-import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -50,10 +50,8 @@ import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
@@ -514,6 +512,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             ctx.close();
         } else {
             deviceSessionCtx.setDeviceInfo(msg.getDeviceInfo());
+//            deviceSessionCtx.setProfile(msg.getDeviceProfile());
             sessionInfo = SessionInfoCreator.create(msg, context, sessionId);
             transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), new TransportServiceCallback<Void>() {
                 @Override
