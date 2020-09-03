@@ -59,6 +59,9 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     private DeviceProfileDao deviceProfileDao;
 
     @Autowired
+    private DeviceDao deviceDao;
+
+    @Autowired
     private TenantDao tenantDao;
 
     @Autowired
@@ -241,6 +244,12 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                     if (StringUtils.isEmpty(deviceProfile.getName())) {
                         throw new DataValidationException("Device profile name should be specified!");
                     }
+                    if (deviceProfile.getType() == null) {
+                        throw new DataValidationException("Device profile type should be specified!");
+                    }
+                    if (deviceProfile.getTransportType() == null) {
+                        throw new DataValidationException("Device profile transport type should be specified!");
+                    }
                     if (deviceProfile.getTenantId() == null) {
                         throw new DataValidationException("Device profile should be assigned to tenant!");
                     } else {
@@ -262,8 +271,20 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                     DeviceProfile old = deviceProfileDao.findById(deviceProfile.getTenantId(), deviceProfile.getId().getId());
                     if (old == null) {
                         throw new DataValidationException("Can't update non existing device profile!");
-                    } else if (!old.getType().equals(deviceProfile.getType())) {
-                        throw new DataValidationException("Changing type of device profile is prohibited!");
+                    }
+                    boolean profileTypeChanged = !old.getType().equals(deviceProfile.getType());
+                    boolean transportTypeChanged = !old.getTransportType().equals(deviceProfile.getTransportType());
+                    if (profileTypeChanged || transportTypeChanged) {
+                        Long profileDeviceCount = deviceDao.countDevicesByDeviceProfileId(deviceProfile.getTenantId(), deviceProfile.getId().getId());
+                        if (profileDeviceCount > 0) {
+                            String message = null;
+                            if (profileTypeChanged) {
+                                message = "Can't change device profile type because devices referenced it!";
+                            } else if (transportTypeChanged) {
+                                message = "Can't change device profile transport type because devices referenced it!";
+                            }
+                            throw new DataValidationException(message);
+                        }
                     }
                 }
             };
