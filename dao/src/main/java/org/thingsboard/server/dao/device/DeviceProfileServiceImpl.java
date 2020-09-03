@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -171,7 +172,9 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         deviceProfile.setDescription("Default device profile");
         DeviceProfileData deviceProfileData = new DeviceProfileData();
         DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
+        DefaultDeviceProfileTransportConfiguration transportConfiguration = new DefaultDeviceProfileTransportConfiguration();
         deviceProfileData.setConfiguration(configuration);
+        deviceProfileData.setTransportConfiguration(transportConfiguration);
         deviceProfile.setProfileData(deviceProfileData);
         return saveDeviceProfile(deviceProfile);
     }
