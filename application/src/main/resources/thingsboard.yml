@@ -194,8 +194,21 @@ cassandra:
   url: "${CASSANDRA_URL:127.0.0.1:9042}"
   # Specify local datacenter name
   local_datacenter: "${CASSANDRA_LOCAL_DATACENTER:datacenter1}"
-  # Enable/disable secure connection
-  ssl: "${CASSANDRA_USE_SSL:false}"
+  ssl:
+    # Enable/disable secure connection
+    enabled: "${CASSANDRA_USE_SSL:false}"
+    # Enable/disable validation of Cassandra server hostname
+    # If enabled, hostname of Cassandra server must match CN of server certificate
+    hostname_validation: "${CASSANDRA_SSL_HOSTNAME_VALIDATION:true}"
+    # Set trust store for client authentication of server (optional, uses trust store from default SSLContext if not set)
+    trust_store: "${CASSANDRA_SSL_TRUST_STORE:}"
+    trust_store_password: "${CASSANDRA_SSL_TRUST_STORE_PASSWORD:}"
+    # Set key store for server authentication of client (optional, uses key store from default SSLContext if not set)
+    # A key store is only needed if the Cassandra server requires client authentication
+    key_store: "${CASSANDRA_SSL_KEY_STORE:}"
+    key_store_password: "${CASSANDRA_SSL_KEY_STORE_PASSWORD:}"
+    # Comma separated list of cipher suites (optional, uses Java default cipher suites if not set)
+    cipher_suites: "${CASSANDRA_SSL_CIPHER_SUITES:}"
   # Enable/disable JMX
   jmx: "${CASSANDRA_USE_JMX:false}"
   # Enable/disable metrics collection.
