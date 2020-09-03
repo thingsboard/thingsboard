@@ -141,7 +141,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
   }
 
   onDeviceProfileChanged(deviceProfile: DeviceProfileInfo) {
-    if (deviceProfile) {
+    if (deviceProfile && this.isEdit) {
       const deviceProfileType: DeviceProfileType = deviceProfile.type;
       const deviceTransportType: DeviceTransportType = deviceProfile.transportType;
       let deviceData: DeviceData = this.entityForm.getRawValue().deviceData;
@@ -151,6 +151,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
           transportConfiguration: createDeviceTransportConfiguration(deviceTransportType)
         };
         this.entityForm.patchValue({deviceData});
+        this.entityForm.markAsDirty();
       } else {
         let changed = false;
         if (deviceData.configuration.type !== deviceProfileType) {
@@ -163,6 +164,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
         }
         if (changed) {
           this.entityForm.patchValue({deviceData});
+          this.entityForm.markAsDirty();
         }
       }
     }

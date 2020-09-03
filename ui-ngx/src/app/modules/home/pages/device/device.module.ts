@@ -29,12 +29,16 @@ import { DeviceConfigurationComponent } from './data/device-configuration.compon
 import { DeviceDataComponent } from './data/device-data.component';
 import { DefaultDeviceTransportConfigurationComponent } from './data/default-device-transport-configuration.component';
 import { DeviceTransportConfigurationComponent } from './data/device-transport-configuration.component';
+import { MqttDeviceTransportConfigurationComponent } from './data/mqtt-device-transport-configuration.component';
+import { Lwm2mDeviceTransportConfigurationComponent } from './data/lwm2m-device-transport-configuration.component';
 
 @NgModule({
   declarations: [
     DefaultDeviceConfigurationComponent,
     DeviceConfigurationComponent,
     DefaultDeviceTransportConfigurationComponent,
+    MqttDeviceTransportConfigurationComponent,
+    Lwm2mDeviceTransportConfigurationComponent,
     DeviceTransportConfigurationComponent,
     DeviceDataComponent,
     DeviceComponent,

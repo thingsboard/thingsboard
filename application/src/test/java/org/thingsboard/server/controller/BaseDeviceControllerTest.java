@@ -238,21 +238,6 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testSaveSameDeviceWithDifferentDeviceProfileId() throws Exception {
-        Device device = new Device();
-        device.setName("My device");
-        device.setType("default");
-        Device savedDevice = doPost("/api/device", device, Device.class);
-        DeviceProfile deviceProfile2 = this.createDeviceProfile("Device Profile 2");
-        DeviceProfile savedDeviceProfile2 = doPost("/api/deviceProfile", deviceProfile2, DeviceProfile.class);
-
-        savedDevice.setDeviceProfileId(savedDeviceProfile2.getId());
-
-        doPost("/api/device/", savedDevice).andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Changing device profile is prohibited")));
-    }
-
-    @Test
     public void testAssignDeviceToCustomerFromDifferentTenant() throws Exception {
         loginSysAdmin();
 

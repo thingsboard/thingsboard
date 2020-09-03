@@ -19,6 +19,7 @@
   <input matInput type="text" placeholder="{{ 'device-profile.device-profile' | translate }}"
          #deviceProfileInput
          formControlName="deviceProfile"
+         (focusin)="onFocus()"
          [required]="required"
          (keydown)="deviceProfileEnter($event)"
          (keypress)="deviceProfileEnter($event)"
