@@ -86,6 +86,8 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.DEVICE);
     this.config.entityResources = entityTypeResources.get(EntityType.DEVICE);
 
+    this.config.addDialogStyle = {width: '600px'};
+
     this.config.deleteEntityTitle = device => this.translate.instant('device.delete-device-title', { deviceName: device.name });
     this.config.deleteEntityContent = () => this.translate.instant('device.delete-device-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('device.delete-devices-title', {count});

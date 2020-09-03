@@ -24,9 +24,19 @@ import { DeviceCredentialsDialogComponent } from '@modules/home/pages/device/dev
 import { HomeDialogsModule } from '../../dialogs/home-dialogs.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
+import { DefaultDeviceConfigurationComponent } from './data/default-device-configuration.component';
+import { DeviceConfigurationComponent } from './data/device-configuration.component';
+import { DeviceDataComponent } from './data/device-data.component';
+import { DefaultDeviceTransportConfigurationComponent } from './data/default-device-transport-configuration.component';
+import { DeviceTransportConfigurationComponent } from './data/device-transport-configuration.component';
 
 @NgModule({
   declarations: [
+    DefaultDeviceConfigurationComponent,
+    DeviceConfigurationComponent,
+    DefaultDeviceTransportConfigurationComponent,
+    DeviceTransportConfigurationComponent,
+    DeviceDataComponent,
     DeviceComponent,
     DeviceTabsComponent,
     DeviceTableHeaderComponent,

@@ -94,6 +94,8 @@ import { DeviceProfileDataComponent } from './profile/device-profile-data.compon
 import { DeviceProfileComponent } from './profile/device-profile.component';
 import { DefaultDeviceProfileTransportConfigurationComponent } from './profile/device/default-device-profile-transport-configuration.component';
 import { DeviceProfileTransportConfigurationComponent } from './profile/device/device-profile-transport-configuration.component';
+import { DeviceProfileDialogComponent } from './profile/device-profile-dialog.component';
+import { DeviceProfileAutocompleteComponent } from './profile/device-profile-autocomplete.component';
 
 @NgModule({
   declarations:
@@ -165,12 +167,14 @@ import { DeviceProfileTransportConfigurationComponent } from './profile/device/d
       TenantProfileDataComponent,
       TenantProfileComponent,
       TenantProfileDialogComponent,
+      DeviceProfileAutocompleteComponent,
       DefaultDeviceProfileConfigurationComponent,
       DeviceProfileConfigurationComponent,
       DefaultDeviceProfileTransportConfigurationComponent,
       DeviceProfileTransportConfigurationComponent,
       DeviceProfileDataComponent,
-      DeviceProfileComponent
+      DeviceProfileComponent,
+      DeviceProfileDialogComponent
     ],
   imports: [
     CommonModule,
@@ -231,12 +235,14 @@ import { DeviceProfileTransportConfigurationComponent } from './profile/device/d
     TenantProfileDataComponent,
     TenantProfileComponent,
     TenantProfileDialogComponent,
+    DeviceProfileAutocompleteComponent,
     DefaultDeviceProfileConfigurationComponent,
     DeviceProfileConfigurationComponent,
     DefaultDeviceProfileTransportConfigurationComponent,
     DeviceProfileTransportConfigurationComponent,
     DeviceProfileDataComponent,
-    DeviceProfileComponent
+    DeviceProfileComponent,
+    DeviceProfileDialogComponent
   ],
   providers: [
     WidgetComponentService,

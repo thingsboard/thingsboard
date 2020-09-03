@@ -748,7 +748,9 @@
         "import": "Import device",
         "device-file": "Device file",
         "search": "Search devices",
-        "selected-devices": "{ count, plural, 1 {1 device} other {# devices} } selected"
+        "selected-devices": "{ count, plural, 1 {1 device} other {# devices} } selected",
+        "device-configuration": "Device configuration",
+        "transport-configuration": "Transport configuration"
     },
     "device-profile": {
         "device-profile": "Device profile",

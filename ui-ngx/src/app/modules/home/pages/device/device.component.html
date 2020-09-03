@@ -83,6 +83,13 @@
           {{ 'device.name-required' | translate }}
         </mat-error>
       </mat-form-field>
+      <tb-device-profile-autocomplete
+        [selectDefaultProfile]="isAdd"
+        required
+        formControlName="deviceProfileId"
+        (deviceProfileUpdated)="onDeviceProfileUpdated()"
+        (deviceProfileChanged)="onDeviceProfileChanged($event)">
+      </tb-device-profile-autocomplete>
       <tb-entity-subtype-autocomplete
         formControlName="type"
         [required]="true"
@@ -93,6 +100,10 @@
         <mat-label translate>device.label</mat-label>
         <input matInput formControlName="label">
       </mat-form-field>
+      <tb-device-data
+        formControlName="deviceData"
+        required>
+      </tb-device-data>
       <div formGroupName="additionalInfo" fxLayout="column">
         <mat-checkbox fxFlex formControlName="gateway" style="padding-bottom: 16px;">
           {{ 'device.is-gateway' | translate }}

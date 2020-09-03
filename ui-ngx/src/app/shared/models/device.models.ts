@@ -91,6 +91,19 @@ export function createDeviceProfileConfiguration(type: DeviceProfileType): Devic
   return configuration;
 }
 
+export function createDeviceConfiguration(type: DeviceProfileType): DeviceConfiguration {
+  let configuration: DeviceConfiguration = null;
+  if (type) {
+    switch (type) {
+      case DeviceProfileType.DEFAULT:
+        const defaultConfiguration: DefaultDeviceConfiguration = {};
+        configuration = {...defaultConfiguration, type: DeviceProfileType.DEFAULT};
+        break;
+    }
+  }
+  return configuration;
+}
+
 export function createDeviceProfileTransportConfiguration(type: DeviceTransportType): DeviceProfileTransportConfiguration {
   let transportConfiguration: DeviceProfileTransportConfiguration = null;
   if (type) {
@@ -112,6 +125,27 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
   return transportConfiguration;
 }
 
+export function createDeviceTransportConfiguration(type: DeviceTransportType): DeviceTransportConfiguration {
+  let transportConfiguration: DeviceTransportConfiguration = null;
+  if (type) {
+    switch (type) {
+      case DeviceTransportType.DEFAULT:
+        const defaultTransportConfiguration: DefaultDeviceTransportConfiguration = {};
+        transportConfiguration = {...defaultTransportConfiguration, type: DeviceTransportType.DEFAULT};
+        break;
+      case DeviceTransportType.MQTT:
+        const mqttTransportConfiguration: MqttDeviceTransportConfiguration = {};
+        transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
+        break;
+      case DeviceTransportType.LWM2M:
+        const lwm2mTransportConfiguration: Lwm2mDeviceTransportConfiguration = {};
+        transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
+        break;
+    }
+  }
+  return transportConfiguration;
+}
+
 export interface DeviceProfileData {
   configuration: DeviceProfileConfiguration;
   transportConfiguration: DeviceProfileTransportConfiguration;
@@ -121,7 +155,7 @@ export interface DeviceProfile extends BaseData<DeviceProfileId> {
   tenantId?: TenantId;
   name: string;
   description?: string;
-  default: boolean;
+  default?: boolean;
   type: DeviceProfileType;
   transportType: DeviceTransportType;
   defaultRuleChainId?: RuleChainId;

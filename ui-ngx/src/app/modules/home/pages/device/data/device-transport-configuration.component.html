@@ -15,13 +15,13 @@
     limitations under the License.
 
 -->
-<div [formGroup]="deviceProfileTransportConfigurationFormGroup">
+<div [formGroup]="deviceTransportConfigurationFormGroup">
   <div [ngSwitch]="transportType">
     <ng-template [ngSwitchCase]="deviceTransportType.DEFAULT">
-      <tb-default-device-profile-transport-configuration
+      <tb-default-device-transport-configuration
         [required]="required"
         formControlName="configuration">
-      </tb-default-device-profile-transport-configuration>
+      </tb-default-device-transport-configuration>
     </ng-template>
   </div>
 </div>

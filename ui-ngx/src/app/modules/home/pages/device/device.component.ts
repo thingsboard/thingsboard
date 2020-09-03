@@ -19,7 +19,16 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DeviceInfo } from '@shared/models/device.models';
+import {
+  createDeviceConfiguration,
+  createDeviceProfileConfiguration, createDeviceTransportConfiguration,
+  DeviceData,
+  DeviceInfo,
+  DeviceProfileData,
+  DeviceProfileInfo,
+  DeviceProfileType,
+  DeviceTransportType
+} from '@shared/models/device.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
@@ -124,6 +133,38 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
           }
         }
       );
+    }
+  }
+
+  onDeviceProfileUpdated() {
+    this.entitiesTableConfig.table.updateData(false);
+  }
+
+  onDeviceProfileChanged(deviceProfile: DeviceProfileInfo) {
+    if (deviceProfile) {
+      const deviceProfileType: DeviceProfileType = deviceProfile.type;
+      const deviceTransportType: DeviceTransportType = deviceProfile.transportType;
+      let deviceData: DeviceData = this.entityForm.getRawValue().deviceData;
+      if (!deviceData) {
+        deviceData = {
+          configuration: createDeviceConfiguration(deviceProfileType),
+          transportConfiguration: createDeviceTransportConfiguration(deviceTransportType)
+        };
+        this.entityForm.patchValue({deviceData});
+      } else {
+        let changed = false;
+        if (deviceData.configuration.type !== deviceProfileType) {
+          deviceData.configuration = createDeviceConfiguration(deviceProfileType);
+          changed = true;
+        }
+        if (deviceData.transportConfiguration.type !== deviceTransportType) {
+          deviceData.transportConfiguration = createDeviceTransportConfiguration(deviceTransportType);
+          changed = true;
+        }
+        if (changed) {
+          this.entityForm.patchValue({deviceData});
+        }
+      }
     }
   }
 }
