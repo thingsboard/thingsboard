@@ -151,7 +151,7 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
     public void testSaveSameDeviceProfileWithDifferentType() {
         DeviceProfile deviceProfile = this.createDeviceProfile(tenantId,"Device Profile");
         DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
-        //TODO: once we have mode profile types, we should test that we can not change profile type in runtime and uncomment the @Ignore.
+        //TODO: once we have more profile types, we should test that we can not change profile type in runtime and uncomment the @Ignore.
 //        savedDeviceProfile.setType(DeviceProfileType.LWM2M);
         deviceProfileService.saveDeviceProfile(savedDeviceProfile);
     }

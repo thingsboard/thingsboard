@@ -14,7 +14,6 @@
 -- limitations under the License.
 --
 
-
 CREATE TABLE IF NOT EXISTS admin_settings (
     id uuid NOT NULL CONSTRAINT admin_settings_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
@@ -129,7 +128,7 @@ CREATE TABLE IF NOT EXISTS device_profile (
     name varchar(255),
     type varchar(255),
     transport_type varchar(255),
-    profile_data varchar,
+    profile_data jsonb,
     description varchar,
     search_text varchar(255),
     is_default boolean,
@@ -144,7 +143,7 @@ CREATE TABLE IF NOT EXISTS device (
     additional_info varchar,
     customer_id uuid,
     device_profile_id uuid NOT NULL,
-    device_data varchar,
+    device_data jsonb,
     type varchar(255),
     name varchar(255),
     label varchar(255),
@@ -206,7 +205,7 @@ CREATE TABLE IF NOT EXISTS tenant_profile (
     id uuid NOT NULL CONSTRAINT tenant_profile_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     name varchar(255),
-    profile_data varchar,
+    profile_data jsonb,
     description varchar,
     search_text varchar(255),
     is_default boolean,

@@ -28,6 +28,7 @@ import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.server.dao.util.mapping.JsonBinaryType;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
@@ -37,7 +38,7 @@ import javax.persistence.Table;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@TypeDef(name = "json", typeClass = JsonStringType.class)
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = ModelConstants.TENANT_PROFILE_COLUMN_FAMILY_NAME)
 public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> implements SearchTextEntity<TenantProfile> {
 
@@ -59,8 +60,8 @@ public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> impl
     @Column(name = ModelConstants.TENANT_PROFILE_ISOLATED_TB_RULE_ENGINE)
     private boolean isolatedTbRuleEngine;
 
-    @Type(type = "json")
-    @Column(name = ModelConstants.TENANT_PROFILE_PROFILE_DATA_PROPERTY)
+    @Type(type = "jsonb")
+    @Column(name = ModelConstants.TENANT_PROFILE_PROFILE_DATA_PROPERTY, columnDefinition = "jsonb")
     private JsonNode profileData;
 
     public TenantProfileEntity() {
