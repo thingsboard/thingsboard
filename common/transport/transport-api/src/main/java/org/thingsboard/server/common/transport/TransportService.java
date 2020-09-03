@@ -17,6 +17,8 @@ package org.thingsboard.server.common.transport;
 
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
@@ -44,13 +46,13 @@ public interface TransportService {
     GetTenantRoutingInfoResponseMsg getRoutingInfo(GetTenantRoutingInfoRequestMsg msg);
 
     void process(ValidateDeviceTokenRequestMsg msg,
-                 TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback);
+                 TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
 
     void process(ValidateDeviceX509CertRequestMsg msg,
-                 TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback);
+                 TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
 
     void process(GetOrCreateDeviceFromGatewayRequestMsg msg,
-                 TransportServiceCallback<GetOrCreateDeviceFromGatewayResponseMsg> callback);
+                 TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse> callback);
 
     void getDeviceProfile(DeviceProfileId deviceProfileId, TransportServiceCallback<DeviceProfile> callback);
 

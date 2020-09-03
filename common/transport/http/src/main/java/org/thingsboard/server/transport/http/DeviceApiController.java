@@ -36,6 +36,8 @@ import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
@@ -200,7 +202,7 @@ public class DeviceApiController {
         return responseWriter;
     }
 
-    private static class DeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> {
+    private static class DeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponse> {
         private final TransportContext transportContext;
         private final DeferredResult<ResponseEntity> responseWriter;
         private final Consumer<SessionInfoProto> onSuccess;
@@ -212,22 +214,9 @@ public class DeviceApiController {
         }
 
         @Override
-        public void onSuccess(ValidateDeviceCredentialsResponseMsg msg) {
+        public void onSuccess(ValidateDeviceCredentialsResponse msg) {
             if (msg.hasDeviceInfo()) {
-                UUID sessionId = UUID.randomUUID();
-                DeviceInfoProto deviceInfoProto = msg.getDeviceInfo();
-                SessionInfoProto sessionInfo = SessionInfoProto.newBuilder()
-                        .setNodeId(transportContext.getNodeId())
-                        .setTenantIdMSB(deviceInfoProto.getTenantIdMSB())
-                        .setTenantIdLSB(deviceInfoProto.getTenantIdLSB())
-                        .setDeviceIdMSB(deviceInfoProto.getDeviceIdMSB())
-                        .setDeviceIdLSB(deviceInfoProto.getDeviceIdLSB())
-                        .setSessionIdMSB(sessionId.getMostSignificantBits())
-                        .setSessionIdLSB(sessionId.getLeastSignificantBits())
-                        .setDeviceName(msg.getDeviceInfo().getDeviceName())
-                        .setDeviceType(msg.getDeviceInfo().getDeviceType())
-                        .build();
-                onSuccess.accept(sessionInfo);
+                onSuccess.accept(SessionInfoCreator.create(msg, transportContext, UUID.randomUUID()));
             } else {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
             }

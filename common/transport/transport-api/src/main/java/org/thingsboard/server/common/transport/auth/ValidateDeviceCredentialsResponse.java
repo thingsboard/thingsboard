@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.transport.auth;
 
+import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.DeviceProfile;
 
 @Data
-public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
+@Builder
+public class ValidateDeviceCredentialsResponse implements DeviceProfileAware {
 
-    private String deviceTelemetryTopic = MqttTopics.DEVICE_TELEMETRY_TOPIC;
-    private String deviceAttributesTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
-    private String deviceRpcRequestTopic = MqttTopics.DEVICE_RPC_REQUESTS_TOPIC;
-    private String deviceRpcResponseTopic = MqttTopics.DEVICE_RPC_RESPONSE_TOPIC;
+    private final TransportDeviceInfo deviceInfo;
+    private final DeviceProfile deviceProfile;
+    private final String credentials;
 
-    @Override
-    public DeviceTransportType getType() {
-        return DeviceTransportType.MQTT;
+    public boolean hasDeviceInfo() {
+        return deviceInfo != null;
     }
-
 }
