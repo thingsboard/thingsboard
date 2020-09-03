@@ -27,7 +27,7 @@ import java.util.UUID;
 
 public interface DeviceProfileRepository extends PagingAndSortingRepository<DeviceProfileEntity, UUID> {
 
-    @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.name, d.type) " +
+    @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.name, d.type, d.transportType) " +
             "FROM DeviceProfileEntity d " +
             "WHERE d.id = :deviceProfileId")
     DeviceProfileInfo findDeviceProfileInfoById(@Param("deviceProfileId") UUID deviceProfileId);
@@ -38,7 +38,7 @@ public interface DeviceProfileRepository extends PagingAndSortingRepository<Devi
                                                  @Param("textSearch") String textSearch,
                                                  Pageable pageable);
 
-    @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.name, d.type) " +
+    @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.name, d.type, d.transportType) " +
             "FROM DeviceProfileEntity d WHERE " +
             "d.tenantId = :tenantId AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
     Page<DeviceProfileInfo> findDeviceProfileInfos(@Param("tenantId") UUID tenantId,
@@ -49,7 +49,7 @@ public interface DeviceProfileRepository extends PagingAndSortingRepository<Devi
             "WHERE d.tenantId = :tenantId AND d.isDefault = true")
     DeviceProfileEntity findByDefaultTrueAndTenantId(@Param("tenantId") UUID tenantId);
 
-    @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.name, d.type) " +
+    @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.name, d.type, d.transportType) " +
             "FROM DeviceProfileEntity d " +
             "WHERE d.tenantId = :tenantId AND d.isDefault = true")
     DeviceProfileInfo findDefaultDeviceProfileInfo(@Param("tenantId") UUID tenantId);

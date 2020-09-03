@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.service;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -145,11 +146,13 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         deviceProfileService.saveDeviceProfile(deviceProfile2);
     }
 
+    @Ignore
     @Test(expected = DataValidationException.class)
     public void testSaveSameDeviceProfileWithDifferentType() {
         DeviceProfile deviceProfile = this.createDeviceProfile(tenantId,"Device Profile");
         DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
-        savedDeviceProfile.setType(DeviceProfileType.LWM2M);
+        //TODO: once we have mode profile types, we should test that we can not change profile type in runtime and uncomment the @Ignore.
+//        savedDeviceProfile.setType(DeviceProfileType.LWM2M);
         deviceProfileService.saveDeviceProfile(savedDeviceProfile);
     }
 
@@ -247,8 +250,9 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         Collections.sort(deviceProfiles, idComparator);
         Collections.sort(loadedDeviceProfileInfos, deviceProfileInfoIdComparator);
 
-        List<DeviceProfileInfo> deviceProfileInfos = deviceProfiles.stream().map(deviceProfile -> new DeviceProfileInfo(deviceProfile.getId(),
-                deviceProfile.getName(), deviceProfile.getType())).collect(Collectors.toList());
+        List<DeviceProfileInfo> deviceProfileInfos = deviceProfiles.stream()
+                .map(deviceProfile -> new DeviceProfileInfo(deviceProfile.getId(),
+                deviceProfile.getName(), deviceProfile.getType(), deviceProfile.getTransportType())).collect(Collectors.toList());
 
         Assert.assertEquals(deviceProfileInfos, loadedDeviceProfileInfos);
 

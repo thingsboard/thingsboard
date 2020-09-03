@@ -23,6 +23,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -57,6 +58,10 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
     @Column(name = ModelConstants.DEVICE_PROFILE_TYPE_PROPERTY)
     private DeviceProfileType type;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.DEVICE_PROFILE_TRANSPORT_TYPE_PROPERTY)
+    private DeviceTransportType transportType;
+
     @Column(name = ModelConstants.DEVICE_PROFILE_DESCRIPTION_PROPERTY)
     private String description;
 
@@ -87,6 +92,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         this.setCreatedTime(deviceProfile.getCreatedTime());
         this.name = deviceProfile.getName();
         this.type = deviceProfile.getType();
+        this.transportType = deviceProfile.getTransportType();
         this.description = deviceProfile.getDescription();
         this.isDefault = deviceProfile.isDefault();
         this.profileData = JacksonUtil.convertValue(deviceProfile.getProfileData(), ObjectNode.class);
@@ -118,6 +124,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         }
         deviceProfile.setName(name);
         deviceProfile.setType(type);
+        deviceProfile.setTransportType(transportType);
         deviceProfile.setDescription(description);
         deviceProfile.setDefault(isDefault);
         deviceProfile.setProfileData(JacksonUtil.convertValue(profileData, DeviceProfileData.class));

@@ -21,5 +21,6 @@ import lombok.Data;
 public class DeviceProfileData {
 
     private DeviceProfileConfiguration configuration;
+    private DeviceProfileTransportConfiguration transportConfiguration;
 
 }

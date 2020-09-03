@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data;
+package org.thingsboard.server.common.data;
 
-import lombok.Data;
-
-@Data
-public class DeviceData {
-
-    private DeviceConfiguration configuration;
-    private DeviceTransportConfiguration transportConfiguration;
-
+public enum DeviceTransportType {
+    DEFAULT,
+    MQTT,
+    LWM2M
 }

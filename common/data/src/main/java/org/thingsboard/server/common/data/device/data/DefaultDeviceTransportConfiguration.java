@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.device.data;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 
 @Data
-public class Lwm2mDeviceProfileConfiguration implements DeviceProfileConfiguration {
+public class DefaultDeviceTransportConfiguration implements DeviceTransportConfiguration {
 
     @Override
-    public DeviceProfileType getType() {
-        return DeviceProfileType.LWM2M;
+    public DeviceTransportType getType() {
+        return DeviceTransportType.DEFAULT;
     }
 
 }
