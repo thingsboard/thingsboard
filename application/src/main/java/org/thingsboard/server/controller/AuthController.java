@@ -235,6 +235,8 @@ public class AuthController extends BaseController {
                 }
             }
 
+            sendNotificationMsgToEdgeService(user.getTenantId(), user.getId(), ActionType.CREDENTIALS_UPDATED);
+
             JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
             JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
 

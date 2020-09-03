@@ -24,6 +24,8 @@ public final class EdgeUtils {
 
     public static EdgeEventType getEdgeEventTypeByEntityType(EntityType entityType) {
         switch (entityType) {
+            case EDGE:
+                return EdgeEventType.EDGE;
             case DEVICE:
                 return EdgeEventType.DEVICE;
             case ASSET:

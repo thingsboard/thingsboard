@@ -867,7 +867,7 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getRelationUpdateMsgList() != null && !uplinkMsg.getRelationUpdateMsgList().isEmpty()) {
                 for (RelationUpdateMsg relationUpdateMsg: uplinkMsg.getRelationUpdateMsgList()) {
-                    onRelationUpdate(relationUpdateMsg);
+                    result.add(onRelationUpdate(relationUpdateMsg));
                 }
             }
             if (uplinkMsg.getRuleChainMetadataRequestMsgList() != null && !uplinkMsg.getRuleChainMetadataRequestMsgList().isEmpty()) {
@@ -1170,11 +1170,13 @@ public final class EdgeGrpcSession implements Closeable {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
                     // TODO: voba - handle success
+                    log.debug("Successfully send ENTITY_CREATED EVENT to rule engine [{}]", device);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
                     // TODO: voba - handle failure
+                    log.debug("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", device, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
@@ -1262,12 +1264,12 @@ public final class EdgeGrpcSession implements Closeable {
             }
             return Futures.immediateFuture(null);
         } catch (Exception e) {
-            log.error("Error during finding existent alarm", e);
-            return Futures.immediateFailedFuture(new RuntimeException("Error during finding existent alarm", e));
+            log.error("Failed to process alarm update msg [{}]", alarmUpdateMsg, e);
+            return Futures.immediateFailedFuture(new RuntimeException("Failed to process alarm update msg", e));
         }
     }
 
-    private void onRelationUpdate(RelationUpdateMsg relationUpdateMsg) {
+    private ListenableFuture<Void> onRelationUpdate(RelationUpdateMsg relationUpdateMsg) {
         log.info("onRelationUpdate {}", relationUpdateMsg);
         try {
             EntityRelation entityRelation = new EntityRelation();
@@ -1297,8 +1299,10 @@ public final class EdgeGrpcSession implements Closeable {
                 case UNRECOGNIZED:
                     log.error("Unsupported msg type");
             }
+            return Futures.immediateFuture(null);
         } catch (Exception e) {
-            log.error("Error during relation update msg", e);
+            log.error("Failed to process relation update msg [{}]", relationUpdateMsg, e);
+            return Futures.immediateFailedFuture(new RuntimeException("Failed to process relation update msg", e));
         }
     }
 
