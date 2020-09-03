@@ -575,7 +575,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   updateDataVisibility(index: number): void {
     if (this.displayLegend) {
-      const hidden = this.legendData.keys[index].dataKey.hidden;
+      const hidden = this.legendData.keys.find(key => key.dataIndex === index).dataKey.hidden;
       if (hidden) {
         this.hiddenData[index].data = this.data[index].data;
         this.data[index].data = [];
@@ -1226,6 +1226,9 @@ export class WidgetSubscription implements IWidgetSubscription {
         });
       });
     }
+    if (this.displayLegend) {
+      this.legendData.keys = this.legendData.keys.sort((key1, key2) => key1.dataKey.label.localeCompare(key2.dataKey.label));
+    }
     if (this.caulculateLegendData) {
       this.data.forEach((dataSetHolder, keyIndex) => {
         this.updateLegend(keyIndex, dataSetHolder.data, false);
@@ -1328,7 +1331,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private updateLegend(dataIndex: number, data: DataSet, detectChanges: boolean) {
-    const dataKey = this.legendData.keys[dataIndex].dataKey;
+    const dataKey = this.legendData.keys.find(key => key.dataIndex === dataIndex).dataKey;
     const decimals = isDefined(dataKey.decimals) ? dataKey.decimals : this.decimals;
     const units = dataKey.units && dataKey.units.length ? dataKey.units : this.units;
     const legendKeyData = this.legendData.data[dataIndex];
