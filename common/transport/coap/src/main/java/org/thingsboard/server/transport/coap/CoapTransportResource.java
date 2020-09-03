@@ -32,6 +32,8 @@ import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.lang.reflect.Field;
@@ -295,7 +297,7 @@ public class CoapTransportResource extends CoapResource {
         return this;
     }
 
-    private static class DeviceAuthCallback implements TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg> {
+    private static class DeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponse> {
         private final TransportContext transportContext;
         private final CoapExchange exchange;
         private final Consumer<TransportProtos.SessionInfoProto> onSuccess;
@@ -307,22 +309,9 @@ public class CoapTransportResource extends CoapResource {
         }
 
         @Override
-        public void onSuccess(TransportProtos.ValidateDeviceCredentialsResponseMsg msg) {
+        public void onSuccess(ValidateDeviceCredentialsResponse msg) {
             if (msg.hasDeviceInfo()) {
-                UUID sessionId = UUID.randomUUID();
-                TransportProtos.DeviceInfoProto deviceInfoProto = msg.getDeviceInfo();
-                TransportProtos.SessionInfoProto sessionInfo = TransportProtos.SessionInfoProto.newBuilder()
-                        .setNodeId(transportContext.getNodeId())
-                        .setTenantIdMSB(deviceInfoProto.getTenantIdMSB())
-                        .setTenantIdLSB(deviceInfoProto.getTenantIdLSB())
-                        .setDeviceIdMSB(deviceInfoProto.getDeviceIdMSB())
-                        .setDeviceIdLSB(deviceInfoProto.getDeviceIdLSB())
-                        .setSessionIdMSB(sessionId.getMostSignificantBits())
-                        .setSessionIdLSB(sessionId.getLeastSignificantBits())
-                        .setDeviceName(msg.getDeviceInfo().getDeviceName())
-                        .setDeviceType(msg.getDeviceInfo().getDeviceType())
-                        .build();
-                onSuccess.accept(sessionInfo);
+                onSuccess.accept(SessionInfoCreator.create(msg, transportContext, UUID.randomUUID()));
             } else {
                 exchange.respond(ResponseCode.UNAUTHORIZED);
             }
