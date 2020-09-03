@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportContext;
@@ -78,7 +79,7 @@ public class DeviceApiController {
                                                               @RequestParam(value = "sharedKeys", required = false, defaultValue = "") String sharedKeys,
                                                               HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
-        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+        transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     GetAttributeRequestMsg.Builder request = GetAttributeRequestMsg.newBuilder().setRequestId(0);
                     List<String> clientKeySet = !StringUtils.isEmpty(clientKeys) ? Arrays.asList(clientKeys.split(",")) : null;
@@ -100,7 +101,7 @@ public class DeviceApiController {
     public DeferredResult<ResponseEntity> postDeviceAttributes(@PathVariable("deviceToken") String deviceToken,
                                                                @RequestBody String json, HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
-        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+        transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
                     transportService.process(sessionInfo, JsonConverter.convertToAttributesProto(new JsonParser().parse(json)),
@@ -114,7 +115,7 @@ public class DeviceApiController {
     public DeferredResult<ResponseEntity> postTelemetry(@PathVariable("deviceToken") String deviceToken,
                                                         @RequestBody String json, HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
-        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+        transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
                     transportService.process(sessionInfo, JsonConverter.convertToTelemetryProto(new JsonParser().parse(json)),
@@ -128,7 +129,7 @@ public class DeviceApiController {
     public DeferredResult<ResponseEntity> claimDevice(@PathVariable("deviceToken") String deviceToken,
                                                       @RequestBody(required = false) String json, HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
-        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+        transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
                     DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
@@ -143,7 +144,7 @@ public class DeviceApiController {
                                                               @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
                                                               HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
-        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+        transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
                     transportService.registerSyncSession(sessionInfo, new HttpSessionListener(responseWriter),
@@ -160,7 +161,7 @@ public class DeviceApiController {
                                                          @PathVariable("requestId") Integer requestId,
                                                          @RequestBody String json, HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
-        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+        transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
                     transportService.process(sessionInfo, ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId).setPayload(json).build(), new HttpOkCallback(responseWriter));
@@ -172,7 +173,7 @@ public class DeviceApiController {
     public DeferredResult<ResponseEntity> postRpcRequest(@PathVariable("deviceToken") String deviceToken,
                                                          @RequestBody String json, HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
-        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+        transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     JsonObject request = new JsonParser().parse(json).getAsJsonObject();
                     TransportService transportService = transportContext.getTransportService();
@@ -190,7 +191,7 @@ public class DeviceApiController {
                                                                 @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
                                                                 HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
-        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+        transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
                     transportService.registerSyncSession(sessionInfo, new HttpSessionListener(responseWriter),

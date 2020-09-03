@@ -39,6 +39,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.SessionMsgListener;
@@ -366,7 +367,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD));
             ctx.close();
         } else {
-            transportService.process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(userName).build(),
+            transportService.process(DeviceTransportType.MQTT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(userName).build(),
                     new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
                         @Override
                         public void onSuccess(ValidateDeviceCredentialsResponse msg) {
@@ -387,7 +388,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             String strCert = SslUtil.getX509CertificateString(cert);
             String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-            transportService.process(ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
+            transportService.process(DeviceTransportType.MQTT, ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
                     new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
                         @Override
                         public void onSuccess(ValidateDeviceCredentialsResponse msg) {

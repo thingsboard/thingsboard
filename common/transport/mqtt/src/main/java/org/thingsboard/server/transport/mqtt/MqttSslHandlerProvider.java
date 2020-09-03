@@ -24,6 +24,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -157,7 +158,7 @@ public class MqttSslHandlerProvider {
                     String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
                     final String[] credentialsBodyHolder = new String[1];
                     CountDownLatch latch = new CountDownLatch(1);
-                    transportService.process(TransportProtos.ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
+                    transportService.process(DeviceTransportType.MQTT, TransportProtos.ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
                             new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
                                 @Override
                                 public void onSuccess(ValidateDeviceCredentialsResponse msg) {

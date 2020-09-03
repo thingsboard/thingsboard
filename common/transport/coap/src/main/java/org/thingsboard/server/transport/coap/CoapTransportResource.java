@@ -24,6 +24,7 @@ import org.eclipse.californium.core.network.ExchangeObserver;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.springframework.util.ReflectionUtils;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -145,7 +146,7 @@ public class CoapTransportResource extends CoapResource {
             return;
         }
 
-        transportService.process(TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(credentials.get().getCredentialsId()).build(),
+        transportService.process(DeviceTransportType.DEFAULT, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(credentials.get().getCredentialsId()).build(),
                 new DeviceAuthCallback(transportContext, exchange, sessionInfo -> {
                     UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
                     try {

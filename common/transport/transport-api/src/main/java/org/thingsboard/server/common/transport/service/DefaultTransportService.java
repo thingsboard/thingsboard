@@ -27,6 +27,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -252,20 +253,20 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public void process(TransportProtos.ValidateDeviceTokenRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+    public void process(DeviceTransportType transportType, TransportProtos.ValidateDeviceTokenRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         log.trace("Processing msg: {}", msg);
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateTokenRequestMsg(msg).build());
-        doProcess(protoMsg, callback);
+        doProcess(transportType, protoMsg, callback);
     }
 
     @Override
-    public void process(TransportProtos.ValidateDeviceX509CertRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+    public void process(DeviceTransportType transportType, TransportProtos.ValidateDeviceX509CertRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         log.trace("Processing msg: {}", msg);
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateX509CertRequestMsg(msg).build());
-        doProcess(protoMsg, callback);
+        doProcess(transportType, protoMsg, callback);
     }
 
-    private void doProcess(TbProtoQueueMsg<TransportApiRequestMsg> protoMsg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+    private void doProcess(DeviceTransportType transportType, TbProtoQueueMsg<TransportApiRequestMsg> protoMsg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         ListenableFuture<ValidateDeviceCredentialsResponse> response = Futures.transform(transportApiRequestTemplate.send(protoMsg), tmp -> {
             TransportProtos.ValidateDeviceCredentialsResponseMsg msg = tmp.getValue().getValidateTokenResponseMsg();
             ValidateDeviceCredentialsResponse.ValidateDeviceCredentialsResponseBuilder result = ValidateDeviceCredentialsResponse.builder();
@@ -282,6 +283,11 @@ public class DefaultTransportService implements TransportService {
                             profile = deviceProfile.get();
                             deviceProfiles.put(tdi.getDeviceProfileId(), profile);
                         }
+                    }
+                    if (transportType != DeviceTransportType.DEFAULT
+                            && profile != null && profile.getTransportType() != DeviceTransportType.DEFAULT && profile.getTransportType() != transportType) {
+                        log.debug("[{}] Device profile [{}] has different transport type: {}, expected: {}", tdi.getDeviceId(), tdi.getDeviceProfileId(), profile.getTransportType(), transportType);
+                        throw new IllegalStateException("Device profile has different transport type: " + profile.getTransportType() + ". Expected: " + transportType);
                     }
                     result.deviceProfile(profile);
                 }
