@@ -326,7 +326,7 @@ public abstract class AbstractWebTest {
         deviceProfileData.setTransportConfiguration(transportConfiguration);
         deviceProfile.setProfileData(deviceProfileData);
         deviceProfile.setDefault(false);
-        deviceProfile.setDefaultRuleChainId(new RuleChainId(Uuids.timeBased()));
+        deviceProfile.setDefaultRuleChainId(null);
         return deviceProfile;
     }
 

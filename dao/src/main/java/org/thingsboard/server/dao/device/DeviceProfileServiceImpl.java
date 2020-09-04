@@ -165,11 +165,21 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     @Override
     public DeviceProfile createDefaultDeviceProfile(TenantId tenantId) {
         log.trace("Executing createDefaultDeviceProfile tenantId [{}]", tenantId);
+        return doCreateDefaultDeviceProfile(tenantId, "Default", true);
+    }
+
+    @Override
+    public DeviceProfile createDeviceProfile(TenantId tenantId, String profileName) {
+        log.trace("Executing createDefaultDeviceProfile tenantId [{}], profileName [{}]", tenantId, profileName);
+        return doCreateDefaultDeviceProfile(tenantId, profileName, false);
+    }
+
+    private DeviceProfile doCreateDefaultDeviceProfile(TenantId tenantId, String profileName, boolean defaultProfile) {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setTenantId(tenantId);
-        deviceProfile.setDefault(true);
-        deviceProfile.setName("Default");
+        deviceProfile.setDefault(defaultProfile);
+        deviceProfile.setName(profileName);
         deviceProfile.setType(DeviceProfileType.DEFAULT);
         deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
         deviceProfile.setDescription("Default device profile");

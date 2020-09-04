@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
@@ -208,7 +209,7 @@ public abstract class AbstractServiceTest {
         deviceProfileData.setTransportConfiguration(transportConfiguration);
         deviceProfile.setProfileData(deviceProfileData);
         deviceProfile.setDefault(false);
-        deviceProfile.setDefaultRuleChainId(new RuleChainId(Uuids.timeBased()));
+        deviceProfile.setDefaultRuleChainId(null);
         return deviceProfile;
     }
 

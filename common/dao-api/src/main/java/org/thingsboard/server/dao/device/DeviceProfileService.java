@@ -41,6 +41,8 @@ public interface DeviceProfileService {
 
     DeviceProfile createDefaultDeviceProfile(TenantId tenantId);
 
+    DeviceProfile createDeviceProfile(TenantId tenantId, String profileName);
+
     DeviceProfile findDefaultDeviceProfile(TenantId tenantId);
 
     DeviceProfileInfo findDefaultDeviceProfileInfo(TenantId tenantId);

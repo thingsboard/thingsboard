@@ -15,30 +15,32 @@
 --
 
 CREATE TABLE IF NOT EXISTS device_profile (
-  id uuid NOT NULL CONSTRAINT device_profile_pkey PRIMARY KEY,
-  created_time bigint NOT NULL,
-  name varchar(255),
-  type varchar(255),
-  profile_data varchar,
-  description varchar,
-  search_text varchar(255),
-  is_default boolean,
-  tenant_id uuid,
-  default_rule_chain_id uuid,
-  CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name)
+    id uuid NOT NULL CONSTRAINT device_profile_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    name varchar(255),
+    type varchar(255),
+    transport_type varchar(255),
+    profile_data jsonb,
+    description varchar,
+    search_text varchar(255),
+    is_default boolean,
+    tenant_id uuid,
+    default_rule_chain_id uuid,
+    CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id)
 );
 
 CREATE TABLE IF NOT EXISTS tenant_profile (
-  id uuid NOT NULL CONSTRAINT tenant_profile_pkey PRIMARY KEY,
-  created_time bigint NOT NULL,
-  name varchar(255),
-  profile_data varchar,
-  description varchar,
-  search_text varchar(255),
-  is_default boolean,
-  isolated_tb_core boolean,
-  isolated_tb_rule_engine boolean,
-  CONSTRAINT tenant_profile_name_unq_key UNIQUE (name)
+    id uuid NOT NULL CONSTRAINT tenant_profile_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    name varchar(255),
+    profile_data jsonb,
+    description varchar,
+    search_text varchar(255),
+    is_default boolean,
+    isolated_tb_core boolean,
+    isolated_tb_rule_engine boolean,
+    CONSTRAINT tenant_profile_name_unq_key UNIQUE (name)
 );
 
 CREATE OR REPLACE PROCEDURE update_tenant_profiles()
@@ -71,9 +73,9 @@ CREATE OR REPLACE PROCEDURE update_device_profiles()
     LANGUAGE plpgsql AS
 $$
 BEGIN
-    UPDATE device as d SET device_profile_id = p.id, device_data = '{"configuration":{"type":"DEFAULT"}}'
+    UPDATE device as d SET device_profile_id = p.id, device_data = '{"configuration":{"type":"DEFAULT"}, "transportConfiguration":{"type":"DEFAULT"}}'
         FROM
-           (SELECT id, tenant_id from device_profile WHERE is_default = true) as p
-                WHERE d.device_profile_id IS NULL AND p.tenant_id = d.tenant_id;
+           (SELECT id, tenant_id, name from device_profile) as p
+                WHERE d.device_profile_id IS NULL AND p.tenant_id = d.tenant_id AND d.type = p.name;
 END;
 $$;

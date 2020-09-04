@@ -121,6 +121,30 @@ CREATE TABLE IF NOT EXISTS dashboard (
     title varchar(255)
 );
 
+CREATE TABLE IF NOT EXISTS rule_chain (
+    id uuid NOT NULL CONSTRAINT rule_chain_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    configuration varchar(10000000),
+    name varchar(255),
+    first_rule_node_id uuid,
+    root boolean,
+    debug_mode boolean,
+    search_text varchar(255),
+    tenant_id uuid
+);
+
+CREATE TABLE IF NOT EXISTS rule_node (
+    id uuid NOT NULL CONSTRAINT rule_node_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    rule_chain_id uuid,
+    additional_info varchar,
+    configuration varchar(10000000),
+    type varchar(255),
+    name varchar(255),
+    debug_mode boolean,
+    search_text varchar(255)
+);
 
 CREATE TABLE IF NOT EXISTS device_profile (
     id uuid NOT NULL CONSTRAINT device_profile_pkey PRIMARY KEY,
@@ -134,7 +158,8 @@ CREATE TABLE IF NOT EXISTS device_profile (
     is_default boolean,
     tenant_id uuid,
     default_rule_chain_id uuid,
-    CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name)
+    CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id)
 );
 
 CREATE TABLE IF NOT EXISTS device (
@@ -260,31 +285,6 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     search_text varchar(255),
     tenant_id uuid,
     title varchar(255)
-);
-
-CREATE TABLE IF NOT EXISTS rule_chain (
-    id uuid NOT NULL CONSTRAINT rule_chain_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    additional_info varchar,
-    configuration varchar(10000000),
-    name varchar(255),
-    first_rule_node_id uuid,
-    root boolean,
-    debug_mode boolean,
-    search_text varchar(255),
-    tenant_id uuid
-);
-
-CREATE TABLE IF NOT EXISTS rule_node (
-    id uuid NOT NULL CONSTRAINT rule_node_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    rule_chain_id uuid,
-    additional_info varchar,
-    configuration varchar(10000000),
-    type varchar(255),
-    name varchar(255),
-    debug_mode boolean,
-    search_text varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS entity_view (

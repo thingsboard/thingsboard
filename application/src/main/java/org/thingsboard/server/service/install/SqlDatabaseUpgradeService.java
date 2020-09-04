@@ -20,11 +20,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
@@ -39,6 +41,7 @@ import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.List;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
 import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
@@ -86,6 +89,9 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private DeviceService deviceService;
 
     @Autowired
     private DeviceProfileService deviceProfileService;
@@ -348,7 +354,14 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         do {
                             pageData = tenantService.findTenants(pageLink);
                             for (Tenant tenant : pageData.getData()) {
+                                List<EntitySubtype> deviceTypes = deviceService.findDeviceTypesByTenantId(tenant.getId()).get();
                                 deviceProfileService.findOrCreateDefaultDeviceProfile(tenant.getId());
+                                for (EntitySubtype deviceType : deviceTypes) {
+                                    try {
+                                        deviceProfileService.createDeviceProfile(tenant.getId(), deviceType.getType());
+                                    } catch (Exception e) {
+                                    }
+                                }
                             }
                             pageLink = pageLink.nextPageLink();
                         } while (pageData.hasNext());
