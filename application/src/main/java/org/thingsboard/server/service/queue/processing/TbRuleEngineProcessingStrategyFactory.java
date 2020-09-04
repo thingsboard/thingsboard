@@ -114,10 +114,8 @@ public class TbRuleEngineProcessingStrategyFactory {
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
-                        if (multiplyPauseBetweenRetries && maxPauseBetweenRetries > 0) {
-                            if (pauseBetweenRetries != maxPauseBetweenRetries) {
-                                pauseBetweenRetries = Math.min(maxPauseBetweenRetries, pauseBetweenRetries * pauseBetweenRetries);
-                            }
+                        if (multiplyPauseBetweenRetries && maxPauseBetweenRetries > pauseBetweenRetries) {
+                            pauseBetweenRetries = Math.min(maxPauseBetweenRetries, pauseBetweenRetries * 2);
                         }
                     }
                     return new TbRuleEngineProcessingDecision(false, toReprocess);
