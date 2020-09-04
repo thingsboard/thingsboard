@@ -121,7 +121,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Assert.assertNotNull(foundDefaultDeviceProfileInfo.getName());
         Assert.assertNotNull(foundDefaultDeviceProfileInfo.getType());
         Assert.assertEquals(DeviceProfileType.DEFAULT, foundDefaultDeviceProfileInfo.getType());
-        Assert.assertEquals("Default", foundDefaultDeviceProfileInfo.getName());
+        Assert.assertEquals("default", foundDefaultDeviceProfileInfo.getName());
     }
 
     @Test

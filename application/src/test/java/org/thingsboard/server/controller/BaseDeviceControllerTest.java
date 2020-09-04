@@ -186,9 +186,8 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     public void testSaveDeviceWithEmptyType() throws Exception {
         Device device = new Device();
         device.setName("My device");
-        doPost("/api/device", device)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Device type should be specified")));
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        Assert.assertEquals("default", savedDevice.getType());
     }
 
     @Test

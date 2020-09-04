@@ -55,6 +55,6 @@ public interface DeviceProfileRepository extends PagingAndSortingRepository<Devi
             "WHERE d.tenantId = :tenantId AND d.isDefault = true")
     DeviceProfileInfo findDefaultDeviceProfileInfo(@Param("tenantId") UUID tenantId);
 
-    DeviceProfile findByTenantIdAndName(UUID id, String profileName);
+    DeviceProfileEntity findByTenantIdAndName(UUID id, String profileName);
 
 }
