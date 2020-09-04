@@ -280,7 +280,8 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     private void processEntity(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         ActionType edgeEventActionType = ActionType.valueOf(edgeNotificationMsg.getEdgeEventAction());
         EdgeEventType edgeEventType = EdgeEventType.valueOf(edgeNotificationMsg.getEdgeEventType());
-        EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(edgeEventType, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
+        EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(edgeEventType,
+                new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
         ListenableFuture<List<EdgeId>> edgeIdsFuture;
         switch (edgeEventActionType) {
             case ADDED: // used only for USER entity

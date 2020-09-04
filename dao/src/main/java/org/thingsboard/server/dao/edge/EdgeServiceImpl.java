@@ -432,7 +432,8 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                 ListenableFuture<List<EntityRelation>> originatorEdgeRelationsFuture =
                         relationService.findByToAndTypeAsync(tenantId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
                 return Futures.transform(originatorEdgeRelationsFuture, originatorEdgeRelations -> {
-                    if (originatorEdgeRelations != null && originatorEdgeRelations.size() > 0) {
+                    if (originatorEdgeRelations != null && originatorEdgeRelations.size() > 0 &&
+                            originatorEdgeRelations.get(0).getFrom() != null) {
                         return Collections.singletonList(new EdgeId(originatorEdgeRelations.get(0).getFrom().getId()));
                     } else {
                         return Collections.emptyList();
@@ -444,6 +445,9 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                 return convertToEdgeIds(findEdgesByTenantIdAndRuleChainId(tenantId, new RuleChainId(entityId.getId())));
             case USER:
                 User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
+                if (userById == null) {
+                    return Futures.immediateFuture(Collections.emptyList());
+                }
                 TextPageData<Edge> edges;
                 if (userById.getCustomerId() == null || userById.getCustomerId().isNullUid()) {
                     edges = findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
