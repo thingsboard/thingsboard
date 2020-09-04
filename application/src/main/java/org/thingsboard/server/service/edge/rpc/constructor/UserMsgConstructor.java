@@ -31,7 +31,7 @@ import java.util.UUID;
 
 @Component
 @Slf4j
-public class UserUpdateMsgConstructor {
+public class UserMsgConstructor {
 
     public UserUpdateMsg constructUserUpdatedMsg(UpdateMsgType msgType, User user, CustomerId customerId) {
         UserUpdateMsg.Builder builder = UserUpdateMsg.newBuilder()

@@ -28,7 +28,7 @@ import org.thingsboard.server.gen.edge.UpdateMsgType;
 
 @Component
 @Slf4j
-public class DeviceUpdateMsgConstructor {
+public class DeviceMsgConstructor {
 
     public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device, CustomerId customerId) {
         DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()

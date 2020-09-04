@@ -23,7 +23,7 @@ import org.thingsboard.server.gen.edge.AdminSettingsUpdateMsg;
 
 @Slf4j
 @Component
-public class AdminSettingsUpdateMsgConstructor {
+public class AdminSettingsMsgConstructor {
 
     public AdminSettingsUpdateMsg constructAdminSettingsUpdateMsg(AdminSettings adminSettings) {
         AdminSettingsUpdateMsg.Builder builder = AdminSettingsUpdateMsg.newBuilder()

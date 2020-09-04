@@ -38,7 +38,7 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class RuleChainUpdateMsgConstructor {
+public class RuleChainMsgConstructor {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 

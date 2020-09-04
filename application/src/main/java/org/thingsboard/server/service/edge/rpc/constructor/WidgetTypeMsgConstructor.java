@@ -26,7 +26,7 @@ import org.thingsboard.server.gen.edge.WidgetTypeUpdateMsg;
 
 @Component
 @Slf4j
-public class WidgetTypeUpdateMsgConstructor {
+public class WidgetTypeMsgConstructor {
 
     public WidgetTypeUpdateMsg constructWidgetTypeUpdateMsg(UpdateMsgType msgType, WidgetType widgetType) {
         WidgetTypeUpdateMsg.Builder builder = WidgetTypeUpdateMsg.newBuilder()

@@ -25,7 +25,7 @@ import org.thingsboard.server.gen.edge.UpdateMsgType;
 
 @Component
 @Slf4j
-public class CustomerUpdateMsgConstructor {
+public class CustomerMsgConstructor {
 
     public CustomerUpdateMsg constructCustomerUpdatedMsg(UpdateMsgType msgType, Customer customer) {
         CustomerUpdateMsg.Builder builder = CustomerUpdateMsg.newBuilder()

@@ -17,28 +17,25 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.gen.edge.AssetUpdateMsg;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 
 @Component
 @Slf4j
-public class AssetUpdateMsgConstructor {
+public class DashboardMsgConstructor {
 
-    public AssetUpdateMsg constructAssetUpdatedMsg(UpdateMsgType msgType, Asset asset, CustomerId customerId) {
-        AssetUpdateMsg.Builder builder = AssetUpdateMsg.newBuilder()
+    public DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard, CustomerId customerId) {
+        DashboardUpdateMsg.Builder builder = DashboardUpdateMsg.newBuilder()
                 .setMsgType(msgType)
-                .setIdMSB(asset.getId().getId().getMostSignificantBits())
-                .setIdLSB(asset.getId().getId().getLeastSignificantBits())
-                .setName(asset.getName())
-                .setType(asset.getType());
-        if (asset.getLabel() != null) {
-            builder.setLabel(asset.getLabel());
-        }
+                .setIdMSB(dashboard.getId().getId().getMostSignificantBits())
+                .setIdLSB(dashboard.getId().getId().getLeastSignificantBits())
+                .setTitle(dashboard.getTitle())
+                .setConfiguration(JacksonUtil.toString(dashboard.getConfiguration()));
         if (customerId != null) {
             builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
             builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
@@ -46,10 +43,11 @@ public class AssetUpdateMsgConstructor {
         return builder.build();
     }
 
-    public AssetUpdateMsg constructAssetDeleteMsg(AssetId assetId) {
-        return AssetUpdateMsg.newBuilder()
+    public DashboardUpdateMsg constructDashboardDeleteMsg(DashboardId dashboardId) {
+        return DashboardUpdateMsg.newBuilder()
                 .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
-                .setIdMSB(assetId.getId().getMostSignificantBits())
-                .setIdLSB(assetId.getId().getLeastSignificantBits()).build();
+                .setIdMSB(dashboardId.getId().getMostSignificantBits())
+                .setIdLSB(dashboardId.getId().getLeastSignificantBits()).build();
     }
+
 }

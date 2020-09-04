@@ -27,7 +27,7 @@ import org.thingsboard.server.gen.edge.UpdateMsgType;
 
 @Component
 @Slf4j
-public class EntityViewUpdateMsgConstructor {
+public class EntityViewMsgConstructor {
 
     public EntityViewUpdateMsg constructEntityViewUpdatedMsg(UpdateMsgType msgType, EntityView entityView, CustomerId customerId) {
         EdgeEntityType entityType;
