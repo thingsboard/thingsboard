@@ -330,7 +330,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     if (isOldSchema(conn, 3001000)) {
 
                         try {
-                            conn.createStatement().execute("ALTER TABLE device ADD COLUMN device_profile_id uuid, ADD COLUMN device_data varchar");
+                            conn.createStatement().execute("ALTER TABLE device ADD COLUMN device_profile_id uuid, ADD COLUMN device_data jsonb");
                         } catch (Exception e) {
                         }
 

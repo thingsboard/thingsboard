@@ -23,11 +23,12 @@ import {
   DeviceProfileTransportConfiguration,
   DeviceTransportType, MqttDeviceProfileTransportConfiguration
 } from '@shared/models/device.models';
+import { isDefinedAndNotNull } from '../../../../../core/utils';
 
 @Component({
   selector: 'tb-mqtt-device-profile-transport-configuration',
   templateUrl: './mqtt-device-profile-transport-configuration.component.html',
-  styleUrls: [],
+  styleUrls: ['./mqtt-device-profile-transport-configuration.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => MqttDeviceProfileTransportConfigurationComponent),
@@ -65,7 +66,12 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   ngOnInit() {
     this.mqttDeviceProfileTransportConfigurationFormGroup = this.fb.group({
-      configuration: [null, Validators.required]
+      configuration: this.fb.group({
+        deviceAttributesTopic: [null, Validators.required],
+        deviceTelemetryTopic: [null, Validators.required],
+        deviceRpcRequestTopic: [null, Validators.required],
+        deviceRpcResponseTopic: [null, Validators.required]
+      })
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -82,7 +88,9 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
   }
 
   writeValue(value: MqttDeviceProfileTransportConfiguration | null): void {
-    this.mqttDeviceProfileTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
+    if (isDefinedAndNotNull(value)) {
+      this.mqttDeviceProfileTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
+    }
   }
 
   private updateModel() {
