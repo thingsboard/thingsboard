@@ -56,8 +56,6 @@ public class TbRuleEngineProcessingStrategyFactory {
         private final boolean retryTimeout;
         private final int maxRetries;
         private final double maxAllowedFailurePercentage;
-
-        private final boolean multiplyPauseBetweenRetries;
         private final long maxPauseBetweenRetries;
 
         private long pauseBetweenRetries;
@@ -73,7 +71,6 @@ public class TbRuleEngineProcessingStrategyFactory {
             this.maxRetries = configuration.getRetries();
             this.maxAllowedFailurePercentage = configuration.getFailurePercentage();
             this.pauseBetweenRetries = configuration.getPauseBetweenRetries();
-            this.multiplyPauseBetweenRetries = configuration.isMultiplyPauseBetweenRetries();
             this.maxPauseBetweenRetries = configuration.getMaxPauseBetweenRetries();
         }
 
@@ -114,7 +111,7 @@ public class TbRuleEngineProcessingStrategyFactory {
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
-                        if (multiplyPauseBetweenRetries && maxPauseBetweenRetries > pauseBetweenRetries) {
+                        if (maxPauseBetweenRetries > pauseBetweenRetries) {
                             pauseBetweenRetries = Math.min(maxPauseBetweenRetries, pauseBetweenRetries * 2);
                         }
                     }
