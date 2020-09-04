@@ -799,7 +799,8 @@
         "attributes-topic-filter": "Attributes topic filter",
         "attributes-topic-filter-required": "Attributes topic filter is required.",
         "rpc-response-topic-filter": "RPC response topic filter",
-        "rpc-response-topic-filter-required": "RPC response topic filter is required."
+        "rpc-response-topic-filter-required": "RPC response topic filter is required.",
+        "not-valid-pattern-topic-filter": "Not valid pattern topic filter"
     },
     "dialog": {
         "close": "Close dialog"
