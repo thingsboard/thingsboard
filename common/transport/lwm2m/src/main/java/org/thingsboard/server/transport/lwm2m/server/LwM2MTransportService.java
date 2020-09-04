@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -33,20 +34,25 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
+import org.thingsboard.server.transport.lwm2m.server.client.AttrTelemetryObserveValue;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 import org.thingsboard.server.transport.lwm2m.server.client.ModelClient;
 import org.thingsboard.server.transport.lwm2m.server.client.ModelObject;
+import org.thingsboard.server.transport.lwm2m.server.client.ResultsAnalyzerParameters;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.adaptors.ReadResultAttrTel;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.*;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
@@ -74,34 +80,47 @@ public class LwM2MTransportService {
     @Autowired
     LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
 
+    /**
+     * Start registration device
+     * Create session: Map<String <registrationId >, ModelClient>
+     * 1. replaceNewRegistration -> (solving the problem of incorrect termination of the previous session with this endpoint)
+     * 1.1 When we initialize the registration, we register the session by endpoint.
+     * 1.2 If the server has incomplete requests (canceling the registration of the previous session),
+     * delete the previous session only by the previous registration.getId
+     * 1.2 Add Model (Entity) for client (from registration & observe) by registration.getId
+     * 1.2 Remove from sessions Model by enpPoint
+     * Next ->  Create new ModelClient for current session -> setModelClient...
+     *
+     * @param lwServer             - LeshanServer
+     * @param registration         - Registration LwM2M Client
+     * @param previousObsersations - may be null
+     */
     public void onRegistered(LeshanServer lwServer, Registration registration, Collection<Observation> previousObsersations) {
-        /**
-         * Info about start registration device
-         */
         log.info("Received endpoint registration version event: \nendPoint: {}\nregistration.getId(): {}\npreviousObsersations {}", registration.getEndpoint(), registration.getId(), previousObsersations);
-        /**
-         * Create session: Map<String <registrationId >, ModelClient>
-         * 1. replaceNewRegistration -> (solving the problem of incorrect termination of the previous session with this endpoint)
-         * 1.1 When we initialize the registration, we register the session by endpoint.
-         * 1.2 If the server has incomplete requests (canceling the registration of the previous session),
-         *     delete the previous session only by the previous registration.getId
-         * 1.2 Add Model (Entity) for client (from registration & observe) by registration.getId
-         * 1.2 Remove from sessions Model by enpPoint
-         * Next ->  Create new ModelClient for current session -> setModelClient...
-         */
         ModelClient modelClient = lwM2mInMemorySecurityStore.replaceNewRegistration(lwServer, registration, this);
         if (modelClient != null) {
+            modelClient.setLwM2MTransportService(this);
             setModelClient(lwServer, registration, modelClient);
-            SessionInfoProto sessionInfo =  getValidateSessionInfo(registration.getId());
-            transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
-            transportService.registerAsyncSession(sessionInfo, new LwM2MSessionMsgListener(sessionId));
+            SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration.getId());
+            transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), null);
+            transportService.registerAsyncSession(sessionInfo, new LwM2MSessionMsgListener(sessionId, this));
         }
     }
+
+    /**
+     * @param lwServer     - LeshanServer
+     * @param registration - Registration LwM2M Client
+     */
 
     public void updatedReg(LeshanServer lwServer, Registration registration) {
         log.info("[{}] endpoint updateReg, registration.getId(): {}", registration.getEndpoint(), registration.getId());
     }
 
+    /**
+     * @param registration - Registration LwM2M Client
+     * @param observations - All paths observations before unReg
+     *                     !!! Warn: if have not finishing unReg, then this operation will be finished on next Client`s connect
+     */
     public void unReg(Registration registration, Collection<Observation> observations) {
         lwM2mInMemorySecurityStore.setRemoveSessions(registration.getId());
         lwM2mInMemorySecurityStore.remove();
@@ -111,7 +130,6 @@ public class LwM2MTransportService {
 
     public void onSleepingDev(Registration registration) {
         String endpointId = registration.getEndpoint();
-        String smsNumber = registration.getSmsNumber() == null ? "" : registration.getSmsNumber();
         String lwm2mVersion = registration.getLwM2mVersion();
         log.info("[{}] [{}] Received endpoint Sleeping version event", endpointId, lwm2mVersion);
         //TODO: associate endpointId with device information.
@@ -126,25 +144,23 @@ public class LwM2MTransportService {
 
     /**
      * Create new ModelClient for current session -> setModelClient...
-     * @param lwServer
-     * @param registration
-     * @param modelClient
+     * #1   Add all ObjectLinks (instance) to control the process of executing requests to the client
+     * to get the client model with current values
+     * #2   Get the client model with current values. Analyze the response in -> lwM2MTransportRequest.sendResponse
+     *
+     * @param lwServer     - LeshanServer
+     * @param registration - Registration LwM2M Client
+     * @param modelClient  - object with All parameters off client
      */
     private void setModelClient(LeshanServer lwServer, Registration registration, ModelClient modelClient) {
-        /**
-         * Add all ObjectLinks (instance) to control the process of executing requests to the client
-         * to get the client model with current values
-         */
+        // #1
         Arrays.stream(registration.getObjectLinks()).forEach(url -> {
             String[] objects = url.getUrl().split("/");
             if (objects.length == 3) {
                 modelClient.addPendingRequests(url.getUrl());
             }
         });
-        /**
-         * get the client model with current values
-         * Analyze the response in -> lwM2MTransportRequest.sendResponse
-         */
+        // #2
         Arrays.stream(registration.getObjectLinks()).forEach(url -> {
             String[] objects = url.getUrl().split("/");
             if (objects.length == 3) {
@@ -156,115 +172,172 @@ public class LwM2MTransportService {
     }
 
     /**
-     * add attribute telemetry information from credentials to client model and start observe
+     * Add attribute telemetry information from credentials to client model and start observe
      * !!! if the resource has an observation, but no telemetry or attribute - the observation will not use
-     * @param lwServer
-     * @param registration
-     * @param modelClient
+     * #1 Client`s starting info  to  send to thingsboard
+     * #2 Sending Attribute Telemetry with value to thingsboard only once at the start of the connection
+     * #3 Start observe
+     *
+     * @param lwServer     - LeshanServer
+     * @param registration - Registration LwM2M Client
+     * @param modelClient  - object with All parameters off client
      */
     @SneakyThrows
     public void getAttrTelemetryObserveFromModel(LeshanServer lwServer, Registration registration, ModelClient modelClient) {
-        log.info("51) getAttrTelemetryObserveFromModelintegratioId: {}", registration.getId());
-        String credentials = (lwM2mInMemorySecurityStore.getSessions() != null && lwM2mInMemorySecurityStore.getSessions().size() > 0) ?
-                getModelClient(registration).getCredentialsResponse().getCredentialsBody() : null;
-        JsonObject objectMsg = (credentials != null) ? adaptor.validateJson(credentials) : null;
-
-        /**
-         * Example: with pathResource (use only pathResource)
-         *{"observe":["/2/0","/2/0/0","/4/0/2"],
-         * "attribute":["/2/0/1","/3/0/9"],
-         * "telemetry":["/1/0/1","/2/0/1","/6/0/1"]}
-         */
-        JsonObject clientObserveAttrTelemetry = (objectMsg != null &&
-                !objectMsg.isJsonNull() &&
-                objectMsg.has(OBSERVE_ATTRIBUTE_TELEMETRY) &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonObject() &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonNull()) ? objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject() : null;
-
-        /**
-         * Add info from clientObserveAttrTelemetry(credentials) to ModelClient
-         */
-        modelClient.setClientObserveAttrTelemetry(clientObserveAttrTelemetry);
-
-        /**
-         * Client`s starting info  to  send to thingsboard
-         *
-         */
-        doGetAttributsTelemetryObserve(lwServer, modelClient);
-        /**
-         * Sending Attribute Telemetry with value to thingsboard only once at the start of the connection
-         */
-        this.setAttrTelemtryToThingsboard(registration);
-        /**
-         * Start observe
-         */
-        getModelClient(registration).getReadResultAttrTel().getPostObserve().forEach(target -> {
-            lwM2MTransportRequest.sendAllRequest(lwServer, registration, target, GET_TYPE_OPER_OBSERVE,
-                    null, null, null, "", context.getTimeout());
-        });
-    }
-
-    private void setAttrTelemtryToThingsboard(Registration registration) {
-        processDevicePublish(getModelClient(registration).getReadResultAttrTel().getPostAttribute(),
-                DEVICE_ATTRIBUTES_TOPIC, -1, registration.getId());
-        processDevicePublish(getModelClient(registration).getReadResultAttrTel().getPostTelemetry(),
-                DEVICE_TELEMETRY_TOPIC, -1, registration.getId());
+        // #1
+        this.setAttributsTelemetryObserveToModelClient(registration, modelClient);
+        // #2
+        this.setAttrTelemetryToThingsboard(registration.getId());
+        // #3
+        this.onSentObserveToClient(lwServer, registration);
     }
 
     /**
-     * Client`s add info  about Attribute Telemetry Observe to Model Client
-     * @param lwServer
-     * @param modelClient
-     * @return
+     * Sent All Attribute and Telemetry to Thingsboard
+     * @param registrationId - Id of Registration LwM2M Client
      */
-    @SneakyThrows
-    public ReadResultAttrTel doGetAttributsTelemetryObserve(LeshanServer lwServer, ModelClient modelClient) {
-        log.info("52) getAttrTelemetryObserve From ModelintegratioId: {}", modelClient.getClientObserveAttrTelemetry());
-        JsonArray attributes = modelClient.getClientObserveAttrTelemetry().get(ATTRIBUTE).getAsJsonArray();
-        JsonArray telemetrys = modelClient.getClientObserveAttrTelemetry().get(TELEMETRY).getAsJsonArray();
-        JsonArray observes = modelClient.getClientObserveAttrTelemetry().get(OBSERVE).getAsJsonArray();
-        Registration registration = lwServer.getRegistrationService().getByEndpoint(modelClient.getEndPoint());
-        registration.getAdditionalRegistrationAttributes().entrySet().forEach(entry -> {
-            log.info("Attributes: Key : [{}] Value : [{}]", entry.getKey(), entry.getValue());
-            modelClient.getReadResultAttrTel().getPostAttribute().addProperty(entry.getKey(), entry.getValue());
-        });
-        setAttrTelemtryResources(attributes, modelClient, modelClient.getReadResultAttrTel(), ATTRIBUTE);
-        setAttrTelemtryResources(telemetrys, modelClient, modelClient.getReadResultAttrTel(), TELEMETRY);
-        observes.forEach(path -> {
-            if (getValidateObserve(modelClient.getReadResultAttrTel(), path.getAsString().toString()))
-                modelClient.getReadResultAttrTel().getPostObserve().add(path.getAsString().toString());
-        });
-        return modelClient.getReadResultAttrTel();
+    private void setAttrTelemetryToThingsboard(String registrationId) {
+        AttrTelemetryObserveValue parametersAllWithValue = lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registrationId).getAttrTelemetryObserveValue();
+        JsonObject telemetrys = this.getParametersFromModelClient(parametersAllWithValue.getPostAttribute());
+        this.setToDeviceAttributeTelemetry(telemetrys, DEVICE_ATTRIBUTES_TOPIC, -1, registrationId);
+        JsonObject attributes = this.getParametersFromModelClient(parametersAllWithValue.getPostTelemetry());
+        this.setToDeviceAttributeTelemetry(attributes, DEVICE_TELEMETRY_TOPIC, -1, registrationId);
     }
 
+    /**
+     * Get Attribute or Telemetry in format  {name(Attr/Telemetry):value} for Thingsboard
+     * @param parametersAllWithValue - JsonObjects: {path: {name(Attr/Telemetry) : value}
+     * @return result: new: JsonObject: {name(Attr/Telemetry):value}
+     */
+    private JsonObject getParametersFromModelClient(JsonObject parametersAllWithValue) {
+        JsonObject parametersWithValue = new JsonObject();
+        parametersAllWithValue.entrySet().forEach(value -> {
+            Map.Entry<String, JsonElement> parameter = value.getValue().getAsJsonObject().entrySet().stream().findFirst().get();
+            parametersWithValue.addProperty(parameter.getKey(), parameter.getValue().getAsString().toString());
+        });
+        return parametersWithValue;
+    }
+
+
+    /**
+     * To Model Client: Attribute, Telemetry, Observe (update )
+     * #1 Add Attribute from LWM2M Client (ATTRIBUTE+attrId == id) ==> {path: {name: value}}
+     * #2 Add Attribute from credentials (path to resource == id)  ==> {path: {name: value}}
+     * #3 Add Telemetry from credentials (path to resource == id)  ==> {path: {name: value}}
+     * #4 Add Attribute && Telemetry from credentials ==> [path]
+     * #5 Add Observe from credentials, if observe is in Attribute or Telemetry (path to resource == id)  ==> [path]
+     *
+     * @param registration - Registration LwM2M Client
+     * @param modelClient  - object with All parameters off client
+     */
     @SneakyThrows
-    private void setAttrTelemtryResources(JsonArray params, ModelClient modelClient, ReadResultAttrTel readResultAttrTel, String type) {
+    public void setAttributsTelemetryObserveToModelClient(Registration registration, ModelClient modelClient) {
+        JsonObject credentialsBody = getObserveAttrTelemetryFromThingsboard(registration);
+        if (credentialsBody != null) {
+            modelClient.getAttrTelemetryObserveValue().setPostAttributeProfile(credentialsBody.get(ATTRIBUTE).getAsJsonArray());
+            modelClient.getAttrTelemetryObserveValue().setPostTelemetryProfile(credentialsBody.get(TELEMETRY).getAsJsonArray());
+            modelClient.getAttrTelemetryObserveValue().setPostObserveProfile(credentialsBody.get(OBSERVE).getAsJsonArray());
+            AtomicInteger attrId = new AtomicInteger();
+            // #1
+            modelClient.getAttrTelemetryObserveValue().setPostAttribute(new JsonObject());
+            registration.getAdditionalRegistrationAttributes().entrySet().forEach(entry -> {
+                JsonObject resNameValue = new JsonObject();
+                resNameValue.getAsJsonObject().addProperty(entry.getKey(), entry.getValue());
+                modelClient.getAttrTelemetryObserveValue().getPostAttribute().getAsJsonObject().add(ATTRIBUTE + attrId, resNameValue);
+                attrId.getAndIncrement();
+            });
+            // #2 #3 #4 #5
+            this.updateAttrTelemetryObserveValue(modelClient);
+        }
+    }
+
+    private void updateAttrTelemetryObserveValue(ModelClient modelClient) {        // #2 && #4
+        modelClient.getAttrTelemetryObserveValue().setPostTelemetry(new JsonObject());
+        modelClient.getAttrTelemetryObserveValue().setPostObserve(ConcurrentHashMap.newKeySet());
+        modelClient.getAttrTelemetryObserveValue().setPathResAttrTelemetry(ConcurrentHashMap.newKeySet());
+        this.setAttrTelemtryResources(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), modelClient, modelClient.getAttrTelemetryObserveValue(), ATTRIBUTE);
+        // #3 && #4
+        this.setAttrTelemtryResources(modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile(), modelClient, modelClient.getAttrTelemetryObserveValue(), TELEMETRY);
+        // #5
+        this.setObserveResources(modelClient);
+    }
+
+    /**
+     * @param registration - Registration LwM2M Client
+     * @return credentialsBody with Observe&Attribute&Telemetry From Thingsboard
+     * Example: with pathResource (use only pathResource)
+     * {"attribute":["/2/0/1","/3/0/9"],
+     * "telemetry":["/1/0/1","/2/0/1","/6/0/1"],
+     * "observe":["/2/0","/2/0/0","/4/0/2"]}
+     */
+    private JsonObject getObserveAttrTelemetryFromThingsboard(Registration registration) {
+        String credentialsBody = (lwM2mInMemorySecurityStore.getSessions() != null && lwM2mInMemorySecurityStore.getSessions().size() > 0) ?
+                lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registration.getId()).getCredentialsResponse().getCredentialsBody() : null;
+        JsonObject objectMsg = (credentialsBody != null) ? adaptor.validateJson(credentialsBody) : null;
+        return (getValidateCredentialsBodyFromThingsboard(objectMsg)) ? objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject() : null;
+    }
+
+    private boolean getValidateCredentialsBodyFromThingsboard(JsonObject objectMsg) {
+        return (objectMsg != null &&
+                !objectMsg.isJsonNull() &&
+                objectMsg.has(OBSERVE_ATTRIBUTE_TELEMETRY) &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonObject() &&
+                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonNull() &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(ATTRIBUTE) &&
+                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).isJsonNull() &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).isJsonArray() &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(TELEMETRY) &&
+                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).isJsonNull() &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).isJsonArray() &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(OBSERVE) &&
+                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE).isJsonNull() &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE).isJsonArray());
+    }
+
+    /**
+     * Add Attribute || Telemetry from credentials (#2 || #3)
+     * Add Attribute && Telemetry from credentials ==> [path] (#4)
+     *
+     * @param params                    -
+     * @param modelClient               - object with All parameters off client
+     * @param attrTelemetryObserveValue -
+     * @param type                      -
+     */
+    @SneakyThrows
+    private void setAttrTelemtryResources(JsonArray params, ModelClient modelClient, AttrTelemetryObserveValue attrTelemetryObserveValue, String type) {
         params.forEach(param -> {
-            String path = param.getAsString().toString();
-            String[] paths = path.split("/");
-            if (paths.length > 3) {
-                int objId = Integer.parseInt(paths[1]);
-                int insId = Integer.parseInt(paths[2]);
-                int resId = Integer.parseInt(paths[3]);
-                if (modelClient.getModelObjects().get(objId) != null) {
-                    ModelObject modelObject = modelClient.getModelObjects().get(objId);
-                    String resName = modelObject.getObjectModel().resources.get(resId).name;
-                    if (modelObject.getInstances().get(insId) != null) {
-                        LwM2mObjectInstance instance = modelObject.getInstances().get(insId);
-                        if (instance.getResource(resId) != null) {
-                            String resValue = (instance.getResource(resId).isMultiInstances()) ?
-                                    instance.getResource(resId).getValues().toString() :
-                                    instance.getResource(resId).getValue().toString();
-                            if (resName != null && !resName.isEmpty() && resValue != null) {
-                                switch (type) {
-                                    case ATTRIBUTE:
-                                        readResultAttrTel.getPostAttribute().addProperty(resName, resValue);
-                                        readResultAttrTel.getPathResAttrTelemetry().add(path);
-                                        break;
-                                    case TELEMETRY:
-                                        readResultAttrTel.getPostTelemetry().addProperty(resName, resValue);
-                                        readResultAttrTel.getPathResAttrTelemetry().add(path);
-                                        break;
+            String path = (param.isJsonPrimitive()) ? param.getAsString().toString() : null;
+            if (path != null) {
+                String[] paths = path.split("/");
+                if (paths.length > 3) {
+                    int objId = Integer.parseInt(paths[1]);
+                    int insId = Integer.parseInt(paths[2]);
+                    int resId = Integer.parseInt(paths[3]);
+                    if (modelClient.getModelObjects().get(objId) != null) {
+                        ModelObject modelObject = modelClient.getModelObjects().get(objId);
+                        String resName = modelObject.getObjectModel().resources.get(resId).name;
+                        if (modelObject.getInstances().get(insId) != null) {
+                            LwM2mObjectInstance instance = modelObject.getInstances().get(insId);
+                            if (instance.getResource(resId) != null) {
+                                String resValue = (instance.getResource(resId).isMultiInstances()) ?
+                                        instance.getResource(resId).getValues().toString() :
+                                        instance.getResource(resId).getValue().toString();
+                                JsonObject resNameValue = createResNameValue(resName, resValue);
+                                if (resNameValue != null) {
+                                    switch (type) {
+                                        case ATTRIBUTE:
+                                            // #2 {path: {name: value}}
+                                            attrTelemetryObserveValue.getPostAttribute().getAsJsonObject().add(path, resNameValue);
+                                            // #4 add Attribute to All list ==> [path] (#4)
+                                            attrTelemetryObserveValue.getPathResAttrTelemetry().add(path);
+                                            break;
+                                        case TELEMETRY:
+                                            // #3 {path: {name: value}}
+                                            attrTelemetryObserveValue.getPostTelemetry().getAsJsonObject().add(path, resNameValue);
+                                            // #4 add Telemetry to All list ==> [path]
+                                            attrTelemetryObserveValue.getPathResAttrTelemetry().add(path);
+                                            break;
+                                    }
                                 }
                             }
                         }
@@ -274,35 +347,64 @@ public class LwM2MTransportService {
         });
     }
 
-    private boolean getValidateObserve(ReadResultAttrTel readResultAttrTel, String path) {
-        return (Arrays.stream(readResultAttrTel.getPathResAttrTelemetry().stream().toArray()).filter(pathRes ->
-                path.equals(pathRes)).findAny().orElse(null) != null);
-
+    /**
+     * @param resValue - String from Resource as isMultiInstances/SingleResource
+     * @param resName  - name Resource
+     * @return JsonObject {name: value}
+     */
+    private JsonObject createResNameValue(String resName, String resValue) {
+        JsonObject resNameValue = null;
+        //
+        if (resName != null && !resName.isEmpty() && resValue != null) {
+            resNameValue = new JsonObject();
+            resNameValue.getAsJsonObject().addProperty(resName, resValue);
+        }
+        return resNameValue;
     }
 
     /**
-     * Start observe
-     * Analyze the response in ->
-     * 1. First: lwM2MTransportRequest.sendResponse, ObservationListener.newObservation
-     * 2. Next: ObservationListener.onResponse
-     * @param registration
-     * @return
+     * #5 Add Observe from credentials, if observe is in Attribute or Telemetry (path to resource == id)  ==> [path]
+     *
+     * @param modelClient - object with All parameters off client
      */
-    public ModelClient getModelClient(Registration registration) {
-        return lwM2mInMemorySecurityStore.getSessions().get(registration.getId());
+    @SneakyThrows
+    private void setObserveResources(ModelClient modelClient) {
+        modelClient.getAttrTelemetryObserveValue().getPostObserveProfile().forEach(path -> {
+            if (getValidateObserve(modelClient, path.getAsString().toString()))
+                modelClient.getAttrTelemetryObserveValue().getPostObserve().add(path.getAsString().toString());
+        });
     }
 
+    /**
+     * ValidateObserve: if ath observe is in Attribute || Telemetry return true
+     *
+     * @param modelClient - object with All parameters off client
+     * @param path        - observe from Thingsboard
+     * @return - false if path observe is not present in Attribute or Telemetry
+     */
+    private boolean getValidateObserve(ModelClient modelClient, String path) {
+        return (Arrays.stream(modelClient.getAttrTelemetryObserveValue().getPathResAttrTelemetry().toArray())
+                .filter(path::equals).findAny().orElse(null) != null);
+    }
 
-    public void processDevicePublish(JsonElement msg, String topicName, int msgId, String registrationId) {
+    /**
+     * Prepare Sent to Thigsboard callback - Attribute or Telemetry
+     *
+     * @param msg            - JsonObject: [{name: value}]
+     * @param topicName      - Api Attribute or Telemetry
+     * @param msgId          - always == -1
+     * @param registrationId - Id of Registration LwM2M Client
+     */
+    public void setToDeviceAttributeTelemetry(JsonElement msg, String topicName, int msgId, String registrationId) {
         SessionInfoProto sessionInfo = getValidateSessionInfo(registrationId);
         if (sessionInfo != null) {
             try {
-                if (topicName.equals(LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC)) {
-                    PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
-                    transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(msgId, postTelemetryMsg));
-                } else if (topicName.equals(LwM2MTransportHandler.DEVICE_ATTRIBUTES_TOPIC)) {
+                if (topicName.equals(LwM2MTransportHandler.DEVICE_ATTRIBUTES_TOPIC)) {
                     PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
-                    transportService.process(sessionInfo, postAttributeMsg, getPubAckCallback(msgId, postAttributeMsg));
+                    transportService.process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSentAttrTelemetry(msgId, postAttributeMsg));
+                } else if (topicName.equals(LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC)) {
+                    PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
+                    transportService.process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSentAttrTelemetry(msgId, postTelemetryMsg));
                 }
             } catch (AdaptorException e) {
                 log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
@@ -312,11 +414,18 @@ public class LwM2MTransportService {
         }
     }
 
-    private <T> TransportServiceCallback<Void> getPubAckCallback(final int msgId, final T msg) {
+    /**
+     * Sent to Thingsboard Attribute || Telemetry
+     *
+     * @param msgId - always == -1
+     * @param msg   - JsonObject: [{name: value}]
+     * @return - dummy
+     */
+    private <T> TransportServiceCallback<Void> getPubAckCallbackSentAttrTelemetry(final int msgId, final T msg) {
         return new TransportServiceCallback<Void>() {
             @Override
             public void onSuccess(Void dummy) {
-                log.trace("[{}] Published msg: {}", sessionId, msg);
+                log.trace("[{}] Success to publish msg: {}, dummy: {}", sessionId, msg, dummy);
             }
 
             @Override
@@ -326,9 +435,13 @@ public class LwM2MTransportService {
         };
     }
 
+    /**
+     * @param registrationId - Id of Registration LwM2M Client
+     * @return - sessionInfo after access connect client
+     */
     private SessionInfoProto getValidateSessionInfo(String registrationId) {
         SessionInfoProto sessionInfo = null;
-        ModelClient modelClient = lwM2mInMemorySecurityStore.getByModelClient(registrationId);
+        ModelClient modelClient = lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registrationId);
         ValidateDeviceCredentialsResponseMsg msg = modelClient.getCredentialsResponse();
         if (msg == null || msg.getDeviceInfo() == null) {
             log.warn("[{}] [{}]", modelClient.getEndPoint(), CONNECTION_REFUSED_NOT_AUTHORIZED.toString());
@@ -344,88 +457,326 @@ public class LwM2MTransportService {
                     .setDeviceName(msg.getDeviceInfo().getDeviceName())
                     .setDeviceType(msg.getDeviceInfo().getDeviceType())
                     .build();
-//            transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
-
         }
         return sessionInfo;
     }
 
     /**
-     * Sending observe value to thingsboard
-     * @param registration
-     * @param path
-     * @param response
+     * Sending observe value to thingsboard from ObservationListener.onResponse: object, instance, SingleResource or MultipleResource
+     *
+     * @param registration - Registration LwM2M Client
+     * @param path         - observe
+     * @param response     - observe
      */
     @SneakyThrows
-    public void setValue(Registration registration, String path, ReadResponse response) {
+    public void onObservationResponse(Registration registration, String path, ReadResponse response) {
         if (response.getContent() instanceof LwM2mObject) {
             LwM2mObject content = (LwM2mObject) response.getContent();
-            log.info("observOnResponse: \nEndpoint: [{}] object: {} \n observation: {} \n content: {}",
-                    registration.getEndpoint(), content.getId(), path, content);
             String target = "/" + content.getId();
-            log.info("observOnResponseCancel: \n target {}", target);
+            log.info("observOnResponse Object: \n target {}", target);
         } else if (response.getContent() instanceof LwM2mObjectInstance) {
             LwM2mObjectInstance content = (LwM2mObjectInstance) response.getContent();
-            log.info("[{}] \ninstance: {}", registration.getEndpoint(), content.getId());
+            log.info("[{}] \n observOnResponse instance: {}", registration.getEndpoint(), content.getId());
         } else if (response.getContent() instanceof LwM2mSingleResource) {
             LwM2mSingleResource content = (LwM2mSingleResource) response.getContent();
-            this.setResourcesValue(registration, content.getValue(), null, path);
+            this.onObservationSetResourcesValue(registration.getId(), content.getValue(), null, path);
         } else if (response.getContent() instanceof LwM2mMultipleResource) {
             LwM2mSingleResource content = (LwM2mSingleResource) response.getContent();
-            this.setResourcesValue(registration, null, content.getValues(), path);
+            this.onObservationSetResourcesValue(registration.getId(), null, content.getValues(), path);
         }
     }
 
     /**
      * Sending observe value of resources to thingsboard
-     * 1. Create new resources with a new observation resource value
-     * 2. Create the new instance where the resources are located with new resources
-     * 3. Change old instance to new instance (actual value in Model Client))
-     * 4. Update value in PostAttribute and PostTelemetry (Model Client)
-     * 5. Update value in thingsboard: PostAttribute and PostTelemetry
-     * @param registration
-     * @param value
-     * @param values
-     * @param path
+     * #1 Return old Resource from ModelObject
+     * #2 Create new Resource with value from observation
+     * #3 Create new Resources from old Resources
+     * #4 Update new Resources (replace old Resource on new Resource)
+     * #5 Remove old Instance from modelClient
+     * #6 Create new Instance with new Resources values
+     * #7 Update modelClient.getModelObjects(idObject) (replace old Instance on new Instance)
+     *
+     * @param registrationId - Id of Registration LwM2M Client
+     * @param value          - LwM2mSingleResource response.getContent()
+     * @param values         - LwM2mSingleResource response.getContent()
+     * @param path           - resource
      */
     @SneakyThrows
-    private void setResourcesValue(Registration registration, Object value, Map<Integer, ?> values, String path) {
+    private void onObservationSetResourcesValue(String registrationId, Object value, Map<Integer, ?> values, String path) {
+
         ResultIds resultIds = new ResultIds(path);
-        ModelClient modelClient = getModelClient(registration);
+        // #1 resourceOld == LwM2mSingleResource [id=9, value=21, type=INTEGER]
+        ModelClient modelClient = lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registrationId);
         ModelObject modelObject = modelClient.getModelObjects().get(resultIds.getObjectId());
-        Map<Integer, LwM2mObjectInstance> instances = modelObject.getInstances();
-        LwM2mObjectInstance instanceOld = (instances.get(resultIds.instanceId) != null) ? instances.get(resultIds.instanceId) : null;
+        Map<Integer, LwM2mObjectInstance> instancesModelObject = modelObject.getInstances();
+        LwM2mObjectInstance instanceOld = (instancesModelObject.get(resultIds.instanceId) != null) ? instancesModelObject.get(resultIds.instanceId) : null;
         Map<Integer, LwM2mResource> resourcesOld = (instanceOld != null) ? instanceOld.getResources() : null;
         LwM2mResource resourceOld = (resourcesOld != null && resourcesOld.get(resultIds.getResourceId()) != null) ? resourcesOld.get(resultIds.getResourceId()) : null;
-        if (resourceOld != null) {
+        // #2
+        LwM2mResource resourceNew;
+        JsonObject resNameValue;
+        String resourceName = modelObject.getObjectModel().resources.get(resultIds.getResourceId()).name;
+        if (resourceOld.isMultiInstances()) {
+            resourceNew = LwM2mMultipleResource.newResource(resultIds.getResourceId(), values, resourceOld.getType());
+            resNameValue = createResNameValue(resourceName, values.toString());
+        } else {
+            resourceNew = LwM2mSingleResource.newResource(resultIds.getResourceId(), value, resourceOld.getType());
+            resNameValue = createResNameValue(resourceName, value.toString());
+        }
+        if (resNameValue != null) {
+            if (modelClient.getAttrTelemetryObserveValue().getPostAttribute().getAsJsonObject().has(path))
+                modelClient.getAttrTelemetryObserveValue().getPostAttribute().getAsJsonObject().add(path, resNameValue);
+            if (modelClient.getAttrTelemetryObserveValue().getPostTelemetry().getAsJsonObject().has(path))
+                modelClient.getAttrTelemetryObserveValue().getPostTelemetry().getAsJsonObject().add(path, resNameValue);
+            //#3
             Map<Integer, LwM2mResource> resourcesNew = new HashMap<>(resourcesOld);
+            // #4
+            resourcesNew.remove(resourceOld);
+            // #5
+            resourcesNew.put(resultIds.getResourceId(), resourceNew);
+            // #6
+            LwM2mObjectInstance instanceNew = new LwM2mObjectInstance(resultIds.instanceId, resourcesNew.values());
+            // #7
             CountDownLatch respLatch = new CountDownLatch(1);
-            getModelClient(registration).getModelObjects().get(resultIds.getObjectId()).removeInstance(resultIds.instanceId);
-            instances.remove(instanceOld);
-            instances.remove(resultIds.instanceId, instanceOld);
+            modelClient.getModelObjects().get(resultIds.getObjectId()).removeInstance(resultIds.instanceId);
+            instancesModelObject.put(resultIds.instanceId, instanceNew);
             respLatch.countDown();
             try {
                 respLatch.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException ex) { }
-            LwM2mResource resourceNew;
-            String resourceName = modelObject.getObjectModel().resources.get(resultIds.getResourceId()).name;
-            if (resourceOld.isMultiInstances()) {
-                resourceNew = LwM2mMultipleResource.newResource(resultIds.getResourceId(), values, resourceOld.getType());
-                if (modelClient.getReadResultAttrTel().getPostAttribute().has(resourceName)) modelClient.getReadResultAttrTel().getPostAttribute().addProperty(resourceName, values.toString());
-                if (modelClient.getReadResultAttrTel().getPostTelemetry().has(resourceName)) modelClient.getReadResultAttrTel().getPostTelemetry().addProperty(resourceName, values.toString());
-            } else {
-                resourceNew = LwM2mSingleResource.newResource(resultIds.getResourceId(), value, resourceOld.getType());
-                if (modelClient.getReadResultAttrTel().getPostAttribute().has(resourceName)) modelClient.getReadResultAttrTel().getPostAttribute().addProperty(resourceName, value.toString());
-                if (modelClient.getReadResultAttrTel().getPostTelemetry().has(resourceName)) modelClient.getReadResultAttrTel().getPostTelemetry().addProperty(resourceName, value.toString());
+            } catch (InterruptedException ex) {
             }
-            resourcesNew.remove(resourceOld);
-            resourcesNew.put(resultIds.getResourceId(), resourceNew );
-            LwM2mObjectInstance instanceNew = new LwM2mObjectInstance(resultIds.instanceId, resourcesNew.values());
-            instances.put(resultIds.instanceId, instanceNew);
-            this.setAttrTelemtryToThingsboard (registration);
+            this.setAttrTelemetryToThingsboard(registrationId);
         }
     }
 
+    /**
+     * Start observe
+     * Analyze the response in ->
+     * 1. First: lwM2MTransportRequest.sendResponse, ObservationListener.newObservation
+     * 2. Next: ObservationListener.onResponse     *
+     *
+     * @param lwServer     - LeshanServer
+     * @param registration - Registration LwM2M Client
+     */
+    private void onSentObserveToClient(LeshanServer lwServer, Registration registration) {
+        if (lwServer.getObservationService().getObservations(registration).size() > 0) {
+            this.setCancelAllObservation(lwServer, registration);
+        }
+        lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registration.getId()).getAttrTelemetryObserveValue().getPostObserve().forEach(target -> {
+            lwM2MTransportRequest.sendAllRequest(lwServer, registration, target, GET_TYPE_OPER_OBSERVE,
+                    null, null, null, "", context.getTimeout());
+        });
+    }
+
+    /**
+     * Get info about changeCredentials from Thingsboard
+     * #1 Equivalence test: old <> new Value (Only Attribute, Telemetry, Observe)
+     * #1.1 pathResAttrTelemetryProfile
+     * #1.2 Attribute
+     * #1.3 Telemetry
+     * #1.4 Observe
+     * #2 If #1 == change, then analyze and update Value in Transport
+     * #2.1 ResAttrTelemetryProfile:
+     * - add
+     * -- if is value in modelClient: Get Read query to Client and add to ResAttrTelemetry
+     * -- if is not value in modelClient: nothing
+     * - del: - nothing
+     * #2.2 Attribute:
+     * - add:
+     * -- if is value in modelClient: add modelClient.getAttrTelemetryObserveValue().getPostAttribute and Get Thingsboard (Attr)
+     * -- if is not value in modelClient: nothing
+     * - del:
+     * -- del from modelClient.getAttrTelemetryObserveValue().getPostAttribute and update modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile
+     * #2.3 Telemetry
+     * - add:
+     * -- if is value in modelClient: add modelClient.getAttrTelemetryObserveValue().getPostTelemetry and Get Thingsboard (Telemetry)
+     * -- if is not value in modelClient: nothing
+     * - del
+     * -- del from modelClient.getAttrTelemetryObserveValue().getPostTelemetry and update modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile
+     * #2.4 Observe: if dell All Attr/Telemetry or change observe =>
+     * - if dell All Attr/Telemetry and is observe => cancel observe
+     * - change observe
+     * -- add:
+     * --- if path in All Attr/Telemetry old/add and have value: (without query to client) => observe
+     * --- if path in All Attr/Telemetry old/add and have not value => nothing
+     * -- del: cancel observe
+     * Update in modelClient.getAttrTelemetryObserveValue(): ...Profile
+     *
+     * @param updateCredentials - Credentials include info about Attr/Telemetry/Observe (Profile)
+     */
+    @SneakyThrows
+    public void onGetChangeCredentials(ToTransportUpdateCredentialsProto updateCredentials) {
+        String credentialsId = (updateCredentials.getCredentialsIdCount() > 0) ? updateCredentials.getCredentialsId(0) : null;
+        JsonObject credentialsValue = (updateCredentials.getCredentialsValueCount() > 0) ? adaptor.validateJson(updateCredentials.getCredentialsValue(0)) : null;
+        if (credentialsValue != null && !credentialsValue.isJsonNull() && credentialsId != null && !credentialsId.isEmpty()) {
+            String registrationId = lwM2mInMemorySecurityStore.getByRegistrationId(credentialsId);
+            Registration registration = lwM2mInMemorySecurityStore.getByRegistration(registrationId);
+            ModelClient modelClient = lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registrationId);
+            LeshanServer lwServer = modelClient.getLwServer();
+            log.info("updateCredentials -> registration: {}", registration);
+
+            // #1
+            ResultsAnalyzerParameters pathResAttrTelemetryAnalyzer;
+            ResultsAnalyzerParameters postAttributeAnalyzer;
+            ResultsAnalyzerParameters postTelemetryAnalyzer = null;
+            ResultsAnalyzerParameters postObserveAnalyzer = null;
+
+            JsonObject observeAttrNewJson = (credentialsValue.has("observeAttr") && !credentialsValue.get("observeAttr").isJsonNull()) ? credentialsValue.get("observeAttr").getAsJsonObject() : null;
+            log.info("updateCredentials -> observeAttr: {}", observeAttrNewJson);
+            JsonArray attributeNew = (observeAttrNewJson.has("attribute") && !observeAttrNewJson.get("attribute").isJsonNull()) ? observeAttrNewJson.get("attribute").getAsJsonArray() : null;
+            JsonArray telemetryNew = (observeAttrNewJson.has("telemetry") && !observeAttrNewJson.get("telemetry").isJsonNull()) ? observeAttrNewJson.get("telemetry").getAsJsonArray() : null;
+            JsonArray observeNew = (observeAttrNewJson.has("observe") && !observeAttrNewJson.get("observe").isJsonNull()) ? observeAttrNewJson.get("observe").getAsJsonArray() : null;
+            if (!modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile().equals(attributeNew) ||
+                    !modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile().equals(telemetryNew) ||
+                    !modelClient.getAttrTelemetryObserveValue().getPostObserveProfile().equals(observeNew)) {
+                if (!modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile().equals(attributeNew) ||
+                        !modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile().equals(telemetryNew)) {
+                    // #1.1
+                    Set<String> pathResAttrTelemetryProfileNew = ConcurrentHashMap.newKeySet();
+                    attributeNew.forEach(attr -> {
+                        pathResAttrTelemetryProfileNew.add(attr.getAsString().toString());
+                    });
+                    telemetryNew.forEach(telemetry -> {
+                        pathResAttrTelemetryProfileNew.add(telemetry.getAsString().toString());
+                    });
+                    Set<String> pathResAttrTelemetryProfileOld = ConcurrentHashMap.newKeySet();
+                    modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile().forEach(attr -> {
+                        pathResAttrTelemetryProfileOld.add(attr.getAsString().toString());
+                    });
+                    modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile().forEach(telemetry -> {
+                        pathResAttrTelemetryProfileOld.add(telemetry.getAsString().toString());
+                    });
+                    pathResAttrTelemetryAnalyzer = getAnalyzerParameters(pathResAttrTelemetryProfileOld, pathResAttrTelemetryProfileNew);
+                    // #1.2
+                    postAttributeAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), Set.class),
+                            new Gson().fromJson(attributeNew, Set.class));
+                    // #1.3
+                    postTelemetryAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile(), Set.class),
+                            new Gson().fromJson(telemetryNew, Set.class));
+                    // #1.4
+                    postObserveAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostObserveProfile(), Set.class),
+                            new Gson().fromJson(observeNew, Set.class));
+                    // #2.1
+                    if (pathResAttrTelemetryAnalyzer != null) {
+                        if (pathResAttrTelemetryAnalyzer.getPathPostParametersAdd() != null && pathResAttrTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+                            this.updateResourceValue(lwServer, registration, modelClient, pathResAttrTelemetryAnalyzer.getPathPostParametersAdd());
+                        }
+                    }
+
+                    // #2.2
+                    if (postAttributeAnalyzer != null) {
+                        if (postAttributeAnalyzer.getPathPostParametersAdd() != null && postAttributeAnalyzer.getPathPostParametersAdd().size() > 0) {
+                            this.sentNewAttrTelemetryToThingsboard(registration.getId(), modelClient, postAttributeAnalyzer.getPathPostParametersAdd(), DEVICE_ATTRIBUTES_TOPIC);
+                        }
+                    }
+                    // #2.3
+                    if (postTelemetryAnalyzer != null) {
+                        if (postTelemetryAnalyzer.getPathPostParametersAdd() != null && postTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+                            this.sentNewAttrTelemetryToThingsboard(registration.getId(), modelClient, postTelemetryAnalyzer.getPathPostParametersAdd(), DEVICE_TELEMETRY_TOPIC);
+                        }
+                    }
+//                    if (!modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile().equals(attributeNew)) {
+//                        Set<String> setParametersNew = new Gson().fromJson(attributeNew, Set.class);
+//                        postAttributeAnalyzer = getAnalyzerParameters(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), attributeNew);
+////                        modelClient.getAttrTelemetryObserveValue().setPostAttributeProfile(attributeNew);
+//                    }
+                    if (!modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile().equals(telemetryNew)) {
+//                        modelClient.getAttrTelemetryObserveValue().setPostTelemetryProfile(telemetryNew);
+                    }
+
+                }
+
+
+//
+//                // #2.4
+//
+//                if (!modelClient.getAttrTelemetryObserveValue().getPostObserveProfile().equals(observeNew) ||
+//                        (pathResAttrTelemetryDel != null && pathResAttrTelemetryDel.size() > 0)) {
+////                    modelClient.getAttrTelemetryObserveValue().setPostObserveProfile(observeNew);
+//                }
+
+
+                this.setModelClient(lwServer, registration, modelClient);
+            }
+
+        }
+    }
+
+    /**
+     * Compare old list with new list  after change AttrTelemetryObserve in config Profile
+     *
+     * @param parametersOld -
+     * @param parametersNew -
+     * @return ResultsAnalyzerParameters: add && new
+     */
+    private ResultsAnalyzerParameters getAnalyzerParameters(Set<String> parametersOld, Set<String> parametersNew) {
+        ResultsAnalyzerParameters analyzerParameters = new ResultsAnalyzerParameters();
+        if (!parametersOld.equals(parametersNew)) {
+            analyzerParameters.setPathPostParametersAdd(ConcurrentHashMap.newKeySet());
+            analyzerParameters.setPathPostParametersDel(ConcurrentHashMap.newKeySet());
+            analyzerParameters.setPathPostParametersAdd(parametersNew
+                    .stream().filter(p -> !parametersOld.contains(p)).collect(Collectors.toSet()));
+            analyzerParameters.setPathPostParametersDel(parametersOld
+                    .stream().filter(p -> !parametersNew.contains(p)).collect(Collectors.toSet()));
+        }
+        return analyzerParameters;
+    }
+
+    /**
+     * Update Resource value after change RezAttrTelemetry in config Profile
+     * sent response Read to Client and add path to pathResAttrTelemetry in ModelClient.getAttrTelemetryObserveValue()
+     * @param lwServer     - LeshanServer
+     * @param registration - Registration LwM2M Client
+     * @param modelClient  - object with All parameters off client
+     * @param targets      - path Resources
+     */
+
+    private void updateResourceValue(LeshanServer lwServer, Registration registration, ModelClient modelClient, Set<String> targets) {
+        targets.stream().forEach(target -> {
+            ResultIds pathIds = new ResultIds(target);
+            if (pathIds.resourceId >= 0 && modelClient.getModelObjects().get(pathIds.getObjectId())
+                    .getInstances().get(pathIds.getInstanceId()).getResource(pathIds.getResourceId()).getValue() != null) {
+                lwM2MTransportRequest.sendAllRequest(lwServer, registration, target, GET_TYPE_OPER_READ,
+                        ContentFormat.TLV.getName(), null, null, "", context.getTimeout());
+                modelClient.getAttrTelemetryObserveValue().getPathResAttrTelemetry().add(target);
+            }
+        });
+
+    }
+
+
+    /**
+     * Save path/name/value to PostAttribute/PostTelemetry in pathResAttrTelemetry in ModelClient.getAttrTelemetryObserveValue()
+     * Sent to thingsboard msg format: JsonObject: [{name: value}] Attribute/Telemetry
+     * @param registrationId - RegistrationId LwM2M Client
+     * @param modelClient  - object with All parameters off client
+     * @param targets - paths Resource
+     * @param typeTopic - DEVICE_ATTRIBUTES_TOPIC, DEVICE_TELEMETRY_TOPIC
+     */
+    private void sentNewAttrTelemetryToThingsboard(String registrationId, ModelClient modelClient, Set<String> targets, String typeTopic) {
+        JsonObject parametersWithValue = new JsonObject();
+        targets.stream().forEach(target -> {
+            ResultIds pathIds = new ResultIds(target);
+            if (pathIds.resourceId >= 0 && modelClient.getModelObjects().get(pathIds.getObjectId())
+                    .getInstances().get(pathIds.getInstanceId()).getResource(pathIds.getResourceId()).getValue().toString() != null) {
+                JsonObject postParameter = new JsonObject();
+                String name = modelClient.getModelObjects().get(pathIds.getObjectId()).getObjectModel().resources.get(pathIds.resourceId).name;
+                String value = modelClient.getModelObjects().get(pathIds.getObjectId())
+                        .getInstances().get(pathIds.getInstanceId()).getResource(pathIds.getResourceId()).getValue().toString();
+                postParameter.addProperty(name, value);
+                parametersWithValue.addProperty(name, value);
+                if (DEVICE_ATTRIBUTES_TOPIC.equals(typeTopic)) {
+                    modelClient.getAttrTelemetryObserveValue().getPostAttribute().getAsJsonObject().add(target, postParameter);
+                }
+                else if (DEVICE_TELEMETRY_TOPIC.equals(typeTopic)) {
+                    modelClient.getAttrTelemetryObserveValue().getPostTelemetry().getAsJsonObject().add(target, postParameter);
+                }
+            }
+        });
+        if (!parametersWithValue.getAsJsonObject().isJsonNull()) {
+            this.setToDeviceAttributeTelemetry(parametersWithValue, typeTopic, -1, registrationId);
+        }
+    }
 
     /**
      * Trigger Server path = "/1/0/8"
@@ -435,6 +786,7 @@ public class LwM2MTransportService {
         lwM2MTransportRequest.sendAllRequest(lwServer, registration, path, POST_TYPE_OPER_EXECUTE,
                 ContentFormat.TLV.getName(), null, null, "", context.getTimeout());
     }
+
 
 //
 //    private void cancelAllObservation(LeshanServer lwServer, Registration registration) {
@@ -521,48 +873,48 @@ public class LwM2MTransportService {
 //        return observeResponse;
 //    }
 
-//    public void setCancelAllObservation(LeshanServer lwServer, Registration registration) {
-//        log.info("33)  setCancelObservationObjects endpoint: {}", registration.getEndpoint());
-//        int cancel = lwServer.getObservationService().cancelObservations(registration);
-//        Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
-////        if (registration != null) {
-////            observations.forEach(observation -> {
-//        log.info("33_1)  setCancelObservationObjects endpoint: {} cancel: {}", registration.getEndpoint(), cancel);
-////                this.sendAllRequest(lwServer, registration, observation.getPath().toString(), POST_TYPE_OPER_OBSERVE_CANCEL, null, null, observation);
-////                log.info("33_2)  setCancelObservationObjects endpoint: {}", registration.getEndpoint());
-////                lwServer.getObservationService().cancelObservation(observation);
-////                log.info("33_3)  setCancelObservationObjects endpoint: {}", registration.getEndpoint());
-////                /**
-////                 * active cancellation does not remove observation from store : it should be done manually using
-////                 */
-////                lwServer.getObservationService().cancelObservations(registration, observation.getPath().toString());
-////                log.info("33_4)  setCancelObservationObjects endpoint: {}/\n target {}", registration.getEndpoint(), observation.getPath().toString());
-////            });
-////        }
-////        if (registration != null) {
-//////            CountDownLatch cancelLatch = new CountDownLatch(1);
-////            Arrays.stream(registration.getObjectLinks()).forEach(url -> {
-////                String[] objects = url.getUrl().split("/");
-////                if (objects.length > 2) {
-////                    String target = "/" + objects[1];
-////
-//////                    CancelObservationResponse cancelResponse = lwServer.send(registration, new CancelObservationRequest(observation));
-//////                    log.info("cancelResponse: {}", cancelResponse);
-////                    /**
-////                     * active cancellation does not remove observation from store : it should be done manually using
-////                     */
-////                    lwServer.getObservationService().cancelObservations(registration, target);
-////                    log.info("33_1)  setCancelObservationObjects endpoint: {}/\n target {}", registration.getEndpoint(), target);
-////                }
-////            });
-////            cancelLatch.countDown();
-////            try {
-////                cancelLatch.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
-////            } catch (InterruptedException e) {
-////
-////            }
-////        }
-//    }
+    public void setCancelAllObservation(LeshanServer lwServer, Registration registration) {
+        log.info("33)  setCancelObservationObjects endpoint: {}", registration.getEndpoint());
+        int cancel = lwServer.getObservationService().cancelObservations(registration);
+        Set<Observation> observations = lwServer.getObservationService().getObservations(registration);
+        if (registration != null) {
+            observations.forEach(observation -> {
+                log.info("33_1)  setCancelObservationObjects endpoint: {} cancel: {}", registration.getEndpoint(), cancel);
+                lwM2MTransportRequest.sendAllRequest(lwServer, registration, observation.getPath().toString(), POST_TYPE_OPER_OBSERVE_CANCEL, null, null, null, null, context.getTimeout());
+                log.info("33_2)  setCancelObservationObjects endpoint: {}", registration.getEndpoint());
+                lwServer.getObservationService().cancelObservation(observation);
+                log.info("33_3)  setCancelObservationObjects endpoint: {}", registration.getEndpoint());
+                /**
+                 * active cancellation does not remove observation from store : it should be done manually using
+                 */
+                lwServer.getObservationService().cancelObservations(registration, observation.getPath().toString());
+                log.info("33_4)  setCancelObservationObjects endpoint: {}/\n target {}", registration.getEndpoint(), observation.getPath().toString());
+            });
+        }
+        if (registration != null) {
+            CountDownLatch cancelLatch = new CountDownLatch(1);
+            Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+                String[] objects = url.getUrl().split("/");
+                if (objects.length > 2) {
+                    String target = "/" + objects[1];
+
+//                    CancelObservationResponse cancelResponse = lwServer.send(registration, new CancelObservationRequest(observation));
+//                    log.info("cancelResponse: {}", cancelResponse);
+                    /**
+                     * active cancellation does not remove observation from store : it should be done manually using
+                     */
+                    lwServer.getObservationService().cancelObservations(registration, target);
+                    log.info("33_1)  setCancelObservationObjects endpoint: {}/\n target {}", registration.getEndpoint(), target);
+                }
+            });
+            cancelLatch.countDown();
+            try {
+                cancelLatch.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+
+            }
+        }
+    }
 
 //    private ModelClient getClientModelWithValue(LeshanServer lwServer, Registration registration) {
 //        log.info("1) getClientModelWithValue  start: \n registration: {}", registration);
@@ -623,8 +975,8 @@ public class LwM2MTransportService {
 //    }
 
 
-//    public ReadResultAttrTel doGetAttributsTelemetryObserve1(LeshanServer lwServer, String clientEndpoint) {
-//        ReadResultAttrTel readResultAttrTel = new ReadResultAttrTel();
+//    public AttrTelemetryObserveValue doGetAttributsTelemetryObserve1(LeshanServer lwServer, String clientEndpoint) {
+//        AttrTelemetryObserveValue readResultAttrTel = new AttrTelemetryObserveValue();
 //        Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
 //        registration.getAdditionalRegistrationAttributes().entrySet().forEach(entry -> {
 //            log.info("Attributes: Key : [{}] Value : [{}]", entry.getKey(), entry.getValue());
@@ -674,8 +1026,8 @@ public class LwM2MTransportService {
 //    }
 
 
-//    public ReadResultAttrTel doGetAttributsTelemetry(LeshanServer lwServer, String clientEndpoint) {
-//        ReadResultAttrTel readResultAttrTel = new ReadResultAttrTel();
+//    public AttrTelemetryObserveValue doGetAttributsTelemetry(LeshanServer lwServer, String clientEndpoint) {
+//        AttrTelemetryObserveValue readResultAttrTel = new AttrTelemetryObserveValue();
 //        Registration registration = lwServer.getRegistrationService().getByEndpoint(clientEndpoint);
 //        registration.getAdditionalRegistrationAttributes().entrySet().forEach(entry -> {
 //            log.info("Attributes: Key : [{}] Value : [{}]", entry.getKey(), entry.getValue());

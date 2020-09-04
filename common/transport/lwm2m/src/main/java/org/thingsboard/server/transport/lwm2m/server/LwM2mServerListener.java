@@ -93,7 +93,7 @@ public class LwM2mServerListener {
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
 //            log.info("Received notification onResponse from [{}] containing value [{}]", observation.getPath(), response.getContent().toString());
             if (registration != null) {
-                service.setValue(registration, observation.getPath().toString(), response);
+                service.onObservationResponse(registration, observation.getPath().toString(), response);
             }
         }
 

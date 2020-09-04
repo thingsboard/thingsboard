@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.InMemorySecurityStore;
-import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.eclipse.leshan.server.security.SecurityStoreListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +61,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     public SecurityInfo getByEndpoint(String endPoint) {
         readLock.lock();
         try {
-            String integrationId = getByIntegrationId(endPoint, null);
+            String integrationId = this.getByRegistrationId(endPoint, null);
             return (integrationId != null) ? sessions.get(integrationId).getInfo() : add(endPoint);
         } finally {
             readLock.unlock();
@@ -73,7 +72,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     public SecurityInfo getByIdentity(String identity) {
         readLock.lock();
         try {
-            String integrationId = getByIntegrationId(null, identity);
+            String integrationId = this.getByRegistrationId(null, identity);
             return (integrationId != null) ? sessions.get(integrationId).getInfo() : add(identity);
         } finally {
             readLock.unlock();
@@ -136,15 +135,26 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         return (modelClients != null) ? modelClients.getValue() : null;
     }
 
-    public ModelClient getByModelClient(String registrationId) {
+    public ModelClient getByRegistrationIdModelClient(String registrationId) {
         return this.sessions.get(registrationId);
     }
 
-    private String getByIntegrationId(String endPoint, String identity) {
-        List<String> integrationIds = (endPoint != null) ?
+    private String getByRegistrationId(String endPoint, String identity) {
+        List<String> registrationIds = (endPoint != null) ?
                 this.sessions.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndPoint())).map(model -> model.getKey()).collect(Collectors.toList()) :
                 this.sessions.entrySet().stream().filter(model -> identity.equals(model.getValue().getIdentity())).map(model -> model.getKey()).collect(Collectors.toList());
-        return (integrationIds != null && integrationIds.size() > 0) ? integrationIds.get(0) : null;
+        return (registrationIds != null && registrationIds.size() > 0) ? registrationIds.get(0) : null;
+    }
+
+    public String getByRegistrationId(String credentialsId) {
+        List<String> registrationIds = (this.sessions.entrySet().stream().filter(model -> credentialsId.equals(model.getValue().getEndPoint())).map(model -> model.getKey()).collect(Collectors.toList()) != null) ?
+                this.sessions.entrySet().stream().filter(model -> credentialsId.equals(model.getValue().getEndPoint())).map(model -> model.getKey()).collect(Collectors.toList()) :
+                this.sessions.entrySet().stream().filter(model -> credentialsId.equals(model.getValue().getIdentity())).map(model -> model.getKey()).collect(Collectors.toList());
+        return (registrationIds != null && registrationIds.size() > 0) ? registrationIds.get(0) : null;
+    }
+
+    public Registration getByRegistration (String registrationId) {
+        return this.sessions.get(registrationId).getRegistration();
     }
 
     private SecurityInfo getByModelClientSecurityInfo(String endPoint, String identity) {
@@ -182,7 +192,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
                 modelClient = (ModelClient) this.sessions.get(registration.getEndpoint()).clone();
                 modelClient.setRegistrationParam(lwServer, registration);
                 modelClient.setAttributes(registration.getAdditionalRegistrationAttributes());
-                modelClient.setTransportService(transportService);
+//                modelClient.setTransportService(transportService);
                 this.sessions.put(registration.getId(), modelClient);
                 this.sessions.remove(registration.getEndpoint());
             }

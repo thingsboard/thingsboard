@@ -46,8 +46,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Component("LwM2MTransportHandler")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
@@ -70,10 +69,9 @@ public class LwM2MTransportHandler{
     public static final String REPLACE_PARAM = "replace";
 
     public static final String OBSERVE_ATTRIBUTE_TELEMETRY = "observeAttr";
-    public static final String OBSERVE = "observe";
     public static final String ATTRIBUTE = "attribute";
     public static final String TELEMETRY = "telemetry";
-
+    public static final String OBSERVE = "observe";
     /**
      * The default key store FolderPath for reading Certificates from resource
      */
@@ -129,8 +127,8 @@ public class LwM2MTransportHandler{
             "LwM2M_EventLog-V1_0.xml"};
 
     public static final String BASE_DEVICE_API_TOPIC = "v1/devices/me";
-    public static final String DEVICE_TELEMETRY_TOPIC = BASE_DEVICE_API_TOPIC + "/telemetry";
     public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + "/attributes";
+    public static final String DEVICE_TELEMETRY_TOPIC = BASE_DEVICE_API_TOPIC + "/telemetry";
 
     public static final String GET_TYPE_OPER_READ = "read";
     public static final String GET_TYPE_OPER_DISCOVER = "discover";
@@ -153,6 +151,7 @@ public class LwM2MTransportHandler{
 
     @Autowired
     private LwM2MTransportService service;
+
 
     @PostConstruct
     public void init() {
@@ -266,5 +265,20 @@ public class LwM2MTransportHandler{
             }
         }
         return object;
+    }
+
+    /**
+     * Equals to Map for values
+     * @param map1
+     * @param map2
+     * @param <V>
+     * @return
+     */
+    public static <V extends Comparable<V>>  boolean valuesEquals(Map<?,V> map1, Map<?,V> map2) {
+        List<V> values1 = new ArrayList<V>(map1.values());
+        List<V> values2 = new ArrayList<V>(map2.values());
+        Collections.sort(values1);
+        Collections.sort(values2);
+        return values1.equals(values2);
     }
 }

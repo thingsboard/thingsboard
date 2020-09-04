@@ -13,27 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.adaptors;
+package org.thingsboard.server.transport.lwm2m.server.client;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import lombok.Data;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Data
-public class ReadResultAttrTel {
-
+public class AttrTelemetryObserveValue {
+    /**
+     * postAttribute, postTelemetry
+     *  {{name:value},
+     *  "Time":"23:00" }}
+     */
     JsonObject postAttribute;
+    JsonArray postAttributeProfile;
     JsonObject postTelemetry;
-    Set <String> postObserve;
-    Set <String> pathResAttrTelemetry;
+    JsonArray postTelemetryProfile;
+    /**
+     * postObserve
+     * [ "/2/0/0", "/2/0/1"]
+     */
+    Set<String> postObserve;
+    JsonArray postObserveProfile;
 
-    public ReadResultAttrTel() {
-        postAttribute = new JsonObject();
-        postTelemetry = new JsonObject();
-        postObserve = ConcurrentHashMap.newKeySet();
-        pathResAttrTelemetry = ConcurrentHashMap.newKeySet();
-    }
+    /**
+     * Only All resourses: postAttribute&postTelemetry
+     */
+    Set<String> pathResAttrTelemetry;
 }

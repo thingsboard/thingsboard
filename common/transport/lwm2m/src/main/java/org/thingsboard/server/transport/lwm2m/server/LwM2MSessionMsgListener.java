@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
@@ -29,9 +28,10 @@ import java.util.UUID;
 
 @Slf4j
 public class LwM2MSessionMsgListener implements SessionMsgListener {
+    private LwM2MTransportService service;
 
-    LwM2MSessionMsgListener(UUID sessionId) {
-        log.info("6.0) start listener sessionId: {}", sessionId);
+    LwM2MSessionMsgListener(UUID sessionId, LwM2MTransportService service) {
+        this.service = service;
     }
 
     @Override
@@ -50,8 +50,8 @@ public class LwM2MSessionMsgListener implements SessionMsgListener {
     }
 
     @Override
-    public void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto toTransportUpdateCredentials) {
-        log.info("6.4) onProcessCredentialsUpdate listenerЖ {}", toTransportUpdateCredentials);
+    public void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto updateCredentials) {
+        this.service.onGetChangeCredentials(updateCredentials);
     }
 
     @Override

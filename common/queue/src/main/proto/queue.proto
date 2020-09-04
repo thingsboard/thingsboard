@@ -183,6 +183,12 @@ message ValidateDeviceLwM2MCredentialsRequestMsg {
   string credentialsId = 1;
 }
 
+message ToTransportUpdateCredentialsProto {
+  repeated string credentialsId = 1;
+  repeated string credentialsValue = 2;
+//  repeated string message = 1;
+}
+
 message GetTenantRoutingInfoRequestMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
@@ -195,10 +201,6 @@ message GetTenantRoutingInfoResponseMsg {
 
 message SessionCloseNotificationProto {
   string message = 1;
-}
-
-message ToTransportUpdateCredentialsProto {
-  repeated string message = 1;
 }
 
 

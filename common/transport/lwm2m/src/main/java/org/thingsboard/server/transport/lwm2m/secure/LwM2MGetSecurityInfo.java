@@ -16,8 +16,6 @@
 package org.thingsboard.server.transport.lwm2m.secure;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.SecurityUtil;
@@ -26,11 +24,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBootstrap;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
-import org.thingsboard.server.transport.lwm2m.server.client.ModelClient;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
 import java.io.IOException;
@@ -58,18 +56,13 @@ public class LwM2MGetSecurityInfo {
     public ReadResultSecurityStore getSecurityInfo(String endPoint, TypeServer keyValue) {
         CountDownLatch latch = new CountDownLatch(1);
         final ReadResultSecurityStore[] resultSecurityStore = new ReadResultSecurityStore[1];
-        contextS.getTransportService().process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(endPoint).build(),
-                new TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg>() {
+        contextS.getTransportService().process(ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(endPoint).build(),
+                new TransportServiceCallback<ValidateDeviceCredentialsResponseMsg>() {
                     @Override
-                    public void onSuccess(TransportProtos.ValidateDeviceCredentialsResponseMsg msg) {
+                    public void onSuccess(ValidateDeviceCredentialsResponseMsg msg) {
                         String ingfosStr = msg.getCredentialsBody();
                         resultSecurityStore[0] = putSecurityInfo(endPoint, msg.getDeviceInfo().getDeviceName(), ingfosStr, keyValue);
                         resultSecurityStore[0].setMsg(msg);
-//                        if (resultSecurityStore[0].getSecurityMode() < DEFAULT_MODE.code && keyValue.equals(TypeServer.CLIENT)) {
-//                        if (resultSecurityStore[0].getSecurityMode() < DEFAULT_MODE.code) {
-//                            String endpoint = (resultSecurityStore[0].getSecurityMode()== PSK.code) ? resultSecurityStore[0].getSecurityInfo().getEndpoint(): endPoint;
-//                            contextS.getSessions().put(endpoint, new ModelClient(msg, null, null ));
-//                        }
                         latch.countDown();
                     }
 
