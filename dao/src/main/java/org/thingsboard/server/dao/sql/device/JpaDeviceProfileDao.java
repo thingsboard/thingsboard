@@ -80,4 +80,8 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
         return deviceProfileRepository.findDefaultDeviceProfileInfo(tenantId.getId());
     }
 
+    @Override
+    public DeviceProfile findByName(TenantId tenantId, String profileName) {
+        return deviceProfileRepository.findByTenantIdAndName(tenantId.getId(), profileName);
+    }
 }

@@ -184,4 +184,15 @@ public interface DeviceDao extends Dao<Device> {
     ListenableFuture<Device> findDeviceByTenantIdAndIdAsync(TenantId tenantId, UUID id);
 
     Long countDevicesByDeviceProfileId(TenantId tenantId, UUID deviceProfileId);
+
+    /**
+     * Find devices by tenantId, profileId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param profileId the profileId
+     * @param pageLink the page link
+     * @return the list of device objects
+     */
+    PageData<Device> findDevicesByTenantIdAndProfileId(UUID tenantId, UUID profileId, PageLink pageLink);
+
 }

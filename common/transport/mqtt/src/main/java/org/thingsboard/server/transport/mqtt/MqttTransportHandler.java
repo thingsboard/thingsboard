@@ -39,6 +39,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.msg.EncryptionUtil;
@@ -574,7 +575,13 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             adaptor.convertToPublish(deviceSessionCtx, rpcResponse).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
-            log.trace("[{}] Failed to convert device RPC commandto MQTT msg", sessionId, e);
+            log.trace("[{}] Failed to convert device RPC command to MQTT msg", sessionId, e);
         }
+    }
+
+    @Override
+    public void onProfileUpdate(DeviceProfile deviceProfile) {
+        deviceSessionCtx.getDeviceInfo().setDeviceType(deviceProfile.getName());
+        sessionInfo = SessionInfoProto.newBuilder().mergeFrom(sessionInfo).setDeviceType(deviceProfile.getName()).build();
     }
 }

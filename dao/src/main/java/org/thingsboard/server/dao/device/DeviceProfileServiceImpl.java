@@ -23,10 +23,12 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
@@ -44,6 +46,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_PROFILE_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -54,12 +57,16 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String INCORRECT_DEVICE_PROFILE_ID = "Incorrect deviceProfileId ";
+    private static final String INCORRECT_DEVICE_PROFILE_NAME = "Incorrect deviceProfileName ";
 
     @Autowired
     private DeviceProfileDao deviceProfileDao;
 
     @Autowired
     private DeviceDao deviceDao;
+
+    @Autowired
+    private DeviceService deviceService;
 
     @Autowired
     private TenantDao tenantDao;
@@ -75,6 +82,13 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         return deviceProfileDao.findById(tenantId, deviceProfileId.getId());
     }
 
+    @Override
+    public DeviceProfile findDeviceProfileByName(TenantId tenantId, String profileName) {
+        log.trace("Executing findDeviceProfileByName [{}][{}]", tenantId, profileName);
+        Validator.validateString(profileName, INCORRECT_DEVICE_PROFILE_NAME + profileName);
+        return deviceProfileDao.findByName(tenantId, profileName);
+    }
+
     @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{'info', #deviceProfileId.id}")
     @Override
     public DeviceProfileInfo findDeviceProfileInfoById(TenantId tenantId, DeviceProfileId deviceProfileId) {
@@ -87,6 +101,10 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile) {
         log.trace("Executing saveDeviceProfile [{}]", deviceProfile);
         deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
+        DeviceProfile oldDeviceProfile = null;
+        if (deviceProfile.getId() != null) {
+            oldDeviceProfile = deviceProfileDao.findById(deviceProfile.getTenantId(), deviceProfile.getId().getId());
+        }
         DeviceProfile savedDeviceProfile;
         try {
             savedDeviceProfile = deviceProfileDao.save(deviceProfile.getTenantId(), deviceProfile);
@@ -101,9 +119,22 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         Cache cache = cacheManager.getCache(DEVICE_PROFILE_CACHE);
         cache.evict(Collections.singletonList(savedDeviceProfile.getId().getId()));
         cache.evict(Arrays.asList("info", savedDeviceProfile.getId().getId()));
+        cache.evict(Arrays.asList(deviceProfile.getTenantId().getId(), deviceProfile.getName()));
         if (savedDeviceProfile.isDefault()) {
             cache.evict(Arrays.asList("default", savedDeviceProfile.getTenantId().getId()));
             cache.evict(Arrays.asList("default", "info", savedDeviceProfile.getTenantId().getId()));
+        }
+        if (oldDeviceProfile != null && !oldDeviceProfile.getName().equals(deviceProfile.getName())) {
+            PageLink pageLink = new PageLink(100);
+            PageData<Device> pageData;
+            do {
+                pageData = deviceDao.findDevicesByTenantIdAndProfileId(deviceProfile.getTenantId().getId(), deviceProfile.getUuidId(), pageLink);
+                for (Device device : pageData.getData()) {
+                    device.setType(deviceProfile.getName());
+                    deviceService.saveDevice(device);
+                }
+                pageLink = pageLink.nextPageLink();
+            } while (pageData.hasNext());
         }
         return savedDeviceProfile;
     }
@@ -116,10 +147,11 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         if (deviceProfile != null && deviceProfile.isDefault()) {
             throw new DataValidationException("Deletion of Default Device Profile is prohibited!");
         }
-        this.removeDeviceProfile(tenantId, deviceProfileId);
+        this.removeDeviceProfile(tenantId, deviceProfile);
     }
 
-    private void removeDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId) {
+    private void removeDeviceProfile(TenantId tenantId, DeviceProfile deviceProfile) {
+        DeviceProfileId deviceProfileId = deviceProfile.getId();
         try {
             deviceProfileDao.removeById(tenantId, deviceProfileId.getId());
         } catch (Exception t) {
@@ -134,6 +166,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         Cache cache = cacheManager.getCache(DEVICE_PROFILE_CACHE);
         cache.evict(Collections.singletonList(deviceProfileId.getId()));
         cache.evict(Arrays.asList("info", deviceProfileId.getId()));
+        cache.evict(Arrays.asList(tenantId.getId(), deviceProfile.getName()));
     }
 
     @Override
@@ -152,12 +185,13 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         return deviceProfileDao.findDeviceProfileInfos(tenantId, pageLink);
     }
 
+    @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{#tenantId.id, #name}")
     @Override
-    public DeviceProfile findOrCreateDefaultDeviceProfile(TenantId tenantId) {
+    public DeviceProfile findOrCreateDeviceProfile(TenantId tenantId, String name) {
         log.trace("Executing findOrCreateDefaultDeviceProfile");
-        DeviceProfile deviceProfile = findDefaultDeviceProfile(tenantId);
+        DeviceProfile deviceProfile = findDeviceProfileByName(tenantId, name);
         if (deviceProfile == null) {
-            deviceProfile = this.createDefaultDeviceProfile(tenantId);
+            deviceProfile = this.doCreateDefaultDeviceProfile(tenantId, name, name.equals("default"));
         }
         return deviceProfile;
     }
@@ -166,12 +200,6 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     public DeviceProfile createDefaultDeviceProfile(TenantId tenantId) {
         log.trace("Executing createDefaultDeviceProfile tenantId [{}]", tenantId);
         return doCreateDefaultDeviceProfile(tenantId, "default", true);
-    }
-
-    @Override
-    public DeviceProfile createDeviceProfile(TenantId tenantId, String profileName) {
-        log.trace("Executing createDefaultDeviceProfile tenantId [{}], profileName [{}]", tenantId, profileName);
-        return doCreateDefaultDeviceProfile(tenantId, profileName, false);
     }
 
     private DeviceProfile doCreateDefaultDeviceProfile(TenantId tenantId, String profileName, boolean defaultProfile) {
@@ -227,6 +255,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 deviceProfileDao.save(tenantId, deviceProfile);
                 cache.evict(Collections.singletonList(previousDefaultDeviceProfile.getId().getId()));
                 cache.evict(Arrays.asList("info", previousDefaultDeviceProfile.getId().getId()));
+                cache.evict(Arrays.asList(tenantId.getId(), previousDefaultDeviceProfile.getName()));
                 changed = true;
             }
             if (changed) {
@@ -234,6 +263,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 cache.evict(Arrays.asList("info", deviceProfile.getId().getId()));
                 cache.evict(Arrays.asList("default", tenantId.getId()));
                 cache.evict(Arrays.asList("default", "info", tenantId.getId()));
+                cache.evict(Arrays.asList(tenantId.getId(), deviceProfile.getName()));
             }
             return changed;
         }
@@ -309,7 +339,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
                 @Override
                 protected void removeEntity(TenantId tenantId, DeviceProfile entity) {
-                    removeDeviceProfile(tenantId, entity.getId());
+                    removeDeviceProfile(tenantId, entity);
                 }
             };
 

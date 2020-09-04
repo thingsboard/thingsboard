@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 
@@ -53,4 +54,7 @@ public interface DeviceProfileRepository extends PagingAndSortingRepository<Devi
             "FROM DeviceProfileEntity d " +
             "WHERE d.tenantId = :tenantId AND d.isDefault = true")
     DeviceProfileInfo findDefaultDeviceProfileInfo(@Param("tenantId") UUID tenantId);
+
+    DeviceProfile findByTenantIdAndName(UUID id, String profileName);
+
 }

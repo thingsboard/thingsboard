@@ -355,10 +355,12 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                             pageData = tenantService.findTenants(pageLink);
                             for (Tenant tenant : pageData.getData()) {
                                 List<EntitySubtype> deviceTypes = deviceService.findDeviceTypesByTenantId(tenant.getId()).get();
-                                deviceProfileService.findOrCreateDefaultDeviceProfile(tenant.getId());
+                                try {
+                                    deviceProfileService.createDefaultDeviceProfile(tenant.getId());
+                                } catch (Exception e){}
                                 for (EntitySubtype deviceType : deviceTypes) {
                                     try {
-                                        deviceProfileService.createDeviceProfile(tenant.getId(), deviceType.getType());
+                                        deviceProfileService.findOrCreateDeviceProfile(tenant.getId(), deviceType.getType());
                                     } catch (Exception e) {
                                     }
                                 }
