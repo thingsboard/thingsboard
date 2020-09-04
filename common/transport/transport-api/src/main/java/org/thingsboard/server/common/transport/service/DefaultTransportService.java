@@ -43,6 +43,7 @@ import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
+import org.thingsboard.server.common.transport.TransportProfileCache;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
@@ -121,8 +122,7 @@ public class DefaultTransportService implements TransportService {
     private final PartitionService partitionService;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final StatsFactory statsFactory;
-    private final DataDecodingEncodingService dataDecodingEncodingService;
-
+    private final TransportProfileCache transportProfileCache;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
@@ -141,7 +141,6 @@ public class DefaultTransportService implements TransportService {
     //TODO 3.2: @ybondarenko Implement cleanup of this maps.
     private final ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, TbRateLimits> perDeviceLimits = new ConcurrentHashMap<>();
-    private final ConcurrentMap<DeviceProfileId, DeviceProfile> deviceProfiles = new ConcurrentHashMap<>();
 
     private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
     private volatile boolean stopped = false;
@@ -151,13 +150,13 @@ public class DefaultTransportService implements TransportService {
                                    TbQueueProducerProvider producerProvider,
                                    PartitionService partitionService,
                                    StatsFactory statsFactory,
-                                   DataDecodingEncodingService dataDecodingEncodingService) {
+                                   TransportProfileCache transportProfileCache) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.queueProvider = queueProvider;
         this.producerProvider = producerProvider;
         this.partitionService = partitionService;
         this.statsFactory = statsFactory;
-        this.dataDecodingEncodingService = dataDecodingEncodingService;
+        this.transportProfileCache = transportProfileCache;
     }
 
     @PostConstruct
@@ -276,14 +275,7 @@ public class DefaultTransportService implements TransportService {
                 result.deviceInfo(tdi);
                 ByteString profileBody = msg.getProfileBody();
                 if (profileBody != null && !profileBody.isEmpty()) {
-                    DeviceProfile profile = deviceProfiles.get(tdi.getDeviceProfileId());
-                    if (profile == null) {
-                        Optional<DeviceProfile> deviceProfile = dataDecodingEncodingService.decode(profileBody.toByteArray());
-                        if (deviceProfile.isPresent()) {
-                            profile = deviceProfile.get();
-                            deviceProfiles.put(tdi.getDeviceProfileId(), profile);
-                        }
-                    }
+                    DeviceProfile profile = transportProfileCache.getOrCreate(tdi.getDeviceProfileId(), profileBody);
                     if (transportType != DeviceTransportType.DEFAULT
                             && profile != null && profile.getTransportType() != DeviceTransportType.DEFAULT && profile.getTransportType() != transportType) {
                         log.debug("[{}] Device profile [{}] has different transport type: {}, expected: {}", tdi.getDeviceId(), tdi.getDeviceProfileId(), profile.getTransportType(), transportType);
@@ -309,15 +301,7 @@ public class DefaultTransportService implements TransportService {
                 result.deviceInfo(tdi);
                 ByteString profileBody = msg.getProfileBody();
                 if (profileBody != null && !profileBody.isEmpty()) {
-                    DeviceProfile profile = deviceProfiles.get(tdi.getDeviceProfileId());
-                    if (profile == null) {
-                        Optional<DeviceProfile> deviceProfile = dataDecodingEncodingService.decode(profileBody.toByteArray());
-                        if (deviceProfile.isPresent()) {
-                            profile = deviceProfile.get();
-                            deviceProfiles.put(tdi.getDeviceProfileId(), profile);
-                        }
-                    }
-                    result.deviceProfile(profile);
+                    result.deviceProfile(transportProfileCache.getOrCreate(tdi.getDeviceProfileId(), profileBody));
                 }
             }
             return result.build();
@@ -629,8 +613,10 @@ public class DefaultTransportService implements TransportService {
             }
         } else {
             if (toSessionMsg.hasDeviceProfileUpdateMsg()) {
-                Optional<DeviceProfile> deviceProfile = dataDecodingEncodingService.decode(toSessionMsg.getDeviceProfileUpdateMsg().getData().toByteArray());
-                deviceProfile.ifPresent(this::onProfileUpdate);
+                DeviceProfile deviceProfile = transportProfileCache.put(toSessionMsg.getDeviceProfileUpdateMsg().getData());
+                if (deviceProfile != null) {
+                    onProfileUpdate(deviceProfile);
+                }
             } else {
                 //TODO: should we notify the device actor about missed session?
                 log.debug("[{}] Missing session.", sessionId);
@@ -640,7 +626,7 @@ public class DefaultTransportService implements TransportService {
 
     @Override
     public void getDeviceProfile(DeviceProfileId deviceProfileId, TransportServiceCallback<DeviceProfile> callback) {
-        DeviceProfile deviceProfile = deviceProfiles.get(deviceProfileId);
+        DeviceProfile deviceProfile = transportProfileCache.get(deviceProfileId);
         if (deviceProfile != null) {
             callback.onSuccess(deviceProfile);
         } else {
@@ -653,14 +639,13 @@ public class DefaultTransportService implements TransportService {
                     TransportApiRequestMsg.newBuilder().setGetDeviceProfileRequestMsg(msg).build());
             AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg),
                     response -> {
-                        byte[] devProfileBody = response.getValue().getGetDeviceProfileResponseMsg().getData().toByteArray();
-                        if (devProfileBody != null && devProfileBody.length > 0) {
-                            Optional<DeviceProfile> deviceProfileOpt = dataDecodingEncodingService.decode(devProfileBody);
-                            if (deviceProfileOpt.isPresent()) {
-                                deviceProfiles.put(deviceProfileOpt.get().getId(), deviceProfile);
-                                callback.onSuccess(deviceProfileOpt.get());
+                        ByteString devProfileBody = response.getValue().getGetDeviceProfileResponseMsg().getData();
+                        if (devProfileBody != null && !devProfileBody.isEmpty()) {
+                            DeviceProfile profile = transportProfileCache.put(devProfileBody);
+                            if (profile != null) {
+                                callback.onSuccess(profile);
                             } else {
-                                log.warn("Failed to decode device profile: {}", Arrays.toString(devProfileBody));
+                                log.warn("Failed to decode device profile: {}", devProfileBody);
                                 callback.onError(new IllegalArgumentException("Failed to decode device profile!"));
                             }
                         } else {
@@ -673,7 +658,6 @@ public class DefaultTransportService implements TransportService {
 
     @Override
     public void onProfileUpdate(DeviceProfile deviceProfile) {
-        deviceProfiles.put(deviceProfile.getId(), deviceProfile);
         long deviceProfileIdMSB = deviceProfile.getId().getId().getMostSignificantBits();
         long deviceProfileIdLSB = deviceProfile.getId().getId().getLeastSignificantBits();
         sessions.forEach((id, md) -> {
@@ -736,7 +720,7 @@ public class DefaultTransportService implements TransportService {
 
     private RuleChainId resolveRuleChainId(TransportProtos.SessionInfoProto sessionInfo) {
         DeviceProfileId deviceProfileId = new DeviceProfileId(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
-        DeviceProfile deviceProfile = deviceProfiles.get(deviceProfileId);
+        DeviceProfile deviceProfile = transportProfileCache.get(deviceProfileId);
         RuleChainId ruleChainId;
         if (deviceProfile == null) {
             log.warn("[{}] Device profile is null!", deviceProfileId);
@@ -745,27 +729,6 @@ public class DefaultTransportService implements TransportService {
             ruleChainId = deviceProfile.getDefaultRuleChainId();
         }
         return ruleChainId;
-    }
-
-    private <T extends com.google.protobuf.GeneratedMessageV3> ListenableFuture<TbProtoQueueMsg<T>> extractProfile(ListenableFuture<TbProtoQueueMsg<T>> send,
-                                                                                                                   Function<T, Boolean> hasDeviceInfo,
-                                                                                                                   Function<T, TransportProtos.DeviceInfoProto> deviceInfoF,
-                                                                                                                   Function<T, ByteString> profileBodyF) {
-        return Futures.transform(send, response -> {
-            T value = response.getValue();
-            if (hasDeviceInfo.apply(value)) {
-                TransportProtos.DeviceInfoProto deviceInfo = deviceInfoF.apply(value);
-                ByteString profileBody = profileBodyF.apply(value);
-                if (profileBody != null && !profileBody.isEmpty()) {
-                    DeviceProfileId deviceProfileId = new DeviceProfileId(new UUID(deviceInfo.getDeviceProfileIdMSB(), deviceInfo.getDeviceProfileIdLSB()));
-                    if (!deviceProfiles.containsKey(deviceProfileId)) {
-                        Optional<DeviceProfile> deviceProfile = dataDecodingEncodingService.decode(profileBody.toByteArray());
-                        deviceProfile.ifPresent(profile -> deviceProfiles.put(deviceProfileId, profile));
-                    }
-                }
-            }
-            return response;
-        }, transportCallbackExecutor);
     }
 
     private class TransportTbQueueCallback implements TbQueueCallback {
