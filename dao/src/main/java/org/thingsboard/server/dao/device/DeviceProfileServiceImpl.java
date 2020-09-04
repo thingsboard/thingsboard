@@ -165,7 +165,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     @Override
     public DeviceProfile createDefaultDeviceProfile(TenantId tenantId) {
         log.trace("Executing createDefaultDeviceProfile tenantId [{}]", tenantId);
-        return doCreateDefaultDeviceProfile(tenantId, "Default", true);
+        return doCreateDefaultDeviceProfile(tenantId, "default", true);
     }
 
     @Override
