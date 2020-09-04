@@ -169,8 +169,14 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         deviceValidator.validate(device, Device::getTenantId);
         Device savedDevice;
         try {
+            DeviceProfile deviceProfile;
             if (device.getDeviceProfileId() == null) {
-                DeviceProfile deviceProfile = this.deviceProfileService.findOrCreateDefaultDeviceProfile(device.getTenantId());
+                if (!StringUtils.isEmpty(device.getType())) {
+                    deviceProfile = this.deviceProfileService.findOrCreateDeviceProfile(device.getTenantId(), device.getType());
+                } else {
+                    deviceProfile = this.deviceProfileService.findDefaultDeviceProfile(device.getTenantId());
+                    device.setType(deviceProfile.getName());
+                }
                 device.setDeviceProfileId(new DeviceProfileId(deviceProfile.getId().getId()));
                 DeviceData deviceData = new DeviceData();
                 switch (deviceProfile.getType()) {
@@ -178,7 +184,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                         deviceData.setConfiguration(new DefaultDeviceConfiguration());
                         break;
                 }
-                switch (deviceProfile.getTransportType()){
+                switch (deviceProfile.getTransportType()) {
                     case DEFAULT:
                         deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
                         break;
@@ -190,7 +196,14 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                         break;
                 }
                 device.setDeviceData(deviceData);
+            } else {
+                deviceProfile = this.deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId());
+                if (deviceProfile == null) {
+                    throw new DataValidationException("Device is referencing non existing device profile!");
+                }
             }
+            device.setType(deviceProfile.getName());
+
             savedDevice = deviceDao.save(device.getTenantId(), device);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
@@ -441,9 +454,6 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
                 @Override
                 protected void validateDataImpl(TenantId tenantId, Device device) {
-                    if (StringUtils.isEmpty(device.getType())) {
-                        throw new DataValidationException("Device type should be specified!");
-                    }
                     if (StringUtils.isEmpty(device.getName())) {
                         throw new DataValidationException("Device name should be specified!");
                     }

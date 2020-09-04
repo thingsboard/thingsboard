@@ -27,6 +27,8 @@ public interface DeviceProfileService {
 
     DeviceProfile findDeviceProfileById(TenantId tenantId, DeviceProfileId deviceProfileId);
 
+    DeviceProfile findDeviceProfileByName(TenantId tenantId, String profileName);
+
     DeviceProfileInfo findDeviceProfileInfoById(TenantId tenantId, DeviceProfileId deviceProfileId);
 
     DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile);
@@ -37,11 +39,9 @@ public interface DeviceProfileService {
 
     PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink);
 
-    DeviceProfile findOrCreateDefaultDeviceProfile(TenantId tenantId);
+    DeviceProfile findOrCreateDeviceProfile(TenantId tenantId, String profileName);
 
     DeviceProfile createDefaultDeviceProfile(TenantId tenantId);
-
-    DeviceProfile createDeviceProfile(TenantId tenantId, String profileName);
 
     DeviceProfile findDefaultDeviceProfile(TenantId tenantId);
 

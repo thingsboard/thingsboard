@@ -35,7 +35,7 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     @Getter
     private volatile DeviceId deviceId;
     @Getter
-    private volatile TransportDeviceInfo deviceInfo;
+    protected volatile TransportDeviceInfo deviceInfo;
     private volatile boolean connected;
 
     public DeviceId getDeviceId() {
