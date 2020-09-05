@@ -194,6 +194,7 @@ public class LwM2MTransportService {
 
     /**
      * Sent All Attribute and Telemetry to Thingsboard
+     *
      * @param registrationId - Id of Registration LwM2M Client
      */
     private void setAttrTelemetryToThingsboard(String registrationId) {
@@ -206,6 +207,7 @@ public class LwM2MTransportService {
 
     /**
      * Get Attribute or Telemetry in format  {name(Attr/Telemetry):value} for Thingsboard
+     *
      * @param parametersAllWithValue - JsonObjects: {path: {name(Attr/Telemetry) : value}
      * @return result: new: JsonObject: {name(Attr/Telemetry):value}
      */
@@ -597,10 +599,9 @@ public class LwM2MTransportService {
      * - if dell All Attr/Telemetry and is observe => cancel observe
      * - change observe
      * -- add:
-     * --- if path in All Attr/Telemetry old/add and have value: (without query to client) => observe
-     * --- if path in All Attr/Telemetry old/add and have not value => nothing
+     * --- if path in All Attr/Telemetry: (without query to client) => observe
      * -- del: cancel observe
-     * Update in modelClient.getAttrTelemetryObserveValue(): ...Profile
+     * #3 Update in modelClient.getAttrTelemetryObserveValue(): ...Profile
      *
      * @param updateCredentials - Credentials include info about Attr/Telemetry/Observe (Profile)
      */
@@ -618,7 +619,7 @@ public class LwM2MTransportService {
             // #1
             ResultsAnalyzerParameters pathResAttrTelemetryAnalyzer;
             ResultsAnalyzerParameters postAttributeAnalyzer;
-            ResultsAnalyzerParameters postTelemetryAnalyzer = null;
+            ResultsAnalyzerParameters postTelemetryAnalyzer;
             ResultsAnalyzerParameters postObserveAnalyzer = null;
 
             JsonObject observeAttrNewJson = (credentialsValue.has("observeAttr") && !credentialsValue.get("observeAttr").isJsonNull()) ? credentialsValue.get("observeAttr").getAsJsonObject() : null;
@@ -631,7 +632,7 @@ public class LwM2MTransportService {
                     !modelClient.getAttrTelemetryObserveValue().getPostObserveProfile().equals(observeNew)) {
                 if (!modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile().equals(attributeNew) ||
                         !modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile().equals(telemetryNew)) {
-                    // #1.1
+                    // #1.1 add
                     Set<String> pathResAttrTelemetryProfileNew = ConcurrentHashMap.newKeySet();
                     attributeNew.forEach(attr -> {
                         pathResAttrTelemetryProfileNew.add(attr.getAsString().toString());
@@ -647,56 +648,42 @@ public class LwM2MTransportService {
                         pathResAttrTelemetryProfileOld.add(telemetry.getAsString().toString());
                     });
                     pathResAttrTelemetryAnalyzer = getAnalyzerParameters(pathResAttrTelemetryProfileOld, pathResAttrTelemetryProfileNew);
-                    // #1.2
+                    // #1.2 add
                     postAttributeAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), Set.class),
                             new Gson().fromJson(attributeNew, Set.class));
-                    // #1.3
+                    // #1.3 add
                     postTelemetryAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile(), Set.class),
                             new Gson().fromJson(telemetryNew, Set.class));
-                    // #1.4
-                    postObserveAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostObserveProfile(), Set.class),
-                            new Gson().fromJson(observeNew, Set.class));
-                    // #2.1
-                    if (pathResAttrTelemetryAnalyzer != null) {
-                        if (pathResAttrTelemetryAnalyzer.getPathPostParametersAdd() != null && pathResAttrTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
-                            this.updateResourceValue(lwServer, registration, modelClient, pathResAttrTelemetryAnalyzer.getPathPostParametersAdd());
-                        }
+                    // #2.1 add
+                    if (pathResAttrTelemetryAnalyzer != null && pathResAttrTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+                        this.updateResourceValueObserve(lwServer, registration, modelClient, pathResAttrTelemetryAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_READ);
                     }
 
-                    // #2.2
-                    if (postAttributeAnalyzer != null) {
-                        if (postAttributeAnalyzer.getPathPostParametersAdd() != null && postAttributeAnalyzer.getPathPostParametersAdd().size() > 0) {
-                            this.sentNewAttrTelemetryToThingsboard(registration.getId(), modelClient, postAttributeAnalyzer.getPathPostParametersAdd(), DEVICE_ATTRIBUTES_TOPIC);
-                        }
-                    }
-                    // #2.3
-                    if (postTelemetryAnalyzer != null) {
-                        if (postTelemetryAnalyzer.getPathPostParametersAdd() != null && postTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
-                            this.sentNewAttrTelemetryToThingsboard(registration.getId(), modelClient, postTelemetryAnalyzer.getPathPostParametersAdd(), DEVICE_TELEMETRY_TOPIC);
-                        }
-                    }
-//                    if (!modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile().equals(attributeNew)) {
-//                        Set<String> setParametersNew = new Gson().fromJson(attributeNew, Set.class);
-//                        postAttributeAnalyzer = getAnalyzerParameters(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), attributeNew);
-////                        modelClient.getAttrTelemetryObserveValue().setPostAttributeProfile(attributeNew);
-//                    }
-                    if (!modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile().equals(telemetryNew)) {
-//                        modelClient.getAttrTelemetryObserveValue().setPostTelemetryProfile(telemetryNew);
-                    }
+                    // #2.2 add
+                    if (postAttributeAnalyzer != null && postAttributeAnalyzer.getPathPostParametersAdd().size() > 0) {
+                        this.sentNewAttrTelemetryToThingsboard(registration.getId(), modelClient, postAttributeAnalyzer.getPathPostParametersAdd(), DEVICE_ATTRIBUTES_TOPIC);
 
+                    }
+                    // #2.3 add
+                    if (postTelemetryAnalyzer != null && postTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+                        this.sentNewAttrTelemetryToThingsboard(registration.getId(), modelClient, postTelemetryAnalyzer.getPathPostParametersAdd(), DEVICE_TELEMETRY_TOPIC);
+                    }
+                    //todo if is new parameters in observeProfileOld ?
                 }
 
-
-//
-//                // #2.4
-//
-//                if (!modelClient.getAttrTelemetryObserveValue().getPostObserveProfile().equals(observeNew) ||
-//                        (pathResAttrTelemetryDel != null && pathResAttrTelemetryDel.size() > 0)) {
-////                    modelClient.getAttrTelemetryObserveValue().setPostObserveProfile(observeNew);
-//                }
-
-
-                this.setModelClient(lwServer, registration, modelClient);
+                if (!modelClient.getAttrTelemetryObserveValue().getPostObserveProfile().equals(observeNew)) {
+                    // #1.4 add
+                    postObserveAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostObserveProfile(), Set.class),
+                            new Gson().fromJson(observeNew, Set.class));
+                    // #2.4 add
+                    if (postObserveAnalyzer != null && postObserveAnalyzer.getPathPostParametersAdd().size() > 0) {
+                        this.updateResourceValueObserve(lwServer, registration, modelClient, postObserveAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_OBSERVE);
+                    }
+                }
+                // #3
+                modelClient.getAttrTelemetryObserveValue().setPostAttributeProfile(attributeNew);
+                modelClient.getAttrTelemetryObserveValue().setPostTelemetryProfile(telemetryNew);
+                modelClient.getAttrTelemetryObserveValue().setPostObserveProfile(observeNew);
             }
 
         }
@@ -710,10 +697,9 @@ public class LwM2MTransportService {
      * @return ResultsAnalyzerParameters: add && new
      */
     private ResultsAnalyzerParameters getAnalyzerParameters(Set<String> parametersOld, Set<String> parametersNew) {
-        ResultsAnalyzerParameters analyzerParameters = new ResultsAnalyzerParameters();
+        ResultsAnalyzerParameters analyzerParameters = null;
         if (!parametersOld.equals(parametersNew)) {
-            analyzerParameters.setPathPostParametersAdd(ConcurrentHashMap.newKeySet());
-            analyzerParameters.setPathPostParametersDel(ConcurrentHashMap.newKeySet());
+            analyzerParameters = new ResultsAnalyzerParameters();
             analyzerParameters.setPathPostParametersAdd(parametersNew
                     .stream().filter(p -> !parametersOld.contains(p)).collect(Collectors.toSet()));
             analyzerParameters.setPathPostParametersDel(parametersOld
@@ -725,20 +711,28 @@ public class LwM2MTransportService {
     /**
      * Update Resource value after change RezAttrTelemetry in config Profile
      * sent response Read to Client and add path to pathResAttrTelemetry in ModelClient.getAttrTelemetryObserveValue()
+     *
      * @param lwServer     - LeshanServer
      * @param registration - Registration LwM2M Client
      * @param modelClient  - object with All parameters off client
      * @param targets      - path Resources
      */
 
-    private void updateResourceValue(LeshanServer lwServer, Registration registration, ModelClient modelClient, Set<String> targets) {
+    private void updateResourceValueObserve(LeshanServer lwServer, Registration registration, ModelClient modelClient, Set<String> targets, String typeOper) {
         targets.stream().forEach(target -> {
             ResultIds pathIds = new ResultIds(target);
             if (pathIds.resourceId >= 0 && modelClient.getModelObjects().get(pathIds.getObjectId())
                     .getInstances().get(pathIds.getInstanceId()).getResource(pathIds.getResourceId()).getValue() != null) {
-                lwM2MTransportRequest.sendAllRequest(lwServer, registration, target, GET_TYPE_OPER_READ,
-                        ContentFormat.TLV.getName(), null, null, "", context.getTimeout());
-                modelClient.getAttrTelemetryObserveValue().getPathResAttrTelemetry().add(target);
+                if (GET_TYPE_OPER_READ.equals(typeOper)) {
+                    lwM2MTransportRequest.sendAllRequest(lwServer, registration, target, typeOper,
+                            ContentFormat.TLV.getName(), null, null, "", context.getTimeout());
+                    modelClient.getAttrTelemetryObserveValue().getPathResAttrTelemetry().add(target);
+                }
+                else if (GET_TYPE_OPER_OBSERVE.equals(typeOper)) {
+                    lwM2MTransportRequest.sendAllRequest(lwServer, registration, target, typeOper,
+                            null, null, null, "", context.getTimeout());
+                    modelClient.getAttrTelemetryObserveValue().getPostObserve().add(target);
+                }
             }
         });
 
@@ -748,10 +742,11 @@ public class LwM2MTransportService {
     /**
      * Save path/name/value to PostAttribute/PostTelemetry in pathResAttrTelemetry in ModelClient.getAttrTelemetryObserveValue()
      * Sent to thingsboard msg format: JsonObject: [{name: value}] Attribute/Telemetry
+     *
      * @param registrationId - RegistrationId LwM2M Client
-     * @param modelClient  - object with All parameters off client
-     * @param targets - paths Resource
-     * @param typeTopic - DEVICE_ATTRIBUTES_TOPIC, DEVICE_TELEMETRY_TOPIC
+     * @param modelClient    - object with All parameters off client
+     * @param targets        - paths Resource
+     * @param typeTopic      - DEVICE_ATTRIBUTES_TOPIC, DEVICE_TELEMETRY_TOPIC
      */
     private void sentNewAttrTelemetryToThingsboard(String registrationId, ModelClient modelClient, Set<String> targets, String typeTopic) {
         JsonObject parametersWithValue = new JsonObject();
@@ -767,8 +762,7 @@ public class LwM2MTransportService {
                 parametersWithValue.addProperty(name, value);
                 if (DEVICE_ATTRIBUTES_TOPIC.equals(typeTopic)) {
                     modelClient.getAttrTelemetryObserveValue().getPostAttribute().getAsJsonObject().add(target, postParameter);
-                }
-                else if (DEVICE_TELEMETRY_TOPIC.equals(typeTopic)) {
+                } else if (DEVICE_TELEMETRY_TOPIC.equals(typeTopic)) {
                     modelClient.getAttrTelemetryObserveValue().getPostTelemetry().getAsJsonObject().add(target, postParameter);
                 }
             }

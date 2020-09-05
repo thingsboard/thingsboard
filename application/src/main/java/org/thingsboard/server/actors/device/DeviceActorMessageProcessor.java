@@ -482,12 +482,12 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     void notifyTransportAboutProfileUpdate(UUID sessionId, SessionInfoMetaData sessionMd, DeviceCredentials deviceCredentials) {
         log.info("2) LwM2Mtype: ");
         TransportProtos.ToTransportUpdateCredentialsProto.Builder notification = TransportProtos.ToTransportUpdateCredentialsProto.newBuilder();
-        notification.addMessage(deviceCredentials.toString());
+        notification.addCredentialsId(deviceCredentials.getCredentialsId());
+        notification.addCredentialsValue(deviceCredentials.getCredentialsValue());
         ToTransportMsg msg = ToTransportMsg.newBuilder()
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
                 .setToTransportUpdateCredentialsNotification(notification).build();
-//                .setToTransportUpdateCredentialsNotification(TransportProtos.ToTransportUpdateCredentialsProto.getDefaultInstance()).build();
         systemContext.getTbCoreToTransportService().process(sessionMd.getSessionInfo().getNodeId(), msg);
     }
 

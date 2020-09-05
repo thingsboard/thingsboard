@@ -24,4 +24,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ResultsAnalyzerParameters {
     Set<String> pathPostParametersAdd;
     Set<String> pathPostParametersDel;
+
+    public ResultsAnalyzerParameters() {
+        this.pathPostParametersAdd = ConcurrentHashMap.newKeySet();
+        this.pathPostParametersDel = ConcurrentHashMap.newKeySet();
+    }
 }
