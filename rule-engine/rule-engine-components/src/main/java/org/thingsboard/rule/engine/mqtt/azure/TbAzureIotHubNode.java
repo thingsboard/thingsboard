@@ -40,7 +40,7 @@ import java.util.Optional;
         configClazz = TbAzureIotHubNodeConfiguration.class,
         nodeDescription = "Publish messages to the Azure IoT Hub",
         nodeDetails = "Will publish message payload to the Azure IoT Hub with QoS <b>AT_LEAST_ONCE</b>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeAzureIotHubConfig"
 )
 public class TbAzureIotHubNode extends TbMqttNode {

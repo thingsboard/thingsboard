@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.rule;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.BaseData;
@@ -27,8 +28,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
@@ -48,7 +49,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 /**
  * Created by igor on 3/12/18.
@@ -336,11 +336,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    public TextPageData<RuleChain> findTenantRuleChains(TenantId tenantId, TextPageLink pageLink) {
+    public PageData<RuleChain> findTenantRuleChains(TenantId tenantId, PageLink pageLink) {
         Validator.validateId(tenantId, "Incorrect tenant id for search rule chain request.");
-        Validator.validatePageLink(pageLink, "Incorrect PageLink object for search rule chain request.");
-        List<RuleChain> ruleChains = ruleChainDao.findRuleChainsByTenantId(tenantId.getId(), pageLink);
-        return new TextPageData<>(ruleChains, pageLink);
+        Validator.validatePageLink(pageLink);
+        return ruleChainDao.findRuleChainsByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override
@@ -360,12 +359,21 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     private void checkRuleNodesAndDelete(TenantId tenantId, RuleChainId ruleChainId) {
+        try{
+            ruleChainDao.removeById(tenantId, ruleChainId.getId());
+        } catch (Exception t) {
+            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_rule_chain_device_profile")) {
+                throw new DataValidationException("The rule chain referenced by the device profiles cannot be deleted!");
+            } else {
+                throw t;
+            }
+        }
         List<EntityRelation> nodeRelations = getRuleChainToNodeRelations(tenantId, ruleChainId);
         for (EntityRelation relation : nodeRelations) {
             deleteRuleNode(tenantId, relation.getTo());
         }
         deleteEntityRelations(tenantId, ruleChainId);
-        ruleChainDao.removeById(tenantId, ruleChainId.getId());
     }
 
     private List<EntityRelation> getRuleChainToNodeRelations(TenantId tenantId, RuleChainId ruleChainId) {
@@ -418,7 +426,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             new PaginatedRemover<TenantId, RuleChain>() {
 
                 @Override
-                protected List<RuleChain> findEntities(TenantId tenantId, TenantId id, TextPageLink pageLink) {
+                protected PageData<RuleChain> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
                     return ruleChainDao.findRuleChainsByTenantId(id.getId(), pageLink);
                 }
 

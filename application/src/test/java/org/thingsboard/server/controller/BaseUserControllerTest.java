@@ -27,8 +27,8 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.mail.TestMailService;
 
@@ -353,15 +353,14 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         }
 
         List<User> loadedTenantAdmins = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(33);
-        TextPageData<User> pageData = null;
+        PageLink pageLink = new PageLink(33);
+        PageData<User> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?",
-                    new TypeReference<TextPageData<User>>() {
-                    }, pageLink);
+                    new TypeReference<PageData<User>>(){}, pageLink);
             loadedTenantAdmins.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -370,13 +369,12 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
         Assert.assertEquals(tenantAdmins, loadedTenantAdmins);
 
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
-
-        pageLink = new TextPageLink(33);
-        pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?",
-                new TypeReference<TextPageData<User>>() {
-                }, pageLink);
+        doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
+        .andExpect(status().isOk());
+        
+        pageLink = new PageLink(33);
+        pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?", 
+                new TypeReference<PageData<User>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
     }
@@ -422,15 +420,14 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         }
 
         List<User> loadedTenantAdminsEmail1 = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(33, email1);
-        TextPageData<User> pageData = null;
+        PageLink pageLink = new PageLink(33, 0, email1);
+        PageData<User> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?",
-                    new TypeReference<TextPageData<User>>() {
-                    }, pageLink);
+                    new TypeReference<PageData<User>>(){}, pageLink);
             loadedTenantAdminsEmail1.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -440,14 +437,13 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         Assert.assertEquals(tenantAdminsEmail1, loadedTenantAdminsEmail1);
 
         List<User> loadedTenantAdminsEmail2 = new ArrayList<>();
-        pageLink = new TextPageLink(16, email2);
+        pageLink = new PageLink(16, 0, email2);
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?",
-                    new TypeReference<TextPageData<User>>() {
-                    }, pageLink);
+                    new TypeReference<PageData<User>>(){}, pageLink);
             loadedTenantAdminsEmail2.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -461,10 +457,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
 
-        pageLink = new TextPageLink(4, email1);
-        pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?",
-                new TypeReference<TextPageData<User>>() {
-                }, pageLink);
+        pageLink = new PageLink(4, 0, email1);
+        pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?", 
+                new TypeReference<PageData<User>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
@@ -473,10 +468,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
 
-        pageLink = new TextPageLink(4, email2);
-        pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?",
-                new TypeReference<TextPageData<User>>() {
-                }, pageLink);
+        pageLink = new PageLink(4, 0, email2);
+        pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?", 
+                new TypeReference<PageData<User>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
@@ -519,15 +513,14 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         }
 
         List<User> loadedCustomerUsers = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(33);
-        TextPageData<User> pageData = null;
+        PageLink pageLink = new PageLink(33);
+        PageData<User> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/users?",
-                    new TypeReference<TextPageData<User>>() {
-                    }, pageLink);
+                    new TypeReference<PageData<User>>(){}, pageLink);
             loadedCustomerUsers.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -599,15 +592,14 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         }
 
         List<User> loadedCustomerUsersEmail1 = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(33, email1);
-        TextPageData<User> pageData = null;
+        PageLink pageLink = new PageLink(33, 0, email1);
+        PageData<User> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/users?",
-                    new TypeReference<TextPageData<User>>() {
-                    }, pageLink);
+                    new TypeReference<PageData<User>>(){}, pageLink);
             loadedCustomerUsersEmail1.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -617,14 +609,13 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         Assert.assertEquals(customerUsersEmail1, loadedCustomerUsersEmail1);
 
         List<User> loadedCustomerUsersEmail2 = new ArrayList<>();
-        pageLink = new TextPageLink(16, email2);
+        pageLink = new PageLink(16, 0, email2);
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/users?",
-                    new TypeReference<TextPageData<User>>() {
-                    }, pageLink);
+                    new TypeReference<PageData<User>>(){}, pageLink);
             loadedCustomerUsersEmail2.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -638,10 +629,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
 
-        pageLink = new TextPageLink(4, email1);
-        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/users?",
-                new TypeReference<TextPageData<User>>() {
-                }, pageLink);
+        pageLink = new PageLink(4, 0, email1);
+        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/users?", 
+                new TypeReference<PageData<User>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
@@ -650,10 +640,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
 
-        pageLink = new TextPageLink(4, email2);
-        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/users?",
-                new TypeReference<TextPageData<User>>() {
-                }, pageLink);
+        pageLink = new PageLink(4, 0, email2);
+        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/users?", 
+                new TypeReference<PageData<User>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 

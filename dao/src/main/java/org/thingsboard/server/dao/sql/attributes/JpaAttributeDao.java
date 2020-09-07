@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -35,7 +34,6 @@ import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -45,11 +43,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
-
 @Component
 @Slf4j
-@SqlDao
 public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService implements AttributesDao {
 
     @Autowired
@@ -126,14 +121,14 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 DaoUtil.convertDataList(Lists.newArrayList(
                         attributeKvRepository.findAllByEntityTypeAndEntityIdAndAttributeType(
                                 entityId.getEntityType(),
-                                UUIDConverter.fromTimeUUID(entityId.getId()),
+                                entityId.getId(),
                                 attributeType))));
     }
 
     @Override
     public ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, String attributeType, AttributeKvEntry attribute) {
         AttributeKvEntity entity = new AttributeKvEntity();
-        entity.setId(new AttributeKvCompositeKey(entityId.getEntityType(), fromTimeUUID(entityId.getId()), attributeType, attribute.getKey()));
+        entity.setId(new AttributeKvCompositeKey(entityId.getEntityType(), entityId.getId(), attributeType, attribute.getKey()));
         entity.setLastUpdateTs(attribute.getLastUpdateTs());
         entity.setStrValue(attribute.getStrValue().orElse(null));
         entity.setDoubleValue(attribute.getDoubleValue().orElse(null));
@@ -151,7 +146,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String attributeType, List<String> keys) {
         return service.submit(() -> {
             keys.forEach(key ->
-                    attributeKvRepository.delete(entityId.getEntityType(), UUIDConverter.fromTimeUUID(entityId.getId()), attributeType, key)
+                    attributeKvRepository.delete(entityId.getEntityType(), entityId.getId(), attributeType, key)
             );
             return null;
         });
@@ -160,7 +155,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     private AttributeKvCompositeKey getAttributeKvCompositeKey(EntityId entityId, String attributeType, String attributeKey) {
         return new AttributeKvCompositeKey(
                 entityId.getEntityType(),
-                fromTimeUUID(entityId.getId()),
+                entityId.getId(),
                 attributeType,
                 attributeKey);
     }

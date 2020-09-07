@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.msg;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Builder;
@@ -51,6 +52,7 @@ public final class TbMsg implements Serializable {
     private final RuleChainId ruleChainId;
     private final RuleNodeId ruleNodeId;
     //This field is not serialized because we use queues and there is no need to do it
+    @JsonIgnore
     transient private final TbMsgCallback callback;
 
     public static TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {

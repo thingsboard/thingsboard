@@ -21,10 +21,11 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Objects;
+import java.util.function.BiConsumer;
 
 @Data
 @AllArgsConstructor
-public abstract class TbSubscription {
+public abstract class TbSubscription<T> {
 
     private final String serviceId;
     private final String sessionId;
@@ -32,6 +33,7 @@ public abstract class TbSubscription {
     private final TenantId tenantId;
     private final EntityId entityId;
     private final TbSubscriptionType type;
+    private final BiConsumer<String, T> updateConsumer;
 
     @Override
     public boolean equals(Object o) {

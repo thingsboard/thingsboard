@@ -17,10 +17,10 @@ package org.thingsboard.server.dao.customer;
 
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,7 +44,7 @@ public interface CustomerDao extends Dao<Customer> {
      * @param pageLink the page link
      * @return the list of customer objects
      */
-    List<Customer> findCustomersByTenantId(UUID tenantId, TextPageLink pageLink);
+    PageData<Customer> findCustomersByTenantId(UUID tenantId, PageLink pageLink);
 
     /**
      * Find customers by tenantId and customer title.

@@ -1,0 +1,63 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.tb-widget {
+  .tb-widget-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, .5);
+
+    span {
+      color: #f00;
+    }
+  }
+
+  .tb-widget-no-data {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, .75);
+
+    span {
+      color: #000;
+      text-align: center;
+    }
+  }
+
+  .tb-widget-loading {
+    z-index: 3;
+    background: rgba(255, 255, 255, .15);
+  }
+
+  .tb-widget-error-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+  }
+
+  .tb-widget-error-msg {
+    padding: 5px;
+    font-size: 16px;
+    color: #f00;
+    word-wrap: break-word;
+  }
+
+  #widget-container {
+    min-height: 0;
+    min-width: 0;
+  }
+}

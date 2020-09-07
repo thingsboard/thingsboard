@@ -25,11 +25,11 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.mqtt.telemetry.AbstractMqttTelemetryIntegrationTest;
-import org.thingsboard.server.transport.mqtt.MqttTopics;
 
 import java.util.Arrays;
 import java.util.HashSet;

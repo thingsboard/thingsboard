@@ -15,9 +15,8 @@
  */
 package org.thingsboard.server.dao.model;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.ArrayUtils;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 
@@ -28,8 +27,7 @@ public class ModelConstants {
     private ModelConstants() {
     }
 
-    public static final UUID NULL_UUID = UUIDs.startOf(0);
-    public static final String NULL_UUID_STR = UUIDConverter.fromTimeUUID(NULL_UUID);
+    public static final UUID NULL_UUID = Uuids.startOf(0);
     public static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
 
     // this is the difference between midnight October 15, 1582 UTC and midnight January 1, 1970 UTC as 100 nanosecond units
@@ -39,6 +37,7 @@ public class ModelConstants {
      * Generic constants.
      */
     public static final String ID_PROPERTY = "id";
+    public static final String CREATED_TIME_PROPERTY = "created_time";
     public static final String USER_ID_PROPERTY = "user_id";
     public static final String TENANT_ID_PROPERTY = "tenant_id";
     public static final String CUSTOMER_ID_PROPERTY = "customer_id";
@@ -115,10 +114,20 @@ public class ModelConstants {
     public static final String TENANT_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String TENANT_REGION_PROPERTY = "region";
     public static final String TENANT_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
-    public static final String TENANT_ISOLATED_TB_CORE = "isolated_tb_core";
-    public static final String TENANT_ISOLATED_TB_RULE_ENGINE = "isolated_tb_rule_engine";
+    public static final String TENANT_TENANT_PROFILE_ID_PROPERTY = "tenant_profile_id";
 
     public static final String TENANT_BY_REGION_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "tenant_by_region_and_search_text";
+
+    /**
+     * Tenant profile constants.
+     */
+    public static final String TENANT_PROFILE_COLUMN_FAMILY_NAME = "tenant_profile";
+    public static final String TENANT_PROFILE_NAME_PROPERTY = "name";
+    public static final String TENANT_PROFILE_PROFILE_DATA_PROPERTY = "profile_data";
+    public static final String TENANT_PROFILE_DESCRIPTION_PROPERTY = "description";
+    public static final String TENANT_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
+    public static final String TENANT_PROFILE_ISOLATED_TB_CORE = "isolated_tb_core";
+    public static final String TENANT_PROFILE_ISOLATED_TB_RULE_ENGINE = "isolated_tb_rule_engine";
 
     /**
      * Cassandra customer constants.
@@ -142,12 +151,28 @@ public class ModelConstants {
     public static final String DEVICE_TYPE_PROPERTY = "type";
     public static final String DEVICE_LABEL_PROPERTY = "label";
     public static final String DEVICE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String DEVICE_DEVICE_PROFILE_ID_PROPERTY = "device_profile_id";
+    public static final String DEVICE_DEVICE_DATA_PROPERTY = "device_data";
+
     public static final String DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_and_search_text";
     public static final String DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_by_type_and_search_text";
     public static final String DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_customer_and_search_text";
     public static final String DEVICE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_customer_by_type_and_search_text";
     public static final String DEVICE_BY_TENANT_AND_NAME_VIEW_NAME = "device_by_tenant_and_name";
     public static final String DEVICE_TYPES_BY_TENANT_VIEW_NAME = "device_types_by_tenant";
+
+    /**
+     * Device profile constants.
+     */
+    public static final String DEVICE_PROFILE_COLUMN_FAMILY_NAME = "device_profile";
+    public static final String DEVICE_PROFILE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String DEVICE_PROFILE_NAME_PROPERTY = "name";
+    public static final String DEVICE_PROFILE_TYPE_PROPERTY = "type";
+    public static final String DEVICE_PROFILE_TRANSPORT_TYPE_PROPERTY = "transport_type";
+    public static final String DEVICE_PROFILE_PROFILE_DATA_PROPERTY = "profile_data";
+    public static final String DEVICE_PROFILE_DESCRIPTION_PROPERTY = "description";
+    public static final String DEVICE_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
+    public static final String DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
 
     /**
      * Cassandra entityView constants.
@@ -228,6 +253,7 @@ public class ModelConstants {
     public static final String ALARM_TYPE_PROPERTY = "type";
     public static final String ALARM_DETAILS_PROPERTY = "details";
     public static final String ALARM_ORIGINATOR_ID_PROPERTY = "originator_id";
+    public static final String ALARM_ORIGINATOR_NAME_PROPERTY = "originator_name";
     public static final String ALARM_ORIGINATOR_TYPE_PROPERTY = "originator_type";
     public static final String ALARM_SEVERITY_PROPERTY = "severity";
     public static final String ALARM_STATUS_PROPERTY = "status";

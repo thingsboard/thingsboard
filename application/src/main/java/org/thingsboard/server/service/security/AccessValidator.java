@@ -27,25 +27,30 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.controller.HttpValidationCallback;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -70,6 +75,7 @@ import java.util.function.BiConsumer;
 @Component
 public class AccessValidator {
 
+    public static final String ONLY_SYSTEM_ADMINISTRATOR_IS_ALLOWED_TO_PERFORM_THIS_OPERATION = "Only system administrator is allowed to perform this operation!";
     public static final String CUSTOMER_USER_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION = "Customer user is not allowed to perform this operation!";
     public static final String SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION = "System administrator is not allowed to perform this operation!";
     public static final String DEVICE_WITH_REQUESTED_ID_NOT_FOUND = "Device with requested id wasn't found!";
@@ -86,6 +92,9 @@ public class AccessValidator {
 
     @Autowired
     protected DeviceService deviceService;
+
+    @Autowired
+    protected DeviceProfileService deviceProfileService;
 
     @Autowired
     protected AssetService assetService;
@@ -160,6 +169,9 @@ public class AccessValidator {
             case DEVICE:
                 validateDevice(currentUser, operation, entityId, callback);
                 return;
+            case DEVICE_PROFILE:
+                validateDeviceProfile(currentUser, operation, entityId, callback);
+                return;
             case ASSET:
                 validateAsset(currentUser, operation, entityId, callback);
                 return;
@@ -171,6 +183,12 @@ public class AccessValidator {
                 return;
             case TENANT:
                 validateTenant(currentUser, operation, entityId, callback);
+                return;
+            case TENANT_PROFILE:
+                validateTenantProfile(currentUser, operation, entityId, callback);
+                return;
+            case USER:
+                validateUser(currentUser, operation, entityId, callback);
                 return;
             case ENTITY_VIEW:
                 validateEntityView(currentUser, operation, entityId, callback);
@@ -198,6 +216,24 @@ public class AccessValidator {
                     return ValidationResult.ok(device);
                 }
             }), executor);
+        }
+    }
+
+    private void validateDeviceProfile(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
+        if (currentUser.isSystemAdmin()) {
+            callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
+        } else {
+            DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(currentUser.getTenantId(), new DeviceProfileId(entityId.getId()));
+            if (deviceProfile == null) {
+                callback.onSuccess(ValidationResult.entityNotFound("Device profile with requested id wasn't found!"));
+            } else {
+                try {
+                    accessControlService.checkPermission(currentUser, Resource.DEVICE_PROFILE, operation, entityId, deviceProfile);
+                } catch (ThingsboardException e) {
+                    callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                }
+                callback.onSuccess(ValidationResult.ok(deviceProfile));
+            }
         }
     }
 
@@ -306,6 +342,30 @@ public class AccessValidator {
 
             }), executor);
         }
+    }
+
+    private void validateTenantProfile(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
+        if (currentUser.isSystemAdmin()) {
+            callback.onSuccess(ValidationResult.ok(null));
+        } else {
+            callback.onSuccess(ValidationResult.accessDenied(ONLY_SYSTEM_ADMINISTRATOR_IS_ALLOWED_TO_PERFORM_THIS_OPERATION));
+        }
+    }
+
+    private void validateUser(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
+        ListenableFuture<User> userFuture = userService.findUserByIdAsync(currentUser.getTenantId(), new UserId(entityId.getId()));
+        Futures.addCallback(userFuture, getCallback(callback, user -> {
+            if (user == null) {
+                return ValidationResult.entityNotFound("User with requested id wasn't found!");
+            }
+            try {
+                accessControlService.checkPermission(currentUser, Resource.USER, operation, entityId, user);
+            } catch (ThingsboardException e) {
+                return ValidationResult.accessDenied(e.getMessage());
+            }
+            return ValidationResult.ok(user);
+
+        }), executor);
     }
 
     private void validateEntityView(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {

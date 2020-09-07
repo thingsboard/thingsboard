@@ -32,8 +32,8 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerDao;
@@ -46,7 +46,6 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -221,12 +220,19 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
-    public TextPageData<User> findTenantAdmins(TenantId tenantId, TextPageLink pageLink) {
+    public PageData<User> findUsersByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findUsersByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validatePageLink(pageLink);
+        return userDao.findByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public PageData<User> findTenantAdmins(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findTenantAdmins, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<User> users = userDao.findTenantAdmins(tenantId.getId(), pageLink);
-        return new TextPageData<>(users, pageLink);
+        validatePageLink(pageLink);
+        return userDao.findTenantAdmins(tenantId.getId(), pageLink);
     }
 
     @Override
@@ -237,13 +243,12 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
-    public TextPageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, TextPageLink pageLink) {
+    public PageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findCustomerUsers, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(customerId, "Incorrect customerId " + customerId);
-        validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<User> users = userDao.findCustomerUsers(tenantId.getId(), customerId.getId(), pageLink);
-        return new TextPageData<>(users, pageLink);
+        validatePageLink(pageLink);
+        return userDao.findCustomerUsers(tenantId.getId(), customerId.getId(), pageLink);
     }
 
     @Override
@@ -462,7 +467,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     private PaginatedRemover<TenantId, User> tenantAdminsRemover = new PaginatedRemover<TenantId, User>() {
         @Override
-        protected List<User> findEntities(TenantId tenantId, TenantId id, TextPageLink pageLink) {
+        protected PageData<User> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
             return userDao.findTenantAdmins(id.getId(), pageLink);
         }
 
@@ -474,7 +479,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     private PaginatedRemover<CustomerId, User> customerUsersRemover = new PaginatedRemover<CustomerId, User>() {
         @Override
-        protected List<User> findEntities(TenantId tenantId, CustomerId id, TextPageLink pageLink) {
+        protected PageData<User> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
             return userDao.findCustomerUsers(tenantId.getId(), id.getId(), pageLink);
 
         }

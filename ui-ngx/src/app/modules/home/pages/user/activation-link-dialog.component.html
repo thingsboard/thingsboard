@@ -1,0 +1,57 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form style="min-width: 400px;">
+  <mat-toolbar color="primary">
+    <h2 translate>user.activation-link</h2>
+    <span fxFlex></span>
+    <button mat-button mat-icon-button
+            (click)="close()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div mat-dialog-content tb-toast toastTarget="activationLinkDialogContent">
+    <div class="mat-content" fxLayout="column">
+      <span [innerHTML]="'user.activation-link-text' | translate: {activationLink: activationLink}"></span>
+      <div fxLayout="row" fxLayoutAlign="start center">
+        <pre class="tb-highlight" fxFlex><code>{{ activationLink }}</code></pre>
+        <button mat-icon-button
+                color="primary"
+                ngxClipboard
+                cbContent="{{ activationLink }}"
+                (cbOnSuccess)="onActivationLinkCopied()"
+                matTooltip="{{ 'user.copy-activation-link' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-button color="primary"
+            type="button"
+            cdkFocusInitial
+            [disabled]="(isLoading$ | async)"
+            (click)="close()">
+      {{ 'action.ok' | translate }}
+    </button>
+  </div>
+</form>

@@ -42,6 +42,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.USER, userPermissionChecker);
         put(Resource.WIDGETS_BUNDLE, widgetsPermissionChecker);
         put(Resource.WIDGET_TYPE, widgetsPermissionChecker);
+        put(Resource.DEVICE_PROFILE, tenantEntityPermissionChecker);
     }
 
     public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker() {
@@ -76,7 +77,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, UserId userId, User userEntity) {
-            if (userEntity.getAuthority() == Authority.SYS_ADMIN) {
+            if (Authority.SYS_ADMIN.equals(userEntity.getAuthority())) {
                 return false;
             }
             if (!user.getTenantId().equals(userEntity.getTenantId())) {

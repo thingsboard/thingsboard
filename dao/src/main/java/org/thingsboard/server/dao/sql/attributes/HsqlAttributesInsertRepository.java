@@ -19,12 +19,10 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.util.HsqlDao;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import java.sql.Types;
 import java.util.List;
 
-@SqlDao
 @HsqlDao
 @Repository
 @Transactional
@@ -46,7 +44,7 @@ public class HsqlAttributesInsertRepository extends AttributeKvInsertRepository 
         entities.forEach(entity -> {
             jdbcTemplate.update(INSERT_OR_UPDATE, ps -> {
                 ps.setString(1, entity.getId().getEntityType().name());
-                ps.setString(2, entity.getId().getEntityId());
+                ps.setObject(2, entity.getId().getEntityId());
                 ps.setString(3, entity.getId().getAttributeType());
                 ps.setString(4, entity.getId().getAttributeKey());
                 ps.setString(5, entity.getStrValue());

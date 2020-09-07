@@ -1,0 +1,172 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-form-field appearance="standard" [formGroup]="keysListFormGroup" class="mat-block">
+  <mat-chip-list #chipList formControlName="keys" tb-chip-draggable (chipDrop)="onChipDrop($event)">
+    <mat-chip
+      *ngFor="let key of keys; let $index = index"
+      [selectable]="!disabled"
+      [removable]="!disabled"
+      (removed)="remove(key)">
+      <div fxLayout="row" fxLayoutAlign="start center" class="tb-attribute-chip">
+        <div *ngIf="!disabled" class="tb-chip-drag-handle" style="margin-right: 5px;">
+          <mat-icon class="tb-mat-20">drag_handle</mat-icon>
+        </div>
+        <div class="tb-color-preview" (click)="showColorPicker(key)" style="margin-right: 5px;">
+          <div class="tb-color-result" [ngStyle]="{background: key.color}"></div>
+        </div>
+        <div class="tb-chip-labels">
+          <div class="tb-chip-label">
+            <span *ngIf="datasourceType !== datasourceTypes.function">
+              <span *ngIf="key.type === dataKeyTypes.alarm"
+                    matTooltip="{{'datakey.alarm' | translate }}"
+                    matTooltipPosition="above">
+                  <mat-icon class="tb-mat-20">notifications</mat-icon>
+              </span>
+              <span *ngIf="key.type === dataKeyTypes.attribute"
+                    matTooltip="{{'datakey.attributes' | translate }}"
+                    matTooltipPosition="above">
+                  <mat-icon class="tb-mat-20"
+                            svgIcon="alpha-a-circle-outline"></mat-icon>
+              </span>
+              <span *ngIf="key.type === dataKeyTypes.entityField"
+                    matTooltip="{{'datakey.entity-field' | translate }}"
+                    matTooltipPosition="above">
+                  <mat-icon class="tb-mat-20"
+                            svgIcon="alpha-e-circle-outline"></mat-icon>
+              </span>
+              <span *ngIf="key.type === dataKeyTypes.timeseries"
+                    matTooltip="{{'datakey.timeseries' | translate }}"
+                    matTooltipPosition="above">
+                  <mat-icon class="tb-mat-20">timeline</mat-icon>
+              </span>
+            </span>
+            {{key.label}}
+          </div>
+          <div class="tb-chip-separator">: </div>
+          <div class="tb-chip-label">
+            <strong *ngIf="datasourceType !== datasourceTypes.function && key.postFuncBody; else simpleChipLabel">f({{key.name}})</strong>
+            <ng-template #simpleChipLabel>
+              <strong>{{key.name}}</strong>
+            </ng-template>
+          </div>
+        </div>
+        <button *ngIf="!disabled"
+                type="button"
+                (click)="editDataKey(key, $index)" mat-button mat-icon-button class="tb-mat-32">
+          <mat-icon class="tb-mat-20">edit</mat-icon>
+        </button>
+        <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
+      </div>
+    </mat-chip>
+    <input matInput type="text" placeholder="{{ !disabled ? placeholder : '' }}"
+           style="max-width: 200px;"
+           #keyInput
+           formControlName="key"
+           matAutocompleteOrigin
+           #origin="matAutocompleteOrigin"
+           [matAutocompleteConnectedTo]="origin"
+           (focusin)="onFocus()"
+           [matAutocomplete]="keyAutocomplete"
+           [matChipInputFor]="chipList"
+           [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+           (matChipInputTokenEnd)="add($event)">
+  </mat-chip-list>
+  <mat-autocomplete #keyAutocomplete="matAutocomplete"
+                    class="tb-autocomplete"
+                    [displayWith]="displayKeyFn">
+    <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
+      <span style="white-space: nowrap;">
+        <span *ngIf="datasourceType !== datasourceTypes.function">
+          <span *ngIf="key.type === dataKeyTypes.alarm"
+                matTooltip="{{'datakey.alarm' | translate }}"
+                matTooltipPosition="above">
+              <mat-icon class="tb-mat-16">notifications</mat-icon>
+          </span>
+          <span *ngIf="key.type === dataKeyTypes.attribute"
+                matTooltip="{{'datakey.attributes' | translate }}"
+                matTooltipPosition="above">
+              <mat-icon class="tb-mat-16"
+                        svgIcon="alpha-a-circle-outline"></mat-icon>
+          </span>
+          <span *ngIf="key.type === dataKeyTypes.entityField"
+                matTooltip="{{'datakey.entity-field' | translate }}"
+                matTooltipPosition="above">
+              <mat-icon class="tb-mat-16"
+                        svgIcon="alpha-e-circle-outline"></mat-icon>
+          </span>
+          <span *ngIf="key.type === dataKeyTypes.timeseries"
+                matTooltip="{{'datakey.timeseries' | translate }}"
+                matTooltipPosition="above">
+              <mat-icon class="tb-mat-16">timeline</mat-icon>
+          </span>
+        </span>
+        <span [innerHTML]="key.name | highlight:searchText"></span>
+      </span>
+    </mat-option>
+    <mat-option *ngIf="!(filteredKeys | async)?.length" [value]="null" class="tb-not-found">
+      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+          <span translate>entity.no-keys-found</span>
+        </div>
+        <ng-template #searchNotEmpty>
+          <span>
+            {{ translate.get('entity.no-key-matching',
+              {key: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+          </span>
+          <span *ngIf="datasourceType === datasourceTypes.function; else createEntityKey">
+            <a translate (click)="createKey(searchText)">entity.create-new-key</a>
+          </span>
+          <ng-template #createEntityKey>
+            <span>{{'entity.create-new-key' | translate }}  </span>
+            <span *ngIf="widgetType == widgetTypes.alarm"
+                  matTooltip="{{'datakey.alarm' | translate }}"
+                  matTooltipPosition="above">
+              <mat-icon (click)="createKey(searchText, dataKeyTypes.alarm)"
+                        class="tb-mat-16">notifications</mat-icon>
+            </span>
+            <span *ngIf="widgetType == widgetTypes.latest || widgetType == widgetTypes.alarm"
+                  matTooltip="{{'datakey.attributes' | translate }}"
+                  matTooltipPosition="above">
+              <mat-icon (click)="createKey(searchText, dataKeyTypes.attribute)"
+                      class="tb-mat-16"
+                      svgIcon="alpha-a-circle-outline"></mat-icon>
+            </span>
+            <span *ngIf="widgetType == widgetTypes.latest || widgetType == widgetTypes.alarm"
+                  matTooltip="{{'datakey.entity-field' | translate }}"
+                  matTooltipPosition="above">
+              <mat-icon (click)="createKey(searchText, dataKeyTypes.entityField)"
+                        class="tb-mat-16"
+                        svgIcon="alpha-e-circle-outline"></mat-icon>
+            </span>
+            <span matTooltip="{{'datakey.timeseries' | translate }}"
+                  matTooltipPosition="above">
+              <mat-icon (click)="createKey(searchText, dataKeyTypes.timeseries)"
+                      class="tb-mat-16">timeline</mat-icon>
+            </span>
+          </ng-template>
+        </ng-template>
+      </div>
+    </mat-option>
+  </mat-autocomplete>
+  <mat-error *ngIf="keysListFormGroup.get('keys').hasError('required')">
+    {{ requiredText }}
+  </mat-error>
+</mat-form-field>
+<div class="mat-caption" style="color: rgba(0,0,0,0.57);" *ngIf="maxDataKeys !== null && maxDataKeys > -1">
+  {{ maxDataKeysText() }}
+</div>

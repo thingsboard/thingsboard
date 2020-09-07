@@ -15,67 +15,111 @@
  */
 package org.thingsboard.server.dao.sql.asset;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
-import org.thingsboard.server.dao.util.SqlDao;
+import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by Valerii Sosliuk on 5/21/2017.
  */
-@SqlDao
-public interface AssetRepository extends CrudRepository<AssetEntity, String> {
+public interface AssetRepository extends PagingAndSortingRepository<AssetEntity, UUID> {
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo) " +
+            "FROM AssetEntity a " +
+            "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "WHERE a.id = :assetId")
+    AssetInfoEntity findAssetInfoById(@Param("assetId") UUID assetId);
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND a.id > :idOffset ORDER BY a.id")
-    List<AssetEntity> findByTenantId(@Param("tenantId") String tenantId,
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<AssetEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                      @Param("textSearch") String textSearch,
-                                     @Param("idOffset") String idOffset,
                                      Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo) " +
+            "FROM AssetEntity a " +
+            "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<AssetInfoEntity> findAssetInfosByTenantId(@Param("tenantId") UUID tenantId,
+                                                   @Param("textSearch") String textSearch,
+                                                   Pageable pageable);
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND a.id > :idOffset ORDER BY a.id")
-    List<AssetEntity> findByTenantIdAndCustomerId(@Param("tenantId") String tenantId,
-                                                  @Param("customerId") String customerId,
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<AssetEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
+                                                  @Param("customerId") UUID customerId,
                                                   @Param("textSearch") String textSearch,
-                                                  @Param("idOffset") String idOffset,
                                                   Pageable pageable);
 
-    List<AssetEntity> findByTenantIdAndIdIn(String tenantId, List<String> assetIds);
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo) " +
+            "FROM AssetEntity a " +
+            "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND a.customerId = :customerId " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<AssetInfoEntity> findAssetInfosByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
+                                                                @Param("customerId") UUID customerId,
+                                                                @Param("searchText") String searchText,
+                                                                Pageable pageable);
 
-    List<AssetEntity> findByTenantIdAndCustomerIdAndIdIn(String tenantId, String customerId, List<String> assetIds);
+    List<AssetEntity> findByTenantIdAndIdIn(UUID tenantId, List<UUID> assetIds);
 
-    AssetEntity findByTenantIdAndName(String tenantId, String name);
+    List<AssetEntity> findByTenantIdAndCustomerIdAndIdIn(UUID tenantId, UUID customerId, List<UUID> assetIds);
+
+    AssetEntity findByTenantIdAndName(UUID tenantId, String name);
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND a.id > :idOffset ORDER BY a.id")
-    List<AssetEntity> findByTenantIdAndType(@Param("tenantId") String tenantId,
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<AssetEntity> findByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                             @Param("type") String type,
                                             @Param("textSearch") String textSearch,
-                                            @Param("idOffset") String idOffset,
                                             Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo) " +
+            "FROM AssetEntity a " +
+            "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND a.type = :type " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<AssetInfoEntity> findAssetInfosByTenantIdAndType(@Param("tenantId") UUID tenantId,
+                                                          @Param("type") String type,
+                                                          @Param("textSearch") String textSearch,
+                                                          Pageable pageable);
+
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND a.id > :idOffset ORDER BY a.id")
-    List<AssetEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") String tenantId,
-                                                         @Param("customerId") String customerId,
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<AssetEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
+                                                         @Param("customerId") UUID customerId,
                                                          @Param("type") String type,
                                                          @Param("textSearch") String textSearch,
-                                                         @Param("idOffset") String idOffset,
                                                          Pageable pageable);
 
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo) " +
+            "FROM AssetEntity a " +
+            "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND a.customerId = :customerId " +
+            "AND a.type = :type " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<AssetInfoEntity> findAssetInfosByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
+                                                                       @Param("customerId") UUID customerId,
+                                                                       @Param("type") String type,
+                                                                       @Param("textSearch") String textSearch,
+                                                                       Pageable pageable);
+
     @Query("SELECT DISTINCT a.type FROM AssetEntity a WHERE a.tenantId = :tenantId")
-    List<String> findTenantAssetTypes(@Param("tenantId") String tenantId);
+    List<String> findTenantAssetTypes(@Param("tenantId") UUID tenantId);
 
 }

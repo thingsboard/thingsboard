@@ -22,6 +22,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageLink;
 
+import java.util.UUID;
+
 /**
  * Created by ashvayka on 11.05.17.
  */
@@ -35,5 +37,6 @@ public class AlarmQuery {
     private AlarmSearchStatus searchStatus;
     private AlarmStatus status;
     private Boolean fetchOriginator;
+    private UUID idOffset;
 
 }

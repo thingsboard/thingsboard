@@ -39,17 +39,21 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
+import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonV1MqttAdaptor;
@@ -474,10 +478,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD));
             ctx.close();
         } else {
-            transportService.process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(userName).build(),
-                    new TransportServiceCallback<ValidateDeviceCredentialsResponseMsg>() {
+            transportService.process(DeviceTransportType.MQTT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(userName).build(),
+                    new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
                         @Override
-                        public void onSuccess(ValidateDeviceCredentialsResponseMsg msg) {
+                        public void onSuccess(ValidateDeviceCredentialsResponse msg) {
                             onValidateDeviceResponse(msg, ctx);
                         }
 
@@ -495,10 +499,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             String strCert = SslUtil.getX509CertificateString(cert);
             String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-            transportService.process(ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
-                    new TransportServiceCallback<ValidateDeviceCredentialsResponseMsg>() {
+            transportService.process(DeviceTransportType.MQTT, ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
+                    new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
                         @Override
-                        public void onSuccess(ValidateDeviceCredentialsResponseMsg msg) {
+                        public void onSuccess(ValidateDeviceCredentialsResponse msg) {
                             onValidateDeviceResponse(msg, ctx);
                         }
 
@@ -584,7 +588,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void checkGatewaySession() {
-        DeviceInfoProto device = deviceSessionCtx.getDeviceInfo();
+        TransportDeviceInfo device = deviceSessionCtx.getDeviceInfo();
         try {
             JsonNode infoNode = context.getMapper().readTree(device.getAdditionalInfo());
             if (infoNode != null) {
@@ -614,23 +618,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void onValidateDeviceResponse(ValidateDeviceCredentialsResponseMsg msg, ChannelHandlerContext ctx) {
+    private void onValidateDeviceResponse(ValidateDeviceCredentialsResponse msg, ChannelHandlerContext ctx) {
         if (!msg.hasDeviceInfo()) {
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED));
             ctx.close();
         } else {
             deviceSessionCtx.setDeviceInfo(msg.getDeviceInfo());
-            sessionInfo = SessionInfoProto.newBuilder()
-                    .setNodeId(context.getNodeId())
-                    .setSessionIdMSB(sessionId.getMostSignificantBits())
-                    .setSessionIdLSB(sessionId.getLeastSignificantBits())
-                    .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
-                    .setDeviceIdLSB(msg.getDeviceInfo().getDeviceIdLSB())
-                    .setTenantIdMSB(msg.getDeviceInfo().getTenantIdMSB())
-                    .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
-                    .setDeviceName(msg.getDeviceInfo().getDeviceName())
-                    .setDeviceType(msg.getDeviceInfo().getDeviceType())
-                    .build();
+            deviceSessionCtx.setDeviceProfile(msg.getDeviceProfile());
+            sessionInfo = SessionInfoCreator.create(msg, context, sessionId);
             transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), new TransportServiceCallback<Void>() {
                 @Override
                 public void onSuccess(Void msg) {
@@ -696,5 +691,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device RPC command to MQTT msg", sessionId, e);
         }
+    }
+
+    @Override
+    public void onProfileUpdate(DeviceProfile deviceProfile) {
+        deviceSessionCtx.getDeviceInfo().setDeviceType(deviceProfile.getName());
+        sessionInfo = SessionInfoProto.newBuilder().mergeFrom(sessionInfo).setDeviceType(deviceProfile.getName()).build();
     }
 }

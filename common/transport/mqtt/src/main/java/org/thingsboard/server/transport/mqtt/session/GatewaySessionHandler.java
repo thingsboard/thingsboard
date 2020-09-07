@@ -39,12 +39,12 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
+import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
+import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
@@ -76,9 +76,9 @@ public class GatewaySessionHandler {
 
     private final MqttTransportContext context;
     private final TransportService transportService;
-    private final DeviceInfoProto gateway;
+    private final TransportDeviceInfo gateway;
     private final UUID sessionId;
-    private final Lock deviceCreationLock = new ReentrantLock();
+    private final ConcurrentMap<String, Lock> deviceCreationLockMap;
     private final ConcurrentMap<String, GatewayDeviceSessionCtx> devices;
     private final ConcurrentMap<String, SettableFuture<GatewayDeviceSessionCtx>> deviceFutures;
     private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
@@ -93,6 +93,7 @@ public class GatewaySessionHandler {
         this.sessionId = sessionId;
         this.devices = new ConcurrentHashMap<>();
         this.deviceFutures = new ConcurrentHashMap<>();
+        this.deviceCreationLockMap = new ConcurrentHashMap<>();
         this.mqttQoSMap = deviceSessionCtx.getMqttQoSMap();
         this.channel = deviceSessionCtx.getChannel();
     }
@@ -136,6 +137,7 @@ public class GatewaySessionHandler {
     private ListenableFuture<GatewayDeviceSessionCtx> onDeviceConnect(String deviceName, String deviceType) {
         GatewayDeviceSessionCtx result = devices.get(deviceName);
         if (result == null) {
+            Lock deviceCreationLock = deviceCreationLockMap.computeIfAbsent(deviceName, s -> new ReentrantLock());
             deviceCreationLock.lock();
             try {
                 result = devices.get(deviceName);
@@ -161,13 +163,14 @@ public class GatewaySessionHandler {
                 transportService.process(GetOrCreateDeviceFromGatewayRequestMsg.newBuilder()
                                 .setDeviceName(deviceName)
                                 .setDeviceType(deviceType)
-                                .setGatewayIdMSB(gateway.getDeviceIdMSB())
-                                .setGatewayIdLSB(gateway.getDeviceIdLSB()).build(),
-                        new TransportServiceCallback<GetOrCreateDeviceFromGatewayResponseMsg>() {
+                                .setGatewayIdMSB(gateway.getDeviceId().getId().getMostSignificantBits())
+                                .setGatewayIdLSB(gateway.getDeviceId().getId().getLeastSignificantBits()).build(),
+                        new TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse>() {
                             @Override
-                            public void onSuccess(GetOrCreateDeviceFromGatewayResponseMsg msg) {
-                                GatewayDeviceSessionCtx deviceSessionCtx = new GatewayDeviceSessionCtx(GatewaySessionHandler.this, msg.getDeviceInfo(), mqttQoSMap);
+                            public void onSuccess(GetOrCreateDeviceFromGatewayResponse msg) {
+                                GatewayDeviceSessionCtx deviceSessionCtx = new GatewayDeviceSessionCtx(GatewaySessionHandler.this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap);
                                 if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
+                                    log.trace("[{}] First got or created device [{}], type [{}] for the gateway session", sessionId, deviceName, deviceType);
                                     SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
                                     transportService.registerAsyncSession(deviceSessionInfo, deviceSessionCtx);
                                     transportService.process(deviceSessionInfo, DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
@@ -250,8 +253,7 @@ public class GatewaySessionHandler {
                                     TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(deviceEntry.getValue().getAsJsonArray());
                                     transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
                                 } catch (Throwable e) {
-                                    UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
-                                    log.warn("[{}][{}] Failed to convert telemetry: {}", gatewayId, deviceName, deviceEntry.getValue(), e);
+                                    log.warn("[{}][{}] Failed to convert telemetry: {}", gateway.getDeviceId(), deviceName, deviceEntry.getValue(), e);
                                 }
                             }
 
@@ -287,8 +289,7 @@ public class GatewaySessionHandler {
                                         TransportProtos.PostTelemetryMsg postTelemetryMsg = ProtoConverter.validatePostTelemetryMsg(msg.toByteArray());
                                         transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
                                     } catch (Throwable e) {
-                                        UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
-                                        log.warn("[{}][{}] Failed to convert telemetry: {}", gatewayId, deviceName, msg, e);
+                                        log.warn("[{}][{}] Failed to convert telemetry: {}", gateway.getDeviceId(), deviceName, msg, e);
                                     }
                                 }
 
@@ -299,9 +300,8 @@ public class GatewaySessionHandler {
                             }, context.getExecutor());
                 });
             } else {
-                UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
-                log.debug("[{}] Devices telemetry messages is empty for: [{}]", sessionId, gatewayId);
-                throw new IllegalArgumentException("[" + sessionId + "] Devices telemetry messages is empty for [" + gatewayId + "]");
+                log.debug("[{}] Devices telemetry messages is empty for: [{}]", sessionId, gateway.getDeviceId());
+                throw new IllegalArgumentException("[" + sessionId + "] Devices telemetry messages is empty for [" + gateway.getDeviceId() + "]");
             }
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
@@ -327,8 +327,7 @@ public class GatewaySessionHandler {
                                     TransportProtos.ClaimDeviceMsg claimDeviceMsg = JsonConverter.convertToClaimDeviceProto(deviceId, deviceEntry.getValue());
                                     transportService.process(deviceCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(channel, deviceName, msgId, claimDeviceMsg));
                                 } catch (Throwable e) {
-                                    UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
-                                    log.warn("[{}][{}] Failed to convert claim message: {}", gatewayId, deviceName, deviceEntry.getValue(), e);
+                                    log.warn("[{}][{}] Failed to convert claim message: {}", gateway.getDeviceId(), deviceName, deviceEntry.getValue(), e);
                                 }
                             }
 
@@ -365,8 +364,7 @@ public class GatewaySessionHandler {
                                         TransportProtos.ClaimDeviceMsg claimDeviceMsg = ProtoConverter.convertToClaimDeviceProto(deviceId, claimRequest.toByteArray());
                                         transportService.process(deviceCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(channel, deviceName, msgId, claimDeviceMsg));
                                     } catch (Throwable e) {
-                                        UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
-                                        log.warn("[{}][{}] Failed to convert claim message: {}", gatewayId, deviceName, claimRequest, e);
+                                        log.warn("[{}][{}] Failed to convert claim message: {}", gateway.getDeviceId(), deviceName, claimRequest, e);
                                     }
                                 }
 
@@ -377,9 +375,8 @@ public class GatewaySessionHandler {
                             }, context.getExecutor());
                 });
             } else {
-                UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
-                log.debug("[{}] Devices claim messages is empty for: [{}]", sessionId, gatewayId);
-                throw new IllegalArgumentException("[" + sessionId + "] Devices claim messages is empty for [" + gatewayId + "]");
+                log.debug("[{}] Devices claim messages is empty for: [{}]", sessionId, gateway.getDeviceId());
+                throw new IllegalArgumentException("[" + sessionId + "] Devices claim messages is empty for [" + gateway.getDeviceId() + "]");
             }
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
@@ -436,8 +433,7 @@ public class GatewaySessionHandler {
                                         TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.validatePostAttributeMsg(kvListProto.toByteArray());
                                         transportService.process(deviceCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(channel, deviceName, msgId, postAttributeMsg));
                                     } catch (Throwable e) {
-                                        UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
-                                        log.warn("[{}][{}] Failed to process device attributes command: {}", gatewayId, deviceName, kvListProto, e);
+                                        log.warn("[{}][{}] Failed to process device attributes command: {}", gateway.getDeviceId(), deviceName, kvListProto, e);
                                     }
                                 }
 
@@ -448,9 +444,8 @@ public class GatewaySessionHandler {
                             }, context.getExecutor());
                 });
             } else {
-                UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
-                log.debug("[{}] Devices attributes keys list is empty for: [{}]", sessionId, gatewayId);
-                throw new IllegalArgumentException("[" + sessionId + "] Devices attributes keys list is empty for [" + gatewayId + "]");
+                log.debug("[{}] Devices attributes keys list is empty for: [{}]", sessionId, gateway.getDeviceId());
+                throw new IllegalArgumentException("[" + sessionId + "] Devices attributes keys list is empty for [" + gateway.getDeviceId() + "]");
             }
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);

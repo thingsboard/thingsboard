@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -78,15 +78,13 @@ public class BaseEventService implements EventService {
     }
 
     @Override
-    public TimePageData<Event> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink) {
-        List<Event> events = eventDao.findEvents(tenantId.getId(), entityId, pageLink);
-        return new TimePageData<>(events, pageLink);
+    public PageData<Event> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink) {
+        return eventDao.findEvents(tenantId.getId(), entityId, pageLink);
     }
 
     @Override
-    public TimePageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
-        List<Event> events = eventDao.findEvents(tenantId.getId(), entityId, eventType, pageLink);
-        return new TimePageData<>(events, pageLink);
+    public PageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
+        return eventDao.findEvents(tenantId.getId(), entityId, eventType, pageLink);
     }
 
     @Override
@@ -96,7 +94,7 @@ public class BaseEventService implements EventService {
 
     @Override
     public void removeEvents(TenantId tenantId, EntityId entityId) {
-        TimePageData<Event> eventPageData;
+        PageData<Event> eventPageData;
         TimePageLink eventPageLink = new TimePageLink(1000);
         do {
             eventPageData = findEvents(tenantId, entityId, eventPageLink);
@@ -104,7 +102,7 @@ public class BaseEventService implements EventService {
                 eventDao.removeById(tenantId, event.getUuidId());
             }
             if (eventPageData.hasNext()) {
-                eventPageLink = eventPageData.getNextPageLink();
+                eventPageLink = eventPageLink.nextPageLink();
             }
         } while (eventPageData.hasNext());
     }

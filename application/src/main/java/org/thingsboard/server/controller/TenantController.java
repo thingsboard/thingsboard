@@ -28,10 +28,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -58,8 +59,20 @@ public class TenantController extends BaseController {
         checkParameter("tenantId", strTenantId);
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
-            checkTenantId(tenantId, Operation.READ);
-            return checkNotNull(tenantService.findTenantById(tenantId));
+            return checkTenantId(tenantId, Operation.READ);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/info/{tenantId}", method = RequestMethod.GET)
+    @ResponseBody
+    public TenantInfo getTenantInfoById(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
+        checkParameter("tenantId", strTenantId);
+        try {
+            TenantId tenantId = new TenantId(toUUID(strTenantId));
+            return checkTenantInfoId(tenantId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -100,15 +113,32 @@ public class TenantController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenants", params = {"limit"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/tenants", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public TextPageData<Tenant> getTenants(@RequestParam int limit,
-                                           @RequestParam(required = false) String textSearch,
-                                           @RequestParam(required = false) String idOffset,
-                                           @RequestParam(required = false) String textOffset) throws ThingsboardException {
+    public PageData<Tenant> getTenants(@RequestParam int pageSize,
+                                       @RequestParam int page,
+                                       @RequestParam(required = false) String textSearch,
+                                       @RequestParam(required = false) String sortProperty,
+                                       @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
-            TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return checkNotNull(tenantService.findTenants(pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/tenantInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<TenantInfo> getTenantInfos(@RequestParam int pageSize,
+                                               @RequestParam int page,
+                                               @RequestParam(required = false) String textSearch,
+                                               @RequestParam(required = false) String sortProperty,
+                                               @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            return checkNotNull(tenantService.findTenantInfos(pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }
