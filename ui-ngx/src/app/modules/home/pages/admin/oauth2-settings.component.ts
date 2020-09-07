@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewContainerRef } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   ClientAuthenticationMethod,
@@ -32,9 +32,16 @@ import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { WINDOW } from '@core/services/window.service';
-import { Subscription } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
+import {
+  EDIT_REDIRECT_URI_PANEL_DATA,
+  EditRedirectUriPanelComponent,
+  EditRedirectUriPanelData
+} from './edit-redirect-uri-panel.component';
 
 @Component({
   selector: 'tb-oauth2-settings',
@@ -45,6 +52,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
   private URL_REGEXP = /^[A-Za-z][A-Za-z\d.+-]*:\/*(?:\w+(?::\w+)?@)?[^\s/]+(?::\d+)?(?:\/[\w#!:.?+=&%@\-/]*)?$/;
   private subscriptions: Subscription[] = [];
+  private templates = [];
 
   readonly separatorKeysCodes: number[] = [ENTER, COMMA];
 
@@ -55,8 +63,13 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   converterTypesExternalUser: MapperConfigType[] = ['BASIC', 'CUSTOM'];
   tenantNameStrategies: TenantNameStrategy[] = ['DOMAIN', 'EMAIL', 'CUSTOM'];
 
+  templateProvider = ['Custom'];
+
   constructor(protected store: Store<AppState>,
               private adminService: AdminService,
+              private overlay: Overlay,
+              private viewContainerRef: ViewContainerRef,
+              private cd: ChangeDetectorRef,
               private fb: FormBuilder,
               private dialogService: DialogService,
               private translate: TranslateService,
@@ -66,8 +79,12 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
   ngOnInit(): void {
     this.buildOAuth2SettingsForm();
-    this.adminService.getOAuth2Settings().subscribe(
-      (oauth2Settings) => {
+    forkJoin([
+      this.adminService.getOAuth2Template(),
+      this.adminService.getOAuth2Settings()
+    ]).subscribe(
+      ([templates, oauth2Settings]) => {
+        this.initTemplates(templates);
         this.oauth2Settings = oauth2Settings;
         this.initOAuth2Settings(this.oauth2Settings);
         this.oauth2SettingsForm.reset(this.oauth2Settings);
@@ -79,7 +96,13 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     super.ngOnDestroy();
     this.subscriptions.forEach((subscription) => {
       subscription.unsubscribe();
-    })
+    });
+  }
+
+  private initTemplates(templates: any): void {
+    this.templates = templates;
+    templates.map(provider => this.templateProvider.push(provider.name));
+    this.templateProvider.sort();
   }
 
   get clientsDomainsParams(): FormArray {
@@ -114,7 +137,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       url: [null, [Validators.required, Validators.pattern(this.URL_REGEXP)]],
       username: [null],
       password: [null]
-    })
+    });
   }
 
   private buildOAuth2SettingsForm(): void {
@@ -136,23 +159,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       const listDomainName = [];
       control.root.value.clientsDomainsParams.forEach((domain) => {
         listDomainName.push(domain.domainName);
-      })
+      });
       if (listDomainName.indexOf(control.value) > -1) {
-        return {unique: true};
-      }
-    }
-    return null;
-  }
-
-  private uniqueRegistrationIdValidator(control: AbstractControl): { [key: string]: boolean } | null {
-    if (control.value !== null && control?.root) {
-      const listRegistration = [];
-      control.root.value.clientsDomainsParams.forEach((domain) => {
-        domain.clientRegistrations.forEach((client) => {
-          listRegistration.push(client.registrationId);
-        })
-      })
-      if (listRegistration.indexOf(control.value) > -1) {
         return {unique: true};
       }
     }
@@ -174,7 +182,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
     this.subscriptions.push(formDomain.get('domainName').valueChanges.subscribe((domain) => {
       if (!domain) {
-        domain = this.window.location.hostname
+        domain = this.window.location.hostname;
       }
       const uri = this.window.location.protocol + `//${domain}/login/oauth2/code/`;
       formDomain.get('redirectUriTemplate').patchValue(uri);
@@ -183,7 +191,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     if (domainParams) {
       domainParams.clientRegistrations.forEach((registration) => {
         this.clientDomainRegistrations(formDomain).push(this.buildSettingsRegistration(registration));
-      })
+      });
     } else {
       this.clientDomainRegistrations(formDomain).push(this.buildSettingsRegistration());
     }
@@ -193,7 +201,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
   private buildSettingsRegistration(registrationData?: ClientRegistration): FormGroup {
     const clientRegistration = this.fb.group({
-      registrationId: [null, [Validators.required, this.uniqueRegistrationIdValidator]],
+      providerName: ['Custom', [Validators.required]],
       loginButtonLabel: [null, [Validators.required]],
       loginButtonIcon: [null],
       clientId: ['', [Validators.required]],
@@ -227,8 +235,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
     if (registrationData) {
       registrationData.scope.forEach(() => {
-        (clientRegistration.get('scope') as FormArray).push(this.fb.control(''))
-      })
+        (clientRegistration.get('scope') as FormArray).push(this.fb.control(''));
+      });
       if (registrationData.mapperConfig.type !== 'BASIC') {
         clientRegistration.get('mapperConfig.type').patchValue('CUSTOM');
       }
@@ -288,7 +296,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       if (data) {
         this.clientsDomainsParams.removeAt(index);
       }
-    })
+    });
   }
 
   clientDomainRegistrations(control: AbstractControl): FormArray {
@@ -305,15 +313,57 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       $event.preventDefault();
     }
 
-    const registrationId = this.clientDomainRegistrations(controler).at(index).get('registrationId').value;
+    const providerName = this.clientDomainRegistrations(controler).at(index).get('providerName').value;
     this.dialogService.confirm(
-      this.translate.instant('admin.oauth2.delete-registration-title', {name: registrationId || ''}),
+      this.translate.instant('admin.oauth2.delete-registration-title', {name: providerName || ''}),
       this.translate.instant('admin.oauth2.delete-registration-text'), null,
       this.translate.instant('action.delete')
     ).subscribe((data) => {
       if (data) {
         this.clientDomainRegistrations(controler).removeAt(index);
       }
-    })
+    });
+  }
+
+  editRedirectURI($event: MouseEvent, index: number) {
+    if ($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+    }
+    const target = $event.target || $event.currentTarget;
+    const config = new OverlayConfig();
+    config.backdropClass = 'cdk-overlay-transparent-backdrop';
+    config.hasBackdrop = true;
+    const connectedPosition: ConnectedPosition = {
+      originX: 'end',
+      originY: 'bottom',
+      overlayX: 'end',
+      overlayY: 'top'
+    };
+    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+      .withPositions([connectedPosition]);
+
+    const overlayRef = this.overlay.create(config);
+    overlayRef.backdropClick().subscribe(() => {
+      overlayRef.dispose();
+    });
+
+    const redirectURI = this.clientsDomainsParams.at(index).get('redirectUriTemplate').value;
+
+    const injectionTokens = new WeakMap<any, any>([
+      [EDIT_REDIRECT_URI_PANEL_DATA, {
+        redirectURI
+      } as EditRedirectUriPanelData],
+      [OverlayRef, overlayRef]
+    ]);
+    const injector = new PortalInjector(this.viewContainerRef.injector, injectionTokens);
+    const componentRef = overlayRef.attach(new ComponentPortal(EditRedirectUriPanelComponent,
+      this.viewContainerRef, injector));
+    componentRef.onDestroy(() => {
+      if (componentRef.instance.result !== null) {
+        const attributeValue = componentRef.instance.result;
+        this.clientsDomainsParams.at(index).get('redirectUriTemplate').patchValue(attributeValue, {emitEvent: true});
+      }
+    });
   }
 }

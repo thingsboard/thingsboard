@@ -40,300 +40,316 @@
                         {{ domain.get('domainName').value ? domain.get('domainName').value : ("admin.new-domain" | translate) }}
                       </mat-panel-title>
                       <mat-panel-description fxLayoutAlign="end center">
-                        <button mat-icon-button (click)="deleteDomain($event, i)">
-                          <mat-icon>delete</mat-icon>
-                        </button>
+                          <button mat-icon-button
+                                  type="button"
+                                  (click)="editRedirectURI($event, i)"
+                                  matTooltip="{{ 'admin.oauth2.redirect-uri-template' | translate }}"
+                                  matTooltipPosition="above">
+                            <mat-icon>link</mat-icon>
+                          </button>
+                          <button mat-icon-button
+                                  type="button"
+                                  (click)="deleteDomain($event, i)"
+                                  matTooltip="{{ 'action.delete' | translate }}"
+                                  matTooltipPosition="above">
+                            <mat-icon>delete</mat-icon>
+                          </button>
                       </mat-panel-description>
                     </mat-expansion-panel-header>
 
-                    <mat-form-field class="mat-block">
-                      <mat-label translate>admin.domain-name</mat-label>
-                      <input matInput formControlName="domainName" required>
-                      <mat-error *ngIf="domain.get('domainName').hasError('pattern')">
-                        {{ 'admin.error-verification-url' | translate }}
-                      </mat-error>
-                      <mat-error *ngIf="domain.get('domainName').hasError('unique')">
-                        {{ 'admin.domain-name-unique' | translate }}
-                      </mat-error>
-                    </mat-form-field>
+                    <ng-template matExpansionPanelContent>
+                      <mat-form-field class="mat-block">
+                        <mat-label translate>admin.domain-name</mat-label>
+                        <input matInput formControlName="domainName" required>
+                        <mat-error *ngIf="domain.get('domainName').hasError('pattern')">
+                          {{ 'admin.error-verification-url' | translate }}
+                        </mat-error>
+                        <mat-error *ngIf="domain.get('domainName').hasError('unique')">
+                          {{ 'admin.domain-name-unique' | translate }}
+                        </mat-error>
+                      </mat-form-field>
 
-                    <mat-form-field fxFlex class="mat-block">
-                      <mat-label translate>admin.oauth2.redirect-uri-template</mat-label>
-                      <input matInput formControlName="redirectUriTemplate" required>
-                      <mat-error
-                        *ngIf="domain.get('redirectUriTemplate').hasError('required')">
-                        {{ 'admin.oauth2.redirect-uri-template-required' | translate }}
-                      </mat-error>
-                      <mat-error
-                        *ngIf="domain.get('redirectUriTemplate').hasError('pattern')">
-                        {{ 'admin.oauth2.uri-pattern-error' | translate }}
-                      </mat-error>
-                    </mat-form-field>
+                      <ng-container formArrayName="clientRegistrations">
+                        <div class="container">
+                          <mat-expansion-panel *ngFor="let registration of clientDomainRegistrations(domain).controls; let j = index;"
+                                    class="registration-card mat-elevation-z0">
+                            <mat-expansion-panel-header>
+                              <mat-panel-title fxLayoutAlign="start center">
+                                {{ registration.get('providerName').value }}
+                              </mat-panel-title>
+                              <mat-panel-description fxLayoutAlign="end center">
+                                <button mat-icon-button
+                                        type="button"
+                                        (click)="deleteRegistration($event, domain, j)"
+                                        matTooltip="{{ 'action.delete' | translate }}"
+                                        matTooltipPosition="above">
+                                  <mat-icon>delete</mat-icon>
+                                </button>
+                              </mat-panel-description>
+                            </mat-expansion-panel-header>
 
-                    <ng-container formArrayName="clientRegistrations">
-                      <div class="container">
-                        <mat-card *ngFor="let registration of clientDomainRegistrations(domain).controls; let j = index;"
-                                  class="registration-card">
-                          <section [formGroupName]="j">
-                            <div fxLayoutAlign="end center">
-                              <button mat-icon-button (click)="deleteRegistration($event, domain, j)">
-                                <mat-icon>delete</mat-icon>
-                              </button>
-                            </div>
-                            <mat-form-field fxFlex class="mat-block">
-                              <mat-label translate>admin.oauth2.registration-id</mat-label>
-                              <input matInput formControlName="registrationId" required>
-                              <mat-error *ngIf="registration.get('registrationId').hasError('required')">
-                                {{ 'admin.oauth2.registration-id-required' | translate }}
-                              </mat-error>
-                              <mat-error *ngIf="registration.get('registrationId').hasError('unique')">
-                                {{ 'admin.oauth2.registration-id-unique' | translate }}
-                              </mat-error>
-                            </mat-form-field>
-
-                            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-                              <mat-form-field fxFlex class="mat-block">
-                                <mat-label translate>admin.oauth2.client-id</mat-label>
-                                <input matInput formControlName="clientId" required>
-                                <mat-error *ngIf="registration.get('clientId').hasError('required')">
-                                  {{ 'admin.oauth2.client-id-required' | translate }}
-                                </mat-error>
-                              </mat-form-field>
-
-                              <mat-form-field fxFlex class="mat-block">
-                                <mat-label translate>admin.oauth2.client-secret</mat-label>
-                                <input matInput formControlName="clientSecret" required>
-                                <mat-error *ngIf="registration.get('clientSecret').hasError('required')">
-                                  {{ 'admin.oauth2.client-secret-required' | translate }}
-                                </mat-error>
-                              </mat-form-field>
-                            </div>
-
-                            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-                              <mat-form-field fxFlex class="mat-block">
-                                <mat-label translate>admin.oauth2.access-token-uri</mat-label>
-                                <input matInput formControlName="accessTokenUri" required>
-                                <mat-error *ngIf="registration.get('accessTokenUri').hasError('required')">
-                                  {{ 'admin.oauth2.access-token-uri-required' | translate }}
-                                </mat-error>
-                                <mat-error *ngIf="registration.get('accessTokenUri').hasError('pattern')">
-                                  {{ 'admin.oauth2.uri-pattern-error' | translate }}
-                                </mat-error>
-                              </mat-form-field>
-
-                              <mat-form-field fxFlex class="mat-block">
-                                <mat-label translate>admin.oauth2.authorization-uri</mat-label>
-                                <input matInput formControlName="authorizationUri" required>
-                                <mat-error *ngIf="registration.get('authorizationUri').hasError('required')">
-                                  {{ 'admin.oauth2.authorization-uri-required' | translate }}
-                                </mat-error>
-                                <mat-error *ngIf="registration.get('authorizationUri').hasError('pattern')">
-                                  {{ 'admin.oauth2.uri-pattern-error' | translate }}
-                                </mat-error>
-                              </mat-form-field>
-                            </div>
-
-                            <mat-form-field fxFlex class="mat-block">
-                              <mat-label translate>admin.oauth2.scope</mat-label>
-                              <mat-chip-list #scopeList>
-                                <mat-chip *ngFor="let scope of registration.get('scope').value; let k = index;"
-                                          removable (removed)="removeScope(k, registration)">
-                                  {{scope}}
-                                  <mat-icon matChipRemove>cancel</mat-icon>
-                                </mat-chip>
-                                <input [matChipInputFor]="scopeList"
-                                       [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                                       matChipInputAddOnBlur
-                                       (matChipInputTokenEnd)="addScope($event, registration)">
-                              </mat-chip-list>
-                              <mat-error *ngIf="registration.get('scope').hasError('required')">
-                                {{ 'admin.oauth2.jwk-set-uri-required' | translate }}
-                              </mat-error>
-                            </mat-form-field>
-
-                            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-                              <mat-form-field fxFlex class="mat-block">
-                                <mat-label translate>admin.oauth2.jwk-set-uri</mat-label>
-                                <input matInput formControlName="jwkSetUri" required>
-                                <mat-error *ngIf="registration.get('jwkSetUri').hasError('required')">
-                                  {{ 'admin.oauth2.jwk-set-uri-required' | translate }}
-                                </mat-error>
-                                <mat-error *ngIf="registration.get('jwkSetUri').hasError('pattern')">
-                                  {{ 'admin.oauth2.uri-pattern-error' | translate }}
-                                </mat-error>
-                              </mat-form-field>
-
-                              <mat-form-field fxFlex class="mat-block">
-                                <mat-label translate>admin.oauth2.user-info-uri</mat-label>
-                                <input matInput formControlName="userInfoUri" required>
-                                <mat-error *ngIf="registration.get('userInfoUri').hasError('required')">
-                                  {{ 'admin.oauth2.user-info-uri-required' | translate }}
-                                </mat-error>
-                                <mat-error *ngIf="registration.get('userInfoUri').hasError('pattern')">
-                                  {{ 'admin.oauth2.uri-pattern-error' | translate }}
-                                </mat-error>
-                              </mat-form-field>
-                            </div>
-
-                            <mat-form-field fxFlex class="mat-block">
-                              <mat-label translate>admin.oauth2.client-authentication-method</mat-label>
-                              <mat-select formControlName="clientAuthenticationMethod">
-                                <mat-option *ngFor="let clientAuthenticationMethod of clientAuthenticationMethods"
-                                            [value]="clientAuthenticationMethod">
-                                  {{ clientAuthenticationMethod | uppercase }}
-                                </mat-option>
-                              </mat-select>
-                            </mat-form-field>
-
-                            <mat-form-field class="mat-block">
-                              <mat-label translate>admin.oauth2.user-name-attribute-name</mat-label>
-                              <input matInput formControlName="userNameAttributeName" required>
-                              <mat-error *ngIf="registration.get('userNameAttributeName').hasError('required')">
-                                {{ 'admin.oauth2.user-name-attribute-name-required' | translate }}
-                              </mat-error>
-                            </mat-form-field>
-
-                            <section formGroupName="mapperConfig">
-                              <div fxLayout="column" fxLayoutGap="8px">
-                                <mat-checkbox formControlName="allowUserCreation">
-                                  {{ 'admin.oauth2.allow-user-creation' | translate }}
-                                </mat-checkbox>
-                                <mat-checkbox formControlName="activateUser">
-                                  {{ 'admin.oauth2.activate-user' | translate }}
-                                </mat-checkbox>
-                              </div>
-
-                              <mat-form-field fxFlex class="mat-block">
-                                <mat-label translate>admin.oauth2.type</mat-label>
-                                <mat-select formControlName="type">
-                                  <mat-option *ngFor="let converterTypeExternalUser of converterTypesExternalUser"
-                                              [value]="converterTypeExternalUser">
-                                    {{ converterTypeExternalUser }}
-                                  </mat-option>
-                                </mat-select>
-                              </mat-form-field>
-
-                              <section formGroupName="basic"
-                                       *ngIf="registration.get('mapperConfig.type').value === 'BASIC'">
-                                <mat-form-field class="mat-block">
-                                  <mat-label translate>admin.oauth2.email-attribute-key</mat-label>
-                                  <input matInput formControlName="emailAttributeKey" required>
-                                  <mat-error
-                                    *ngIf="registration.get('mapperConfig.basic.emailAttributeKey').hasError('required')">
-                                    {{ 'admin.oauth2.email-attribute-key-required' | translate }}
-                                  </mat-error>
+                            <ng-template matExpansionPanelContent>
+                              <section [formGroupName]="j">
+                                <mat-form-field fxFlex class="mat-block">
+                                  <mat-label translate>Login Provider</mat-label>
+                                  <mat-select formControlName="providerName">
+                                    <mat-option *ngFor="let provider of templateProvider" [value]="provider">
+                                      {{ provider | uppercase }}
+                                    </mat-option>
+                                  </mat-select>
                                 </mat-form-field>
 
                                 <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
                                   <mat-form-field fxFlex class="mat-block">
-                                    <mat-label translate>admin.oauth2.first-name-attribute-key</mat-label>
-                                    <input matInput formControlName="firstNameAttributeKey">
+                                    <mat-label translate>admin.oauth2.client-id</mat-label>
+                                    <input matInput formControlName="clientId" required>
+                                    <mat-error *ngIf="registration.get('clientId').hasError('required')">
+                                      {{ 'admin.oauth2.client-id-required' | translate }}
+                                    </mat-error>
                                   </mat-form-field>
 
                                   <mat-form-field fxFlex class="mat-block">
-                                    <mat-label translate>admin.oauth2.last-name-attribute-key</mat-label>
-                                    <input matInput formControlName="lastNameAttributeKey">
-                                  </mat-form-field>
-                                </div>
-
-                                <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-                                  <mat-form-field fxFlex class="mat-block">
-                                    <mat-label translate>admin.oauth2.tenant-name-strategy</mat-label>
-                                    <mat-select formControlName="tenantNameStrategy">
-                                      <mat-option *ngFor="let tenantNameStrategy of tenantNameStrategies"
-                                                  [value]="tenantNameStrategy">
-                                        {{ tenantNameStrategy }}
-                                      </mat-option>
-                                    </mat-select>
-                                  </mat-form-field>
-
-                                  <mat-form-field fxFlex class="mat-block">
-                                    <mat-label translate>admin.oauth2.tenant-name-pattern</mat-label>
-                                    <input matInput
-                                           formControlName="tenantNamePattern"
-                                           [required]="registration.get('mapperConfig.basic.tenantNameStrategy').value === 'CUSTOM'">
-                                    <mat-error
-                                      *ngIf="registration.get('mapperConfig.basic.tenantNamePattern').hasError('required')">
-                                      {{ 'admin.oauth2.tenant-name-pattern-required' | translate }}
+                                    <mat-label translate>admin.oauth2.client-secret</mat-label>
+                                    <input matInput formControlName="clientSecret" required>
+                                    <mat-error *ngIf="registration.get('clientSecret').hasError('required')">
+                                      {{ 'admin.oauth2.client-secret-required' | translate }}
                                     </mat-error>
                                   </mat-form-field>
                                 </div>
 
-                                <mat-form-field fxFlex class="mat-block">
-                                  <mat-label translate>admin.oauth2.customer-name-pattern</mat-label>
-                                  <input matInput formControlName="customerNamePattern">
-                                </mat-form-field>
+                                <mat-tab-group dynamicHeight>
+                                  <mat-tab label="General">
+                                    <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" style="margin-top: 16px;">
+                                      <mat-form-field fxFlex class="mat-block">
+                                        <mat-label translate>admin.oauth2.access-token-uri</mat-label>
+                                        <input matInput formControlName="accessTokenUri" required>
+                                        <mat-error *ngIf="registration.get('accessTokenUri').hasError('required')">
+                                          {{ 'admin.oauth2.access-token-uri-required' | translate }}
+                                        </mat-error>
+                                        <mat-error *ngIf="registration.get('accessTokenUri').hasError('pattern')">
+                                          {{ 'admin.oauth2.uri-pattern-error' | translate }}
+                                        </mat-error>
+                                      </mat-form-field>
 
-                                <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-                                  <mat-form-field fxFlex class="mat-block">
-                                    <mat-label translate>admin.oauth2.default-dashboard-name</mat-label>
-                                    <input matInput formControlName="defaultDashboardName">
-                                  </mat-form-field>
+                                      <mat-form-field fxFlex class="mat-block">
+                                        <mat-label translate>admin.oauth2.authorization-uri</mat-label>
+                                        <input matInput formControlName="authorizationUri" required>
+                                        <mat-error *ngIf="registration.get('authorizationUri').hasError('required')">
+                                          {{ 'admin.oauth2.authorization-uri-required' | translate }}
+                                        </mat-error>
+                                        <mat-error *ngIf="registration.get('authorizationUri').hasError('pattern')">
+                                          {{ 'admin.oauth2.uri-pattern-error' | translate }}
+                                        </mat-error>
+                                      </mat-form-field>
+                                    </div>
 
-                                  <mat-checkbox fxFlex formControlName="alwaysFullScreen" class="checkbox-row">
-                                    {{ 'admin.oauth2.always-fullscreen' | translate}}
-                                  </mat-checkbox>
-                                </div>
+                                    <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+                                      <mat-form-field fxFlex class="mat-block">
+                                        <mat-label translate>admin.oauth2.jwk-set-uri</mat-label>
+                                        <input matInput formControlName="jwkSetUri" required>
+                                        <mat-error *ngIf="registration.get('jwkSetUri').hasError('required')">
+                                          {{ 'admin.oauth2.jwk-set-uri-required' | translate }}
+                                        </mat-error>
+                                        <mat-error *ngIf="registration.get('jwkSetUri').hasError('pattern')">
+                                          {{ 'admin.oauth2.uri-pattern-error' | translate }}
+                                        </mat-error>
+                                      </mat-form-field>
+
+                                      <mat-form-field fxFlex class="mat-block">
+                                        <mat-label translate>admin.oauth2.user-info-uri</mat-label>
+                                        <input matInput formControlName="userInfoUri" required>
+                                        <mat-error *ngIf="registration.get('userInfoUri').hasError('required')">
+                                          {{ 'admin.oauth2.user-info-uri-required' | translate }}
+                                        </mat-error>
+                                        <mat-error *ngIf="registration.get('userInfoUri').hasError('pattern')">
+                                          {{ 'admin.oauth2.uri-pattern-error' | translate }}
+                                        </mat-error>
+                                      </mat-form-field>
+                                    </div>
+
+                                    <mat-form-field fxFlex class="mat-block">
+                                      <mat-label translate>admin.oauth2.client-authentication-method</mat-label>
+                                      <mat-select formControlName="clientAuthenticationMethod">
+                                        <mat-option *ngFor="let clientAuthenticationMethod of clientAuthenticationMethods"
+                                                    [value]="clientAuthenticationMethod">
+                                          {{ clientAuthenticationMethod | uppercase }}
+                                        </mat-option>
+                                      </mat-select>
+                                    </mat-form-field>
+
+                                    <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" *ngIf="registration.get('providerName').value === 'Custom'">
+                                      <mat-form-field fxFlex class="mat-block">
+                                        <mat-label translate>admin.oauth2.login-button-label</mat-label>
+                                        <input matInput formControlName="loginButtonLabel" required>
+                                        <mat-error
+                                          *ngIf="registration.get('loginButtonLabel').hasError('required')">
+                                          {{ 'admin.oauth2.login-button-label-required' | translate }}
+                                        </mat-error>
+                                      </mat-form-field>
+
+                                      <mat-form-field fxFlex class="mat-block">
+                                        <mat-label translate>admin.oauth2.login-button-icon</mat-label>
+                                        <input matInput formControlName="loginButtonIcon">
+                                      </mat-form-field>
+                                    </div>
+
+                                    <mat-form-field fxFlex class="mat-block">
+                                      <mat-label translate>admin.oauth2.scope</mat-label>
+                                      <mat-chip-list #scopeList>
+                                        <mat-chip *ngFor="let scope of registration.get('scope').value; let k = index;"
+                                                  removable (removed)="removeScope(k, registration)">
+                                          {{scope}}
+                                          <mat-icon matChipRemove>cancel</mat-icon>
+                                        </mat-chip>
+                                        <input [matChipInputFor]="scopeList"
+                                               [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                                               matChipInputAddOnBlur
+                                               (matChipInputTokenEnd)="addScope($event, registration)">
+                                      </mat-chip-list>
+                                      <mat-error *ngIf="registration.get('scope').hasError('required')">
+                                        {{ 'admin.oauth2.jwk-set-uri-required' | translate }}
+                                      </mat-error>
+                                    </mat-form-field>
+
+                                  </mat-tab>
+                                  <mat-tab label="Mapper">
+                                    <mat-form-field class="mat-block" style="margin-top: 16px;">
+                                      <mat-label translate>admin.oauth2.user-name-attribute-name</mat-label>
+                                      <input matInput formControlName="userNameAttributeName" required>
+                                      <mat-error *ngIf="registration.get('userNameAttributeName').hasError('required')">
+                                        {{ 'admin.oauth2.user-name-attribute-name-required' | translate }}
+                                      </mat-error>
+                                    </mat-form-field>
+
+                                    <section formGroupName="mapperConfig">
+                                      <div fxLayout="column" fxLayoutGap="8px">
+                                        <mat-checkbox formControlName="allowUserCreation">
+                                          {{ 'admin.oauth2.allow-user-creation' | translate }}
+                                        </mat-checkbox>
+                                        <mat-checkbox formControlName="activateUser">
+                                          {{ 'admin.oauth2.activate-user' | translate }}
+                                        </mat-checkbox>
+                                      </div>
+
+                                      <mat-form-field fxFlex class="mat-block">
+                                        <mat-label translate>admin.oauth2.type</mat-label>
+                                        <mat-select formControlName="type">
+                                          <mat-option *ngFor="let converterTypeExternalUser of converterTypesExternalUser"
+                                                      [value]="converterTypeExternalUser">
+                                            {{ converterTypeExternalUser }}
+                                          </mat-option>
+                                        </mat-select>
+                                      </mat-form-field>
+
+                                      <section formGroupName="basic"
+                                               *ngIf="registration.get('mapperConfig.type').value === 'BASIC'">
+                                        <mat-form-field class="mat-block">
+                                          <mat-label translate>admin.oauth2.email-attribute-key</mat-label>
+                                          <input matInput formControlName="emailAttributeKey" required>
+                                          <mat-error
+                                            *ngIf="registration.get('mapperConfig.basic.emailAttributeKey').hasError('required')">
+                                            {{ 'admin.oauth2.email-attribute-key-required' | translate }}
+                                          </mat-error>
+                                        </mat-form-field>
+
+                                        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+                                          <mat-form-field fxFlex class="mat-block">
+                                            <mat-label translate>admin.oauth2.first-name-attribute-key</mat-label>
+                                            <input matInput formControlName="firstNameAttributeKey">
+                                          </mat-form-field>
+
+                                          <mat-form-field fxFlex class="mat-block">
+                                            <mat-label translate>admin.oauth2.last-name-attribute-key</mat-label>
+                                            <input matInput formControlName="lastNameAttributeKey">
+                                          </mat-form-field>
+                                        </div>
+
+                                        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+                                          <mat-form-field fxFlex class="mat-block">
+                                            <mat-label translate>admin.oauth2.tenant-name-strategy</mat-label>
+                                            <mat-select formControlName="tenantNameStrategy">
+                                              <mat-option *ngFor="let tenantNameStrategy of tenantNameStrategies"
+                                                          [value]="tenantNameStrategy">
+                                                {{ tenantNameStrategy }}
+                                              </mat-option>
+                                            </mat-select>
+                                          </mat-form-field>
+
+                                          <mat-form-field fxFlex class="mat-block" *ngIf="registration.get('mapperConfig.basic.tenantNameStrategy').value === 'CUSTOM'">
+                                            <mat-label translate>admin.oauth2.tenant-name-pattern</mat-label>
+                                            <input matInput
+                                                   formControlName="tenantNamePattern"
+                                                   [required]="registration.get('mapperConfig.basic.tenantNameStrategy').value === 'CUSTOM'">
+                                            <mat-error
+                                              *ngIf="registration.get('mapperConfig.basic.tenantNamePattern').hasError('required')">
+                                              {{ 'admin.oauth2.tenant-name-pattern-required' | translate }}
+                                            </mat-error>
+                                          </mat-form-field>
+                                        </div>
+
+                                        <mat-form-field fxFlex class="mat-block">
+                                          <mat-label translate>admin.oauth2.customer-name-pattern</mat-label>
+                                          <input matInput formControlName="customerNamePattern">
+                                        </mat-form-field>
+
+                                        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+                                          <mat-form-field fxFlex class="mat-block">
+                                            <mat-label translate>admin.oauth2.default-dashboard-name</mat-label>
+                                            <input matInput formControlName="defaultDashboardName">
+                                          </mat-form-field>
+
+                                          <mat-checkbox fxFlex formControlName="alwaysFullScreen" class="checkbox-row">
+                                            {{ 'admin.oauth2.always-fullscreen' | translate}}
+                                          </mat-checkbox>
+                                        </div>
+                                      </section>
+
+                                      <section formGroupName="custom"
+                                               *ngIf="registration.get('mapperConfig.type').value === 'CUSTOM'">
+                                        <mat-form-field class="mat-block">
+                                          <mat-label translate>admin.oauth2.url</mat-label>
+                                          <input matInput formControlName="url" required>
+                                          <mat-error
+                                            *ngIf="registration.get('mapperConfig.custom.url').hasError('required')">
+                                            {{ 'admin.oauth2.url-required' | translate }}
+                                          </mat-error>
+                                          <mat-error
+                                            *ngIf="registration.get('mapperConfig.custom.url').hasError('pattern')">
+                                            {{ 'admin.oauth2.url-pattern' | translate }}
+                                          </mat-error>
+                                        </mat-form-field>
+
+                                        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+                                          <mat-form-field fxFlex class="mat-block">
+                                            <mat-label translate>common.username</mat-label>
+                                            <input matInput formControlName="username" autocomplete="new-username">
+                                          </mat-form-field>
+
+                                          <mat-form-field fxFlex class="mat-block">
+                                            <mat-label translate>common.password</mat-label>
+                                            <input matInput type="password" formControlName="password" autocomplete="new-password">
+                                          </mat-form-field>
+                                        </div>
+                                      </section>
+                                    </section>
+                                  </mat-tab>
+                                </mat-tab-group>
 
                               </section>
+                            </ng-template>
+                          </mat-expansion-panel>
+                        </div>
+                      </ng-container>
 
-                              <section formGroupName="custom"
-                                       *ngIf="registration.get('mapperConfig.type').value === 'CUSTOM'">
-                                <mat-form-field class="mat-block">
-                                  <mat-label translate>admin.oauth2.url</mat-label>
-                                  <input matInput formControlName="url" required>
-                                  <mat-error
-                                    *ngIf="registration.get('mapperConfig.custom.url').hasError('required')">
-                                    {{ 'admin.oauth2.url-required' | translate }}
-                                  </mat-error>
-                                  <mat-error
-                                    *ngIf="registration.get('mapperConfig.custom.url').hasError('pattern')">
-                                    {{ 'admin.oauth2.url-pattern' | translate }}
-                                  </mat-error>
-                                </mat-form-field>
-
-                                <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-                                  <mat-form-field fxFlex class="mat-block">
-                                    <mat-label translate>common.username</mat-label>
-                                    <input matInput formControlName="username" autocomplete="new-username">
-                                  </mat-form-field>
-
-                                  <mat-form-field fxFlex class="mat-block">
-                                    <mat-label translate>common.password</mat-label>
-                                    <input matInput type="password" formControlName="password" autocomplete="new-password">
-                                  </mat-form-field>
-                                </div>
-                              </section>
-                            </section>
-
-                            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-                              <mat-form-field fxFlex class="mat-block">
-                                <mat-label translate>admin.oauth2.login-button-label</mat-label>
-                                <input matInput formControlName="loginButtonLabel" required>
-                                <mat-error
-                                  *ngIf="registration.get('loginButtonLabel').hasError('required')">
-                                  {{ 'admin.oauth2.login-button-label-required' | translate }}
-                                </mat-error>
-                              </mat-form-field>
-
-                              <mat-form-field fxFlex class="mat-block">
-                                <mat-label translate>admin.oauth2.login-button-icon</mat-label>
-                                <input matInput formControlName="loginButtonIcon">
-                              </mat-form-field>
-                            </div>
-                          </section>
-                        </mat-card>
+                      <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
+                        <button mat-button mat-raised-button color="primary"
+                                [disabled]="(isLoading$ | async)"
+                                (click)="addRegistration(domain)"
+                                type="button">
+                          {{'admin.add-provider' | translate}}
+                        </button>
                       </div>
-                    </ng-container>
-
-                    <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
-                      <button mat-button mat-raised-button color="primary"
-                              [disabled]="(isLoading$ | async)"
-                              (click)="addRegistration(domain)"
-                              type="button">
-                        {{'admin.add-registration' | translate}}
-                      </button>
-                    </div>
+                    </ng-template>
 
                   </mat-expansion-panel>
                 </ng-container>

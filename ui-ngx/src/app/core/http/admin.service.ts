@@ -63,8 +63,12 @@ export class AdminService {
     return this.http.get<OAuth2Settings>(`/api/oauth2/config`, defaultHttpOptionsFromConfig(config));
   }
 
+  public getOAuth2Template(config?: RequestConfig): Observable<any> {
+    return this.http.get<any>(`/api/oauth2/config/template`, defaultHttpOptionsFromConfig(config));
+  }
+
   public saveOAuth2Settings(OAuth2Setting: OAuth2Settings,
-                              config?: RequestConfig): Observable<OAuth2Settings> {
+                            config?: RequestConfig): Observable<OAuth2Settings> {
     return this.http.post<OAuth2Settings>('/api/oauth2/config', OAuth2Setting,
       defaultHttpOptionsFromConfig(config));
   }

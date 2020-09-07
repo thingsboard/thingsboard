@@ -125,7 +125,7 @@
         "error-verification-url": "A domain name shouldn't contain symbols '/' and ':'. Example: thingsboard.io",
         "add-domain": "Add domain",
         "new-domain": "New domain",
-        "add-registration": "Add registration",
+        "add-provider": "Add provider",
         "settings": "Settings",
         "oauth2": {
           "settings": "OAuth2 Settings",

@@ -76,7 +76,6 @@ export interface DomainParams {
 }
 
 export interface ClientRegistration {
-  registrationId: string;
   loginButtonLabel: string;
   loginButtonIcon: string;
   clientId: string;
@@ -86,9 +85,9 @@ export interface ClientRegistration {
   scope: string[];
   jwkSetUri: string;
   userInfoUri: string;
-  clientAuthenticationMethod: ClientAuthenticationMethod
+  clientAuthenticationMethod: ClientAuthenticationMethod;
   userNameAttributeName: string;
-  mapperConfig: MapperConfig
+  mapperConfig: MapperConfig;
 }
 
 export interface MapperConfig {

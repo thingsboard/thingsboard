@@ -13,17 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host{
-  .checkbox-row {
-    margin-top: 16px;
-  }
-
-  .registration-card{
-    margin-bottom: 8px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-  }
-
-  .container{
-    margin-bottom: 16px;
-  }
+:host {
+  background-color: #f9f9f9;
 }
