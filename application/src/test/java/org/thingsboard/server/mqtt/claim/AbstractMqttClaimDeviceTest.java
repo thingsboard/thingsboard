@@ -225,7 +225,7 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
 
         client.publish(topic, new MqttMessage(payloadBytes));
 
-        Thread.sleep(1000);
+        Thread.sleep(2000);
 
         ClaimResult claimResult = doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResult.class, status().isOk());
         assertEquals(claimResult.getResponse(), ClaimResponse.SUCCESS);
@@ -284,7 +284,7 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
 
         client.publish(topic, new MqttMessage(payloadBytes));
 
-        Thread.sleep(1000);
+        Thread.sleep(2000);
 
         ClaimResult claimResult = doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResult.class, status().isOk());
         assertEquals(claimResult.getResponse(), ClaimResponse.SUCCESS);

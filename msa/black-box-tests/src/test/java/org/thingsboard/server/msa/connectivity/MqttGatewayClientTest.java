@@ -183,6 +183,9 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         String sharedAttributeValue = RandomStringUtils.randomAlphanumeric(8);
         sharedAttributes.addProperty("sharedAttr", sharedAttributeValue);
 
+        // Subscribe for attribute update event
+        mqttClient.on("v1/gateway/attributes", listener, MqttQoS.AT_LEAST_ONCE).get();
+
         ResponseEntity sharedAttributesResponse = restClient.getRestTemplate()
                 .postForEntity(HTTPS_URL + "/api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE",
                         mapper.readTree(sharedAttributes.toString()), ResponseEntity.class,

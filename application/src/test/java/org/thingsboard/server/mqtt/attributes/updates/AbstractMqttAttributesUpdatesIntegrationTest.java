@@ -123,7 +123,7 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
         Thread.sleep(2000);
 
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
-        onUpdateCallback.getLatch().await(5, TimeUnit.SECONDS);
+        onUpdateCallback.getLatch().await(3, TimeUnit.SECONDS);
 
         validateUpdateAttributesResponse(topicToSubscribeForAttributesUpdates, onUpdateCallback);
 
@@ -131,7 +131,7 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
         client.setCallback(onDeleteCallback);
 
         doDelete("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/SHARED_SCOPE?keys=attribute5", String.class);
-        onDeleteCallback.getLatch().await(5, TimeUnit.SECONDS);
+        onDeleteCallback.getLatch().await(3, TimeUnit.SECONDS);
 
         validateDeleteAttributesResponse(topicToSubscribeForAttributesUpdates, onDeleteCallback);
     }
@@ -196,7 +196,7 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
 
         publishMqttMsg(client, connectPayloadBytes, topicToConnectDevice);
 
-        Thread.sleep(2000);
+        Thread.sleep(1000);
 
         Device savedDevice = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
         assertNotNull(savedDevice);

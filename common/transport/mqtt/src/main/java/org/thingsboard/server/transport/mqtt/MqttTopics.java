@@ -20,30 +20,33 @@ package org.thingsboard.server.transport.mqtt;
  */
 public class MqttTopics {
 
-    public static final String RPC_RESPONSE = "/rpc/response/";
-    public static final String RPC_REQUEST = "/rpc/request/";
-    public static final String RPC = "/rpc";
-    public static final String CONNECT = "/connect";
-    public static final String DISCONNECT = "/disconnect";
-    public static final String ATTRIBUTES_RESPONSE = "/attributes/response/";
-    public static final String ATTRIBUTES_REQUEST = "/attributes/request/";
-    public static final String TELEMETRY = "/telemetry";
-    public static final String ATTRIBUTES = "/attributes";
-    public static final String CLAIM = "/claim";
-    public static final String SUB_TOPIC = "+";
+    private static final String RPC = "/rpc";
+    private static final String CONNECT = "/connect";
+    private static final String DISCONNECT = "/disconnect";
+    private static final String TELEMETRY = "/telemetry";
+    private static final String ATTRIBUTES = "/attributes";
+    private static final String CLAIM = "/claim";
+    private static final String SUB_TOPIC = "+";
+    private static final String ATTRIBUTES_RESPONSE = "/attributes/response";
+    private static final String ATTRIBUTES_REQUEST = "/attributes/request";
 
+    private static final String DEVICE_RPC_RESPONSE = "/rpc/response/";
+    private static final String DEVICE_RPC_REQUEST = "/rpc/request/";
+
+    private static final String DEVICE_ATTRIBUTES_RESPONSE = ATTRIBUTES_RESPONSE + "/";
+    private static final String DEVICE_ATTRIBUTES_REQUEST = ATTRIBUTES_REQUEST + "/";
 
     // V1_JSON topics
 
     public static final String BASE_DEVICE_API_TOPIC_V1_JSON = "v1/devices/me";
 
-    public static final String DEVICE_RPC_RESPONSE_TOPIC_V1_JSON = BASE_DEVICE_API_TOPIC_V1_JSON + RPC_RESPONSE;
+    public static final String DEVICE_RPC_RESPONSE_TOPIC_V1_JSON = BASE_DEVICE_API_TOPIC_V1_JSON + DEVICE_RPC_RESPONSE;
     public static final String DEVICE_RPC_RESPONSE_SUB_TOPIC_V1_JSON = DEVICE_RPC_RESPONSE_TOPIC_V1_JSON + SUB_TOPIC;
-    public static final String DEVICE_RPC_REQUESTS_TOPIC_V1_JSON = BASE_DEVICE_API_TOPIC_V1_JSON + RPC_REQUEST;
+    public static final String DEVICE_RPC_REQUESTS_TOPIC_V1_JSON = BASE_DEVICE_API_TOPIC_V1_JSON + DEVICE_RPC_REQUEST;
     public static final String DEVICE_RPC_REQUESTS_SUB_TOPIC_V1_JSON = DEVICE_RPC_REQUESTS_TOPIC_V1_JSON + SUB_TOPIC;
-    public static final String DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX_V1_JSON = BASE_DEVICE_API_TOPIC_V1_JSON + ATTRIBUTES_RESPONSE;
+    public static final String DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX_V1_JSON = BASE_DEVICE_API_TOPIC_V1_JSON + DEVICE_ATTRIBUTES_RESPONSE;
     public static final String DEVICE_ATTRIBUTES_RESPONSES_TOPIC_V1_JSON = DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX_V1_JSON + SUB_TOPIC;
-    public static final String DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V1_JSON = BASE_DEVICE_API_TOPIC_V1_JSON + ATTRIBUTES_REQUEST;
+    public static final String DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V1_JSON = BASE_DEVICE_API_TOPIC_V1_JSON + DEVICE_ATTRIBUTES_REQUEST;
     public static final String DEVICE_TELEMETRY_TOPIC_V1_JSON = BASE_DEVICE_API_TOPIC_V1_JSON + TELEMETRY;
     public static final String DEVICE_CLAIM_TOPIC_V1_JSON = BASE_DEVICE_API_TOPIC_V1_JSON + CLAIM;
     public static final String DEVICE_ATTRIBUTES_TOPIC_V1_JSON = BASE_DEVICE_API_TOPIC_V1_JSON + ATTRIBUTES;
@@ -64,13 +67,13 @@ public class MqttTopics {
 
     public static final String BASE_DEVICE_API_TOPIC_V2_JSON = "v2/json";
 
-    public static final String DEVICE_RPC_RESPONSE_TOPIC_V2_JSON = BASE_DEVICE_API_TOPIC_V2_JSON + RPC_RESPONSE;
+    public static final String DEVICE_RPC_RESPONSE_TOPIC_V2_JSON = BASE_DEVICE_API_TOPIC_V2_JSON + DEVICE_RPC_RESPONSE;
     public static final String DEVICE_RPC_RESPONSE_SUB_TOPIC_V2_JSON = DEVICE_RPC_RESPONSE_TOPIC_V2_JSON + SUB_TOPIC;
-    public static final String DEVICE_RPC_REQUESTS_TOPIC_V2_JSON = BASE_DEVICE_API_TOPIC_V2_JSON + RPC_REQUEST;
+    public static final String DEVICE_RPC_REQUESTS_TOPIC_V2_JSON = BASE_DEVICE_API_TOPIC_V2_JSON + DEVICE_RPC_REQUEST;
     public static final String DEVICE_RPC_REQUESTS_SUB_TOPIC_V2_JSON = DEVICE_RPC_REQUESTS_TOPIC_V2_JSON + SUB_TOPIC;
-    public static final String DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX_V2_JSON = BASE_DEVICE_API_TOPIC_V2_JSON + ATTRIBUTES_RESPONSE;
+    public static final String DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX_V2_JSON = BASE_DEVICE_API_TOPIC_V2_JSON + DEVICE_ATTRIBUTES_RESPONSE;
     public static final String DEVICE_ATTRIBUTES_RESPONSES_TOPIC_V2_JSON = DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX_V2_JSON + SUB_TOPIC;
-    public static final String DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V2_JSON = BASE_DEVICE_API_TOPIC_V2_JSON + ATTRIBUTES_REQUEST;
+    public static final String DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V2_JSON = BASE_DEVICE_API_TOPIC_V2_JSON + DEVICE_ATTRIBUTES_REQUEST;
     public static final String DEVICE_TELEMETRY_TOPIC_V2_JSON = BASE_DEVICE_API_TOPIC_V2_JSON + TELEMETRY;
     public static final String DEVICE_CLAIM_TOPIC_V2_JSON = BASE_DEVICE_API_TOPIC_V2_JSON + CLAIM;
     public static final String DEVICE_ATTRIBUTES_TOPIC_V2_JSON = BASE_DEVICE_API_TOPIC_V2_JSON + ATTRIBUTES;
@@ -79,13 +82,13 @@ public class MqttTopics {
 
     public static final String BASE_DEVICE_API_TOPIC_V2_PROTO = "v2/proto";
 
-    public static final String DEVICE_RPC_RESPONSE_TOPIC_V2_PROTO = BASE_DEVICE_API_TOPIC_V2_PROTO + RPC_RESPONSE;
+    public static final String DEVICE_RPC_RESPONSE_TOPIC_V2_PROTO = BASE_DEVICE_API_TOPIC_V2_PROTO + DEVICE_RPC_RESPONSE;
     public static final String DEVICE_RPC_RESPONSE_SUB_TOPIC_V2_PROTO = DEVICE_RPC_RESPONSE_TOPIC_V2_PROTO + SUB_TOPIC;
-    public static final String DEVICE_RPC_REQUESTS_TOPIC_V2_PROTO = BASE_DEVICE_API_TOPIC_V2_PROTO + RPC_REQUEST;
+    public static final String DEVICE_RPC_REQUESTS_TOPIC_V2_PROTO = BASE_DEVICE_API_TOPIC_V2_PROTO + DEVICE_RPC_REQUEST;
     public static final String DEVICE_RPC_REQUESTS_SUB_TOPIC_V2_PROTO = DEVICE_RPC_REQUESTS_TOPIC_V2_PROTO + SUB_TOPIC;
-    public static final String DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX_V2_PROTO = BASE_DEVICE_API_TOPIC_V2_PROTO + ATTRIBUTES_RESPONSE;
+    public static final String DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX_V2_PROTO = BASE_DEVICE_API_TOPIC_V2_PROTO + DEVICE_ATTRIBUTES_RESPONSE;
     public static final String DEVICE_ATTRIBUTES_RESPONSES_TOPIC_V2_PROTO = DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX_V2_PROTO + SUB_TOPIC;
-    public static final String DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V2_PROTO = BASE_DEVICE_API_TOPIC_V2_PROTO + ATTRIBUTES_REQUEST;
+    public static final String DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V2_PROTO = BASE_DEVICE_API_TOPIC_V2_PROTO + DEVICE_ATTRIBUTES_REQUEST;
     public static final String DEVICE_TELEMETRY_TOPIC_V2_PROTO = BASE_DEVICE_API_TOPIC_V2_PROTO + TELEMETRY;
     public static final String DEVICE_CLAIM_TOPIC_V2_PROTO = BASE_DEVICE_API_TOPIC_V2_PROTO + CLAIM;
     public static final String DEVICE_ATTRIBUTES_TOPIC_V2_PROTO = BASE_DEVICE_API_TOPIC_V2_PROTO + ATTRIBUTES;
