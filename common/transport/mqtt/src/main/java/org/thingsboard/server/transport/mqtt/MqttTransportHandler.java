@@ -514,7 +514,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             ctx.close();
         } else {
             deviceSessionCtx.setDeviceInfo(msg.getDeviceInfo());
-//            deviceSessionCtx.setProfile(msg.getDeviceProfile());
+            deviceSessionCtx.setDeviceProfile(msg.getDeviceProfile());
             sessionInfo = SessionInfoCreator.create(msg, context, sessionId);
             transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), new TransportServiceCallback<Void>() {
                 @Override
