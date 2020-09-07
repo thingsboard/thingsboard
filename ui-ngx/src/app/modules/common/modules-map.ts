@@ -60,6 +60,7 @@ import * as AngularMaterialStepper from '@angular/material/stepper';
 import * as AngularMaterialTable from '@angular/material/table';
 import * as AngularMaterialTabs from '@angular/material/tabs';
 import * as AngularMaterialToolbar from '@angular/material/toolbar';
+import * as AngularMaterialTooltip from '@angular/material/tooltip';
 import * as AngularMaterialTree from '@angular/material/tree';
 import * as NgrxStore from '@ngrx/store';
 import * as RxJs from 'rxjs';
@@ -119,6 +120,7 @@ export const modulesMap: {[key: string]: any} = {
   '@angular/material/table': SystemJS.newModule(AngularMaterialTable),
   '@angular/material/tabs': SystemJS.newModule(AngularMaterialTabs),
   '@angular/material/toolbar': SystemJS.newModule(AngularMaterialToolbar),
+  '@angular/material/tooltip': SystemJS.newModule(AngularMaterialTooltip),
   '@angular/material/tree': SystemJS.newModule(AngularMaterialTree),
   '@ngrx/store': SystemJS.newModule(NgrxStore),
   rxjs: SystemJS.newModule(RxJs),

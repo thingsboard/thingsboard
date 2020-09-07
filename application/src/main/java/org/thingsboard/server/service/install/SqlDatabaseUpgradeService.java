@@ -324,7 +324,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.info("Schema updated.");
                 }
                 break;
-            case "3.1.1":
+            case "3.1.2":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
                     if (isOldSchema(conn, 3001000)) {
@@ -339,7 +339,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         } catch (Exception e) {
                         }
 
-                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.1", "schema_update_before.sql");
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.2", "schema_update_before.sql");
                         loadSql(schemaUpdateFile, conn);
 
                         log.info("Creating default tenant profiles...");
@@ -371,7 +371,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         log.info("Updating device profiles...");
                         conn.createStatement().execute("call update_device_profiles()");
 
-                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.1", "schema_update_after.sql");
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.2", "schema_update_after.sql");
                         loadSql(schemaUpdateFile, conn);
 
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3002000;");
