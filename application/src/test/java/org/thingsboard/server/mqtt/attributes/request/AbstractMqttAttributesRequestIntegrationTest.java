@@ -152,16 +152,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
         TestMqttCallback sharedAttributesCallback = getTestMqttCallback();
         client.setCallback(sharedAttributesCallback);
-        validateSharedResponseGateway(client, sharedAttributesCallback, deviceName, topicToRequestAttributesValues, false);
-
-        doDelete("/api/plugins/telemetry/" + savedDevice.getId().getId() + "/SHARED_SCOPE?keys=attribute5");
-
-        Thread.sleep(1000);
-
-        TestMqttCallback sharedDeletedAttributesCallback = getTestMqttCallback();
-        client.setCallback(sharedDeletedAttributesCallback);
-        validateSharedResponseGateway(client, sharedDeletedAttributesCallback, deviceName, topicToRequestAttributesValues, true);
-
+        validateSharedResponseGateway(client, sharedAttributesCallback, deviceName, topicToRequestAttributesValues);
     }
 
     private void postAttributesAndSubscribeToTopic(Device savedDevice, MqttAsyncClient client, String topicToPost, String topicToSubscribe) throws Exception {
@@ -256,7 +247,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         }
     }
 
-    private void validateSharedResponseGateway(MqttAsyncClient client, TestMqttCallback callback, String deviceName, String topic, boolean checkForDeleted) throws MqttException, InterruptedException, InvalidProtocolBufferException {
+    private void validateSharedResponseGateway(MqttAsyncClient client, TestMqttCallback callback, String deviceName, String topic) throws MqttException, InterruptedException, InvalidProtocolBufferException {
         if (topic.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC_V1_JSON) || topic.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC_V2_JSON)) {
             String payloadStr = "{\"id\": 1, \"device\": \"" + deviceName + "\", \"client\": false, \"keys\": [\"attribute1\", \"attribute2\", \"attribute3\", \"attribute4\", \"attribute5\"]}";
             MqttMessage mqttMessage = new MqttMessage();
@@ -264,13 +255,8 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
             client.publish(topic, mqttMessage);
             callback.getLatch().await(3, TimeUnit.SECONDS);
             assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getQoS());
-            if (!checkForDeleted) {
-                String expectedRequestPayload = "{\"id\":1,\"device\":\"" + deviceName + "\",\"values\":{\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}},\"attribute4\":73,\"attribute1\":\"value1\",\"attribute3\":42.0,\"attribute2\":true}}";
-                assertEquals(expectedRequestPayload, new String(callback.getPayloadBytes(), StandardCharsets.UTF_8));
-            } else {
-                String expectedRequestPayload = "{\"id\":1,\"device\":\"" + deviceName + "\",\"values\":{\"attribute4\":73,\"attribute1\":\"value1\",\"attribute3\":42.0,\"attribute2\":true},\"deleted\":[\"attribute5\"]}";
-                assertEquals(expectedRequestPayload, new String(callback.getPayloadBytes(), StandardCharsets.UTF_8));
-            }
+            String expectedRequestPayload = "{\"id\":1,\"device\":\"" + deviceName + "\",\"values\":{\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}},\"attribute4\":73,\"attribute1\":\"value1\",\"attribute3\":42.0,\"attribute2\":true}}";
+            assertEquals(expectedRequestPayload, new String(callback.getPayloadBytes(), StandardCharsets.UTF_8));
         } else {
             String keys = "attribute1,attribute2,attribute3,attribute4,attribute5";
             TransportApiProtos.GatewayAttributesRequestMsg gatewayAttributesRequestMsg = getGatewayAttributesRequestMsg(deviceName, keys, false);
@@ -287,17 +273,8 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
             List<TransportProtos.KeyValueProto> expectedSharedKeyValueProtos = expectedResponseMsg.getSharedAttributeListList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
             List<TransportProtos.KeyValueProto> actualSharedKeyValueProtos = actualResponseMsg.getSharedAttributeListList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
-            List<String> actualDeletedKeys = actualResponseMsg.getDeletedAttributeKeysList();
 
-            if (!checkForDeleted) {
-                assertTrue(actualSharedKeyValueProtos.containsAll(expectedSharedKeyValueProtos));
-            } else {
-                assertEquals(4, actualSharedKeyValueProtos.size());
-                assertEquals(1, actualDeletedKeys.size());
-                assertEquals("attribute5", actualDeletedKeys.get(0));
-                assertFalse(actualSharedKeyValueProtos.stream().map(TransportProtos.KeyValueProto::getKey).collect(Collectors.toList()).contains("attribute5"));
-                assertTrue(expectedSharedKeyValueProtos.containsAll(actualSharedKeyValueProtos));
-            }
+            assertTrue(actualSharedKeyValueProtos.containsAll(expectedSharedKeyValueProtos));
         }
     }
 
