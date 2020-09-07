@@ -17,6 +17,8 @@ package org.thingsboard.server.common.transport.session;
 
 import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.msg.session.SessionContext;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
@@ -36,6 +38,10 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     private volatile DeviceId deviceId;
     @Getter
     protected volatile TransportDeviceInfo deviceInfo;
+    @Getter
+    @Setter
+    protected volatile DeviceProfile deviceProfile;
+
     private volatile boolean connected;
 
     public DeviceId getDeviceId() {

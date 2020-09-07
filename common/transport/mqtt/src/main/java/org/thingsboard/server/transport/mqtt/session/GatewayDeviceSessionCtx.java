@@ -35,7 +35,7 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     private final GatewaySessionHandler parent;
     private volatile SessionInfoProto sessionInfo;
 
-    public GatewayDeviceSessionCtx(GatewaySessionHandler parent, TransportDeviceInfo deviceInfo, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
+    public GatewayDeviceSessionCtx(GatewaySessionHandler parent, TransportDeviceInfo deviceInfo, DeviceProfile deviceProfile, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
         super(UUID.randomUUID(), mqttQoSMap);
         this.parent = parent;
         this.sessionInfo = SessionInfoProto.newBuilder()
@@ -54,6 +54,7 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
                 .setDeviceProfileIdLSB(deviceInfo.getDeviceProfileId().getId().getLeastSignificantBits())
                 .build();
         setDeviceInfo(deviceInfo);
+        setDeviceProfile(deviceProfile);
     }
 
     @Override
