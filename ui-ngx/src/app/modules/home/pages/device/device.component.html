@@ -90,12 +90,6 @@
         (deviceProfileUpdated)="onDeviceProfileUpdated()"
         (deviceProfileChanged)="onDeviceProfileChanged($event)">
       </tb-device-profile-autocomplete>
-      <tb-entity-subtype-autocomplete
-        formControlName="type"
-        [required]="true"
-        [entityType]="entityType.DEVICE"
-      >
-      </tb-entity-subtype-autocomplete>
       <mat-form-field class="mat-block">
         <mat-label translate>device.label</mat-label>
         <input matInput formControlName="label">

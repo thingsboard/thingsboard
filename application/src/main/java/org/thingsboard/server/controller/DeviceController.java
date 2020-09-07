@@ -47,6 +47,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -315,6 +316,7 @@ public class DeviceController extends BaseController {
             @RequestParam int pageSize,
             @RequestParam int page,
             @RequestParam(required = false) String type,
+            @RequestParam(required = false) String deviceProfileId,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
@@ -323,6 +325,9 @@ public class DeviceController extends BaseController {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             if (type != null && type.trim().length() > 0) {
                 return checkNotNull(deviceService.findDeviceInfosByTenantIdAndType(tenantId, type, pageLink));
+            } else if (deviceProfileId != null && deviceProfileId.length() > 0) {
+                DeviceProfileId profileId = new DeviceProfileId(toUUID(deviceProfileId));
+                return checkNotNull(deviceService.findDeviceInfosByTenantIdAndDeviceProfileId(tenantId, profileId, pageLink));
             } else {
                 return checkNotNull(deviceService.findDeviceInfosByTenantId(tenantId, pageLink));
             }
@@ -379,6 +384,7 @@ public class DeviceController extends BaseController {
             @RequestParam int pageSize,
             @RequestParam int page,
             @RequestParam(required = false) String type,
+            @RequestParam(required = false) String deviceProfileId,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
@@ -390,6 +396,9 @@ public class DeviceController extends BaseController {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             if (type != null && type.trim().length() > 0) {
                 return checkNotNull(deviceService.findDeviceInfosByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
+            } else if (deviceProfileId != null && deviceProfileId.length() > 0) {
+                DeviceProfileId profileId = new DeviceProfileId(toUUID(deviceProfileId));
+                return checkNotNull(deviceService.findDeviceInfosByTenantIdAndCustomerIdAndDeviceProfileId(tenantId, customerId, profileId, pageLink));
             } else {
                 return checkNotNull(deviceService.findDeviceInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink));
             }

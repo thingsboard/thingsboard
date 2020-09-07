@@ -80,7 +80,6 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
       {
         name: [entity ? entity.name : '', [Validators.required]],
         deviceProfileId: [entity ? entity.deviceProfileId : null, [Validators.required]],
-        type: [entity ? entity.type : null, [Validators.required]],
         label: [entity ? entity.label : ''],
         deviceData: [entity ? entity.deviceData : null, [Validators.required]],
         additionalInfo: this.fb.group(
@@ -96,7 +95,6 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
   updateForm(entity: DeviceInfo) {
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({deviceProfileId: entity.deviceProfileId});
-    this.entityForm.patchValue({type: entity.type});
     this.entityForm.patchValue({label: entity.label});
     this.entityForm.patchValue({deviceData: entity.deviceData});
     this.entityForm.patchValue({additionalInfo:

@@ -14,12 +14,21 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  forwardRef,
+  Input, NgZone,
+  OnInit,
+  Output,
+  ViewChild
+} from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { map, mergeMap, share, startWith, tap } from 'rxjs/operators';
+import { map, mergeMap, share, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,6 +48,7 @@ import {
 } from '@shared/models/device.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfileDialogComponent, DeviceProfileDialogData } from './device-profile-dialog.component';
+import { MatAutocomplete } from '@angular/material/autocomplete';
 
 @Component({
   selector: 'tb-device-profile-autocomplete',
@@ -58,6 +68,12 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
 
   @Input()
   selectDefaultProfile = false;
+
+  @Input()
+  displayAllOnEmpty = false;
+
+  @Input()
+  editProfileEnabled = true;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -79,11 +95,22 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
 
   @ViewChild('deviceProfileInput', {static: true}) deviceProfileInput: ElementRef;
 
+  @ViewChild('deviceProfileAutocomplete', {static: true}) deviceProfileAutocomplete: MatAutocomplete;
+
   filteredDeviceProfiles: Observable<Array<DeviceProfileInfo>>;
 
   searchText = '';
 
   private dirty = false;
+
+  private ignoreClosedPanel = false;
+
+  private allDeviceProfile: DeviceProfileInfo = {
+    name: this.translate.instant('device-profile.all-device-profiles'),
+    type: DeviceProfileType.DEFAULT,
+    transportType: DeviceTransportType.DEFAULT,
+    id: null
+  };
 
   private propagateChange = (v: any) => { };
 
@@ -92,6 +119,7 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
               public truncate: TruncatePipe,
               private deviceProfileService: DeviceProfileService,
               private fb: FormBuilder,
+              private zone: NgZone,
               private dialog: MatDialog) {
     this.selectDeviceProfileFormGroup = this.fb.group({
       deviceProfile: [null]
@@ -115,9 +143,25 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
           } else {
             modelValue = value;
           }
-          this.updateView(modelValue);
+          if (!this.displayAllOnEmpty || modelValue) {
+            this.updateView(modelValue);
+          }
         }),
-        map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
+        map(value => {
+          if (value) {
+            if (typeof value === 'string') {
+              return value;
+            } else {
+              if (this.displayAllOnEmpty && value === this.allDeviceProfile) {
+                return '';
+              } else {
+                return value.name;
+              }
+            }
+          } else {
+            return '';
+          }
+        }),
         mergeMap(name => this.fetchDeviceProfiles(name) ),
         share()
       );
@@ -150,6 +194,9 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
           this.deviceProfileChanged.emit(profile);
         }
       );
+    } else if (this.displayAllOnEmpty) {
+      this.modelValue = null;
+      this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(this.allDeviceProfile, {emitEvent: false});
     } else {
       this.modelValue = null;
       this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(null, {emitEvent: false});
@@ -165,8 +212,20 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
     }
   }
 
+  onPanelClosed() {
+    if (this.ignoreClosedPanel) {
+      this.ignoreClosedPanel = false;
+    } else {
+      if (this.displayAllOnEmpty && !this.selectDeviceProfileFormGroup.get('deviceProfile').value) {
+        this.zone.run(() => {
+          this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(this.allDeviceProfile, {emitEvent: true});
+        }, 0);
+      }
+    }
+  }
+
   updateView(deviceProfile: DeviceProfileInfo | null) {
-    const idValue = deviceProfile ? new DeviceProfileId(deviceProfile.id.id) : null;
+    const idValue = deviceProfile && deviceProfile.id ? new DeviceProfileId(deviceProfile.id.id) : null;
     if (!entityIdEquals(this.modelValue, idValue)) {
       this.modelValue = idValue;
       this.propagateChange(this.modelValue);
@@ -186,12 +245,17 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
     });
     return this.deviceProfileService.getDeviceProfileInfos(pageLink, {ignoreLoading: true}).pipe(
       map(pageData => {
-        return pageData.data;
+        let data = pageData.data;
+        if (this.displayAllOnEmpty) {
+          data = [this.allDeviceProfile, ...data];
+        }
+        return data;
       })
     );
   }
 
   clear() {
+    this.ignoreClosedPanel = true;
     this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(null, {emitEvent: true});
     setTimeout(() => {
       this.deviceProfileInput.nativeElement.blur();
@@ -204,7 +268,7 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
   }
 
   deviceProfileEnter($event: KeyboardEvent) {
-    if ($event.keyCode === ENTER) {
+    if (this.editProfileEnabled && $event.keyCode === ENTER) {
       $event.preventDefault();
       if (!this.modelValue) {
         this.createDeviceProfile($event, this.searchText);

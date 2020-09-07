@@ -30,7 +30,7 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-  <button *ngIf="selectDeviceProfileFormGroup.get('deviceProfile').value && !disabled"
+  <button *ngIf="selectDeviceProfileFormGroup.get('deviceProfile').value && !disabled && editProfileEnabled"
           type="button"
           matSuffix mat-button mat-icon-button aria-label="Edit"
           matTooltip="{{ 'device-profile.edit' | translate }}"
@@ -40,6 +40,7 @@
   </button>
   <mat-autocomplete
     class="tb-autocomplete"
+    (closed)="onPanelClosed()"
     #deviceProfileAutocomplete="matAutocomplete"
     [displayWith]="displayDeviceProfileFn">
     <mat-option *ngFor="let deviceProfile of filteredDeviceProfiles | async" [value]="deviceProfile">

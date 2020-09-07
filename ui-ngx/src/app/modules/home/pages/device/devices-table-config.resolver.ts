@@ -113,7 +113,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     const routeParams = route.params;
     this.config.componentsData = {
       deviceScope: route.data.devicesType,
-      deviceType: ''
+      deviceProfileId: null
     };
     this.customerId = routeParams.customerId;
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
@@ -152,14 +152,13 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
   configureColumns(deviceScope: string): Array<EntityTableColumn<DeviceInfo>> {
     const columns: Array<EntityTableColumn<DeviceInfo>> = [
       new DateEntityTableColumn<DeviceInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<DeviceInfo>('name', 'device.name', '20%'),
-      new EntityTableColumn<DeviceInfo>('deviceProfileName', 'device-profile.device-profile', '20%'),
-      new EntityTableColumn<DeviceInfo>('type', 'device.device-type', '20%'),
-      new EntityTableColumn<DeviceInfo>('label', 'device.label', '20%')
+      new EntityTableColumn<DeviceInfo>('name', 'device.name', '25%'),
+      new EntityTableColumn<DeviceInfo>('deviceProfileName', 'device-profile.device-profile', '25%'),
+      new EntityTableColumn<DeviceInfo>('label', 'device.label', '25%')
     ];
     if (deviceScope === 'tenant') {
       columns.push(
-        new EntityTableColumn<DeviceInfo>('customerTitle', 'customer.customer', '20%'),
+        new EntityTableColumn<DeviceInfo>('customerTitle', 'customer.customer', '25%'),
         new EntityTableColumn<DeviceInfo>('customerIsPublic', 'device.public', '60px',
           entity => {
             return checkBoxCell(entity.customerIsPublic);
@@ -178,11 +177,15 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
   configureEntityFunctions(deviceScope: string): void {
     if (deviceScope === 'tenant') {
       this.config.entitiesFetchFunction = pageLink =>
-        this.deviceService.getTenantDeviceInfos(pageLink, this.config.componentsData.deviceType);
+        this.deviceService.getTenantDeviceInfosByDeviceProfileId(pageLink,
+          this.config.componentsData.deviceProfileId !== null ?
+            this.config.componentsData.deviceProfileId.id : '');
       this.config.deleteEntity = id => this.deviceService.deleteDevice(id.id);
     } else {
       this.config.entitiesFetchFunction = pageLink =>
-        this.deviceService.getCustomerDeviceInfos(this.customerId, pageLink, this.config.componentsData.deviceType);
+        this.deviceService.getCustomerDeviceInfosByDeviceProfileId(this.customerId, pageLink,
+          this.config.componentsData.deviceProfileId !== null ?
+          this.config.componentsData.deviceProfileId.id : '');
       this.config.deleteEntity = id => this.deviceService.unassignDeviceFromCustomer(id.id);
     }
   }

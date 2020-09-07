@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.TenantProfileData;
@@ -34,6 +35,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
@@ -48,6 +50,7 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -100,6 +103,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private DeviceProfileService deviceProfileService;
 
     @Autowired
     private AttributesService attributesService;
@@ -213,16 +219,18 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerB.getId(), "customerB@thingsboard.org", CUSTOMER_CRED);
         createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerC.getId(), "customerC@thingsboard.org", CUSTOMER_CRED);
 
-        createDevice(demoTenant.getId(), customerA.getId(), DEFAULT_DEVICE_TYPE, "Test Device A1", "A1_TEST_TOKEN", null);
-        createDevice(demoTenant.getId(), customerA.getId(), DEFAULT_DEVICE_TYPE, "Test Device A2", "A2_TEST_TOKEN", null);
-        createDevice(demoTenant.getId(), customerA.getId(), DEFAULT_DEVICE_TYPE, "Test Device A3", "A3_TEST_TOKEN", null);
-        createDevice(demoTenant.getId(), customerB.getId(), DEFAULT_DEVICE_TYPE, "Test Device B1", "B1_TEST_TOKEN", null);
-        createDevice(demoTenant.getId(), customerC.getId(), DEFAULT_DEVICE_TYPE, "Test Device C1", "C1_TEST_TOKEN", null);
+        DeviceProfile defaultDeviceProfile = this.deviceProfileService.findOrCreateDeviceProfile(demoTenant.getId(), DEFAULT_DEVICE_TYPE);
 
-        createDevice(demoTenant.getId(), null, DEFAULT_DEVICE_TYPE, "DHT11 Demo Device", "DHT11_DEMO_TOKEN", "Demo device that is used in sample " +
+        createDevice(demoTenant.getId(), customerA.getId(), defaultDeviceProfile.getId(), "Test Device A1", "A1_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerA.getId(), defaultDeviceProfile.getId(), "Test Device A2", "A2_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerA.getId(), defaultDeviceProfile.getId(), "Test Device A3", "A3_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerB.getId(), defaultDeviceProfile.getId(), "Test Device B1", "B1_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerC.getId(), defaultDeviceProfile.getId(), "Test Device C1", "C1_TEST_TOKEN", null);
+
+        createDevice(demoTenant.getId(), null, defaultDeviceProfile.getId(), "DHT11 Demo Device", "DHT11_DEMO_TOKEN", "Demo device that is used in sample " +
                 "applications that upload data from DHT11 temperature and humidity sensor");
 
-        createDevice(demoTenant.getId(), null, DEFAULT_DEVICE_TYPE, "Raspberry Pi Demo Device", "RASPBERRY_PI_DEMO_TOKEN", "Demo device that is used in " +
+        createDevice(demoTenant.getId(), null, defaultDeviceProfile.getId(), "Raspberry Pi Demo Device", "RASPBERRY_PI_DEMO_TOKEN", "Demo device that is used in " +
                 "Raspberry Pi GPIO control sample application");
 
         Asset thermostatAlarms = new Asset();
@@ -231,8 +239,10 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         thermostatAlarms.setType("AlarmPropagationAsset");
         thermostatAlarms = assetService.saveAsset(thermostatAlarms);
 
-        DeviceId t1Id = createDevice(demoTenant.getId(), null, "thermostat", "Thermostat T1", "T1_TEST_TOKEN", "Demo device for Thermostats dashboard").getId();
-        DeviceId t2Id = createDevice(demoTenant.getId(), null, "thermostat", "Thermostat T2", "T2_TEST_TOKEN", "Demo device for Thermostats dashboard").getId();
+        DeviceProfile thermostatDeviceProfile = this.deviceProfileService.findOrCreateDeviceProfile(demoTenant.getId(), "thermostat");
+
+        DeviceId t1Id = createDevice(demoTenant.getId(), null, thermostatDeviceProfile.getId(), "Thermostat T1", "T1_TEST_TOKEN", "Demo device for Thermostats dashboard").getId();
+        DeviceId t2Id = createDevice(demoTenant.getId(), null, thermostatDeviceProfile.getId(), "Thermostat T2", "T2_TEST_TOKEN", "Demo device for Thermostats dashboard").getId();
 
         relationService.saveRelation(thermostatAlarms.getTenantId(), new EntityRelation(thermostatAlarms.getId(), t1Id, "ToAlarmPropagationAsset"));
         relationService.saveRelation(thermostatAlarms.getTenantId(), new EntityRelation(thermostatAlarms.getId(), t2Id, "ToAlarmPropagationAsset"));
@@ -308,14 +318,14 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     private Device createDevice(TenantId tenantId,
                                 CustomerId customerId,
-                                String type,
+                                DeviceProfileId deviceProfileId,
                                 String name,
                                 String accessToken,
                                 String description) {
         Device device = new Device();
         device.setTenantId(tenantId);
         device.setCustomerId(customerId);
-        device.setType(type);
+        device.setDeviceProfileId(deviceProfileId);
         device.setName(name);
         if (description != null) {
             ObjectNode additionalInfo = objectMapper.createObjectNode();

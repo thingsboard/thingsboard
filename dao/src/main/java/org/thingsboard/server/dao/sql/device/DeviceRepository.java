@@ -106,6 +106,18 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
                                              @Param("textSearch") String textSearch,
                                              Pageable pageable);
 
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.DeviceInfoEntity(d, c.title, c.additionalInfo, p.name) " +
+            "FROM DeviceEntity d " +
+            "LEFT JOIN CustomerEntity c on c.id = d.customerId " +
+            "LEFT JOIN DeviceProfileEntity p on p.id = d.deviceProfileId " +
+            "WHERE d.tenantId = :tenantId " +
+            "AND d.deviceProfileId = :deviceProfileId " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<DeviceInfoEntity> findDeviceInfosByTenantIdAndDeviceProfileId(@Param("tenantId") UUID tenantId,
+                                                                       @Param("deviceProfileId") UUID deviceProfileId,
+                                                                       @Param("textSearch") String textSearch,
+                                                                       Pageable pageable);
+
     @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND d.customerId = :customerId " +
             "AND d.type = :type " +
@@ -129,6 +141,20 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
                                                           @Param("type") String type,
                                                           @Param("textSearch") String textSearch,
                                                           Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.DeviceInfoEntity(d, c.title, c.additionalInfo, p.name) " +
+            "FROM DeviceEntity d " +
+            "LEFT JOIN CustomerEntity c on c.id = d.customerId " +
+            "LEFT JOIN DeviceProfileEntity p on p.id = d.deviceProfileId " +
+            "WHERE d.tenantId = :tenantId " +
+            "AND d.customerId = :customerId " +
+            "AND d.deviceProfileId = :deviceProfileId " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<DeviceInfoEntity> findDeviceInfosByTenantIdAndCustomerIdAndDeviceProfileId(@Param("tenantId") UUID tenantId,
+                                                                                    @Param("customerId") UUID customerId,
+                                                                                    @Param("deviceProfileId") UUID deviceProfileId,
+                                                                                    @Param("textSearch") String textSearch,
+                                                                                    Pageable pageable);
 
     @Query("SELECT DISTINCT d.type FROM DeviceEntity d WHERE d.tenantId = :tenantId")
     List<String> findTenantDeviceTypes(@Param("tenantId") UUID tenantId);

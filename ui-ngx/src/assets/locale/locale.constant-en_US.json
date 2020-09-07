@@ -755,6 +755,7 @@
     "device-profile": {
         "device-profile": "Device profile",
         "device-profiles": "Device profiles",
+        "all-device-profiles": "All",
         "add": "Add device profile",
         "edit": "Edit device profile",
         "device-profile-details": "Device profile details",
