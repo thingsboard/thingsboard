@@ -19,46 +19,60 @@
   <section formGroupName="configuration">
     <fieldset class="fields-group">
       <legend class="group-title" translate>device-profile.mqtt-device-topic-filters</legend>
-      <h6 class="mat-body" translate>device-profile.support-level-wildcards</h6>
-      <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
-        <mat-form-field fxFlex>
-          <mat-label translate>device-profile.telemetry-topic-filter</mat-label>
-          <input matInput required
-                 formControlName="deviceTelemetryTopic"
-                 type="text">
-          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceTelemetryTopic').hasError('required')">
-            {{ 'device-profile.telemetry-topic-filter-required' | translate}}
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field fxFlex>
-          <mat-label translate>device-profile.rpc-request-topic-filter</mat-label>
-          <input matInput required
-                 formControlName="deviceRpcRequestTopic"
-                 type="text">
-          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceRpcRequestTopic').hasError('required')">
-            {{ 'device-profile.rpc-request-topic-filter-required' | translate}}
-          </mat-error>
-        </mat-form-field>
-      </div>
-      <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
-        <mat-form-field fxFlex>
-          <mat-label translate>device-profile.attributes-topic-filter</mat-label>
-          <input matInput required
-                 formControlName="deviceAttributesTopic"
-                 type="text">
-          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceAttributesTopic').hasError('required')">
-            {{ 'device-profile.attributes-topic-filter-required' | translate}}
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field fxFlex>
-          <mat-label translate>device-profile.rpc-response-topic-filter</mat-label>
-          <input matInput required
-                 formControlName="deviceRpcResponseTopic"
-                 type="text">
-          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceRpcResponseTopic').hasError('required')">
-            {{ 'device-profile.rpc-response-topic-filter-required' | translate}}
-          </mat-error>
-        </mat-form-field>
+      <h6 class="mat-body" innerHTML="{{ 'device-profile.support-level-wildcards' | translate }}"></h6>
+      <div fxLayoutGap="8px" fxLayout="column">
+        <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
+          <mat-form-field fxFlex>
+            <mat-label translate>device-profile.telemetry-topic-filter</mat-label>
+            <input matInput required
+                   formControlName="deviceTelemetryTopic"
+                   type="text">
+            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceTelemetryTopic').hasError('required')">
+              {{ 'device-profile.telemetry-topic-filter-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceTelemetryTopic').hasError('pattern')">
+              {{ 'device-profile.not-valid-pattern-topic-filter' | translate}}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field fxFlex>
+            <mat-label translate>device-profile.rpc-request-topic-filter</mat-label>
+            <input matInput required
+                   formControlName="deviceRpcRequestTopic"
+                   type="text">
+            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceRpcRequestTopic').hasError('required')">
+              {{ 'device-profile.rpc-request-topic-filter-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceRpcRequestTopic').hasError('pattern')">
+              {{ 'device-profile.not-valid-pattern-topic-filter' | translate}}
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
+          <mat-form-field fxFlex>
+            <mat-label translate>device-profile.attributes-topic-filter</mat-label>
+            <input matInput required
+                   formControlName="deviceAttributesTopic"
+                   type="text">
+            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceAttributesTopic').hasError('required')">
+              {{ 'device-profile.attributes-topic-filter-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceAttributesTopic').hasError('pattern')">
+              {{ 'device-profile.not-valid-pattern-topic-filter' | translate}}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field fxFlex>
+            <mat-label translate>device-profile.rpc-response-topic-filter</mat-label>
+            <input matInput required
+                   formControlName="deviceRpcResponseTopic"
+                   type="text">
+            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceRpcResponseTopic').hasError('required')">
+              {{ 'device-profile.rpc-response-topic-filter-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceRpcResponseTopic').hasError('pattern')">
+              {{ 'device-profile.not-valid-pattern-topic-filter' | translate}}
+            </mat-error>
+          </mat-form-field>
+        </div>
       </div>
     </fieldset>
   </section>

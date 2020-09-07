@@ -40,6 +40,9 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
   mqttDeviceProfileTransportConfigurationFormGroup: FormGroup;
 
   private requiredValue: boolean;
+
+  private MQTTTopicPattern = new RegExp('^((?![#+]).)*$|^(.*[^#]\/|^)#$|^(.*\/|^)\+(\/.*|$)$');
+
   get required(): boolean {
     return this.requiredValue;
   }
@@ -67,10 +70,10 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
   ngOnInit() {
     this.mqttDeviceProfileTransportConfigurationFormGroup = this.fb.group({
       configuration: this.fb.group({
-        deviceAttributesTopic: [null, Validators.required],
-        deviceTelemetryTopic: [null, Validators.required],
-        deviceRpcRequestTopic: [null, Validators.required],
-        deviceRpcResponseTopic: [null, Validators.required]
+        deviceAttributesTopic: [null, [Validators.required, Validators.pattern(this.MQTTTopicPattern)]],
+        deviceTelemetryTopic: [null, [Validators.required, Validators.pattern(this.MQTTTopicPattern)]],
+        deviceRpcRequestTopic: [null, [Validators.required, Validators.pattern(this.MQTTTopicPattern)]],
+        deviceRpcResponseTopic: [null, [Validators.required, Validators.pattern(this.MQTTTopicPattern)]]
       })
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
