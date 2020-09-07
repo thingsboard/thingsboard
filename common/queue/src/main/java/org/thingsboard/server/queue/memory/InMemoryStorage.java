@@ -23,27 +23,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public final class InMemoryStorage {
     private static InMemoryStorage instance;
     private final ConcurrentHashMap<String, BlockingQueue<TbQueueMsg>> storage;
-    private static ScheduledExecutorService statExecutor;
 
     private InMemoryStorage() {
         storage = new ConcurrentHashMap<>();
-        statExecutor = Executors.newSingleThreadScheduledExecutor();
-        statExecutor.scheduleAtFixedRate(this::printStats, 60, 60, TimeUnit.SECONDS);
     }
 
-    private void printStats() {
+    public void printStats() {
         storage.forEach((topic, queue) -> {
             if (queue.size() > 0) {
-                log.debug("Topic: [{}], Queue size: [{}]", topic, queue.size());
+                log.debug("[{}] Queue Size [{}]", topic, queue.size());
             }
         });
     }
@@ -90,9 +84,4 @@ public final class InMemoryStorage {
         storage.clear();
     }
 
-    public void destroy() {
-        if (statExecutor != null) {
-            statExecutor.shutdownNow();
-        }
-    }
 }
