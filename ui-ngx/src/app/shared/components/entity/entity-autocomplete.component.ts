@@ -77,6 +77,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   @Input()
   excludeEntityIds: Array<string>;
 
+  @Input()
+  labelText: string;
+
+  @Input()
+  requiredText: string;
+
   private requiredValue: boolean;
   get required(): boolean {
     return this.requiredValue;
@@ -88,21 +94,6 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   @Input()
   disabled: boolean;
-
-  labelValue: string;
-
-  @Input()
-  set label(label: string) {
-    this.labelValue = label;
-    this.entityText = label;
-  }
-
-  requiredTextValue: string;
-
-  @Input()
-  set requiredText(requiredText: string) {
-    this.requiredTextValue = requiredText;
-  }
 
   @ViewChild('entityInput', {static: true}) entityInput: ElementRef;
 
@@ -227,13 +218,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           break;
       }
     }
-    if (this.labelValue) {
-      this.entityText = this.labelValue;
+    if (this.labelText && this.labelText.length) {
+      this.entityText = this.labelText;
     }
-    if (this.requiredTextValue) {
-      this.entityRequiredText = this.requiredTextValue;
+    if (this.requiredText && this.requiredText.length) {
+      this.entityRequiredText = this.requiredText;
     }
-
     const currentEntity = this.getCurrentEntity();
     if (currentEntity) {
       const currentEntityType = currentEntity.id.entityType;
