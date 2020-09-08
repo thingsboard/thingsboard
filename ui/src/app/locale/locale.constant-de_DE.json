@@ -84,7 +84,6 @@
     "timeout-invalid": "Das ist keine gültige Wartezeit.",
     "enable-tls": "TLS aktivieren",
     "tls-version" : "TLS-Version",
-    "enter-tls-version" : "Geben Sie die TLS-Version ein",
     "send-test-mail": "Test E-Mail senden",
     "security-settings": "Sicherheitseinstellungen",
     "password-policy": "Kennwortrichtlinie",
@@ -1150,7 +1149,7 @@
     "total": "Gesamt"
   },
   "login": {
-    "login": "Login",
+    "login": "Anmelden",
     "request-password-reset": "Passwortzurücksetzung anfordern",
     "reset-password": "Passwort zurücksetzen",
     "create-password": "Passwort erstellen",
@@ -1164,7 +1163,9 @@
     "new-password": "Neues Passwort",
     "new-password-again": "Neues Passwort wiederholen",
     "password-link-sent-message": "Der Link zum Zurücksetzen des Passworts wurde erfolgreich versendet!",
-    "email": "E-Mail"
+    "email": "E-Mail",
+    "login-with": "Mit {{name}} anmelden",
+    "or": "oder"
   },
   "position": {
     "top": "Oben",
@@ -1687,23 +1688,6 @@
     }
   },
   "language": {
-    "language": "Sprache",
-    "locales": {
-      "de_DE": "Deutsch",
-      "fr_FR": "Französisch",
-      "zh_CN": "Chinesisch",
-      "en_US": "Englisch",
-      "it_IT": "Italienisch",
-      "ko_KR": "Koreanisch",
-      "ru_RU": "Russisch",
-      "es_ES": "Spanisch",
-      "ja_JA": "Japanisch",
-      "tr_TR": "Türkisch",
-      "fa_IR": "Persisch",
-      "uk_UA": "Ukrainisch",
-      "cs_CZ": "Tschechisch",
-      "el_GR": "Griechisch",
-      "lv_LV": "Lettisch"
-    }
+    "language": "Sprache"
   }
 }

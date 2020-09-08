@@ -14,11 +14,39 @@
 # limitations under the License.
 #
 
+queue_type: "kafka"
+request_topic: "js_eval.requests"
+
+js:
+  response_poll_interval: "25"
+
 kafka:
-  request_topic: "js.eval.requests"
   bootstrap:
     # Kafka Bootstrap Servers
     servers: "localhost:9092"
+  replication_factor: "1"
+  topic_properties: "retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600"
+  use_confluent_cloud: false
+  confluent:
+    sasl:
+      mechanism: "PLAIN"
+
+pubsub:
+  queue_properties: "ackDeadlineInSec:30;messageRetentionInSec:604800"
+
+aws_sqs:
+  queue_properties: "VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800"
+
+rabbitmq:
+  host: "localhost"
+  port: "5672"
+  virtual_host: "/"
+  username: "admin"
+  password: "password"
+  queue_properties: "x-max-length-bytes:1048576000;x-message-ttl:604800000"
+
+service_bus:
+  queue_properties: "lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800"
 
 logger:
   level: "info"

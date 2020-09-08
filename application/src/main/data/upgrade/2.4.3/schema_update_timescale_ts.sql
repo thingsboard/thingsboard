@@ -14,60 +14,32 @@
 -- limitations under the License.
 --
 
--- select check_version();
+-- call create_new_ts_kv_table();
 
-CREATE OR REPLACE FUNCTION check_version() RETURNS boolean AS $$
-DECLARE
-    current_version integer;
-    valid_version boolean;
-BEGIN
-    RAISE NOTICE 'Check the current installed PostgreSQL version...';
-    SELECT current_setting('server_version_num') INTO current_version;
-    IF current_version < 90600 THEN
-        valid_version := FALSE;
-    ELSE
-        valid_version := TRUE;
-    END IF;
-    IF valid_version = FALSE THEN
-        RAISE NOTICE 'Postgres version should be at least more than 9.6!';
-    ELSE
-        RAISE NOTICE 'PostgreSQL version is valid!';
-        RAISE NOTICE 'Schema update started...';
-    END IF;
-    RETURN valid_version;
-END;
-$$ LANGUAGE 'plpgsql';
-
--- select create_new_tenant_ts_kv_table();
-
-CREATE OR REPLACE FUNCTION create_new_tenant_ts_kv_table() RETURNS VOID AS $$
+CREATE OR REPLACE PROCEDURE create_new_ts_kv_table() LANGUAGE plpgsql AS $$
 
 BEGIN
   ALTER TABLE tenant_ts_kv
     RENAME TO tenant_ts_kv_old;
-  CREATE TABLE IF NOT EXISTS tenant_ts_kv
+  CREATE TABLE IF NOT EXISTS ts_kv
   (
     LIKE tenant_ts_kv_old
   );
-  ALTER TABLE tenant_ts_kv
-    ALTER COLUMN tenant_id TYPE uuid USING tenant_id::uuid;
-  ALTER TABLE tenant_ts_kv
-    ALTER COLUMN entity_id TYPE uuid USING entity_id::uuid;
-  ALTER TABLE tenant_ts_kv
-    ALTER COLUMN key TYPE integer USING key::integer;
-  ALTER TABLE tenant_ts_kv
-    ADD CONSTRAINT tenant_ts_kv_pkey PRIMARY KEY(tenant_id, entity_id, key, ts);
+  ALTER TABLE ts_kv ALTER COLUMN entity_id TYPE uuid USING entity_id::uuid;
+  ALTER TABLE ts_kv ALTER COLUMN key TYPE integer USING key::integer;
+  ALTER INDEX ts_kv_pkey RENAME TO tenant_ts_kv_pkey_old;
   ALTER INDEX idx_tenant_ts_kv RENAME TO idx_tenant_ts_kv_old;
   ALTER INDEX tenant_ts_kv_ts_idx RENAME TO tenant_ts_kv_ts_idx_old;
---   PERFORM create_hypertable('tenant_ts_kv', 'ts', chunk_time_interval => 86400000, if_not_exists => true);
-  CREATE INDEX IF NOT EXISTS idx_tenant_ts_kv ON tenant_ts_kv(tenant_id, entity_id, key, ts);
+  ALTER TABLE ts_kv ADD CONSTRAINT ts_kv_pkey PRIMARY KEY(entity_id, key, ts);
+--   CREATE INDEX IF NOT EXISTS ts_kv_ts_idx ON ts_kv(ts DESC);
+  ALTER TABLE ts_kv DROP COLUMN IF EXISTS tenant_id;
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
 
--- select create_ts_kv_latest_table();
+-- call create_ts_kv_latest_table();
 
-CREATE OR REPLACE FUNCTION create_ts_kv_latest_table() RETURNS VOID AS $$
+CREATE OR REPLACE PROCEDURE create_ts_kv_latest_table() LANGUAGE plpgsql AS $$
 
 BEGIN
     CREATE TABLE IF NOT EXISTS ts_kv_latest
@@ -82,12 +54,12 @@ BEGIN
         CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
     );
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
 
--- select create_ts_kv_dictionary_table();
+-- call create_ts_kv_dictionary_table();
 
-CREATE OR REPLACE FUNCTION create_ts_kv_dictionary_table() RETURNS VOID AS $$
+CREATE OR REPLACE PROCEDURE create_ts_kv_dictionary_table() LANGUAGE plpgsql AS $$
 
 BEGIN
   CREATE TABLE IF NOT EXISTS ts_kv_dictionary
@@ -97,12 +69,12 @@ BEGIN
     CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
   );
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
--- select insert_into_dictionary();
+-- call insert_into_dictionary();
 
-CREATE OR REPLACE FUNCTION insert_into_dictionary() RETURNS VOID AS
-$$
+CREATE OR REPLACE PROCEDURE insert_into_dictionary() LANGUAGE plpgsql AS $$
+
 DECLARE
     insert_record RECORD;
     key_cursor CURSOR FOR SELECT DISTINCT key
@@ -122,66 +94,45 @@ BEGIN
     END LOOP;
     CLOSE key_cursor;
 END;
-$$ language 'plpgsql';
+$$;
 
--- select insert_into_tenant_ts_kv();
-
-CREATE OR REPLACE FUNCTION insert_into_tenant_ts_kv() RETURNS void AS
+CREATE OR REPLACE FUNCTION to_uuid(IN entity_id varchar, OUT uuid_id uuid) AS
 $$
-DECLARE
-    insert_size CONSTANT integer := 10000;
-    insert_counter       integer DEFAULT 0;
-    insert_record        RECORD;
-    insert_cursor CURSOR FOR SELECT CONCAT(tenant_id_first_part_uuid, '-', tenant_id_second_part_uuid, '-1', tenant_id_third_part_uuid, '-', tenant_id_fourth_part_uuid, '-', tenant_id_fifth_part_uuid)::uuid AS tenant_id,
-                                    CONCAT(entity_id_first_part_uuid, '-', entity_id_second_part_uuid, '-1', entity_id_third_part_uuid, '-', entity_id_fourth_part_uuid, '-', entity_id_fifth_part_uuid)::uuid AS entity_id,
-                                    tenant_ts_kv_records.key                                                         AS key,
-                                    tenant_ts_kv_records.ts                                                          AS ts,
-                                    tenant_ts_kv_records.bool_v                                                      AS bool_v,
-                                    tenant_ts_kv_records.str_v                                                       AS str_v,
-                                    tenant_ts_kv_records.long_v                                                      AS long_v,
-                                    tenant_ts_kv_records.dbl_v                                                       AS dbl_v
-                             FROM (SELECT SUBSTRING(tenant_id, 8, 8)  AS tenant_id_first_part_uuid,
-                                          SUBSTRING(tenant_id, 4, 4)  AS tenant_id_second_part_uuid,
-                                          SUBSTRING(tenant_id, 1, 3)  AS tenant_id_third_part_uuid,
-                                          SUBSTRING(tenant_id, 16, 4) AS tenant_id_fourth_part_uuid,
-                                          SUBSTRING(tenant_id, 20)    AS tenant_id_fifth_part_uuid,
-                                          SUBSTRING(entity_id, 8, 8)  AS entity_id_first_part_uuid,
-                                          SUBSTRING(entity_id, 4, 4)  AS entity_id_second_part_uuid,
-                                          SUBSTRING(entity_id, 1, 3)  AS entity_id_third_part_uuid,
-                                          SUBSTRING(entity_id, 16, 4) AS entity_id_fourth_part_uuid,
-                                          SUBSTRING(entity_id, 20)    AS entity_id_fifth_part_uuid,
-                                          key_id                      AS key,
-                                          ts,
-                                          bool_v,
-                                          str_v,
-                                          long_v,
-                                          dbl_v
-                                   FROM tenant_ts_kv_old
-                                            INNER JOIN ts_kv_dictionary ON (tenant_ts_kv_old.key = ts_kv_dictionary.key)) AS tenant_ts_kv_records;
 BEGIN
-    OPEN insert_cursor;
-    LOOP
-        insert_counter := insert_counter + 1;
-        FETCH insert_cursor INTO insert_record;
-        IF NOT FOUND THEN
-            RAISE NOTICE '% records have been inserted into the new tenant_ts_kv table!',insert_counter - 1;
-            EXIT;
-        END IF;
-        INSERT INTO tenant_ts_kv(tenant_id, entity_id, key, ts, bool_v, str_v, long_v, dbl_v)
-        VALUES (insert_record.tenant_id, insert_record.entity_id, insert_record.key, insert_record.ts, insert_record.bool_v, insert_record.str_v,
-                insert_record.long_v, insert_record.dbl_v);
-        IF MOD(insert_counter, insert_size) = 0 THEN
-            RAISE NOTICE '% records have been inserted into the new tenant_ts_kv table!',insert_counter;
-        END IF;
-    END LOOP;
-    CLOSE insert_cursor;
+    uuid_id := substring(entity_id, 8, 8) || '-' || substring(entity_id, 4, 4) || '-1' || substring(entity_id, 1, 3) ||
+               '-' || substring(entity_id, 16, 4) || '-' || substring(entity_id, 20, 12);
 END;
-$$ LANGUAGE 'plpgsql';
+$$ LANGUAGE plpgsql;
 
--- select insert_into_ts_kv_latest();
+-- call insert_into_ts_kv();
 
-CREATE OR REPLACE FUNCTION insert_into_ts_kv_latest() RETURNS void AS
-$$
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv(IN path_to_file varchar) LANGUAGE plpgsql AS $$
+BEGIN
+
+    EXECUTE format ('COPY (SELECT to_uuid(entity_id)                                     AS entity_id,
+           new_ts_kv_records.key                                                         AS key,
+           new_ts_kv_records.ts                                                          AS ts,
+           new_ts_kv_records.bool_v                                                      AS bool_v,
+           new_ts_kv_records.str_v                                                       AS str_v,
+           new_ts_kv_records.long_v                                                      AS long_v,
+           new_ts_kv_records.dbl_v                                                       AS dbl_v
+    FROM (SELECT entity_id                   AS entity_id,
+                 key_id                      AS key,
+                 ts,
+                 bool_v,
+                 str_v,
+                 long_v,
+                 dbl_v
+          FROM tenant_ts_kv_old
+                   INNER JOIN ts_kv_dictionary ON (tenant_ts_kv_old.key = ts_kv_dictionary.key)) AS new_ts_kv_records) TO %L;', path_to_file);
+    EXECUTE format ('COPY ts_kv FROM %L', path_to_file);
+END;
+$$;
+
+-- call insert_into_ts_kv_latest();
+
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv_latest() LANGUAGE plpgsql AS $$
+
 DECLARE
     insert_size CONSTANT integer := 10000;
     insert_counter       integer DEFAULT 0;
@@ -191,7 +142,7 @@ DECLARE
                                     latest_records.key          AS key,
                                     latest_records.entity_id    AS entity_id,
                                     latest_records.ts           AS ts
-                             FROM (SELECT DISTINCT key AS key, entity_id AS entity_id, MAX(ts) AS ts FROM tenant_ts_kv GROUP BY key, entity_id) AS latest_records;
+                             FROM (SELECT DISTINCT key AS key, entity_id AS entity_id, MAX(ts) AS ts FROM ts_kv GROUP BY key, entity_id) AS latest_records;
 BEGIN
     OPEN insert_cursor;
     LOOP
@@ -201,7 +152,7 @@ BEGIN
             RAISE NOTICE '% records have been inserted into the ts_kv_latest table!',insert_counter - 1;
             EXIT;
         END IF;
-        SELECT entity_id AS entity_id, key AS key, ts AS ts, bool_v AS bool_v, str_v AS str_v, long_v AS long_v, dbl_v AS dbl_v INTO insert_record FROM tenant_ts_kv WHERE entity_id = latest_record.entity_id AND key = latest_record.key AND ts = latest_record.ts;
+        SELECT entity_id AS entity_id, key AS key, ts AS ts, bool_v AS bool_v, str_v AS str_v, long_v AS long_v, dbl_v AS dbl_v INTO insert_record FROM ts_kv WHERE entity_id = latest_record.entity_id AND key = latest_record.key AND ts = latest_record.ts;
         INSERT INTO ts_kv_latest(entity_id, key, ts, bool_v, str_v, long_v, dbl_v)
         VALUES (insert_record.entity_id, insert_record.key, insert_record.ts, insert_record.bool_v, insert_record.str_v, insert_record.long_v, insert_record.dbl_v);
         IF MOD(insert_counter, insert_size) = 0 THEN
@@ -210,4 +161,48 @@ BEGIN
     END LOOP;
     CLOSE insert_cursor;
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
+
+-- call insert_into_ts_kv_cursor();
+
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv_cursor() LANGUAGE plpgsql AS $$
+
+DECLARE
+    insert_size CONSTANT integer := 10000;
+    insert_counter       integer DEFAULT 0;
+    insert_record        RECORD;
+    insert_cursor CURSOR FOR SELECT to_uuid(entity_id)                                                            AS entity_id,
+                                    new_ts_kv_records.key                                                         AS key,
+                                    new_ts_kv_records.ts                                                          AS ts,
+                                    new_ts_kv_records.bool_v                                                      AS bool_v,
+                                    new_ts_kv_records.str_v                                                       AS str_v,
+                                    new_ts_kv_records.long_v                                                      AS long_v,
+                                    new_ts_kv_records.dbl_v                                                       AS dbl_v
+                             FROM (SELECT entity_id                   AS entity_id,
+                                          key_id                      AS key,
+                                          ts,
+                                          bool_v,
+                                          str_v,
+                                          long_v,
+                                          dbl_v
+                                   FROM tenant_ts_kv_old
+                                            INNER JOIN ts_kv_dictionary ON (tenant_ts_kv_old.key = ts_kv_dictionary.key)) AS new_ts_kv_records;
+BEGIN
+    OPEN insert_cursor;
+    LOOP
+        insert_counter := insert_counter + 1;
+        FETCH insert_cursor INTO insert_record;
+        IF NOT FOUND THEN
+            RAISE NOTICE '% records have been inserted into the new ts_kv table!',insert_counter - 1;
+            EXIT;
+        END IF;
+        INSERT INTO ts_kv(entity_id, key, ts, bool_v, str_v, long_v, dbl_v)
+        VALUES (insert_record.entity_id, insert_record.key, insert_record.ts, insert_record.bool_v, insert_record.str_v,
+                insert_record.long_v, insert_record.dbl_v);
+        IF MOD(insert_counter, insert_size) = 0 THEN
+            RAISE NOTICE '% records have been inserted into the new ts_kv table!',insert_counter;
+        END IF;
+    END LOOP;
+    CLOSE insert_cursor;
+END;
+$$;

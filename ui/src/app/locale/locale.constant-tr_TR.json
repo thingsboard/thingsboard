@@ -84,7 +84,6 @@
         "timeout-invalid": "Bu geçerli bir zaman aşımı gibi görünmüyor.",
         "enable-tls": "TLS'i etkinleştir.",
         "tls-version" : "TLS sürümü",
-        "enter-tls-version" : "TLS sürümünü girin",
         "send-test-mail": "Test e-postası gönder"
     },
     "alarm": {
@@ -1091,7 +1090,7 @@
         "total": "toplam"
     },
     "login": {
-        "login": "Oturum aç",
+        "login": "Giriş Yap",
         "request-password-reset": "Parola Sıfırlama İsteği Gönder",
         "reset-password": "Parola Sıfırla",
         "create-password": "Parola Oluştur",
@@ -1105,7 +1104,9 @@
         "new-password": "Yeni parola",
         "new-password-again": "Yeni parola tekrarı",
         "password-link-sent-message": "Parola sıfırlama e-postası başarıyla gönderildi!",
-        "email": "E-posta"
+        "email": "E-posta",
+        "login-with": "{{name}} ile Giriş Yap",
+        "or": "ya da"
     },
     "position": {
         "top": "Üst",
@@ -1592,23 +1593,6 @@
         }
     },
     "language": {
-        "language": "Dil",
-        "locales": {
-            "de_DE": "Almanca",
-            "fr_FR": "Fransızca",
-            "zh_CN": "Çince",
-            "en_US": "İngilizce",
-            "it_IT": "İtalyan",
-            "ko_KR": "Koreli",
-            "ru_RU": "Rusça",
-            "es_ES": "İspanyol",
-            "ja_JA": "Japonca",
-            "tr_TR": "Türkçe",
-            "fa_IR": "Farsça",
-            "uk_UA": "Ukrayna",
-            "cs_CZ": "Çekçe",
-            "el_GR": "Yunanca",
-            "lv_LV": "Letonca"
-        }
+        "language": "Dil"
     }
 }

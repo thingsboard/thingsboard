@@ -17,6 +17,13 @@ In order to set database type change the value of `DATABASE` variable in `.env` 
 
 **NOTE**: According to the database type corresponding docker service will be deployed (see `docker-compose.postgres.yml`, `docker-compose.cassandra.yml` for details).
 
+Execute the following command to create log folders for the services and chown of these folders to the docker container users. 
+To be able to change user, **chown** command is used, which requires sudo permissions (script will request password for a sudo access): 
+
+`
+$ ./docker-create-log-folders.sh
+`
+
 Execute the following command to run installation:
 
 `
@@ -51,7 +58,7 @@ In case of any issues you can examine service logs for errors.
 For example to see ThingsBoard node logs execute the following command:
 
 `
-$ docker-compose logs -f tb1
+$ docker-compose logs -f tb-core1 tb-rule-engine1
 `
 
 Or use `docker-compose ps` to see the state of all the containers.

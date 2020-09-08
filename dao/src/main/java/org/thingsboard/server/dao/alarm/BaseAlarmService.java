@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -53,7 +54,6 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -264,9 +264,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                             entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
                                 alarmInfo.setOriginatorName(originatorName);
                                 return alarmInfo;
-                            }
-                    );
-                });
+                            }, MoreExecutors.directExecutor());
+                }, MoreExecutors.directExecutor());
     }
 
     @Override
@@ -283,11 +282,11 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                                 }
                                 alarmInfo.setOriginatorName(originatorName);
                                 return alarmInfo;
-                            }
+                            }, MoreExecutors.directExecutor()
                     ));
                 }
                 return Futures.successfulAsList(alarmFutures);
-            });
+            }, MoreExecutors.directExecutor());
         }
         return Futures.transform(alarms, new Function<List<AlarmInfo>, TimePageData<AlarmInfo>>() {
             @Nullable
@@ -295,7 +294,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             public TimePageData<AlarmInfo> apply(@Nullable List<AlarmInfo> alarms) {
                 return new TimePageData<>(alarms, query.getPageLink());
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     @Override

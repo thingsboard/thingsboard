@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>2.5.0-SNAPSHOT</version>
+        <version>2.5.4-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>common</artifactId>
@@ -37,9 +37,11 @@
         <module>data</module>
         <module>util</module>
         <module>message</module>
+        <module>actor</module>
         <module>queue</module>
         <module>transport</module>
         <module>dao-api</module>
+        <module>stats</module>
     </modules>
 
 </project>

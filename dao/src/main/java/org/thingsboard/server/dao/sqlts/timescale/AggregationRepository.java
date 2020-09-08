@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.sqlts.timescale;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
-import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
+import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 import javax.persistence.EntityManager;
@@ -36,13 +36,13 @@ public class AggregationRepository {
     public static final String FIND_SUM = "findSum";
     public static final String FIND_COUNT = "findCount";
 
-    public static final String FROM_WHERE_CLAUSE = "FROM tenant_ts_kv tskv WHERE tskv.tenant_id = cast(:tenantId AS uuid) AND tskv.entity_id = cast(:entityId AS uuid) AND tskv.key= cast(:entityKey AS int) AND tskv.ts > :startTs AND tskv.ts <= :endTs GROUP BY tskv.tenant_id, tskv.entity_id, tskv.key, tsBucket ORDER BY tskv.tenant_id, tskv.entity_id, tskv.key, tsBucket";
+    public static final String FROM_WHERE_CLAUSE = "FROM ts_kv tskv WHERE tskv.entity_id = cast(:entityId AS uuid) AND tskv.key= cast(:entityKey AS int) AND tskv.ts > :startTs AND tskv.ts <= :endTs GROUP BY tskv.entity_id, tskv.key, tsBucket ORDER BY tskv.entity_id, tskv.key, tsBucket";
 
     public static final String FIND_AVG_QUERY = "SELECT time_bucket(:timeBucket, tskv.ts) AS tsBucket, :timeBucket AS interval, SUM(COALESCE(tskv.long_v, 0)) AS longValue, SUM(COALESCE(tskv.dbl_v, 0.0)) AS doubleValue, SUM(CASE WHEN tskv.long_v IS NULL THEN 0 ELSE 1 END) AS longCountValue, SUM(CASE WHEN tskv.dbl_v IS NULL THEN 0 ELSE 1 END) AS doubleCountValue, null AS strValue, 'AVG' AS aggType ";
 
-    public static final String FIND_MAX_QUERY = "SELECT time_bucket(:timeBucket, tskv.ts) AS tsBucket, :timeBucket AS interval, MAX(COALESCE(tskv.long_v, -9223372036854775807)) AS longValue, MAX(COALESCE(tskv.dbl_v, -1.79769E+308)) as doubleValue, SUM(CASE WHEN tskv.long_v IS NULL THEN 0 ELSE 1 END) AS longCountValue, SUM(CASE WHEN tskv.dbl_v IS NULL THEN 0 ELSE 1 END) AS doubleCountValue, MAX(tskv.str_v) AS strValue, MAX(tskv.json_v) AS jsonValue, 'MAX' AS aggType ";
+    public static final String FIND_MAX_QUERY = "SELECT time_bucket(:timeBucket, tskv.ts) AS tsBucket, :timeBucket AS interval, MAX(COALESCE(tskv.long_v, -9223372036854775807)) AS longValue, MAX(COALESCE(tskv.dbl_v, -1.79769E+308)) as doubleValue, SUM(CASE WHEN tskv.long_v IS NULL THEN 0 ELSE 1 END) AS longCountValue, SUM(CASE WHEN tskv.dbl_v IS NULL THEN 0 ELSE 1 END) AS doubleCountValue, MAX(tskv.str_v) AS strValue, 'MAX' AS aggType ";
 
-    public static final String FIND_MIN_QUERY = "SELECT time_bucket(:timeBucket, tskv.ts) AS tsBucket, :timeBucket AS interval, MIN(COALESCE(tskv.long_v, 9223372036854775807)) AS longValue, MIN(COALESCE(tskv.dbl_v, 1.79769E+308)) as doubleValue, SUM(CASE WHEN tskv.long_v IS NULL THEN 0 ELSE 1 END) AS longCountValue, SUM(CASE WHEN tskv.dbl_v IS NULL THEN 0 ELSE 1 END) AS doubleCountValue, MIN(tskv.str_v) AS strValue, MIN(tskv.json_v) AS jsonValue,'MIN' AS aggType ";
+    public static final String FIND_MIN_QUERY = "SELECT time_bucket(:timeBucket, tskv.ts) AS tsBucket, :timeBucket AS interval, MIN(COALESCE(tskv.long_v, 9223372036854775807)) AS longValue, MIN(COALESCE(tskv.dbl_v, 1.79769E+308)) as doubleValue, SUM(CASE WHEN tskv.long_v IS NULL THEN 0 ELSE 1 END) AS longCountValue, SUM(CASE WHEN tskv.dbl_v IS NULL THEN 0 ELSE 1 END) AS doubleCountValue, MIN(tskv.str_v) AS strValue, 'MIN' AS aggType ";
 
     public static final String FIND_SUM_QUERY = "SELECT time_bucket(:timeBucket, tskv.ts) AS tsBucket, :timeBucket AS interval, SUM(COALESCE(tskv.long_v, 0)) AS longValue, SUM(COALESCE(tskv.dbl_v, 0.0)) AS doubleValue, SUM(CASE WHEN tskv.long_v IS NULL THEN 0 ELSE 1 END) AS longCountValue, SUM(CASE WHEN tskv.dbl_v IS NULL THEN 0 ELSE 1 END) AS doubleCountValue, null AS strValue, null AS jsonValue, 'SUM' AS aggType ";
 
@@ -52,43 +52,42 @@ public class AggregationRepository {
     private EntityManager entityManager;
 
     @Async
-    public CompletableFuture<List<TimescaleTsKvEntity>> findAvg(UUID tenantId, UUID entityId, int entityKey, long timeBucket, long startTs, long endTs) {
+    public CompletableFuture<List<TimescaleTsKvEntity>> findAvg(UUID entityId, int entityKey, long timeBucket, long startTs, long endTs) {
         @SuppressWarnings("unchecked")
-        List<TimescaleTsKvEntity> resultList = getResultList(tenantId, entityId, entityKey, timeBucket, startTs, endTs, FIND_AVG);
+        List<TimescaleTsKvEntity> resultList = getResultList(entityId, entityKey, timeBucket, startTs, endTs, FIND_AVG);
         return CompletableFuture.supplyAsync(() -> resultList);
     }
 
     @Async
-    public CompletableFuture<List<TimescaleTsKvEntity>> findMax(UUID tenantId, UUID entityId, int entityKey, long timeBucket, long startTs, long endTs) {
+    public CompletableFuture<List<TimescaleTsKvEntity>> findMax(UUID entityId, int entityKey, long timeBucket, long startTs, long endTs) {
         @SuppressWarnings("unchecked")
-        List<TimescaleTsKvEntity> resultList = getResultList(tenantId, entityId, entityKey, timeBucket, startTs, endTs, FIND_MAX);
+        List<TimescaleTsKvEntity> resultList = getResultList(entityId, entityKey, timeBucket, startTs, endTs, FIND_MAX);
         return CompletableFuture.supplyAsync(() -> resultList);
     }
 
     @Async
-    public CompletableFuture<List<TimescaleTsKvEntity>> findMin(UUID tenantId, UUID entityId, int entityKey, long timeBucket, long startTs, long endTs) {
+    public CompletableFuture<List<TimescaleTsKvEntity>> findMin(UUID entityId, int entityKey, long timeBucket, long startTs, long endTs) {
         @SuppressWarnings("unchecked")
-        List<TimescaleTsKvEntity> resultList = getResultList(tenantId, entityId, entityKey, timeBucket, startTs, endTs, FIND_MIN);
+        List<TimescaleTsKvEntity> resultList = getResultList(entityId, entityKey, timeBucket, startTs, endTs, FIND_MIN);
         return CompletableFuture.supplyAsync(() -> resultList);
     }
 
     @Async
-    public CompletableFuture<List<TimescaleTsKvEntity>> findSum(UUID tenantId, UUID entityId, int entityKey, long timeBucket, long startTs, long endTs) {
+    public CompletableFuture<List<TimescaleTsKvEntity>> findSum(UUID entityId, int entityKey, long timeBucket, long startTs, long endTs) {
         @SuppressWarnings("unchecked")
-        List<TimescaleTsKvEntity> resultList = getResultList(tenantId, entityId, entityKey, timeBucket, startTs, endTs, FIND_SUM);
+        List<TimescaleTsKvEntity> resultList = getResultList(entityId, entityKey, timeBucket, startTs, endTs, FIND_SUM);
         return CompletableFuture.supplyAsync(() -> resultList);
     }
 
     @Async
-    public CompletableFuture<List<TimescaleTsKvEntity>> findCount(UUID tenantId, UUID entityId, int entityKey, long timeBucket, long startTs, long endTs) {
+    public CompletableFuture<List<TimescaleTsKvEntity>> findCount(UUID entityId, int entityKey, long timeBucket, long startTs, long endTs) {
         @SuppressWarnings("unchecked")
-        List<TimescaleTsKvEntity> resultList = getResultList(tenantId, entityId, entityKey, timeBucket, startTs, endTs, FIND_COUNT);
+        List<TimescaleTsKvEntity> resultList = getResultList(entityId, entityKey, timeBucket, startTs, endTs, FIND_COUNT);
         return CompletableFuture.supplyAsync(() -> resultList);
     }
 
-    private List getResultList(UUID tenantId, UUID entityId, int entityKey, long timeBucket, long startTs, long endTs, String query) {
+    private List getResultList(UUID entityId, int entityKey, long timeBucket, long startTs, long endTs, String query) {
         return entityManager.createNamedQuery(query)
-                .setParameter("tenantId", tenantId)
                 .setParameter("entityId", entityId)
                 .setParameter("entityKey", entityKey)
                 .setParameter("timeBucket", timeBucket)

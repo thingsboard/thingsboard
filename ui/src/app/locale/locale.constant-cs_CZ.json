@@ -84,7 +84,6 @@
         "timeout-invalid": "Tohle nevypadá jako platný časový limit.",
         "enable-tls": "Povolit TLS",
         "tls-version": "Verze TLS",
-        "enter-tls-version" : "Zadejte verzi TLS",
         "send-test-mail": "Odeslat testovací zprávu"
     },
     "alarm": {
@@ -771,6 +770,7 @@
         "list-of-rulenodes": "{ count, plural, 1 {Jeden uzel pravidla} other {Seznam # uzlů pravidel} }",
         "rulenode-name-starts-with": "Uzly pravidel, jejichž název začíná '{{prefix}}'",
         "type-current-customer": "Stávající zákazník",
+        "type-current-tenant": "Stávající tenant",
         "search": "Vyhledat entity",
         "selected-entities": "{ count, plural, 1 {1 entita} other {# entit} } zvoleno",
         "entity-name": "Název entity",
@@ -1136,7 +1136,7 @@
         "total": "celkem"
     },
     "login": {
-        "login": "Přihlásit",
+        "login": "Přihlásit se",
         "request-password-reset": "Vyžádat reset hesla",
         "reset-password": "Reset hesla",
         "create-password": "Vytvořit heslo",
@@ -1150,7 +1150,9 @@
         "new-password": "Nové heslo",
         "new-password-again": "Nové heslo znovu",
         "password-link-sent-message": "Odkaz pro reset hesla byl úspěšně odeslán!",
-        "email": "Email"
+        "email": "Email",
+        "login-with": "Přihlásit se přes {{name}}",
+        "or": "nebo"
     },
     "position": {
         "top": "Nahoře",
@@ -1639,23 +1641,6 @@
         }
     },
     "language": {
-        "language": "Jazyk",
-        "locales": {
-            "de_DE": "German",
-            "fr_FR": "French",
-            "zh_CN": "Chinese",
-            "en_US": "English",
-            "it_IT": "Italian",
-            "ko_KR": "Korean",
-            "ru_RU": "Russian",
-            "es_ES": "Spanish",
-            "ja_JA": "Japanese",
-            "tr_TR": "Turkish",
-            "fa_IR": "Persian",
-            "uk_UA": "Ukrainian",
-            "cs_CZ": "Česky",
-            "el_GR": "Řečtina",
-            "lv_LV": "Lotyština"
-        }
+        "language": "Jazyk"
     }
 }

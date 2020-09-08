@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.device;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -97,9 +98,9 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                     }
                     log.warn("Failed to find claimingAllowed attribute for device or it is already claimed![{}]", device.getName());
                     throw new IllegalArgumentException();
-                });
+                }, MoreExecutors.directExecutor());
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     private ClaimDataInfo getClaimData(Cache cache, Device device) throws ExecutionException, InterruptedException {
@@ -138,9 +139,9 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                 if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                     device.setCustomerId(customerId);
                     Device savedDevice = deviceService.saveDevice(device);
-                    return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(savedDevice, ClaimResponse.SUCCESS));
+                    return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(savedDevice, ClaimResponse.SUCCESS), MoreExecutors.directExecutor());
                 }
-                return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(null, ClaimResponse.CLAIMED));
+                return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(null, ClaimResponse.CLAIMED), MoreExecutors.directExecutor());
             }
         } else {
             log.warn("Failed to find the device's claiming message![{}]", device.getName());

@@ -92,19 +92,7 @@ public abstract class BaseAdminControllerTest extends AbstractControllerTest {
         .andExpect(status().isBadRequest())
         .andExpect(statusReason(containsString("is prohibited")));
     }
-    
-    @Test
-    public void testSaveAdminSettingsWithNewJsonStructure() throws Exception {
-        loginSysAdmin();
-        AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class); 
-        JsonNode json = adminSettings.getJsonValue();
-        ((ObjectNode) json).put("newKey", "my new value");
-        adminSettings.setJsonValue(json);
-        doPost("/api/admin/settings", adminSettings)
-        .andExpect(status().isBadRequest())
-        .andExpect(statusReason(containsString("Provided json structure is different")));
-    }
-    
+
     @Test
     public void testSendTestMail() throws Exception {
         loginSysAdmin();

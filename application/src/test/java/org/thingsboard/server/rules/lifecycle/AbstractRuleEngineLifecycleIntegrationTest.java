@@ -15,16 +15,15 @@
  */
 package org.thingsboard.server.rules.lifecycle;
 
-import com.datastax.driver.core.utils.UUIDs;
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
-import org.thingsboard.server.actors.service.ActorService;
+import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Event;
@@ -39,12 +38,11 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.controller.AbstractRuleEngineControllerTest;
 import org.thingsboard.server.dao.attributes.AttributesService;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -61,7 +59,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
     protected User tenantAdmin;
 
     @Autowired
-    protected ActorService actorService;
+    protected ActorSystemContext actorSystem;
 
     @Autowired
     protected AttributesService attributesService;
@@ -136,16 +134,13 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
 
         Thread.sleep(1000);
 
+        TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
+        TbMsg tbMsg = TbMsg.newMsg("CUSTOM", device.getId(), new TbMsgMetaData(), "{}", tbMsgCallback);
+        QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg, null, null);
         // Pushing Message to the system
-        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(),
-                "CUSTOM",
-                device.getId(),
-                new TbMsgMetaData(),
-                "{}",
-                null, null, 0L);
-        actorService.onMsg(new SendToClusterMsg(device.getId(), new ServiceToRuleEngineMsg(savedTenant.getId(), tbMsg)));
+        actorSystem.tell(qMsg);
+        Mockito.verify(tbMsgCallback, Mockito.timeout(3000)).onSuccess();
 
-        Thread.sleep(3000);
 
         TimePageData<Event> eventsPage = getDebugEvents(savedTenant.getId(), ruleChain.getFirstRuleNodeId(), 1000);
         List<Event> events = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());

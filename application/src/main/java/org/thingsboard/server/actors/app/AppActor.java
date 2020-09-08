@@ -15,71 +15,55 @@
  */
 package org.thingsboard.server.actors.app;
 
-import akka.actor.ActorRef;
-import akka.actor.LocalActorRef;
-import akka.actor.OneForOneStrategy;
-import akka.actor.Props;
-import akka.actor.SupervisorStrategy;
-import akka.actor.SupervisorStrategy.Directive;
-import akka.actor.Terminated;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
-import akka.japi.Function;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
+import org.thingsboard.server.actors.TbActor;
+import org.thingsboard.server.actors.TbActorId;
+import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.actors.TbEntityActorId;
+import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
-import org.thingsboard.server.actors.shared.rulechain.SystemRuleChainManager;
 import org.thingsboard.server.actors.tenant.TenantActor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
-import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.tenant.TenantService;
-import scala.concurrent.duration.Duration;
+import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
-public class AppActor extends RuleChainManagerActor {
+@Slf4j
+public class AppActor extends ContextAwareActor {
 
     private static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
     private final TenantService tenantService;
-    private final BiMap<TenantId, ActorRef> tenantActors;
+    private final Set<TenantId> deletedTenants;
     private boolean ruleChainsInitialized;
 
     private AppActor(ActorSystemContext systemContext) {
-        super(systemContext, new SystemRuleChainManager(systemContext));
+        super(systemContext);
         this.tenantService = systemContext.getTenantService();
-        this.tenantActors = HashBiMap.create();
+        this.deletedTenants = new HashSet<>();
     }
 
     @Override
-    public SupervisorStrategy supervisorStrategy() {
-        return strategy;
-    }
-
-    @Override
-    public void preStart() {
-    }
-
-    @Override
-    protected boolean process(TbActorMsg msg) {
+    protected boolean doProcess(TbActorMsg msg) {
         if (!ruleChainsInitialized) {
-            initRuleChainsAndTenantActors();
+            initTenantActors();
             ruleChainsInitialized = true;
             if (msg.getMsgType() != MsgType.APP_INIT_MSG) {
                 log.warn("Rule Chains initialized by unexpected message: {}", msg);
@@ -88,26 +72,24 @@ public class AppActor extends RuleChainManagerActor {
         switch (msg.getMsgType()) {
             case APP_INIT_MSG:
                 break;
-            case SEND_TO_CLUSTER_MSG:
-                onPossibleClusterMsg((SendToClusterMsg) msg);
-                break;
-            case CLUSTER_EVENT_MSG:
-                broadcast(msg);
+            case PARTITION_CHANGE_MSG:
+                ctx.broadcastToChildren(msg);
                 break;
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
                 break;
-            case SERVICE_TO_RULE_ENGINE_MSG:
-                onServiceToRuleEngineMsg((ServiceToRuleEngineMsg) msg);
+            case QUEUE_TO_RULE_ENGINE_MSG:
+                onQueueToRuleEngineMsg((QueueToRuleEngineMsg) msg);
                 break;
             case TRANSPORT_TO_DEVICE_ACTOR_MSG:
+                onToDeviceActorMsg((TenantAwareMsg) msg, false);
+                break;
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
             case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
-            case REMOTE_TO_RULE_CHAIN_TELL_NEXT_MSG:
-                onToDeviceActorMsg((TenantAwareMsg) msg);
+                onToDeviceActorMsg((TenantAwareMsg) msg, true);
                 break;
             default:
                 return false;
@@ -115,16 +97,30 @@ public class AppActor extends RuleChainManagerActor {
         return true;
     }
 
-    private void initRuleChainsAndTenantActors() {
+    private void initTenantActors() {
         log.info("Starting main system actor.");
         try {
-            initRuleChains();
-            if (systemContext.isTenantComponentsInitEnabled()) {
-                PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT);
-                for (Tenant tenant : tenantIterator) {
+            // This Service may be started for specific tenant only.
+            Optional<TenantId> isolatedTenantId = systemContext.getServiceInfoProvider().getIsolatedTenant();
+            if (isolatedTenantId.isPresent()) {
+                Tenant tenant = systemContext.getTenantService().findTenantById(isolatedTenantId.get());
+                if (tenant != null) {
                     log.debug("[{}] Creating tenant actor", tenant.getId());
                     getOrCreateTenantActor(tenant.getId());
                     log.debug("Tenant actor created.");
+                } else {
+                    log.error("[{}] Tenant with such ID does not exist", isolatedTenantId.get());
+                }
+            } else if (systemContext.isTenantComponentsInitEnabled()) {
+                PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT);
+                boolean isRuleEngine = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
+                boolean isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
+                for (Tenant tenant : tenantIterator) {
+                    if (isCore || (isRuleEngine && !tenant.isIsolatedTbRuleEngine())) {
+                        log.debug("[{}] Creating tenant actor", tenant.getId());
+                        getOrCreateTenantActor(tenant.getId());
+                        log.debug("[{}] Tenant actor created.", tenant.getId());
+                    }
                 }
             }
             log.info("Main system actor started.");
@@ -133,102 +129,76 @@ public class AppActor extends RuleChainManagerActor {
         }
     }
 
-    private void onPossibleClusterMsg(SendToClusterMsg msg) {
-        Optional<ServerAddress> address = systemContext.getRoutingService().resolveById(msg.getEntityId());
-        if (address.isPresent()) {
-            systemContext.getRpcService().tell(
-                    systemContext.getEncodingService().convertToProtoDataMessage(address.get(), msg.getMsg()));
-        } else {
-            self().tell(msg.getMsg(), ActorRef.noSender());
-        }
-    }
-
-    private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {
+    private void onQueueToRuleEngineMsg(QueueToRuleEngineMsg msg) {
         if (SYSTEM_TENANT.equals(msg.getTenantId())) {
-//            this may be a notification about system entities created.
-//            log.warn("[{}] Invalid service to rule engine msg called. System messages are not supported yet: {}", SYSTEM_TENANT, msg);
+            msg.getTbMsg().getCallback().onFailure(new RuleEngineException("Message has system tenant id!"));
         } else {
-            getOrCreateTenantActor(msg.getTenantId()).tell(msg, self());
+            if (!deletedTenants.contains(msg.getTenantId())) {
+                getOrCreateTenantActor(msg.getTenantId()).tell(msg);
+            } else {
+                msg.getTbMsg().getCallback().onSuccess();
+            }
         }
-    }
-
-    @Override
-    protected void broadcast(Object msg) {
-        super.broadcast(msg);
-        tenantActors.values().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
-        ActorRef target = null;
+        TbActorRef target = null;
         if (SYSTEM_TENANT.equals(msg.getTenantId())) {
-            target = getEntityActorRef(msg.getEntityId());
+            log.warn("Message has system tenant id: {}", msg);
         } else {
             if (msg.getEntityId().getEntityType() == EntityType.TENANT
                     && msg.getEvent() == ComponentLifecycleEvent.DELETED) {
-                log.debug("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
-                ActorRef tenantActor = tenantActors.remove(new TenantId(msg.getEntityId().getId()));
-                if (tenantActor != null) {
-                    log.debug("[{}] Deleting tenant actor: {}", msg.getTenantId(), tenantActor);
-                    context().stop(tenantActor);
-                }
+                log.info("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
+                TenantId tenantId = new TenantId(msg.getEntityId().getId());
+                deletedTenants.add(tenantId);
+                ctx.stop(new TbEntityActorId(tenantId));
             } else {
                 target = getOrCreateTenantActor(msg.getTenantId());
             }
         }
         if (target != null) {
-            target.tell(msg, ActorRef.noSender());
+            target.tellWithHighPriority(msg);
         } else {
             log.debug("[{}] Invalid component lifecycle msg: {}", msg.getTenantId(), msg);
         }
     }
 
-    private void onToDeviceActorMsg(TenantAwareMsg msg) {
-        getOrCreateTenantActor(msg.getTenantId()).tell(msg, ActorRef.noSender());
-    }
-
-    private ActorRef getOrCreateTenantActor(TenantId tenantId) {
-        return tenantActors.computeIfAbsent(tenantId, k -> {
-            log.debug("[{}] Creating tenant actor.", tenantId);
-            ActorRef tenantActor = context().actorOf(Props.create(new TenantActor.ActorCreator(systemContext, tenantId))
-                    .withDispatcher(DefaultActorService.CORE_DISPATCHER_NAME), tenantId.toString());
-            context().watch(tenantActor);
-            log.debug("[{}] Created tenant actor: {}.", tenantId, tenantActor);
-            return tenantActor;
-        });
-    }
-
-    @Override
-    protected void processTermination(Terminated message) {
-        ActorRef terminated = message.actor();
-        if (terminated instanceof LocalActorRef) {
-            boolean removed = tenantActors.inverse().remove(terminated) != null;
-            if (removed) {
-                log.debug("[{}] Removed actor:", terminated);
+    private void onToDeviceActorMsg(TenantAwareMsg msg, boolean priority) {
+        if (!deletedTenants.contains(msg.getTenantId())) {
+            TbActorRef tenantActor = getOrCreateTenantActor(msg.getTenantId());
+            if (priority) {
+                tenantActor.tellWithHighPriority(msg);
+            } else {
+                tenantActor.tell(msg);
             }
         } else {
-            throw new IllegalStateException("Remote actors are not supported!");
+            if (msg instanceof TransportToDeviceActorMsgWrapper) {
+                ((TransportToDeviceActorMsgWrapper) msg).getCallback().onSuccess();
+            }
         }
     }
 
-    public static class ActorCreator extends ContextBasedCreator<AppActor> {
-        private static final long serialVersionUID = 1L;
+    private TbActorRef getOrCreateTenantActor(TenantId tenantId) {
+        return ctx.getOrCreateChildActor(new TbEntityActorId(tenantId),
+                () -> DefaultActorService.TENANT_DISPATCHER_NAME,
+                () -> new TenantActor.ActorCreator(systemContext, tenantId));
+    }
+
+    public static class ActorCreator extends ContextBasedCreator {
 
         public ActorCreator(ActorSystemContext context) {
             super(context);
         }
 
         @Override
-        public AppActor create() {
+        public TbActorId createActorId() {
+            return new TbEntityActorId(new TenantId(EntityId.NULL_UUID));
+        }
+
+        @Override
+        public TbActor createActor() {
             return new AppActor(context);
         }
     }
 
-    private final SupervisorStrategy strategy = new OneForOneStrategy(3, Duration.create("1 minute"), t -> {
-        log.warn("Unknown failure", t);
-        if (t instanceof RuntimeException) {
-            return SupervisorStrategy.restart();
-        } else {
-            return SupervisorStrategy.stop();
-        }
-    });
 }

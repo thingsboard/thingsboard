@@ -77,9 +77,7 @@
         </md-toolbar>
         <md-toolbar class="md-table-toolbar alternate" ng-show="mode==='default' && selectedAttributes.length">
             <div class="md-toolbar-tools">
-                <span translate="{{attributeScope === types.latestTelemetry
-                                    ? 'attribute.selected-telemetry'
-                                    : 'attribute.selected-attributes'}}"
+                <span translate="{{(attributeScope === types.latestTelemetry) ? 'attribute.selected-telemetry' : 'attribute.selected-attributes'}}"
                       translate-values="{count: selectedAttributes.length}"
                       translate-interpolation="messageformat"></span>
                 <span flex></span>

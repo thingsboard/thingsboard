@@ -14,11 +14,51 @@
 # limitations under the License.
 #
 
+queue_type: "TB_QUEUE_TYPE" #kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
+request_topic: "REMOTE_JS_EVAL_REQUEST_TOPIC"
+
+js:
+  response_poll_interval: "REMOTE_JS_RESPONSE_POLL_INTERVAL_MS"
+
 kafka:
-  request_topic: "REMOTE_JS_EVAL_REQUEST_TOPIC"
   bootstrap:
     # Kafka Bootstrap Servers
     servers: "TB_KAFKA_SERVERS"
+  replication_factor: "TB_QUEUE_KAFKA_REPLICATION_FACTOR"
+  topic_properties: "TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES"
+  use_confluent_cloud: "TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD"
+  confluent:
+    sasl:
+      mechanism: "TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM"
+    username: "TB_QUEUE_KAFKA_CONFLUENT_USERNAME"
+    password: "TB_QUEUE_KAFKA_CONFLUENT_PASSWORD"
+
+pubsub:
+  project_id: "TB_QUEUE_PUBSUB_PROJECT_ID"
+  service_account: "TB_QUEUE_PUBSUB_SERVICE_ACCOUNT"
+  queue_properties: "TB_QUEUE_PUBSUB_JE_QUEUE_PROPERTIES"
+
+aws_sqs:
+  access_key_id: "TB_QUEUE_AWS_SQS_ACCESS_KEY_ID"
+  secret_access_key: "TB_QUEUE_AWS_SQS_SECRET_ACCESS_KEY"
+  region: "TB_QUEUE_AWS_SQS_REGION"
+  queue_properties: "TB_QUEUE_AWS_SQS_JE_QUEUE_PROPERTIES"
+
+rabbitmq:
+  host: "TB_QUEUE_RABBIT_MQ_HOST"
+  port: "TB_QUEUE_RABBIT_MQ_PORT"
+  virtual_host: "TB_QUEUE_RABBIT_MQ_VIRTUAL_HOST"
+  username: "TB_QUEUE_RABBIT_MQ_USERNAME"
+  password: "TB_QUEUE_RABBIT_MQ_PASSWORD"
+  queue_properties: "TB_QUEUE_RABBIT_MQ_JE_QUEUE_PROPERTIES"
+
+service_bus:
+  namespace_name: "TB_QUEUE_SERVICE_BUS_NAMESPACE_NAME"
+  sas_key_name: "TB_QUEUE_SERVICE_BUS_SAS_KEY_NAME"
+  sas_key: "TB_QUEUE_SERVICE_BUS_SAS_KEY"
+  max_messages: "TB_QUEUE_SERVICE_BUS_MAX_MESSAGES"
+  queue_properties: "TB_QUEUE_SERVICE_BUS_JE_QUEUE_PROPERTIES"
+
 logger:
   level: "LOGGER_LEVEL"
   path: "LOG_FOLDER"

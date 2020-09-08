@@ -15,4 +15,6 @@
 # limitations under the License.
 #
 
-su postgres -c '/usr/lib/postgresql/10/bin/pg_ctl stop'
+export PG_CTL=$(find /usr/lib/postgresql/ -name pg_ctl)
+
+su postgres -c '${PG_CTL} stop'

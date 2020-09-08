@@ -23,6 +23,7 @@ import com.datastax.driver.mapping.Result;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.EntitySubtypeEntity;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.DeviceEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
@@ -178,14 +180,29 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
                 if (result != null) {
                     List<EntitySubtype> entitySubtypes = new ArrayList<>();
                     result.all().forEach((entitySubtypeEntity) ->
-                        entitySubtypes.add(entitySubtypeEntity.toEntitySubtype())
+                            entitySubtypes.add(entitySubtypeEntity.toEntitySubtype())
                     );
                     return entitySubtypes;
                 } else {
                     return Collections.emptyList();
                 }
             }
-        });
+        }, MoreExecutors.directExecutor());
+    }
+
+    @Override
+    public Device findDeviceByTenantIdAndId(TenantId tenantId, UUID id) {
+        Select.Where query = select().from(getColumnFamilyName()).where(eq(ModelConstants.TENANT_ID_PROPERTY, tenantId.getId())).and(eq(ModelConstants.ID_PROPERTY, id));
+        log.trace("Execute query {}", query);
+        DeviceEntity entity = findOneByStatement(tenantId, query);
+        return DaoUtil.getData(entity);
+    }
+
+    @Override
+    public ListenableFuture<Device> findDeviceByTenantIdAndIdAsync(TenantId tenantId, UUID id) {
+        Select.Where query = select().from(getColumnFamilyName()).where(eq(ModelConstants.TENANT_ID_PROPERTY, tenantId.getId())).and(eq(ModelConstants.ID_PROPERTY, id));
+        log.trace("Execute query {}", query);
+        return findOneByStatementAsync(tenantId, query);
     }
 
 }

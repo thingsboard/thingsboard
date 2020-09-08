@@ -1,0 +1,411 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+package transport;
+
+option java_package = "org.thingsboard.server.gen.transport";
+option java_outer_classname = "TransportProtos";
+
+message QueueInfo {
+  string name = 1;
+  string topic = 2;
+  int32 partitions = 3;
+}
+
+/**
+ * Service Discovery Data Structures;
+ */
+message ServiceInfo {
+  string serviceId = 1;
+  repeated string serviceTypes = 2;
+  int64 tenantIdMSB = 3;
+  int64 tenantIdLSB = 4;
+  repeated QueueInfo ruleEngineQueues = 5;
+}
+
+/**
+ * Transport Service Data Structures;
+ */
+message SessionInfoProto {
+  string nodeId = 1;
+  int64 sessionIdMSB = 2;
+  int64 sessionIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  int64 deviceIdMSB = 6;
+  int64 deviceIdLSB = 7;
+  string deviceName = 8;
+  string deviceType = 9;
+  int64 gwSessionIdMSB = 10;
+  int64 gwSessionIdLSB = 11;
+}
+
+enum SessionEvent {
+  OPEN = 0;
+  CLOSED = 1;
+}
+
+enum SessionType {
+  SYNC = 0;
+  ASYNC = 1;
+}
+
+enum KeyValueType {
+  BOOLEAN_V = 0;
+  LONG_V = 1;
+  DOUBLE_V = 2;
+  STRING_V = 3;
+  JSON_V = 4;
+}
+
+message KeyValueProto {
+  string key = 1;
+  KeyValueType type = 2;
+  bool bool_v = 3;
+  int64 long_v = 4;
+  double double_v = 5;
+  string string_v = 6;
+  string json_v = 7;
+}
+
+message TsKvProto {
+  int64 ts = 1;
+  KeyValueProto kv = 2;
+}
+
+message TsKvListProto {
+  int64 ts = 1;
+  repeated KeyValueProto kv = 2;
+}
+
+message DeviceInfoProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  string deviceName = 5;
+  string deviceType = 6;
+  string additionalInfo = 7;
+}
+
+/**
+ * Transport Service Messages;
+ */
+message SessionEventMsg {
+  SessionType sessionType = 1;
+  SessionEvent event = 2;
+}
+
+message PostTelemetryMsg {
+  repeated TsKvListProto tsKvList = 1;
+}
+
+message PostAttributeMsg {
+  repeated KeyValueProto kv = 1;
+}
+
+message GetAttributeRequestMsg {
+  int32 requestId = 1;
+  repeated string clientAttributeNames = 2;
+  repeated string sharedAttributeNames = 3;
+}
+
+message GetAttributeResponseMsg {
+  int32 requestId = 1;
+  repeated TsKvProto clientAttributeList = 2;
+  repeated TsKvProto sharedAttributeList = 3;
+  string error = 5;
+}
+
+message AttributeUpdateNotificationMsg {
+  repeated TsKvProto sharedUpdated = 1;
+  repeated string sharedDeleted = 2;
+}
+
+message ValidateDeviceTokenRequestMsg {
+  string token = 1;
+}
+
+message ValidateDeviceX509CertRequestMsg {
+  string hash = 1;
+}
+
+message ValidateDeviceCredentialsResponseMsg {
+  DeviceInfoProto deviceInfo = 1;
+  string credentialsBody = 2;
+}
+
+message GetOrCreateDeviceFromGatewayRequestMsg {
+  int64 gatewayIdMSB = 1;
+  int64 gatewayIdLSB = 2;
+  string deviceName = 3;
+  string deviceType = 4;
+}
+
+message GetOrCreateDeviceFromGatewayResponseMsg {
+  DeviceInfoProto deviceInfo = 1;
+}
+
+message GetTenantRoutingInfoRequestMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+}
+
+message GetTenantRoutingInfoResponseMsg {
+  bool isolatedTbCore = 1;
+  bool isolatedTbRuleEngine = 2;
+}
+
+message SessionCloseNotificationProto {
+  string message = 1;
+}
+
+message SubscribeToAttributeUpdatesMsg {
+  bool unsubscribe = 1;
+}
+
+message SubscribeToRPCMsg {
+  bool unsubscribe = 1;
+}
+
+message ToDeviceRpcRequestMsg {
+  int32 requestId = 1;
+  string methodName = 2;
+  string params = 3;
+}
+
+message ToDeviceRpcResponseMsg {
+  int32 requestId = 1;
+  string payload = 2;
+}
+
+message ToServerRpcRequestMsg {
+  int32 requestId = 1;
+  string methodName = 2;
+  string params = 3;
+}
+
+message ToServerRpcResponseMsg {
+  int32 requestId = 1;
+  string payload = 2;
+  string error = 3;
+}
+
+message ClaimDeviceMsg {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+  string secretKey = 3;
+  int64 durationMs = 4;
+}
+
+//Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
+message SubscriptionInfoProto {
+  int64 lastActivityTime = 1;
+  bool attributeSubscription = 2;
+  bool rpcSubscription = 3;
+}
+
+message SessionSubscriptionInfoProto {
+  SessionInfoProto sessionInfo = 1;
+  SubscriptionInfoProto subscriptionInfo = 2;
+}
+
+message DeviceSessionsCacheEntry {
+  repeated SessionSubscriptionInfoProto sessions = 1;
+}
+
+message TransportToDeviceActorMsg {
+  SessionInfoProto sessionInfo = 1;
+  SessionEventMsg sessionEvent = 2;
+  GetAttributeRequestMsg getAttributes = 3;
+  SubscribeToAttributeUpdatesMsg subscribeToAttributes = 4;
+  SubscribeToRPCMsg subscribeToRPC = 5;
+  ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 6;
+  SubscriptionInfoProto subscriptionInfo = 7;
+  ClaimDeviceMsg claimDevice = 8;
+}
+
+message TransportToRuleEngineMsg {
+  SessionInfoProto sessionInfo = 1;
+  PostTelemetryMsg postTelemetry = 2;
+  PostAttributeMsg postAttributes = 3;
+  ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 4;
+  ToServerRpcRequestMsg toServerRPCCallRequest = 5;
+}
+
+/**
+ * TB Core Data Structures
+ */
+
+message TbSubscriptionProto {
+  string serviceId = 1;
+  string sessionId = 2;
+  int32 subscriptionId = 3;
+  string entityType = 4;
+  int64 tenantIdMSB = 5;
+  int64 tenantIdLSB = 6;
+  int64 entityIdMSB = 7;
+  int64 entityIdLSB = 8;
+}
+
+message TbTimeSeriesSubscriptionProto {
+  TbSubscriptionProto sub = 1;
+  bool allKeys = 2;
+  repeated TbSubscriptionKetStateProto keyStates = 3;
+  int64 startTime = 4;
+  int64 endTime = 5;
+}
+
+message TbAttributeSubscriptionProto {
+  TbSubscriptionProto sub = 1;
+  bool allKeys = 2;
+  repeated TbSubscriptionKetStateProto keyStates = 3;
+  string scope = 4;
+}
+
+message TbSubscriptionUpdateProto {
+  string sessionId = 1;
+  int32 subscriptionId = 2;
+  int32 errorCode = 3;
+  string errorMsg = 4;
+  repeated TbSubscriptionUpdateValueListProto data = 5;
+}
+
+message TbAttributeUpdateProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string scope = 6;
+  repeated TsKvProto data = 7;
+}
+
+message TbTimeSeriesUpdateProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  repeated TsKvProto data = 6;
+}
+
+message TbSubscriptionCloseProto {
+  string sessionId = 1;
+  int32 subscriptionId = 2;
+}
+
+message TbSubscriptionKetStateProto {
+  string key = 1;
+  int64 ts = 2;
+}
+
+message TbSubscriptionUpdateValueListProto {
+  string key = 1;
+  repeated int64 ts = 2;
+  repeated string value = 3;
+}
+
+/**
+ * TB Core to TB Core messages
+ */
+
+message DeviceStateServiceMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  bool added = 5;
+  bool updated = 6;
+  bool deleted = 7;
+}
+
+message SubscriptionMgrMsgProto {
+  TbTimeSeriesSubscriptionProto telemetrySub = 1;
+  TbAttributeSubscriptionProto attributeSub = 2;
+  TbSubscriptionCloseProto subClose = 3;
+  TbTimeSeriesUpdateProto tsUpdate = 4;
+  TbAttributeUpdateProto attrUpdate = 5;
+}
+
+message LocalSubscriptionServiceMsgProto {
+  TbSubscriptionUpdateProto subUpdate = 1;
+}
+
+message FromDeviceRPCResponseProto {
+  int64 requestIdMSB = 1;
+  int64 requestIdLSB = 2;
+  string response = 3;
+  int32 error = 4;
+}
+/**
+ * Main messages;
+ */
+
+/* Request from Transport Service to ThingsBoard Core Service */
+message TransportApiRequestMsg {
+  ValidateDeviceTokenRequestMsg validateTokenRequestMsg = 1;
+  ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
+  GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
+  GetTenantRoutingInfoRequestMsg getTenantRoutingInfoRequestMsg = 4;
+}
+
+/* Response from ThingsBoard Core Service to Transport Service */
+message TransportApiResponseMsg {
+  ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
+  GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
+  GetTenantRoutingInfoResponseMsg getTenantRoutingInfoResponseMsg = 4;
+}
+
+/* Messages that are handled by ThingsBoard Core Service */
+message ToCoreMsg {
+  TransportToDeviceActorMsg toDeviceActorMsg = 1;
+  DeviceStateServiceMsgProto deviceStateServiceMsg = 2;
+  SubscriptionMgrMsgProto toSubscriptionMgrMsg = 3;
+  bytes toDeviceActorNotificationMsg = 4;
+}
+
+/* High priority messages with low latency are handled by ThingsBoard Core Service separately */
+message ToCoreNotificationMsg {
+  LocalSubscriptionServiceMsgProto toLocalSubscriptionServiceMsg = 1;
+  FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
+  bytes componentLifecycleMsg = 3;
+}
+
+/* Messages that are handled by ThingsBoard RuleEngine Service */
+message ToRuleEngineMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  bytes tbMsg = 3;
+  repeated string relationTypes = 4;
+  string failureMessage = 5;
+}
+
+message ToRuleEngineNotificationMsg {
+  bytes componentLifecycleMsg = 1;
+  FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
+}
+
+/* Messages that are handled by ThingsBoard Transport Service */
+message ToTransportMsg {
+  int64 sessionIdMSB = 1;
+  int64 sessionIdLSB = 2;
+  SessionCloseNotificationProto sessionCloseNotification = 3;
+  GetAttributeResponseMsg getAttributesResponse = 4;
+  AttributeUpdateNotificationMsg attributeUpdateNotification = 5;
+  ToDeviceRpcRequestMsg toDeviceRequest = 6;
+  ToServerRpcResponseMsg toServerResponse = 7;
+}

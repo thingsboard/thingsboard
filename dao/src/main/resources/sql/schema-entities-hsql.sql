@@ -144,6 +144,7 @@ CREATE TABLE IF NOT EXISTS event (
     event_type varchar(255),
     event_uid varchar(255),
     tenant_id varchar(31),
+    ts bigint NOT NULL,
     CONSTRAINT event_unq_key UNIQUE (tenant_id, entity_type, entity_id, event_type, event_uid)
 );
 
@@ -183,7 +184,9 @@ CREATE TABLE IF NOT EXISTS tenant (
     search_text varchar(255),
     state varchar(255),
     title varchar(255),
-    zip varchar(255)
+    zip varchar(255),
+    isolated_tb_core boolean,
+    isolated_tb_rule_engine boolean
 );
 
 CREATE TABLE IF NOT EXISTS user_credentials (
@@ -249,3 +252,4 @@ CREATE TABLE IF NOT EXISTS entity_view (
     search_text varchar(255),
     additional_info varchar
 );
+

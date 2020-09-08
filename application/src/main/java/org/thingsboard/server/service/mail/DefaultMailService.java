@@ -115,6 +115,21 @@ public class DefaultMailService implements MailService {
         if (enableTls && jsonConfig.has("tlsVersion") && StringUtils.isNoneEmpty(jsonConfig.get("tlsVersion").asText())) {
             javaMailProperties.put(MAIL_PROP + protocol + ".ssl.protocols", jsonConfig.get("tlsVersion").asText());
         }
+
+        boolean enableProxy = jsonConfig.has("enableProxy") && jsonConfig.get("enableProxy").asBoolean();
+
+        if (enableProxy) {
+            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.host", jsonConfig.get("proxyHost").asText());
+            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.port", jsonConfig.get("proxyPort").asText());
+            String proxyUser = jsonConfig.get("proxyUser").asText();
+            if (StringUtils.isNoneEmpty(proxyUser)) {
+                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.user", proxyUser);
+            }
+            String proxyPassword = jsonConfig.get("proxyPassword").asText();
+            if (StringUtils.isNoneEmpty(proxyPassword)) {
+                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.password", proxyPassword);
+            }
+        }
         return javaMailProperties;
     }
 
@@ -277,6 +292,7 @@ public class DefaultMailService implements MailService {
         } else {
             message = exception.getMessage();
         }
+        log.warn("Unable to send mail: {}", message);
         return new ThingsboardException(String.format("Unable to send mail: %s", message),
                 ThingsboardErrorCode.GENERAL);
     }

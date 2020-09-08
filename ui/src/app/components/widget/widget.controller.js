@@ -152,7 +152,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
             var entityInfo = getActiveEntityInfo();
             var entityId = entityInfo ? entityInfo.entityId : null;
             var entityName = entityInfo ? entityInfo.entityName : null;
-            var entityLabel = entityInfo && entityInfo.label ? entityInfo.label : null;
+            var entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
             handleWidgetAction($event, this.descriptor, entityId, entityName, null, entityLabel);
         }
         widgetContext.customHeaderActions.push(headerAction);

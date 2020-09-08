@@ -84,7 +84,6 @@
         "timeout-invalid": ".مهلت، به نظر نمي آيد معتبر باشد",
         "enable-tls": "TLS فعال سازي",
         "tls-version": "نسخه TLS",
-        "enter-tls-version" : "نسخه TLS را وارد کنید",
         "send-test-mail": "ارسال پيام آزمايشي"
     },
     "alarm": {
@@ -1626,21 +1625,6 @@
         }
     },
     "language": {
-        "language": "زبان",
-        "locales": {
-            "de_DE": "آلمانی",
-			"fr_FR": "فرانسوي",
-            "zh_CN": "چيني",
-            "en_US": "انگليسي",
-            "it_IT": "ايتاليايي",
-            "ko_KR": "کره اي",
-            "ru_RU": "روسي",
-            "es_ES": "اسپانيولي",
-            "ja_JA": "ژاپني",
-            "tr_TR": "ترکي",
-			"fa_IR": "فارسي",
-            "uk_UA": "اوکراین",
-	          "cs_CZ": "در چک "            
-        }
+        "language": "زبان"
     }
 }

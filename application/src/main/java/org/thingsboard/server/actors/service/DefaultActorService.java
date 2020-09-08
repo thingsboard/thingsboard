@@ -15,274 +15,122 @@
  */
 package org.thingsboard.server.actors.service;
 
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.actor.Props;
-import akka.actor.Terminated;
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
-import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.DefaultTbActorSystem;
+import org.thingsboard.server.actors.TbActorId;
+import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.actors.TbActorSystem;
+import org.thingsboard.server.actors.TbActorSystemSettings;
 import org.thingsboard.server.actors.app.AppActor;
 import org.thingsboard.server.actors.app.AppInitMsg;
-import org.thingsboard.server.actors.rpc.RpcBroadcastMsg;
-import org.thingsboard.server.actors.rpc.RpcManagerActor;
-import org.thingsboard.server.actors.rpc.RpcSessionCreateRequestMsg;
 import org.thingsboard.server.actors.stats.StatsActor;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
-import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
-import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
-import org.thingsboard.server.service.cluster.discovery.ServerInstance;
-import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
-import org.thingsboard.server.service.state.DeviceStateService;
-import org.thingsboard.server.service.transport.RuleEngineStats;
-import scala.concurrent.Await;
-import scala.concurrent.Future;
-import scala.concurrent.duration.Duration;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
+import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_ACTOR_MESSAGE;
 
 @Service
 @Slf4j
 public class DefaultActorService implements ActorService {
 
-    private static final String ACTOR_SYSTEM_NAME = "Akka";
-
     public static final String APP_DISPATCHER_NAME = "app-dispatcher";
-    public static final String CORE_DISPATCHER_NAME = "core-dispatcher";
-    public static final String SYSTEM_RULE_DISPATCHER_NAME = "system-rule-dispatcher";
-    public static final String TENANT_RULE_DISPATCHER_NAME = "rule-dispatcher";
-    public static final String RPC_DISPATCHER_NAME = "rpc-dispatcher";
+    public static final String TENANT_DISPATCHER_NAME = "tenant-dispatcher";
+    public static final String DEVICE_DISPATCHER_NAME = "device-dispatcher";
+    public static final String RULE_DISPATCHER_NAME = "rule-dispatcher";
 
     @Autowired
     private ActorSystemContext actorContext;
 
-    @Autowired
-    private ClusterRpcService rpcService;
+    private TbActorSystem system;
 
-    @Autowired
-    private DiscoveryService discoveryService;
+    private TbActorRef appActor;
 
-    @Autowired
-    private DeviceStateService deviceStateService;
+    @Value("${actors.system.throughput:5}")
+    private int actorThroughput;
 
-    private ActorSystem system;
+    @Value("${actors.system.max_actor_init_attempts:10}")
+    private int maxActorInitAttempts;
 
-    private ActorRef appActor;
+    @Value("${actors.system.scheduler_pool_size:1}")
+    private int schedulerPoolSize;
 
-    private ActorRef rpcManagerActor;
+    @Value("${actors.system.app_dispatcher_pool_size:1}")
+    private int appDispatcherSize;
+
+    @Value("${actors.system.tenant_dispatcher_pool_size:2}")
+    private int tenantDispatcherSize;
+
+    @Value("${actors.system.device_dispatcher_pool_size:4}")
+    private int deviceDispatcherSize;
+
+    @Value("${actors.system.rule_dispatcher_pool_size:4}")
+    private int ruleDispatcherSize;
 
     @PostConstruct
     public void initActorSystem() {
-        log.info("Initializing Actor system.");
+        log.info("Initializing actor system.");
         actorContext.setActorService(this);
-        system = ActorSystem.create(ACTOR_SYSTEM_NAME, actorContext.getConfig());
+        TbActorSystemSettings settings = new TbActorSystemSettings(actorThroughput, schedulerPoolSize, maxActorInitAttempts);
+        system = new DefaultTbActorSystem(settings);
+
+        system.createDispatcher(APP_DISPATCHER_NAME, initDispatcherExecutor(APP_DISPATCHER_NAME, appDispatcherSize));
+        system.createDispatcher(TENANT_DISPATCHER_NAME, initDispatcherExecutor(TENANT_DISPATCHER_NAME, tenantDispatcherSize));
+        system.createDispatcher(DEVICE_DISPATCHER_NAME, initDispatcherExecutor(DEVICE_DISPATCHER_NAME, deviceDispatcherSize));
+        system.createDispatcher(RULE_DISPATCHER_NAME, initDispatcherExecutor(RULE_DISPATCHER_NAME, ruleDispatcherSize));
+
         actorContext.setActorSystem(system);
 
-        appActor = system.actorOf(Props.create(new AppActor.ActorCreator(actorContext)).withDispatcher(APP_DISPATCHER_NAME), "appActor");
+        appActor = system.createRootActor(APP_DISPATCHER_NAME, new AppActor.ActorCreator(actorContext));
         actorContext.setAppActor(appActor);
 
-        rpcManagerActor = system.actorOf(Props.create(new RpcManagerActor.ActorCreator(actorContext)).withDispatcher(CORE_DISPATCHER_NAME),
-                "rpcManagerActor");
-
-        ActorRef statsActor = system.actorOf(Props.create(new StatsActor.ActorCreator(actorContext)).withDispatcher(CORE_DISPATCHER_NAME), "statsActor");
+        TbActorRef statsActor = system.createRootActor(TENANT_DISPATCHER_NAME, new StatsActor.ActorCreator(actorContext, "StatsActor"));
         actorContext.setStatsActor(statsActor);
 
-        rpcService.init(this);
         log.info("Actor system initialized.");
+    }
+
+    private ExecutorService initDispatcherExecutor(String dispatcherName, int poolSize) {
+        if (poolSize == 0) {
+            int cores = Runtime.getRuntime().availableProcessors();
+            poolSize = Math.max(1, cores / 2);
+        }
+        if (poolSize == 1) {
+            return Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(dispatcherName));
+        } else {
+            return Executors.newWorkStealingPool(poolSize);
+        }
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
         log.info("Received application ready event. Sending application init message to actor system");
-        appActor.tell(new AppInitMsg(), ActorRef.noSender());
+        appActor.tellWithHighPriority(new AppInitMsg());
+    }
+
+    @EventListener(PartitionChangeEvent.class)
+    public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
+        log.info("Received partition change event.");
+        this.appActor.tellWithHighPriority(new PartitionChangeMsg(partitionChangeEvent.getServiceQueueKey(), partitionChangeEvent.getPartitions()));
     }
 
     @PreDestroy
     public void stopActorSystem() {
-        Future<Terminated> status = system.terminate();
-        try {
-            Terminated terminated = Await.result(status, Duration.Inf());
-            log.info("Actor system terminated: {}", terminated);
-        } catch (Exception e) {
-            log.error("Failed to terminate actor system.", e);
+        if (system != null) {
+            log.info("Stopping actor system.");
+            system.stop();
+            log.info("Actor system stopped.");
         }
     }
 
-    @Override
-    public void onMsg(SendToClusterMsg msg) {
-        appActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void onServerAdded(ServerInstance server) {
-        log.trace("Processing onServerAdded msg: {}", server);
-        broadcast(new ClusterEventMsg(server.getServerAddress(), true));
-    }
-
-    @Override
-    public void onServerUpdated(ServerInstance server) {
-        //Do nothing
-    }
-
-    @Override
-    public void onServerRemoved(ServerInstance server) {
-        log.trace("Processing onServerRemoved msg: {}", server);
-        broadcast(new ClusterEventMsg(server.getServerAddress(), false));
-    }
-
-    @Override
-    public void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state) {
-        log.trace("[{}] Processing {} state change event: {}", tenantId, entityId.getEntityType(), state);
-        broadcast(new ComponentLifecycleMsg(tenantId, entityId, state));
-    }
-
-    @Override
-    public void onCredentialsUpdate(TenantId tenantId, DeviceId deviceId) {
-        DeviceCredentialsUpdateNotificationMsg msg = new DeviceCredentialsUpdateNotificationMsg(tenantId, deviceId);
-        appActor.tell(new SendToClusterMsg(deviceId, msg), ActorRef.noSender());
-    }
-
-    @Override
-    public void onDeviceNameOrTypeUpdate(TenantId tenantId, DeviceId deviceId, String deviceName, String deviceType) {
-        log.trace("[{}] Processing onDeviceNameOrTypeUpdate event, deviceName: {}, deviceType: {}", deviceId, deviceName, deviceType);
-        DeviceNameOrTypeUpdateMsg msg = new DeviceNameOrTypeUpdateMsg(tenantId, deviceId, deviceName, deviceType);
-        appActor.tell(new SendToClusterMsg(deviceId, msg), ActorRef.noSender());
-    }
-
-    public void broadcast(ToAllNodesMsg msg) {
-        actorContext.getEncodingService().encode(msg);
-        rpcService.broadcast(new RpcBroadcastMsg(ClusterAPIProtos.ClusterMessage
-                .newBuilder()
-                .setPayload(ByteString
-                        .copyFrom(actorContext.getEncodingService().encode(msg)))
-                .setMessageType(CLUSTER_ACTOR_MESSAGE)
-                .build()));
-        appActor.tell(msg, ActorRef.noSender());
-    }
-
-    private void broadcast(ClusterEventMsg msg) {
-        this.appActor.tell(msg, ActorRef.noSender());
-        this.rpcManagerActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Value("${cluster.stats.enabled:false}")
-    private boolean statsEnabled;
-
-    private final AtomicInteger sentClusterMsgs = new AtomicInteger(0);
-    private final AtomicInteger receivedClusterMsgs = new AtomicInteger(0);
-
-
-    @Scheduled(fixedDelayString = "${cluster.stats.print_interval_ms}")
-    public void printStats() {
-        if (statsEnabled) {
-            int sent = sentClusterMsgs.getAndSet(0);
-            int received = receivedClusterMsgs.getAndSet(0);
-            if (sent > 0 || received > 0) {
-                log.info("Cluster msgs sent [{}] received [{}]", sent, received);
-            }
-        }
-    }
-
-    @Override
-    public void onReceivedMsg(ServerAddress source, ClusterAPIProtos.ClusterMessage msg) {
-        if (statsEnabled) {
-            receivedClusterMsgs.incrementAndGet();
-        }
-        ServerAddress serverAddress = new ServerAddress(source.getHost(), source.getPort(), source.getServerType());
-        if (log.isDebugEnabled()) {
-            log.info("Received msg [{}] from [{}]", msg.getMessageType().name(), serverAddress);
-            log.info("MSG: {}", msg);
-        }
-        switch (msg.getMessageType()) {
-            case CLUSTER_ACTOR_MESSAGE:
-                java.util.Optional<TbActorMsg> decodedMsg = actorContext.getEncodingService()
-                        .decode(msg.getPayload().toByteArray());
-                if (decodedMsg.isPresent()) {
-                    appActor.tell(decodedMsg.get(), ActorRef.noSender());
-                } else {
-                    log.error("Error during decoding cluster proto message");
-                }
-                break;
-            case TO_ALL_NODES_MSG:
-                //TODO
-                break;
-            case CLUSTER_TELEMETRY_SUBSCRIPTION_CREATE_MESSAGE:
-                actorContext.getTsSubService().onNewRemoteSubscription(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_TELEMETRY_SUBSCRIPTION_UPDATE_MESSAGE:
-                actorContext.getTsSubService().onRemoteSubscriptionUpdate(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_TELEMETRY_SUBSCRIPTION_CLOSE_MESSAGE:
-                actorContext.getTsSubService().onRemoteSubscriptionClose(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_TELEMETRY_SESSION_CLOSE_MESSAGE:
-                actorContext.getTsSubService().onRemoteSessionClose(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_TELEMETRY_ATTR_UPDATE_MESSAGE:
-                actorContext.getTsSubService().onRemoteAttributesUpdate(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_TELEMETRY_TS_UPDATE_MESSAGE:
-                actorContext.getTsSubService().onRemoteTsUpdate(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_RPC_FROM_DEVICE_RESPONSE_MESSAGE:
-                actorContext.getDeviceRpcService().processResponseToServerSideRPCRequestFromRemoteServer(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_DEVICE_STATE_SERVICE_MESSAGE:
-                actorContext.getDeviceStateService().onRemoteMsg(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_TRANSACTION_SERVICE_MESSAGE:
-                actorContext.getRuleChainTransactionService().onRemoteTransactionMsg(serverAddress, msg.getPayload().toByteArray());
-                break;
-        }
-    }
-
-    @Override
-    public void onSendMsg(ClusterAPIProtos.ClusterMessage msg) {
-        if (statsEnabled) {
-            sentClusterMsgs.incrementAndGet();
-        }
-        rpcManagerActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void onRpcSessionCreateRequestMsg(RpcSessionCreateRequestMsg msg) {
-        if (statsEnabled) {
-            sentClusterMsgs.incrementAndGet();
-        }
-        rpcManagerActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void onBroadcastMsg(RpcBroadcastMsg msg) {
-        rpcManagerActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void onDeviceAdded(Device device) {
-        deviceStateService.onDeviceAdded(device);
-    }
 }

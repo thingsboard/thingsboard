@@ -19,20 +19,15 @@ import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.cassandra.CassandraCluster;
-import org.thingsboard.server.dao.cassandra.CassandraInstallCluster;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.util.NoSqlDao;
-import org.thingsboard.server.service.install.cql.CQLStatementsParser;
 import org.thingsboard.server.service.install.cql.CassandraDbHelper;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
 import static org.thingsboard.server.service.install.DatabaseHelper.ASSET;
@@ -59,16 +54,9 @@ import static org.thingsboard.server.service.install.DatabaseHelper.TYPE;
 @NoSqlDao
 @Profile("install")
 @Slf4j
-public class CassandraDatabaseUpgradeService implements DatabaseEntitiesUpgradeService {
+public class CassandraDatabaseUpgradeService extends AbstractCassandraDatabaseUpgradeService implements DatabaseEntitiesUpgradeService {
 
     private static final String SCHEMA_UPDATE_CQL = "schema_update.cql";
-
-    @Autowired
-    private CassandraCluster cluster;
-
-    @Autowired
-    @Qualifier("CassandraInstallCluster")
-    private CassandraInstallCluster installCluster;
 
     @Autowired
     private DashboardService dashboardService;
@@ -264,7 +252,8 @@ public class CassandraDatabaseUpgradeService implements DatabaseEntitiesUpgradeS
                 try {
                     cluster.getSession().execute(updateDeviceTableStmt);
                     Thread.sleep(2500);
-                } catch (InvalidQueryException e) {}
+                } catch (InvalidQueryException e) {
+                }
                 log.info("Schema updated.");
                 break;
             case "2.4.1":
@@ -275,7 +264,8 @@ public class CassandraDatabaseUpgradeService implements DatabaseEntitiesUpgradeS
                     cluster.getSession().execute(updateAssetTableStmt);
                     Thread.sleep(2500);
                     log.info("Assets updated.");
-                } catch (InvalidQueryException e) {}
+                } catch (InvalidQueryException e) {
+                }
                 log.info("Schema updated.");
                 break;
             case "2.4.2":
@@ -286,24 +276,39 @@ public class CassandraDatabaseUpgradeService implements DatabaseEntitiesUpgradeS
                     cluster.getSession().execute(updateAlarmTableStmt);
                     Thread.sleep(2500);
                     log.info("Alarms updated.");
-                } catch (InvalidQueryException e) {}
+                } catch (InvalidQueryException e) {
+                }
+                log.info("Schema updated.");
+                break;
+            case "2.4.3":
+                log.info("Updating schema ...");
+                String updateAttributeKvTableStmt = "alter table attributes_kv_cf add json_v text";
+                try {
+                    log.info("Updating attributes ...");
+                    cluster.getSession().execute(updateAttributeKvTableStmt);
+                    Thread.sleep(2500);
+                    log.info("Attributes updated.");
+                } catch (InvalidQueryException e) {
+                }
+
+                String updateTenantCoreTableStmt = "alter table tenant add isolated_tb_core boolean";
+                String updateTenantRuleEngineTableStmt = "alter table tenant add isolated_tb_rule_engine boolean";
+
+                try {
+                    log.info("Updating tenant...");
+                    cluster.getSession().execute(updateTenantCoreTableStmt);
+                    Thread.sleep(2500);
+
+                    cluster.getSession().execute(updateTenantRuleEngineTableStmt);
+                    Thread.sleep(2500);
+                    log.info("Tenant updated.");
+                } catch (InvalidQueryException e) {
+                }
                 log.info("Schema updated.");
                 break;
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);
         }
-
-    }
-
-    private void loadCql(Path cql) throws Exception {
-        List<String> statements = new CQLStatementsParser(cql).getStatements();
-        statements.forEach(statement -> {
-            installCluster.getSession().execute(statement);
-            try {
-                Thread.sleep(2500);
-            } catch (InterruptedException e) {}
-        });
-        Thread.sleep(5000);
     }
 
 }

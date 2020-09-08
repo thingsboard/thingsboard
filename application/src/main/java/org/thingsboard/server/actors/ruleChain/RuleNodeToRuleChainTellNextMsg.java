@@ -34,6 +34,7 @@ class RuleNodeToRuleChainTellNextMsg implements TbActorMsg, Serializable {
     private final RuleNodeId originator;
     private final Set<String> relationTypes;
     private final TbMsg msg;
+    private final String failureMessage;
 
     @Override
     public MsgType getMsgType() {

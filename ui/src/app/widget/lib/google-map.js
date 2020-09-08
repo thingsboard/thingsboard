@@ -94,7 +94,7 @@ export default class TbGoogleMap {
         window[this.initMapFunctionName] = function() { // eslint-disable-line no-undef, angular/window-service
             lazyLoad.load([ // eslint-disable-line no-undef
                 { type: 'js', path: 'https://unpkg.com/@google/markerwithlabel@1.2.3/src/markerwithlabel.js' },
-                { type: 'js', path: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js' }
+                { type: 'js', path: 'https://unpkg.com/@google/markerclustererplus@4.0.1/dist/markerclustererplus.min.js' }
             ]).then(
                 function success() {
                     gmGlobals.gmApiKeys[tbMap.apiKey].loaded = true;

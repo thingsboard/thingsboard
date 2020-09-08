@@ -25,6 +25,8 @@ export default function AdminController(adminService, toast, $scope, $rootScope,
         return protocol;
     });
 
+    vm.tlsVersions = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'];
+
     $translate('admin.test-mail-sent').then(function (translation) {
         vm.testMailSent = translation;
     }, function (translationId) {
@@ -37,6 +39,9 @@ export default function AdminController(adminService, toast, $scope, $rootScope,
     function loadSettings() {
         adminService.getAdminSettings($state.$current.data.key).then(function success(settings) {
             vm.settings = settings;
+            if(vm.settings.jsonValue && vm.settings.jsonValue.enableTls && angular.isString(vm.settings.jsonValue.enableTls)){
+                vm.settings.jsonValue.enableTls = vm.settings.jsonValue.enableTls === 'true';
+            }
         });
     }
 

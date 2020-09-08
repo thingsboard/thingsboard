@@ -22,37 +22,21 @@ import org.springframework.beans.factory.annotation.Value;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.SQLWarning;
+import java.sql.Statement;
 
 @Slf4j
 public abstract class AbstractSqlTsDatabaseUpgradeService {
 
     protected static final String CALL_REGEX = "call ";
-    protected static final String CHECK_VERSION = "check_version()";
     protected static final String DROP_TABLE = "DROP TABLE ";
-    protected static final String DROP_FUNCTION_IF_EXISTS = "DROP FUNCTION IF EXISTS ";
-
-    private static final String CALL_CHECK_VERSION = CALL_REGEX + CHECK_VERSION;
-
-
-    private static final String FUNCTION = "function: {}";
-    private static final String DROP_STATEMENT = "drop statement: {}";
-    private static final String QUERY = "query: {}";
-    private static final String SUCCESSFULLY_EXECUTED = "Successfully executed ";
-    private static final String FAILED_TO_EXECUTE = "Failed to execute ";
-    private static final String FAILED_DUE_TO = " due to: {}";
-
-    protected static final String SUCCESSFULLY_EXECUTED_FUNCTION = SUCCESSFULLY_EXECUTED + FUNCTION;
-    protected static final String FAILED_TO_EXECUTE_FUNCTION_DUE_TO = FAILED_TO_EXECUTE + FUNCTION + FAILED_DUE_TO;
-
-    protected static final String SUCCESSFULLY_EXECUTED_DROP_STATEMENT = SUCCESSFULLY_EXECUTED + DROP_STATEMENT;
-    protected static final String FAILED_TO_EXECUTE_DROP_STATEMENT = FAILED_TO_EXECUTE + DROP_STATEMENT + FAILED_DUE_TO;
-
-    protected static final String SUCCESSFULLY_EXECUTED_QUERY = SUCCESSFULLY_EXECUTED + QUERY;
-    protected static final String FAILED_TO_EXECUTE_QUERY = FAILED_TO_EXECUTE + QUERY + FAILED_DUE_TO;
+    protected static final String DROP_PROCEDURE_IF_EXISTS = "DROP PROCEDURE IF EXISTS ";
+    protected static final String TS_KV_SQL = "ts_kv.sql";
+    protected static final String PATH_TO_USERS_PUBLIC_FOLDER = "C:\\Users\\Public";
+    protected static final String THINGSBOARD_WINDOWS_UPGRADE_DIR = "THINGSBOARD_WINDOWS_UPGRADE_DIR";
 
     @Value("${spring.datasource.url}")
     protected String dbUrl;
@@ -66,7 +50,7 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
     @Autowired
     protected InstallScripts installScripts;
 
-    protected abstract void loadSql(Connection conn);
+    protected abstract void loadSql(Connection conn, String fileName);
 
     protected void loadFunctions(Path sqlFile, Connection conn) throws Exception {
         String sql = new String(Files.readAllBytes(sqlFile), StandardCharsets.UTF_8);
@@ -74,50 +58,59 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
     }
 
     protected boolean checkVersion(Connection conn) {
-        log.info("Check the current PostgreSQL version...");
         boolean versionValid = false;
         try {
-            CallableStatement callableStatement = conn.prepareCall("{? = " + CALL_CHECK_VERSION + " }");
-            callableStatement.registerOutParameter(1, Types.BOOLEAN);
-            callableStatement.execute();
-            versionValid = callableStatement.getBoolean(1);
-            callableStatement.close();
+            Statement statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT current_setting('server_version_num')");
+            resultSet.next();
+            if(resultSet.getLong(1) > 110000) {
+                versionValid = true;
+            }
+            statement.close();
         } catch (Exception e) {
             log.info("Failed to check current PostgreSQL version due to: {}", e.getMessage());
         }
         return versionValid;
     }
 
-    protected void executeFunction(Connection conn, String query) {
-        log.info("{} ... ", query);
+    protected boolean isOldSchema(Connection conn, long fromVersion) {
+        boolean isOldSchema = true;
         try {
-            CallableStatement callableStatement = conn.prepareCall("{" + query + "}");
-            callableStatement.execute();
-            callableStatement.close();
-            log.info(SUCCESSFULLY_EXECUTED_FUNCTION, query.replace(CALL_REGEX, ""));
-            Thread.sleep(2000);
-        } catch (Exception e) {
-            log.info(FAILED_TO_EXECUTE_FUNCTION_DUE_TO, query, e.getMessage());
-        }
-    }
-
-    protected void executeDropStatement(Connection conn, String query) {
-        try {
-            conn.createStatement().execute(query); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-            log.info(SUCCESSFULLY_EXECUTED_DROP_STATEMENT, query);
-            Thread.sleep(5000);
+            Statement statement = conn.createStatement();
+            statement.execute("CREATE TABLE IF NOT EXISTS tb_schema_settings ( schema_version bigint NOT NULL, CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version));");
+            Thread.sleep(1000);
+            ResultSet resultSet = statement.executeQuery("SELECT schema_version FROM tb_schema_settings;");
+            if (resultSet.next()) {
+                isOldSchema = resultSet.getLong(1) <= fromVersion;
+            } else {
+                resultSet.close();
+                statement.execute("INSERT INTO tb_schema_settings (schema_version) VALUES (" + fromVersion + ")");
+            }
+            statement.close();
         } catch (InterruptedException | SQLException e) {
-            log.info(FAILED_TO_EXECUTE_DROP_STATEMENT, query, e.getMessage());
+            log.info("Failed to check current PostgreSQL schema due to: {}", e.getMessage());
         }
+        return isOldSchema;
     }
 
     protected void executeQuery(Connection conn, String query) {
         try {
-            conn.createStatement().execute(query); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-            log.info(SUCCESSFULLY_EXECUTED_QUERY, query);
-            Thread.sleep(5000);
+            Statement statement = conn.createStatement();
+            statement.execute(query); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+            SQLWarning warnings = statement.getWarnings();
+            if (warnings != null) {
+                log.info("{}", warnings.getMessage());
+                SQLWarning nextWarning = warnings.getNextWarning();
+                while (nextWarning != null) {
+                    log.info("{}", nextWarning.getMessage());
+                    nextWarning = nextWarning.getNextWarning();
+                }
+            }
+            Thread.sleep(2000);
+            log.info("Successfully executed query: {}", query);
         } catch (InterruptedException | SQLException e) {
-            log.info(FAILED_TO_EXECUTE_QUERY, query, e.getMessage());
+            log.error("Failed to execute query: {} due to: {}", query, e.getMessage());
+            throw new RuntimeException("Failed to execute query:" + query + " due to: ", e);
         }
     }
 

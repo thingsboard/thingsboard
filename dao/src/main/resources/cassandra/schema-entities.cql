@@ -110,6 +110,8 @@ CREATE TABLE IF NOT EXISTS thingsboard.tenant (
 	phone text,
 	email text,
 	additional_info text,
+	isolated_tb_core boolean,
+	isolated_tb_rule_engine boolean,
 	PRIMARY KEY (id, region)
 );
 

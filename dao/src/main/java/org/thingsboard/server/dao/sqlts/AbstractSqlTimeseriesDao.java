@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
@@ -40,9 +42,10 @@ import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
-import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
+import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
 import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
 import org.thingsboard.server.dao.sqlts.latest.TsKvLatestRepository;
 import org.thingsboard.server.dao.timeseries.SimpleListenableFuture;
@@ -50,7 +53,10 @@ import org.thingsboard.server.dao.timeseries.SimpleListenableFuture;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -80,7 +86,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     @Autowired
     private TsKvDictionaryRepository dictionaryRepository;
 
-    private TbSqlBlockingQueue<TsKvLatestEntity> tsLatestQueue;
+    private TbSqlBlockingQueueWrapper<TsKvLatestEntity> tsLatestQueue;
 
     @Value("${sql.ts_latest.batch_size:1000}")
     private int tsLatestBatchSize;
@@ -91,8 +97,14 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     @Value("${sql.ts_latest.stats_print_interval_ms:1000}")
     private long tsLatestStatsPrintIntervalMs;
 
+    @Value("${sql.ts_latest.batch_threads:4}")
+    private int tsLatestBatchThreads;
+
     @Autowired
     protected ScheduledLogExecutorComponent logExecutor;
+
+    @Autowired
+    private StatsFactory statsFactory;
 
     @Value("${sql.ts.batch_size:1000}")
     protected int tsBatchSize;
@@ -103,6 +115,12 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     @Value("${sql.ts.stats_print_interval_ms:1000}")
     protected long tsStatsPrintIntervalMs;
 
+    @Value("${sql.ts.batch_threads:4}")
+    protected int tsBatchThreads;
+
+    @Value("${sql.timescale.batch_threads:4}")
+    protected int timescaleBatchThreads;
+
     @PostConstruct
     protected void init() {
         TbSqlBlockingQueueParams tsLatestParams = TbSqlBlockingQueueParams.builder()
@@ -110,9 +128,24 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
                 .batchSize(tsLatestBatchSize)
                 .maxDelay(tsLatestMaxDelay)
                 .statsPrintIntervalMs(tsLatestStatsPrintIntervalMs)
+                .statsNamePrefix("ts.latest")
                 .build();
-        tsLatestQueue = new TbSqlBlockingQueue<>(tsLatestParams);
-        tsLatestQueue.init(logExecutor, v -> insertLatestTsRepository.saveOrUpdate(v));
+
+        java.util.function.Function<TsKvLatestEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
+        tsLatestQueue = new TbSqlBlockingQueueWrapper<>(tsLatestParams, hashcodeFunction, tsLatestBatchThreads, statsFactory);
+
+        tsLatestQueue.init(logExecutor, v -> {
+            Map<TsKey, TsKvLatestEntity> trueLatest = new HashMap<>();
+            v.forEach(ts -> {
+                TsKey key = new TsKey(ts.getEntityId(), ts.getKey());
+                TsKvLatestEntity old = trueLatest.get(key);
+                if (old == null || old.getTs() < ts.getTs()) {
+                    trueLatest.put(key, ts);
+                }
+            });
+            List<TsKvLatestEntity> latestEntities = new ArrayList<>(trueLatest.values());
+            insertLatestTsRepository.saveOrUpdate(latestEntities);
+        });
     }
 
     @PreDestroy
@@ -125,7 +158,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     protected ListenableFuture<List<TsKvEntry>> processFindAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
         List<ListenableFuture<List<TsKvEntry>>> futures = queries
                 .stream()
-                .map(query -> findAllAsync(tenantId, entityId, query))
+                .map(query -> findAllAsync(entityId, query))
                 .collect(Collectors.toList());
         return Futures.transform(Futures.allAsList(futures), new Function<List<List<TsKvEntry>>, List<TsKvEntry>>() {
             @Nullable
@@ -142,9 +175,9 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
         }, service);
     }
 
-    protected abstract ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query);
+    protected abstract ListenableFuture<List<TsKvEntry>> findAllAsync(EntityId entityId, ReadTsKvQuery query);
 
-    protected abstract ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(TenantId tenantId, EntityId entityId, ReadTsKvQuery query);
+    protected abstract ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(EntityId entityId, ReadTsKvQuery query);
 
     protected ListenableFuture<List<TsKvEntry>> getTskvEntriesFuture(ListenableFuture<List<Optional<TsKvEntry>>> future) {
         return Futures.transform(future, new Function<List<Optional<TsKvEntry>>, List<TsKvEntry>>() {
@@ -162,12 +195,12 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
         }, service);
     }
 
-    protected ListenableFuture<List<TsKvEntry>> findNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
+    protected ListenableFuture<List<TsKvEntry>> findNewLatestEntryFuture(EntityId entityId, DeleteTsKvQuery query) {
         long startTs = 0;
         long endTs = query.getStartTs() - 1;
         ReadTsKvQuery findNewLatestQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, endTs - startTs, 1,
                 Aggregation.NONE, DESC_ORDER);
-        return findAllAsync(tenantId, entityId, findNewLatestQuery);
+        return findAllAsync(entityId, findNewLatestQuery);
     }
 
     protected ListenableFuture<TsKvEntry> getFindLatestFuture(EntityId entityId, String key) {
@@ -187,7 +220,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
         return Futures.immediateFuture(result);
     }
 
-    protected ListenableFuture<Void> getRemoveLatestFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
+    protected ListenableFuture<Void> getRemoveLatestFuture(EntityId entityId, DeleteTsKvQuery query) {
         ListenableFuture<TsKvEntry> latestFuture = getFindLatestFuture(entityId, query.getKey());
 
         ListenableFuture<Boolean> booleanFuture = Futures.transform(latestFuture, tsKvEntry -> {
@@ -215,7 +248,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
                 if (query.getRewriteLatestIfDeleted()) {
                     ListenableFuture<Void> savedLatestFuture = Futures.transformAsync(booleanFuture, isRemove -> {
                         if (isRemove) {
-                            return getNewLatestEntryFuture(tenantId, entityId, query);
+                            return getNewLatestEntryFuture(entityId, query);
                         }
                         return Futures.immediateFuture(null);
                     }, service);
@@ -234,7 +267,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
             public void onFailure(Throwable t) {
                 log.warn("[{}] Failed to process remove of the latest value", entityId, t);
             }
-        });
+        }, MoreExecutors.directExecutor());
         return resultFuture;
     }
 
@@ -294,8 +327,8 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
         return keyId;
     }
 
-    private ListenableFuture<Void> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        ListenableFuture<List<TsKvEntry>> future = findNewLatestEntryFuture(tenantId, entityId, query);
+    private ListenableFuture<Void> getNewLatestEntryFuture(EntityId entityId, DeleteTsKvQuery query) {
+        ListenableFuture<List<TsKvEntry>> future = findNewLatestEntryFuture(entityId, query);
         return Futures.transformAsync(future, entryList -> {
             if (entryList.size() == 1) {
                 return getSaveLatestFuture(entityId, entryList.get(0));

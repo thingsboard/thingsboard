@@ -23,6 +23,7 @@ import com.datastax.driver.mapping.Result;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -185,7 +186,7 @@ public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntit
                     return Collections.emptyList();
                 }
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
 }

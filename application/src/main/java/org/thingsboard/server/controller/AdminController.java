@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,23 +26,25 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.service.update.UpdateService;
-import org.thingsboard.server.common.data.UpdateMessage;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api/admin")
 public class AdminController extends BaseController {
 
     @Autowired
     private MailService mailService;
-    
+
     @Autowired
     private AdminSettingsService adminSettingsService;
 
@@ -57,7 +60,11 @@ public class AdminController extends BaseController {
     public AdminSettings getAdminSettings(@PathVariable("key") String key) throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-            return checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key));
+            AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key));
+            if (adminSettings.getKey().equals("mail")) {
+                ((ObjectNode) adminSettings.getJsonValue()).put("password", "");
+            }
+            return adminSettings;
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -65,13 +72,14 @@ public class AdminController extends BaseController {
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/settings", method = RequestMethod.POST)
-    @ResponseBody 
+    @ResponseBody
     public AdminSettings saveAdminSettings(@RequestBody AdminSettings adminSettings) throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
             adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
             if (adminSettings.getKey().equals("mail")) {
                 mailService.updateMailConfiguration();
+                ((ObjectNode) adminSettings.getJsonValue()).put("password", "");
             }
             return adminSettings;
         } catch (Exception e) {
@@ -111,8 +119,8 @@ public class AdminController extends BaseController {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
             adminSettings = checkNotNull(adminSettings);
             if (adminSettings.getKey().equals("mail")) {
-               String email = getCurrentUser().getEmail();
-               mailService.sendTestMail(adminSettings.getJsonValue(), email);
+                String email = getCurrentUser().getEmail();
+                mailService.sendTestMail(adminSettings.getJsonValue(), email);
             }
         } catch (Exception e) {
             throw handleException(e);

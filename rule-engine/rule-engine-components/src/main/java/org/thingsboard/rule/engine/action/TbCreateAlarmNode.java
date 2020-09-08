@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -44,7 +45,7 @@ import java.util.List;
         nodeDetails =
                 "Details - JS function that creates JSON object based on incoming message. This object will be added into Alarm.details field.\n" +
                         "Node output:\n" +
-                        "If alarm was not created, original message is returned. Otherwise new Message returned with type 'ALARM', Alarm object in 'msg' property and 'matadata' will contains one of those properties 'isNewAlarm/isExistingAlarm'. " +
+                        "If alarm was not created, original message is returned. Otherwise new Message returned with type 'ALARM', Alarm object in 'msg' property and 'metadata' will contains one of those properties 'isNewAlarm/isExistingAlarm'. " +
                         "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>. " +
                         "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
@@ -108,18 +109,18 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     private ListenableFuture<AlarmResult> createNewAlarm(TbContext ctx, TbMsg msg, Alarm msgAlarm) {
         ListenableFuture<Alarm> asyncAlarm;
         if (msgAlarm != null) {
-            asyncAlarm = Futures.immediateCheckedFuture(msgAlarm);
+            asyncAlarm = Futures.immediateFuture(msgAlarm);
         } else {
             ctx.logJsEvalRequest();
             asyncAlarm = Futures.transform(buildAlarmDetails(ctx, msg, null),
                     details -> {
                         ctx.logJsEvalResponse();
                         return buildAlarm(msg, details, ctx.getTenantId());
-                    });
+                    }, MoreExecutors.directExecutor());
         }
         ListenableFuture<Alarm> asyncCreated = Futures.transform(asyncAlarm,
                 alarm -> ctx.getAlarmService().createOrUpdateAlarm(alarm), ctx.getDbCallbackExecutor());
-        return Futures.transform(asyncCreated, alarm -> new AlarmResult(true, false, false, alarm));
+        return Futures.transform(asyncCreated, alarm -> new AlarmResult(true, false, false, alarm), MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<AlarmResult> updateAlarm(TbContext ctx, TbMsg msg, Alarm existingAlarm, Alarm msgAlarm) {
@@ -140,7 +141,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             return ctx.getAlarmService().createOrUpdateAlarm(existingAlarm);
         }, ctx.getDbCallbackExecutor());
 
-        return Futures.transform(asyncUpdated, a -> new AlarmResult(false, true, false, a));
+        return Futures.transform(asyncUpdated, a -> new AlarmResult(false, true, false, a), MoreExecutors.directExecutor());
     }
 
     private Alarm buildAlarm(TbMsg msg, JsonNode details, TenantId tenantId) {

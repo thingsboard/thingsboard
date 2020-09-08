@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonParseException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -28,6 +29,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -42,7 +44,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.server.common.data.DataConstants.CLIENT_SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.LATEST_TS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
@@ -91,16 +92,16 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         }
         ConcurrentHashMap<String, List<String>> failuresMap = new ConcurrentHashMap<>();
         ListenableFuture<List<Void>> allFutures = Futures.allAsList(
-                putLatestTelemetry(ctx, entityId, msg, LATEST_TS, config.getLatestTsKeyNames(), failuresMap),
-                putAttrAsync(ctx, entityId, msg, CLIENT_SCOPE, config.getClientAttributeNames(), failuresMap, "cs_"),
-                putAttrAsync(ctx, entityId, msg, SHARED_SCOPE, config.getSharedAttributeNames(), failuresMap, "shared_"),
-                putAttrAsync(ctx, entityId, msg, SERVER_SCOPE, config.getServerAttributeNames(), failuresMap, "ss_")
+                putLatestTelemetry(ctx, entityId, msg, LATEST_TS, TbNodeUtils.processPatterns(config.getLatestTsKeyNames(), msg.getMetaData()), failuresMap),
+                putAttrAsync(ctx, entityId, msg, CLIENT_SCOPE, TbNodeUtils.processPatterns(config.getClientAttributeNames(), msg.getMetaData()), failuresMap, "cs_"),
+                putAttrAsync(ctx, entityId, msg, SHARED_SCOPE, TbNodeUtils.processPatterns(config.getSharedAttributeNames(), msg.getMetaData()), failuresMap, "shared_"),
+                putAttrAsync(ctx, entityId, msg, SERVER_SCOPE, TbNodeUtils.processPatterns(config.getServerAttributeNames(), msg.getMetaData()), failuresMap, "ss_")
         );
         withCallback(allFutures, i -> {
             if (!failuresMap.isEmpty()) {
                 throw reportFailures(failuresMap);
             }
-            ctx.tellNext(msg, SUCCESS);
+            ctx.tellSuccess(msg);
         }, t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
@@ -122,7 +123,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 }
             }
             return null;
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<Void> putLatestTelemetry(TbContext ctx, EntityId entityId, TbMsg msg, String scope, List<String> keys, ConcurrentHashMap<String, List<String>> failuresMap) {
@@ -152,7 +153,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 }
             });
             return null;
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     private void putValueWithTs(TbMsg msg, TsKvEntry r) {
@@ -177,6 +178,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 } catch (IOException e) {
                     throw new JsonParseException("Can't parse jsonValue: " + r.getJsonValue().get(), e);
                 }
+                break;
         }
         msg.getMetaData().putValue(r.getKey(), value.toString());
     }

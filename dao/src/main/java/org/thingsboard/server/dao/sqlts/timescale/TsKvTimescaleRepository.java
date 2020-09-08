@@ -21,8 +21,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvCompositeKey;
-import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
+import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvCompositeKey;
+import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 import java.util.List;
@@ -31,12 +31,10 @@ import java.util.UUID;
 @TimescaleDBTsDao
 public interface TsKvTimescaleRepository extends CrudRepository<TimescaleTsKvEntity, TimescaleTsKvCompositeKey> {
 
-    @Query("SELECT tskv FROM TimescaleTsKvEntity tskv WHERE tskv.tenantId = :tenantId " +
-            "AND tskv.entityId = :entityId " +
+    @Query("SELECT tskv FROM TimescaleTsKvEntity tskv WHERE tskv.entityId = :entityId " +
             "AND tskv.key = :entityKey " +
             "AND tskv.ts > :startTs AND tskv.ts <= :endTs")
     List<TimescaleTsKvEntity> findAllWithLimit(
-            @Param("tenantId") UUID tenantId,
             @Param("entityId") UUID entityId,
             @Param("entityKey") int key,
             @Param("startTs") long startTs,
@@ -44,12 +42,10 @@ public interface TsKvTimescaleRepository extends CrudRepository<TimescaleTsKvEnt
 
     @Transactional
     @Modifying
-    @Query("DELETE FROM TimescaleTsKvEntity tskv WHERE tskv.tenantId = :tenantId " +
-            "AND tskv.entityId = :entityId " +
+    @Query("DELETE FROM TimescaleTsKvEntity tskv WHERE tskv.entityId = :entityId " +
             "AND tskv.key = :entityKey " +
             "AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    void delete(@Param("tenantId") UUID tenantId,
-                @Param("entityId") UUID entityId,
+    void delete(@Param("entityId") UUID entityId,
                 @Param("entityKey") int key,
                 @Param("startTs") long startTs,
                 @Param("endTs") long endTs);

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -94,7 +95,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
             String newData = data != null ? data : msg.getData();
             TbMsgMetaData newMetadata = metadata != null ? new TbMsgMetaData(metadata) : msg.getMetaData().copy();
             String newMessageType = !StringUtils.isEmpty(messageType) ? messageType : msg.getType();
-            return new TbMsg(msg.getId(), newMessageType, msg.getOriginator(), newMetadata, newData, msg.getRuleChainId(), msg.getRuleNodeId(), msg.getClusterPartition());
+            return TbMsg.transformMsg(msg, newMessageType, msg.getOriginator(), newMetadata, newData);
         } catch (Throwable th) {
             th.printStackTrace();
             throw new RuntimeException("Failed to unbind message data from javascript result", th);
@@ -121,7 +122,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
             } else {
                 return Futures.immediateFuture(unbindMsg(json, msg));
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     @Override
@@ -174,7 +175,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
             } else {
                 return Futures.immediateFuture(json.asBoolean());
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     @Override
@@ -232,7 +233,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
                             return Futures.immediateFailedFuture(new ScriptException(e));
                         }
                     }
-                });
+                }, MoreExecutors.directExecutor());
     }
 
     public void destroy() {

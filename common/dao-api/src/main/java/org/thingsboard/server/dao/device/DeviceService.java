@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import java.util.List;
 
 public interface DeviceService {
-    
+
     Device findDeviceById(TenantId tenantId, DeviceId deviceId);
 
     ListenableFuture<Device> findDeviceByIdAsync(TenantId tenantId, DeviceId deviceId);
@@ -64,5 +64,7 @@ public interface DeviceService {
     ListenableFuture<List<Device>> findDevicesByQuery(TenantId tenantId, DeviceSearchQuery query);
 
     ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId);
+
+    Device assignDeviceToTenant(TenantId tenantId, Device device);
 
 }

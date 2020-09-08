@@ -48,7 +48,6 @@ import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
@@ -74,15 +73,20 @@ import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 @ActiveProfiles("test")
@@ -114,9 +118,7 @@ public abstract class AbstractControllerTest {
      */
     private static final long DEFAULT_TIMEOUT = -1L;
 
-    protected MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
-            MediaType.APPLICATION_JSON.getSubtype(),
-            Charset.forName("utf8"));
+    protected MediaType contentType = MediaType.APPLICATION_JSON;
 
     protected MockMvc mockMvc;
 
@@ -199,6 +201,7 @@ public abstract class AbstractControllerTest {
         createUserAndLogin(customerUser, CUSTOMER_USER_PASSWORD);
 
         logout();
+
         log.info("Executed setup");
     }
 
@@ -221,6 +224,28 @@ public abstract class AbstractControllerTest {
 
     protected void loginCustomerUser() throws Exception {
         login(CUSTOMER_USER_EMAIL, CUSTOMER_USER_PASSWORD);
+    }
+
+    private Tenant savedDifferentTenant;
+
+    protected void loginDifferentTenant() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Different tenant");
+        savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Assert.assertNotNull(savedDifferentTenant);
+        User differentTenantAdmin = new User();
+        differentTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
+        differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
+        differentTenantAdmin.setEmail("different_tenant@thingsboard.org");
+
+        createUserAndLogin(differentTenantAdmin, "testPassword");
+    }
+
+    protected void deleteDifferentTenant() throws Exception {
+        loginSysAdmin();
+        doDelete("/api/tenant/" + savedDifferentTenant.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
     protected User createUserAndLogin(User user, String password) throws Exception {
@@ -298,6 +323,10 @@ public abstract class AbstractControllerTest {
         return readResponse(doGet(urlTemplate, urlVariables).andExpect(status().isOk()), responseClass);
     }
 
+    protected <T> T doGet(String urlTemplate, Class<T> responseClass, ResultMatcher resultMatcher, Object... urlVariables) throws Exception {
+        return readResponse(doGet(urlTemplate, urlVariables).andExpect(resultMatcher), responseClass);
+    }
+
     protected <T> T doGetAsync(String urlTemplate, Class<T> responseClass, Object... urlVariables) throws Exception {
         return readResponse(doGetAsync(urlTemplate, urlVariables).andExpect(status().isOk()), responseClass);
     }
@@ -339,9 +368,9 @@ public abstract class AbstractControllerTest {
         return readResponse(doGet(urlTemplate, vars).andExpect(status().isOk()), responseType);
     }
 
-    protected <T> T  doGetTypedWithTimePageLink(String urlTemplate, TypeReference<T> responseType,
-                                                TimePageLink pageLink,
-                                                Object... urlVariables) throws Exception {
+    protected <T> T doGetTypedWithTimePageLink(String urlTemplate, TypeReference<T> responseType,
+                                               TimePageLink pageLink,
+                                               Object... urlVariables) throws Exception {
         List<Object> pageLinkVariables = new ArrayList<>();
         urlTemplate += "limit={limit}";
         pageLinkVariables.add(pageLink.getLimit());
@@ -407,7 +436,7 @@ public abstract class AbstractControllerTest {
         return mockMvc.perform(postRequest);
     }
 
-    protected <T> ResultActions doPostAsync(String urlTemplate, T content, Long timeout, String... params)  throws Exception {
+    protected <T> ResultActions doPostAsync(String urlTemplate, T content, Long timeout, String... params) throws Exception {
         MockHttpServletRequestBuilder postRequest = post(urlTemplate);
         setJwtToken(postRequest);
         String json = json(content);

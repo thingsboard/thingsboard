@@ -84,7 +84,6 @@
         "timeout-invalid": "올바른 제한시간이 아닙니다.",
         "enable-tls": "TLS 사용",
         "tls-version" : "TLS 버전",
-        "enter-tls-version" : "TLS 버전을 입력하세요",
         "send-test-mail": "테스트 메일 보내기"
     },
     "alarm": {
@@ -935,7 +934,9 @@
         "new-password": "새 비밀번호",
         "new-password-again": "새 비밀번호 확인",
         "password-link-sent-message": "비밀번호 재설정 링크가 성공적으로 전송되었습니다!",
-        "email": "이메일"
+        "email": "이메일",
+        "login-with": "{{name}}으로 로그인",
+        "or": "또는"
     },
     "position": {
         "top": "상단",
@@ -1385,21 +1386,6 @@
         }
     },
     "language": {
-        "language": "언어",
-        "locales": {
-            "de_DE": "독일어",
-            "en_US": "영어",
-            "fr_FR": "프랑스의",
-            "ko_KR": "한글",
-            "zh_CN": "중국어",
-            "ru_RU": "러시아어",
-            "es_ES": "스페인어",
-            "it_IT": "이탈리아 사람",
-            "ja_JA": "일본어",
-            "tr_TR": "터키어",
-            "fa_IR": "페르시아 인",
-            "uk_UA": "우크라이나의",
-            "cs_CZ": "체코 어로"            
-        }
+        "language": "언어"
     }
 }

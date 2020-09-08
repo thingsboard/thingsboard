@@ -88,7 +88,14 @@
         "timeout-invalid": "That doesn't look like a valid timeout.",
         "enable-tls": "Enable TLS",
         "tls-version": "TLS version",
-        "enter-tls-version" : "Enter TLS version",
+        "enable-proxy": "Enable proxy",
+        "proxy-host": "Proxy host",
+        "proxy-host-required": "Proxy host is required.",
+        "proxy-port": "Proxy port",
+        "proxy-port-required": "You must supply a proxy port.",
+        "proxy-port-invalid": "That doesn't look like a valid proxy port.",
+        "proxy-user": "Proxy user",
+        "proxy-password": "Proxy password",
         "send-test-mail": "Send test mail",
         "security-settings": "Security settings",
         "password-policy": "Password policy",
@@ -209,6 +216,7 @@
         "entity-filter-no-entity-matched": "No entities matching specified filter were found.",
         "no-entity-filter-specified": "No entity filter specified",
         "root-state-entity": "Use dashboard state entity as root",
+        "last-level-relation": "Fetch last level relation only",
         "root-entity": "Root entity",
         "state-entity-parameter-name": "State entity parameter name",
         "default-state-entity": "Default state entity",
@@ -349,7 +357,9 @@
         "action-data": "Action data",
         "failure-details": "Failure details",
         "search": "Search audit logs",
-        "clear-search": "Clear search"
+        "clear-search": "Clear search",
+        "type-assigned-from-tenant": "Assigned from Tenant",
+        "type-assigned-to-tenant": "Assigned to Tenant"
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
@@ -609,6 +619,7 @@
     },
     "details": {
         "edit-mode": "Edit mode",
+        "edit-json": "Edit JSON",
         "toggle-edit-mode": "Toggle edit mode"
     },
     "device": {
@@ -811,6 +822,7 @@
         "list-of-rulenodes": "{ count, plural, 1 {One rule node} other {List of # rule nodes} }",
         "rulenode-name-starts-with": "Rule nodes whose names start with '{{prefix}}'",
         "type-current-customer": "Current Customer",
+        "type-current-tenant": "Current Tenant",
         "search": "Search entities",
         "selected-entities": "{ count, plural, 1 {1 entity} other {# entities} } selected",
         "entity-name": "Entity name",
@@ -1200,7 +1212,12 @@
         "tls-path-private-key": "Path to private key on gateway",
         "toggle-fullscreen": "Toggle fullscreen",
         "transformer-json-config": "Configuration JSON*",
-        "update-config": "Add/update configuration JSON"
+        "update-config": "Add/update configuration JSON",
+        "state-title": "Gateway state",
+        "show-config-tip": "Show gateway configuration",
+        "title-show-config": "Show gateway configuration",
+        "read-only": "Read only",
+        "read-write": ""
     },
     "grid": {
         "delete-item-title": "Are you sure you want to delete this item?",
@@ -1249,7 +1266,9 @@
             "server-attribute": "Server attribute",
             "timeseries": "Timeseries",
             "entity-field": "Entity field",
-            "access-token": "Access token"
+            "access-token": "Access token",
+            "isgateway": "Is Gateway",
+            "description": "Description"
         },
         "stepper-text":{
             "select-file": "Select a file",
@@ -1270,7 +1289,8 @@
     "js-func": {
         "no-return-error": "Function must return value!",
         "return-type-mismatch": "Function must return value of '{{type}}' type!",
-        "tidy": "Tidy"
+        "tidy": "Tidy",
+        "mini": "Mini"
     },
     "key-val": {
         "key": "Key",
@@ -1323,7 +1343,10 @@
         "new-password": "New password",
         "new-password-again": "New password again",
         "password-link-sent-message": "Password reset link was successfully sent!",
-        "email": "Email"
+        "email": "Email",
+        "login-with": "Login with {{name}}",
+        "or": "or",
+        "error": "Login error"
     },
     "position": {
         "top": "Top",
@@ -1480,6 +1503,12 @@
         "help": "Help",
         "reset-debug-mode": "Reset debug mode in all nodes"
     },
+    "queue": {
+        "select_name": "Select queue name",
+        "name": "Queue Name",
+        "name_required": "Queue name is required!"
+
+    },
     "tenant": {
         "tenant": "Tenant",
         "tenants": "Tenants",
@@ -1505,7 +1534,11 @@
         "idCopiedMessage": "Tenant Id has been copied to clipboard",
         "select-tenant": "Select tenant",
         "no-tenants-matching": "No tenants matching '{{entity}}' were found.",
-        "tenant-required": "Tenant is required"
+        "tenant-required": "Tenant is required",
+        "isolated-tb-core": "Processing in isolated ThingsBoard Core container",
+        "isolated-tb-rule-engine": "Processing in isolated ThingsBoard Rule Engine container",
+        "isolated-tb-core-details": "Requires separate microservice(s) per isolated Tenant",
+        "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",
@@ -1593,7 +1626,9 @@
         "boolean-value": "Boolean value",
         "false": "False",
         "true": "True",
-        "long": "Long"
+        "long": "Long",
+        "json": "JSON",
+        "json-value": "JSON value"
     },
     "widget": {
         "widget-library": "Widgets Library",
@@ -1870,22 +1905,23 @@
     "language": {
         "language": "Language",
         "locales": {
-            "de_DE": "German",
-            "fr_FR": "French",
-            "zh_CN": "Simplified Chinese",
-            "zh_TW": "Traditional Chinese",
+            "de_DE": "Deutsch",
+            "fr_FR": "Français",
+            "zh_CN": "简体中文",
+            "zh_TW": "繁體中文",
             "en_US": "English",
-            "it_IT": "Italian",
-            "ko_KR": "Korean",
-            "ru_RU": "Russian",
-            "es_ES": "Spanish",
-            "ja_JA": "Japanese",
-            "tr_TR": "Turkish",
-            "fa_IR": "Persian",
-            "uk_UA": "Ukrainian",
-            "cs_CZ": "Czech",
-            "el_GR": "Greek",
-            "lv_LV": "Latvian"
+            "it_IT": "Italiano",
+            "ko_KR": "한글",
+            "ru_RU": "Русский",
+            "es_ES": "Español",
+            "ja_JA": "日本語",
+            "tr_TR": "Türkçe",
+            "fa_IR": "فارسي",
+            "uk_UA": "Українська",
+            "cs_CZ": "Česky",
+            "el_GR": "Ελληνικά",
+            "ro_RO": "Română",
+            "lv_LV": "Latviešu"
         }
     }
 }

@@ -25,7 +25,8 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
+import org.thingsboard.server.common.msg.queue.ServiceQueue;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +75,7 @@ public class TbMsgGeneratorNode implements TbNode {
     }
 
     @Override
-    public void onClusterEventMsg(TbContext ctx, ClusterEventMsg msg) {
+    public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
         updateGeneratorState(ctx);
     }
 
@@ -97,7 +98,7 @@ public class TbMsgGeneratorNode implements TbNode {
             withCallback(generate(ctx),
                     m -> {
                         if (initialized && (config.getMsgCount() == TbMsgGeneratorNodeConfiguration.UNLIMITED_MSG_COUNT || currentMsgCount < config.getMsgCount())) {
-                            ctx.tellNext(m, SUCCESS);
+                            ctx.enqueueForTellNext(m, SUCCESS);
                             scheduleTickMsg(ctx);
                             currentMsgCount++;
                         }
@@ -118,7 +119,7 @@ public class TbMsgGeneratorNode implements TbNode {
         }
         lastScheduledTs = lastScheduledTs + delay;
         long curDelay = Math.max(0L, (lastScheduledTs - curTs));
-        TbMsg tickMsg = ctx.newMsg(TB_MSG_GENERATOR_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), "");
+        TbMsg tickMsg = ctx.newMsg(ServiceQueue.MAIN, TB_MSG_GENERATOR_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), "");
         nextTickId = tickMsg.getId();
         ctx.tellSelf(tickMsg, curDelay);
     }
@@ -126,13 +127,13 @@ public class TbMsgGeneratorNode implements TbNode {
     private ListenableFuture<TbMsg> generate(TbContext ctx) {
         return ctx.getJsExecutor().executeAsync(() -> {
             if (prevMsg == null) {
-                prevMsg = ctx.newMsg("", originatorId, new TbMsgMetaData(), "{}");
+                prevMsg = ctx.newMsg(ServiceQueue.MAIN, "", originatorId, new TbMsgMetaData(), "{}");
             }
             if (initialized) {
                 ctx.logJsEvalRequest();
                 TbMsg generated = jsEngine.executeGenerate(prevMsg);
                 ctx.logJsEvalResponse();
-                prevMsg = ctx.newMsg(generated.getType(), originatorId, generated.getMetaData(), generated.getData());
+                prevMsg = ctx.newMsg(ServiceQueue.MAIN, generated.getType(), originatorId, generated.getMetaData(), generated.getData());
             }
             return prevMsg;
         });

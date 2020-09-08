@@ -71,14 +71,14 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                     deviceRepository.findByTenantId(
                             fromTimeUUID(tenantId),
                             pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
-                            new PageRequest(0, pageLink.getLimit())));
+                            PageRequest.of(0, pageLink.getLimit())));
         } else {
             return DaoUtil.convertDataList(
                     deviceRepository.findByTenantId(
                             fromTimeUUID(tenantId),
                             Objects.toString(pageLink.getTextSearch(), ""),
                             pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
-                            new PageRequest(0, pageLink.getLimit())));
+                            PageRequest.of(0, pageLink.getLimit())));
         }
     }
 
@@ -95,7 +95,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                         fromTimeUUID(customerId),
                         Objects.toString(pageLink.getTextSearch(), ""),
                         pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
-                        new PageRequest(0, pageLink.getLimit())));
+                        PageRequest.of(0, pageLink.getLimit())));
     }
 
     @Override
@@ -118,7 +118,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                         type,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
-                        new PageRequest(0, pageLink.getLimit())));
+                        PageRequest.of(0, pageLink.getLimit())));
     }
 
     @Override
@@ -130,12 +130,22 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                         type,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
-                        new PageRequest(0, pageLink.getLimit())));
+                        PageRequest.of(0, pageLink.getLimit())));
     }
 
     @Override
     public ListenableFuture<List<EntitySubtype>> findTenantDeviceTypesAsync(UUID tenantId) {
         return service.submit(() -> convertTenantDeviceTypesToDto(tenantId, deviceRepository.findTenantDeviceTypes(fromTimeUUID(tenantId))));
+    }
+
+    @Override
+    public Device findDeviceByTenantIdAndId(TenantId tenantId, UUID id) {
+        return DaoUtil.getData(deviceRepository.findByTenantIdAndId(fromTimeUUID(tenantId.getId()), fromTimeUUID(id)));
+    }
+
+    @Override
+    public ListenableFuture<Device> findDeviceByTenantIdAndIdAsync(TenantId tenantId, UUID id) {
+        return service.submit(() -> DaoUtil.getData(deviceRepository.findByTenantIdAndId(fromTimeUUID(tenantId.getId()), fromTimeUUID(id))));
     }
 
     private List<EntitySubtype> convertTenantDeviceTypesToDto(UUID tenantId, List<String> types) {

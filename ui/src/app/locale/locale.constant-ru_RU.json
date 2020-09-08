@@ -86,7 +86,6 @@
         "timeout-invalid": "Недействительный таймаут.",
         "enable-tls": "Включить TLS",
         "tls-version" : "Версия TLS",
-        "enter-tls-version" : "Введите версию TLS",
         "send-test-mail": "Отправить пробное письмо",
         "security-settings": "Настройки безопасности",
         "password-policy": "Политика паролей",
@@ -207,6 +206,7 @@
         "entity-filter-no-entity-matched": "Объекты, соответствующие фильтру, не найдены.",
         "no-entity-filter-specified": "Не указан фильтр объектов",
         "root-state-entity": "Использовать объект, полученный из дашборда, как корневой",
+        "last-level-relation": "Использовать только отношения последнего уровня",
         "root-entity": "Корневой объект",
         "state-entity-parameter-name": "Название объекта состояния",
         "default-state-entity": "Объект состояния по умолчанию",
@@ -607,6 +607,7 @@
     },
     "details": {
         "edit-mode": "Режим редактирования",
+        "edit-json": "Редактировать JSON",
         "toggle-edit-mode": "Режим редактирования"
     },
     "device": {
@@ -808,6 +809,7 @@
         "list-of-rulenodes": "{ count, plural, 1 {Одно правило} other {Список из # правил} }",
         "rulenode-name-starts-with": "Правила, чьи названия начинаются с '{{prefix}}'",
         "type-current-customer": "Текущий клиент",
+        "type-current-tenant": "Текущий владелец",
         "search": "Поиск объектов",
         "selected-entities": "Выбран(ы) { count, plural, 1 {1 объект} few {# объекта} other {# объектов} }",
         "entity-name": "Название объекта",
@@ -1191,8 +1193,7 @@
     },
     "js-func": {
         "no-return-error": "Функция должна возвращать значение!",
-        "return-type-mismatch": "Функция должна возвращать значение типа '{{type}}'!",
-        "tidy": "Tidy"
+        "return-type-mismatch": "Функция должна возвращать значение типа '{{type}}'!"
     },
     "key-val": {
         "key": "Ключ",
@@ -1245,7 +1246,9 @@
         "new-password": "Новый пароль",
         "new-password-again": "Повторите новый пароль",
         "password-link-sent-message": "Ссылка для сброса пароля была успешно отправлена!",
-        "email": "Эл. адрес"
+        "email": "Эл. адрес",
+        "login-with": "Войти через {{name}}",
+        "or": "или"
     },
     "position": {
         "top": "Верх",
@@ -1401,6 +1404,12 @@
         "test": "Протестировать",
         "help": "Помощь",
         "reset-debug-mode": "Сбросить режим отладки во всех правилах"
+    },
+    "queue": {
+        "select_name": "Выберите имя для Queue",
+        "name": "Имя для Queue",
+        "name_required": "Поле 'Имя для Queue' обязательно к заполнению!"
+
     },
     "tenant": {
         "tenant": "Владелец",
@@ -1788,23 +1797,6 @@
         }
     },
     "language": {
-        "language": "Язык",
-        "locales": {
-            "de_DE": "Немецкий",
-            "en_US": "Английский",
-            "zh_CN": "Китайский",
-            "ko_KR": "Корейский",
-            "es_ES": "Испанский",
-            "it_IT": "Итальянский",
-            "ru_RU": "Русский",
-            "tr_TR": "Турецкий",
-            "fr_FR": "Французский",
-            "ja_JA": "Японский",
-            "fa_IR": "Персидский",
-            "uk_UA": "Украинский",
-            "cs_CZ": "Чешский",
-            "el_GR": "Греческий",
-            "lv_LV": "Латышский"
-        }
+        "language": "Язык"
     }
 }
