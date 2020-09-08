@@ -176,27 +176,8 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     deviceProfile = this.deviceProfileService.findOrCreateDeviceProfile(device.getTenantId(), device.getType());
                 } else {
                     deviceProfile = this.deviceProfileService.findDefaultDeviceProfile(device.getTenantId());
-                    device.setType(deviceProfile.getName());
                 }
                 device.setDeviceProfileId(new DeviceProfileId(deviceProfile.getId().getId()));
-                DeviceData deviceData = new DeviceData();
-                switch (deviceProfile.getType()) {
-                    case DEFAULT:
-                        deviceData.setConfiguration(new DefaultDeviceConfiguration());
-                        break;
-                }
-                switch (deviceProfile.getTransportType()) {
-                    case DEFAULT:
-                        deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
-                        break;
-                    case MQTT:
-                        deviceData.setTransportConfiguration(new MqttDeviceTransportConfiguration());
-                        break;
-                    case LWM2M:
-                        deviceData.setTransportConfiguration(new Lwm2mDeviceTransportConfiguration());
-                        break;
-                }
-                device.setDeviceData(deviceData);
             } else {
                 deviceProfile = this.deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId());
                 if (deviceProfile == null) {
@@ -204,6 +185,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 }
             }
             device.setType(deviceProfile.getName());
+            device.setDeviceData(syncDeviceData(deviceProfile, device.getDeviceData()));
 
             savedDevice = deviceDao.save(device.getTenantId(), device);
         } catch (Exception t) {
@@ -222,6 +204,33 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
         }
         return savedDevice;
+    }
+
+    private DeviceData syncDeviceData(DeviceProfile deviceProfile, DeviceData deviceData) {
+        if (deviceData == null) {
+            deviceData = new DeviceData();
+        }
+        if (deviceData.getConfiguration() == null || !deviceProfile.getType().equals(deviceData.getConfiguration().getType())) {
+            switch (deviceProfile.getType()) {
+                case DEFAULT:
+                    deviceData.setConfiguration(new DefaultDeviceConfiguration());
+                    break;
+            }
+        }
+        if (deviceData.getTransportConfiguration() == null || !deviceProfile.getTransportType().equals(deviceData.getTransportConfiguration().getType())) {
+            switch (deviceProfile.getTransportType()) {
+                case DEFAULT:
+                    deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
+                    break;
+                case MQTT:
+                    deviceData.setTransportConfiguration(new MqttDeviceTransportConfiguration());
+                    break;
+                case LWM2M:
+                    deviceData.setTransportConfiguration(new Lwm2mDeviceTransportConfiguration());
+                    break;
+            }
+        }
+        return deviceData;
     }
 
     @Override
