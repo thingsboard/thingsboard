@@ -65,7 +65,7 @@ public class TbMsgPackProcessingContext {
     public boolean await(long packProcessingTimeout, TimeUnit milliseconds) throws InterruptedException {
         boolean success = processingTimeoutLatch.await(packProcessingTimeout, milliseconds);
         if (!success && profilerEnabled) {
-            msgProfilerMap.values().forEach(TbMsgProfilerInfo::onTimeout);
+            msgProfilerMap.values().forEach(this::onTimeout);
         }
         return success;
     }
