@@ -68,18 +68,20 @@ public class BatchTbRuleEngineSubmitStrategy extends AbstractTbRuleEngineSubmitS
         int listSize = orderedMsgList.size();
         int startIdx = Math.min(packIdx.get() * batchSize, listSize);
         int endIdx = Math.min(startIdx + batchSize, listSize);
+        Map<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> tmpPack;
         synchronized (pendingPack) {
             pendingPack.clear();
             for (int i = startIdx; i < endIdx; i++) {
                 IdMsgPair pair = orderedMsgList.get(i);
                 pendingPack.put(pair.uuid, pair.msg);
             }
+            tmpPack = new LinkedHashMap<>(pendingPack);
         }
         int submitSize = pendingPack.size();
         if (log.isDebugEnabled() && submitSize > 0) {
             log.debug("[{}] submitting [{}] messages to rule engine", queueName, submitSize);
         }
-        pendingPack.forEach(msgConsumer);
+        tmpPack.forEach(msgConsumer);
     }
 
 }

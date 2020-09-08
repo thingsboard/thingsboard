@@ -103,7 +103,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     void onRuleChainToRuleNodeMsg(RuleChainToRuleNodeMsg msg) throws Exception {
-        msg.getMsg().getCallback().visit(info);
+        msg.getMsg().getCallback().onProcessingStart(info);
         checkActive(msg.getMsg());
         if (ruleNode.isDebugMode()) {
             systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), msg.getFromRelationType());
