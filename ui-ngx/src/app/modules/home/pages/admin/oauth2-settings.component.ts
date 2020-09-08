@@ -18,6 +18,7 @@ import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewContainerR
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   ClientAuthenticationMethod,
+  ClientProviderTemplated,
   ClientRegistration,
   DomainParams,
   MapperConfigType,
@@ -50,9 +51,24 @@ import {
 })
 export class OAuth2SettingsComponent extends PageComponent implements OnInit, HasConfirmForm, OnDestroy {
 
-  private URL_REGEXP = /^[A-Za-z][A-Za-z\d.+-]*:\/*(?:\w+(?::\w+)?@)?[^\s/]+(?::\d+)?(?:\/[\w#!:.?+=&%@\-/]*)?$/;
+  private URL_REGEXP = /^[A-Za-z][A-Za-z\d.+-]*:\/*(?:\w+(?::\w+)?@)?[^\s/]+(?::\d+)?(?:\/[\w#!:.,?+=&%@\-/]*)?$/;
   private subscriptions: Subscription[] = [];
-  private templates = [];
+  private templates = new Map<string, ClientProviderTemplated>();
+  private defaultProvider = {
+    providerName: 'Custom',
+    clientAuthenticationMethod: 'Post',
+    userNameAttributeName: 'email',
+    mapperConfig: {
+      allowUserCreation: true,
+      activateUser: false,
+      type: 'BASIC',
+      basic: {
+        emailAttributeKey: 'email',
+        tenantNameStrategy: 'DOMAIN',
+        alwaysFullScreen: false
+      }
+    }
+  };
 
   readonly separatorKeysCodes: number[] = [ENTER, COMMA];
 
@@ -99,9 +115,9 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     });
   }
 
-  private initTemplates(templates: any): void {
-    this.templates = templates;
-    templates.map(provider => this.templateProvider.push(provider.name));
+  private initTemplates(templates: ClientProviderTemplated[]): void {
+    templates.map(provider => this.templates.set(provider.name, provider));
+    this.templateProvider.push(...Array.from(this.templates.keys()));
     this.templateProvider.sort();
   }
 
@@ -118,7 +134,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       tenantNamePattern: [null],
       customerNamePattern: [null],
       defaultDashboardName: [null],
-      alwaysFullScreen: [false],
+      alwaysFullScreen: [false]
     });
 
     this.subscriptions.push(basicGroup.get('tenantNameStrategy').valueChanges.subscribe((domain) => {
@@ -209,7 +225,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       accessTokenUri: ['', [Validators.required, Validators.pattern(this.URL_REGEXP)]],
       authorizationUri: ['', [Validators.required, Validators.pattern(this.URL_REGEXP)]],
       scope: this.fb.array([], [Validators.required]),
-      jwkSetUri: ['', [Validators.required, Validators.pattern(this.URL_REGEXP)]],
+      jwkSetUri: ['', [Validators.pattern(this.URL_REGEXP)]],
       userInfoUri: ['', [Validators.required, Validators.pattern(this.URL_REGEXP)]],
       clientAuthenticationMethod: ['POST', [Validators.required]],
       userNameAttributeName: ['email', [Validators.required]],
@@ -230,6 +246,27 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       } else {
         mapperConfig.removeControl('basic');
         mapperConfig.addControl('custom', this.formCustomGroup);
+      }
+    }));
+
+    this.subscriptions.push(clientRegistration.get('providerName').valueChanges.subscribe((provider) => {
+      (clientRegistration.get('scope') as FormArray).clear();
+      if (provider === 'Custom') {
+        clientRegistration.reset(this.defaultProvider, {emitEvent: false});
+        clientRegistration.get('accessTokenUri').enable();
+        clientRegistration.get('authorizationUri').enable();
+        clientRegistration.get('jwkSetUri').enable();
+        clientRegistration.get('userInfoUri').enable();
+      } else {
+        const template = this.templates.get(provider);
+        template.scope.forEach(() => {
+          (clientRegistration.get('scope') as FormArray).push(this.fb.control(''));
+        });
+        clientRegistration.get('accessTokenUri').disable();
+        clientRegistration.get('authorizationUri').disable();
+        clientRegistration.get('jwkSetUri').disable();
+        clientRegistration.get('userInfoUri').disable();
+        clientRegistration.patchValue(this.templates.get(provider), {emitEvent: false});
       }
     }));
 
@@ -365,5 +402,9 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
         this.clientsDomainsParams.at(index).get('redirectUriTemplate').patchValue(attributeValue, {emitEvent: true});
       }
     });
+  }
+
+  toggleEditMode(control: AbstractControl, path: string) {
+    control.get(path).disabled ? control.get(path).enable() : control.get(path).disable();
   }
 }

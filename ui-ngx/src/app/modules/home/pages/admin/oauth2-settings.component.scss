@@ -21,9 +21,32 @@
   .registration-card{
     margin-bottom: 8px;
     border: 1px solid rgba(0, 0, 0, 0.2);
+
+    .custom-settings{
+      font-size: 16px;
+      .mat-expansion-panel-header{
+        padding: 0 2px;
+      }
+    }
   }
 
   .container{
     margin-bottom: 16px;
+  }
+}
+
+:host ::ng-deep{
+  .registration-card{
+    .custom-settings{
+      .mat-expansion-panel-body{
+        padding: 0 2px 16px;
+      }
+      .mat-tab-label{
+        text-transform: none;
+      }
+      .mat-form-field-suffix .mat-icon-button .mat-icon{
+        font-size: 18px;
+      }
+    }
   }
 }

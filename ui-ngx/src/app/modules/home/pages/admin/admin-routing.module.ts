@@ -81,14 +81,14 @@ const routes: Routes = [
         }
       },
       {
-        path: 'oauth2-settings',
+        path: 'oauth2',
         component: OAuth2SettingsComponent,
         canDeactivate: [ConfirmOnExitGuard],
         data: {
           auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-          title: 'admin.oauth2.settings',
+          title: 'admin.oauth2.oauth2',
           breadcrumb: {
-            label: 'admin.oauth2.settings',
+            label: 'admin.oauth2.oauth2',
             icon: 'security'
           }
         }

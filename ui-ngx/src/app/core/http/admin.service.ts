@@ -20,6 +20,7 @@ import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import {
   AdminSettings,
+  ClientProviderTemplated,
   MailServerSettings,
   OAuth2Settings,
   SecuritySettings,
@@ -63,8 +64,8 @@ export class AdminService {
     return this.http.get<OAuth2Settings>(`/api/oauth2/config`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getOAuth2Template(config?: RequestConfig): Observable<any> {
-    return this.http.get<any>(`/api/oauth2/config/template`, defaultHttpOptionsFromConfig(config));
+  public getOAuth2Template(config?: RequestConfig): Observable<Array<ClientProviderTemplated>> {
+    return this.http.get<Array<ClientProviderTemplated>>(`/api/oauth2/config/template`, defaultHttpOptionsFromConfig(config));
   }
 
   public saveOAuth2Settings(OAuth2Setting: OAuth2Settings,

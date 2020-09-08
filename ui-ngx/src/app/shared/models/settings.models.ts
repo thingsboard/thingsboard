@@ -14,6 +14,9 @@
 /// limitations under the License.
 ///
 
+import { EntityId } from '@shared/models/id/entity-id';
+import { TenantId } from '@shared/models/id/tenant-id';
+
 export const smtpPortPattern: RegExp = /^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/;
 
 export interface AdminSettings<T> {
@@ -73,6 +76,17 @@ export interface DomainParams {
   domainName: string;
   redirectUriTemplate: string;
   clientRegistrations: ClientRegistration[];
+}
+
+export interface ClientProviderTemplated extends ClientRegistration{
+  additionalInfo: string;
+  comment: string;
+  createdTime: number;
+  helpLink: string;
+  id: EntityId;
+  name: string;
+  providerId: string;
+  tenantId: TenantId;
 }
 
 export interface ClientRegistration {

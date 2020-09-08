@@ -120,9 +120,9 @@ export class MenuService {
             icon: 'security'
           },
           {
-            name: 'admin.oauth2.settings',
+            name: 'admin.oauth2.oauth2',
             type: 'link',
-            path: '/settings/oauth2-settings',
+            path: '/settings/oauth2',
             icon: 'security'
           }
         ]
@@ -246,13 +246,13 @@ export class MenuService {
         icon: 'settings',
         pages: [
           {
-            name: 'admin.oauth2.settings',
+            name: 'admin.oauth2.oauth2',
             type: 'link',
-            path: '/settings/oauth2-settings',
+            path: '/settings/oauth2',
             icon: 'security'
           }
         ]
-      })
+      });
     }
 
     return sections;
