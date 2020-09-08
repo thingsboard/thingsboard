@@ -144,7 +144,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                     submitStrategy.init(msgs);
 
                     while (!stopped) {
-                        TbMsgPackProcessingContext ctx = new TbMsgPackProcessingContext(submitStrategy);
+                        TbMsgPackProcessingContext ctx = new TbMsgPackProcessingContext(configuration.getName(), submitStrategy);
                         submitStrategy.submitAttempt((id, msg) -> submitExecutor.submit(() -> {
                             log.trace("[{}] Creating callback for message: {}", id, msg.getValue());
                             ToRuleEngineMsg toRuleEngineMsg = msg.getValue();
@@ -175,6 +175,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                         if (!ctx.getFailedMap().isEmpty()) {
                             printFirstOrAll(configuration, ctx, ctx.getFailedMap(), "Failed");
                         }
+                        ctx.printProfilerStats();
+
                         TbRuleEngineProcessingDecision decision = ackStrategy.analyze(result);
                         if (statsEnabled) {
                             stats.log(result, decision.isCommit());
