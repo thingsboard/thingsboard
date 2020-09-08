@@ -15,15 +15,15 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.query.KeyFilter;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-@Data
-public class DeviceProfileData {
+public class AlarmCondition {
 
-    private DeviceProfileConfiguration configuration;
-    private DeviceProfileTransportConfiguration transportConfiguration;
-    private List<DeviceProfileAlarm> alarms;
+    private List<KeyFilter> condition;
+    private TimeUnit durationUnit;
+    private long durationValue;
 
 }

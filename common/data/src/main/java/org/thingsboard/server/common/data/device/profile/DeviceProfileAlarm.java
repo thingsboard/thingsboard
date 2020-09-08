@@ -16,14 +16,22 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
-public class DeviceProfileData {
+public class DeviceProfileAlarm {
 
-    private DeviceProfileConfiguration configuration;
-    private DeviceProfileTransportConfiguration transportConfiguration;
-    private List<DeviceProfileAlarm> alarms;
+    private String id;
+    private String alarmType;
+
+    private Map<AlarmSeverity, AlarmRule> createRules;
+    private AlarmRule clearRule;
+
+    // Hidden in advanced settings
+    private boolean propagate;
+    private List<String> propagateRelationTypes;
 
 }

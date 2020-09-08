@@ -15,15 +15,10 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import lombok.Data;
+public class AlarmRule {
 
-import java.util.List;
-
-@Data
-public class DeviceProfileData {
-
-    private DeviceProfileConfiguration configuration;
-    private DeviceProfileTransportConfiguration transportConfiguration;
-    private List<DeviceProfileAlarm> alarms;
+    private AlarmCondition condition;
+    // Advanced
+    private String alarmDetails;
 
 }
