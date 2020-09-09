@@ -33,12 +33,12 @@ import java.util.concurrent.ConcurrentMap;
 public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext implements SessionMsgListener {
 
     private final GatewaySessionHandler parent;
-    private volatile SessionInfoProto sessionInfo;
 
-    public GatewayDeviceSessionCtx(GatewaySessionHandler parent, TransportDeviceInfo deviceInfo, DeviceProfile deviceProfile, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
+    public GatewayDeviceSessionCtx(GatewaySessionHandler parent, TransportDeviceInfo deviceInfo,
+                                   DeviceProfile deviceProfile, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
         super(UUID.randomUUID(), mqttQoSMap);
         this.parent = parent;
-        this.sessionInfo = SessionInfoProto.newBuilder()
+        setSessionInfo(SessionInfoProto.newBuilder()
                 .setNodeId(parent.getNodeId())
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
@@ -52,7 +52,7 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
                 .setGwSessionIdLSB(parent.getSessionId().getLeastSignificantBits())
                 .setDeviceProfileIdMSB(deviceInfo.getDeviceProfileId().getId().getMostSignificantBits())
                 .setDeviceProfileIdLSB(deviceInfo.getDeviceProfileId().getId().getLeastSignificantBits())
-                .build();
+                .build());
         setDeviceInfo(deviceInfo);
         setDeviceProfile(deviceProfile);
     }
@@ -65,10 +65,6 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     @Override
     public int nextMsgId() {
         return parent.nextMsgId();
-    }
-
-    SessionInfoProto getSessionInfo() {
-        return sessionInfo;
     }
 
     @Override
@@ -106,11 +102,5 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     @Override
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
         // This feature is not supported in the TB IoT Gateway yet.
-    }
-
-    @Override
-    public void onProfileUpdate(DeviceProfile deviceProfile) {
-        deviceInfo.setDeviceType(deviceProfile.getName());
-        sessionInfo = SessionInfoProto.newBuilder().mergeFrom(sessionInfo).setDeviceType(deviceProfile.getName()).build();
     }
 }

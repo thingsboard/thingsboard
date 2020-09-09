@@ -15,20 +15,8 @@
  */
 package org.thingsboard.server.transport.mqtt.util;
 
-import lombok.extern.slf4j.Slf4j;
+public interface MqttTopicFilter {
 
-import java.util.regex.Pattern;
-
-@Slf4j
-public class MqttTopicRegexUtil {
-
-    public static Pattern toRegex(String topicFilter) {
-        String regex = topicFilter
-                .replace("\\", "\\\\")
-                .replace("+", "[^/]+")
-                .replace("/#", "($|/.*)");
-        log.debug("Converting [{}] to [{}]", topicFilter, regex);
-        return Pattern.compile(regex);
-    }
+    boolean filter(String topic);
 
 }

@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host{
-  .fields-group {
-    padding: 8px;
-    margin: 10px 0;
-    border: 1px groove rgba(0, 0, 0, .25);
-    border-radius: 4px;
+package org.thingsboard.server.transport.mqtt.util;
 
-    legend {
-      color: rgba(0, 0, 0, .7);
-    }
+import lombok.Data;
 
-    .tb-hint{
-      padding: 0;
+@Data
+public class EqualsTopicFilter implements MqttTopicFilter {
+
+    private final String filter;
+
+    @Override
+    public boolean filter(String topic) {
+        return filter.equals(topic);
     }
-  }
 }

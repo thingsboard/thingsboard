@@ -15,15 +15,24 @@
 ///
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  NG_VALUE_ACCESSOR,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   DeviceProfileTransportConfiguration,
-  DeviceTransportType, MqttDeviceProfileTransportConfiguration
+  DeviceTransportType,
+  MqttDeviceProfileTransportConfiguration
 } from '@shared/models/device.models';
-import { isDefinedAndNotNull } from '../../../../../core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-mqtt-device-profile-transport-configuration',
@@ -41,11 +50,10 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   private requiredValue: boolean;
 
-  private MQTTTopicPattern = new RegExp('^((?![#+]).)*$|^(.*[^#]\/|^)#$|^(.*\/|^)\+(\/.*|$)$');
-
   get required(): boolean {
     return this.requiredValue;
   }
+
   @Input()
   set required(value: boolean) {
     this.requiredValue = coerceBooleanProperty(value);
@@ -70,10 +78,8 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
   ngOnInit() {
     this.mqttDeviceProfileTransportConfigurationFormGroup = this.fb.group({
       configuration: this.fb.group({
-        deviceAttributesTopic: [null, [Validators.required, Validators.pattern(this.MQTTTopicPattern)]],
-        deviceTelemetryTopic: [null, [Validators.required, Validators.pattern(this.MQTTTopicPattern)]],
-        deviceRpcRequestTopic: [null, [Validators.required, Validators.pattern(this.MQTTTopicPattern)]],
-        deviceRpcResponseTopic: [null, [Validators.required, Validators.pattern(this.MQTTTopicPattern)]]
+        deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
+        deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]]
       })
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
@@ -103,5 +109,35 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       configuration.type = DeviceTransportType.MQTT;
     }
     this.propagateChange(configuration);
+  }
+
+  private validationMQTTTopic(): ValidatorFn {
+    return (c: FormControl) => {
+      const newTopic = c.value;
+      const wildcardSymbols = /[#+]/g;
+      let findSymbol = wildcardSymbols.exec(newTopic);
+      while (findSymbol) {
+        const index = findSymbol.index;
+        const currentSymbol = findSymbol[0];
+        const prevSymbol = index > 0 ? newTopic[index - 1] : null;
+        const nextSymbol = index < (newTopic.length - 1) ? newTopic[index + 1] : null;
+        if (currentSymbol === '#' && (index !== (newTopic.length - 1) || (prevSymbol !== null && prevSymbol !== '/'))) {
+          return {
+            invalidMultiTopicCharacter: {
+              valid: false
+            }
+          };
+        }
+        if (currentSymbol === '+' && ((prevSymbol !== null && prevSymbol !== '/') || (nextSymbol !== null && nextSymbol !== '/'))) {
+          return {
+            invalidSingleTopicCharacter: {
+              valid: false
+            }
+          };
+        }
+        findSymbol = wildcardSymbols.exec(newTopic);
+      }
+      return null;
+    };
   }
 }

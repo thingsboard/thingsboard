@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host{
-  .fields-group {
-    padding: 8px;
-    margin: 10px 0;
-    border: 1px groove rgba(0, 0, 0, .25);
-    border-radius: 4px;
+package org.thingsboard.server.transport.mqtt.util;
 
-    legend {
-      color: rgba(0, 0, 0, .7);
+import lombok.Data;
+
+import java.util.regex.Pattern;
+
+@Data
+public class RegexTopicFilter implements MqttTopicFilter {
+
+    private final Pattern regex;
+
+    public RegexTopicFilter(String regex) {
+        this.regex = Pattern.compile(regex);
     }
 
-    .tb-hint{
-      padding: 0;
+    @Override
+    public boolean filter(String topic) {
+        return regex.matcher(topic).matches();
     }
-  }
 }

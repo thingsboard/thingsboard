@@ -110,8 +110,6 @@ export interface DefaultDeviceProfileTransportConfiguration {
 export interface MqttDeviceProfileTransportConfiguration {
   deviceTelemetryTopic?: string;
   deviceAttributesTopic?: string;
-  deviceRpcRequestTopic?: string;
-  deviceRpcResponseTopic?: string;
   [key: string]: any;
 }
 
@@ -164,9 +162,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
       case DeviceTransportType.MQTT:
         const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {
           deviceTelemetryTopic: 'v1/devices/me/telemetry',
-          deviceAttributesTopic: 'v1/devices/me/attributes',
-          deviceRpcRequestTopic: 'v1/devices/me/rpc/request/',
-          deviceRpcResponseTopic: 'v1/devices/me/rpc/response/'
+          deviceAttributesTopic: 'v1/devices/me/attributes'
         };
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;

@@ -23,8 +23,6 @@ public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTra
 
     private String deviceTelemetryTopic = MqttTopics.DEVICE_TELEMETRY_TOPIC;
     private String deviceAttributesTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
-    private String deviceRpcRequestTopic = MqttTopics.DEVICE_RPC_REQUESTS_TOPIC;
-    private String deviceRpcResponseTopic = MqttTopics.DEVICE_RPC_RESPONSE_TOPIC;
 
     @Override
     public DeviceTransportType getType() {
