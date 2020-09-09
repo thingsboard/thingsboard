@@ -31,8 +31,10 @@ import java.sql.SQLException;
 import java.sql.SQLType;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Repository
 @Slf4j
@@ -59,7 +61,12 @@ public abstract class AttributeKvInsertRepository {
     @Value("${sql.remove_null_chars}")
     private boolean removeNullChars;
 
-    protected void saveOrUpdate(List<AttributeKvEntity> entities) {
+    @Value("${sql.batch_sort:false}")
+    private boolean batchSort;
+
+
+    protected void saveOrUpdate(List<AttributeKvEntity> inputEntities) {
+        List<AttributeKvEntity> entities = batchSort ? sortEntities(inputEntities) : inputEntities;
         transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
@@ -173,5 +180,14 @@ public abstract class AttributeKvInsertRepository {
             return PATTERN_THREAD_LOCAL.get().matcher(strValue).replaceAll(EMPTY_STR);
         }
         return strValue;
+    }
+
+    private static List<AttributeKvEntity> sortEntities(List<AttributeKvEntity> entities) {
+        return entities.stream()
+                .sorted(Comparator.comparing((AttributeKvEntity attributeKvEntity) -> attributeKvEntity.getId().getEntityId())
+                        .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getEntityType().name())
+                        .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getAttributeType())
+                        .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getAttributeKey())
+                ).collect(Collectors.toList());
     }
 }

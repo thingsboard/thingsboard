@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.dao.sqlts.insert.latest.psql;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sqlts.insert.AbstractInsertRepository;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
@@ -29,7 +31,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 @PsqlTsLatestAnyDao
@@ -45,8 +51,12 @@ public class PsqlLatestInsertTsRepository extends AbstractInsertRepository imple
             "INSERT INTO ts_kv_latest (entity_id, key, ts, bool_v, str_v, long_v, dbl_v,  json_v) VALUES(?, ?, ?, ?, ?, ?, ?, cast(? AS json)) " +
                     "ON CONFLICT (entity_id, key) DO UPDATE SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json);";
 
+    @Value("${sql.batch_sort:false}")
+    private boolean batchSort;
+
     @Override
-    public void saveOrUpdate(List<TsKvLatestEntity> entities) {
+    public void saveOrUpdate(List<TsKvLatestEntity> inputEntities) {
+        List<TsKvLatestEntity> entities = batchSort ? sortEntities(inputEntities) : inputEntities;
         transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
@@ -150,5 +160,11 @@ public class PsqlLatestInsertTsRepository extends AbstractInsertRepository imple
                 });
             }
         });
+    }
+
+    private static List<TsKvLatestEntity> sortEntities(List<TsKvLatestEntity> entities) {
+        return entities.stream().sorted(Comparator.comparing((Function<TsKvLatestEntity, UUID>) AbstractTsKvEntity::getEntityId)
+                .thenComparingInt(AbstractTsKvEntity::getKey)
+        ).collect(Collectors.toList());
     }
 }
