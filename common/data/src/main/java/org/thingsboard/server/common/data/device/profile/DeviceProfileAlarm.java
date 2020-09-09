@@ -33,5 +33,4 @@ public class DeviceProfileAlarm {
     // Hidden in advanced settings
     private boolean propagate;
     private List<String> propagateRelationTypes;
-
 }

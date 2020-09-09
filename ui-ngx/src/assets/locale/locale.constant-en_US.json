@@ -801,7 +801,20 @@
         "attributes-topic-filter-required": "Attributes topic filter is required.",
         "rpc-response-topic-filter": "RPC response topic filter",
         "rpc-response-topic-filter-required": "RPC response topic filter is required.",
-        "not-valid-pattern-topic-filter": "Not valid pattern topic filter"
+        "not-valid-pattern-topic-filter": "Not valid pattern topic filter",
+        "alarm-rules": "Alarm rules ({{count}})",
+        "add-alarm-rule": "Add alarm rule",
+        "edit-alarm-rule": "Edit alarm rule",
+        "alarm-rule-details": "Alarm rule details",
+        "alarm-type": "Alarm type",
+        "alarm-type-required": "Alarm type is required.",
+        "alarm-type-pattern-hint": "Alarm type pattern, use <code>${metaKeyName}</code> to substitute variables from metadata",
+        "create-alarm-pattern": "Create <b>{{alarmType}}</b> alarm",
+        "create-alarm-rules": "Create alarm rules",
+        "clear-alarm-rule": "Clear alarm rule",
+        "add-create-alarm-rule": "Add create alarm rule",
+        "select-alarm-severity": "Select alarm severity",
+        "alarm-severity-required": "Alarm severity is required."
     },
     "dialog": {
         "close": "Close dialog"
@@ -1759,6 +1772,13 @@
         "minutes": "Minutes",
         "seconds": "Seconds",
         "advanced": "Advanced"
+    },
+    "timeunit": {
+        "milliseconds": "Milliseconds",
+        "seconds": "Seconds",
+        "minutes": "Minutes",
+        "hours": "Hours",
+        "days": "Days"
     },
     "timewindow": {
         "days": "{ days, plural, 1 { day } other {# days } }",

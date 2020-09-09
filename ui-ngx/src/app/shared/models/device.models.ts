@@ -23,6 +23,8 @@ import { EntitySearchQuery } from '@shared/models/relation.models';
 import { DeviceProfileId } from '@shared/models/id/device-profile-id';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { EntityInfoData } from '@shared/models/entity.models';
+import { KeyFilter } from '@shared/models/query/query.models';
+import { TimeUnit } from '@shared/models/time/time.models';
 
 export enum DeviceProfileType {
   DEFAULT = 'DEFAULT'
@@ -198,9 +200,30 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
   return transportConfiguration;
 }
 
+export interface AlarmCondition {
+  condition: Array<KeyFilter>;
+  durationUnit?: TimeUnit;
+  durationValue?: number;
+}
+
+export interface AlarmRule {
+  condition: AlarmCondition;
+  alarmDetails?: string;
+}
+
+export interface DeviceProfileAlarm {
+  id: string;
+  alarmType: string;
+  createRules: {[severity: string]: AlarmRule};
+  clearRule?: AlarmRule;
+  propagate?: boolean;
+  propagateRelationTypes?: Array<string>;
+}
+
 export interface DeviceProfileData {
   configuration: DeviceProfileConfiguration;
   transportConfiguration: DeviceProfileTransportConfiguration;
+  alarms?: Array<DeviceProfileAlarm>;
 }
 
 export interface DeviceProfile extends BaseData<DeviceProfileId> {

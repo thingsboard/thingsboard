@@ -1,0 +1,54 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxFlex fxLayout="column">
+  <div *ngFor="let createAlarmRuleControl of createAlarmRulesFormArray().controls; let $index = index;
+               last as isLast;" fxLayout="row" style="padding-left: 20px;" [formGroup]="createAlarmRuleControl">
+    <mat-form-field class="mat-block" floatLabel="always" hideRequiredMarker>
+      <mat-label translate></mat-label>
+      <mat-select formControlName="severity"
+                  required
+                  placeholder="{{ 'device-profile.select-alarm-severity' | translate }}">
+        <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
+          {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="createAlarmRuleControl.get('severity').hasError('required')">
+        {{ 'device-profile.alarm-severity-required' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <tb-alarm-rule formControlName="alarmRule">
+    </tb-alarm-rule>
+    <button *ngIf="!disabled && createAlarmRulesFormArray().controls.length > 1"
+            mat-icon-button color="primary" style="min-width: 40px;"
+            type="button"
+            (click)="removeCreateAlarmRule($index)"
+            matTooltip="{{ 'action.remove' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <div *ngIf="!disabled" fxFlex fxLayout="row" fxLayoutAlign="start center">
+    <button mat-icon-button color="primary"
+            type="button"
+            (click)="addCreateAlarmRule()"
+            matTooltip="{{ 'device-profile.add-create-alarm-rule' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>add</mat-icon>
+    </button>
+  </div>
+</div>

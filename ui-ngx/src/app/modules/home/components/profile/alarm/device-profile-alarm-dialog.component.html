@@ -1,0 +1,65 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="alarmFormGroup" (ngSubmit)="save()" style="min-width: 600px;">
+  <mat-toolbar fxLayout="row" color="primary">
+    <h2>{{ (isReadOnly ? 'device-profile.alarm-rule-details' : (isAdd ? 'device-profile.add-alarm-rule' : 'device-profile.edit-alarm-rule')) | translate }}</h2>
+    <span fxFlex></span>
+    <button mat-button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div mat-dialog-content>
+    <fieldset [disabled]="(isLoading$ | async) || isReadOnly" fxLayout="column">
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>device-profile.alarm-type</mat-label>
+        <input required matInput formControlName="alarmType">
+        <mat-error *ngIf="alarmFormGroup.get('alarmType').hasError('required')">
+          {{ 'device-profile.alarm-type-required' | translate }}
+        </mat-error>
+        <mat-hint innerHTML="{{ 'device-profile.alarm-type-pattern-hint' | translate }}"></mat-hint>
+      </mat-form-field>
+      <fieldset>
+        <legend translate>device-profile.create-alarm-rules</legend>
+      </fieldset>
+      <fieldset>
+        <legend translate>device-profile.clear-alarm-rule</legend>
+      </fieldset>
+    </fieldset>
+  </div>
+  <div mat-dialog-actions fxLayout="row">
+    <span fxFlex></span>
+    <button *ngIf="!isReadOnly" mat-button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || alarmFormGroup.invalid
+            || !alarmFormGroup.dirty">
+      {{ (isAdd ? 'action.add' : 'action.save') | translate }}
+    </button>
+    <button mat-button color="primary"
+            style="margin-right: 20px;"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()" cdkFocusInitial>
+      {{ (isReadOnly ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+  </div>
+</form>

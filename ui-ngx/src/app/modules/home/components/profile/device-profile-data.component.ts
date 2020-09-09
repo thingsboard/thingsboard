@@ -71,7 +71,8 @@ export class DeviceProfileDataComponent implements ControlValueAccessor, OnInit 
   ngOnInit() {
     this.deviceProfileDataFormGroup = this.fb.group({
       configuration: [null, Validators.required],
-      transportConfiguration: [null, Validators.required]
+      transportConfiguration: [null, Validators.required],
+      alarms: [null]
     });
     this.deviceProfileDataFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -96,6 +97,7 @@ export class DeviceProfileDataComponent implements ControlValueAccessor, OnInit 
       deviceTransportTypeConfigurationInfoMap.get(deviceTransportType).hasProfileConfiguration;
     this.deviceProfileDataFormGroup.patchValue({configuration: value?.configuration}, {emitEvent: false});
     this.deviceProfileDataFormGroup.patchValue({transportConfiguration: value?.transportConfiguration}, {emitEvent: false});
+    this.deviceProfileDataFormGroup.patchValue({alarms: value?.alarms}, {emitEvent: false});
   }
 
   private updateModel() {

@@ -39,5 +39,17 @@
         required>
       </tb-device-profile-transport-configuration>
     </mat-expansion-panel>
+    <mat-expansion-panel [expanded]="false">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <div>{{'device-profile.alarm-rules' | translate:
+            {count: deviceProfileDataFormGroup.get('alarms').value ?
+                deviceProfileDataFormGroup.get('alarms').value.length : 0} }}</div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <tb-device-profile-alarms
+        formControlName="alarms">
+      </tb-device-profile-alarms>
+    </mat-expansion-panel>
   </mat-accordion>
 </div>

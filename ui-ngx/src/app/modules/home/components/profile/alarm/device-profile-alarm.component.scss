@@ -13,15 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+@import '../scss/constants';
 
-import lombok.Data;
+:host {
+  display: block;
+  .tb-device-profile-alarm {
+    &.mat-padding {
+      padding: 8px;
+      @media #{$mat-gt-sm} {
+        padding: 16px;
+      }
+    }
+  }
+  a.mat-icon-button {
+    &:hover, &:focus {
+      border-bottom: none;
+    }
+  }
+  .fields-group {
+    padding: 8px;
+    margin: 10px 0;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
 
-@Data
-public class AlarmRule {
-
-    private AlarmCondition condition;
-    // Advanced
-    private String alarmDetails;
-
+    legend {
+      padding-left: 8px;
+      padding-right: 8px;
+      margin-bottom: -30px;
+      .mat-form-field {
+        margin-bottom: 21px;
+      }
+    }
+  }
 }

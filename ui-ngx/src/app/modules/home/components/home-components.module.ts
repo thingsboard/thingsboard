@@ -98,6 +98,12 @@ import { DeviceProfileDialogComponent } from './profile/device-profile-dialog.co
 import { DeviceProfileAutocompleteComponent } from './profile/device-profile-autocomplete.component';
 import { MqttDeviceProfileTransportConfigurationComponent } from './profile/device/mqtt-device-profile-transport-configuration.component';
 import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/device/lwm2m-device-profile-transport-configuration.component';
+import { DeviceProfileAlarmsComponent } from './profile/alarm/device-profile-alarms.component';
+import { DeviceProfileAlarmComponent } from './profile/alarm/device-profile-alarm.component';
+import { DeviceProfileAlarmDialogComponent } from './profile/alarm/device-profile-alarm-dialog.component';
+import { CreateAlarmRulesComponent } from './profile/alarm/create-alarm-rules.component';
+import { AlarmRuleComponent } from './profile/alarm/alarm-rule.component';
+import { AlarmRuleConditionComponent } from './profile/alarm/alarm-rule-condition.component';
 
 @NgModule({
   declarations:
@@ -176,6 +182,12 @@ import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/dev
       MqttDeviceProfileTransportConfigurationComponent,
       Lwm2mDeviceProfileTransportConfigurationComponent,
       DeviceProfileTransportConfigurationComponent,
+      CreateAlarmRulesComponent,
+      AlarmRuleComponent,
+      AlarmRuleConditionComponent,
+      DeviceProfileAlarmComponent,
+      DeviceProfileAlarmDialogComponent,
+      DeviceProfileAlarmsComponent,
       DeviceProfileDataComponent,
       DeviceProfileComponent,
       DeviceProfileDialogComponent
@@ -246,6 +258,12 @@ import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/dev
     MqttDeviceProfileTransportConfigurationComponent,
     Lwm2mDeviceProfileTransportConfigurationComponent,
     DeviceProfileTransportConfigurationComponent,
+    CreateAlarmRulesComponent,
+    AlarmRuleComponent,
+    AlarmRuleConditionComponent,
+    DeviceProfileAlarmComponent,
+    DeviceProfileAlarmDialogComponent,
+    DeviceProfileAlarmsComponent,
     DeviceProfileDataComponent,
     DeviceProfileComponent,
     DeviceProfileDialogComponent

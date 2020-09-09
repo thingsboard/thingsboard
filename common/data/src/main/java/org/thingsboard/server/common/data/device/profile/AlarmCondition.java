@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import lombok.Data;
 import org.thingsboard.server.common.data.query.KeyFilter;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@Data
 public class AlarmCondition {
 
     private List<KeyFilter> condition;

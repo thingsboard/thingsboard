@@ -13,15 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
-
-import lombok.Data;
-
-@Data
-public class AlarmRule {
-
-    private AlarmCondition condition;
-    // Advanced
-    private String alarmDetails;
+:host {
 
 }
