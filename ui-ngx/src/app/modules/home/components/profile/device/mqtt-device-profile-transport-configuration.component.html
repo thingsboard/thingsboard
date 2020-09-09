@@ -37,23 +37,6 @@
             </mat-error>
           </mat-form-field>
           <mat-form-field fxFlex>
-            <mat-label translate>device-profile.rpc-request-topic-filter</mat-label>
-            <input matInput required
-                   formControlName="deviceRpcRequestTopic"
-                   type="text">
-            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceRpcRequestTopic').hasError('required')">
-              {{ 'device-profile.rpc-request-topic-filter-required' | translate}}
-            </mat-error>
-            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceRpcRequestTopic').hasError('invalidSingleTopicCharacter')">
-              {{ 'device-profile.not-valid-single-character' | translate}}
-            </mat-error>
-            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceRpcRequestTopic').hasError('invalidMultiTopicCharacter')">
-              {{ 'device-profile.not-valid-multi-character' | translate}}
-            </mat-error>
-          </mat-form-field>
-        </div>
-        <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
-          <mat-form-field fxFlex>
             <mat-label translate>device-profile.attributes-topic-filter</mat-label>
             <input matInput required
                    formControlName="deviceAttributesTopic"
@@ -65,21 +48,6 @@
               {{ 'device-profile.not-valid-single-character' | translate}}
             </mat-error>
             <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceAttributesTopic').hasError('invalidMultiTopicCharacter')">
-              {{ 'device-profile.not-valid-multi-character' | translate}}
-            </mat-error>
-          </mat-form-field>
-          <mat-form-field fxFlex>
-            <mat-label translate>device-profile.rpc-response-topic-filter</mat-label>
-            <input matInput required
-                   formControlName="deviceRpcResponseTopic"
-                   type="text">
-            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceRpcResponseTopic').hasError('required')">
-              {{ 'device-profile.rpc-response-topic-filter-required' | translate}}
-            </mat-error>
-            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceRpcResponseTopic').hasError('invalidSingleTopicCharacter')">
-              {{ 'device-profile.not-valid-single-character' | translate}}
-            </mat-error>
-            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceRpcResponseTopic').hasError('invalidMultiTopicCharacter')">
               {{ 'device-profile.not-valid-multi-character' | translate}}
             </mat-error>
           </mat-form-field>

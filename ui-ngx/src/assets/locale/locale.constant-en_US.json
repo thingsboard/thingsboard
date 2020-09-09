@@ -795,15 +795,11 @@
         "support-level-wildcards": "Single <code>[+]</code> and multi-level <code>[#]</code> wildcards supported.",
         "telemetry-topic-filter": "Telemetry topic filter",
         "telemetry-topic-filter-required": "Telemetry topic filter is required.",
-        "rpc-request-topic-filter": "RPC request topic filter",
-        "rpc-request-topic-filter-required": "RPC request topic filter is required.",
         "attributes-topic-filter": "Attributes topic filter",
         "attributes-topic-filter-required": "Attributes topic filter is required.",
-        "rpc-response-topic-filter": "RPC response topic filter",
-        "rpc-response-topic-filter-required": "RPC response topic filter is required.",
         "not-valid-single-character": "Invalid use of a single-level wildcard character",
         "not-valid-multi-character": "Invalid use of a multi-level wildcard character",
-        "single-level-wildcards-hint": "<code>[+]</code> is suitable for any topic level. Ex.: <b>v1/devices/+/telemetry</b> or <b>+/devices/+/attributes</b>.",
+        "single-level-wildcards-hint": "<code>[+]</code> is suitable for any topic filter level. Ex.: <b>v1/devices/+/telemetry</b> or <b>+/devices/+/attributes</b>.",
         "multi-level-wildcards-hint": "<code>[#]</code> can replace the topic filter itself and must be the last symbol of the topic. Ex.: <b>#</b> or <b>v1/devices/me/#</b>."
     },
     "dialog": {

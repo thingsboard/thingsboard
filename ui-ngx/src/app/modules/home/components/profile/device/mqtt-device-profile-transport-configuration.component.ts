@@ -79,9 +79,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     this.mqttDeviceProfileTransportConfigurationFormGroup = this.fb.group({
       configuration: this.fb.group({
         deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
-        deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]],
-        deviceRpcRequestTopic: [null, [Validators.required, this.validationMQTTTopic()]],
-        deviceRpcResponseTopic: [null, [Validators.required, this.validationMQTTTopic()]]
+        deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]]
       })
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
