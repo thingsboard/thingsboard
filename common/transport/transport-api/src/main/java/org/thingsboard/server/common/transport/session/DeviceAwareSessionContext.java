@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.msg.session.SessionContext;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 
 import java.util.UUID;
@@ -41,6 +42,9 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     @Getter
     @Setter
     protected volatile DeviceProfile deviceProfile;
+    @Getter
+    @Setter
+    private volatile TransportProtos.SessionInfoProto sessionInfo;
 
     private volatile boolean connected;
 
@@ -52,6 +56,13 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
         this.deviceInfo = deviceInfo;
         this.connected = true;
         this.deviceId = deviceInfo.getDeviceId();
+    }
+
+    @Override
+    public void onProfileUpdate(DeviceProfile deviceProfile) {
+        this.deviceProfile = deviceProfile;
+        this.deviceInfo.setDeviceType(deviceProfile.getName());
+        this.sessionInfo = TransportProtos.SessionInfoProto.newBuilder().mergeFrom(sessionInfo).setDeviceType(deviceProfile.getName()).build();
     }
 
     public boolean isConnected() {

@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.transport.mqtt.util;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.DeviceTransportType;
+
+import java.util.regex.Pattern;
 
 @Data
-public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
+public class RegexTopicFilter implements MqttTopicFilter {
 
-    private String deviceTelemetryTopic = MqttTopics.DEVICE_TELEMETRY_TOPIC;
-    private String deviceAttributesTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
+    private final Pattern regex;
 
-    @Override
-    public DeviceTransportType getType() {
-        return DeviceTransportType.MQTT;
+    public RegexTopicFilter(String regex) {
+        this.regex = Pattern.compile(regex);
     }
 
+    @Override
+    public boolean filter(String topic) {
+        return regex.matcher(topic).matches();
+    }
 }

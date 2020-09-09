@@ -26,7 +26,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(MockitoJUnitRunner.class)
-public class MqttTopicRegexUtilTest {
+public class MqttTopicFilterFactoryTest {
 
     private static String TEST_STR_1 = "Sensor/Temperature/House/48";
     private static String TEST_STR_2 = "Sensor/Temperature";
@@ -34,23 +34,23 @@ public class MqttTopicRegexUtilTest {
 
     @Test
     public void metadataCanBeUpdated() throws ScriptException {
-        Pattern filter = MqttTopicRegexUtil.toRegex("Sensor/Temperature/House/+");
-        assertTrue(filter.matcher(TEST_STR_1).matches());
-        assertFalse(filter.matcher(TEST_STR_2).matches());
+        MqttTopicFilter filter = MqttTopicFilterFactory.toFilter("Sensor/Temperature/House/+");
+        assertTrue(filter.filter(TEST_STR_1));
+        assertFalse(filter.filter(TEST_STR_2));
 
-        filter = MqttTopicRegexUtil.toRegex("Sensor/+/House/#");
-        assertTrue(filter.matcher(TEST_STR_1).matches());
-        assertFalse(filter.matcher(TEST_STR_2).matches());
+        filter = MqttTopicFilterFactory.toFilter("Sensor/+/House/#");
+        assertTrue(filter.filter(TEST_STR_1));
+        assertFalse(filter.filter(TEST_STR_2));
 
-        filter = MqttTopicRegexUtil.toRegex("Sensor/#");
-        assertTrue(filter.matcher(TEST_STR_1).matches());
-        assertTrue(filter.matcher(TEST_STR_2).matches());
-        assertTrue(filter.matcher(TEST_STR_3).matches());
+        filter = MqttTopicFilterFactory.toFilter("Sensor/#");
+        assertTrue(filter.filter(TEST_STR_1));
+        assertTrue(filter.filter(TEST_STR_2));
+        assertTrue(filter.filter(TEST_STR_3));
 
-        filter = MqttTopicRegexUtil.toRegex("Sensor/Temperature/#");
-        assertTrue(filter.matcher(TEST_STR_1).matches());
-        assertTrue(filter.matcher(TEST_STR_2).matches());
-        assertFalse(filter.matcher(TEST_STR_3).matches());
+        filter = MqttTopicFilterFactory.toFilter("Sensor/Temperature/#");
+        assertTrue(filter.filter(TEST_STR_1));
+        assertTrue(filter.filter(TEST_STR_2));
+        assertFalse(filter.filter(TEST_STR_3));
     }
 
 }
