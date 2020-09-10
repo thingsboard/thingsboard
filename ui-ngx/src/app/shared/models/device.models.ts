@@ -292,13 +292,15 @@ export interface DeviceInfo extends Device {
 
 export enum DeviceCredentialsType {
   ACCESS_TOKEN = 'ACCESS_TOKEN',
-  X509_CERTIFICATE = 'X509_CERTIFICATE'
+  X509_CERTIFICATE = 'X509_CERTIFICATE',
+  MQTT_BASIC = 'MQTT_BASIC'
 }
 
 export const credentialTypeNames = new Map<DeviceCredentialsType, string>(
   [
     [DeviceCredentialsType.ACCESS_TOKEN, 'Access token'],
-    [DeviceCredentialsType.X509_CERTIFICATE, 'X.509 Certificate'],
+    [DeviceCredentialsType.X509_CERTIFICATE, 'MQTT X.509'],
+    [DeviceCredentialsType.MQTT_BASIC, 'MQTT Basic']
   ]
 );
 
@@ -306,7 +308,13 @@ export interface DeviceCredentials extends BaseData<DeviceCredentialsId> {
   deviceId: DeviceId;
   credentialsType: DeviceCredentialsType;
   credentialsId: string;
-  credentialsValue: string;
+  credentialsValue: string | DeviceCredentialMQTTBasic;
+}
+
+export interface DeviceCredentialMQTTBasic {
+  clientId: string;
+  userName: string;
+  password: string;
 }
 
 export interface DeviceSearchQuery extends EntitySearchQuery {
