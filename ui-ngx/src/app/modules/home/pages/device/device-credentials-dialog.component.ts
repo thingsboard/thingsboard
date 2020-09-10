@@ -114,7 +114,7 @@ export class DeviceCredentialsDialogComponent extends
         let credentialsBasic = {clientId: null, userName: null, password: null};
         if (deviceCredentials.credentialsType === DeviceCredentialsType.MQTT_BASIC) {
           credentialsValue = null;
-          credentialsBasic = deviceCredentials.credentialsValue as DeviceCredentialMQTTBasic;
+          credentialsBasic = JSON.parse(deviceCredentials.credentialsValue) as DeviceCredentialMQTTBasic;
         }
         this.deviceCredentialsFormGroup.patchValue({
           credentialsType: deviceCredentials.credentialsType,
@@ -183,7 +183,7 @@ export class DeviceCredentialsDialogComponent extends
     this.submitted = true;
     const deviceCredentialsValue = this.deviceCredentialsFormGroup.value;
     if (deviceCredentialsValue.credentialsType === DeviceCredentialsType.MQTT_BASIC) {
-      deviceCredentialsValue.credentialsValue = deviceCredentialsValue.credentialsBasic;
+      deviceCredentialsValue.credentialsValue = JSON.stringify(deviceCredentialsValue.credentialsBasic);
     }
     delete deviceCredentialsValue.credentialsBasic;
     this.deviceCredentials = {...this.deviceCredentials, ...deviceCredentialsValue};

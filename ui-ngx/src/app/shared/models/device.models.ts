@@ -308,7 +308,7 @@ export interface DeviceCredentials extends BaseData<DeviceCredentialsId> {
   deviceId: DeviceId;
   credentialsType: DeviceCredentialsType;
   credentialsId: string;
-  credentialsValue: string | DeviceCredentialMQTTBasic;
+  credentialsValue: string;
 }
 
 export interface DeviceCredentialMQTTBasic {
