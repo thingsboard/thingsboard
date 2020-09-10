@@ -252,9 +252,20 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public void process(DeviceTransportType transportType, TransportProtos.ValidateDeviceTokenRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+    public void process(DeviceTransportType transportType, TransportProtos.ValidateDeviceTokenRequestMsg msg,
+                        TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         log.trace("Processing msg: {}", msg);
-        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateTokenRequestMsg(msg).build());
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(),
+                TransportApiRequestMsg.newBuilder().setValidateTokenRequestMsg(msg).build());
+        doProcess(transportType, protoMsg, callback);
+    }
+
+    @Override
+    public void process(DeviceTransportType transportType, TransportProtos.ValidateBasicMqttCredRequestMsg msg,
+                        TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+        log.trace("Processing msg: {}", msg);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(),
+                TransportApiRequestMsg.newBuilder().setValidateBasicMqttCredRequestMsg(msg).build());
         doProcess(transportType, protoMsg, callback);
     }
 
@@ -265,9 +276,10 @@ public class DefaultTransportService implements TransportService {
         doProcess(transportType, protoMsg, callback);
     }
 
-    private void doProcess(DeviceTransportType transportType, TbProtoQueueMsg<TransportApiRequestMsg> protoMsg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+    private void doProcess(DeviceTransportType transportType, TbProtoQueueMsg<TransportApiRequestMsg> protoMsg,
+                           TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         ListenableFuture<ValidateDeviceCredentialsResponse> response = Futures.transform(transportApiRequestTemplate.send(protoMsg), tmp -> {
-            TransportProtos.ValidateDeviceCredentialsResponseMsg msg = tmp.getValue().getValidateTokenResponseMsg();
+            TransportProtos.ValidateDeviceCredentialsResponseMsg msg = tmp.getValue().getValidateCredResponseMsg();
             ValidateDeviceCredentialsResponse.ValidateDeviceCredentialsResponseBuilder result = ValidateDeviceCredentialsResponse.builder();
             if (msg.hasDeviceInfo()) {
                 result.credentials(msg.getCredentialsBody());

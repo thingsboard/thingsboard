@@ -147,6 +147,12 @@ message ValidateDeviceX509CertRequestMsg {
   string hash = 1;
 }
 
+message ValidateBasicMqttCredRequestMsg {
+  string clientId = 1;
+  string userName = 2;
+  string password = 3;
+}
+
 message ValidateDeviceCredentialsResponseMsg {
   DeviceInfoProto deviceInfo = 1;
   string credentialsBody = 2;
@@ -429,11 +435,12 @@ message TransportApiRequestMsg {
   GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
   GetTenantRoutingInfoRequestMsg getTenantRoutingInfoRequestMsg = 4;
   GetDeviceProfileRequestMsg getDeviceProfileRequestMsg = 5;
+  ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 6;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
 message TransportApiResponseMsg {
-  ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
+  ValidateDeviceCredentialsResponseMsg validateCredResponseMsg = 1;
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
   GetTenantRoutingInfoResponseMsg getTenantRoutingInfoResponseMsg = 4;
   GetDeviceProfileResponseMsg getDeviceProfileResponseMsg = 5;
