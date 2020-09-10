@@ -66,6 +66,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.security.cert.X509Certificate;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -365,25 +366,27 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private void processAuthTokenConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
         String userName = msg.payload().userName();
         log.info("[{}] Processing connect msg for client with user name: {}!", sessionId, userName);
-        if (StringUtils.isEmpty(userName)) {
-            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD));
-            ctx.close();
-        } else {
-            transportService.process(DeviceTransportType.MQTT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(userName).build(),
-                    new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
-                        @Override
-                        public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                            onValidateDeviceResponse(msg, ctx);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            log.trace("[{}] Failed to process credentials: {}", address, userName, e);
-                            ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE));
-                            ctx.close();
-                        }
-                    });
+        TransportProtos.ValidateBasicMqttCredRequestMsg.Builder request = TransportProtos.ValidateBasicMqttCredRequestMsg.newBuilder()
+                .setClientId(msg.payload().clientIdentifier())
+                .setUserName(userName);
+        String password = msg.payload().password();
+        if (password != null) {
+            request.setPassword(password);
         }
+        transportService.process(DeviceTransportType.MQTT, request.build(),
+                new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
+                    @Override
+                    public void onSuccess(ValidateDeviceCredentialsResponse msg) {
+                        onValidateDeviceResponse(msg, ctx);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        log.trace("[{}] Failed to process credentials: {}", address, userName, e);
+                        ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE));
+                        ctx.close();
+                    }
+                });
     }
 
     private void processX509CertConnect(ChannelHandlerContext ctx, X509Certificate cert) {
