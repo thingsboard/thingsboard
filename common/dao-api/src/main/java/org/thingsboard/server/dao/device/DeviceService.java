@@ -68,6 +68,8 @@ public interface DeviceService {
 
     ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId);
 
+    Device assignDeviceToTenant(TenantId tenantId, Device device);
+
     Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId);
 
     Device unassignDeviceFromEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId);

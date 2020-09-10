@@ -20,7 +20,7 @@ import nodeScriptTestTemplate from './node-script-test.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function NodeScriptTest($q, $mdDialog, $document, ruleChainService) {
+export default function NodeScriptTest($q, $mdDialog, $document, ruleChainService, utils) {
 
     var service = {
         testNodeScript: testNodeScript
@@ -89,6 +89,8 @@ export default function NodeScriptTest($q, $mdDialog, $document, ruleChainServic
                 deviceName: "Test Device",
                 ts: new Date().getTime() + ""
             };
+        } else {
+            metadata = utils.sortObjectKeys(metadata);
         }
         if (!msgType) {
             msgType = "POST_TELEMETRY_REQUEST";

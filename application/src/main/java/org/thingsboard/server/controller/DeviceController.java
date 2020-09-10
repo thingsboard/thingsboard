@@ -39,10 +39,11 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -52,13 +53,14 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -79,6 +81,7 @@ public class DeviceController extends BaseController {
 
     private static final String DEVICE_ID = "deviceId";
     private static final String DEVICE_NAME = "deviceName";
+    private static final String TENANT_ID = "tenantId";
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.GET)
@@ -503,6 +506,56 @@ public class DeviceController extends BaseController {
             return secretKey;
         }
         return DataConstants.DEFAULT_SECRET_KEY;
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/{tenantId}/device/{deviceId}", method = RequestMethod.POST)
+    @ResponseBody
+    public Device assignDeviceToTenant(@PathVariable(TENANT_ID) String strTenantId,
+                                       @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+        checkParameter(TENANT_ID, strTenantId);
+        checkParameter(DEVICE_ID, strDeviceId);
+        try {
+            DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
+            Device device = checkDeviceId(deviceId, Operation.ASSIGN_TO_TENANT);
+
+            TenantId newTenantId = new TenantId(toUUID(strTenantId));
+            Tenant newTenant = tenantService.findTenantById(newTenantId);
+            if (newTenant == null) {
+                throw new ThingsboardException("Could not find the specified Tenant!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
+
+            Device assignedDevice = deviceService.assignDeviceToTenant(newTenantId, device);
+
+            logEntityAction(getCurrentUser(), deviceId, assignedDevice,
+                    assignedDevice.getCustomerId(),
+                    ActionType.ASSIGNED_TO_TENANT, null, strTenantId, newTenant.getName());
+
+            Tenant currentTenant = tenantService.findTenantById(getTenantId());
+            pushAssignedFromNotification(currentTenant, newTenantId, assignedDevice);
+
+            return assignedDevice;
+        } catch (Exception e) {
+            logEntityAction(getCurrentUser(), emptyId(EntityType.DEVICE), null,
+                    null,
+                    ActionType.ASSIGNED_TO_TENANT, e, strTenantId);
+            throw handleException(e);
+        }
+    }
+
+    private void pushAssignedFromNotification(Tenant currentTenant, TenantId newTenantId, Device assignedDevice) {
+        String data = entityToStr(assignedDevice);
+        if (data != null) {
+            TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_ASSIGNED_FROM_TENANT, assignedDevice.getId(), getMetaDataForAssignedFrom(currentTenant), TbMsgDataType.JSON, data);
+            tbClusterService.pushMsgToRuleEngine(newTenantId, assignedDevice.getId(), tbMsg, null);
+        }
+    }
+
+    private TbMsgMetaData getMetaDataForAssignedFrom(Tenant tenant) {
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue("assignedFromTenantId", tenant.getId().getId().toString());
+        metaData.putValue("assignedFromTenantName", tenant.getName());
+        return metaData;
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

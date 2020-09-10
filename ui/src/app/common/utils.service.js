@@ -150,7 +150,8 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         customTranslation: customTranslation,
         objToBase64: objToBase64,
         base64toObj: base64toObj,
-        loadImageAspect: loadImageAspect
+        loadImageAspect: loadImageAspect,
+        sortObjectKeys: sortObjectKeys
     }
 
     return service;
@@ -603,6 +604,16 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
             deferred.resolve(0);
         }
         return deferred.promise;
+    }
+
+    function sortObjectKeys(obj) {
+        var sortedObj = {};
+        var keys = Object.keys(obj).sort();
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            sortedObj[key] = obj[key];
+        }
+        return sortedObj;
     }
 
 }

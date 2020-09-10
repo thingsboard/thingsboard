@@ -85,4 +85,7 @@ public interface DeviceRepository extends CrudRepository<DeviceEntity, String> {
     List<DeviceEntity> findDevicesByTenantIdAndCustomerIdAndIdIn(String tenantId, String customerId, List<String> deviceIds);
 
     List<DeviceEntity> findDevicesByTenantIdAndIdIn(String tenantId, List<String> deviceIds);
+
+    DeviceEntity findByTenantIdAndId(String tenantId, String id);
+
 }

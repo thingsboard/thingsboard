@@ -18,15 +18,16 @@ package org.thingsboard.rule.engine.action;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -56,8 +57,13 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
     @Override
     protected ListenableFuture<AlarmResult> processAlarm(TbContext ctx, TbMsg msg) {
         String alarmType = TbNodeUtils.processPattern(this.config.getAlarmType(), msg.getMetaData());
-        ListenableFuture<Alarm> latest = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType);
-        return Futures.transformAsync(latest, a -> {
+        ListenableFuture<Alarm> alarmFuture;
+        if (msg.getOriginator().getEntityType().equals(EntityType.ALARM)) {
+            alarmFuture = ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), new AlarmId(msg.getOriginator().getId()));
+        } else {
+            alarmFuture = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType);
+        }
+        return Futures.transformAsync(alarmFuture, a -> {
             if (a != null && !a.getStatus().isCleared()) {
                 return clearAlarm(ctx, msg, a);
             }

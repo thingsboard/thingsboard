@@ -93,7 +93,7 @@ public class BaseEdgeEventControllerTest extends AbstractControllerTest {
 
         doPost("/api/relation", relation);
 
-        Thread.sleep(1000);
+        Thread.sleep(2000);
 
         List<EdgeEvent> edgeEvents = doGetTypedWithTimePageLink("/api/edge/" + edge.getId().toString() + "/events?",
                 new TypeReference<TimePageData<EdgeEvent>>() {

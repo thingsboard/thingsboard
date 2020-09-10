@@ -49,7 +49,7 @@ public class EdgeEventsCleanUpService extends AbstractCleanUpService {
     }
 
     @Override
-    protected void doCleanUp(Connection connection) {
+    protected void doCleanUp(Connection connection) throws SQLException {
         long totalEdgeEventsRemoved = executeQuery(connection, "call cleanup_edge_events_by_ttl(" + ttl + ", 0);");
         log.info("Total edge events removed by TTL: [{}]", totalEdgeEventsRemoved);
     }

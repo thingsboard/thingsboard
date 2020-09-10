@@ -30,6 +30,8 @@
 
 <!--    <logger name="org.thingsboard.server.service.queue" level="TRACE" />-->
 <!--    <logger name="org.thingsboard.server.service.transport" level="TRACE" />-->
+<!--    <logger name="org.thingsboard.server.queue.memory.InMemoryStorage" level="DEBUG" />-->
+
 
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
 

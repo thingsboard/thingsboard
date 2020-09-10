@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.EntitySubtypeEntity;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.DeviceEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.relation.RelationDao;
@@ -196,6 +197,21 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
                 }
             }
         }, MoreExecutors.directExecutor());
+    }
+
+    @Override
+    public Device findDeviceByTenantIdAndId(TenantId tenantId, UUID id) {
+        Select.Where query = select().from(getColumnFamilyName()).where(eq(ModelConstants.TENANT_ID_PROPERTY, tenantId.getId())).and(eq(ModelConstants.ID_PROPERTY, id));
+        log.trace("Execute query {}", query);
+        DeviceEntity entity = findOneByStatement(tenantId, query);
+        return DaoUtil.getData(entity);
+    }
+
+    @Override
+    public ListenableFuture<Device> findDeviceByTenantIdAndIdAsync(TenantId tenantId, UUID id) {
+        Select.Where query = select().from(getColumnFamilyName()).where(eq(ModelConstants.TENANT_ID_PROPERTY, tenantId.getId())).and(eq(ModelConstants.ID_PROPERTY, id));
+        log.trace("Execute query {}", query);
+        return findOneByStatementAsync(tenantId, query);
     }
 
     @Override

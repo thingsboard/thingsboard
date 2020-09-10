@@ -57,6 +57,8 @@ public class DataConstants {
     public static final String ATTRIBUTES_DELETED = "ATTRIBUTES_DELETED";
     public static final String ALARM_ACK = "ALARM_ACK";
     public static final String ALARM_CLEAR = "ALARM_CLEAR";
+    public static final String ENTITY_ASSIGNED_FROM_TENANT = "ENTITY_ASSIGNED_FROM_TENANT";
+    public static final String ENTITY_ASSIGNED_TO_TENANT = "ENTITY_ASSIGNED_TO_TENANT";
     public static final String ENTITY_ASSIGNED_TO_EDGE = "ENTITY_ASSIGNED_TO_EDGE";
     public static final String ENTITY_UNASSIGNED_FROM_EDGE = "ENTITY_UNASSIGNED_FROM_EDGE";
 

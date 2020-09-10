@@ -506,6 +506,22 @@ public class BaseRelationService implements RelationService {
                 }, MoreExecutors.directExecutor());
     }
 
+    @Override
+    public void removeRelations(TenantId tenantId, EntityId entityId) {
+        Cache cache = cacheManager.getCache(RELATIONS_CACHE);
+
+        List<EntityRelation> relations = new ArrayList<>();
+        for (RelationTypeGroup relationTypeGroup : RelationTypeGroup.values()) {
+            relations.addAll(findByFrom(tenantId, entityId, relationTypeGroup));
+            relations.addAll(findByTo(tenantId, entityId, relationTypeGroup));
+        }
+
+        for (EntityRelation relation : relations) {
+            cacheEviction(relation, cache);
+            deleteRelation(tenantId, relation);
+        }
+    }
+
     protected void validate(EntityRelation relation) {
         if (relation == null) {
             throw new DataValidationException("Relation type should be specified!");
