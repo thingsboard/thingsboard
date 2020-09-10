@@ -65,7 +65,6 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
   set entity(entity: T) {
     this.entityValue = entity;
     if (this.entityForm) {
-      this.entityForm.reset(undefined, {emitEvent: false});
       this.entityForm.markAsPristine();
       this.updateForm(entity);
     }
@@ -124,7 +123,7 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
       if (isString(obj[curr])) {
         acc[curr] = obj[curr].trim();
       } else if (isObject(obj[curr])) {
-        acc[curr] = this.deepTrim(obj[curr])
+        acc[curr] = this.deepTrim(obj[curr]);
       } else {
         acc[curr] = obj[curr];
       }
