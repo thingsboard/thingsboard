@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
@@ -43,11 +44,7 @@ import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -78,12 +75,17 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
                 .maxDelay(tsMaxDelay)
                 .statsPrintIntervalMs(tsStatsPrintIntervalMs)
                 .statsNamePrefix("ts.timescale")
+                .batchSortEnabled(batchSortEnabled)
                 .build();
 
         Function<TimescaleTsKvEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
         tsQueue = new TbSqlBlockingQueueWrapper<>(tsParams, hashcodeFunction, timescaleBatchThreads, statsFactory);
 
-        tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v));
+        tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v),
+                Comparator.comparing((Function<TimescaleTsKvEntity, UUID>) AbstractTsKvEntity::getEntityId)
+                        .thenComparing(AbstractTsKvEntity::getKey)
+                        .thenComparing(AbstractTsKvEntity::getTs)
+        );
     }
 
     @PreDestroy
