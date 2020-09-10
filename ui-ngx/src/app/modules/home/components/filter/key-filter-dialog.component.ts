@@ -39,6 +39,9 @@ import { filter, map, startWith } from 'rxjs/operators';
 export interface KeyFilterDialogData {
   keyFilter: KeyFilterInfo;
   isAdd: boolean;
+  displayUserParameters: boolean;
+  readonly: boolean;
+  telemetryKeysOnly: boolean;
 }
 
 @Component({
@@ -53,7 +56,10 @@ export class KeyFilterDialogComponent extends
 
   keyFilterFormGroup: FormGroup;
 
-  entityKeyTypes = [EntityKeyType.ENTITY_FIELD, EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES];
+  entityKeyTypes =
+    this.data.telemetryKeysOnly ?
+      [EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES] :
+      [EntityKeyType.ENTITY_FIELD, EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES];
 
   entityKeyTypeTranslations = entityKeyTypeTranslationMap;
 
@@ -95,32 +101,37 @@ export class KeyFilterDialogComponent extends
         predicates: [this.data.keyFilter.predicates, [Validators.required]]
       }
     );
-    this.keyFilterFormGroup.get('valueType').valueChanges.subscribe((valueType: EntityKeyValueType) => {
-      const prevValue: EntityKeyValueType = this.keyFilterFormGroup.value.valueType;
-      const predicates: KeyFilterPredicate[] = this.keyFilterFormGroup.get('predicates').value;
-      if (prevValue && prevValue !== valueType && predicates && predicates.length) {
-        this.dialogs.confirm(this.translate.instant('filter.key-value-type-change-title'),
-          this.translate.instant('filter.key-value-type-change-message')).subscribe(
-          (result) => {
-            if (result) {
-              this.keyFilterFormGroup.get('predicates').setValue([]);
-            } else {
-              this.keyFilterFormGroup.get('valueType').setValue(prevValue, {emitEvent: false});
-            }
-          }
-        );
-      }
-    });
 
-    this.keyFilterFormGroup.get('key.key').valueChanges.pipe(
-      filter((keyName) => this.keyFilterFormGroup.get('key.type').value === this.entityField && this.entityFields.hasOwnProperty(keyName))
-    ).subscribe((keyName: string) => {
-      const prevValueType: EntityKeyValueType = this.keyFilterFormGroup.value.valueType;
-      const newValueType = this.entityFields[keyName]?.time ? EntityKeyValueType.DATE_TIME : EntityKeyValueType.STRING;
-      if (prevValueType !== newValueType) {
-        this.keyFilterFormGroup.get('valueType').patchValue(newValueType, {emitEvent: false});
-      }
-    });
+    if (!this.data.readonly) {
+      this.keyFilterFormGroup.get('valueType').valueChanges.subscribe((valueType: EntityKeyValueType) => {
+        const prevValue: EntityKeyValueType = this.keyFilterFormGroup.value.valueType;
+        const predicates: KeyFilterPredicate[] = this.keyFilterFormGroup.get('predicates').value;
+        if (prevValue && prevValue !== valueType && predicates && predicates.length) {
+          this.dialogs.confirm(this.translate.instant('filter.key-value-type-change-title'),
+            this.translate.instant('filter.key-value-type-change-message')).subscribe(
+            (result) => {
+              if (result) {
+                this.keyFilterFormGroup.get('predicates').setValue([]);
+              } else {
+                this.keyFilterFormGroup.get('valueType').setValue(prevValue, {emitEvent: false});
+              }
+            }
+          );
+        }
+      });
+
+      this.keyFilterFormGroup.get('key.key').valueChanges.pipe(
+        filter((keyName) => this.keyFilterFormGroup.get('key.type').value === this.entityField && this.entityFields.hasOwnProperty(keyName))
+      ).subscribe((keyName: string) => {
+        const prevValueType: EntityKeyValueType = this.keyFilterFormGroup.value.valueType;
+        const newValueType = this.entityFields[keyName]?.time ? EntityKeyValueType.DATE_TIME : EntityKeyValueType.STRING;
+        if (prevValueType !== newValueType) {
+          this.keyFilterFormGroup.get('valueType').patchValue(newValueType, {emitEvent: false});
+        }
+      });
+    } else {
+      this.keyFilterFormGroup.disable({emitEvent: false});
+    }
 
     this.entityFields = entityFields;
     this.entityFieldsList = Object.values(entityFields).map(entityField => entityField.keyName).sort();

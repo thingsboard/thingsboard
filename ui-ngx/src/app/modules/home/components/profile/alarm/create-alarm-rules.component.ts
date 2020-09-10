@@ -150,15 +150,11 @@ export class CreateAlarmRulesComponent implements ControlValueAccessor, OnInit, 
   }
 
   private updateModel() {
-    if (this.createAlarmRulesFormGroup.valid) {
-      const value: {severity: string, alarmRule: AlarmRule}[] = this.createAlarmRulesFormGroup.get('createAlarmRules').value;
-      const createAlarmRules: {[severity: string]: AlarmRule} = {};
-      value.forEach(v => {
-        createAlarmRules[v.severity] = v.alarmRule;
-      });
-      this.propagateChange(createAlarmRules);
-    } else {
-      this.propagateChange(null);
-    }
+    const value: {severity: string, alarmRule: AlarmRule}[] = this.createAlarmRulesFormGroup.get('createAlarmRules').value;
+    const createAlarmRules: {[severity: string]: AlarmRule} = {};
+    value.forEach(v => {
+      createAlarmRules[v.severity] = v.alarmRule;
+    });
+    this.propagateChange(createAlarmRules);
   }
 }

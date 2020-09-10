@@ -13,35 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../scss/constants';
 
 :host {
   display: block;
-  .tb-device-profile-alarm {
-    &.mat-padding {
-      padding: 8px;
-      @media #{$mat-gt-sm} {
-        padding: 16px;
-      }
-    }
-  }
-  a.mat-icon-button {
-    &:hover, &:focus {
-      border-bottom: none;
-    }
-  }
-  .fields-group {
-    padding: 8px;
-    margin: 10px 0;
+  .clear-alarm-rule {
     border: 1px groove rgba(0, 0, 0, .25);
     border-radius: 4px;
+    padding: 8px;
+  }
+  .mat-expansion-panel {
+    box-shadow: none;
+    &.device-profile-alarm {
+      border: 1px groove rgba(0, 0, 0, .25);
+      .mat-expansion-panel-header {
+        padding: 0 24px 0 8px;
+        &.mat-expanded {
+          height: 80px;
+        }
+      }
+    }
+    &.advanced-settings {
+      border: none;
+      padding: 0;
+    }
+  }
+}
 
-    legend {
-      padding-left: 8px;
-      padding-right: 8px;
-      margin-bottom: -30px;
-      .mat-form-field {
-        margin-bottom: 21px;
+:host ::ng-deep {
+  .mat-expansion-panel {
+    &.device-profile-alarm {
+      .mat-expansion-panel-body {
+        padding: 0 8px;
+      }
+    }
+    &.advanced-settings {
+      .mat-expansion-panel-body {
+        padding: 0;
       }
     }
   }

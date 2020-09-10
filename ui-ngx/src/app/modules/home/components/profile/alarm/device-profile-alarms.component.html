@@ -17,8 +17,9 @@
 -->
 <div fxLayout="column">
   <div class="tb-device-profile-alarms">
-    <div *ngFor="let alarmControl of alarmsFormArray().controls; let $index = index; last as isLast;"
-         fxLayout="column">
+    <div *ngFor="let alarmControl of alarmsFormArray().controls; trackBy: trackByAlarm;
+                 let $index = index; last as isLast;"
+         fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
       <tb-device-profile-alarm [formControl]="alarmControl"
                                (removeAlarm)="removeAlarm($index)">
       </tb-device-profile-alarm>

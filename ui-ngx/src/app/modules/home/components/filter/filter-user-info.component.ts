@@ -76,7 +76,7 @@ export class FilterUserInfoComponent implements ControlValueAccessor, OnInit {
     this.keyFilterPredicateUserInfo = keyFilterPredicateUserInfo;
   }
 
-  private openFilterUserInfoDialog() {
+  public openFilterUserInfoDialog() {
    this.dialog.open<FilterUserInfoDialogComponent, FilterUserInfoDialogData,
      KeyFilterPredicateUserInfo>(FilterUserInfoDialogComponent, {
       disableClose: true,
@@ -85,7 +85,8 @@ export class FilterUserInfoComponent implements ControlValueAccessor, OnInit {
         keyFilterPredicateUserInfo: deepClone(this.keyFilterPredicateUserInfo),
         valueType: this.valueType,
         key: this.key,
-        operation: this.operation
+        operation: this.operation,
+        readonly: this.disabled
       }
     }).afterClosed().subscribe(
       (result) => {

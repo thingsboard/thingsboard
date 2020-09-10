@@ -563,7 +563,7 @@ mat-label {
     }
   }
 
-  mat-toolbar.mat-table-toolbar:not(.mat-primary), .mat-cell {
+  mat-toolbar.mat-table-toolbar:not(.mat-primary), .mat-cell, .mat-expansion-panel-header {
     button.mat-icon-button {
       mat-icon {
         color: rgba(0, 0, 0, .54);

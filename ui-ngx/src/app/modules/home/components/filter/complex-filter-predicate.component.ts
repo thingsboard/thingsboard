@@ -48,6 +48,8 @@ export class ComplexFilterPredicateComponent implements ControlValueAccessor, On
 
   @Input() key: string;
 
+  @Input() displayUserParameters = true;
+
   private propagateChange = null;
 
   private complexFilterPredicate: ComplexFilterPredicateInfo;
@@ -79,11 +81,12 @@ export class ComplexFilterPredicateComponent implements ControlValueAccessor, On
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        complexPredicate: deepClone(this.complexFilterPredicate),
-        disabled: this.disabled,
+        complexPredicate: this.disabled ? this.complexFilterPredicate : deepClone(this.complexFilterPredicate),
+        readonly: this.disabled,
         valueType: this.valueType,
         isAdd: false,
-        key: this.key
+        key: this.key,
+        displayUserParameters: this.displayUserParameters
       }
     }).afterClosed().subscribe(
       (result) => {

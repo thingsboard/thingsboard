@@ -19,17 +19,14 @@ import {
   ControlValueAccessor,
   FormBuilder,
   FormControl,
-  FormGroup, NG_VALIDATORS,
-  NG_VALUE_ACCESSOR, Validator,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  Validator,
   Validators
 } from '@angular/forms';
-import { DeviceProfileAlarm } from '@shared/models/device.models';
-import { deepClone } from '@core/utils';
+import { AlarmRule, DeviceProfileAlarm } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
-import {
-  DeviceProfileAlarmDialogComponent,
-  DeviceProfileAlarmDialogData
-} from './device-profile-alarm-dialog.component';
 
 @Component({
   selector: 'tb-device-profile-alarm',
@@ -55,6 +52,8 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
 
   @Output()
   removeAlarm = new EventEmitter();
+
+  expanded = false;
 
   private modelValue: DeviceProfileAlarm;
 
@@ -98,31 +97,24 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
 
   writeValue(value: DeviceProfileAlarm): void {
     this.modelValue = value;
-    this.alarmFormGroup.reset(this.modelValue, {emitEvent: false});
+    if (!this.modelValue.alarmType) {
+      this.expanded = true;
+    }
+    this.alarmFormGroup.reset(this.modelValue || undefined, {emitEvent: false});
   }
 
-/*  openAlarm($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<DeviceProfileAlarmDialogComponent, DeviceProfileAlarmDialogData,
-      DeviceProfileAlarm>(DeviceProfileAlarmDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        isAdd: false,
-        alarm: this.disabled ? this.modelValue : deepClone(this.modelValue),
-        isReadOnly: this.disabled
+  public addClearAlarmRule() {
+    const clearAlarmRule: AlarmRule = {
+      condition: {
+        condition: []
       }
-    }).afterClosed().subscribe(
-      (deviceProfileAlarm) => {
-        if (deviceProfileAlarm) {
-          this.modelValue = deviceProfileAlarm;
-          this.updateModel();
-        }
-      }
-    );
-  } */
+    };
+    this.alarmFormGroup.patchValue({clearRule: clearAlarmRule});
+  }
+
+  public removeClearAlarmRule() {
+    this.alarmFormGroup.patchValue({clearRule: null});
+  }
 
   public validate(c: FormControl) {
     return (this.alarmFormGroup.valid) ? null : {
@@ -133,12 +125,8 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
   }
 
   private updateModel() {
-    if (this.alarmFormGroup.valid) {
-      const value = this.alarmFormGroup.value;
-      this.modelValue = {...this.modelValue, ...value};
-      this.propagateChange(this.modelValue);
-    } else {
-      this.propagateChange(null);
-    }
+    const value = this.alarmFormGroup.value;
+    this.modelValue = {...this.modelValue, ...value};
+    this.propagateChange(this.modelValue);
   }
 }

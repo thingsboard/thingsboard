@@ -46,6 +46,10 @@ export class KeyFilterListComponent implements ControlValueAccessor, OnInit {
 
   @Input() disabled: boolean;
 
+  @Input() displayUserParameters = true;
+
+  @Input() telemetryKeysOnly = false;
+
   keyFilterListFormGroup: FormGroup;
 
   entityKeyTypeTranslations = entityKeyTypeTranslationMap;
@@ -147,8 +151,11 @@ export class KeyFilterListComponent implements ControlValueAccessor, OnInit {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        keyFilter: keyFilter ? deepClone(keyFilter): null,
-        isAdd
+        keyFilter: keyFilter ? (this.disabled ? keyFilter : deepClone(keyFilter)) : null,
+        isAdd,
+        readonly: this.disabled,
+        displayUserParameters: this.displayUserParameters,
+        telemetryKeysOnly: this.telemetryKeysOnly
       }
     }).afterClosed();
   }

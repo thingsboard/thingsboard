@@ -100,10 +100,10 @@ import { MqttDeviceProfileTransportConfigurationComponent } from './profile/devi
 import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/device/lwm2m-device-profile-transport-configuration.component';
 import { DeviceProfileAlarmsComponent } from './profile/alarm/device-profile-alarms.component';
 import { DeviceProfileAlarmComponent } from './profile/alarm/device-profile-alarm.component';
-import { DeviceProfileAlarmDialogComponent } from './profile/alarm/device-profile-alarm-dialog.component';
 import { CreateAlarmRulesComponent } from './profile/alarm/create-alarm-rules.component';
 import { AlarmRuleComponent } from './profile/alarm/alarm-rule.component';
 import { AlarmRuleConditionComponent } from './profile/alarm/alarm-rule-condition.component';
+import { AlarmRuleKeyFiltersDialogComponent } from './profile/alarm/alarm-rule-key-filters-dialog.component';
 
 @NgModule({
   declarations:
@@ -184,9 +184,9 @@ import { AlarmRuleConditionComponent } from './profile/alarm/alarm-rule-conditio
       DeviceProfileTransportConfigurationComponent,
       CreateAlarmRulesComponent,
       AlarmRuleComponent,
+      AlarmRuleKeyFiltersDialogComponent,
       AlarmRuleConditionComponent,
       DeviceProfileAlarmComponent,
-      DeviceProfileAlarmDialogComponent,
       DeviceProfileAlarmsComponent,
       DeviceProfileDataComponent,
       DeviceProfileComponent,
@@ -260,9 +260,9 @@ import { AlarmRuleConditionComponent } from './profile/alarm/alarm-rule-conditio
     DeviceProfileTransportConfigurationComponent,
     CreateAlarmRulesComponent,
     AlarmRuleComponent,
+    AlarmRuleKeyFiltersDialogComponent,
     AlarmRuleConditionComponent,
     DeviceProfileAlarmComponent,
-    DeviceProfileAlarmDialogComponent,
     DeviceProfileAlarmsComponent,
     DeviceProfileDataComponent,
     DeviceProfileComponent,

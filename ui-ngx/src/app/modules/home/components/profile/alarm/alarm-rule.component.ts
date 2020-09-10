@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, NgZone, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -27,11 +27,13 @@ import {
 } from '@angular/forms';
 import { AlarmRule } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
+import { TimeUnit, timeUnitTranslationMap } from '../../../../../shared/models/time/time.models';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({
   selector: 'tb-alarm-rule',
   templateUrl: './alarm-rule.component.html',
-  styleUrls: [],
+  styleUrls: ['./alarm-rule.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -47,8 +49,22 @@ import { MatDialog } from '@angular/material/dialog';
 })
 export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validator {
 
+  timeUnits = Object.keys(TimeUnit);
+  timeUnitTranslations = timeUnitTranslationMap;
+
   @Input()
   disabled: boolean;
+
+  private requiredValue: boolean;
+  get required(): boolean {
+    return this.requiredValue;
+  }
+  @Input()
+  set required(value: boolean) {
+    this.requiredValue = coerceBooleanProperty(value);
+  }
+
+  enableDuration = false;
 
   private modelValue: AlarmRule;
 
@@ -69,7 +85,11 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
 
   ngOnInit() {
     this.alarmRuleFormGroup = this.fb.group({
-      condition: [null, Validators.required],
+      condition:  this.fb.group({
+        condition: [null, Validators.required],
+        durationUnit: [null],
+        durationValue: [null]
+      }, Validators.required),
       alarmDetails: [null]
     });
     this.alarmRuleFormGroup.valueChanges.subscribe(() => {
@@ -88,24 +108,51 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
 
   writeValue(value: AlarmRule): void {
     this.modelValue = value;
-    this.alarmRuleFormGroup.reset(this.modelValue, {emitEvent: false});
+    this.enableDuration = value && !!value.condition.durationValue;
+    this.alarmRuleFormGroup.reset(this.modelValue || undefined, {emitEvent: false});
+    this.updateValidators();
   }
 
   public validate(c: FormControl) {
-    return (this.alarmRuleFormGroup.valid) ? null : {
+    return (!this.required && !this.modelValue || this.alarmRuleFormGroup.valid) ? null : {
       alarmRule: {
         valid: false,
       },
     };
   }
 
+  public enableDurationChanged(enableDuration) {
+    this.enableDuration = enableDuration;
+    this.updateValidators(true, true);
+  }
+
+  private updateValidators(resetDuration = false, emitEvent = false) {
+    if (this.enableDuration) {
+      this.alarmRuleFormGroup.get('condition').get('durationValue')
+        .setValidators([Validators.required, Validators.min(1), Validators.max(2147483647)]);
+      this.alarmRuleFormGroup.get('condition').get('durationUnit')
+        .setValidators([Validators.required]);
+    } else {
+      this.alarmRuleFormGroup.get('condition').get('durationValue')
+        .setValidators([]);
+      this.alarmRuleFormGroup.get('condition').get('durationUnit')
+        .setValidators([]);
+      if (resetDuration) {
+        this.alarmRuleFormGroup.get('condition').patchValue({
+          durationValue: null,
+          durationUnit: null
+        });
+      }
+    }
+    this.alarmRuleFormGroup.get('condition').get('durationValue').updateValueAndValidity({emitEvent});
+    this.alarmRuleFormGroup.get('condition').get('durationUnit').updateValueAndValidity({emitEvent});
+  }
+
   private updateModel() {
-    if (this.alarmRuleFormGroup.valid) {
-      const value = this.alarmRuleFormGroup.value;
+    const value = this.alarmRuleFormGroup.value;
+    if (this.modelValue) {
       this.modelValue = {...this.modelValue, ...value};
       this.propagateChange(this.modelValue);
-    } else {
-      this.propagateChange(null);
     }
   }
 }

@@ -15,5 +15,16 @@
     limitations under the License.
 
 -->
-<div fxLayout="row" [formGroup]="alarmRuleConditionFormGroup">
-</div>
+<mat-form-field class="mat-block" (click)="openFilterDialog($event)" floatLabel="always" hideRequiredMarker>
+  <mat-label></mat-label>
+  <input readonly
+         required matInput [formControl]="alarmRuleConditionControl"
+         placeholder="{{'device-profile.enter-alarm-rule-condition-prompt' | translate}}">
+  <a matSuffix mat-icon-button color="primary"
+     type="button"
+     (click)="openFilterDialog($event)"
+     matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
+     matTooltipPosition="above">
+    <mat-icon>{{ disabled ? 'more_vert' : 'edit' }}</mat-icon>
+  </a>
+</mat-form-field>

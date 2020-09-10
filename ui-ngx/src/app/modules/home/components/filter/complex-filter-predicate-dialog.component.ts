@@ -32,9 +32,10 @@ import {
 export interface ComplexFilterPredicateDialogData {
   complexPredicate: ComplexFilterPredicateInfo;
   key: string;
-  disabled: boolean;
+  readonly: boolean;
   isAdd: boolean;
   valueType: EntityKeyValueType;
+  displayUserParameters: boolean;
 }
 
 @Component({
@@ -73,6 +74,9 @@ export class ComplexFilterPredicateDialogComponent extends
         predicates: [this.data.complexPredicate.predicates, [Validators.required]]
       }
     );
+    if (this.data.readonly) {
+      this.complexFilterFormGroup.disable({emitEvent: false});
+    }
   }
 
   ngOnInit(): void {

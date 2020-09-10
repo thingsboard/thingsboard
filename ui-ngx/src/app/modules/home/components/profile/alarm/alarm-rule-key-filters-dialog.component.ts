@@ -14,68 +14,58 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  Inject,
-  OnInit,
-  SkipSelf
-} from '@angular/core';
+import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
-import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
-import { DeviceProfileAlarm } from '@shared/models/device.models';
+import { DialogComponent } from '@app/shared/components/dialog.component';
+import { UtilsService } from '@core/services/utils.service';
+import { TranslateService } from '@ngx-translate/core';
+import { KeyFilter, keyFilterInfosToKeyFilters, keyFiltersToKeyFilterInfos } from '@shared/models/query/query.models';
 
-export interface DeviceProfileAlarmDialogData {
-  alarm: DeviceProfileAlarm;
-  isAdd: boolean;
-  isReadOnly: boolean;
+export interface AlarmRuleKeyFiltersDialogData {
+  readonly: boolean;
+  keyFilters: Array<KeyFilter>;
 }
 
 @Component({
-  selector: 'tb-device-profile-alarm-dialog',
-  templateUrl: './device-profile-alarm-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: DeviceProfileAlarmDialogComponent}],
+  selector: 'tb-alarm-rule-key-filters-dialog',
+  templateUrl: './alarm-rule-key-filters-dialog.component.html',
+  providers: [{provide: ErrorStateMatcher, useExisting: AlarmRuleKeyFiltersDialogComponent}],
   styleUrls: []
 })
-export class DeviceProfileAlarmDialogComponent extends
-  DialogComponent<DeviceProfileAlarmDialogComponent, DeviceProfileAlarm> implements OnInit, ErrorStateMatcher {
+export class AlarmRuleKeyFiltersDialogComponent extends DialogComponent<AlarmRuleKeyFiltersDialogComponent, Array<KeyFilter>>
+  implements OnInit, ErrorStateMatcher {
 
-  alarmFormGroup: FormGroup;
+  readonly = this.data.readonly;
+  keyFilters = this.data.keyFilters;
 
-  isReadOnly = this.data.isReadOnly;
-  alarm = this.data.alarm;
-  isAdd = this.data.isAdd;
+  keyFiltersFormGroup: FormGroup;
 
   submitted = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: DeviceProfileAlarmDialogData,
-              public dialogRef: MatDialogRef<DeviceProfileAlarmDialogComponent, DeviceProfileAlarm>,
+              @Inject(MAT_DIALOG_DATA) public data: AlarmRuleKeyFiltersDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public fb: FormBuilder) {
+              public dialogRef: MatDialogRef<AlarmRuleKeyFiltersDialogComponent, Array<KeyFilter>>,
+              private fb: FormBuilder,
+              private utils: UtilsService,
+              public translate: TranslateService) {
     super(store, router, dialogRef);
-    this.isAdd = this.data.isAdd;
-    this.alarm = this.data.alarm;
+
+    this.keyFiltersFormGroup = this.fb.group({
+      keyFilters: [keyFiltersToKeyFilterInfos(this.keyFilters), Validators.required]
+    });
+    if (this.readonly) {
+      this.keyFiltersFormGroup.disable({emitEvent: false});
+    }
   }
 
   ngOnInit(): void {
-    this.alarmFormGroup = this.fb.group({
-      id: [null, Validators.required],
-      alarmType: [null, Validators.required],
-      createRules: [null],
-      clearRule: [null],
-      propagate: [null],
-      propagateRelationTypes: [null]
-    });
-    this.alarmFormGroup.reset(this.alarm, {emitEvent: false});
-    if (this.isReadOnly) {
-      this.alarmFormGroup.disable({emitEvent: false});
-    }
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -90,10 +80,7 @@ export class DeviceProfileAlarmDialogComponent extends
 
   save(): void {
     this.submitted = true;
-    if (this.alarmFormGroup.valid) {
-      this.alarm = {...this.alarm, ...this.alarmFormGroup.value};
-      this.dialogRef.close(this.alarm);
-    }
+    this.keyFilters = keyFilterInfosToKeyFilters(this.keyFiltersFormGroup.get('keyFilters').value);
+    this.dialogRef.close(this.keyFilters);
   }
-
 }

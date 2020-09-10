@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="keyFilterFormGroup" (ngSubmit)="save()" style="width: 900px;">
   <mat-toolbar color="primary">
-    <h2>{{(data.isAdd ? 'filter.add-key-filter' : 'filter.edit-key-filter') | translate}}</h2>
+    <h2>{{(data.isAdd ? 'filter.add-key-filter' : (data.readonly ? 'filter.key-filter' : 'filter.edit-key-filter')) | translate}}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -70,6 +70,7 @@
         </mat-form-field>
       </section>
       <tb-filter-predicate-list *ngIf="keyFilterFormGroup.get('valueType').value"
+                                [displayUserParameters]="data.displayUserParameters"
                                 [valueType]="keyFilterFormGroup.get('valueType').value"
                                 [key]="keyFilterFormGroup.get('key.key').value"
                                 formControlName="predicates">
@@ -79,6 +80,7 @@
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-raised-button color="primary"
             type="submit"
+            *ngIf="!data.readonly"
             [disabled]="(isLoading$ | async) || keyFilterFormGroup.invalid || !keyFilterFormGroup.dirty">
       {{ (data.isAdd ? 'action.add' : 'action.update') | translate }}
     </button>
@@ -87,7 +89,7 @@
             [disabled]="(isLoading$ | async)"
             (click)="cancel()"
             cdkFocusInitial>
-      {{ 'action.cancel' | translate }}
+      {{ (data.readonly ? 'action.close' : 'action.cancel') | translate }}
     </button>
   </div>
 </form>

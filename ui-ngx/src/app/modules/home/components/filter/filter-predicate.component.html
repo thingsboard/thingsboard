@@ -35,11 +35,12 @@
       <tb-complex-filter-predicate
         [key]="key"
         [valueType]="valueType"
+        [displayUserParameters]="displayUserParameters"
         formControlName="predicate">
       </tb-complex-filter-predicate>
     </ng-template>
   </div>
-  <tb-filter-user-info *ngIf="type !== filterPredicateType.COMPLEX"
+  <tb-filter-user-info *ngIf="type !== filterPredicateType.COMPLEX && displayUserParameters"
                        style="width: 60px;"
                        fxLayout="row" fxLayoutAlign="center"
                        [valueType]="valueType"

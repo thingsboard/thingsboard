@@ -13,23 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.thingsboard.server.common.data.query;
 
-:host {
-  .create-alarm-rule {
-    border: 1px groove rgba(0, 0, 0, .25);
-    border-radius: 4px;
-    padding: 8px;
-    .mat-form-field.severity {
-      border-right: 1px groove rgba(0, 0, 0, 0.25);
-      padding-right: 8px;
-    }
-  }
-}
-
-:host ::ng-deep {
-  .mat-form-field.severity {
-    .mat-form-field-infix {
-      width: 160px;
-    }
-  }
+public enum EntityKeyValueType {
+    STRING,
+    NUMERIC,
+    BOOLEAN,
+    DATE_TIME
 }

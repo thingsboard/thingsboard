@@ -19,9 +19,12 @@ import {
   AbstractControl,
   ControlValueAccessor,
   FormArray,
-  FormBuilder, FormControl,
-  FormGroup, NG_VALIDATORS,
-  NG_VALUE_ACCESSOR, Validator,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  Validator,
   Validators
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -30,10 +33,6 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DeviceProfileAlarm } from '@shared/models/device.models';
 import { guid } from '@core/utils';
 import { Subscription } from 'rxjs';
-import {
-  DeviceProfileAlarmDialogComponent,
-  DeviceProfileAlarmDialogData
-} from './device-profile-alarm-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 
 @Component({
@@ -125,6 +124,14 @@ export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnIni
     });
   }
 
+  public trackByAlarm(index: number, alarmControl: AbstractControl): string {
+    if (alarmControl) {
+      return alarmControl.value.id;
+    } else {
+      return null;
+    }
+  }
+
   public removeAlarm(index: number) {
     (this.deviceProfileAlarmsFormGroup.get('alarms') as FormArray).removeAt(index);
   }
@@ -144,22 +151,6 @@ export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnIni
     const alarmsArray = this.deviceProfileAlarmsFormGroup.get('alarms') as FormArray;
     alarmsArray.push(this.fb.control(alarm, [Validators.required]));
     this.deviceProfileAlarmsFormGroup.updateValueAndValidity();
-
-/*    this.dialog.open<DeviceProfileAlarmDialogComponent, DeviceProfileAlarmDialogData,
-      DeviceProfileAlarm>(DeviceProfileAlarmDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        isAdd: true,
-        alarm,
-        isReadOnly: false
-      }
-    }).afterClosed().subscribe(
-      (deviceProfileAlarm) => {
-        if (deviceProfileAlarm) {
-        }
-      }
-    ); */
   }
 
   public validate(c: FormControl) {
@@ -171,11 +162,11 @@ export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnIni
   }
 
   private updateModel() {
-    if (this.deviceProfileAlarmsFormGroup.valid) {
+//    if (this.deviceProfileAlarmsFormGroup.valid) {
       const alarms: Array<DeviceProfileAlarm> = this.deviceProfileAlarmsFormGroup.get('alarms').value;
       this.propagateChange(alarms);
-    } else {
+  /*  } else {
       this.propagateChange(null);
-    }
+    } */
   }
 }

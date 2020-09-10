@@ -37,6 +37,7 @@
       </mat-form-field>
       <tb-filter-predicate-list
         [valueType]="data.valueType"
+        [displayUserParameters]="data.displayUserParameters"
         [operation]="complexFilterFormGroup.get('operation').value"
         [key]="data.key"
         formControlName="predicates">
@@ -45,6 +46,7 @@
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-raised-button color="primary"
+            *ngIf="!data.readonly"
             type="submit"
             [disabled]="(isLoading$ | async) || complexFilterFormGroup.invalid || !complexFilterFormGroup.dirty">
       {{ (isAdd ? 'action.add' : 'action.update') | translate }}
@@ -54,7 +56,7 @@
             [disabled]="(isLoading$ | async)"
             (click)="cancel()"
             cdkFocusInitial>
-      {{ 'action.cancel' | translate }}
+      {{ (data.readonly ? 'action.close' : 'action.cancel') | translate }}
     </button>
   </div>
 </form>

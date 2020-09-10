@@ -65,7 +65,6 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
   set entity(entity: T) {
     this.entityValue = entity;
     if (this.entityForm) {
-      this.entityForm.reset(undefined, {emitEvent: false});
       this.entityForm.markAsPristine();
       this.updateForm(entity);
     }

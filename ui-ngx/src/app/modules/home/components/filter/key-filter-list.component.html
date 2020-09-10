@@ -46,9 +46,9 @@
             <button mat-icon-button color="primary"
                     type="button"
                     (click)="editKeyFilter($index)"
-                    matTooltip="{{ 'filter.edit-key-filter' | translate }}"
+                    matTooltip="{{ (disabled ? 'filter.key-filter' : 'filter.edit-key-filter') | translate }}"
                     matTooltipPosition="above">
-              <mat-icon>edit</mat-icon>
+              <mat-icon>{{disabled ? 'more_vert' : 'edit'}}</mat-icon>
             </button>
             <button mat-icon-button color="primary"
                     [fxShow]="!disabled"

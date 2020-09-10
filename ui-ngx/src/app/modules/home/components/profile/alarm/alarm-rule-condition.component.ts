@@ -19,19 +19,22 @@ import {
   ControlValueAccessor,
   FormBuilder,
   FormControl,
-  FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  Validator,
-  Validators
+  Validator
 } from '@angular/forms';
-import { AlarmCondition } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
+import { KeyFilter } from '@shared/models/query/query.models';
+import { deepClone } from '@core/utils';
+import {
+  AlarmRuleKeyFiltersDialogComponent,
+  AlarmRuleKeyFiltersDialogData
+} from './alarm-rule-key-filters-dialog.component';
 
 @Component({
   selector: 'tb-alarm-rule-condition',
   templateUrl: './alarm-rule-condition.component.html',
-  styleUrls: [],
+  styleUrls: ['./alarm-rule-condition.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -50,9 +53,9 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
   @Input()
   disabled: boolean;
 
-  private modelValue: AlarmCondition;
+  alarmRuleConditionControl: FormControl;
 
-  alarmRuleConditionFormGroup: FormGroup;
+  private modelValue: Array<KeyFilter>;
 
   private propagateChange = (v: any) => { };
 
@@ -68,45 +71,56 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
   }
 
   ngOnInit() {
-    this.alarmRuleConditionFormGroup = this.fb.group({
-      condition: [null, Validators.required],
-      durationUnit: [null],
-      durationValue: [null]
-    });
-    this.alarmRuleConditionFormGroup.valueChanges.subscribe(() => {
-      this.updateModel();
-    });
+    this.alarmRuleConditionControl = this.fb.control(null);
   }
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
-    if (this.disabled) {
-      this.alarmRuleConditionFormGroup.disable({emitEvent: false});
-    } else {
-      this.alarmRuleConditionFormGroup.enable({emitEvent: false});
-    }
   }
 
-  writeValue(value: AlarmCondition): void {
+  writeValue(value: Array<KeyFilter>): void {
     this.modelValue = value;
-    this.alarmRuleConditionFormGroup.reset(this.modelValue, {emitEvent: false});
+    this.updateConditionInfo();
   }
 
   public validate(c: FormControl) {
-    return (this.alarmRuleConditionFormGroup.valid) ? null : {
+    return (this.modelValue && this.modelValue.length) ? null : {
       alarmRuleCondition: {
         valid: false,
       },
     };
   }
 
-  private updateModel() {
-    if (this.alarmRuleConditionFormGroup.valid) {
-      const value = this.alarmRuleConditionFormGroup.value;
-      this.modelValue = {...this.modelValue, ...value};
-      this.propagateChange(this.modelValue);
-    } else {
-      this.propagateChange(null);
+  public openFilterDialog($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
     }
+    this.dialog.open<AlarmRuleKeyFiltersDialogComponent, AlarmRuleKeyFiltersDialogData,
+      Array<KeyFilter>>(AlarmRuleKeyFiltersDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        readonly: this.disabled,
+        keyFilters: this.disabled ? this.modelValue : deepClone(this.modelValue)
+      }
+    }).afterClosed().subscribe((result) => {
+      if (result) {
+        this.modelValue = result;
+        this.updateModel();
+      }
+    });
+  }
+
+  private updateConditionInfo() {
+    if (this.modelValue && this.modelValue.length) {
+      this.alarmRuleConditionControl.patchValue('Condition set');
+    } else {
+      this.alarmRuleConditionControl.patchValue(null);
+    }
+  }
+
+  private updateModel() {
+    this.updateConditionInfo();
+    this.propagateChange(this.modelValue);
   }
 }
