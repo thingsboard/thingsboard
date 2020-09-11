@@ -116,16 +116,13 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
             Map<TsKey, TsKvLatestEntity> trueLatest = new HashMap<>();
             v.forEach(ts -> {
                 TsKey key = new TsKey(ts.getEntityId(), ts.getKey());
-                TsKvLatestEntity old = trueLatest.get(key);
-                if (old == null || old.getTs() < ts.getTs()) {
-                    trueLatest.put(key, ts);
-                }
+                trueLatest.merge(key, ts, (oldTs, newTs) -> oldTs.getTs() < newTs.getTs() ? newTs : oldTs);
             });
-            List<TsKvLatestEntity> latestEntities = batchSortEnabled ?
-                    trueLatest.values().stream().sorted(Comparator.comparing((Function<TsKvLatestEntity, UUID>) AbstractTsKvEntity::getEntityId)
-                            .thenComparingInt(AbstractTsKvEntity::getKey)
-                    )
-                            .collect(Collectors.toList()) : new ArrayList<>(trueLatest.values());
+            List<TsKvLatestEntity> latestEntities = new ArrayList<>(trueLatest.values());
+            if (batchSortEnabled) {
+                latestEntities.sort(Comparator.comparing((Function<TsKvLatestEntity, UUID>) AbstractTsKvEntity::getEntityId)
+                        .thenComparingInt(AbstractTsKvEntity::getKey));
+            }
             insertLatestTsRepository.saveOrUpdate(latestEntities);
         }, (l, r) -> 0);
     }
