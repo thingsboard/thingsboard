@@ -30,6 +30,8 @@ import {
   AlarmRuleKeyFiltersDialogComponent,
   AlarmRuleKeyFiltersDialogData
 } from './alarm-rule-key-filters-dialog.component';
+import { TranslateService } from '@ngx-translate/core';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'tb-alarm-rule-condition',
@@ -60,7 +62,9 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
   private propagateChange = (v: any) => { };
 
   constructor(private dialog: MatDialog,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private translate: TranslateService,
+              private datePipe: DatePipe) {
   }
 
   registerOnChange(fn: any): void {
@@ -76,6 +80,11 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.disabled) {
+      this.alarmRuleConditionControl.disable({emitEvent: false});
+    } else {
+      this.alarmRuleConditionControl.enable({emitEvent: false});
+    }
   }
 
   writeValue(value: Array<KeyFilter>): void {
@@ -83,8 +92,12 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
     this.updateConditionInfo();
   }
 
+  public conditionSet() {
+    return this.modelValue && this.modelValue.length;
+  }
+
   public validate(c: FormControl) {
-    return (this.modelValue && this.modelValue.length) ? null : {
+    return this.conditionSet() ? null : {
       alarmRuleCondition: {
         valid: false,
       },
@@ -112,11 +125,7 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
   }
 
   private updateConditionInfo() {
-    if (this.modelValue && this.modelValue.length) {
-      this.alarmRuleConditionControl.patchValue('Condition set');
-    } else {
-      this.alarmRuleConditionControl.patchValue(null);
-    }
+    this.alarmRuleConditionControl.patchValue(this.modelValue);
   }
 
   private updateModel() {

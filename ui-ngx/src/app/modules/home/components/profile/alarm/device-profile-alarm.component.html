@@ -66,6 +66,10 @@
         <mat-icon>remove_circle_outline</mat-icon>
       </button>
     </div>
+    <div *ngIf="disabled && !alarmFormGroup.get('clearRule').value">
+      <span translate fxLayoutAlign="center center"
+            class="tb-prompt">device-profile.no-clear-alarm-rule</span>
+    </div>
     <div fxLayout="row" *ngIf="!disabled"
          [fxShow]="!alarmFormGroup.get('clearRule').value">
       <button mat-stroked-button color="primary"

@@ -15,16 +15,22 @@
     limitations under the License.
 
 -->
-<mat-form-field class="mat-block" (click)="openFilterDialog($event)" floatLabel="always" hideRequiredMarker>
-  <mat-label></mat-label>
-  <input readonly
-         required matInput [formControl]="alarmRuleConditionControl"
-         placeholder="{{'device-profile.enter-alarm-rule-condition-prompt' | translate}}">
-  <a matSuffix mat-icon-button color="primary"
-     type="button"
-     (click)="openFilterDialog($event)"
-     matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
-     matTooltipPosition="above">
-    <mat-icon>{{ disabled ? 'more_vert' : 'edit' }}</mat-icon>
-  </a>
-</mat-form-field>
+<div fxLayout="column" fxFlex>
+  <div fxLayout="row" fxLayoutAlign="start center" style="min-height: 40px;">
+    <div class="tb-small" translate>device-profile.alarm-rule-condition</div>
+    <span fxFlex></span>
+    <a mat-button color="primary"
+       type="button"
+       (click)="openFilterDialog($event)"
+       matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
+       matTooltipPosition="above">
+      {{ (disabled ? 'action.view' : (conditionSet() ? 'action.edit' : 'action.add')) | translate }}
+    </a>
+  </div>
+  <div class="tb-alarm-rule-condition" fxFlex fxLayout="column" fxLayoutAlign="center" (click)="openFilterDialog($event)">
+    <tb-filter-text [formControl]="alarmRuleConditionControl"
+                    required
+                    addFilterPrompt="{{'device-profile.enter-alarm-rule-condition-prompt' | translate}}">
+    </tb-filter-text>
+  </div>
+</div>

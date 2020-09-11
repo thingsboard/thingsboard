@@ -142,7 +142,7 @@ export class CreateAlarmRulesComponent implements ControlValueAccessor, OnInit, 
   }
 
   public validate(c: FormControl) {
-    return (this.createAlarmRulesFormGroup.valid && this.createAlarmRulesFormGroup.get('createAlarmRules').value.length) ? null : {
+    return (this.createAlarmRulesFormGroup.valid) ? null : {
       createAlarmRules: {
         valid: false,
       },

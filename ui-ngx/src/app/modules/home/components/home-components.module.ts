@@ -104,6 +104,7 @@ import { CreateAlarmRulesComponent } from './profile/alarm/create-alarm-rules.co
 import { AlarmRuleComponent } from './profile/alarm/alarm-rule.component';
 import { AlarmRuleConditionComponent } from './profile/alarm/alarm-rule-condition.component';
 import { AlarmRuleKeyFiltersDialogComponent } from './profile/alarm/alarm-rule-key-filters-dialog.component';
+import { FilterTextComponent } from './filter/filter-text.component';
 
 @NgModule({
   declarations:
@@ -165,6 +166,7 @@ import { AlarmRuleKeyFiltersDialogComponent } from './profile/alarm/alarm-rule-k
       FilterDialogComponent,
       FiltersDialogComponent,
       FilterSelectComponent,
+      FilterTextComponent,
       FiltersEditComponent,
       FiltersEditPanelComponent,
       UserFilterDialogComponent,
@@ -245,6 +247,7 @@ import { AlarmRuleKeyFiltersDialogComponent } from './profile/alarm/alarm-rule-k
     FilterDialogComponent,
     FiltersDialogComponent,
     FilterSelectComponent,
+    FilterTextComponent,
     FiltersEditComponent,
     UserFilterDialogComponent,
     TenantProfileAutocompleteComponent,
