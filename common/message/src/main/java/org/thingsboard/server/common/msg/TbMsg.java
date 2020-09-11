@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.gen.MsgProtos;
+import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
@@ -82,6 +83,11 @@ public final class TbMsg implements Serializable {
     public static TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
         return new TbMsg(origMsg.getQueueName(), origMsg.getId(), origMsg.getTs(), type, originator, metaData.copy(), origMsg.getDataType(),
                 data, origMsg.getRuleChainId(), origMsg.getRuleNodeId(), origMsg.getCallback());
+    }
+
+    public static TbMsg transformMsg(TbMsg origMsg, RuleChainId ruleChainId) {
+        return new TbMsg(origMsg.queueName, origMsg.id, origMsg.ts, origMsg.type, origMsg.originator, origMsg.metaData, origMsg.dataType,
+                origMsg.data, ruleChainId, null, origMsg.getCallback());
     }
 
     public static TbMsg newMsg(TbMsg tbMsg, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {

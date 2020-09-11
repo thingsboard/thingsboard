@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport;
+package org.thingsboard.server.service.profile;
 
-import com.google.protobuf.ByteString;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.Optional;
+public interface TbDeviceProfileCache {
 
-public interface TransportProfileCache {
+    DeviceProfile get(TenantId tenantId, DeviceProfileId deviceProfileId);
 
-    DeviceProfile getOrCreate(DeviceProfileId id, ByteString profileBody);
-
-    DeviceProfile get(DeviceProfileId id);
+    DeviceProfile get(TenantId tenantId, DeviceId deviceId);
 
     void put(DeviceProfile profile);
 
-    DeviceProfile put(ByteString profileBody);
-
     void evict(DeviceProfileId id);
+
+    void evict(DeviceId id);
 
 }

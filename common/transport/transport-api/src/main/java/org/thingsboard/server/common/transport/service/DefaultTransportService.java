@@ -629,6 +629,11 @@ public class DefaultTransportService implements TransportService {
                 if (deviceProfile != null) {
                     onProfileUpdate(deviceProfile);
                 }
+            } else if (toSessionMsg.hasDeviceProfileDeleteMsg()) {
+                transportProfileCache.evict(new DeviceProfileId(new UUID(
+                        toSessionMsg.getDeviceProfileDeleteMsg().getProfileIdMSB(),
+                        toSessionMsg.getDeviceProfileDeleteMsg().getProfileIdLSB()
+                )));
             } else {
                 //TODO: should we notify the device actor about missed session?
                 log.debug("[{}] Missing session.", sessionId);

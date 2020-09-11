@@ -15,23 +15,31 @@
  */
 package org.thingsboard.server.service.queue.processing;
 
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.EventListener;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
 
 import javax.annotation.PreDestroy;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -51,12 +59,15 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
 
     protected final ActorSystemContext actorContext;
     protected final DataDecodingEncodingService encodingService;
+    protected final TbDeviceProfileCache deviceProfileCache;
 
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
 
-    public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
+    public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
+                                   TbDeviceProfileCache deviceProfileCache, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
+        this.deviceProfileCache = deviceProfileCache;
         this.nfConsumer = nfConsumer;
     }
 
@@ -124,6 +135,23 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             }
             log.info("TB Notifications Consumer stopped.");
         });
+    }
+
+    protected void handleComponentLifecycleMsg(UUID id, ByteString nfMsg) {
+        Optional<TbActorMsg> actorMsgOpt = encodingService.decode(nfMsg.toByteArray());
+        if (actorMsgOpt.isPresent()) {
+            TbActorMsg actorMsg = actorMsgOpt.get();
+            if (actorMsg instanceof ComponentLifecycleMsg) {
+                ComponentLifecycleMsg componentLifecycleMsg = (ComponentLifecycleMsg) actorMsg;
+                if (EntityType.DEVICE_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    deviceProfileCache.evict(new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
+                } else if (EntityType.DEVICE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    deviceProfileCache.evict(new DeviceId(componentLifecycleMsg.getEntityId().getId()));
+                }
+            }
+            log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
+            actorContext.tellWithHighPriority(actorMsg);
+        }
     }
 
     protected abstract void handleNotification(UUID id, TbProtoQueueMsg<N> msg, TbCallback callback) throws Exception;

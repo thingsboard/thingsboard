@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.queue;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.ProtocolStringList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,6 +39,7 @@ import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.*;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
@@ -80,8 +82,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               TbRuleEngineQueueFactory tbRuleEngineQueueFactory, RuleEngineStatisticsService statisticsService,
                                               ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
                                               TbRuleEngineDeviceRpcService tbDeviceRpcService,
-                                              StatsFactory statsFactory) {
-        super(actorContext, encodingService, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
+                                              StatsFactory statsFactory, TbDeviceProfileCache deviceProfileCache) {
+        super(actorContext, encodingService, deviceProfileCache, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
         this.statisticsService = statisticsService;
         this.ruleEngineSettings = ruleEngineSettings;
         this.tbRuleEngineQueueFactory = tbRuleEngineQueueFactory;
@@ -239,11 +241,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     protected void handleNotification(UUID id, TbProtoQueueMsg<ToRuleEngineNotificationMsg> msg, TbCallback callback) throws Exception {
         ToRuleEngineNotificationMsg nfMsg = msg.getValue();
         if (nfMsg.getComponentLifecycleMsg() != null && !nfMsg.getComponentLifecycleMsg().isEmpty()) {
-            Optional<TbActorMsg> actorMsg = encodingService.decode(nfMsg.getComponentLifecycleMsg().toByteArray());
-            if (actorMsg.isPresent()) {
-                log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
-                actorContext.tellWithHighPriority(actorMsg.get());
-            }
+            handleComponentLifecycleMsg(id, nfMsg.getComponentLifecycleMsg());
             callback.onSuccess();
         } else if (nfMsg.hasFromDeviceRpcResponse()) {
             TransportProtos.FromDeviceRPCResponseProto proto = nfMsg.getFromDeviceRpcResponse();

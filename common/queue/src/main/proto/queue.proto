@@ -194,6 +194,11 @@ message DeviceProfileUpdateMsg {
   bytes data = 1;
 }
 
+message DeviceProfileDeleteMsg {
+    int64 profileIdMSB = 1;
+    int64 profileIdLSB = 2;
+}
+
 message SessionCloseNotificationProto {
   string message = 1;
 }
@@ -485,4 +490,5 @@ message ToTransportMsg {
   ToDeviceRpcRequestMsg toDeviceRequest = 6;
   ToServerRpcResponseMsg toServerResponse = 7;
   DeviceProfileUpdateMsg deviceProfileUpdateMsg = 8;
+  DeviceProfileDeleteMsg deviceProfileDeleteMsg = 9;
 }
