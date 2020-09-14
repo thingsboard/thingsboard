@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
@@ -50,12 +51,10 @@ import org.thingsboard.server.dao.util.SqlTsLatestAnyDao;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -90,6 +89,9 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     @Value("${sql.ts_latest.batch_threads:4}")
     private int tsLatestBatchThreads;
 
+    @Value("${sql.batch_sort:false}")
+    protected boolean batchSortEnabled;
+
     @Autowired
     protected ScheduledLogExecutorComponent logExecutor;
 
@@ -104,6 +106,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
                 .maxDelay(tsLatestMaxDelay)
                 .statsPrintIntervalMs(tsLatestStatsPrintIntervalMs)
                 .statsNamePrefix("ts.latest")
+                .batchSortEnabled(false)
                 .build();
 
         java.util.function.Function<TsKvLatestEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
@@ -113,14 +116,15 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
             Map<TsKey, TsKvLatestEntity> trueLatest = new HashMap<>();
             v.forEach(ts -> {
                 TsKey key = new TsKey(ts.getEntityId(), ts.getKey());
-                TsKvLatestEntity old = trueLatest.get(key);
-                if (old == null || old.getTs() < ts.getTs()) {
-                    trueLatest.put(key, ts);
-                }
+                trueLatest.merge(key, ts, (oldTs, newTs) -> oldTs.getTs() < newTs.getTs() ? newTs : oldTs);
             });
             List<TsKvLatestEntity> latestEntities = new ArrayList<>(trueLatest.values());
+            if (batchSortEnabled) {
+                latestEntities.sort(Comparator.comparing((Function<TsKvLatestEntity, UUID>) AbstractTsKvEntity::getEntityId)
+                        .thenComparingInt(AbstractTsKvEntity::getKey));
+            }
             insertLatestTsRepository.saveOrUpdate(latestEntities);
-        });
+        }, (l, r) -> 0);
     }
 
     @PreDestroy
