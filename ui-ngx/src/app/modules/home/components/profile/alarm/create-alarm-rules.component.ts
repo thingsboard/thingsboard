@@ -124,6 +124,9 @@ export class CreateAlarmRulesComponent implements ControlValueAccessor, OnInit, 
       this.updateModel();
     });
     this.updateUsedSeverities();
+    if (!this.disabled && !this.createAlarmRulesFormGroup.valid) {
+      this.updateModel();
+    }
   }
 
   public removeCreateAlarmRule(index: number) {

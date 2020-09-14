@@ -105,6 +105,7 @@ import { AlarmRuleComponent } from './profile/alarm/alarm-rule.component';
 import { AlarmRuleConditionComponent } from './profile/alarm/alarm-rule-condition.component';
 import { AlarmRuleKeyFiltersDialogComponent } from './profile/alarm/alarm-rule-key-filters-dialog.component';
 import { FilterTextComponent } from './filter/filter-text.component';
+import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
 
 @NgModule({
   declarations:
@@ -192,7 +193,8 @@ import { FilterTextComponent } from './filter/filter-text.component';
       DeviceProfileAlarmsComponent,
       DeviceProfileDataComponent,
       DeviceProfileComponent,
-      DeviceProfileDialogComponent
+      DeviceProfileDialogComponent,
+      AddDeviceProfileDialogComponent
     ],
   imports: [
     CommonModule,
@@ -269,7 +271,8 @@ import { FilterTextComponent } from './filter/filter-text.component';
     DeviceProfileAlarmsComponent,
     DeviceProfileDataComponent,
     DeviceProfileComponent,
-    DeviceProfileDialogComponent
+    DeviceProfileDialogComponent,
+    AddDeviceProfileDialogComponent
   ],
   providers: [
     WidgetComponentService,

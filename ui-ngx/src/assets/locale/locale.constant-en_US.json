@@ -811,6 +811,7 @@
         "single-level-wildcards-hint": "<code>[+]</code> is suitable for any topic filter level. Ex.: <b>v1/devices/+/telemetry</b> or <b>+/devices/+/attributes</b>.",
         "multi-level-wildcards-hint": "<code>[#]</code> can replace the topic filter itself and must be the last symbol of the topic. Ex.: <b>#</b> or <b>v1/devices/me/#</b>.",
         "alarm-rules": "Alarm rules ({{count}})",
+        "no-alarm-rules": "No alarm rules configured",
         "add-alarm-rule": "Add alarm rule",
         "edit-alarm-rule": "Edit alarm rule",
         "alarm-type": "Alarm type",

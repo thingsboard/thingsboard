@@ -32,12 +32,12 @@
         </mat-slide-toggle>
       </div>
       <div class="tb-condition-duration" fxFlex fxLayout="row" fxLayoutGap="8px">
-        <span style="min-width: 250px;" [fxShow]="!enableDuration"></span>
-        <div style="min-width: 250px;" fxLayout="row" fxLayoutGap="8px" [fxShow]="enableDuration">
+        <span style="min-width: 250px;" *ngIf="!enableDuration"></span>
+        <div style="min-width: 250px;" fxLayout="row" fxLayoutGap="8px" *ngIf="enableDuration">
           <mat-form-field class="mat-block duration-value-field" hideRequiredMarker floatLabel="always">
             <mat-label></mat-label>
             <input type="number"
-                   [required]="enableDuration"
+                   required
                    step="1"
                    min="1" max="2147483647" matInput
                    placeholder="{{ 'device-profile.condition-duration-value' | translate }}"
@@ -55,7 +55,7 @@
           <mat-form-field class="mat-block duration-unit-field" hideRequiredMarker floatLabel="always">
             <mat-label></mat-label>
             <mat-select formControlName="durationUnit"
-                        [required]="enableDuration"
+                        required
                         placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
               <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
                 {{ timeUnitTranslations.get(timeUnit) | translate }}

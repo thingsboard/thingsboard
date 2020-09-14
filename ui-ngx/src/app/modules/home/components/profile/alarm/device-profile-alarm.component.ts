@@ -63,7 +63,8 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
 
   alarmFormGroup: FormGroup;
 
-  private propagateChange = (v: any) => { };
+  private propagateChange = null;
+  private propagateChangePending = false;
 
   constructor(private dialog: MatDialog,
               private fb: FormBuilder) {
@@ -71,6 +72,12 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
+    if (this.propagateChangePending) {
+      this.propagateChangePending = false;
+      setTimeout(() => {
+        this.propagateChange(this.modelValue);
+      }, 0);
+    }
   }
 
   registerOnTouched(fn: any): void {
@@ -100,11 +107,15 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
   }
 
   writeValue(value: DeviceProfileAlarm): void {
+    this.propagateChangePending = false;
     this.modelValue = value;
     if (!this.modelValue.alarmType) {
       this.expanded = true;
     }
     this.alarmFormGroup.reset(this.modelValue || undefined, {emitEvent: false});
+    if (!this.disabled && !this.alarmFormGroup.valid) {
+      this.updateModel();
+    }
   }
 
   public addClearAlarmRule() {
@@ -160,6 +171,10 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
   private updateModel() {
     const value = this.alarmFormGroup.value;
     this.modelValue = {...this.modelValue, ...value};
-    this.propagateChange(this.modelValue);
+    if (this.propagateChange) {
+      this.propagateChange(this.modelValue);
+    } else {
+      this.propagateChangePending = true;
+    }
   }
 }

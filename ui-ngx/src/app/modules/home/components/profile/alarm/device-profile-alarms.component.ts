@@ -162,11 +162,7 @@ export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnIni
   }
 
   private updateModel() {
-//    if (this.deviceProfileAlarmsFormGroup.valid) {
-      const alarms: Array<DeviceProfileAlarm> = this.deviceProfileAlarmsFormGroup.get('alarms').value;
-      this.propagateChange(alarms);
-  /*  } else {
-      this.propagateChange(null);
-    } */
+    const alarms: Array<DeviceProfileAlarm> = this.deviceProfileAlarmsFormGroup.get('alarms').value;
+    this.propagateChange(alarms);
   }
 }

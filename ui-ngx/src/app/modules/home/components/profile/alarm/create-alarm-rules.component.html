@@ -46,7 +46,7 @@
       <mat-icon>remove_circle_outline</mat-icon>
     </button>
   </div>
-  <div *ngIf="disabled && !createAlarmRulesFormArray().controls.length">
+  <div *ngIf="!createAlarmRulesFormArray().controls.length">
       <span translate fxLayoutAlign="center center"
             class="tb-prompt">device-profile.no-create-alarm-rules</span>
   </div>

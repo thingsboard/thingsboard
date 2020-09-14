@@ -35,6 +35,12 @@ import {
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfileComponent } from '../../components/profile/device-profile.component';
 import { DeviceProfileTabsComponent } from './device-profile-tabs.component';
+import { Observable } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  AddDeviceProfileDialogComponent,
+  AddDeviceProfileDialogData
+} from '../../components/profile/add-device-profile-dialog.component';
 
 @Injectable()
 export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableConfig<DeviceProfile>> {
@@ -44,7 +50,8 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
   constructor(private deviceProfileService: DeviceProfileService,
               private translate: TranslateService,
               private datePipe: DatePipe,
-              private dialogService: DialogService) {
+              private dialogService: DialogService,
+              private dialog: MatDialog) {
 
     this.config.entityType = EntityType.DEVICE_PROFILE;
     this.config.entityComponent = DeviceProfileComponent;
@@ -92,12 +99,24 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
     this.config.onEntityAction = action => this.onDeviceProfileAction(action);
     this.config.deleteEnabled = (deviceProfile) => deviceProfile && !deviceProfile.default;
     this.config.entitySelectionEnabled = (deviceProfile) => deviceProfile && !deviceProfile.default;
+    this.config.addEntity = () => this.addDeviceProfile();
   }
 
   resolve(): EntityTableConfig<DeviceProfile> {
     this.config.tableTitle = this.translate.instant('device-profile.device-profiles');
 
     return this.config;
+  }
+
+  addDeviceProfile(): Observable<DeviceProfile> {
+    return this.dialog.open<AddDeviceProfileDialogComponent, AddDeviceProfileDialogData,
+      DeviceProfile>(AddDeviceProfileDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        deviceProfileName: null
+      }
+    }).afterClosed();
   }
 
   setDefaultDeviceProfile($event: Event, deviceProfile: DeviceProfile) {
