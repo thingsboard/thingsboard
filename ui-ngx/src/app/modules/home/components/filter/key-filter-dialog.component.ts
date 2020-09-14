@@ -40,6 +40,7 @@ export interface KeyFilterDialogData {
   keyFilter: KeyFilterInfo;
   isAdd: boolean;
   displayUserParameters: boolean;
+  allowUserDynamicSource: boolean;
   readonly: boolean;
   telemetryKeysOnly: boolean;
 }

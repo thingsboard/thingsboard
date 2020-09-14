@@ -25,7 +25,8 @@
         <mat-select formControlName="severity"
                     required
                     placeholder="{{ 'device-profile.select-alarm-severity' | translate }}">
-          <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
+          <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity"
+                       [disabled]="isDisabledSeverity(alarmSeverityEnum[alarmSeverity], $index)">
             {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
           </mat-option>
         </mat-select>

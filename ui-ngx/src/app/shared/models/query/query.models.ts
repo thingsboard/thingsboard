@@ -453,6 +453,9 @@ function simpleKeyFilterPredicateToText(translate: TranslateService,
 }
 
 export function keyFilterInfosToKeyFilters(keyFilterInfos: Array<KeyFilterInfo>): Array<KeyFilter> {
+  if (!keyFilterInfos) {
+    return [];
+  }
   const keyFilters: Array<KeyFilter> = [];
   for (const keyFilterInfo of keyFilterInfos) {
     const key = keyFilterInfo.key;

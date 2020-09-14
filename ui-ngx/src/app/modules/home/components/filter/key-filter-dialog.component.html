@@ -70,6 +70,7 @@
         </mat-form-field>
       </section>
       <tb-filter-predicate-list *ngIf="keyFilterFormGroup.get('valueType').value"
+                                [allowUserDynamicSource]="data.allowUserDynamicSource"
                                 [displayUserParameters]="data.displayUserParameters"
                                 [valueType]="keyFilterFormGroup.get('valueType').value"
                                 [key]="keyFilterFormGroup.get('key.key').value"

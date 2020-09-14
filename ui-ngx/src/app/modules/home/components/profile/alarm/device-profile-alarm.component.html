@@ -26,6 +26,7 @@
       <mat-form-field floatLabel="always"
                       style="width: 600px;"
                       [fxShow]="expanded"
+                      (keydown)="!disabled ? $event.stopPropagation() : null;"
                       (click)="!disabled ? $event.stopPropagation() : null;">
         <mat-label>{{'device-profile.alarm-type' | translate}}</mat-label>
         <input required matInput formControlName="alarmType" placeholder="Enter alarm type">
@@ -90,9 +91,28 @@
         </div>
       </mat-panel-title>
     </mat-expansion-panel-header>
-    <mat-checkbox formControlName="propagate" style="padding-bottom: 16px;">
+    <mat-checkbox formControlName="propagate" style="display: block; padding-bottom: 16px;">
       {{ 'device-profile.propagate-alarm' | translate }}
     </mat-checkbox>
-    <div>TODO: Propagate relation types</div>
+    <section *ngIf="alarmFormGroup.get('propagate').value === true">
+      <mat-form-field floatLabel="always" class="mat-block">
+        <mat-label translate>device-profile.alarm-rule-relation-types-list</mat-label>
+        <mat-chip-list #relationTypesChipList [disabled]="disabled">
+          <mat-chip
+            *ngFor="let key of alarmFormGroup.get('propagateRelationTypes').value;"
+            (removed)="removeRelationType(key)">
+            {{key}}
+            <mat-icon matChipRemove>close</mat-icon>
+          </mat-chip>
+          <input matInput type="text" placeholder="{{'device-profile.alarm-rule-relation-types-list' | translate}}"
+                 style="max-width: 200px;"
+                 [matChipInputFor]="relationTypesChipList"
+                 [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                 (matChipInputTokenEnd)="addRelationType($event)"
+                 [matChipInputAddOnBlur]="true">
+        </mat-chip-list>
+        <mat-hint innerHTML="{{ 'device-profile.alarm-rule-relation-types-list-hint' | translate }}"></mat-hint>
+      </mat-form-field>
+    </section>
   </mat-expansion-panel>
 </mat-expansion-panel>

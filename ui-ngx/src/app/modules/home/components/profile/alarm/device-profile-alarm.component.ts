@@ -27,6 +27,8 @@ import {
 } from '@angular/forms';
 import { AlarmRule, DeviceProfileAlarm } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
+import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
+import { MatChipInputEvent } from '@angular/material/chips';
 
 @Component({
   selector: 'tb-device-profile-alarm',
@@ -52,6 +54,8 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
 
   @Output()
   removeAlarm = new EventEmitter();
+
+  separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
 
   expanded = false;
 
@@ -123,6 +127,35 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
       },
     };
   }
+
+  removeRelationType(key: string): void {
+    const keys: string[] = this.alarmFormGroup.get('propagateRelationTypes').value;
+    const index = keys.indexOf(key);
+    if (index >= 0) {
+      keys.splice(index, 1);
+      this.alarmFormGroup.get('propagateRelationTypes').setValue(keys, {emitEvent: true});
+    }
+  }
+
+  addRelationType(event: MatChipInputEvent): void {
+    const input = event.input;
+    let value = event.value;
+    if ((value || '').trim()) {
+      value = value.trim();
+      let keys: string[] = this.alarmFormGroup.get('propagateRelationTypes').value;
+      if (!keys || keys.indexOf(value) === -1) {
+        if (!keys) {
+          keys = [];
+        }
+        keys.push(value);
+        this.alarmFormGroup.get('propagateRelationTypes').setValue(keys, {emitEvent: true});
+      }
+    }
+    if (input) {
+      input.value = '';
+    }
+  }
+
 
   private updateModel() {
     const value = this.alarmFormGroup.value;
