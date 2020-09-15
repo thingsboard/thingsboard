@@ -63,7 +63,6 @@ public class DeviceActor extends ContextAwareActor {
                 break;
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
                 processor.processCredentialsUpdate(msg);
-//                processor.processCredentialsUpdate();
                 break;
             case DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG:
                 processor.processNameOrTypeUpdate((DeviceNameOrTypeUpdateMsg) msg);

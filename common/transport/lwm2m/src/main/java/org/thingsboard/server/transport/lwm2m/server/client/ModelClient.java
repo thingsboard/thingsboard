@@ -27,6 +27,7 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportService;
+import org.thingsboard.server.transport.lwm2m.server.ResultIds;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -91,16 +92,18 @@ public class ModelClient  implements Cloneable {
 
     private void initValue () {
         this.responses.forEach((key, resp) -> {
-            int objectId  = Integer.valueOf(key.split("/")[1]);
-            ObjectModel objectModel = ((Collection<ObjectModel>)lwServer.getModelProvider().getObjectModel(registration).getObjectModels()).stream().filter(v -> v.id==objectId).collect(Collectors.toList()).get(0);
-            if (this.modelObjects.get(objectId) != null) {
-                this.modelObjects.get(objectId).getInstances().put(((ReadResponse) resp).getContent().getId(), (LwM2mObjectInstance)((ReadResponse) resp).getContent());
-            }
-            else {
-                Map<Integer, LwM2mObjectInstance> instances = new ConcurrentHashMap<>();
-                instances.put(((ReadResponse) resp).getContent().getId(), (LwM2mObjectInstance)((ReadResponse) resp).getContent());
-                ModelObject modelObject = new ModelObject(objectModel, instances);
-                this.modelObjects.put(objectId, modelObject);
+//            int objectId  = Integer.valueOf(key.split("/")[1]);
+            ResultIds pathIds = new ResultIds(key);
+            if (pathIds.getObjectId() > -1) {
+                ObjectModel objectModel = ((Collection<ObjectModel>) lwServer.getModelProvider().getObjectModel(registration).getObjectModels()).stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0);
+                if (this.modelObjects.get(pathIds.getObjectId()) != null) {
+                    this.modelObjects.get(pathIds.getObjectId()).getInstances().put(((ReadResponse) resp).getContent().getId(), (LwM2mObjectInstance) ((ReadResponse) resp).getContent());
+                } else {
+                    Map<Integer, LwM2mObjectInstance> instances = new ConcurrentHashMap<>();
+                    instances.put(((ReadResponse) resp).getContent().getId(), (LwM2mObjectInstance) ((ReadResponse) resp).getContent());
+                    ModelObject modelObject = new ModelObject(objectModel, instances);
+                    this.modelObjects.put(pathIds.getObjectId(), modelObject);
+                }
             }
         });
     }

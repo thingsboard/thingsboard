@@ -26,24 +26,34 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 public class AttrTelemetryObserveValue {
+//    /**
+//     *  {path: {name: value}}
+//     */
+//    JsonObject postAttribute;
     /**
-     * postAttribute, postTelemetry
-     *  {{name:value},
-     *  "Time":"23:00" }}
-     */
-    JsonObject postAttribute;
-    JsonArray postAttributeProfile;
-    JsonObject postTelemetry;
-    JsonArray postTelemetryProfile;
-    /**
-     * postObserve
      * [ "/2/0/0", "/2/0/1"]
      */
-    Set<String> postObserve;
-    JsonArray postObserveProfile;
-
+    JsonArray postAttributeProfile;
+//    /**
+//     *  {path: {name: value}}
+//     */
+//    JsonObject postTelemetry;
     /**
-     * Only All resourses: postAttribute&postTelemetry
+     * [ "/2/0/0", "/2/0/1"]
      */
-    Set<String> pathResAttrTelemetry;
+    JsonArray postTelemetryProfile;
+//    /**
+//     * [ "/2/0/0", "/2/0/1"]
+//     */
+//    Set<String> postObserve;
+    /**
+     * [ "/2/0/0", "/2/0/1"]
+     */
+    JsonArray postObserveProfile;
+//
+//    /**
+//     * Only All recourses: postAttribute&postTelemetry
+//     * [ "/2/0/0", "/2/0/1"]
+//     */
+//    Set<String> pathResAttrTelemetry;
 }

@@ -124,7 +124,7 @@ public class LwM2MTransportHandler{
             "LWM2M_LOCKWIPE-v1_0_1.xml", "LWM2M_Portfolio-v1_0.xml",
             "LWM2M_Software_Component-v1_0.xml", "LWM2M_Software_Management-v1_0.xml",
             "LWM2M_WLAN_connectivity4-v1_0.xml", "LwM2M_BinaryAppDataContainer-v1_0_1.xml",
-            "LwM2M_EventLog-V1_0.xml"};
+            "LwM2M_EventLog-V1_0.xml", "LWM2M_Connectivity_Monitoring-v1_0_2.xml"};
 
     public static final String BASE_DEVICE_API_TOPIC = "v1/devices/me";
     public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + "/attributes";

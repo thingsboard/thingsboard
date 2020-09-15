@@ -222,6 +222,9 @@ public class LwM2MTransportRequest {
             @Override
             public void run() {
                 try {
+                    if (path.equals("/3/0")) {
+                        log.info(path);
+                    }
                     sendResponse(registration, path, response, modelClient);
                 } catch (RuntimeException t) {
                     log.error("Unable to send response. \n endpoint: {} \n path: {}\n error: {}", registration.getEndpoint(), path, t.toString());
