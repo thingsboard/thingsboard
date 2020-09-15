@@ -100,9 +100,19 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
 
     @Override
     public void deleteClientRegistrationById(TenantId tenantId, OAuth2ClientRegistrationId id) {
-        log.trace("Executing deleteClientRegistrationById [{}]", id);
+        log.trace("Executing deleteClientRegistrationById [{}], [{}]", tenantId, id);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(id, INCORRECT_CLIENT_REGISTRATION_ID + id);
         clientRegistrationDao.removeById(tenantId, id.getId());
+    }
+
+    @Override
+    @Transactional
+    public void deleteClientRegistrationsByDomain(TenantId tenantId, String domain) {
+        log.trace("Executing deleteClientRegistrationsByDomain [{}], [{}]", tenantId, domain);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateString(domain, INCORRECT_DOMAIN_NAME + domain);
+        clientRegistrationDao.removeByTenantIdAndDomainName(tenantId.getId(), domain);
     }
 
     @Override

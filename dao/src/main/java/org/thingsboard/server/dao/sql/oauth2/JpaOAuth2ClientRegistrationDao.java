@@ -68,6 +68,11 @@ public class JpaOAuth2ClientRegistrationDao extends JpaAbstractDao<OAuth2ClientR
     }
 
     @Override
+    public int removeByTenantIdAndDomainName(UUID tenantId, String domainName) {
+        return repository.deleteByTenantIdAndDomainName(tenantId, domainName);
+    }
+
+    @Override
     public int removeByTenantId(UUID tenantId) {
         return repository.deleteByTenantId(tenantId);
     }

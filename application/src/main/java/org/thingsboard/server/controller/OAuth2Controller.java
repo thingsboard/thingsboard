@@ -47,6 +47,7 @@ import java.util.List;
 @Slf4j
 public class OAuth2Controller extends BaseController {
     private static final String CLIENT_REGISTRATION_ID = "clientRegistrationId";
+    private static final String DOMAIN = "domain";
     private static final String CLIENT_REGISTRATION_TEMPLATE_ID = "clientRegistrationTemplateId";
 
     @RequestMapping(value = "/noauth/oauth2Clients", method = RequestMethod.POST)
@@ -126,6 +127,29 @@ public class OAuth2Controller extends BaseController {
                     null,
                     null,
                     ActionType.DELETED, e, strClientRegistrationId);
+
+            throw handleException(e);
+        }
+    }
+
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/oauth2/config/domain/{domain}", method = RequestMethod.DELETE)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void deleteClientRegistrationForDomain(@PathVariable(DOMAIN) String domain) throws ThingsboardException {
+        checkParameter(DOMAIN, domain);
+        try {
+            oAuth2Service.deleteClientRegistrationsByDomain(getCurrentUser().getTenantId(), domain);
+
+            logEntityAction(emptyId(EntityType.OAUTH2_CLIENT_REGISTRATION), null,
+                    null,
+                    ActionType.DELETED, null, domain);
+
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.OAUTH2_CLIENT_REGISTRATION),
+                    null,
+                    null,
+                    ActionType.DELETED, e, domain);
 
             throw handleException(e);
         }

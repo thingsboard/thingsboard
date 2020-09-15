@@ -28,5 +28,7 @@ public interface OAuth2ClientRegistrationDao extends Dao<OAuth2ClientRegistratio
 
     List<OAuth2ClientRegistration> findByDomainName(String domainName);
 
+    int removeByTenantIdAndDomainName(UUID tenantId, String domainName);
+
     int removeByTenantId(UUID tenantId);
 }

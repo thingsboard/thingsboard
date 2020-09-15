@@ -38,5 +38,7 @@ public interface OAuth2Service {
 
     void deleteClientRegistrationById(TenantId tenantId, OAuth2ClientRegistrationId id);
 
+    void deleteClientRegistrationsByDomain(TenantId tenantId, String domain);
+
     boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId);
 }

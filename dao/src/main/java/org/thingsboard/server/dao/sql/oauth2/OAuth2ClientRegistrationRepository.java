@@ -26,5 +26,7 @@ public interface OAuth2ClientRegistrationRepository extends CrudRepository<OAuth
 
     List<OAuth2ClientRegistrationEntity> findAllByDomainName(String domainName);
 
+    int deleteByTenantIdAndDomainName(UUID tenantId, String domainName);
+
     int deleteByTenantId(UUID tenantId);
 }

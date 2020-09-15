@@ -215,6 +215,20 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0, oAuth2Service.findClientRegistrationsByTenantId(tenantId).size());
     }
 
+    @Test
+    public void testDeleteTenantDomainOAuth2ClientRegistrations() {
+        oAuth2Service.saveClientRegistration(validClientRegistration(tenantId, "domain1"));
+        oAuth2Service.saveClientRegistration(validClientRegistration(tenantId, "domain1"));
+        oAuth2Service.saveClientRegistration(validClientRegistration(tenantId, "domain2"));
+        oAuth2Service.saveClientRegistration(validClientRegistration(TenantId.SYS_TENANT_ID, "domain2"));
+        Assert.assertEquals(4, oAuth2Service.findAllClientRegistrations().size());
+        Assert.assertEquals(3, oAuth2Service.findClientRegistrationsByTenantId(tenantId).size());
+
+        oAuth2Service.deleteClientRegistrationsByDomain(tenantId, "domain1");
+        Assert.assertEquals(2, oAuth2Service.findAllClientRegistrations().size());
+        Assert.assertEquals(1, oAuth2Service.findClientRegistrationsByTenantId(tenantId).size());
+    }
+
     private void updateTenantAllowOAuth2Setting(Boolean allowOAuth2) throws IOException {
         Tenant tenant = tenantService.findTenantById(tenantId);
         if (allowOAuth2 == null) {
