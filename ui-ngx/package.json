@@ -54,7 +54,7 @@
     "jstree": "^3.3.10",
     "jstree-bootstrap-theme": "^1.0.1",
     "jszip": "^3.5.0",
-    "leaflet": "^1.6.0",
+    "leaflet": "^1.7.1",
     "leaflet-editable": "^1.2.0",
     "leaflet-polylinedecorator": "^1.6.0",
     "leaflet-providers": "^1.10.2",
