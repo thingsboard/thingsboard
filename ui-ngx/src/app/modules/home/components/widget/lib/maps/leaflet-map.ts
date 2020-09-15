@@ -622,10 +622,10 @@ export default abstract class LeafletMap {
 
     // Polyline
 
-    updatePolylines(polyData: FormattedData[][], updateBounds = true, data?: FormattedData) {
+    updatePolylines(polyData: FormattedData[][], updateBounds = true, activePolyline?: FormattedData) {
         const keys: string[] = [];
         polyData.forEach((dataSource: FormattedData[]) => {
-            data = data || dataSource[0];
+            const data = activePolyline || dataSource[0];
             if (dataSource.length && data.entityName === dataSource[0].entityName) {
                 if (this.polylines.get(data.entityName)) {
                     this.updatePolyline(data, dataSource, this.options, updateBounds);
