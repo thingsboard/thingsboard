@@ -137,6 +137,7 @@ public class TbDeviceProfileNodeTest {
         alarmRule.setCondition(alarmCondition);
         DeviceProfileAlarm dpa = new DeviceProfileAlarm();
         dpa.setId("highTemperatureAlarmID");
+        dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule));
         deviceProfileData.setAlarms(Collections.singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
@@ -144,6 +145,7 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
+        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm")).thenReturn(Futures.immediateFuture(null));
         Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");

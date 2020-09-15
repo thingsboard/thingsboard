@@ -62,15 +62,17 @@ class DeviceState {
         }
     }
 
-    private void processTelemetry(TbContext ctx, TbMsg msg) {
+    private void processTelemetry(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToSortedTelemetry(new JsonParser().parse(msg.getData()), TbMsgTimeseriesNode.getTs(msg));
-        tsKvMap.forEach((ts, data) -> {
+        for (Map.Entry<Long, List<KvEntry>> entry : tsKvMap.entrySet()) {
+            Long ts = entry.getKey();
+            List<KvEntry> data = entry.getValue();
             latestValues = merge(latestValues, ts, data);
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
                 DeviceProfileAlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(), a -> new DeviceProfileAlarmState(msg.getOriginator(), alarm));
                 alarmState.process(ctx, msg, latestValues);
             }
-        });
+        }
         ctx.tellSuccess(msg);
     }
 
@@ -140,7 +142,9 @@ class DeviceState {
         if (!latestTsKeys.isEmpty()) {
             List<TsKvEntry> data = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), originator, latestTsKeys).get();
             for (TsKvEntry entry : data) {
-                result.putValue(new EntityKey(EntityKeyType.TIME_SERIES, entry.getKey()), toEntityValue(entry));
+                if (entry.getValue() != null) {
+                    result.putValue(new EntityKey(EntityKeyType.TIME_SERIES, entry.getKey()), toEntityValue(entry));
+                }
             }
         }
         if (!clientAttributeKeys.isEmpty()) {
@@ -161,10 +165,12 @@ class DeviceState {
 
     private void addToSnapshot(DeviceDataSnapshot snapshot, Set<String> commonAttributeKeys, List<AttributeKvEntry> data) {
         for (AttributeKvEntry entry : data) {
-            EntityKeyValue value = toEntityValue(entry);
-            snapshot.putValue(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, entry.getKey()), value);
-            if (commonAttributeKeys.contains(entry.getKey())) {
-                snapshot.putValue(new EntityKey(EntityKeyType.ATTRIBUTE, entry.getKey()), value);
+            if (entry.getValue() != null) {
+                EntityKeyValue value = toEntityValue(entry);
+                snapshot.putValue(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, entry.getKey()), value);
+                if (commonAttributeKeys.contains(entry.getKey())) {
+                    snapshot.putValue(new EntityKey(EntityKeyType.ATTRIBUTE, entry.getKey()), value);
+                }
             }
         }
     }
