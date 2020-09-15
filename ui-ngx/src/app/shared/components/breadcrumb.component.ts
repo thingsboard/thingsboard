@@ -110,4 +110,8 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
     }
     return newBreadcrumbs;
   }
+
+  trackByBreadcrumbs(index: number, breadcrumb: BreadCrumb){
+    return breadcrumb.labelFunction ? breadcrumb.labelFunction() : breadcrumb.label;
+  }
 }
