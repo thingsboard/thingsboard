@@ -85,7 +85,7 @@ public class InstallScripts {
     }
 
     public Path getDeviceProfileDefaultRuleChainTemplateFilePath() {
-        return Paths.get(getDataDir(), JSON_DIR, DEVICE_PROFILE_DIR, "rule_chain_template.json");
+        return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DEVICE_PROFILE_DIR, "rule_chain_template.json");
     }
 
     public String getDataDir() {
