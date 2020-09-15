@@ -151,7 +151,8 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
         }
     }
 
-    private void sendRpcResponseToTbCore(String originServiceId, FromDeviceRpcResponse response) {
+    @Override
+    public void sendRpcResponseToTbCore(String originServiceId, FromDeviceRpcResponse response) {
         if (serviceId.equals(originServiceId)) {
             if (tbCoreRpcService.isPresent()) {
                 tbCoreRpcService.get().processRpcResponseFromRuleEngine(response);

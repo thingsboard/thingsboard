@@ -322,6 +322,28 @@ message DeviceCredentialsRequestMsg {
   int64 deviceIdLSB = 2;
 }
 
+message DeviceRpcCallMsg {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+  int64 requestIdMSB = 3;
+  int64 requestIdLSB = 4;
+  int64 expirationTime = 5;
+  bool oneway = 6;
+  string originServiceId = 7;
+  RpcRequestMsg requestMsg = 8;
+  RpcResponseMsg responseMsg = 9;
+}
+
+message RpcRequestMsg {
+  string method = 1;
+  string params = 2;
+}
+
+message RpcResponseMsg {
+  string response = 1;
+  string error = 2;
+}
+
 enum EdgeEntityType {
   DEVICE = 0;
   ASSET = 1;
@@ -343,6 +365,7 @@ message UplinkMsg {
   repeated RelationRequestMsg relationRequestMsg = 9;
   repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 10;
   repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 11;
+  repeated DeviceRpcCallMsg deviceRpcCallMsg = 12;
 }
 
 message UplinkResponseMsg {
@@ -374,6 +397,6 @@ message DownlinkMsg {
   repeated WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = 16;
   repeated WidgetTypeUpdateMsg widgetTypeUpdateMsg = 17;
   repeated AdminSettingsUpdateMsg adminSettingsUpdateMsg = 18;
-
+  repeated DeviceRpcCallMsg deviceRpcCallMsg = 19;
 }
 

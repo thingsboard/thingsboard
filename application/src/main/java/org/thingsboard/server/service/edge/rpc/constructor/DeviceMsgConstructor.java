@@ -15,20 +15,26 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
+import org.thingsboard.server.gen.edge.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
+import org.thingsboard.server.gen.edge.RpcRequestMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 
 @Component
 @Slf4j
 public class DeviceMsgConstructor {
+
+    protected static final ObjectMapper mapper = new ObjectMapper();
 
     public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device, CustomerId customerId) {
         DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()
@@ -66,5 +72,22 @@ public class DeviceMsgConstructor {
                 .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
                 .setIdMSB(deviceId.getId().getMostSignificantBits())
                 .setIdLSB(deviceId.getId().getLeastSignificantBits()).build();
+    }
+
+    public DeviceRpcCallMsg constructDeviceRpcCallMsg(JsonNode body) {
+        RuleEngineDeviceRpcRequest request = mapper.convertValue(body, RuleEngineDeviceRpcRequest.class);
+        RpcRequestMsg.Builder requestBuilder = RpcRequestMsg.newBuilder();
+        requestBuilder.setMethod(request.getMethod());
+        requestBuilder.setParams(request.getBody());
+        DeviceRpcCallMsg.Builder builder = DeviceRpcCallMsg.newBuilder()
+                .setDeviceIdMSB(request.getDeviceId().getId().getMostSignificantBits())
+                .setDeviceIdLSB(request.getDeviceId().getId().getLeastSignificantBits())
+                .setRequestIdMSB(request.getRequestUUID().getMostSignificantBits())
+                .setRequestIdLSB(request.getRequestUUID().getLeastSignificantBits())
+                .setExpirationTime(request.getExpirationTime())
+                .setOriginServiceId(request.getOriginServiceId())
+                .setOneway(request.isOneway())
+                .setRequestMsg(requestBuilder.build());
+        return builder.build();
     }
 }

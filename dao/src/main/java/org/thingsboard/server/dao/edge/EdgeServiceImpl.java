@@ -425,38 +425,43 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Override
     public ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId) {
-        switch (entityId.getEntityType()) {
-            case DEVICE:
-            case ASSET:
-            case ENTITY_VIEW:
-                ListenableFuture<List<EntityRelation>> originatorEdgeRelationsFuture =
-                        relationService.findByToAndTypeAsync(tenantId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
-                return Futures.transform(originatorEdgeRelationsFuture, originatorEdgeRelations -> {
-                    if (originatorEdgeRelations != null && originatorEdgeRelations.size() > 0 &&
-                            originatorEdgeRelations.get(0).getFrom() != null) {
-                        return Collections.singletonList(new EdgeId(originatorEdgeRelations.get(0).getFrom().getId()));
-                    } else {
-                        return Collections.emptyList();
+        if (EntityType.TENANT.equals(entityId.getEntityType())) {
+            TextPageData<Edge> edgesByTenantId = findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
+            return Futures.immediateFuture(edgesByTenantId.getData().stream().map(IdBased::getId).collect(Collectors.toList()));
+        } else {
+            switch (entityId.getEntityType()) {
+                case DEVICE:
+                case ASSET:
+                case ENTITY_VIEW:
+                    ListenableFuture<List<EntityRelation>> originatorEdgeRelationsFuture =
+                            relationService.findByToAndTypeAsync(tenantId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
+                    return Futures.transform(originatorEdgeRelationsFuture, originatorEdgeRelations -> {
+                        if (originatorEdgeRelations != null && originatorEdgeRelations.size() > 0 &&
+                                originatorEdgeRelations.get(0).getFrom() != null) {
+                            return Collections.singletonList(new EdgeId(originatorEdgeRelations.get(0).getFrom().getId()));
+                        } else {
+                            return Collections.emptyList();
+                        }
+                    }, MoreExecutors.directExecutor());
+                case DASHBOARD:
+                    return convertToEdgeIds(findEdgesByTenantIdAndDashboardId(tenantId, new DashboardId(entityId.getId())));
+                case RULE_CHAIN:
+                    return convertToEdgeIds(findEdgesByTenantIdAndRuleChainId(tenantId, new RuleChainId(entityId.getId())));
+                case USER:
+                    User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
+                    if (userById == null) {
+                        return Futures.immediateFuture(Collections.emptyList());
                     }
-                }, MoreExecutors.directExecutor());
-            case DASHBOARD:
-                return convertToEdgeIds(findEdgesByTenantIdAndDashboardId(tenantId, new DashboardId(entityId.getId())));
-            case RULE_CHAIN:
-                return convertToEdgeIds(findEdgesByTenantIdAndRuleChainId(tenantId, new RuleChainId(entityId.getId())));
-            case USER:
-                User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
-                if (userById == null) {
+                    TextPageData<Edge> edges;
+                    if (userById.getCustomerId() == null || userById.getCustomerId().isNullUid()) {
+                        edges = findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
+                    } else {
+                        edges = findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), new TextPageLink(Integer.MAX_VALUE));
+                    }
+                    return convertToEdgeIds(Futures.immediateFuture(edges.getData()));
+                default:
                     return Futures.immediateFuture(Collections.emptyList());
-                }
-                TextPageData<Edge> edges;
-                if (userById.getCustomerId() == null || userById.getCustomerId().isNullUid()) {
-                    edges = findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
-                } else {
-                    edges = findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), new TextPageLink(Integer.MAX_VALUE));
-                }
-                return convertToEdgeIds(Futures.immediateFuture(edges.getData()));
-            default:
-                return Futures.immediateFuture(Collections.emptyList());
+            }
         }
     }
 

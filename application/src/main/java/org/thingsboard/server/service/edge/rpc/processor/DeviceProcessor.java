@@ -21,7 +21,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
+import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -40,9 +42,11 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
+import org.thingsboard.server.gen.edge.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
@@ -213,4 +217,17 @@ public class DeviceProcessor extends BaseProcessor {
         metaData.putValue("edgeName", edge.getName());
         return metaData;
     }
+
+    public ListenableFuture<Void> processDeviceRpcCallResponseMsg(TenantId tenantId, DeviceRpcCallMsg deviceRpcCallMsg) {
+        UUID uuid = new UUID(deviceRpcCallMsg.getRequestIdMSB(), deviceRpcCallMsg.getRequestIdLSB());
+        FromDeviceRpcResponse response;
+        if (!StringUtils.isEmpty(deviceRpcCallMsg.getResponseMsg().getError())) {
+            response = new FromDeviceRpcResponse(uuid, null, RpcError.valueOf(deviceRpcCallMsg.getResponseMsg().getError()));
+        } else {
+            response = new FromDeviceRpcResponse(uuid, deviceRpcCallMsg.getResponseMsg().getResponse(), null);
+        }
+        tbDeviceRpcService.sendRpcResponseToTbCore(deviceRpcCallMsg.getOriginServiceId(), response);
+        return Futures.immediateFuture(null);
+    }
+
 }

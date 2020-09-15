@@ -78,6 +78,7 @@ import org.thingsboard.server.gen.edge.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
+import org.thingsboard.server.gen.edge.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.DownlinkResponseMsg;
@@ -333,6 +334,9 @@ public final class EdgeGrpcSession implements Closeable {
                     case ENTITY_EXISTS_REQUEST:
                         downlinkMsg = processEntityExistsRequestMessage(edgeEvent);
                         break;
+                    case RPC_CALL:
+                        downlinkMsg = processRpcCallMsg(edgeEvent);
+                        break;
                 }
                 if (downlinkMsg != null) {
                     result.add(downlinkMsg);
@@ -356,6 +360,15 @@ public final class EdgeGrpcSession implements Closeable {
                     .build();
         }
         return downlinkMsg;
+    }
+
+    private DownlinkMsg processRpcCallMsg(EdgeEvent edgeEvent) {
+        log.trace("Executing processRpcCall, edgeEvent [{}]", edgeEvent);
+        DeviceRpcCallMsg deviceRpcCallMsg =
+                ctx.getDeviceMsgConstructor().constructDeviceRpcCallMsg(edgeEvent.getEntityBody());
+        return DownlinkMsg.newBuilder()
+                .addAllDeviceRpcCallMsg(Collections.singletonList(deviceRpcCallMsg))
+                .build();
     }
 
     private DownlinkMsg processCredentialsRequestMessage(EdgeEvent edgeEvent) {
@@ -881,6 +894,11 @@ public final class EdgeGrpcSession implements Closeable {
             if (uplinkMsg.getDeviceCredentialsRequestMsgList() != null && !uplinkMsg.getDeviceCredentialsRequestMsgList().isEmpty()) {
                 for (DeviceCredentialsRequestMsg deviceCredentialsRequestMsg : uplinkMsg.getDeviceCredentialsRequestMsgList()) {
                     result.add(ctx.getSyncEdgeService().processDeviceCredentialsRequestMsg(edge, deviceCredentialsRequestMsg));
+                }
+            }
+            if (uplinkMsg.getDeviceRpcCallMsgList() != null && !uplinkMsg.getDeviceRpcCallMsgList().isEmpty()) {
+                for (DeviceRpcCallMsg deviceRpcCallMsg: uplinkMsg.getDeviceRpcCallMsgList()) {
+                    result.add(ctx.getDeviceProcessor().processDeviceRpcCallResponseMsg(edge.getTenantId(), deviceRpcCallMsg));
                 }
             }
         } catch (Exception e) {

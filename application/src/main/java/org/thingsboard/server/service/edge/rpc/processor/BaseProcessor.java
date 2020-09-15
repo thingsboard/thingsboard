@@ -39,12 +39,16 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
 @Slf4j
 public abstract class BaseProcessor {
 
     protected static final ObjectMapper mapper = new ObjectMapper();
+
+    @Autowired
+    protected TbRuleEngineDeviceRpcService tbDeviceRpcService;
 
     @Autowired
     protected AlarmService alarmService;

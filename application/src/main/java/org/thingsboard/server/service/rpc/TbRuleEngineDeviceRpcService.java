@@ -29,4 +29,7 @@ public interface TbRuleEngineDeviceRpcService extends RuleEngineRpcService {
      */
     void processRpcResponseFromDevice(FromDeviceRpcResponse response);
 
+
+    void sendRpcResponseToTbCore(String originServiceId, FromDeviceRpcResponse response);
+
 }
