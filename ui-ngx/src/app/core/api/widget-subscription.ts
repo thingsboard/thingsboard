@@ -1277,7 +1277,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     const index = startIndex + dataIndex * dataKeysCount + dataKeyIndex;
     let update = true;
     let currentData: DataSetHolder;
-    if (this.displayLegend && this.legendData.keys[index].dataKey.hidden) {
+    if (this.displayLegend && this.legendData.keys.find(key => key.dataIndex === index).dataKey.hidden) {
       currentData = this.hiddenData[index];
     } else {
       currentData = this.data[index];
