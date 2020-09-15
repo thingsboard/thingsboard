@@ -53,11 +53,19 @@
                      [readonly]="key.settings.isEditable === 'readonly'"
                      type="number"
                      step="{{key.settings.step}}"
+                     min="{{key.settings.minValue}}"
+                     max="{{key.settings.maxValue}}"
                      (focus)="key.isFocused = true; focusInputElement($event)"
                      (blur)="key.isFocused = false; inputChanged(source, key)">
               <mat-icon *ngIf="key.settings.icon" matPrefix>{{key.settings.icon}}</mat-icon>
               <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
                 {{key.settings.requiredErrorMessage}}
+              </mat-error>
+              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('min')">
+                {{ 'widgets.input-widgets.min-value-error' | translate:{value: key.settings.minValue} }}
+              </mat-error>
+              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('max')">
+                {{ 'widgets.input-widgets.max-value-error' | translate:{value: key.settings.maxValue} }}
               </mat-error>
             </mat-form-field>
           </div>
@@ -91,6 +99,9 @@
                        (dateChange)="inputChanged(source, key)">
                 <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
                   {{key.settings.requiredErrorMessage}}
+                </mat-error>
+                <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('matDatepickerParse')">
+                  {{ 'widgets.input-widgets.invalid-date' | translate }}
                 </mat-error>
               </mat-form-field>
             </div>

@@ -24,7 +24,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DataKey, Datasource, DatasourceData, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { isDefined, isEqual, isUndefined, createLabelFromDatasource } from '@core/utils';
+import { isDefined, isEqual, isUndefined, createLabelFromDatasource, isDefinedAndNotNull } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import * as _moment from 'moment';
 import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
@@ -62,12 +62,24 @@ interface MultipleInputWidgetDataKeySettings {
   isEditable: MultipleInputWidgetDataKeyEditableType;
   disabledOnDataKey: string;
   dataKeyHidden: boolean;
-  step: number;
-  requiredErrorMessage: string;
+  step?: number;
+  minValue?: number;
+  maxValue?: number;
+  requiredErrorMessage?: string;
+  invalidDateErrorMessage?: string;
+  minErrorMessage?: string;
+  maxErrorMessage?: string;
   icon: string;
   inputTypeNumber?: boolean;
   readOnly?: boolean;
   disabledOnCondition?: boolean;
+}
+
+interface MultipleInputWidgetDataKeyErrorMessages {
+  requiredErrorMessage?: string;
+  invalidDateErrorMessage?: string;
+  minErrorMessage?: string;
+  maxErrorMessage?: string;
 }
 
 interface MultipleInputWidgetDataKey extends DataKey {
@@ -75,6 +87,7 @@ interface MultipleInputWidgetDataKey extends DataKey {
   settings: MultipleInputWidgetDataKeySettings;
   isFocused: boolean;
   value?: any;
+  errorMessages?: MultipleInputWidgetDataKeyErrorMessages;
 }
 
 interface MultipleInputWidgetSource {
@@ -195,7 +208,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
             if (dataKey.units) {
               dataKey.label += ' (' + dataKey.units + ')';
             }
-            dataKey.formId = (++keyIndex)+'';
+            dataKey.formId = (++keyIndex) + '';
             dataKey.isFocused = false;
 
             // For backward compatibility
@@ -245,6 +258,14 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
         if (key.settings.dataKeyValueType === 'integer') {
           validators.push(Validators.pattern(/^-?[0-9]+$/));
         }
+        if (key.settings.dataKeyValueType === 'integer' || key.settings.dataKeyValueType === 'double') {
+          if (isDefinedAndNotNull(key.settings.minValue) && isFinite(key.settings.minValue)) {
+            validators.push(Validators.min(key.settings.minValue));
+          }
+          if (isDefinedAndNotNull(key.settings.maxValue) && isFinite(key.settings.maxValue)) {
+            validators.push(Validators.max(key.settings.maxValue));
+          }
+        }
         const formControl = this.fb.control(
           { value: key.value,
                       disabled: key.settings.isEditable === 'disabled' || key.settings.disabledOnCondition},
@@ -265,7 +286,11 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
           switch (key.settings.dataKeyValueType) {
             case 'dateTime':
             case 'date':
-              value = _moment(keyData[0][1]).toDate();
+              if (isDefinedAndNotNull(keyData[0][1]) && keyData[0][1] !== '') {
+                value = _moment(keyData[0][1]).toDate();
+              } else {
+                value = null;
+              }
               break;
             case 'time':
               value = _moment().startOf('day').add(keyData[0][1], 'ms').toDate();
@@ -455,7 +480,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     if (tasks.length) {
       forkJoin(tasks).subscribe(
         () => {
-          this.multipleInputFormGroup.reset(undefined, {emitEvent: false});
+          // this.multipleInputFormGroup.reset(undefined, {emitEvent: false});
           this.multipleInputFormGroup.markAsPristine();
           if (this.settings.showResultMessage) {
             this.ctx.showSuccessToast(this.translate.instant('widgets.input-widgets.update-successful'),
@@ -469,7 +494,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
           }
         });
     } else {
-      this.multipleInputFormGroup.reset(undefined, {emitEvent: false});
+      // this.multipleInputFormGroup.reset(undefined, {emitEvent: false});
       this.multipleInputFormGroup.markAsPristine();
     }
   }
