@@ -25,6 +25,10 @@
       </tb-device-profile-alarm>
     </div>
   </div>
+  <div *ngIf="!alarmsFormArray().controls.length">
+      <span translate fxLayoutAlign="center center"
+            class="tb-prompt">device-profile.no-alarm-rules</span>
+  </div>
   <div *ngIf="!disabled" fxFlex fxLayout="row" fxLayoutAlign="end center"
        style="padding-top: 16px;">
     <button mat-raised-button color="primary"
@@ -32,8 +36,7 @@
             (click)="addAlarm()"
             matTooltip="{{ 'device-profile.add-alarm-rule' | translate }}"
             matTooltipPosition="above">
-      <mat-icon>add</mat-icon>
-      <span translate>action.add</span>
+      <span translate>device-profile.add-alarm-rule</span>
     </button>
   </div>
 </div>

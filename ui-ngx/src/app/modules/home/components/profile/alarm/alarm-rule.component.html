@@ -16,56 +16,56 @@
 
 -->
 <div fxLayout="column" [formGroup]="alarmRuleFormGroup">
-  <div formGroupName="condition" fxLayout="row" fxLayoutAlign="start" fxLayoutGap="8px" fxFlex>
-    <div fxLayout="column" fxFlex>
+  <div formGroupName="condition" fxLayout="row" fxLayoutGap="8px" fxFlex>
+    <tb-alarm-rule-condition fxFlex
+                             formControlName="condition">
+    </tb-alarm-rule-condition>
+    <div fxLayout="column">
       <div fxLayout="row" fxLayoutAlign="start center" style="min-height: 40px;">
-        <label class="tb-small" translate>device-profile.alarm-rule-condition</label>
-      </div>
-      <tb-alarm-rule-condition fxFlex
-                               formControlName="condition">
-      </tb-alarm-rule-condition>
-    </div>
-    <div fxLayout="column" style="min-width: 250px;">
-      <div fxLayout="row" fxLayoutAlign="start center" style="min-height: 40px;">
-        <label fxFlex class="tb-small" translate>device-profile.condition-duration</label>
+        <div class="tb-small" translate>device-profile.condition-duration</div>
+        <span fxFlex></span>
         <mat-slide-toggle [disabled]="disabled"
+                          color="primary"
                           [ngModelOptions]="{standalone: true}"
                           (ngModelChange)="enableDurationChanged($event)"
                           [ngModel]="enableDuration">
         </mat-slide-toggle>
       </div>
-      <div fxLayout="row" fxLayoutGap="8px" [fxShow]="enableDuration">
-        <mat-form-field class="mat-block duration-value-field" hideRequiredMarker floatLabel="always">
-          <mat-label></mat-label>
-          <input type="number"
-                 [required]="enableDuration"
-                 step="1"
-                 min="1" max="2147483647" matInput
-                 placeholder="{{ 'device-profile.condition-duration-value' | translate }}"
-                 formControlName="durationValue">
-          <mat-error *ngIf="alarmRuleFormGroup.get('condition').get('durationValue').hasError('required')">
-            {{ 'device-profile.condition-duration-value-required' | translate }}
-          </mat-error>
-          <mat-error *ngIf="alarmRuleFormGroup.get('condition').get('durationValue').hasError('min')">
-            {{ 'device-profile.condition-duration-value-range' | translate }}
-          </mat-error>
-          <mat-error *ngIf="alarmRuleFormGroup.get('condition').get('durationValue').hasError('max')">
-            {{ 'device-profile.condition-duration-value-range' | translate }}
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field class="mat-block duration-unit-field" hideRequiredMarker floatLabel="always">
-          <mat-label></mat-label>
-          <mat-select formControlName="durationUnit"
-                      [required]="enableDuration"
-                      placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
-            <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
-              {{ timeUnitTranslations.get(timeUnit) | translate }}
-            </mat-option>
-          </mat-select>
-          <mat-error *ngIf="alarmRuleFormGroup.get('condition').get('durationUnit').hasError('required')">
-            {{ 'device-profile.condition-duration-time-unit-required' | translate }}
-          </mat-error>
-        </mat-form-field>
+      <div class="tb-condition-duration" fxFlex fxLayout="row" fxLayoutGap="8px">
+        <span style="min-width: 250px;" *ngIf="!enableDuration"></span>
+        <div style="min-width: 250px;" fxLayout="row" fxLayoutGap="8px" *ngIf="enableDuration">
+          <mat-form-field class="mat-block duration-value-field" hideRequiredMarker floatLabel="always">
+            <mat-label></mat-label>
+            <input type="number"
+                   required
+                   step="1"
+                   min="1" max="2147483647" matInput
+                   placeholder="{{ 'device-profile.condition-duration-value' | translate }}"
+                   formControlName="durationValue">
+            <mat-error *ngIf="alarmRuleFormGroup.get('condition').get('durationValue').hasError('required')">
+              {{ 'device-profile.condition-duration-value-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="alarmRuleFormGroup.get('condition').get('durationValue').hasError('min')">
+              {{ 'device-profile.condition-duration-value-range' | translate }}
+            </mat-error>
+            <mat-error *ngIf="alarmRuleFormGroup.get('condition').get('durationValue').hasError('max')">
+              {{ 'device-profile.condition-duration-value-range' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field class="mat-block duration-unit-field" hideRequiredMarker floatLabel="always">
+            <mat-label></mat-label>
+            <mat-select formControlName="durationUnit"
+                        required
+                        placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
+              <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
+                {{ timeUnitTranslations.get(timeUnit) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="alarmRuleFormGroup.get('condition').get('durationUnit').hasError('required')">
+              {{ 'device-profile.condition-duration-time-unit-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </div>
       </div>
     </div>
   </div>
@@ -73,7 +73,7 @@
     <mat-expansion-panel-header>
       <mat-panel-title>
         <div fxFlex fxLayout="row" fxLayoutAlign="end center">
-          <div class="tb-small" translate>device-profile.advanced-settings</div>
+          <div class="tb-small" translate>device-profile.alarm-rule-details</div>
         </div>
       </mat-panel-title>
     </mat-expansion-panel-header>

@@ -14,9 +14,24 @@
  * limitations under the License.
  */
 :host {
-  a.mat-icon-button {
+  display: flex;
+  a.mat-button {
     &:hover, &:focus {
       border-bottom: none;
+    }
+  }
+  .tb-alarm-rule-condition {
+    padding: 8px;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+}
+
+:host ::ng-deep {
+  .tb-alarm-rule-condition {
+    .tb-filter-text {
+      max-height: 200px;
     }
   }
 }

@@ -27,6 +27,8 @@ import {
 } from '@angular/forms';
 import { AlarmRule, DeviceProfileAlarm } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
+import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
+import { MatChipInputEvent } from '@angular/material/chips';
 
 @Component({
   selector: 'tb-device-profile-alarm',
@@ -53,13 +55,16 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
   @Output()
   removeAlarm = new EventEmitter();
 
+  separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
+
   expanded = false;
 
   private modelValue: DeviceProfileAlarm;
 
   alarmFormGroup: FormGroup;
 
-  private propagateChange = (v: any) => { };
+  private propagateChange = null;
+  private propagateChangePending = false;
 
   constructor(private dialog: MatDialog,
               private fb: FormBuilder) {
@@ -67,6 +72,12 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
+    if (this.propagateChangePending) {
+      this.propagateChangePending = false;
+      setTimeout(() => {
+        this.propagateChange(this.modelValue);
+      }, 0);
+    }
   }
 
   registerOnTouched(fn: any): void {
@@ -96,11 +107,15 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
   }
 
   writeValue(value: DeviceProfileAlarm): void {
+    this.propagateChangePending = false;
     this.modelValue = value;
     if (!this.modelValue.alarmType) {
       this.expanded = true;
     }
     this.alarmFormGroup.reset(this.modelValue || undefined, {emitEvent: false});
+    if (!this.disabled && !this.alarmFormGroup.valid) {
+      this.updateModel();
+    }
   }
 
   public addClearAlarmRule() {
@@ -124,9 +139,42 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
     };
   }
 
+  removeRelationType(key: string): void {
+    const keys: string[] = this.alarmFormGroup.get('propagateRelationTypes').value;
+    const index = keys.indexOf(key);
+    if (index >= 0) {
+      keys.splice(index, 1);
+      this.alarmFormGroup.get('propagateRelationTypes').setValue(keys, {emitEvent: true});
+    }
+  }
+
+  addRelationType(event: MatChipInputEvent): void {
+    const input = event.input;
+    let value = event.value;
+    if ((value || '').trim()) {
+      value = value.trim();
+      let keys: string[] = this.alarmFormGroup.get('propagateRelationTypes').value;
+      if (!keys || keys.indexOf(value) === -1) {
+        if (!keys) {
+          keys = [];
+        }
+        keys.push(value);
+        this.alarmFormGroup.get('propagateRelationTypes').setValue(keys, {emitEvent: true});
+      }
+    }
+    if (input) {
+      input.value = '';
+    }
+  }
+
+
   private updateModel() {
     const value = this.alarmFormGroup.value;
     this.modelValue = {...this.modelValue, ...value};
-    this.propagateChange(this.modelValue);
+    if (this.propagateChange) {
+      this.propagateChange(this.modelValue);
+    } else {
+      this.propagateChangePending = true;
+    }
   }
 }

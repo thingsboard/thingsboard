@@ -1,0 +1,114 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div style="min-width: 1000px;">
+  <mat-toolbar color="primary">
+    <h2 translate>device-profile.add</h2>
+    <span fxFlex></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div mat-dialog-content>
+    <mat-horizontal-stepper [linear]="true" #addDeviceProfileStepper (selectionChange)="selectedIndex = $event.selectedIndex">
+      <mat-step [stepControl]="deviceProfileDetailsFormGroup">
+        <form [formGroup]="deviceProfileDetailsFormGroup" style="padding-bottom: 16px;">
+          <ng-template matStepLabel>{{ 'device-profile.device-profile-details' | translate }}</ng-template>
+          <fieldset [disabled]="isLoading$ | async">
+            <mat-form-field class="mat-block">
+              <mat-label translate>device-profile.name</mat-label>
+              <input matInput formControlName="name" required/>
+              <mat-error *ngIf="deviceProfileDetailsFormGroup.get('name').hasError('required')">
+                {{ 'device-profile.name-required' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <tb-entity-autocomplete
+              labelText="device-profile.default-rule-chain"
+              [entityType]="entityType.RULE_CHAIN"
+              formControlName="defaultRuleChainId">
+            </tb-entity-autocomplete>
+            <mat-form-field class="mat-block">
+              <mat-label translate>device-profile.type</mat-label>
+              <mat-select formControlName="type" required>
+                <mat-option *ngFor="let type of deviceProfileTypes" [value]="type">
+                  {{deviceProfileTypeTranslations.get(type) | translate}}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="deviceProfileDetailsFormGroup.get('type').hasError('required')">
+                {{ 'device-profile.type-required' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field class="mat-block">
+              <mat-label translate>device-profile.description</mat-label>
+              <textarea matInput formControlName="description" rows="2"></textarea>
+            </mat-form-field>
+          </fieldset>
+        </form>
+      </mat-step>
+      <mat-step [stepControl]="transportConfigFormGroup">
+        <form [formGroup]="transportConfigFormGroup" style="padding-bottom: 16px;">
+          <ng-template matStepLabel>{{ 'device-profile.transport-configuration' | translate }}</ng-template>
+          <mat-form-field class="mat-block">
+            <mat-label translate>device-profile.transport-type</mat-label>
+            <mat-select formControlName="transportType" required>
+              <mat-option *ngFor="let type of deviceTransportTypes" [value]="type">
+                {{deviceTransportTypeTranslations.get(type) | translate}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="transportConfigFormGroup.get('transportType').hasError('required')">
+              {{ 'device-profile.transport-type-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <tb-device-profile-transport-configuration
+            formControlName="transportConfiguration"
+            required>
+          </tb-device-profile-transport-configuration>
+        </form>
+      </mat-step>
+      <mat-step [stepControl]="alarmRulesFormGroup">
+        <form [formGroup]="alarmRulesFormGroup" style="padding-bottom: 16px;">
+          <ng-template matStepLabel>{{'device-profile.alarm-rules' | translate:
+            {count: alarmRulesFormGroup.get('alarms').value ?
+                alarmRulesFormGroup.get('alarms').value.length : 0} }}</ng-template>
+          <tb-device-profile-alarms
+            formControlName="alarms">
+          </tb-device-profile-alarms>
+        </form>
+      </mat-step>
+    </mat-horizontal-stepper>
+  </div>
+  <div mat-dialog-actions fxLayout="row wrap" fxLayoutAlign="space-between center">
+    <button mat-button *ngIf="selectedIndex > 0"
+            [disabled]="(isLoading$ | async)"
+            (click)="previousStep()">{{ 'action.back' | translate }}</button>
+    <span *ngIf="selectedIndex <= 0"></span>
+    <div fxLayout="row wrap" fxLayoutGap="20px">
+      <button mat-button
+              [disabled]="(isLoading$ | async)"
+              (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+      <button mat-raised-button
+              [disabled]="(isLoading$ | async) || selectedForm().invalid"
+              color="primary"
+              (click)="nextStep()">{{ (selectedIndex === 2 ? 'action.add' : 'action.continue') | translate }}</button>
+    </div>
+  </div>
+</div>

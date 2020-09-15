@@ -13,19 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+:host {
+  .mat-dialog-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 
-import com.google.common.util.concurrent.ListenableFuture;
+    .mat-stepper-horizontal {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+  }
+}
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.function.Consumer;
-
-public interface TbSqlQueue<E> {
-
-    void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction, Comparator<E> batchUpdateComparator, int queueIndex);
-
-    void destroy();
-
-    ListenableFuture<Void> add(E element);
+:host ::ng-deep {
+  .mat-dialog-content {
+    .mat-stepper-horizontal {
+      .mat-horizontal-content-container {
+        overflow: auto;
+      }
+    }
+  }
 }

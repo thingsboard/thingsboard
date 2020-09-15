@@ -25,7 +25,8 @@
         <mat-select formControlName="severity"
                     required
                     placeholder="{{ 'device-profile.select-alarm-severity' | translate }}">
-          <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
+          <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity"
+                       [disabled]="isDisabledSeverity(alarmSeverityEnum[alarmSeverity], $index)">
             {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
           </mat-option>
         </mat-select>
@@ -36,7 +37,7 @@
       <tb-alarm-rule formControlName="alarmRule" required fxFlex>
       </tb-alarm-rule>
     </div>
-    <button *ngIf="!disabled && createAlarmRulesFormArray().controls.length > 1"
+    <button *ngIf="!disabled"
             mat-icon-button color="primary" style="min-width: 40px;"
             type="button"
             (click)="removeCreateAlarmRule($index)"
@@ -44,6 +45,10 @@
             matTooltipPosition="above">
       <mat-icon>remove_circle_outline</mat-icon>
     </button>
+  </div>
+  <div *ngIf="!createAlarmRulesFormArray().controls.length">
+      <span translate fxLayoutAlign="center center"
+            class="tb-prompt">device-profile.no-create-alarm-rules</span>
   </div>
   <div fxLayout="row" *ngIf="!disabled">
     <button mat-stroked-button color="primary"

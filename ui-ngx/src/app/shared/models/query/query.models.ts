@@ -25,6 +25,8 @@ import { PageData } from '@shared/models/page/page-data';
 import { isDefined, isEqual } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmInfo, AlarmSearchStatus, AlarmSeverity } from '../alarm.models';
+import { Filter } from '@material-ui/icons';
+import { DatePipe } from '@angular/common';
 
 export enum EntityKeyType {
   ATTRIBUTE = 'ATTRIBUTE',
@@ -358,7 +360,102 @@ export interface FiltersInfo {
   datasourceFilters: {[datasourceIndex: number]: FilterInfo};
 }
 
+export function keyFiltersToText(translate: TranslateService, datePipe: DatePipe, keyFilters: Array<KeyFilter>): string {
+  const filtersText = keyFilters.map(keyFilter =>
+      keyFilterToText(translate, datePipe, keyFilter,
+        keyFilters.length > 1 ? ComplexOperation.AND : undefined));
+  let result: string;
+  if (filtersText.length > 1) {
+    const andText = translate.instant('filter.operation.and');
+    result = filtersText.join(' <span class="tb-filter-complex-operation">' + andText + '</span> ');
+  } else {
+    result = filtersText[0];
+  }
+  return result;
+}
+
+export function keyFilterToText(translate: TranslateService, datePipe: DatePipe, keyFilter: KeyFilter,
+                                parentComplexOperation?: ComplexOperation): string {
+  const keyFilterPredicate = keyFilter.predicate;
+  return keyFilterPredicateToText(translate, datePipe, keyFilter, keyFilterPredicate, parentComplexOperation);
+}
+
+export function keyFilterPredicateToText(translate: TranslateService,
+                                         datePipe: DatePipe,
+                                         keyFilter: KeyFilter,
+                                         keyFilterPredicate: KeyFilterPredicate,
+                                         parentComplexOperation?: ComplexOperation): string {
+  if (keyFilterPredicate.type === FilterPredicateType.COMPLEX) {
+    const complexPredicate = keyFilterPredicate as ComplexFilterPredicate;
+    const complexOperation = complexPredicate.operation;
+    const complexPredicatesText =
+      complexPredicate.predicates.map(predicate => keyFilterPredicateToText(translate, datePipe, keyFilter, predicate, complexOperation));
+    if (complexPredicatesText.length > 1) {
+      const operationText = translate.instant(complexOperationTranslationMap.get(complexOperation));
+      let result = complexPredicatesText.join(' <span class="tb-filter-complex-operation">' + operationText + '</span> ');
+      if (complexOperation === ComplexOperation.OR && parentComplexOperation && ComplexOperation.OR !== parentComplexOperation) {
+        result = `<span class="tb-filter-bracket"><span class="tb-left-bracket">(</span>${result}<span class="tb-right-bracket">)</span></span>`;
+      }
+      return result;
+    } else {
+      return complexPredicatesText[0];
+    }
+  } else {
+    return simpleKeyFilterPredicateToText(translate, datePipe, keyFilter, keyFilterPredicate);
+  }
+}
+
+function simpleKeyFilterPredicateToText(translate: TranslateService,
+                                        datePipe: DatePipe,
+                                        keyFilter: KeyFilter,
+                                        keyFilterPredicate: StringFilterPredicate |
+                                                            NumericFilterPredicate |
+                                                            BooleanFilterPredicate): string {
+  const key = keyFilter.key.key;
+  let operation: string;
+  let value: string;
+  const val = keyFilterPredicate.value;
+  const dynamicValue = !!val.dynamicValue && !!val.dynamicValue.sourceType;
+  if (dynamicValue) {
+    value = '<span class="tb-filter-dynamic-value"><span class="tb-filter-dynamic-source">' +
+    translate.instant(dynamicValueSourceTypeTranslationMap.get(val.dynamicValue.sourceType)) + '</span>';
+    value += '.<span class="tb-filter-value">' + val.dynamicValue.sourceAttribute + '</span></span>';
+  }
+  switch (keyFilterPredicate.type) {
+    case FilterPredicateType.STRING:
+      operation = translate.instant(stringOperationTranslationMap.get(keyFilterPredicate.operation));
+      if (keyFilterPredicate.ignoreCase) {
+        operation += ' ' + translate.instant('filter.ignore-case');
+      }
+      if (!dynamicValue) {
+        value = `'${keyFilterPredicate.value.defaultValue}'`;
+      }
+      break;
+    case FilterPredicateType.NUMERIC:
+      operation = translate.instant(numericOperationTranslationMap.get(keyFilterPredicate.operation));
+      if (!dynamicValue) {
+        if (keyFilter.valueType === EntityKeyValueType.DATE_TIME) {
+          value = datePipe.transform(keyFilterPredicate.value.defaultValue, 'yyyy-MM-dd HH:mm');
+        } else {
+          value = keyFilterPredicate.value.defaultValue + '';
+        }
+      }
+      break;
+    case FilterPredicateType.BOOLEAN:
+      operation = translate.instant(booleanOperationTranslationMap.get(keyFilterPredicate.operation));
+      value = translate.instant(keyFilterPredicate.value.defaultValue ? 'value.true' : 'value.false');
+      break;
+  }
+  if (!dynamicValue) {
+    value = `<span class="tb-filter-value">${value}</span>`;
+  }
+  return `<span class="tb-filter-predicate"><span class="tb-filter-entity-key">${key}</span> <span class="tb-filter-simple-operation">${operation}</span> ${value}</span>`;
+}
+
 export function keyFilterInfosToKeyFilters(keyFilterInfos: Array<KeyFilterInfo>): Array<KeyFilter> {
+  if (!keyFilterInfos) {
+    return [];
+  }
   const keyFilters: Array<KeyFilter> = [];
   for (const keyFilterInfo of keyFilterInfos) {
     const key = keyFilterInfo.key;

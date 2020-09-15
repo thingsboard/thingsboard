@@ -61,6 +61,8 @@ export class CreateAlarmRulesComponent implements ControlValueAccessor, OnInit, 
 
   createAlarmRulesFormGroup: FormGroup;
 
+  private usedSeverities: AlarmSeverity[] = [];
+
   private valueChangeSubscription: Subscription = null;
 
   private propagateChange = (v: any) => { };
@@ -121,6 +123,10 @@ export class CreateAlarmRulesComponent implements ControlValueAccessor, OnInit, 
     this.valueChangeSubscription = this.createAlarmRulesFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
+    this.updateUsedSeverities();
+    if (!this.disabled && !this.createAlarmRulesFormGroup.valid) {
+      this.updateModel();
+    }
   }
 
   public removeCreateAlarmRule(index: number) {
@@ -142,11 +148,24 @@ export class CreateAlarmRulesComponent implements ControlValueAccessor, OnInit, 
   }
 
   public validate(c: FormControl) {
-    return (this.createAlarmRulesFormGroup.valid && this.createAlarmRulesFormGroup.get('createAlarmRules').value.length) ? null : {
+    return (this.createAlarmRulesFormGroup.valid) ? null : {
       createAlarmRules: {
         valid: false,
       },
     };
+  }
+
+  public isDisabledSeverity(severity: AlarmSeverity, index: number): boolean {
+    const usedIndex = this.usedSeverities.indexOf(severity);
+    return usedIndex > -1 && usedIndex !== index;
+  }
+
+  private updateUsedSeverities() {
+    this.usedSeverities = [];
+    const value: {severity: string, alarmRule: AlarmRule}[] = this.createAlarmRulesFormGroup.get('createAlarmRules').value;
+    value.forEach((rule, index) => {
+      this.usedSeverities[index] = AlarmSeverity[rule.severity];
+    });
   }
 
   private updateModel() {
@@ -155,6 +174,7 @@ export class CreateAlarmRulesComponent implements ControlValueAccessor, OnInit, 
     value.forEach(v => {
       createAlarmRules[v.severity] = v.alarmRule;
     });
+    this.updateUsedSeverities();
     this.propagateChange(createAlarmRules);
   }
 }

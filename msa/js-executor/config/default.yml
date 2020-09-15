@@ -25,7 +25,7 @@ kafka:
     # Kafka Bootstrap Servers
     servers: "localhost:9092"
   replication_factor: "1"
-  topic_properties: "retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600"
+  topic_properties: "retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100"
   use_confluent_cloud: false
   confluent:
     sasl:
