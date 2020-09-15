@@ -32,6 +32,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.DataConstants;
@@ -69,6 +70,7 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
 import org.thingsboard.server.service.mail.MailExecutorService;
+import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
@@ -123,6 +125,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private DeviceService deviceService;
+
+    @Autowired
+    @Getter
+    private TbDeviceProfileCache deviceProfileCache;
 
     @Autowired
     @Getter
@@ -530,4 +536,5 @@ public class ActorSystemContext {
         log.debug("Scheduling msg {} with delay {} ms", msg, delayInMs);
         getScheduler().schedule(() -> ctx.tell(msg), delayInMs, TimeUnit.MILLISECONDS);
     }
+
 }
