@@ -127,8 +127,8 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
 
   updateForm(entity: DeviceProfile) {
     this.entityForm.patchValue({name: entity.name});
-    this.entityForm.patchValue({type: entity.type});
-    this.entityForm.patchValue({transportType: entity.transportType});
+    this.entityForm.patchValue({type: entity.type}, {emitEvent: false});
+    this.entityForm.patchValue({transportType: entity.transportType}, {emitEvent: false});
     this.entityForm.patchValue({profileData: entity.profileData});
     this.entityForm.patchValue({defaultRuleChainId: entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null});
     this.entityForm.patchValue({description: entity.description});
