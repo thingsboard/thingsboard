@@ -24,5 +24,6 @@ public class TbRuleEngineQueueAckStrategyConfiguration {
     private int retries;
     private double failurePercentage;
     private long pauseBetweenRetries;
+    private long maxPauseBetweenRetries;
 
 }
