@@ -33,8 +33,9 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import javax.transaction.Transactional;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.oauth2.OAuth2Utils.ALLOW_OAUTH2_CONFIGURATION;
@@ -64,17 +65,22 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
     }
 
     @Override
-    public OAuth2ClientRegistration saveClientRegistration(OAuth2ClientRegistration clientRegistration) {
-        log.trace("Executing saveClientRegistration [{}]", clientRegistration);
-        clientRegistrationValidator.validate(clientRegistration, OAuth2ClientRegistration::getTenantId);
-        return clientRegistrationDao.save(clientRegistration.getTenantId(), clientRegistration);
+    @Transactional
+    public OAuth2ClientsParams saveClientsParams(TenantId tenantId, OAuth2ClientsParams clientsParams) {
+        log.trace("Executing saveClientsParams [{}] [{}]", tenantId, clientsParams);
+        clientParamsValidator.accept(tenantId, clientsParams);
+        List<OAuth2ClientRegistration> inputClientRegistrations = OAuth2Utils.toClientRegistrations(tenantId, clientsParams);
+        List<OAuth2ClientRegistration> savedClientRegistrations = inputClientRegistrations.stream()
+                .map(clientRegistration -> clientRegistrationDao.save(clientRegistration.getTenantId(), clientRegistration))
+                .collect(Collectors.toList());
+        return OAuth2Utils.toOAuth2ClientsParams(savedClientRegistrations);
     }
 
     @Override
-    public List<OAuth2ClientRegistration> findClientRegistrationsByTenantId(TenantId tenantId) {
-        log.trace("Executing findClientRegistrationsByTenantId [{}]", tenantId);
+    public OAuth2ClientsParams findClientsParamsByTenantId(TenantId tenantId) {
+        log.trace("Executing findClientsParamsByTenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return clientRegistrationDao.findByTenantId(tenantId.getId());
+        return OAuth2Utils.toOAuth2ClientsParams(clientRegistrationDao.findByTenantId(tenantId.getId()));
     }
 
     @Override
@@ -129,92 +135,90 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
         }
     }
 
-    private final DataValidator<OAuth2ClientRegistration> clientRegistrationValidator =
-            new DataValidator<OAuth2ClientRegistration>() {
-
-                @Override
-                protected void validateCreate(TenantId tenantId, OAuth2ClientRegistration clientRegistration) {
+    private final BiConsumer<TenantId, OAuth2ClientsParams> clientParamsValidator = (tenantId, clientsParams) -> {
+        if (clientsParams == null || clientsParams.getOAuth2DomainDtos() == null
+                || clientsParams.getOAuth2DomainDtos().isEmpty()) {
+            throw new DataValidationException("Domain params should be specified!");
+        }
+        for (OAuth2ClientsDomainParams domainParams : clientsParams.getOAuth2DomainDtos()) {
+            if (StringUtils.isEmpty(domainParams.getDomainName())) {
+                throw new DataValidationException("Domain name should be specified!");
+            }
+            if (StringUtils.isEmpty(domainParams.getRedirectUriTemplate())) {
+                throw new DataValidationException("Redirect URI template should be specified!");
+            }
+            if (domainParams.getClientRegistrations() == null || domainParams.getClientRegistrations().isEmpty()) {
+                throw new DataValidationException("Client registrations should be specified!");
+            }
+            for (ClientRegistrationDto clientRegistration : domainParams.getClientRegistrations()) {
+                if (StringUtils.isEmpty(clientRegistration.getClientId())) {
+                    throw new DataValidationException("Client ID should be specified!");
                 }
-
-                @Override
-                protected void validateUpdate(TenantId tenantId, OAuth2ClientRegistration clientRegistration) {
+                if (StringUtils.isEmpty(clientRegistration.getClientSecret())) {
+                    throw new DataValidationException("Client secret should be specified!");
                 }
-
-                @Override
-                protected void validateDataImpl(TenantId tenantId, OAuth2ClientRegistration clientRegistration) {
-                    if (StringUtils.isEmpty(clientRegistration.getDomainName())) {
-                        throw new DataValidationException("Domain name should be specified!");
+                if (StringUtils.isEmpty(clientRegistration.getAuthorizationUri())) {
+                    throw new DataValidationException("Authorization uri should be specified!");
+                }
+                if (StringUtils.isEmpty(clientRegistration.getAccessTokenUri())) {
+                    throw new DataValidationException("Token uri should be specified!");
+                }
+                if (StringUtils.isEmpty(clientRegistration.getScope())) {
+                    throw new DataValidationException("Scope should be specified!");
+                }
+                if (StringUtils.isEmpty(clientRegistration.getUserInfoUri())) {
+                    throw new DataValidationException("User info uri should be specified!");
+                }
+                if (StringUtils.isEmpty(clientRegistration.getUserNameAttributeName())) {
+                    throw new DataValidationException("User name attribute name should be specified!");
+                }
+                if (StringUtils.isEmpty(clientRegistration.getClientAuthenticationMethod())) {
+                    throw new DataValidationException("Client authentication method should be specified!");
+                }
+                if (StringUtils.isEmpty(clientRegistration.getLoginButtonLabel())) {
+                    throw new DataValidationException("Login button label should be specified!");
+                }
+                OAuth2MapperConfig mapperConfig = clientRegistration.getMapperConfig();
+                if (mapperConfig == null) {
+                    throw new DataValidationException("Mapper config should be specified!");
+                }
+                if (mapperConfig.getType() == null) {
+                    throw new DataValidationException("Mapper config type should be specified!");
+                }
+                if (mapperConfig.getType() == MapperType.BASIC) {
+                    OAuth2BasicMapperConfig basicConfig = mapperConfig.getBasic();
+                    if (basicConfig == null) {
+                        throw new DataValidationException("Basic config should be specified!");
                     }
-                    if (StringUtils.isEmpty(clientRegistration.getRedirectUriTemplate())) {
-                        throw new DataValidationException("Redirect URI template should be specified!");
+                    if (StringUtils.isEmpty(basicConfig.getEmailAttributeKey())) {
+                        throw new DataValidationException("Email attribute key should be specified!");
                     }
-                    if (StringUtils.isEmpty(clientRegistration.getClientId())) {
-                        throw new DataValidationException("Client ID should be specified!");
+                    if (basicConfig.getTenantNameStrategy() == null) {
+                        throw new DataValidationException("Tenant name strategy should be specified!");
                     }
-                    if (StringUtils.isEmpty(clientRegistration.getClientSecret())) {
-                        throw new DataValidationException("Client secret should be specified!");
-                    }
-                    if (StringUtils.isEmpty(clientRegistration.getAuthorizationUri())) {
-                        throw new DataValidationException("Authorization uri should be specified!");
-                    }
-                    if (StringUtils.isEmpty(clientRegistration.getAccessTokenUri())) {
-                        throw new DataValidationException("Token uri should be specified!");
-                    }
-                    if (StringUtils.isEmpty(clientRegistration.getScope())) {
-                        throw new DataValidationException("Scope should be specified!");
-                    }
-                    if (StringUtils.isEmpty(clientRegistration.getUserInfoUri())) {
-                        throw new DataValidationException("User info uri should be specified!");
-                    }
-                    if (StringUtils.isEmpty(clientRegistration.getUserNameAttributeName())) {
-                        throw new DataValidationException("User name attribute name should be specified!");
-                    }
-                    if (StringUtils.isEmpty(clientRegistration.getClientAuthenticationMethod())) {
-                        throw new DataValidationException("Client authentication method should be specified!");
-                    }
-                    if (StringUtils.isEmpty(clientRegistration.getLoginButtonLabel())) {
-                        throw new DataValidationException("Login button label should be specified!");
-                    }
-                    OAuth2MapperConfig mapperConfig = clientRegistration.getMapperConfig();
-                    if (mapperConfig == null) {
-                        throw new DataValidationException("Mapper config should be specified!");
-                    }
-                    if (mapperConfig.getType() == null) {
-                        throw new DataValidationException("Mapper config type should be specified!");
-                    }
-                    if (mapperConfig.getType() == MapperType.BASIC) {
-                        OAuth2BasicMapperConfig basicConfig = mapperConfig.getBasic();
-                        if (basicConfig == null) {
-                            throw new DataValidationException("Basic config should be specified!");
-                        }
-                        if (StringUtils.isEmpty(basicConfig.getEmailAttributeKey())) {
-                            throw new DataValidationException("Email attribute key should be specified!");
-                        }
-                        if (basicConfig.getTenantNameStrategy() == null) {
-                            throw new DataValidationException("Tenant name strategy should be specified!");
-                        }
-                        if (basicConfig.getTenantNameStrategy() == TenantNameStrategyType.CUSTOM
-                                && StringUtils.isEmpty(basicConfig.getTenantNamePattern())) {
-                            throw new DataValidationException("Tenant name pattern should be specified!");
-                        }
-                    }
-                    if (mapperConfig.getType() == MapperType.CUSTOM) {
-                        OAuth2CustomMapperConfig customConfig = mapperConfig.getCustom();
-                        if (customConfig == null) {
-                            throw new DataValidationException("Custom config should be specified!");
-                        }
-                        if (StringUtils.isEmpty(customConfig.getUrl())) {
-                            throw new DataValidationException("Custom mapper URL should be specified!");
-                        }
-                    }
-                    if (clientRegistration.getTenantId() == null) {
-                        throw new DataValidationException("Client registration should be assigned to tenant!");
-                    } else if (!TenantId.SYS_TENANT_ID.equals(clientRegistration.getTenantId())) {
-                        Tenant tenant = tenantService.findTenantById(clientRegistration.getTenantId());
-                        if (tenant == null) {
-                            throw new DataValidationException("Client registration is referencing to non-existent tenant!");
-                        }
+                    if (basicConfig.getTenantNameStrategy() == TenantNameStrategyType.CUSTOM
+                            && StringUtils.isEmpty(basicConfig.getTenantNamePattern())) {
+                        throw new DataValidationException("Tenant name pattern should be specified!");
                     }
                 }
-            };
+                if (mapperConfig.getType() == MapperType.CUSTOM) {
+                    OAuth2CustomMapperConfig customConfig = mapperConfig.getCustom();
+                    if (customConfig == null) {
+                        throw new DataValidationException("Custom config should be specified!");
+                    }
+                    if (StringUtils.isEmpty(customConfig.getUrl())) {
+                        throw new DataValidationException("Custom mapper URL should be specified!");
+                    }
+                }
+            }
+        }
+        if (tenantId == null) {
+            throw new DataValidationException("Client registration should be assigned to tenant!");
+        } else if (!TenantId.SYS_TENANT_ID.equals(tenantId)) {
+            Tenant tenant = tenantService.findTenantById(tenantId);
+            if (tenant == null) {
+                throw new DataValidationException("Client registration is referencing to non-existent tenant!");
+            }
+        }
+    };
 }

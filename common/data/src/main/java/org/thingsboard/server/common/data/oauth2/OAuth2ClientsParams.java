@@ -16,8 +16,11 @@
 package org.thingsboard.server.common.data.oauth2;
 
 import lombok.*;
+import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 @EqualsAndHashCode
 @Data
@@ -26,5 +29,5 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OAuth2ClientsParams {
-    private List<OAuth2ClientRegistration> clientRegistrations;
+    private List<OAuth2ClientsDomainParams> oAuth2DomainDtos;
 }

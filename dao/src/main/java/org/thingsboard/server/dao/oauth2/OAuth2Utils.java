@@ -16,10 +16,14 @@
 package org.thingsboard.server.dao.oauth2;
 
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OAuth2Utils {
@@ -32,5 +36,69 @@ public class OAuth2Utils {
         client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getUuidId().toString()));
         client.setIcon(clientRegistration.getLoginButtonIcon());
         return client;
+    }
+
+    public static List<OAuth2ClientRegistration> toClientRegistrations(TenantId tenantId, OAuth2ClientsParams clientsParams) {
+        return clientsParams.getOAuth2DomainDtos().stream()
+                .flatMap(domainParams -> domainParams.getClientRegistrations().stream()
+                        .map(clientRegistrationDto -> OAuth2Utils.toClientRegistration(tenantId, domainParams.getDomainName(),
+                                domainParams.getRedirectUriTemplate(), clientRegistrationDto)
+                        ))
+                .collect(Collectors.toList());
+    }
+
+    public static OAuth2ClientsParams toOAuth2ClientsParams(List<OAuth2ClientRegistration> clientRegistrations) {
+        Map<String, OAuth2ClientsDomainParams> domainParamsMap = new HashMap<>();
+        for (OAuth2ClientRegistration clientRegistration : clientRegistrations) {
+            String domainName = clientRegistration.getDomainName();
+            OAuth2ClientsDomainParams domainParams = domainParamsMap.computeIfAbsent(domainName,
+                    key -> new OAuth2ClientsDomainParams(domainName, clientRegistration.getRedirectUriTemplate(), new ArrayList<>())
+            );
+            domainParams.getClientRegistrations()
+                    .add(toClientRegistrationDto(clientRegistration));
+        }
+        return new OAuth2ClientsParams(new ArrayList<>(domainParamsMap.values()));
+    }
+
+    public static ClientRegistrationDto toClientRegistrationDto(OAuth2ClientRegistration oAuth2ClientRegistration) {
+        return ClientRegistrationDto.builder()
+                .id(oAuth2ClientRegistration.getId())
+                .createdTime(oAuth2ClientRegistration.getCreatedTime())
+                .mapperConfig(oAuth2ClientRegistration.getMapperConfig())
+                .clientId(oAuth2ClientRegistration.getClientId())
+                .clientSecret(oAuth2ClientRegistration.getClientSecret())
+                .authorizationUri(oAuth2ClientRegistration.getAuthorizationUri())
+                .accessTokenUri(oAuth2ClientRegistration.getAccessTokenUri())
+                .scope(oAuth2ClientRegistration.getScope())
+                .userInfoUri(oAuth2ClientRegistration.getUserInfoUri())
+                .userNameAttributeName(oAuth2ClientRegistration.getUserNameAttributeName())
+                .jwkSetUri(oAuth2ClientRegistration.getJwkSetUri())
+                .clientAuthenticationMethod(oAuth2ClientRegistration.getClientAuthenticationMethod())
+                .loginButtonLabel(oAuth2ClientRegistration.getLoginButtonLabel())
+                .loginButtonIcon(oAuth2ClientRegistration.getLoginButtonIcon())
+                .build();
+    }
+
+    public static OAuth2ClientRegistration toClientRegistration(TenantId tenantId, String domainName, String redirectUriTemplate,
+                                                                 ClientRegistrationDto clientRegistrationDto) {
+        OAuth2ClientRegistration clientRegistration = new OAuth2ClientRegistration();
+        clientRegistration.setId(clientRegistrationDto.getId());
+        clientRegistration.setTenantId(tenantId);
+        clientRegistration.setCreatedTime(clientRegistrationDto.getCreatedTime());
+        clientRegistration.setDomainName(domainName);
+        clientRegistration.setRedirectUriTemplate(redirectUriTemplate);
+        clientRegistration.setMapperConfig(clientRegistrationDto.getMapperConfig());
+        clientRegistration.setClientId(clientRegistrationDto.getClientId());
+        clientRegistration.setClientSecret(clientRegistrationDto.getClientSecret());
+        clientRegistration.setAuthorizationUri(clientRegistrationDto.getAuthorizationUri());
+        clientRegistration.setAccessTokenUri(clientRegistrationDto.getAccessTokenUri());
+        clientRegistration.setScope(clientRegistrationDto.getScope());
+        clientRegistration.setUserInfoUri(clientRegistrationDto.getUserInfoUri());
+        clientRegistration.setUserNameAttributeName(clientRegistrationDto.getUserNameAttributeName());
+        clientRegistration.setJwkSetUri(clientRegistrationDto.getJwkSetUri());
+        clientRegistration.setClientAuthenticationMethod(clientRegistrationDto.getClientAuthenticationMethod());
+        clientRegistration.setLoginButtonLabel(clientRegistrationDto.getLoginButtonLabel());
+        clientRegistration.setLoginButtonIcon(clientRegistrationDto.getLoginButtonIcon());
+        return clientRegistration;
     }
 }

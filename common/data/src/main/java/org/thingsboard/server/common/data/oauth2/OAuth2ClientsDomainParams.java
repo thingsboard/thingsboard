@@ -28,5 +28,5 @@ import java.util.List;
 public class OAuth2ClientsDomainParams {
     private String domainName;
     private String redirectUriTemplate;
-    private List<OAuth2ClientRegistration> clientRegistrations;
+    private List<ClientRegistrationDto> clientRegistrations;
 }
