@@ -17,11 +17,11 @@
 -->
 <mat-form-field [formGroup]="selectRuleChainFormGroup" class="mat-block">
   <input matInput type="text" placeholder="{{ ruleChainLabel | translate }}"
-         #entityInput
+         #ruleChainInput
          formControlName="ruleChainId"
          (focusin)="onFocus()"
          [required]="required"
-         [matAutocomplete]="entityAutocomplete">
+         [matAutocomplete]="ruleChainAutocomplete">
   <button *ngIf="selectRuleChainFormGroup.get('ruleChainId').value && !disabled"
           type="button"
           matSuffix mat-button mat-icon-button aria-label="Clear"
@@ -29,10 +29,10 @@
     <mat-icon class="material-icons">close</mat-icon>
   </button>
   <mat-autocomplete class="tb-autocomplete"
-                    #entityAutocomplete="matAutocomplete"
-                    [displayWith]="displayEntityFn">
-    <mat-option *ngFor="let entity of filteredRuleChains | async" [value]="entity">
-      <span [innerHTML]="entity.name | highlight:searchText"></span>
+                    #ruleChainAutocomplete="matAutocomplete"
+                    [displayWith]="displayRuleChainFn">
+    <mat-option *ngFor="let ruleChain of filteredRuleChains | async" [value]="ruleChain">
+      <span [innerHTML]="ruleChain.name | highlight:searchText"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredRuleChains | async)?.length" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">

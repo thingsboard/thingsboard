@@ -66,7 +66,8 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
   @Input()
   disabled: boolean;
 
-  @ViewChild('entityInput', {static: true}) entityInput: ElementRef;
+  @ViewChild('ruleChainInput', {static: true}) ruleChainInput: ElementRef;
+  @ViewChild('ruleChainInput', {read: MatAutocompleteTrigger}) ruleChainAutocomplete: MatAutocompleteTrigger;
 
   filteredRuleChains: Observable<Array<BaseData<EntityId>>>;
 
@@ -117,9 +118,9 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
   ngAfterViewInit(): void {}
 
   getCurrentEntity(): BaseData<EntityId> | null {
-    const currentEntity = this.selectRuleChainFormGroup.get('ruleChainId').value;
-    if (currentEntity && typeof currentEntity !== 'string') {
-      return currentEntity as BaseData<EntityId>;
+    const currentRuleChain = this.selectRuleChainFormGroup.get('ruleChainId').value;
+    if (currentRuleChain && typeof currentRuleChain !== 'string') {
+      return currentRuleChain as BaseData<EntityId>;
     } else {
       return null;
     }
@@ -180,8 +181,8 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
     }
   }
 
-  displayEntityFn(entity?: BaseData<EntityId>): string | undefined {
-    return entity ? entity.name : undefined;
+  displayRuleChainFn(ruleChain?: BaseData<EntityId>): string | undefined {
+    return ruleChain ? ruleChain.name : undefined;
   }
 
   fetchRuleChain(searchText?: string): Observable<Array<BaseData<EntityId>>> {
@@ -193,12 +194,14 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
   clear() {
     this.selectRuleChainFormGroup.get('ruleChainId').patchValue('', {emitEvent: true});
     setTimeout(() => {
-      this.entityInput.nativeElement.blur();
-      this.entityInput.nativeElement.focus();
+      this.ruleChainInput.nativeElement.blur();
+      this.ruleChainInput.nativeElement.focus();
     }, 0);
   }
 
   createDefaultRuleChain($event: Event, ruleChainName: string) {
+    $event.preventDefault();
+    this.ruleChainAutocomplete.closePanel();
     this.ruleChainService.createDefaultRuleChain(ruleChainName).subscribe((ruleChain) => {
       this.updateView(ruleChain.id.id);
     });
