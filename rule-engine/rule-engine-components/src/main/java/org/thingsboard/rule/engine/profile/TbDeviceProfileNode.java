@@ -16,15 +16,6 @@
 package org.thingsboard.rule.engine.profile;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.header.Headers;
-import org.apache.kafka.common.header.internals.RecordHeader;
-import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -32,22 +23,14 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.kafka.TbKafkaNodeConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
@@ -76,7 +59,6 @@ public class TbDeviceProfileNode implements TbNode {
     /**
      * TODO:
      * 1. Duration in the alarm conditions;
-     * 2. Update of the Profile (rules);
      * 3. Update of the Device attributes (client, server and shared);
      * 4. Dynamic values evaluation;
      */
@@ -86,26 +68,37 @@ public class TbDeviceProfileNode implements TbNode {
         EntityType originatorType = msg.getOriginator().getEntityType();
         if (EntityType.DEVICE.equals(originatorType)) {
             DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
-            DeviceState deviceState = getOrCreateDeviceState(ctx, msg, deviceId);
-            if (deviceState != null) {
-                deviceState.process(ctx, msg);
+            if (msg.getType().equals("ENTITY_UPDATED")) {
+                //TODO: handle if device profile id has changed.
             } else {
-                ctx.tellFailure(msg, new IllegalStateException("Device profile for device [" + deviceId + "] not found!"));
+                DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId);
+                if (deviceState != null) {
+                    deviceState.process(ctx, msg);
+                } else {
+                    ctx.tellFailure(msg, new IllegalStateException("Device profile for device [" + deviceId + "] not found!"));
+                }
             }
         } else if (EntityType.DEVICE_PROFILE.equals(originatorType)) {
-            //TODO: check that the profile rule set was changed. If yes - invalidate the rules.
+            if (msg.getType().equals("ENTITY_UPDATED")) {
+                DeviceProfile deviceProfile = JacksonUtil.fromString(msg.getData(), DeviceProfile.class);
+                for (DeviceState state : deviceStates.values()) {
+                    if (deviceProfile.getId().equals(state.getProfileId())) {
+                        state.updateProfile(ctx, deviceProfile);
+                    }
+                }
+            }
             ctx.tellSuccess(msg);
         } else {
             ctx.tellSuccess(msg);
         }
     }
 
-    private DeviceState getOrCreateDeviceState(TbContext ctx, TbMsg msg, DeviceId deviceId) {
+    private DeviceState getOrCreateDeviceState(TbContext ctx, DeviceId deviceId) {
         DeviceState deviceState = deviceStates.get(deviceId);
         if (deviceState == null) {
             DeviceProfile deviceProfile = cache.get(ctx.getTenantId(), deviceId);
             if (deviceProfile != null) {
-                deviceState = new DeviceState(new DeviceProfileState(deviceProfile));
+                deviceState = new DeviceState(deviceId, new DeviceProfileState(deviceProfile));
                 deviceStates.put(deviceId, deviceState);
             }
         }
