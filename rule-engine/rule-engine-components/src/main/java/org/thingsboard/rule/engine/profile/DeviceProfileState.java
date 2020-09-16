@@ -20,6 +20,7 @@ import lombok.Getter;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.KeyFilter;
 
@@ -54,5 +55,9 @@ class DeviceProfileState {
                 }
             }
         }
+    }
+
+    public DeviceProfileId getProfileId() {
+        return deviceProfile.getId();
     }
 }

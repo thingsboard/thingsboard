@@ -243,6 +243,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
+
+
     private <T> TransportServiceCallback<Void> getPubAckCallback(final ChannelHandlerContext ctx, final int msgId, final T msg) {
         return new TransportServiceCallback<Void>() {
             @Override
