@@ -19,7 +19,7 @@
   <h1 fxFlex fxHide.gt-sm *ngIf="lastBreadcrumb$ | async; let breadcrumb">
     {{ breadcrumb.ignoreTranslate ? (breadcrumb.labelFunction ? breadcrumb.labelFunction() : breadcrumb.label) : (breadcrumb.label | translate) }}
   </h1>
-  <span fxHide.lt-md fxLayout="row" *ngFor="let breadcrumb of breadcrumbs$ | async; last as isLast;" [ngSwitch]="isLast">
+  <span fxHide.lt-md fxLayout="row" *ngFor="let breadcrumb of breadcrumbs$ | async; trackBy: trackByBreadcrumbs; last as isLast;" [ngSwitch]="isLast">
 	    <a *ngSwitchCase="false" [routerLink]="breadcrumb.link" [queryParams]="breadcrumb.queryParams">
         <mat-icon *ngIf="breadcrumb.isMdiIcon" [svgIcon]="breadcrumb.icon">
 	    	</mat-icon>
