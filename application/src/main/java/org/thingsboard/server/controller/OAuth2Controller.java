@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
-import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.*;
 import org.thingsboard.server.common.data.security.Authority;
@@ -42,7 +41,6 @@ import java.util.stream.Collectors;
 public class OAuth2Controller extends BaseController {
     private static final String CLIENT_REGISTRATION_ID = "clientRegistrationId";
     private static final String DOMAIN = "domain";
-    private static final String CLIENT_REGISTRATION_TEMPLATE_ID = "clientRegistrationTemplateId";
 
     @RequestMapping(value = "/noauth/oauth2Clients", method = RequestMethod.POST)
     @ResponseBody
@@ -99,19 +97,6 @@ public class OAuth2Controller extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/oauth2/config/template", method = RequestMethod.POST)
-    @ResponseStatus(value = HttpStatus.OK)
-    public OAuth2ClientRegistrationTemplate saveClientRegistrationTemplate(@RequestBody OAuth2ClientRegistrationTemplate clientRegistrationTemplate) throws ThingsboardException {
-        try {
-            clientRegistrationTemplate.setTenantId(getCurrentUser().getTenantId());
-            checkEntity(clientRegistrationTemplate.getId(), clientRegistrationTemplate, Resource.OAUTH2_CONFIGURATION_TEMPLATE);
-            return oAuth2ConfigTemplateService.saveClientRegistrationTemplate(clientRegistrationTemplate);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/oauth2/config/{clientRegistrationId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
@@ -160,31 +145,6 @@ public class OAuth2Controller extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/oauth2/config/template/{clientRegistrationTemplateId}", method = RequestMethod.DELETE)
-    @ResponseStatus(value = HttpStatus.OK)
-    public void deleteClientRegistrationTemplate(@PathVariable(CLIENT_REGISTRATION_TEMPLATE_ID) String strClientRegistrationTemplateId) throws ThingsboardException {
-        checkParameter(CLIENT_REGISTRATION_TEMPLATE_ID, strClientRegistrationTemplateId);
-        try {
-            OAuth2ClientRegistrationTemplateId clientRegistrationTemplateId = new OAuth2ClientRegistrationTemplateId(toUUID(strClientRegistrationTemplateId));
-            OAuth2ClientRegistrationTemplate clientRegistrationTemplate = checkOAuth2ClientRegistrationTemplateId(clientRegistrationTemplateId, Operation.DELETE);
-            oAuth2ConfigTemplateService.deleteClientRegistrationTemplateById(clientRegistrationTemplateId);
-
-            logEntityAction(clientRegistrationTemplateId, clientRegistrationTemplate,
-                    null,
-                    ActionType.DELETED, null, strClientRegistrationTemplateId);
-
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.OAUTH2_CLIENT_REGISTRATION_TEMPLATE),
-                    null,
-                    null,
-                    ActionType.DELETED, e, strClientRegistrationTemplateId);
-
-            throw handleException(e);
-        }
-    }
-
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/oauth2/config/isAllowed", method = RequestMethod.GET)
     @ResponseBody
@@ -196,25 +156,7 @@ public class OAuth2Controller extends BaseController {
         }
     }
 
-
-
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/oauth2/config/template", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
-    public List<OAuth2ClientRegistrationTemplate> getClientRegistrationTemplates() throws ThingsboardException {
-        try {
-            checkOAuth2ConfigTemplatePermissions(Operation.READ);
-            return oAuth2ConfigTemplateService.findAllClientRegistrationTemplates();
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
     private void checkOAuth2ConfigPermissions(Operation operation) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION, operation);
-    }
-
-    private void checkOAuth2ConfigTemplatePermissions(Operation operation) throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION_TEMPLATE, operation);
     }
 }
