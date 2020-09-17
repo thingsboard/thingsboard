@@ -15,28 +15,32 @@
  */
 package org.thingsboard.server.controller;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.thingsboard.server.common.data.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseDashboardControllerTest extends AbstractControllerTest {
     
@@ -347,6 +351,32 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         Collections.sort(loadedDashboards, idComparator);
         
         Assert.assertEquals(dashboards, loadedDashboards);
+    }
+
+    @Test
+    public void testAssignDashboardToEdge() throws Exception {
+        Edge edge = constructEdge("My edge", "default");
+        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
+
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
+
+        doPost("/api/edge/" + savedEdge.getId().getId().toString()
+                + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+
+        TimePageData<Dashboard> pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/dashboards?",
+                new TypeReference<TimePageData<Dashboard>>() {}, new TextPageLink(100));
+
+        Assert.assertEquals(1, pageData.getData().size());
+
+        doDelete("/api/edge/" + savedEdge.getId().getId().toString()
+                + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+
+        pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/dashboards?",
+                new TypeReference<TimePageData<Dashboard>>() {}, new TextPageLink(100));
+
+        Assert.assertEquals(0, pageData.getData().size());
     }
 
 }

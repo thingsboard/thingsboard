@@ -77,14 +77,3 @@ public interface EdgeService {
 
     ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId);
 }
-
-
-                
-
-                
-
-                        
-
-                        
-
-                                

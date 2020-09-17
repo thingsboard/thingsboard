@@ -24,7 +24,6 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
@@ -40,8 +39,7 @@ import java.util.Map;
         nodeDetails = "If selected checkbox 'Check that all selected keys are present'\" and all keys in message data and metadata are exist - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.\n" +
                 "Else if the checkbox is not selected, and at least one of the keys from data or metadata of the message exists - send Message via <b>True</b> chain, otherwise, <b>False</b> chain is used. ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbFilterNodeCheckMessageConfig"
-)
+        configDirective = "tbFilterNodeCheckMessageConfig")
 public class TbCheckMessageNode implements TbNode {
 
     private static final Gson gson = new Gson();

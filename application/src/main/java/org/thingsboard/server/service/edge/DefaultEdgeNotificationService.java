@@ -88,9 +88,6 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     private RuleChainService ruleChainService;
 
     @Autowired
-    private RelationService relationService;
-
-    @Autowired
     private EdgeEventService edgeEventService;
 
     @Autowired
@@ -135,12 +132,12 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
         EdgeEvent edgeEvent = new EdgeEvent();
         edgeEvent.setEdgeId(edgeId);
         edgeEvent.setTenantId(tenantId);
-        edgeEvent.setEdgeEventType(edgeEventType);
-        edgeEvent.setEdgeEventAction(edgeEventAction.name());
+        edgeEvent.setType(edgeEventType);
+        edgeEvent.setAction(edgeEventAction.name());
         if (entityId != null) {
             edgeEvent.setEntityId(entityId.getId());
         }
-        edgeEvent.setEntityBody(entityBody);
+        edgeEvent.setBody(entityBody);
         edgeEventService.saveAsync(edgeEvent);
     }
 

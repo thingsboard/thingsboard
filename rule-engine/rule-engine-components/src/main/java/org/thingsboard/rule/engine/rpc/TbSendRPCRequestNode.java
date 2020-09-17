@@ -145,19 +145,21 @@ public class TbSendRPCRequestNode implements TbNode {
         List<EntityRelation> result =
                 ctx.getRelationService().findByToAndType(ctx.getTenantId(), msg.getOriginator(), EntityRelation.EDGE_TYPE, RelationTypeGroup.COMMON);
         if (result != null && result.size() > 0) {
-            return new EdgeId(result.get(0).getFrom().getId());
-        } else {
-            return null;
+            EntityRelation relationToEdge = result.get(0);
+            if (relationToEdge.getFrom() != null && relationToEdge.getFrom().getId() != null) {
+                return new EdgeId(relationToEdge.getFrom().getId());
+            }
         }
+        return null;
     }
 
     private void sendRpcRequestToEdgeDevice(TbContext ctx, TbMsg msg, EdgeId edgeId, RuleEngineDeviceRpcRequest request) {
         EdgeEvent edgeEvent = new EdgeEvent();
         edgeEvent.setTenantId(ctx.getTenantId());
-        edgeEvent.setEdgeEventAction(ActionType.RPC_CALL.name());
+        edgeEvent.setAction(ActionType.RPC_CALL.name());
         edgeEvent.setEntityId(request.getDeviceId().getId());
-        edgeEvent.setEdgeEventType(EdgeEventType.DEVICE);
-        edgeEvent.setEntityBody(json.valueToTree(request));
+        edgeEvent.setType(EdgeEventType.DEVICE);
+        edgeEvent.setBody(json.valueToTree(request));
         edgeEvent.setEdgeId(edgeId);
         ListenableFuture<EdgeEvent> saveFuture = ctx.getEdgeEventService().saveAsync(edgeEvent);
         Futures.addCallback(saveFuture, new FutureCallback<EdgeEvent>() {

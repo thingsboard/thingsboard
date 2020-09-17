@@ -35,8 +35,10 @@ import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
 import org.thingsboard.server.dao.model.type.ComponentScopeCodec;
 import org.thingsboard.server.dao.model.type.ComponentTypeCodec;
 import org.thingsboard.server.dao.model.type.DeviceCredentialsTypeCodec;
+import org.thingsboard.server.dao.model.type.EdgeEventTypeCodec;
 import org.thingsboard.server.dao.model.type.EntityTypeCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
+import org.thingsboard.server.dao.model.type.RuleChainTypeCodec;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -71,6 +73,8 @@ public abstract class CassandraAbstractDao {
             registerCodecIfNotFound(registry, new ComponentTypeCodec());
             registerCodecIfNotFound(registry, new ComponentScopeCodec());
             registerCodecIfNotFound(registry, new EntityTypeCodec());
+            registerCodecIfNotFound(registry, new EdgeEventTypeCodec());
+            registerCodecIfNotFound(registry, new RuleChainTypeCodec());
         }
         return session;
     }

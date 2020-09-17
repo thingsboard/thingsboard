@@ -46,9 +46,9 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertEquals(saved.getTenantId(), edgeEvent.getTenantId());
         Assert.assertEquals(saved.getEdgeId(), edgeEvent.getEdgeId());
         Assert.assertEquals(saved.getEntityId(), edgeEvent.getEntityId());
-        Assert.assertEquals(saved.getEdgeEventType(), edgeEvent.getEdgeEventType());
-        Assert.assertEquals(saved.getEdgeEventAction(), edgeEvent.getEdgeEventAction());
-        Assert.assertEquals(saved.getEntityBody(), edgeEvent.getEntityBody());
+        Assert.assertEquals(saved.getType(), edgeEvent.getType());
+        Assert.assertEquals(saved.getAction(), edgeEvent.getAction());
+        Assert.assertEquals(saved.getBody(), edgeEvent.getBody());
     }
 
     protected EdgeEvent generateEdgeEvent(TenantId tenantId, EdgeId edgeId, EntityId entityId, String edgeEventAction) throws IOException {
@@ -59,9 +59,9 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
         edgeEvent.setTenantId(tenantId);
         edgeEvent.setEdgeId(edgeId);
         edgeEvent.setEntityId(entityId.getId());
-        edgeEvent.setEdgeEventType(EdgeEventType.DEVICE);
-        edgeEvent.setEdgeEventAction(edgeEventAction);
-        edgeEvent.setEntityBody(readFromResource("TestJsonData.json"));
+        edgeEvent.setType(EdgeEventType.DEVICE);
+        edgeEvent.setAction(edgeEventAction);
+        edgeEvent.setBody(readFromResource("TestJsonData.json"));
         return edgeEvent;
     }
 
@@ -109,7 +109,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
         TimePageLink pageLink = new TimePageLink(1);
 
         EdgeEvent edgeEventWithTsUpdate = generateEdgeEvent(tenantId, edgeId, deviceId, ActionType.TIMESERIES_UPDATED.name());
-        edgeEventService.saveAsync(edgeEventWithTsUpdate);
+        edgeEventService.saveAsync(edgeEventWithTsUpdate).get();
 
         TimePageData<EdgeEvent> allEdgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, true);
         TimePageData<EdgeEvent> edgeEventsWithoutTsUpdate = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, false);

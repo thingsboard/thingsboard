@@ -27,9 +27,11 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.stats.DefaultRuleEngineStatisticsService;
@@ -690,4 +692,30 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Assert.assertEquals(0, pageData.getData().size());
     }
 
+    @Test
+    public void testAssignAssetToEdge() throws Exception {
+        Edge edge = constructEdge("My edge", "default");
+        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
+
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+
+        doPost("/api/edge/" + savedEdge.getId().getId().toString()
+                + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+
+        TimePageData<Asset> pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/assets?",
+                new TypeReference<TimePageData<Asset>>() {}, new TextPageLink(100));
+
+        Assert.assertEquals(1, pageData.getData().size());
+
+        doDelete("/api/edge/" + savedEdge.getId().getId().toString()
+                + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+
+        pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/assets?",
+                new TypeReference<TimePageData<Asset>>() {}, new TextPageLink(100));
+
+        Assert.assertEquals(0, pageData.getData().size());
+    }
 }

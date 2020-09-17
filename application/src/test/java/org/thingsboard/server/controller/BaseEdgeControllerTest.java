@@ -638,17 +638,4 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(0, pageData.getData().size());
     }
 
-    private Edge constructEdge(String name, String type) {
-        return constructEdge(tenantId, name, type);
-    }
-
-    private Edge constructEdge(TenantId tenantId, String name, String type) {
-        Edge edge = new Edge();
-        edge.setTenantId(tenantId);
-        edge.setName(name);
-        edge.setType(type);
-        edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
-        edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
-        return edge;
-    }
 }

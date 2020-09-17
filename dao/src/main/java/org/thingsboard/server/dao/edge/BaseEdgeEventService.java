@@ -56,7 +56,7 @@ public class BaseEdgeEventService implements EdgeEventService {
                     if (edgeEvent.getEdgeId() == null) {
                         throw new DataValidationException("Edge id should be specified!");
                     }
-                    if (StringUtils.isEmpty(edgeEvent.getEdgeEventAction())) {
+                    if (StringUtils.isEmpty(edgeEvent.getAction())) {
                         throw new DataValidationException("Edge Event action should be specified!");
                     }
                 }

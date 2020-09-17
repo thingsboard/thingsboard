@@ -23,18 +23,13 @@ import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeEventId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.type.EdgeEventTypeCodec;
-import org.thingsboard.server.dao.model.type.EntityTypeCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
@@ -42,17 +37,11 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ACTION_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_EDGE_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ENTITY_BODY_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_BODY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ENTITY_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_TYPE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.EVENT_BODY_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.EVENT_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.EVENT_ENTITY_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.EVENT_ENTITY_TYPE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.EVENT_TENANT_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.EVENT_TYPE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.EVENT_UID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_UID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
 
 @Data
@@ -71,25 +60,23 @@ public class EdgeEventEntity implements BaseEntity<EdgeEvent> {
     @Column(name = EDGE_EVENT_EDGE_ID_PROPERTY)
     private UUID edgeId;
 
-    @PartitionKey(value = 2)
+    @ClusteringColumn()
     @Column(name = EDGE_EVENT_TYPE_PROPERTY, codec = EdgeEventTypeCodec.class)
     private EdgeEventType edgeEventType;
 
-    @PartitionKey(value = 3)
-    @Column(name = EDGE_EVENT_ENTITY_ID_PROPERTY)
-    private UUID entityId;
-
-    @ClusteringColumn()
+    @ClusteringColumn(value = 1)
     @Column(name = EDGE_EVENT_ACTION_PROPERTY)
     private String edgeEventAction;
 
-    // TODO
-    @ClusteringColumn(value = 1)
-    @Column(name = EVENT_UID_PROPERTY)
-    private String eventUid;
+    @ClusteringColumn(value = 2)
+    @Column(name = EDGE_EVENT_UID_PROPERTY)
+    private String edgeEventUid;
 
-    @Column(name = EDGE_EVENT_ENTITY_BODY_PROPERTY, codec = JsonCodec.class)
-    private JsonNode entityBody;
+    @Column(name = EDGE_EVENT_ENTITY_ID_PROPERTY)
+    private UUID entityId;
+
+    @Column(name = EDGE_EVENT_BODY_PROPERTY, codec = JsonCodec.class)
+    private JsonNode body;
 
     public EdgeEventEntity(EdgeEvent edgeEvent) {
         if (edgeEvent.getId() != null) {
@@ -101,13 +88,11 @@ public class EdgeEventEntity implements BaseEntity<EdgeEvent> {
         if (edgeEvent.getEdgeId() != null) {
             this.edgeId = edgeEvent.getEdgeId().getId();
         }
-//        if (event.getEntityId() != null) {
-//            this.entityType = event.getEntityId().getEntityType();
-//            this.entityId = event.getEntityId().getId();
-//        }
-//        this.edgeEventType = edgeEvent.getEdgeEventType();
-//        this.edgeEventAction = edgeEvent.getEdgeEventAction();
-//        this.entityBody = edgeEvent.getEntityBody();
+        this.entityId = edgeEvent.getEntityId();
+        this.edgeEventType = edgeEvent.getType();
+        this.edgeEventAction = edgeEvent.getAction();
+        this.edgeEventUid = edgeEvent.getUid();
+        this.body = edgeEvent.getBody();
     }
 
     @Override
@@ -123,13 +108,14 @@ public class EdgeEventEntity implements BaseEntity<EdgeEvent> {
     @Override
     public EdgeEvent toData() {
         EdgeEvent edgeEvent = new EdgeEvent(new EdgeEventId(id));
-//        edgeEvent.setCreatedTime(UUIDs.unixTimestamp(id));
-//        edgeEvent.setTenantId(new TenantId(tenantId));
-//        edgeEvent.setEdgeId(new EdgeId(edgeId));
-//        edgeEvent.setEntityId(entityId);
-//        event.setBody(body);
-//        event.setType(eventType);
-//        event.setUid(eventUid);
+        edgeEvent.setCreatedTime(UUIDs.unixTimestamp(id));
+        edgeEvent.setTenantId(new TenantId(tenantId));
+        edgeEvent.setEdgeId(new EdgeId(edgeId));
+        edgeEvent.setEntityId(entityId);
+        edgeEvent.setType(edgeEventType);
+        edgeEvent.setAction(edgeEventAction);
+        edgeEvent.setBody(body);
+        edgeEvent.setUid(edgeEventUid);
         return edgeEvent;
     }
 }

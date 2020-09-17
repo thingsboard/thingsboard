@@ -25,8 +25,7 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters({
-        // TODO: voba - fix before final test on cassandra
-        "org.thingsboard.server.dao.service.*VOBA_FIX_BEFORE_FINAL_TESTServiceNoSqlTest"
+        "org.thingsboard.server.dao.service.nosql.*ServiceNoSqlTest"
 })
 public class NoSqlDaoServiceTestSuite {
 

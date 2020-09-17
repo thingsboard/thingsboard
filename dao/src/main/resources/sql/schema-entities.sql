@@ -275,12 +275,14 @@ CREATE TABLE IF NOT EXISTS edge_event (
     id varchar(31) NOT NULL CONSTRAINT edge_event_pkey PRIMARY KEY,
     edge_id varchar(31),
     edge_event_type varchar(255),
+    edge_event_uid varchar(255),
     entity_id varchar(31),
     edge_event_action varchar(255),
-    entity_body varchar(10000000),
+    body varchar(10000000),
     tenant_id varchar(31),
     ts bigint NOT NULL
 );
+
 
 
 CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)

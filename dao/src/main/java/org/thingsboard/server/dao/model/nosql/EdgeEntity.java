@@ -32,6 +32,9 @@ import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_CUSTOMER_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ADDITIONAL_INFO_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CONFIGURATION_PROPERTY;
@@ -50,21 +53,22 @@ import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPER
 @Table(name = EDGE_COLUMN_FAMILY_NAME)
 public class EdgeEntity implements SearchTextEntity<Edge> {
 
-    @PartitionKey
+    @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
     private UUID id;
 
-    @ClusteringColumn
+    @PartitionKey(value = 1)
     @Column(name = EDGE_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
-    @ClusteringColumn
+    @PartitionKey(value = 2)
     @Column(name = EDGE_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
 
     @Column(name = EDGE_ROOT_RULE_CHAIN_ID_PROPERTY)
     private UUID rootRuleChainId;
 
+    @PartitionKey(value = 3)
     @Column(name = EDGE_TYPE_PROPERTY)
     private String type;
 

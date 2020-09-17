@@ -30,8 +30,7 @@ import java.util.Arrays;
  */
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({
-        // TODO: voba - fix before final test on cassandra
-        "org.thingsboard.server.system.*VOBA_FIX_BEFORE_FINAL_TESTNoSqlTest"})
+        "org.thingsboard.server.system.*NoSqlTest"})
 public class SystemNoSqlTestSuite {
 
     @ClassRule

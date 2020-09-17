@@ -31,11 +31,13 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.objects.AttributesEntityView;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -52,7 +54,6 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -551,5 +552,32 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         } while (pageData.hasNext());
 
         return loadedItems;
+    }
+
+    @Test
+    public void testAssignEntityViewToEdge() throws Exception {
+        Edge edge = constructEdge("My edge", "default");
+        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
+
+        EntityView savedEntityView = getNewSavedEntityView("My entityView");
+
+        doPost("/api/edge/" + savedEdge.getId().getId().toString()
+                + "/device/" + testDevice.getId().getId().toString(), Device.class);
+
+        doPost("/api/edge/" + savedEdge.getId().getId().toString()
+                + "/entityView/" + savedEntityView.getId().getId().toString(), EntityView.class);
+
+        TimePageData<EntityView> pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/entityViews?",
+                new TypeReference<TimePageData<EntityView>>() {}, new TextPageLink(100));
+
+        Assert.assertEquals(1, pageData.getData().size());
+
+        doDelete("/api/edge/" + savedEdge.getId().getId().toString()
+                + "/entityView/" + savedEntityView.getId().getId().toString(), EntityView.class);
+
+        pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/entityViews?",
+                new TypeReference<TimePageData<EntityView>>() {}, new TextPageLink(100));
+
+        Assert.assertEquals(0, pageData.getData().size());
     }
 }

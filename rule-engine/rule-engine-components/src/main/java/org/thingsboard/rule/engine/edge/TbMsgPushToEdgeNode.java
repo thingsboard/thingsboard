@@ -154,10 +154,10 @@ public class TbMsgPushToEdgeNode implements TbNode {
     private EdgeEvent buildEdgeEvent(TenantId tenantId, ActionType edgeEventAction, UUID entityId, EdgeEventType edgeEventType, JsonNode entityBody) {
         EdgeEvent edgeEvent = new EdgeEvent();
         edgeEvent.setTenantId(tenantId);
-        edgeEvent.setEdgeEventAction(edgeEventAction.name());
+        edgeEvent.setAction(edgeEventAction.name());
         edgeEvent.setEntityId(entityId);
-        edgeEvent.setEdgeEventType(edgeEventType);
-        edgeEvent.setEntityBody(entityBody);
+        edgeEvent.setType(edgeEventType);
+        edgeEvent.setBody(entityBody);
         return edgeEvent;
     }
 

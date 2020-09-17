@@ -83,38 +83,29 @@ public class BaseEdgeEventControllerTest extends AbstractControllerTest {
         Device savedDevice = doPost("/api/device", device, Device.class);
 
         doPost("/api/edge/" + edge.getId().toString() + "/device/" + savedDevice.getId().toString(), Device.class);
+        Thread.sleep(1000);
 
         Asset asset = constructAsset("TestAsset", "default");
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
         doPost("/api/edge/" + edge.getId().toString() + "/asset/" + savedAsset.getId().toString(), Asset.class);
+        Thread.sleep(1000);
 
         EntityRelation relation = new EntityRelation(savedAsset.getId(), savedDevice.getId(), EntityRelation.CONTAINS_TYPE);
 
         doPost("/api/relation", relation);
-
-        Thread.sleep(2000);
+        Thread.sleep(1000);
 
         List<EdgeEvent> edgeEvents = doGetTypedWithTimePageLink("/api/edge/" + edge.getId().toString() + "/events?",
                 new TypeReference<TimePageData<EdgeEvent>>() {
-                }, new TimePageLink(5)).getData();
+                }, new TimePageLink(4)).getData();
 
         Assert.assertFalse(edgeEvents.isEmpty());
         Assert.assertEquals(4, edgeEvents.size());
-        Assert.assertEquals(edgeEvents.get(0).getEdgeEventType(), EdgeEventType.RELATION);
-        Assert.assertEquals(edgeEvents.get(1).getEdgeEventType(), EdgeEventType.ASSET);
-        Assert.assertEquals(edgeEvents.get(2).getEdgeEventType(), EdgeEventType.DEVICE);
-        Assert.assertEquals(edgeEvents.get(3).getEdgeEventType(), EdgeEventType.RULE_CHAIN);
-    }
-
-    private Edge constructEdge(String name, String type) {
-        Edge edge = new Edge();
-        edge.setTenantId(tenantId);
-        edge.setName(name);
-        edge.setType(type);
-        edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
-        edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
-        return edge;
+        Assert.assertEquals(EdgeEventType.RELATION, edgeEvents.get(0).getType());
+        Assert.assertEquals(EdgeEventType.ASSET, edgeEvents.get(1).getType());
+        Assert.assertEquals(EdgeEventType.DEVICE, edgeEvents.get(2).getType());
+        Assert.assertEquals(EdgeEventType.RULE_CHAIN, edgeEvents.get(3).getType());
     }
 
     private Device constructDevice(String name, String type) {

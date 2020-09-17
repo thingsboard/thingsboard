@@ -24,12 +24,8 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
@@ -67,12 +63,11 @@ public class TbMsgAttributesNode implements TbNode {
         }
         String src = msg.getData();
         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(src));
-        String scope = msg.getMetaData().getValue(SCOPE);
-        if (StringUtils.isEmpty(scope)) {
-            scope = config.getScope();
-            msg.getMetaData().putValue("scope", scope);
+        if (StringUtils.isEmpty(msg.getMetaData().getValue(SCOPE))) {
+            msg.getMetaData().putValue(SCOPE, config.getScope());
         }
-        ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getOriginator(), scope, new ArrayList<>(attributes), new TelemetryNodeCallback(ctx, msg));
+        ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getOriginator(), config.getScope(),
+                new ArrayList<>(attributes), new TelemetryNodeCallback(ctx, msg));
     }
 
     @Override

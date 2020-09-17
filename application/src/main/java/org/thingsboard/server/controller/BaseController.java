@@ -212,6 +212,9 @@ public abstract class BaseController {
     @Getter
     private boolean logControllerErrorStackTrace;
 
+    @Value("${edges.rpc.enabled}")
+    @Getter
+    private boolean edgesSupportEnabled;
 
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {
@@ -745,6 +748,9 @@ public abstract class BaseController {
     }
 
     protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, CustomerId customerId, ActionType edgeEventAction) {
+        if (!edgesSupportEnabled) {
+            return;
+        }
         try {
             sendNotificationMsgToEdgeService(tenantId, edgeId, null, json.writeValueAsString(customerId), EdgeEventType.EDGE, edgeEventAction);
         } catch (Exception e) {
@@ -753,6 +759,9 @@ public abstract class BaseController {
     }
 
     protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, CustomerId customerId, ActionType edgeEventAction) {
+        if (!edgesSupportEnabled) {
+            return;
+        }
         EdgeEventType edgeEventType = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());
         try {
             if (edgeEventType != null) {
@@ -764,6 +773,9 @@ public abstract class BaseController {
     }
 
     protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityRelation relation, ActionType edgeEventAction) {
+        if (!edgesSupportEnabled) {
+            return;
+        }
         try {
             if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
                     !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
@@ -779,6 +791,9 @@ public abstract class BaseController {
     }
 
     protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, ActionType edgeEventAction) {
+        if (!edgesSupportEnabled) {
+            return;
+        }
         EdgeEventType edgeEventType = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());
         if (edgeEventType != null) {
             sendNotificationMsgToEdgeService(tenantId, edgeId, entityId, null, edgeEventType, edgeEventAction);

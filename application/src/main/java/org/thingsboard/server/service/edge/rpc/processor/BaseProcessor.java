@@ -105,12 +105,12 @@ public abstract class BaseProcessor {
         EdgeEvent edgeEvent = new EdgeEvent();
         edgeEvent.setTenantId(tenantId);
         edgeEvent.setEdgeId(edgeId);
-        edgeEvent.setEdgeEventType(edgeEventType);
-        edgeEvent.setEdgeEventAction(edgeEventAction.name());
+        edgeEvent.setType(edgeEventType);
+        edgeEvent.setAction(edgeEventAction.name());
         if (entityId != null) {
             edgeEvent.setEntityId(entityId.getId());
         }
-        edgeEvent.setEntityBody(entityBody);
+        edgeEvent.setBody(entityBody);
         return edgeEventService.saveAsync(edgeEvent);
     }
 }
