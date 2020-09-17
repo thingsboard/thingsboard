@@ -34,11 +34,13 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.gen.edge.RelationUpdateMsg;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.UUID;
 
 @Component
 @Slf4j
+@TbCoreComponent
 public class RelationProcessor extends BaseProcessor {
 
     public ListenableFuture<Void> onRelationUpdate(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {

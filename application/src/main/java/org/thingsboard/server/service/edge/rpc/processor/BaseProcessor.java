@@ -48,9 +48,6 @@ public abstract class BaseProcessor {
     protected static final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
-    protected TbRuleEngineDeviceRpcService tbDeviceRpcService;
-
-    @Autowired
     protected AlarmService alarmService;
 
     @Autowired

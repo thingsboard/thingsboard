@@ -45,6 +45,7 @@ import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -54,6 +55,7 @@ import java.util.UUID;
 
 @Component
 @Slf4j
+@TbCoreComponent
 public class TelemetryProcessor extends BaseProcessor {
 
     private final Gson gson = new Gson();

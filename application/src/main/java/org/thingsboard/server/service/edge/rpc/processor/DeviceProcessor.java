@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
@@ -46,6 +47,7 @@ import org.thingsboard.server.gen.edge.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 
 import java.util.UUID;
@@ -53,6 +55,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 @Slf4j
+@TbCoreComponent
 public class DeviceProcessor extends BaseProcessor {
 
     private static final ReentrantLock deviceCreationLock = new ReentrantLock();
@@ -219,6 +222,7 @@ public class DeviceProcessor extends BaseProcessor {
     }
 
     public ListenableFuture<Void> processDeviceRpcCallResponseMsg(TenantId tenantId, DeviceRpcCallMsg deviceRpcCallMsg) {
+        SettableFuture<Void> futureToSet = SettableFuture.create();
         UUID uuid = new UUID(deviceRpcCallMsg.getRequestIdMSB(), deviceRpcCallMsg.getRequestIdLSB());
         FromDeviceRpcResponse response;
         if (!StringUtils.isEmpty(deviceRpcCallMsg.getResponseMsg().getError())) {
@@ -226,8 +230,20 @@ public class DeviceProcessor extends BaseProcessor {
         } else {
             response = new FromDeviceRpcResponse(uuid, deviceRpcCallMsg.getResponseMsg().getResponse(), null);
         }
-        tbDeviceRpcService.sendRpcResponseToTbCore(deviceRpcCallMsg.getOriginServiceId(), response);
-        return Futures.immediateFuture(null);
+        TbQueueCallback callback = new TbQueueCallback() {
+            @Override
+            public void onSuccess(TbQueueMsgMetadata metadata) {
+                futureToSet.set(null);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("Can't process push notification to core [{}]", deviceRpcCallMsg, t);
+                futureToSet.setException(t);
+            }
+        };
+        tbClusterService.pushNotificationToCore(deviceRpcCallMsg.getOriginServiceId(), response, callback);
+        return futureToSet;
     }
 
 }
