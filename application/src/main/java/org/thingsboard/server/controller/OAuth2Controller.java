@@ -16,21 +16,17 @@
 package org.thingsboard.server.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.*;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -61,14 +57,14 @@ public class OAuth2Controller extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/oauth2/config", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
-    public OAuth2ClientsParams getCurrentClientsParams() throws ThingsboardException {
+    public List<OAuth2ClientsDomainParams> getCurrentClientsParams() throws ThingsboardException {
         try {
             Authority authority = getCurrentUser().getAuthority();
             checkOAuth2ConfigPermissions(Operation.READ);
             if (Authority.SYS_ADMIN.equals(authority)) {
-                return oAuth2Service.findClientsParamsByTenantId(TenantId.SYS_TENANT_ID);
+                return oAuth2Service.findDomainsParamsByTenantId(TenantId.SYS_TENANT_ID);
             } else if (Authority.TENANT_ADMIN.equals(authority)) {
-                return oAuth2Service.findClientsParamsByTenantId(getCurrentUser().getTenantId());
+                return oAuth2Service.findDomainsParamsByTenantId(getCurrentUser().getTenantId());
             } else {
                 throw new IllegalStateException("Authority " + authority + " cannot get client registrations.");
             }
@@ -80,7 +76,7 @@ public class OAuth2Controller extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/oauth2/config", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public OAuth2ClientsParams saveClientParams(@RequestBody OAuth2ClientsParams clientsParams) throws ThingsboardException {
+    public List<OAuth2ClientsDomainParams> saveClientParams(@RequestBody List<OAuth2ClientsDomainParams> domainsParams) throws ThingsboardException {
         try {
             TenantId tenantId;
             Authority authority = getCurrentUser().getAuthority();
@@ -91,13 +87,13 @@ public class OAuth2Controller extends BaseController {
             } else {
                 throw new IllegalStateException("Authority " + authority + " cannot save client registrations.");
             }
-            List<ClientRegistrationDto> clientRegistrationDtos = clientsParams.getOAuth2DomainDtos().stream()
+            List<ClientRegistrationDto> clientRegistrationDtos = domainsParams.stream()
                     .flatMap(domainParams -> domainParams.getClientRegistrations().stream())
                     .collect(Collectors.toList());
             for (ClientRegistrationDto clientRegistrationDto : clientRegistrationDtos) {
                 checkEntity(clientRegistrationDto.getId(), () -> tenantId, Resource.OAUTH2_CONFIGURATION);
             }
-            return oAuth2Service.saveClientsParams(tenantId, clientsParams);
+            return oAuth2Service.saveDomainsParams(tenantId, domainsParams);
         } catch (Exception e) {
             throw handleException(e);
         }

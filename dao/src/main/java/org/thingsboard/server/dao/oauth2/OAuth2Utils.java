@@ -38,8 +38,8 @@ public class OAuth2Utils {
         return client;
     }
 
-    public static List<OAuth2ClientRegistration> toClientRegistrations(TenantId tenantId, OAuth2ClientsParams clientsParams) {
-        return clientsParams.getOAuth2DomainDtos().stream()
+    public static List<OAuth2ClientRegistration> toClientRegistrations(TenantId tenantId, List<OAuth2ClientsDomainParams> domainsParams) {
+        return domainsParams.stream()
                 .flatMap(domainParams -> domainParams.getClientRegistrations().stream()
                         .map(clientRegistrationDto -> OAuth2Utils.toClientRegistration(tenantId, domainParams.getDomainName(),
                                 domainParams.getRedirectUriTemplate(), clientRegistrationDto)
@@ -47,7 +47,7 @@ public class OAuth2Utils {
                 .collect(Collectors.toList());
     }
 
-    public static OAuth2ClientsParams toOAuth2ClientsParams(List<OAuth2ClientRegistration> clientRegistrations) {
+    public static List<OAuth2ClientsDomainParams> toDomainsParams(List<OAuth2ClientRegistration> clientRegistrations) {
         Map<String, OAuth2ClientsDomainParams> domainParamsMap = new HashMap<>();
         for (OAuth2ClientRegistration clientRegistration : clientRegistrations) {
             String domainName = clientRegistration.getDomainName();
@@ -57,7 +57,7 @@ public class OAuth2Utils {
             domainParams.getClientRegistrations()
                     .add(toClientRegistrationDto(clientRegistration));
         }
-        return new OAuth2ClientsParams(new ArrayList<>(domainParamsMap.values()));
+        return new ArrayList<>(domainParamsMap.values());
     }
 
     public static ClientRegistrationDto toClientRegistrationDto(OAuth2ClientRegistration oAuth2ClientRegistration) {

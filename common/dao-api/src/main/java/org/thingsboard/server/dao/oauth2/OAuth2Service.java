@@ -19,7 +19,7 @@ import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientsDomainParams;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,9 +27,9 @@ import java.util.UUID;
 public interface OAuth2Service {
     List<OAuth2ClientInfo> getOAuth2Clients(String domainName);
 
-    OAuth2ClientsParams saveClientsParams(TenantId tenantId, OAuth2ClientsParams clientsParams);
+    List<OAuth2ClientsDomainParams> saveDomainsParams(TenantId tenantId, List<OAuth2ClientsDomainParams> domainsParams);
 
-    OAuth2ClientsParams findClientsParamsByTenantId(TenantId tenantId);
+    List<OAuth2ClientsDomainParams> findDomainsParamsByTenantId(TenantId tenantId);
 
     OAuth2ClientRegistration findClientRegistration(UUID id);
 

@@ -66,21 +66,21 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
 
     @Override
     @Transactional
-    public OAuth2ClientsParams saveClientsParams(TenantId tenantId, OAuth2ClientsParams clientsParams) {
-        log.trace("Executing saveClientsParams [{}] [{}]", tenantId, clientsParams);
-        clientParamsValidator.accept(tenantId, clientsParams);
-        List<OAuth2ClientRegistration> inputClientRegistrations = OAuth2Utils.toClientRegistrations(tenantId, clientsParams);
+    public List<OAuth2ClientsDomainParams> saveDomainsParams(TenantId tenantId, List<OAuth2ClientsDomainParams> domainsParams) {
+        log.trace("Executing saveDomainsParams [{}] [{}]", tenantId, domainsParams);
+        clientParamsValidator.accept(tenantId, domainsParams);
+        List<OAuth2ClientRegistration> inputClientRegistrations = OAuth2Utils.toClientRegistrations(tenantId, domainsParams);
         List<OAuth2ClientRegistration> savedClientRegistrations = inputClientRegistrations.stream()
                 .map(clientRegistration -> clientRegistrationDao.save(clientRegistration.getTenantId(), clientRegistration))
                 .collect(Collectors.toList());
-        return OAuth2Utils.toOAuth2ClientsParams(savedClientRegistrations);
+        return OAuth2Utils.toDomainsParams(savedClientRegistrations);
     }
 
     @Override
-    public OAuth2ClientsParams findClientsParamsByTenantId(TenantId tenantId) {
-        log.trace("Executing findClientsParamsByTenantId [{}]", tenantId);
+    public List<OAuth2ClientsDomainParams> findDomainsParamsByTenantId(TenantId tenantId) {
+        log.trace("Executing findDomainsParamsByTenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return OAuth2Utils.toOAuth2ClientsParams(clientRegistrationDao.findByTenantId(tenantId.getId()));
+        return OAuth2Utils.toDomainsParams(clientRegistrationDao.findByTenantId(tenantId.getId()));
     }
 
     @Override
@@ -135,12 +135,11 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
         }
     }
 
-    private final BiConsumer<TenantId, OAuth2ClientsParams> clientParamsValidator = (tenantId, clientsParams) -> {
-        if (clientsParams == null || clientsParams.getOAuth2DomainDtos() == null
-                || clientsParams.getOAuth2DomainDtos().isEmpty()) {
+    private final BiConsumer<TenantId, List<OAuth2ClientsDomainParams>> clientParamsValidator = (tenantId, domainsParams) -> {
+        if (domainsParams == null || domainsParams.isEmpty()) {
             throw new DataValidationException("Domain params should be specified!");
         }
-        for (OAuth2ClientsDomainParams domainParams : clientsParams.getOAuth2DomainDtos()) {
+        for (OAuth2ClientsDomainParams domainParams : domainsParams) {
             if (StringUtils.isEmpty(domainParams.getDomainName())) {
                 throw new DataValidationException("Domain name should be specified!");
             }
