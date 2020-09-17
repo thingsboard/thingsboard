@@ -14,6 +14,7 @@
     "tenantNameStrategy": "DOMAIN"
   },
   "comment": null,
-  "icon": "mdi:facebook",
+  "loginButtonIcon": "mdi:facebook",
+  "loginButtonLabel": "Login with Facebook",
   "helpLink": "https://developers.facebook.com/docs/facebook-login/web#logindialog"
 }

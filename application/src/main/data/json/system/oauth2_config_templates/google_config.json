@@ -15,6 +15,7 @@
     "tenantNameStrategy": "DOMAIN"
   },
   "comment": null,
-  "icon": "mdi:google",
+  "loginButtonIcon": "mdi:google",
+  "loginButtonLabel": "Login with Google",
   "helpLink": "https://developers.google.com/adwords/api/docs/guides/authentication"
 }
