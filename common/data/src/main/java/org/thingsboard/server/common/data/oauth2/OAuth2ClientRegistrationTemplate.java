@@ -44,7 +44,8 @@ public class OAuth2ClientRegistrationTemplate extends BaseData<OAuth2ClientRegis
     private String jwkSetUri;
     private String clientAuthenticationMethod;
     private String comment;
-    private String icon;
+    private String loginButtonIcon;
+    private String loginButtonLabel;
     private String helpLink;
 
     @Getter(AccessLevel.NONE)
@@ -68,7 +69,8 @@ public class OAuth2ClientRegistrationTemplate extends BaseData<OAuth2ClientRegis
         this.jwkSetUri = clientRegistrationTemplate.jwkSetUri;
         this.clientAuthenticationMethod = clientRegistrationTemplate.clientAuthenticationMethod;
         this.comment = clientRegistrationTemplate.comment;
-        this.icon = clientRegistrationTemplate.icon;
+        this.loginButtonIcon = clientRegistrationTemplate.loginButtonIcon;
+        this.loginButtonLabel = clientRegistrationTemplate.loginButtonLabel;
         this.helpLink = clientRegistrationTemplate.helpLink;
         this.additionalInfo = clientRegistrationTemplate.additionalInfo;
     }

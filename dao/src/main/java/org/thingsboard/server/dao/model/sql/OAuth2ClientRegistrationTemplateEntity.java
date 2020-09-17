@@ -20,7 +20,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.*;
@@ -78,8 +77,10 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
     private Boolean alwaysFullScreen;
     @Column(name = ModelConstants.OAUTH2_TEMPLATE_COMMENT_PROPERTY)
     private String comment;
-    @Column(name = ModelConstants.OAUTH2_TEMPLATE_ICON_PROPERTY)
-    private String icon;
+    @Column(name = ModelConstants.OAUTH2_TEMPLATE_LOGIN_BUTTON_ICON_PROPERTY)
+    private String loginButtonIcon;
+    @Column(name = ModelConstants.OAUTH2_TEMPLATE_LOGIN_BUTTON_LABEL_PROPERTY)
+    private String loginButtonLabel;
     @Column(name = ModelConstants.OAUTH2_TEMPLATE_HELP_LINK_PROPERTY)
     private String helpLink;
 
@@ -107,7 +108,8 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
         this.jwkSetUri = clientRegistrationTemplate.getJwkSetUri();
         this.clientAuthenticationMethod = clientRegistrationTemplate.getClientAuthenticationMethod();
         this.comment = clientRegistrationTemplate.getComment();
-        this.icon = clientRegistrationTemplate.getIcon();
+        this.loginButtonIcon = clientRegistrationTemplate.getLoginButtonIcon();
+        this.loginButtonLabel = clientRegistrationTemplate.getLoginButtonLabel();
         this.helpLink = clientRegistrationTemplate.getHelpLink();
         this.additionalInfo = clientRegistrationTemplate.getAdditionalInfo();
         OAuth2BasicMapperConfig basicConfig = clientRegistrationTemplate.getBasic();
@@ -152,7 +154,8 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
         clientRegistrationTemplate.setJwkSetUri(jwkSetUri);
         clientRegistrationTemplate.setClientAuthenticationMethod(clientAuthenticationMethod);
         clientRegistrationTemplate.setComment(comment);
-        clientRegistrationTemplate.setIcon(icon);
+        clientRegistrationTemplate.setLoginButtonIcon(loginButtonIcon);
+        clientRegistrationTemplate.setLoginButtonLabel(loginButtonLabel);
         clientRegistrationTemplate.setHelpLink(helpLink);
         return clientRegistrationTemplate;
     }

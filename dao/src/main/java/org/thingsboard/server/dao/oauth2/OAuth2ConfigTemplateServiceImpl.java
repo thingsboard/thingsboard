@@ -79,7 +79,7 @@ public class OAuth2ConfigTemplateServiceImpl extends AbstractEntityService imple
         clientRegistrationTemplateDao.removeById(TenantId.SYS_TENANT_ID, templateId.getId());
     }
 
-    private DataValidator<OAuth2ClientRegistrationTemplate> clientRegistrationTemplateValidator =
+    private final DataValidator<OAuth2ClientRegistrationTemplate> clientRegistrationTemplateValidator =
             new DataValidator<OAuth2ClientRegistrationTemplate>() {
 
                 @Override
