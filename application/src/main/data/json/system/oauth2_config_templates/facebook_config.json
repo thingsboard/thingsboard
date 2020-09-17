@@ -5,7 +5,7 @@
   "scope": ["email","public_profile"],
   "jwkSetUri": null,
   "userInfoUri": "https://graph.facebook.com/me?fields=id,name,first_name,last_name,email",
-  "clientAuthenticationMethod": "basic",
+  "clientAuthenticationMethod": "BASIC",
   "userNameAttributeName": "email",
   "basic": {
     "emailAttributeKey": "email",
@@ -15,6 +15,6 @@
   },
   "comment": null,
   "loginButtonIcon": "mdi:facebook",
-  "loginButtonLabel": "Login with Facebook",
+  "loginButtonLabel": "Facebook",
   "helpLink": "https://developers.facebook.com/docs/facebook-login/web#logindialog"
 }

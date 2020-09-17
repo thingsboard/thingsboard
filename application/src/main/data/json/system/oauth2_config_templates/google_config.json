@@ -6,7 +6,7 @@
   "scope": ["email","openid","profile"],
   "jwkSetUri": "https://www.googleapis.com/oauth2/v3/certs",
   "userInfoUri": "https://openidconnect.googleapis.com/v1/userinfo",
-  "clientAuthenticationMethod": "basic",
+  "clientAuthenticationMethod": "BASIC",
   "userNameAttributeName": "email",
   "basic": {
     "emailAttributeKey": "email",
@@ -16,6 +16,6 @@
   },
   "comment": null,
   "loginButtonIcon": "mdi:google",
-  "loginButtonLabel": "Login with Google",
+  "loginButtonLabel": "Google",
   "helpLink": "https://developers.google.com/adwords/api/docs/guides/authentication"
 }
