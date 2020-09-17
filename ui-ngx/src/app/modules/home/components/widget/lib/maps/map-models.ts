@@ -161,8 +161,6 @@ export type PolylineSettings = {
     decoratorSymbolSize: any;
     useDecoratorCustomColor: any;
     decoratorCustomColor: any;
-
-
     colorFunction: GenericFunction;
     strokeOpacityFunction: GenericFunction;
     strokeWeightFunction: GenericFunction;

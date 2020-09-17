@@ -255,7 +255,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   private init(data: any) {
-
     this.reset();
 
     this.currentDashboardId = this.route.snapshot.params.dashboardId;
@@ -275,7 +274,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.layouts.right.layoutCtx.widgets = new LayoutWidgetsArray(this.dashboardCtx);
     this.widgetEditMode = data.widgetEditMode;
     this.singlePageMode = data.singlePageMode;
-
     this.dashboardCtx.aliasController = new AliasController(this.utils,
       this.entityService,
       () => this.dashboardCtx.stateController,
