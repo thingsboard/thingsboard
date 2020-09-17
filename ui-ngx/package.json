@@ -66,7 +66,7 @@
     "ngx-clipboard": "^13.0.1",
     "ngx-color-picker": "^10.0.1",
     "ngx-daterangepicker-material": "^4.0.1",
-    "ngx-flowchart": "git://github.com/thingsboard/ngx-flowchart.git#9caae13da1b95fa8aaa7938f57537b229b207e4a",
+    "ngx-flowchart": "git://github.com/thingsboard/ngx-flowchart.git#master",
     "ngx-hm-carousel": "^2.0.0-rc.1",
     "ngx-sharebuttons": "^8.0.1",
     "ngx-translate-messageformat-compiler": "^4.8.0",
