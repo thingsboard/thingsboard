@@ -71,7 +71,7 @@ public class TbMsgAttributesNode implements TbNode {
                 config.getScope(),
                 new ArrayList<>(attributes),
                 new TelemetryNodeCallback(ctx, msg),
-                StringUtils.isEmpty(notifyDeviceStr) || !notifyDeviceStr.equals("false"));
+                !(config.isNotNotifyDevice() && StringUtils.isNoneEmpty(notifyDeviceStr) && !Boolean.parseBoolean(notifyDeviceStr)));
     }
 
     @Override
