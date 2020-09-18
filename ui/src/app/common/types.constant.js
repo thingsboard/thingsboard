@@ -393,7 +393,15 @@ export default angular.module('thingsboard.types', [])
                 edge: "EDGE",
                 user: "USER",
                 customer: "CUSTOMER",
-                relation: "RELATION"
+                relation: "RELATION",
+                entityGroup: "ENTITY_GROUP",
+                schedulerEvent: "SCHEDULER_EVENT",
+                whiteLabeling: "WHITE_LABELING",
+                loginWhiteLabeling: "LOGIN_WHITE_LABELING",
+                customTranslation: "CUSTOM_TRANSLATION",
+                widgetsBundle: "WIDGETS_BUNDLE",
+                widgetType: "WIDGET_TYPE",
+                adminSettings: "ADMIN_SETTINGS"
             },
             edgeEventAction: {
                 updated: "UPDATED",
@@ -786,8 +794,10 @@ export default angular.module('thingsboard.types', [])
                     clientSide: false
                 }
             },
-            coreRuleChainType: "CORE",
-            edgeRuleChainType: "EDGE",
+            ruleChainType: {
+                core: "CORE",
+                edge: "EDGE"
+            },
             ruleNodeTypeComponentTypes: ["FILTER", "ENRICHMENT", "TRANSFORMATION", "ACTION", "EXTERNAL"],
             ruleChainNodeComponent: {
                 type: 'RULE_CHAIN',

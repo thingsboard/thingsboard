@@ -311,7 +311,7 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
     }
 
     function getEdgesRuleChains(pageLink, config) {
-        return getRuleChains(pageLink, config, types.edgeRuleChainType);
+        return getRuleChains(pageLink, config, types.ruleChainType.edge);
     }
 
     function getEdgeRuleChains(edgeId, pageLink, config) {

@@ -36,11 +36,6 @@
 </div>
 
 <md-content class="md-padding tb-rulechain-fieldset" layout="column">
-    <md-input-container class="md-block"
-                        ng-show="!isEdit && ruleChain.assignedEdgesText && ruleChainScope === 'tenant'">
-        <label translate>rulechain.assigned-to-edges</label>
-        <input ng-model="ruleChain.assignedEdgesText" disabled>
-    </md-input-container>
     <fieldset ng-disabled="$root.loading || !isEdit || isReadOnly">
         <md-input-container class="md-block">
             <label translate>rulechain.name</label>

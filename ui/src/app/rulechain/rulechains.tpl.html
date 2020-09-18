@@ -24,7 +24,6 @@
         <md-tab label="{{ 'rulechain.details' | translate }}">
             <tb-rule-chain rule-chain="vm.grid.operatingItem()"
                      is-edit="vm.grid.detailsConfig.isDetailsEditMode"
-                     rule-chain-scope="vm.ruleChainsScope"
                      is-read-only="vm.grid.isDetailsReadOnly(vm.grid.operatingItem())"
                      the-form="vm.grid.detailsForm"
                      on-set-root-rule-chain="vm.setRootRuleChain(event, vm.grid.detailsConfig.currentItem)"

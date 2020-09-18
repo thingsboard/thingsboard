@@ -106,9 +106,9 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
                 contentType = null;
             }
             var content = '';
-            switch(scope.event.edgeEventType) {
+            switch(scope.event.type) {
                 case types.edgeEventType.relation:
-                    content = angular.toJson(scope.event.entityBody);
+                    content = angular.toJson(scope.event.body);
                     showDialog();
                     break;
                 case types.edgeEventType.ruleChainMetaData:
@@ -121,7 +121,7 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
                         });
                     break;
                 default:
-                    content = entityService.getEntity(scope.event.edgeEventType, scope.event.entityId, {ignoreErrors: true}).then(
+                    content = entityService.getEntity(scope.event.type, scope.event.entityId, {ignoreErrors: true}).then(
                         function success(info) {
                             showDialog();
                             return angular.toJson(info);
@@ -148,6 +148,12 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
             function showError() {
                 toast.showError($translate.instant('edge.load-entity-error'));
             }
+        }
+
+        scope.checkEdgeEventType = function (type) {
+            return !(type === types.edgeEventType.widgetType ||
+                type === types.edgeEventType.adminSettings ||
+                type === types.edgeEventType.widgetsBundle );
         }
 
         scope.checkTooltip = function($event) {

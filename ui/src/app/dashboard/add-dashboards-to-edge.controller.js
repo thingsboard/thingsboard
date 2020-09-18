@@ -53,13 +53,7 @@ export default function AddDashboardsToEdgeController(dashboardService, types, $
         fetchMoreItems_: function () {
             if (vm.dashboards.hasNext && !vm.dashboards.pending) {
                 vm.dashboards.pending = true;
-                var fetchDashboardsPromise;
-                if (edgeCustomerId === vm.types.id.nullUid) {
-                    fetchDashboardsPromise = dashboardService.getTenantDashboards(vm.dashboards.nextPageLink);
-                } else {
-                    fetchDashboardsPromise = dashboardService.getCustomerDashboards(edgeCustomerId, vm.dashboards.nextPageLink);
-                }
-                fetchDashboardsPromise.then(
+                dashboardService.getTenantDashboards(vm.dashboards.nextPageLink).then(
                     function success(dashboards) {
                         vm.dashboards.data = vm.dashboards.data.concat(dashboards.data);
                         vm.dashboards.nextPageLink = dashboards.nextPageLink;

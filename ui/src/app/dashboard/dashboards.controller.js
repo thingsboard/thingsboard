@@ -708,14 +708,7 @@ export function DashboardsController(userService, dashboardService, customerServ
             $event.stopPropagation();
         }
         var pageSize = 10;
-        var fetchDashboardsPromise;
-        if (vm.edgeCustomerId.id === vm.types.id.nullUid) {
-            fetchDashboardsPromise = dashboardService.getTenantDashboards({limit: pageSize, textSearch: ''});
-        } else {
-            fetchDashboardsPromise = dashboardService.getCustomerDashboards(vm.edgeCustomerId.id, {limit: pageSize, textSearch: ''});
-        }
-
-        fetchDashboardsPromise.then(
+        dashboardService.getTenantDashboards({limit: pageSize, textSearch: ''}).then(
             function success(_dashboards) {
                 var dashboards = {
                     pageSize: pageSize,

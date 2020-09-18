@@ -82,7 +82,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
                 ruleNodeComponents:
                 /*@ngInject*/
                     function($stateParams, ruleChainService) {
-                        return ruleChainService.getRuleNodeComponents(types.coreRuleChainType);
+                        return ruleChainService.getRuleNodeComponents(types.ruleChainType.core);
                     }
             },
             data: {
@@ -180,64 +180,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
             ruleNodeComponents:
             /*@ngInject*/
                 function($stateParams, ruleChainService) {
-                    return ruleChainService.getRuleNodeComponents(types.edgeRuleChainType);
-                }
-        },
-        data: {
-            import: false,
-            searchEnabled: false,
-            pageTitle: 'edge.rulechain'
-        },
-        ncyBreadcrumb: {
-            label: '{"icon": "settings_ethernet", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
-        }
-    }).state('home.edges.ruleChains', {
-        url: '/:edgeId/ruleChains',
-        params: {'topIndex': 0},
-        module: 'private',
-        auth: ['TENANT_ADMIN'],
-        views: {
-            "content@home": {
-                templateUrl: ruleChainsTemplate,
-                controllerAs: 'vm',
-                controller: 'RuleChainsController'
-            }
-        },
-        data: {
-            searchEnabled: true,
-            pageTitle: 'edge.rulechains',
-            ruleChainsType: 'edge'
-        },
-        ncyBreadcrumb: {
-            label: '{"icon": "settings_ethernet", "label": "rulechain.edge-rulechains"}'
-        }
-    }).state('home.edges.ruleChains.ruleChain', {
-        url: '/:ruleChainId',
-        reloadOnSearch: false,
-        module: 'private',
-        auth: ['SYS_ADMIN', 'TENANT_ADMIN'],
-        views: {
-            "content@home": {
-                templateUrl: ruleChainTemplate,
-                controller: 'RuleChainController',
-                controllerAs: 'vm'
-            }
-        },
-        resolve: {
-            ruleChain:
-            /*@ngInject*/
-                function($stateParams, ruleChainService) {
-                    return ruleChainService.getRuleChain($stateParams.ruleChainId);
-                },
-            ruleChainMetaData:
-            /*@ngInject*/
-                function($stateParams, ruleChainService) {
-                    return ruleChainService.getRuleChainMetaData($stateParams.ruleChainId);
-                },
-            ruleNodeComponents:
-            /*@ngInject*/
-                function($stateParams, ruleChainService) {
-                    return ruleChainService.getRuleNodeComponents(types.edgeRuleChainType);
+                    return ruleChainService.getRuleNodeComponents(types.ruleChainType.edge);
                 }
         },
         data: {
