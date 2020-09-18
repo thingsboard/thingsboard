@@ -1180,7 +1180,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         var saveRuleChainPromise;
         if (vm.isImport) {
             if (angular.isUndefined(vm.ruleChain.type)) {
-                vm.ruleChain.type = types.coreRuleChainType;
+                vm.ruleChain.type = types.ruleChainType.core;
             }
             saveRuleChainPromise = ruleChainService.saveRuleChain(vm.ruleChain);
         } else {
@@ -1269,7 +1269,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                             vm.isDirty = false;
                             vm.isImport = false;
                             $mdUtil.nextTick(() => {
-                                if (vm.ruleChain.type === vm.types.coreRuleChainType) {
+                                if (vm.ruleChain.type === vm.types.ruleChainType.core) {
                                     $state.go('home.ruleChains.core.ruleChain', {ruleChainId: vm.ruleChain.id.id});
                                 } else {
                                     $state.go('home.ruleChains.edge.ruleChain', {ruleChainId: vm.ruleChain.id.id});
@@ -1293,7 +1293,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         ruleNode.configuration = angular.copy(ruleNode.component.configurationDescriptor.nodeDefinition.defaultConfiguration);
 
         var ruleChainId = vm.ruleChain.id ? vm.ruleChain.id.id : null;
-        var ruleChainType = vm.ruleChain.type ? vm.ruleChain.type : types.coreRuleChainType;
+        var ruleChainType = vm.ruleChain.type ? vm.ruleChain.type : types.ruleChainType.core;
 
         vm.enableHotKeys = false;
 
