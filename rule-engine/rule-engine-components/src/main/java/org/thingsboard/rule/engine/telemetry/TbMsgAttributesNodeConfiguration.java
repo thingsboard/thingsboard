@@ -24,6 +24,8 @@ public class TbMsgAttributesNodeConfiguration implements NodeConfiguration<TbMsg
 
     private String scope;
 
+    private boolean notNotifyDevice;
+
     @Override
     public TbMsgAttributesNodeConfiguration defaultConfiguration() {
         TbMsgAttributesNodeConfiguration configuration = new TbMsgAttributesNodeConfiguration();
