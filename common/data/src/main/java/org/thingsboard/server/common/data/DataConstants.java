@@ -63,11 +63,20 @@ public class DataConstants {
     public static final String ALARM_CLEAR = "ALARM_CLEAR";
     public static final String ENTITY_ASSIGNED_FROM_TENANT = "ENTITY_ASSIGNED_FROM_TENANT";
     public static final String ENTITY_ASSIGNED_TO_TENANT = "ENTITY_ASSIGNED_TO_TENANT";
+    public static final String PROVISION_SUCCESS = "PROVISION_SUCCESS";
+    public static final String PROVISION_FAILURE = "PROVISION_FAILURE";
 
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
     public static final String DEFAULT_SECRET_KEY = "";
     public static final String SECRET_KEY_FIELD_NAME = "secretKey";
     public static final String DURATION_MS_FIELD_NAME = "durationMs";
+
+    public static final String DEVICE_NAME = "deviceName";
+    public static final String DEVICE_TYPE = "deviceType";
+    public static final String CERT_PUB_KEY = "x509CertPubKey";
+
+    public static final String PROVISION_KEY = "provisionDeviceKey";
+    public static final String PROVISION_SECRET = "provisionDeviceSecret";
 
 }

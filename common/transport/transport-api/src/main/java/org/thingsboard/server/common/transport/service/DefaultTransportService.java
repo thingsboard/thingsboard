@@ -485,6 +485,15 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ProvisionDeviceRequestMsg msg, TransportServiceCallback<Void> callback) {
+        if (checkLimits(sessionInfo, msg, callback)) {
+            reportActivityInternal(sessionInfo);
+            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                    .setProvisionDevice(msg).build(), callback);
+        }
+    }
+
+    @Override
     public void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
         reportActivityInternal(sessionInfo);
     }

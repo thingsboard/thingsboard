@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.device;
 
-public enum DeviceProfileType {
-    DEFAULT,
-    PROVISION
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.dao.device.provision.ProvisionRequest;
+import org.thingsboard.server.dao.device.provision.ProvisionResponse;
+
+public interface DeviceProvisionService {
+    ListenableFuture<ProvisionResponse> provisionDevice(ProvisionRequest provisionRequest);
 }

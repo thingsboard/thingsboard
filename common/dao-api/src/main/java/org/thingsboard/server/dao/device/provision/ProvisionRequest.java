@@ -13,9 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.device.provision;
 
-public enum DeviceProfileType {
-    DEFAULT,
-    PROVISION
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileConfiguration;
+
+@Data
+@AllArgsConstructor
+public class ProvisionRequest {
+    private String deviceName;
+    private String deviceType;
+    private String x509CertPubKey;
+    private ProvisionDeviceProfileConfiguration credentials;
 }

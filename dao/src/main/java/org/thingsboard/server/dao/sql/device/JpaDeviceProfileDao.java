@@ -81,6 +81,16 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
     }
 
     @Override
+    public DeviceProfile findProfileByTenantIdAndProfileDataProvisionConfigurationPair(TenantId tenantId, String provisionDeviceKey, String provisionDeviceSecret) {
+        return DaoUtil.getData(deviceProfileRepository.findProfileByTenantIdAndProfileDataProvisionConfigurationPair(tenantId.getId(), provisionDeviceKey, provisionDeviceSecret));
+    }
+
+    @Override
+    public DeviceProfileInfo findProfileInfoByTenantIdAndProfileDataProvisionConfigurationPair(TenantId tenantId, String provisionDeviceKey, String provisionDeviceSecret) {
+        return deviceProfileRepository.findProfileInfoByTenantIdAndProfileDataProvisionConfigurationPair(tenantId.getId(), provisionDeviceKey, provisionDeviceSecret);
+    }
+
+    @Override
     public DeviceProfile findByName(TenantId tenantId, String profileName) {
         return DaoUtil.getData(deviceProfileRepository.findByTenantIdAndName(tenantId.getId(), profileName));
     }

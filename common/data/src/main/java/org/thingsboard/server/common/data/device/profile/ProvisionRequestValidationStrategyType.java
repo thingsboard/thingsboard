@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.common.data.device.profile;
 
-public enum DeviceProfileType {
-    DEFAULT,
-    PROVISION
+public enum ProvisionRequestValidationStrategyType {
+    CHECK_NEW_DEVICE, CHECK_PRE_PROVISIONED_DEVICE
 }

@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.device.provision;
 
-public enum DeviceProfileType {
-    DEFAULT,
-    PROVISION
+public enum ProvisionResponseStatus {
+
+    SUCCESS,
+    NOT_FOUND,
+    FAILURE
+
 }
