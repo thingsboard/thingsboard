@@ -22,8 +22,8 @@ import addRuleChainsToEdgeTemplate from "./add-rulechains-to-edge.tpl.html";
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function RuleChainsController(ruleChainService, userService, edgeService, importExport, $state,
-                                             $stateParams, $filter, $translate, $mdDialog, $document, $q, types) {
+export default function RuleChainsController(ruleChainService, userService, importExport, $state, $stateParams, $filter, $translate, $mdDialog, types,
+                                             $document, $q, edgeService) {
 
     var vm = this;
     var edgeId = $stateParams.edgeId;
@@ -203,21 +203,21 @@ export default function RuleChainsController(ruleChainService, userService, edge
 
             ruleChainActionsList.push({
                 onAction: function ($event, item) {
-                    vm.grid.deleteItem($event, item);
-                },
-                name: function() { return $translate.instant('action.delete') },
-                details: function() { return $translate.instant('rulechain.delete') },
-                icon: "delete",
-                isEnabled: isNonRootRuleChain
-            });
-
-            ruleChainActionsList.push({
-                onAction: function ($event, item) {
                     setDefaultRootEdgeRuleChain($event, item);
                 },
                 name: function() { return $translate.instant('rulechain.set-default-root-edge') },
                 details: function() { return $translate.instant('rulechain.set-default-root-edge') },
                 icon: "flag",
+                isEnabled: isNonRootRuleChain
+            });
+
+            ruleChainActionsList.push({
+                onAction: function ($event, item) {
+                    vm.grid.deleteItem($event, item);
+                },
+                name: function() { return $translate.instant('action.delete') },
+                details: function() { return $translate.instant('rulechain.delete') },
+                icon: "delete",
                 isEnabled: isNonRootRuleChain
             });
 
@@ -395,13 +395,13 @@ export default function RuleChainsController(ruleChainService, userService, edge
         if ($event) {
             $event.stopPropagation();
         }
-
+        var ruleChainParams = {ruleChainId: ruleChain.id.id};
         if (vm.ruleChainsScope === 'edge') {
-            $state.go('home.edges.ruleChains.ruleChain', {ruleChainId: ruleChain.id.id, edgeId: vm.edge.id.id});
+            $state.go('home.edges.ruleChains.ruleChain', {...ruleChainParams, edgeId: vm.edge.id.id});
         } else if (vm.ruleChainsScope === 'edges') {
-            $state.go('home.ruleChains.edge.ruleChain', {ruleChainId: ruleChain.id.id});
+            $state.go('home.ruleChains.edge.ruleChain', ruleChainParams);
         } else {
-            $state.go('home.ruleChains.core.ruleChain', {ruleChainId: ruleChain.id.id});
+            $state.go('home.ruleChains.core.ruleChain', ruleChainParams);
         }
     }
 

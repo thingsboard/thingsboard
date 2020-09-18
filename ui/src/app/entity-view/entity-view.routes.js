@@ -68,4 +68,5 @@ export default function EntityViewRoutes($stateProvider, types) {
                 label: '{"icon": "view_quilt", "label": "{{ vm.customerEntityViewsTitle }}", "translate": "false"}'
             }
         });
+
 }
