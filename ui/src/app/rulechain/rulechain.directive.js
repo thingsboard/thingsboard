@@ -23,7 +23,7 @@ import ruleChainFieldsetTemplate from './rulechain-fieldset.tpl.html';
 export default function RuleChainDirective($compile, $templateCache, $mdDialog, $document, $q, $translate, types, toast) {
     var linker = function (scope, element) {
         var template = $templateCache.get(ruleChainFieldsetTemplate);
-        
+
         element.html(template);
 
         scope.onRuleChainIdCopied = function() {
