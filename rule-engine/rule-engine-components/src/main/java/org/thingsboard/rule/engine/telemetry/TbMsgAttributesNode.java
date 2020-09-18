@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.telemetry;
 
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -63,7 +64,14 @@ public class TbMsgAttributesNode implements TbNode {
         }
         String src = msg.getData();
         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(src));
-        ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getOriginator(), config.getScope(), new ArrayList<>(attributes), new TelemetryNodeCallback(ctx, msg));
+        String notifyDeviceStr = msg.getMetaData().getValue("notifyDevice");
+        ctx.getTelemetryService().saveAndNotify(
+                ctx.getTenantId(),
+                msg.getOriginator(),
+                config.getScope(),
+                new ArrayList<>(attributes),
+                new TelemetryNodeCallback(ctx, msg),
+                StringUtils.isEmpty(notifyDeviceStr) || !notifyDeviceStr.equals("false"));
     }
 
     @Override
