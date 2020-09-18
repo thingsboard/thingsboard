@@ -108,9 +108,6 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
             var content = '';
             switch(scope.event.type) {
                 case types.edgeEventType.relation:
-                case types.edgeEventType.whiteLabeling:
-                case types.edgeEventType.loginWhiteLabeling:
-                case types.edgeEventType.customTranslation:
                     content = angular.toJson(scope.event.body);
                     showDialog();
                     break;
