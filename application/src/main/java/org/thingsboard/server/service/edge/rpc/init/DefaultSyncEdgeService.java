@@ -412,8 +412,8 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(
                 EntityType.valueOf(attributesRequestMsg.getEntityType()),
                 new UUID(attributesRequestMsg.getEntityIdMSB(), attributesRequestMsg.getEntityIdLSB()));
-        final EdgeEventType edgeEventType = getEdgeQueueTypeByEntityType(entityId.getEntityType());
-        if (edgeEventType != null) {
+        final EdgeEventType type = getEdgeQueueTypeByEntityType(entityId.getEntityType());
+        if (type != null) {
             SettableFuture<Void> futureToSet = SettableFuture.create();
             ListenableFuture<List<AttributeKvEntry>> ssAttrFuture = attributesService.findAll(edge.getTenantId(), entityId, DataConstants.SERVER_SCOPE);
             Futures.addCallback(ssAttrFuture, new FutureCallback<List<AttributeKvEntry>>() {
@@ -436,14 +436,14 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
                                     }
                                     entityData.put("kv", attributes);
                                     entityData.put("scope", DataConstants.SERVER_SCOPE);
-                                    JsonNode entityBody = mapper.valueToTree(entityData);
-                                    log.debug("Sending attributes data msg, entityId [{}], attributes [{}]", entityId, entityBody);
+                                    JsonNode body = mapper.valueToTree(entityData);
+                                    log.debug("Sending attributes data msg, entityId [{}], attributes [{}]", entityId, body);
                                     saveEdgeEvent(edge.getTenantId(),
                                             edge.getId(),
-                                            edgeEventType,
+                                            type,
                                             ActionType.ATTRIBUTES_UPDATED,
                                             entityId,
-                                            entityBody);
+                                            body);
                                 } catch (Exception e) {
                                     log.error("[{}] Failed to send attribute updates to the edge", edge.getName(), e);
                                     throw new RuntimeException("[" + edge.getName() + "] Failed to send attribute updates to the edge", e);
@@ -572,22 +572,22 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     private ListenableFuture<EdgeEvent> saveEdgeEvent(TenantId tenantId,
                                EdgeId edgeId,
-                               EdgeEventType edgeEventType,
-                               ActionType edgeEventAction,
+                               EdgeEventType type,
+                               ActionType action,
                                EntityId entityId,
-                               JsonNode entityBody) {
-        log.debug("Pushing edge event to edge queue. tenantId [{}], edgeId [{}], edgeEventType [{}], edgeEventAction[{}], entityId [{}], entityBody [{}]",
-                tenantId, edgeId, edgeEventType, edgeEventAction, entityId, entityBody);
+                               JsonNode body) {
+        log.debug("Pushing edge event to edge queue. tenantId [{}], edgeId [{}], type [{}], action[{}], entityId [{}], body [{}]",
+                tenantId, edgeId, type, action, entityId, body);
 
         EdgeEvent edgeEvent = new EdgeEvent();
         edgeEvent.setTenantId(tenantId);
         edgeEvent.setEdgeId(edgeId);
-        edgeEvent.setType(edgeEventType);
-        edgeEvent.setAction(edgeEventAction.name());
+        edgeEvent.setType(type);
+        edgeEvent.setAction(action.name());
         if (entityId != null) {
             edgeEvent.setEntityId(entityId.getId());
         }
-        edgeEvent.setBody(entityBody);
+        edgeEvent.setBody(body);
         return edgeEventService.saveAsync(edgeEvent);
     }
 }

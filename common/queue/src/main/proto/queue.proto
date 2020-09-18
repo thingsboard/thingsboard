@@ -357,12 +357,12 @@ message EdgeNotificationMsgProto {
   int64 tenantIdLSB = 2;
   int64 edgeIdMSB = 3;
   int64 edgeIdLSB = 4;
-  string edgeEventType = 5;
-  string edgeEventAction = 6;
+  string type = 5;
+  string action = 6;
   int64 entityIdMSB = 7;
   int64 entityIdLSB = 8;
   string entityType = 9;
-  string entityBody = 10;
+  string body = 10;
   PostTelemetryMsg postTelemetryMsg = 11;
   PostAttributeMsg postAttributesMsg = 12;
 }

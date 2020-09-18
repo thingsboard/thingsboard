@@ -122,22 +122,22 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
     private void saveEdgeEvent(TenantId tenantId,
                                EdgeId edgeId,
-                               EdgeEventType edgeEventType,
-                               ActionType edgeEventAction,
+                               EdgeEventType type,
+                               ActionType action,
                                EntityId entityId,
-                               JsonNode entityBody) {
-        log.debug("Pushing edge event to edge queue. tenantId [{}], edgeId [{}], edgeEventType [{}], edgeEventAction[{}], entityId [{}], entityBody [{}]",
-                tenantId, edgeId, edgeEventType, edgeEventAction, entityId, entityBody);
+                               JsonNode body) {
+        log.debug("Pushing edge event to edge queue. tenantId [{}], edgeId [{}], type [{}], action[{}], entityId [{}], body [{}]",
+                tenantId, edgeId, type, action, entityId, body);
 
         EdgeEvent edgeEvent = new EdgeEvent();
         edgeEvent.setEdgeId(edgeId);
         edgeEvent.setTenantId(tenantId);
-        edgeEvent.setType(edgeEventType);
-        edgeEvent.setAction(edgeEventAction.name());
+        edgeEvent.setType(type);
+        edgeEvent.setAction(action.name());
         if (entityId != null) {
             edgeEvent.setEntityId(entityId.getId());
         }
-        edgeEvent.setBody(entityBody);
+        edgeEvent.setBody(body);
         edgeEventService.saveAsync(edgeEvent);
     }
 
@@ -145,8 +145,8 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     public void pushNotificationToEdge(TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback) {
         try {
             TenantId tenantId = new TenantId(new UUID(edgeNotificationMsg.getTenantIdMSB(), edgeNotificationMsg.getTenantIdLSB()));
-            EdgeEventType edgeEventType = EdgeEventType.valueOf(edgeNotificationMsg.getEdgeEventType());
-            switch (edgeEventType) {
+            EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
+            switch (type) {
                 case EDGE:
                     processEdge(tenantId, edgeNotificationMsg);
                     break;
@@ -172,7 +172,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     processRelation(tenantId, edgeNotificationMsg);
                     break;
                 default:
-                    log.debug("Edge event type [{}] is not designed to be pushed to edge", edgeEventType);
+                    log.debug("Edge event type [{}] is not designed to be pushed to edge", type);
             }
         } catch (Exception e) {
             callback.onFailure(e);
@@ -184,12 +184,12 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
     private void processEdge(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         try {
-            ActionType edgeEventActionType = ActionType.valueOf(edgeNotificationMsg.getEdgeEventAction());
+            ActionType actionType = ActionType.valueOf(edgeNotificationMsg.getAction());
             EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
             ListenableFuture<Edge> edgeFuture;
-            switch (edgeEventActionType) {
+            switch (actionType) {
                 case ASSIGNED_TO_CUSTOMER:
-                    CustomerId customerId = mapper.readValue(edgeNotificationMsg.getEntityBody(), CustomerId.class);
+                    CustomerId customerId = mapper.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
                     edgeFuture = edgeService.findEdgeByIdAsync(tenantId, edgeId);
                     Futures.addCallback(edgeFuture, new FutureCallback<Edge>() {
                         @Override
@@ -213,7 +213,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     }, dbCallbackExecutorService);
                     break;
                 case UNASSIGNED_FROM_CUSTOMER:
-                    CustomerId customerIdToDelete = mapper.readValue(edgeNotificationMsg.getEntityBody(), CustomerId.class);
+                    CustomerId customerIdToDelete = mapper.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
                     edgeFuture = edgeService.findEdgeByIdAsync(tenantId, edgeId);
                     Futures.addCallback(edgeFuture, new FutureCallback<Edge>() {
                         @Override
@@ -236,17 +236,17 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     }
 
     private void processWidgetBundleOrWidgetType(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        ActionType edgeEventActionType = ActionType.valueOf(edgeNotificationMsg.getEdgeEventAction());
-        EdgeEventType edgeEventType = EdgeEventType.valueOf(edgeNotificationMsg.getEdgeEventType());
-        EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(edgeEventType, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
-        switch (edgeEventActionType) {
+        ActionType actionType = ActionType.valueOf(edgeNotificationMsg.getAction());
+        EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
+        EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(type, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
+        switch (actionType) {
             case ADDED:
             case UPDATED:
             case DELETED:
                 TextPageData<Edge> edgesByTenantId = edgeService.findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
                 if (edgesByTenantId != null && edgesByTenantId.getData() != null && !edgesByTenantId.getData().isEmpty()) {
                     for (Edge edge : edgesByTenantId.getData()) {
-                        saveEdgeEvent(tenantId, edge.getId(), edgeEventType, edgeEventActionType, entityId, null);
+                        saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, null);
                     }
                 }
                 break;
@@ -254,20 +254,20 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     }
 
     private void processCustomer(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        ActionType edgeEventActionType = ActionType.valueOf(edgeNotificationMsg.getEdgeEventAction());
-        EdgeEventType edgeEventType = EdgeEventType.valueOf(edgeNotificationMsg.getEdgeEventType());
-        EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(edgeEventType, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
+        ActionType actionType = ActionType.valueOf(edgeNotificationMsg.getAction());
+        EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
+        EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(type, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
         TextPageData<Edge> edgesByTenantId = edgeService.findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
         if (edgesByTenantId != null && edgesByTenantId.getData() != null && !edgesByTenantId.getData().isEmpty()) {
             for (Edge edge : edgesByTenantId.getData()) {
-                switch (edgeEventActionType) {
+                switch (actionType) {
                     case UPDATED:
                         if (!edge.getCustomerId().isNullUid() && edge.getCustomerId().equals(entityId)) {
-                            saveEdgeEvent(tenantId, edge.getId(), edgeEventType, edgeEventActionType, entityId, null);
+                            saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, null);
                         }
                         break;
                     case DELETED:
-                        saveEdgeEvent(tenantId, edge.getId(), edgeEventType, edgeEventActionType, entityId, null);
+                        saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, null);
                         break;
                 }
             }
@@ -275,12 +275,12 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     }
 
     private void processEntity(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        ActionType edgeEventActionType = ActionType.valueOf(edgeNotificationMsg.getEdgeEventAction());
-        EdgeEventType edgeEventType = EdgeEventType.valueOf(edgeNotificationMsg.getEdgeEventType());
-        EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(edgeEventType,
+        ActionType actionType = ActionType.valueOf(edgeNotificationMsg.getAction());
+        EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
+        EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(type,
                 new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
         ListenableFuture<List<EdgeId>> edgeIdsFuture;
-        switch (edgeEventActionType) {
+        switch (actionType) {
             case ADDED: // used only for USER entity
             case UPDATED:
             case CREDENTIALS_UPDATED:
@@ -290,7 +290,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     public void onSuccess(@Nullable List<EdgeId> edgeIds) {
                         if (edgeIds != null && !edgeIds.isEmpty()) {
                             for (EdgeId edgeId : edgeIds) {
-                                saveEdgeEvent(tenantId, edgeId, edgeEventType, edgeEventActionType, entityId, null);
+                                saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, null);
                             }
                         }
                     }
@@ -309,14 +309,14 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                         if (edgeIds != null && !edgeIds.isEmpty()) {
                             for (EdgeId edgeId : edgeIds) {
                                 try {
-                                    CustomerId customerId = mapper.readValue(edgeNotificationMsg.getEntityBody(), CustomerId.class);
+                                    CustomerId customerId = mapper.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
                                     ListenableFuture<Edge> future = edgeService.findEdgeByIdAsync(tenantId, edgeId);
                                     Futures.addCallback(future, new FutureCallback<Edge>() {
                                         @Override
                                         public void onSuccess(@Nullable Edge edge) {
                                             if (edge != null && edge.getCustomerId() != null &&
                                                     !edge.getCustomerId().isNullUid() && edge.getCustomerId().equals(customerId)) {
-                                                saveEdgeEvent(tenantId, edgeId, edgeEventType, edgeEventActionType, entityId, null);
+                                                saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, null);
                                             }
                                         }
                                         @Override
@@ -341,15 +341,15 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                 TextPageData<Edge> edgesByTenantId = edgeService.findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
                 if (edgesByTenantId != null && edgesByTenantId.getData() != null && !edgesByTenantId.getData().isEmpty()) {
                     for (Edge edge : edgesByTenantId.getData()) {
-                        saveEdgeEvent(tenantId, edge.getId(), edgeEventType, edgeEventActionType, entityId, null);
+                        saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, null);
                     }
                 }
                 break;
             case ASSIGNED_TO_EDGE:
             case UNASSIGNED_FROM_EDGE:
                 EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
-                saveEdgeEvent(tenantId, edgeId, edgeEventType, edgeEventActionType, entityId, null);
-                if (edgeEventType.equals(EdgeEventType.RULE_CHAIN)) {
+                saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, null);
+                if (type.equals(EdgeEventType.RULE_CHAIN)) {
                     updateDependentRuleChains(tenantId, new RuleChainId(entityId.getId()), edgeId);
                 }
                 break;
@@ -395,8 +395,8 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
         ListenableFuture<Alarm> alarmFuture = alarmService.findAlarmByIdAsync(tenantId, alarmId);
         Futures.transform(alarmFuture, alarm -> {
             if (alarm != null) {
-                EdgeEventType edgeEventType = getEdgeQueueTypeByEntityType(alarm.getOriginator().getEntityType());
-                if (edgeEventType != null) {
+                EdgeEventType type = getEdgeQueueTypeByEntityType(alarm.getOriginator().getEntityType());
+                if (type != null) {
                     ListenableFuture<List<EdgeId>> relatedEdgeIdsByEntityIdFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, alarm.getOriginator());
                     Futures.transform(relatedEdgeIdsByEntityIdFuture, relatedEdgeIdsByEntityId -> {
                         if (relatedEdgeIdsByEntityId != null) {
@@ -404,7 +404,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                                 saveEdgeEvent(tenantId,
                                         edgeId,
                                         EdgeEventType.ALARM,
-                                        ActionType.valueOf(edgeNotificationMsg.getEdgeEventAction()),
+                                        ActionType.valueOf(edgeNotificationMsg.getAction()),
                                         alarmId,
                                         null);
                             }
@@ -418,7 +418,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     }
 
     private void processRelation(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) throws JsonProcessingException {
-        EntityRelation relation = mapper.readValue(edgeNotificationMsg.getEntityBody(), EntityRelation.class);
+        EntityRelation relation = mapper.readValue(edgeNotificationMsg.getBody(), EntityRelation.class);
         if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
                 !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
             List<ListenableFuture<List<EdgeId>>> futures = new ArrayList<>();
@@ -439,7 +439,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                         saveEdgeEvent(tenantId,
                                 edgeId,
                                 EdgeEventType.RELATION,
-                                ActionType.valueOf(edgeNotificationMsg.getEdgeEventAction()),
+                                ActionType.valueOf(edgeNotificationMsg.getAction()),
                                 null,
                                 mapper.valueToTree(relation));
                     }

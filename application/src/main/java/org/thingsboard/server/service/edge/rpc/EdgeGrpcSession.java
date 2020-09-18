@@ -309,8 +309,8 @@ public final class EdgeGrpcSession implements Closeable {
             log.trace("Processing edge event [{}]", edgeEvent);
             try {
                 DownlinkMsg downlinkMsg = null;
-                ActionType edgeEventAction = ActionType.valueOf(edgeEvent.getAction());
-                switch (edgeEventAction) {
+                ActionType action = ActionType.valueOf(edgeEvent.getAction());
+                switch (action) {
                     case UPDATED:
                     case ADDED:
                     case DELETED:
@@ -323,7 +323,7 @@ public final class EdgeGrpcSession implements Closeable {
                     case RELATION_DELETED:
                     case ASSIGNED_TO_CUSTOMER:
                     case UNASSIGNED_FROM_CUSTOMER:
-                        downlinkMsg = processEntityMessage(edgeEvent, edgeEventAction);
+                        downlinkMsg = processEntityMessage(edgeEvent, action);
                         break;
                     case ATTRIBUTES_UPDATED:
                     case ATTRIBUTES_DELETED:
@@ -444,37 +444,37 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processEntityMessage(EdgeEvent edgeEvent, ActionType edgeEventAction) {
+    private DownlinkMsg processEntityMessage(EdgeEvent edgeEvent, ActionType action) {
         UpdateMsgType msgType = getResponseMsgType(ActionType.valueOf(edgeEvent.getAction()));
-        log.trace("Executing processEntityMessage, edgeEvent [{}], edgeEventAction [{}], msgType [{}]", edgeEvent, edgeEventAction, msgType);
+        log.trace("Executing processEntityMessage, edgeEvent [{}], action [{}], msgType [{}]", edgeEvent, action, msgType);
         switch (edgeEvent.getType()) {
             case EDGE:
                 // TODO: voba - add edge update logic
                 return null;
             case DEVICE:
-                return processDevice(edgeEvent, msgType, edgeEventAction);
+                return processDevice(edgeEvent, msgType, action);
             case ASSET:
-                return processAsset(edgeEvent, msgType, edgeEventAction);
+                return processAsset(edgeEvent, msgType, action);
             case ENTITY_VIEW:
-                return processEntityView(edgeEvent, msgType, edgeEventAction);
+                return processEntityView(edgeEvent, msgType, action);
             case DASHBOARD:
-                return processDashboard(edgeEvent, msgType, edgeEventAction);
+                return processDashboard(edgeEvent, msgType, action);
             case CUSTOMER:
-                return processCustomer(edgeEvent, msgType, edgeEventAction);
+                return processCustomer(edgeEvent, msgType, action);
             case RULE_CHAIN:
-                return processRuleChain(edgeEvent, msgType, edgeEventAction);
+                return processRuleChain(edgeEvent, msgType, action);
             case RULE_CHAIN_METADATA:
                 return processRuleChainMetadata(edgeEvent, msgType);
             case ALARM:
                 return processAlarm(edgeEvent, msgType);
             case USER:
-                return processUser(edgeEvent, msgType, edgeEventAction);
+                return processUser(edgeEvent, msgType, action);
             case RELATION:
                 return processRelation(edgeEvent, msgType);
             case WIDGETS_BUNDLE:
-                return processWidgetsBundle(edgeEvent, msgType, edgeEventAction);
+                return processWidgetsBundle(edgeEvent, msgType, action);
             case WIDGET_TYPE:
-                return processWidgetType(edgeEvent, msgType, edgeEventAction);
+                return processWidgetType(edgeEvent, msgType, action);
             case ADMIN_SETTINGS:
                 return processAdminSettings(edgeEvent);
             default:
@@ -524,10 +524,10 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processAsset(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType edgeEventAction) {
+    private DownlinkMsg processAsset(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType action) {
         AssetId assetId = new AssetId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (edgeEventAction) {
+        switch (action) {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
@@ -555,10 +555,10 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processEntityView(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType edgeEventAction) {
+    private DownlinkMsg processEntityView(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType action) {
         EntityViewId entityViewId = new EntityViewId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (edgeEventAction) {
+        switch (action) {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
@@ -586,10 +586,10 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processDashboard(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType edgeEventAction) {
+    private DownlinkMsg processDashboard(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType action) {
         DashboardId dashboardId = new DashboardId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (edgeEventAction) {
+        switch (action) {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
@@ -620,10 +620,10 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processCustomer(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType edgeEventAction) {
+    private DownlinkMsg processCustomer(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType action) {
         CustomerId customerId = new CustomerId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (edgeEventAction) {
+        switch (action) {
             case ADDED:
             case UPDATED:
                 Customer customer = ctx.getCustomerService().findCustomerById(edgeEvent.getTenantId(), customerId);
@@ -646,10 +646,10 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processRuleChain(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType edgeEventAction) {
+    private DownlinkMsg processRuleChain(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType action) {
         RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (edgeEventAction) {
+        switch (action) {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
