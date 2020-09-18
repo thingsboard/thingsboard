@@ -115,6 +115,11 @@ public class InstallScripts {
         }
     }
 
+    public void createDefaultEdgeRuleChains(TenantId tenantId) {
+        Path tenantChainsDir = getTenantRuleChainsDir();
+        loadRuleChainFromFile(tenantId, tenantChainsDir.resolve("edge_root_rule_chain.json"));
+    }
+
     public void loadSystemWidgets() throws Exception {
         Path widgetBundlesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetBundlesDir, path -> path.toString().endsWith(JSON_EXT))) {

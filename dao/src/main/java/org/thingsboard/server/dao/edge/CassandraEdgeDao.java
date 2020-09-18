@@ -27,7 +27,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -57,8 +56,8 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.in;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_BY_ROUTING_KEY_VIEW_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_BY_TENANT_AND_NAME_VIEW_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.EDGE_BY_TENANT_AND_ROUTING_KEY_VIEW_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_COLUMN_FAMILY_NAME;
@@ -203,9 +202,8 @@ public class CassandraEdgeDao extends CassandraAbstractSearchTextDao<EdgeEntity,
 
     @Override
     public Optional<Edge> findByRoutingKey(UUID tenantId, String routingKey) {
-        Select select = select().from(EDGE_BY_TENANT_AND_ROUTING_KEY_VIEW_NAME);
+        Select select = select().from(EDGE_BY_ROUTING_KEY_VIEW_NAME);
         Select.Where query = select.where();
-        query.and(eq(EDGE_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(EDGE_ROUTING_KEY_PROPERTY, routingKey));
         return Optional.ofNullable(DaoUtil.getData(findOneByStatement(new TenantId(tenantId), query)));
     }

@@ -252,52 +252,54 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     void processHandleMessages() throws ExecutionException, InterruptedException {
-        Long queueStartTs = getQueueStartTs().get();
-        TimePageLink pageLink = new TimePageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(), queueStartTs, null, true);
-        TimePageData<EdgeEvent> pageData;
-        UUID ifOffset = null;
-        boolean success = true;
-        do {
-            pageData = ctx.getEdgeNotificationService().findEdgeEvents(edge.getTenantId(), edge.getId(), pageLink);
-            if (isConnected() && !pageData.getData().isEmpty()) {
-                log.trace("[{}] [{}] event(s) are going to be processed.", this.sessionId, pageData.getData().size());
-                List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(pageData.getData());
-                log.trace("[{}] downlink msg(s) are going to be send.", downlinkMsgsPack.size());
+        if (isConnected()) {
+            Long queueStartTs = getQueueStartTs().get();
+            TimePageLink pageLink = new TimePageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(), queueStartTs, null, true);
+            TimePageData<EdgeEvent> pageData;
+            UUID ifOffset = null;
+            boolean success = true;
+            do {
+                pageData = ctx.getEdgeNotificationService().findEdgeEvents(edge.getTenantId(), edge.getId(), pageLink);
+                if (isConnected() && !pageData.getData().isEmpty()) {
+                    log.trace("[{}] [{}] event(s) are going to be processed.", this.sessionId, pageData.getData().size());
+                    List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(pageData.getData());
+                    log.trace("[{}] downlink msg(s) are going to be send.", downlinkMsgsPack.size());
 
-                latch = new CountDownLatch(downlinkMsgsPack.size());
-                for (DownlinkMsg downlinkMsg : downlinkMsgsPack) {
-                    sendResponseMsg(ResponseMsg.newBuilder()
-                            .setDownlinkMsg(downlinkMsg)
-                            .build());
+                    latch = new CountDownLatch(downlinkMsgsPack.size());
+                    for (DownlinkMsg downlinkMsg : downlinkMsgsPack) {
+                        sendResponseMsg(ResponseMsg.newBuilder()
+                                .setDownlinkMsg(downlinkMsg)
+                                .build());
+                    }
+
+                    ifOffset = pageData.getData().get(pageData.getData().size() - 1).getUuidId();
+
+                    success = latch.await(10, TimeUnit.SECONDS);
+                    if (!success) {
+                        log.warn("Failed to deliver the batch: {}", downlinkMsgsPack);
+                    }
                 }
-
-                ifOffset = pageData.getData().get(pageData.getData().size() - 1).getUuidId();
-
-                success = latch.await(10, TimeUnit.SECONDS);
-                if (!success) {
-                    log.warn("Failed to deliver the batch: {}", downlinkMsgsPack);
+                if (isConnected() && (!success || pageData.hasNext())) {
+                    try {
+                        Thread.sleep(ctx.getEdgeEventStorageSettings().getSleepIntervalBetweenBatches());
+                    } catch (InterruptedException e) {
+                        log.error("Error during sleep between batches", e);
+                    }
+                    if (success) {
+                        pageLink = pageData.getNextPageLink();
+                    }
                 }
+            } while (isConnected() && (!success || pageData.hasNext()));
+
+            if (ifOffset != null) {
+                Long newStartTs = UUIDs.unixTimestamp(ifOffset);
+                updateQueueStartTs(newStartTs);
             }
-            if (isConnected() && (!success || pageData.hasNext())) {
-                try {
-                    Thread.sleep(ctx.getEdgeEventStorageSettings().getSleepIntervalBetweenBatches());
-                } catch (InterruptedException e) {
-                    log.error("Error during sleep between batches", e);
-                }
-                if (success) {
-                    pageLink = pageData.getNextPageLink();
-                }
+            try {
+                Thread.sleep(ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval());
+            } catch (InterruptedException e) {
+                log.error("Error during sleep", e);
             }
-        } while (isConnected() && (!success || pageData.hasNext()));
-
-        if (ifOffset != null) {
-            Long newStartTs = UUIDs.unixTimestamp(ifOffset);
-            updateQueueStartTs(newStartTs);
-        }
-        try {
-            Thread.sleep(ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval());
-        } catch (InterruptedException e) {
-            log.error("Error during sleep", e);
         }
     }
 

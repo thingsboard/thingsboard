@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.service.install.cql.CassandraDbHelper;
@@ -44,6 +45,7 @@ import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_VIEWS
 import static org.thingsboard.server.service.install.DatabaseHelper.ID;
 import static org.thingsboard.server.service.install.DatabaseHelper.KEYS;
 import static org.thingsboard.server.service.install.DatabaseHelper.NAME;
+import static org.thingsboard.server.service.install.DatabaseHelper.RULE_CHAIN;
 import static org.thingsboard.server.service.install.DatabaseHelper.SEARCH_TEXT;
 import static org.thingsboard.server.service.install.DatabaseHelper.START_TS;
 import static org.thingsboard.server.service.install.DatabaseHelper.TENANT_ID;
@@ -306,17 +308,39 @@ public class CassandraDatabaseUpgradeService extends AbstractCassandraDatabaseUp
                 }
                 log.info("Schema updated.");
                 break;
-            case "2.5.0":
+            case "2.5.5":
+
+                log.info("Upgrading Cassandra DataBase from version {} to 2.6.0 ...", fromVersion);
+
+                // Dump rule chains
+
+                cluster.getSession();
+
+                ks = cluster.getCluster().getMetadata().getKeyspace(cluster.getKeyspaceName());
+
+                log.info("Dumping rule chains ...");
+                Path ruleChainsDump = CassandraDbHelper.dumpCfIfExists(ks, cluster.getSession(), RULE_CHAIN,
+                        new String[]{ID, TENANT_ID, NAME, SEARCH_TEXT, "first_rule_node_id", "root", "debug_mode", CONFIGURATION, ADDITIONAL_INFO, TYPE},
+                        new String[]{"", "", "", "", "", "", "", "", "", RuleChainType.CORE.name()},
+                        "tb-rule-chains");
+                log.info("Rule chains dumped.");
+
                 log.info("Updating schema ...");
                 schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.6.0", SCHEMA_UPDATE_CQL);
                 loadCql(schemaUpdateFile);
-
-                try {
-                    cluster.getSession().execute("alter table rule_chain add type text");
-                    Thread.sleep(2500);
-                } catch (InvalidQueryException e) {}
                 log.info("Schema updated.");
+
+                // Restore rule chains
+
+                log.info("Restoring rule chains ...");
+                if (ruleChainsDump != null) {
+                    CassandraDbHelper.loadCf(ks, cluster.getSession(), RULE_CHAIN,
+                            new String[]{ID, TENANT_ID, NAME, SEARCH_TEXT, "first_rule_node_id", "root", "debug_mode", CONFIGURATION, ADDITIONAL_INFO, TYPE}, ruleChainsDump);
+                    Files.deleteIfExists(ruleChainsDump);
+                }
+                log.info("Rule chains restored.");
                 break;
+
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);
         }

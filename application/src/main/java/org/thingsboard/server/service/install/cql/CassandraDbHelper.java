@@ -157,6 +157,8 @@ public class CassandraDbHelper {
                     str = new Float(row.getFloat(index)).toString();
                 } else if (type == DataType.timestamp()) {
                     str = ""+row.getTimestamp(index).getTime();
+                } else if (type == DataType.cboolean()) {
+                    str = ""+ row.getBool(index);
                 } else {
                     str = row.getString(index);
                 }
@@ -205,6 +207,8 @@ public class CassandraDbHelper {
             boundStatement.setFloat(column, Float.valueOf(value));
         } else if (type == DataType.timestamp()) {
             boundStatement.setTimestamp(column, new Date(Long.valueOf(value)));
+        } else if (type == DataType.cboolean()) {
+            boundStatement.setBool(column, Boolean.valueOf(value));
         } else {
             boundStatement.setString(column, value);
         }

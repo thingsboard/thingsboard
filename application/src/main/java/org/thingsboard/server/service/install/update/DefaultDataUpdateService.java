@@ -19,9 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -50,6 +48,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 1.4.0 to 2.0.0 ...");
                 tenantsDefaultRuleChainUpdater.updateEntities(null);
                 break;
+            case "2.5.5":
+                log.info("Updating data from version 2.5.5 to 2.6.0 ...");
+                tenantsDefaultEdgeRuleChainUpdater.updateEntities(null);
+                break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
         }
@@ -76,4 +78,24 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 }
             };
 
+    private PaginatedUpdater<String, Tenant> tenantsDefaultEdgeRuleChainUpdater =
+            new PaginatedUpdater<String, Tenant>() {
+
+                @Override
+                protected TextPageData<Tenant> findEntities(String region, TextPageLink pageLink) {
+                    return tenantService.findTenants(pageLink);
+                }
+
+                @Override
+                protected void updateEntity(Tenant tenant) {
+                    try {
+                        RuleChain defaultEdgeRuleChain = ruleChainService.getDefaultRootEdgeRuleChain(tenant.getId());
+                        if (defaultEdgeRuleChain == null) {
+                            installScripts.createDefaultEdgeRuleChains(tenant.getId());
+                        }
+                    } catch (Exception e) {
+                        log.error("Unable to update Tenant", e);
+                    }
+                }
+            };
 }

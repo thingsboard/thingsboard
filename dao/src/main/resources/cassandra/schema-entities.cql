@@ -749,12 +749,12 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.edge_by_tenant_and_name AS
     PRIMARY KEY ( tenant_id, name, id, customer_id, type)
     WITH CLUSTERING ORDER BY ( name ASC, id DESC, customer_id DESC);
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.edge_by_tenant_and_routing_key AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.edge_by_routing_key AS
     SELECT *
     from thingsboard.edge
     WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND routing_key IS NOT NULL AND id IS NOT NULL
-    PRIMARY KEY ( tenant_id, routing_key, id, customer_id, type)
-    WITH CLUSTERING ORDER BY ( routing_key ASC, id DESC, customer_id DESC);
+    PRIMARY KEY ( routing_key, tenant_id, id, customer_id, type)
+    WITH CLUSTERING ORDER BY ( tenant_id DESC, id DESC, customer_id DESC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.edge_by_tenant_and_search_text AS
     SELECT *

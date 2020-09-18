@@ -150,6 +150,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                     }
                 } catch (Exception e) {
                     log.warn("Failed to process messages handling!", e);
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ignore) {}
                 }
             }
         });

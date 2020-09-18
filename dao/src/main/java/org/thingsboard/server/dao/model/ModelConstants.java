@@ -373,7 +373,7 @@ public class ModelConstants {
     public static final String EDGE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "edge_by_customer_and_search_text";
     public static final String EDGE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "edge_by_customer_by_type_and_search_text";
     public static final String EDGE_BY_TENANT_AND_NAME_VIEW_NAME = "edge_by_tenant_and_name";
-    public static final String EDGE_BY_TENANT_AND_ROUTING_KEY_VIEW_NAME = "edge_by_tenant_and_routing_key";
+    public static final String EDGE_BY_ROUTING_KEY_VIEW_NAME = "edge_by_routing_key";
 
     public static final String EDGE_ROUTING_KEY_PROPERTY = "routing_key";
     public static final String EDGE_SECRET_PROPERTY = "secret";
