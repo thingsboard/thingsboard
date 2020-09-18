@@ -107,6 +107,7 @@ public class BaseOAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
         OAuth2ClientRegistrationTemplate clientRegistrationTemplate = new OAuth2ClientRegistrationTemplate();
         clientRegistrationTemplate.setProviderId(providerId);
         clientRegistrationTemplate.setTenantId(tenantId);
+        clientRegistrationTemplate.setAdditionalInfo(mapper.createObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
         clientRegistrationTemplate.setBasic(
                 OAuth2BasicMapperConfig.builder()
                         .firstNameAttributeKey("firstName")

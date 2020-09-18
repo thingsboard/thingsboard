@@ -76,6 +76,7 @@ public class OAuth2Utils {
                 .clientAuthenticationMethod(oAuth2ClientRegistration.getClientAuthenticationMethod())
                 .loginButtonLabel(oAuth2ClientRegistration.getLoginButtonLabel())
                 .loginButtonIcon(oAuth2ClientRegistration.getLoginButtonIcon())
+                .additionalInfo(oAuth2ClientRegistration.getAdditionalInfo())
                 .build();
     }
 
@@ -99,6 +100,7 @@ public class OAuth2Utils {
         clientRegistration.setClientAuthenticationMethod(clientRegistrationDto.getClientAuthenticationMethod());
         clientRegistration.setLoginButtonLabel(clientRegistrationDto.getLoginButtonLabel());
         clientRegistration.setLoginButtonIcon(clientRegistrationDto.getLoginButtonIcon());
+        clientRegistration.setAdditionalInfo(clientRegistrationDto.getAdditionalInfo());
         return clientRegistration;
     }
 }

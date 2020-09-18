@@ -16,10 +16,13 @@
 package org.thingsboard.server.common.data.oauth2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
-import org.thingsboard.server.common.data.BaseData;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -29,7 +32,7 @@ import java.util.List;
 @Data
 @ToString(exclude = {"clientSecret"})
 @NoArgsConstructor
-public class OAuth2ClientRegistration extends BaseData<OAuth2ClientRegistrationId> implements HasTenantId, HasName {
+public class OAuth2ClientRegistration extends SearchTextBasedWithAdditionalInfo<OAuth2ClientRegistrationId> implements HasTenantId, HasName {
 
     private TenantId tenantId;
     private String domainName;
@@ -70,5 +73,10 @@ public class OAuth2ClientRegistration extends BaseData<OAuth2ClientRegistrationI
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
         return loginButtonLabel;
+    }
+
+    @Override
+    public String getSearchText() {
+        return getName();
     }
 }

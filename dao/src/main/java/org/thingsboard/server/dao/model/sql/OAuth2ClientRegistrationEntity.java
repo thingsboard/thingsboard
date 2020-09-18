@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -98,6 +100,10 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
     @Column(name = ModelConstants.OAUTH2_MAPPER_SEND_TOKEN_PROPERTY)
     private Boolean sendToken;
 
+    @Type(type = "json")
+    @Column(name = ModelConstants.OAUTH2_ADDITIONAL_INFO_PROPERTY)
+    private JsonNode additionalInfo;
+
     public OAuth2ClientRegistrationEntity() {
         super();
     }
@@ -123,6 +129,7 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
         this.clientAuthenticationMethod = clientRegistration.getClientAuthenticationMethod();
         this.loginButtonLabel = clientRegistration.getLoginButtonLabel();
         this.loginButtonIcon = clientRegistration.getLoginButtonIcon();
+        this.additionalInfo = clientRegistration.getAdditionalInfo();
         OAuth2MapperConfig mapperConfig = clientRegistration.getMapperConfig();
         if (mapperConfig != null) {
             this.allowUserCreation = mapperConfig.isAllowUserCreation();
@@ -156,6 +163,7 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
         clientRegistration.setTenantId(new TenantId(tenantId));
         clientRegistration.setCreatedTime(createdTime);
         clientRegistration.setDomainName(domainName);
+        clientRegistration.setAdditionalInfo(additionalInfo);
         clientRegistration.setMapperConfig(
                 OAuth2MapperConfig.builder()
                         .allowUserCreation(allowUserCreation)

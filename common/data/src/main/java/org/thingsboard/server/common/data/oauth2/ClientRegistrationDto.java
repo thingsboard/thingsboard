@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.oauth2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.*;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -43,4 +44,5 @@ public class ClientRegistrationDto {
     private String clientAuthenticationMethod;
     private String loginButtonLabel;
     private String loginButtonIcon;
+    private JsonNode additionalInfo;
 }

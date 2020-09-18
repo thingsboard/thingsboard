@@ -300,6 +300,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         clientRegistration.setClientAuthenticationMethod("clientAuthenticationMethod");
         clientRegistration.setLoginButtonLabel("loginButtonLabel");
         clientRegistration.setLoginButtonIcon("loginButtonIcon");
+        clientRegistration.setAdditionalInfo(mapper.createObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
         return clientRegistration;
     }
 }

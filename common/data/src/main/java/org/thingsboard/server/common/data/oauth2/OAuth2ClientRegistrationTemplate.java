@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.common.data.oauth2;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.*;
-import org.thingsboard.server.common.data.BaseData;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
@@ -31,7 +31,7 @@ import java.util.List;
 @Data
 @ToString
 @NoArgsConstructor
-public class OAuth2ClientRegistrationTemplate extends BaseData<OAuth2ClientRegistrationTemplateId> implements HasTenantId, HasName {
+public class OAuth2ClientRegistrationTemplate extends SearchTextBasedWithAdditionalInfo<OAuth2ClientRegistrationTemplateId> implements HasTenantId, HasName {
 
     private TenantId tenantId;
     private String providerId;
@@ -47,14 +47,6 @@ public class OAuth2ClientRegistrationTemplate extends BaseData<OAuth2ClientRegis
     private String loginButtonIcon;
     private String loginButtonLabel;
     private String helpLink;
-
-    @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
-    private transient JsonNode additionalInfo;
-    @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
-    @JsonIgnore
-    private byte[] additionalInfoBytes;
 
     public OAuth2ClientRegistrationTemplate(OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
         super(clientRegistrationTemplate);
@@ -72,19 +64,15 @@ public class OAuth2ClientRegistrationTemplate extends BaseData<OAuth2ClientRegis
         this.loginButtonIcon = clientRegistrationTemplate.loginButtonIcon;
         this.loginButtonLabel = clientRegistrationTemplate.loginButtonLabel;
         this.helpLink = clientRegistrationTemplate.helpLink;
-        this.additionalInfo = clientRegistrationTemplate.additionalInfo;
-    }
-
-    public JsonNode getAdditionalInfo() {
-        return SearchTextBasedWithAdditionalInfo.getJson(() -> additionalInfo, () -> additionalInfoBytes);
-    }
-
-    public void setAdditionalInfo(JsonNode addInfo) {
-        SearchTextBasedWithAdditionalInfo.setJson(addInfo, json -> this.additionalInfo = json, bytes -> this.additionalInfoBytes = bytes);
     }
 
     @Override
     public String getName() {
         return providerId;
+    }
+
+    @Override
+    public String getSearchText() {
+        return getName();
     }
 }
