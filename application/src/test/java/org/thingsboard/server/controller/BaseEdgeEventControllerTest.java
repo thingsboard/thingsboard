@@ -76,6 +76,7 @@ public class BaseEdgeEventControllerTest extends AbstractControllerTest {
 
     @Test
     public void testGetEdgeEvents() throws Exception {
+        Thread.sleep(1000);
         Edge edge = constructEdge("TestEdge", "default");
         edge = doPost("/api/edge", edge, Edge.class);
 
