@@ -804,7 +804,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       const alarmField = alarmFields[key.name];
       if (alarmField) {
         if (alarmField.time) {
-          return this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss');
+          return value ? this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss') : '';
         } else if (alarmField.value === alarmFields.severity.value) {
           return this.translate.instant(alarmSeverityTranslations.get(value));
         } else if (alarmField.value === alarmFields.status.value) {
