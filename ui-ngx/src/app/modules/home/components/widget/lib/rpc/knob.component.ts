@@ -173,7 +173,6 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
 
 
     this.knob.on('click', (e) => {
-      if(this.newValue === this.rpcValue || this.rpcValue == undefined) {
         if (this.moving) {
           this.moving = false;
           return false;
@@ -207,7 +206,6 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
         this.rotation = this.currentDeg;
         this.startDeg = -1;
         this.rpcUpdateValue(this.newValue);
-      }
     });
 
     $(document).on('mouseup touchend', (e) => {
