@@ -57,7 +57,9 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   private subscriptions: Subscription[] = [];
   private templates = new Map<string, ClientProviderTemplated>();
   private defaultProvider = {
-    providerName: 'Custom',
+    additionalInfo: {
+      providerName: 'Custom'
+    },
     clientAuthenticationMethod: 'Post',
     userNameAttributeName: 'email',
     mapperConfig: {
@@ -105,7 +107,6 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
         this.initTemplates(templates);
         this.oauth2Settings = oauth2Settings;
         this.initOAuth2Settings(this.oauth2Settings);
-        // this.oauth2SettingsForm.get('clientDomains').updateValueAndValidity();
       }
     );
   }
@@ -300,7 +301,13 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
         clientRegistration.get('authorizationUri').disable();
         clientRegistration.get('jwkSetUri').disable();
         clientRegistration.get('userInfoUri').disable();
-        clientRegistration.patchValue(this.templates.get(provider), {emitEvent: false});
+        clientRegistration.patchValue({
+          ...template, ...{
+            clientId: '',
+            clientSecret: '',
+            id: {id: null, entityType: null}
+          }
+        }, {emitEvent: false});
       }
     }));
 
@@ -477,6 +484,9 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
   getHelpLink(controller: AbstractControl): string {
     const provider = controller.get('additionalInfo.providerName').value;
+    if (provider === null || provider === 'Custom') {
+      return '';
+    }
     return this.templates.get(provider).helpLink;
   }
 }

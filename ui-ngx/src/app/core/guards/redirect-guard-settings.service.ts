@@ -26,7 +26,7 @@ import { Authority } from '@shared/models/authority.enum';
 @Injectable({
   providedIn: 'root'
 })
-export class RedirectGuard implements CanActivate {
+export class RedirectGuardSettings implements CanActivate {
   constructor(private store: Store<AppState>,
               private router: Router) { }
 
@@ -41,7 +41,7 @@ export class RedirectGuard implements CanActivate {
     );
 
     if (auth?.userDetails?.authority === Authority.TENANT_ADMIN) {
-      this.router.navigateByUrl('/settings/oauth2-settings');
+      this.router.navigateByUrl('/settings/oauth2');
       return false;
     }
     this.router.navigateByUrl('/settings/general');
