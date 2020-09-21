@@ -60,17 +60,27 @@ export class AdminService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public getOAuth2Settings(config?: RequestConfig): Observable<OAuth2Settings> {
-    return this.http.get<OAuth2Settings>(`/api/oauth2/config`, defaultHttpOptionsFromConfig(config));
+  public getOAuth2Settings(config?: RequestConfig): Observable<Array<OAuth2Settings>> {
+    return this.http.get<Array<OAuth2Settings>>(`/api/oauth2/config`, defaultHttpOptionsFromConfig(config));
   }
 
   public getOAuth2Template(config?: RequestConfig): Observable<Array<ClientProviderTemplated>> {
     return this.http.get<Array<ClientProviderTemplated>>(`/api/oauth2/config/template`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveOAuth2Settings(OAuth2Setting: OAuth2Settings,
-                            config?: RequestConfig): Observable<OAuth2Settings> {
-    return this.http.post<OAuth2Settings>('/api/oauth2/config', OAuth2Setting,
+  public saveOAuth2Settings(OAuth2Setting: OAuth2Settings[],
+                            config?: RequestConfig): Observable<Array<OAuth2Settings>> {
+    return this.http.post<Array<OAuth2Settings>>('/api/oauth2/config', OAuth2Setting,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public deleteOAuth2Domain(OAuth2Domain: string, config?: RequestConfig) {
+    return this.http.delete(`/api/oauth2/config/domain/${OAuth2Domain}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public deleteOAuthCclientRegistrationId(clientRegistrationId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/oauth2/config/${clientRegistrationId}`,
       defaultHttpOptionsFromConfig(config));
   }
 

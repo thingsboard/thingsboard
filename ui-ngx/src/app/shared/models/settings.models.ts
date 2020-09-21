@@ -69,21 +69,15 @@ export interface UpdateMessage {
 }
 
 export interface OAuth2Settings {
-  clientsDomainsParams: DomainParams[];
-}
-
-export interface DomainParams {
   domainName: string;
   redirectUriTemplate: string;
   clientRegistrations: ClientRegistration[];
 }
 
 export interface ClientProviderTemplated extends ClientRegistration{
-  additionalInfo: string;
   comment: string;
   createdTime: number;
   helpLink: string;
-  id: EntityId;
   name: string;
   providerId: string;
   tenantId: TenantId;
@@ -97,11 +91,13 @@ export interface ClientRegistration {
   accessTokenUri: string;
   authorizationUri: string;
   scope: string[];
-  jwkSetUri: string;
+  jwkSetUri?: string;
   userInfoUri: string;
   clientAuthenticationMethod: ClientAuthenticationMethod;
   userNameAttributeName: string;
   mapperConfig: MapperConfig;
+  id?: EntityId;
+  additionalInfo: string;
 }
 
 export interface MapperConfig {

@@ -30,10 +30,10 @@
     <mat-card-content style="padding-top: 16px;">
       <form [formGroup]="oauth2SettingsForm" (ngSubmit)="save()">
         <fieldset [disabled]="isLoading$ | async">
-          <ng-container formArrayName="clientsDomainsParams">
+          <ng-container formArrayName="clientDomains">
             <div class="container">
               <mat-accordion multi>
-                <ng-container *ngFor="let domain of clientsDomainsParams.controls; let i = index; let last = last;">
+                <ng-container *ngFor="let domain of clientDomains.controls; let i = index; let last = last;">
                   <mat-expansion-panel [formGroupName]="i" [expanded]="last">
                     <mat-expansion-panel-header>
                       <mat-panel-title fxLayoutAlign="start center">
@@ -75,7 +75,7 @@
                                     class="registration-card mat-elevation-z0">
                             <mat-expansion-panel-header>
                               <mat-panel-title fxLayoutAlign="start center">
-                                {{ registration.get('providerName').value }}
+                                {{ getProviderName(registration) }}
                               </mat-panel-title>
                               <mat-panel-description fxLayoutAlign="end center">
                                 <button mat-icon-button
@@ -90,14 +90,17 @@
 
                             <ng-template matExpansionPanelContent>
                               <section [formGroupName]="j">
-                                <mat-form-field fxFlex class="mat-block">
-                                  <mat-label translate>admin.oauth2.login-provider</mat-label>
-                                  <mat-select formControlName="providerName">
-                                    <mat-option *ngFor="let provider of templateProvider" [value]="provider">
-                                      {{ provider | uppercase }}
-                                    </mat-option>
-                                  </mat-select>
-                                </mat-form-field>
+                                <section formGroupName="additionalInfo" fxLayout="row">
+                                  <mat-form-field fxFlex class="mat-block">
+                                    <mat-label translate>admin.oauth2.login-provider</mat-label>
+                                    <mat-select formControlName="providerName">
+                                      <mat-option *ngFor="let provider of templateProvider" [value]="provider">
+                                        {{ provider | uppercase }}
+                                      </mat-option>
+                                    </mat-select>
+                                  </mat-form-field>
+                                  <div [tb-help]="getHelpLink(registration)" *ngIf="getProviderName(registration) !== 'Custom'"></div>
+                                </section>
 
                                 <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
                                   <mat-form-field fxFlex class="mat-block">
@@ -118,9 +121,9 @@
                                 </div>
 
                                 <mat-expansion-panel class="mat-elevation-z0 custom-settings"
-                                                     [disabled]="registration.get('providerName').value === 'Custom'"
-                                                     [expanded]="registration.get('providerName').value === 'Custom'">
-                                  <mat-expansion-panel-header [fxHide]="registration.get('providerName').value === 'Custom'">
+                                                     [disabled]="getProviderName(registration) === 'Custom'"
+                                                     [expanded]="getProviderName(registration) === 'Custom'">
+                                  <mat-expansion-panel-header [fxHide]="getProviderName(registration) === 'Custom'">
                                     <mat-panel-description fxLayoutAlign="end center">
                                       {{ 'admin.oauth2.custom-setting' | translate }}
                                     </mat-panel-description>
@@ -135,7 +138,7 @@
                                             <button mat-icon-button matSuffix
                                                     type="button"
                                                     (click)="toggleEditMode(registration, 'accessTokenUri')"
-                                                    *ngIf="registration.get('providerName').value !== 'Custom'">
+                                                    *ngIf="getProviderName(registration) !== 'Custom'">
                                               <mat-icon class="material-icons">create</mat-icon>
                                             </button>
                                             <mat-error *ngIf="registration.get('accessTokenUri').hasError('required')">
@@ -152,7 +155,7 @@
                                             <button mat-icon-button matSuffix
                                                     type="button"
                                                     (click)="toggleEditMode(registration, 'authorizationUri')"
-                                                    *ngIf="registration.get('providerName').value !== 'Custom'">
+                                                    *ngIf="getProviderName(registration) !== 'Custom'">
                                               <mat-icon class="material-icons">create</mat-icon>
                                             </button>
                                             <mat-error *ngIf="registration.get('authorizationUri').hasError('required')">
@@ -171,7 +174,7 @@
                                             <button mat-icon-button matSuffix
                                                     type="button" aria-label="Clear"
                                                     (click)="toggleEditMode(registration, 'jwkSetUri')"
-                                                    *ngIf="registration.get('providerName').value !== 'Custom'">
+                                                    *ngIf="getProviderName(registration) !== 'Custom'">
                                               <mat-icon class="material-icons">create</mat-icon>
                                             </button>
                                             <mat-error *ngIf="registration.get('jwkSetUri').hasError('pattern')">
@@ -185,7 +188,7 @@
                                             <button mat-icon-button matSuffix
                                                     type="button"
                                                     (click)="toggleEditMode(registration, 'userInfoUri')"
-                                                    *ngIf="registration.get('providerName').value !== 'Custom'">
+                                                    *ngIf="getProviderName(registration) !== 'Custom'">
                                               <mat-icon class="material-icons">create</mat-icon>
                                             </button>
                                             <mat-error *ngIf="registration.get('userInfoUri').hasError('required')">
@@ -207,7 +210,7 @@
                                           </mat-select>
                                         </mat-form-field>
 
-                                        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" *ngIf="registration.get('providerName').value === 'Custom'">
+                                        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" *ngIf="getProviderName(registration) === 'Custom'">
                                           <mat-form-field fxFlex class="mat-block">
                                             <mat-label translate>admin.oauth2.login-button-label</mat-label>
                                             <input matInput formControlName="loginButtonLabel" required>
@@ -304,7 +307,7 @@
                                                 </mat-select>
                                               </mat-form-field>
 
-                                              <mat-form-field fxFlex class="mat-block" *ngIf="registration.get('mapperConfig.basic.tenantNameStrategy').value === 'CUSTOM'">
+                                              <mat-form-field fxFlex class="mat-block" [fxShow]="registration.get('mapperConfig.basic.tenantNameStrategy').value === 'CUSTOM'">
                                                 <mat-label translate>admin.oauth2.tenant-name-pattern</mat-label>
                                                 <input matInput
                                                        formControlName="tenantNamePattern"
