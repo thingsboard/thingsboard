@@ -34,8 +34,6 @@ public class BaseOAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
     @Autowired
     protected OAuth2ConfigTemplateService oAuth2ConfigTemplateService;
 
-    private TenantId tenantId;
-
     @Before
     public void beforeRun() throws Exception {
         Assert.assertTrue(oAuth2ConfigTemplateService.findAllClientRegistrationTemplates().isEmpty());
@@ -53,15 +51,15 @@ public class BaseOAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
 
     @Test(expected = DataValidationException.class)
     public void testSaveDuplicateProviderId() {
-        OAuth2ClientRegistrationTemplate first = validClientRegistrationTemplate(TenantId.SYS_TENANT_ID, "providerId");
-        OAuth2ClientRegistrationTemplate second = validClientRegistrationTemplate(TenantId.SYS_TENANT_ID, "providerId");
+        OAuth2ClientRegistrationTemplate first = validClientRegistrationTemplate("providerId");
+        OAuth2ClientRegistrationTemplate second = validClientRegistrationTemplate("providerId");
         oAuth2ConfigTemplateService.saveClientRegistrationTemplate(first);
         oAuth2ConfigTemplateService.saveClientRegistrationTemplate(second);
     }
 
     @Test
     public void testCreateNewTemplate() {
-        OAuth2ClientRegistrationTemplate clientRegistrationTemplate = validClientRegistrationTemplate(TenantId.SYS_TENANT_ID, UUID.randomUUID().toString());
+        OAuth2ClientRegistrationTemplate clientRegistrationTemplate = validClientRegistrationTemplate(UUID.randomUUID().toString());
         OAuth2ClientRegistrationTemplate savedClientRegistrationTemplate = oAuth2ConfigTemplateService.saveClientRegistrationTemplate(clientRegistrationTemplate);
 
         Assert.assertNotNull(savedClientRegistrationTemplate);
@@ -73,7 +71,7 @@ public class BaseOAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindTemplate() {
-        OAuth2ClientRegistrationTemplate clientRegistrationTemplate = validClientRegistrationTemplate(TenantId.SYS_TENANT_ID, UUID.randomUUID().toString());
+        OAuth2ClientRegistrationTemplate clientRegistrationTemplate = validClientRegistrationTemplate(UUID.randomUUID().toString());
         OAuth2ClientRegistrationTemplate savedClientRegistrationTemplate = oAuth2ConfigTemplateService.saveClientRegistrationTemplate(clientRegistrationTemplate);
 
         OAuth2ClientRegistrationTemplate foundClientRegistrationTemplate = oAuth2ConfigTemplateService.findClientRegistrationTemplateById(savedClientRegistrationTemplate.getId());
@@ -82,17 +80,17 @@ public class BaseOAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAll() {
-        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(TenantId.SYS_TENANT_ID, UUID.randomUUID().toString()));
-        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(TenantId.SYS_TENANT_ID, UUID.randomUUID().toString()));
+        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(UUID.randomUUID().toString()));
+        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(UUID.randomUUID().toString()));
 
         Assert.assertEquals(2, oAuth2ConfigTemplateService.findAllClientRegistrationTemplates().size());
     }
 
     @Test
     public void testDeleteTemplate() {
-        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(TenantId.SYS_TENANT_ID, UUID.randomUUID().toString()));
-        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(TenantId.SYS_TENANT_ID, UUID.randomUUID().toString()));
-        OAuth2ClientRegistrationTemplate saved = oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(TenantId.SYS_TENANT_ID, UUID.randomUUID().toString()));
+        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(UUID.randomUUID().toString()));
+        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(UUID.randomUUID().toString()));
+        OAuth2ClientRegistrationTemplate saved = oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(UUID.randomUUID().toString()));
 
         Assert.assertEquals(3, oAuth2ConfigTemplateService.findAllClientRegistrationTemplates().size());
         Assert.assertNotNull(oAuth2ConfigTemplateService.findClientRegistrationTemplateById(saved.getId()));
@@ -103,10 +101,9 @@ public class BaseOAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
         Assert.assertNull(oAuth2ConfigTemplateService.findClientRegistrationTemplateById(saved.getId()));
     }
 
-    private OAuth2ClientRegistrationTemplate validClientRegistrationTemplate(TenantId tenantId, String providerId) {
+    private OAuth2ClientRegistrationTemplate validClientRegistrationTemplate(String providerId) {
         OAuth2ClientRegistrationTemplate clientRegistrationTemplate = new OAuth2ClientRegistrationTemplate();
         clientRegistrationTemplate.setProviderId(providerId);
-        clientRegistrationTemplate.setTenantId(tenantId);
         clientRegistrationTemplate.setAdditionalInfo(mapper.createObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
         clientRegistrationTemplate.setBasic(
                 OAuth2BasicMapperConfig.builder()

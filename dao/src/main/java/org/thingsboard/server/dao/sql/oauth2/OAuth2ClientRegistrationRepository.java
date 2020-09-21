@@ -22,11 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface OAuth2ClientRegistrationRepository extends CrudRepository<OAuth2ClientRegistrationEntity, UUID> {
-    List<OAuth2ClientRegistrationEntity> findAllByTenantId(UUID tenantId);
-
     List<OAuth2ClientRegistrationEntity> findAllByDomainName(String domainName);
 
-    int deleteByTenantIdAndDomainName(UUID tenantId, String domainName);
-
-    int deleteByTenantId(UUID tenantId);
+    int deleteByDomainName(String domainName);
 }

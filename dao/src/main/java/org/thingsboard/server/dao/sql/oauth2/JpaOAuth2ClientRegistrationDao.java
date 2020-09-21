@@ -26,7 +26,6 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -56,24 +55,13 @@ public class JpaOAuth2ClientRegistrationDao extends JpaAbstractDao<OAuth2ClientR
     }
 
     @Override
-    public List<OAuth2ClientRegistration> findByTenantId(UUID tenantId) {
-        List<OAuth2ClientRegistrationEntity> entities = repository.findAllByTenantId(tenantId);
-        return entities.stream().map(DaoUtil::getData).collect(Collectors.toList());
-    }
-
-    @Override
     public List<OAuth2ClientRegistration> findByDomainName(String domainName) {
         List<OAuth2ClientRegistrationEntity> entities = repository.findAllByDomainName(domainName);
         return entities.stream().map(DaoUtil::getData).collect(Collectors.toList());
     }
 
     @Override
-    public int removeByTenantIdAndDomainName(UUID tenantId, String domainName) {
-        return repository.deleteByTenantIdAndDomainName(tenantId, domainName);
-    }
-
-    @Override
-    public int removeByTenantId(UUID tenantId) {
-        return repository.deleteByTenantId(tenantId);
+    public int removeByDomainName(String domainName) {
+        return repository.deleteByDomainName(domainName);
     }
 }

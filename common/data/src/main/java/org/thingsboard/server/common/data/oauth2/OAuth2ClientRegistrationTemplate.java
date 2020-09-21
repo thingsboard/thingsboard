@@ -31,9 +31,8 @@ import java.util.List;
 @Data
 @ToString
 @NoArgsConstructor
-public class OAuth2ClientRegistrationTemplate extends SearchTextBasedWithAdditionalInfo<OAuth2ClientRegistrationTemplateId> implements HasTenantId, HasName {
+public class OAuth2ClientRegistrationTemplate extends SearchTextBasedWithAdditionalInfo<OAuth2ClientRegistrationTemplateId> implements HasName {
 
-    private TenantId tenantId;
     private String providerId;
     private OAuth2BasicMapperConfig basic;
     private String authorizationUri;
@@ -50,7 +49,6 @@ public class OAuth2ClientRegistrationTemplate extends SearchTextBasedWithAdditio
 
     public OAuth2ClientRegistrationTemplate(OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
         super(clientRegistrationTemplate);
-        this.tenantId = clientRegistrationTemplate.tenantId;
         this.providerId = clientRegistrationTemplate.providerId;
         this.basic = clientRegistrationTemplate.basic;
         this.authorizationUri = clientRegistrationTemplate.authorizationUri;

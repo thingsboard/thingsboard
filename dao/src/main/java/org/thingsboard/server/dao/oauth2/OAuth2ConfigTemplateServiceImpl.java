@@ -44,10 +44,10 @@ public class OAuth2ConfigTemplateServiceImpl extends AbstractEntityService imple
     @Override
     public OAuth2ClientRegistrationTemplate saveClientRegistrationTemplate(OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
         log.trace("Executing saveClientRegistrationTemplate [{}]", clientRegistrationTemplate);
-        clientRegistrationTemplateValidator.validate(clientRegistrationTemplate, OAuth2ClientRegistrationTemplate::getTenantId);
+        clientRegistrationTemplateValidator.validate(clientRegistrationTemplate, o -> TenantId.SYS_TENANT_ID);
         OAuth2ClientRegistrationTemplate savedClientRegistrationTemplate;
         try {
-            savedClientRegistrationTemplate = clientRegistrationTemplateDao.save(clientRegistrationTemplate.getTenantId(), clientRegistrationTemplate);
+            savedClientRegistrationTemplate = clientRegistrationTemplateDao.save(TenantId.SYS_TENANT_ID, clientRegistrationTemplate);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("oauth2_template_provider_id_unq_key")) {
@@ -97,10 +97,6 @@ public class OAuth2ConfigTemplateServiceImpl extends AbstractEntityService imple
                     }
                     if (clientRegistrationTemplate.getBasic() == null) {
                         throw new DataValidationException("Basic mapper config should be specified!");
-                    }
-                    if (clientRegistrationTemplate.getTenantId() == null
-                            || !TenantId.SYS_TENANT_ID.equals(clientRegistrationTemplate.getTenantId())) {
-                        throw new DataValidationException("Client registration template should be assigned to system admin!");
                     }
                 }
             };

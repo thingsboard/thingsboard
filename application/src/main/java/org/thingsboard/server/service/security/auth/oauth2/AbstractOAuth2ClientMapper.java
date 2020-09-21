@@ -17,7 +17,6 @@ package org.thingsboard.server.service.security.auth.oauth2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,7 +33,6 @@ import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -49,7 +47,6 @@ import org.thingsboard.server.service.security.model.UserPrincipal;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -79,7 +76,7 @@ public abstract class AbstractOAuth2ClientMapper {
 
     private final Lock userCreationLock = new ReentrantLock();
 
-    protected SecurityUser getOrCreateSecurityUserFromOAuth2User(TenantId parentTenantId, OAuth2User oauth2User, boolean allowUserCreation, boolean activateUser) {
+    protected SecurityUser getOrCreateSecurityUserFromOAuth2User(OAuth2User oauth2User, boolean allowUserCreation, boolean activateUser) {
         UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, oauth2User.getEmail());
 
         User user = userService.findUserByEmail(TenantId.SYS_TENANT_ID, oauth2User.getEmail());
@@ -99,13 +96,8 @@ public abstract class AbstractOAuth2ClientMapper {
                     } else {
                         user.setAuthority(Authority.CUSTOMER_USER);
                     }
-                    TenantId tenantId;
-                    if (TenantId.SYS_TENANT_ID.equals(parentTenantId)) {
-                        tenantId = oauth2User.getTenantId() != null ?
-                                oauth2User.getTenantId() : getTenantId(oauth2User.getTenantName());
-                    } else {
-                        tenantId = parentTenantId;
-                    }
+                    TenantId tenantId = oauth2User.getTenantId() != null ?
+                            oauth2User.getTenantId() : getTenantId(oauth2User.getTenantName());
                     user.setTenantId(tenantId);
                     CustomerId customerId = oauth2User.getCustomerId() != null ?
                             oauth2User.getCustomerId() : getCustomerId(user.getTenantId(), oauth2User.getCustomerName());

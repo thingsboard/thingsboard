@@ -19,13 +19,9 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.model.SecurityUser;
-
-import java.util.HashMap;
-import java.util.Optional;
 
 @Component(value="sysAdminPermissions")
 public class SysAdminPermissions extends AbstractPermissions {
@@ -39,7 +35,7 @@ public class SysAdminPermissions extends AbstractPermissions {
         put(Resource.USER, userPermissionChecker);
         put(Resource.WIDGETS_BUNDLE, systemEntityPermissionChecker);
         put(Resource.WIDGET_TYPE, systemEntityPermissionChecker);
-        put(Resource.OAUTH2_CONFIGURATION, sysAdminOAuth2ConfigPermissionChecker);
+        put(Resource.OAUTH2_CONFIGURATION, PermissionChecker.allowAllPermissionChecker);
         put(Resource.OAUTH2_CONFIGURATION_TEMPLATE, PermissionChecker.allowAllPermissionChecker);
     }
 
@@ -65,21 +61,6 @@ public class SysAdminPermissions extends AbstractPermissions {
             return true;
         }
 
-    };
-
-    private final PermissionChecker sysAdminOAuth2ConfigPermissionChecker = new PermissionChecker() {
-        @Override
-        public boolean hasPermission(SecurityUser user, Operation operation) {
-            return true;
-        }
-
-        @Override
-        public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
-            if (entity.getTenantId() != null && !entity.getTenantId().isNullUid()) {
-                return false;
-            }
-            return true;
-        }
     };
 
 }

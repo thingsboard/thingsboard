@@ -25,8 +25,6 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 
@@ -42,8 +40,6 @@ public class OAuth2ConfigTemplateController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public OAuth2ClientRegistrationTemplate saveClientRegistrationTemplate(@RequestBody OAuth2ClientRegistrationTemplate clientRegistrationTemplate) throws ThingsboardException {
         try {
-            clientRegistrationTemplate.setTenantId(getCurrentUser().getTenantId());
-            checkEntity(clientRegistrationTemplate.getId(), clientRegistrationTemplate, Resource.OAUTH2_CONFIGURATION_TEMPLATE);
             return oAuth2ConfigTemplateService.saveClientRegistrationTemplate(clientRegistrationTemplate);
         } catch (Exception e) {
             throw handleException(e);
@@ -57,10 +53,10 @@ public class OAuth2ConfigTemplateController extends BaseController {
         checkParameter(CLIENT_REGISTRATION_TEMPLATE_ID, strClientRegistrationTemplateId);
         try {
             OAuth2ClientRegistrationTemplateId clientRegistrationTemplateId = new OAuth2ClientRegistrationTemplateId(toUUID(strClientRegistrationTemplateId));
-            OAuth2ClientRegistrationTemplate clientRegistrationTemplate = checkOAuth2ClientRegistrationTemplateId(clientRegistrationTemplateId, Operation.DELETE);
             oAuth2ConfigTemplateService.deleteClientRegistrationTemplateById(clientRegistrationTemplateId);
 
-            logEntityAction(clientRegistrationTemplateId, clientRegistrationTemplate,
+            logEntityAction(clientRegistrationTemplateId,
+                    null,
                     null,
                     ActionType.DELETED, null, strClientRegistrationTemplateId);
 
@@ -80,14 +76,9 @@ public class OAuth2ConfigTemplateController extends BaseController {
     @ResponseBody
     public List<OAuth2ClientRegistrationTemplate> getClientRegistrationTemplates() throws ThingsboardException {
         try {
-            checkOAuth2ConfigTemplatePermissions(Operation.READ);
             return oAuth2ConfigTemplateService.findAllClientRegistrationTemplates();
         } catch (Exception e) {
             throw handleException(e);
         }
-    }
-
-    private void checkOAuth2ConfigTemplatePermissions(Operation operation) throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION_TEMPLATE, operation);
     }
 }
