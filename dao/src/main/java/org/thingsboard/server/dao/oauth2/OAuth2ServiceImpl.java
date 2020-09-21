@@ -129,7 +129,7 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
         if (tenant == null) return false;
         JsonNode allowOAuth2ConfigurationJsonNode = tenant.getAdditionalInfo() != null ? tenant.getAdditionalInfo().get(ALLOW_OAUTH2_CONFIGURATION) : null;
         if (allowOAuth2ConfigurationJsonNode == null) {
-            return true;
+            return false;
         } else {
             return allowOAuth2ConfigurationJsonNode.asBoolean();
         }

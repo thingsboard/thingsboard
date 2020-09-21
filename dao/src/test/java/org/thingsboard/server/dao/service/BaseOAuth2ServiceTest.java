@@ -66,7 +66,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
     @Test
     public void testIsOAuth2Allowed_null() throws IOException {
         updateTenantAllowOAuth2Setting(null);
-        Assert.assertTrue(oAuth2Service.isOAuth2ClientRegistrationAllowed(tenantId));
+        Assert.assertFalse(oAuth2Service.isOAuth2ClientRegistrationAllowed(tenantId));
     }
 
     @Test
