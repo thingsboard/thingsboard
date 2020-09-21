@@ -37,7 +37,7 @@
                   <mat-expansion-panel [formGroupName]="i" [expanded]="last">
                     <mat-expansion-panel-header>
                       <mat-panel-title fxLayoutAlign="start center">
-                        {{ domain.get('domainName').value ? domain.get('domainName').value : ("admin.new-domain" | translate) }}
+                        {{ domain.get('domainName').value ? domain.get('domainName').value : ("admin.oauth2.new-domain" | translate) }}
                       </mat-panel-title>
                       <mat-panel-description fxLayoutAlign="end center">
                           <button mat-icon-button
@@ -211,9 +211,9 @@
                                         </mat-form-field>
 
                                         <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" *ngIf="getProviderName(registration) === 'Custom'">
-                                          <mat-form-field fxFlex class="mat-block">
+                                          <mat-form-field fxFlex class="mat-block" floatLabel="always">
                                             <mat-label translate>admin.oauth2.login-button-label</mat-label>
-                                            <input matInput formControlName="loginButtonLabel" required>
+                                            <input matInput formControlName="loginButtonLabel" placeholder="{{ 'admin.oauth2.login-button-label-1' | translate }}" required>
                                             <mat-error
                                               *ngIf="registration.get('loginButtonLabel').hasError('required')">
                                               {{ 'admin.oauth2.login-button-label-required' | translate }}
@@ -380,7 +380,7 @@
                                 [disabled]="(isLoading$ | async)"
                                 (click)="addRegistration(domain)"
                                 type="button">
-                          {{'admin.add-provider' | translate}}
+                          {{'admin.oauth2.add-provider' | translate}}
                         </button>
                       </div>
                     </ng-template>
@@ -396,7 +396,7 @@
                     [disabled]="(isLoading$ | async)"
                     (click)="addDomain()"
                     type="button">
-              {{'admin.add-domain' | translate}}
+              {{'admin.oauth2.add-domain' | translate}}
             </button>
             <button mat-button mat-raised-button color="primary"
                     [disabled]="(isLoading$ | async) || oauth2SettingsForm.invalid || !oauth2SettingsForm.dirty"

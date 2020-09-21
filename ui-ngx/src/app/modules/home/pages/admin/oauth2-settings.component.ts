@@ -334,15 +334,19 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   }
 
   private prepareFormValue(formValue: OAuth2Settings[]): OAuth2Settings[]{
-    formValue.forEach((setting) => {
-      setting.clientRegistrations.forEach((registration) => {
-        registration.additionalInfo = JSON.stringify(registration.additionalInfo);
-        if (registration.id.id === null) {
-          delete registration.id;
-        }
-      });
+    const prepereValue = [];
+    formValue.forEach((setting, index) => {
+      if (this.clientDomains.at(index).dirty) {
+        setting.clientRegistrations.forEach((registration) => {
+          registration.additionalInfo = JSON.stringify(registration.additionalInfo);
+          if (registration.id.id === null) {
+            delete registration.id;
+          }
+        });
+        prepereValue.push(setting);
+      }
     });
-    return formValue;
+    return prepereValue;
   }
 
   confirmForm(): FormGroup {
