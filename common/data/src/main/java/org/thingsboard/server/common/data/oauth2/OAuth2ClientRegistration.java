@@ -32,9 +32,8 @@ import java.util.List;
 @Data
 @ToString(exclude = {"clientSecret"})
 @NoArgsConstructor
-public class OAuth2ClientRegistration extends SearchTextBasedWithAdditionalInfo<OAuth2ClientRegistrationId> implements HasTenantId, HasName {
+public class OAuth2ClientRegistration extends SearchTextBasedWithAdditionalInfo<OAuth2ClientRegistrationId> implements HasName {
 
-    private TenantId tenantId;
     private String domainName;
     private String redirectUriTemplate;
     private OAuth2MapperConfig mapperConfig;
@@ -52,7 +51,6 @@ public class OAuth2ClientRegistration extends SearchTextBasedWithAdditionalInfo<
 
     public OAuth2ClientRegistration(OAuth2ClientRegistration clientRegistration) {
         super(clientRegistration);
-        this.tenantId = clientRegistration.tenantId;
         this.domainName = clientRegistration.domainName;
         this.redirectUriTemplate = clientRegistration.redirectUriTemplate;
         this.mapperConfig = clientRegistration.mapperConfig;

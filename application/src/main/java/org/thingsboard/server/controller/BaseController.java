@@ -27,19 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceInfo;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.EntityViewInfo;
-import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -50,8 +38,6 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -388,10 +374,7 @@ public abstract class BaseController {
                     checkWidgetTypeId(new WidgetTypeId(entityId.getId()), operation);
                     return;
                 case OAUTH2_CLIENT_REGISTRATION:
-                    checkOAuth2ClientRegistrationId(new OAuth2ClientRegistrationId(entityId.getId()), operation);
-                    return;
                 case OAUTH2_CLIENT_REGISTRATION_TEMPLATE:
-                    checkOAuth2ClientRegistrationTemplateId(new OAuth2ClientRegistrationTemplateId(entityId.getId()), operation);
                     return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
@@ -540,30 +523,6 @@ public abstract class BaseController {
             checkNotNull(dashboardInfo);
             accessControlService.checkPermission(getCurrentUser(), Resource.DASHBOARD, operation, dashboardId, dashboardInfo);
             return dashboardInfo;
-        } catch (Exception e) {
-            throw handleException(e, false);
-        }
-    }
-
-    OAuth2ClientRegistration checkOAuth2ClientRegistrationId(OAuth2ClientRegistrationId clientRegistrationId, Operation operation) throws ThingsboardException {
-        try {
-            validateId(clientRegistrationId, "Incorrect oAuth2ClientRegistrationId " + clientRegistrationId);
-            OAuth2ClientRegistration clientRegistration = oAuth2Service.findClientRegistration(clientRegistrationId.getId());
-            checkNotNull(clientRegistration);
-            accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION, operation, clientRegistrationId, clientRegistration);
-            return clientRegistration;
-        } catch (Exception e) {
-            throw handleException(e, false);
-        }
-    }
-
-    OAuth2ClientRegistrationTemplate checkOAuth2ClientRegistrationTemplateId(OAuth2ClientRegistrationTemplateId clientRegistrationTemplateId, Operation operation) throws ThingsboardException {
-        try {
-            validateId(clientRegistrationTemplateId, "Incorrect oAuth2ClientRegistrationTemplateId " + clientRegistrationTemplateId);
-            OAuth2ClientRegistrationTemplate clientRegistrationTemplate = oAuth2ConfigTemplateService.findClientRegistrationTemplateById(clientRegistrationTemplateId);
-            checkNotNull(clientRegistrationTemplate);
-            accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION_TEMPLATE, operation, clientRegistrationTemplateId, clientRegistrationTemplate);
-            return clientRegistrationTemplate;
         } catch (Exception e) {
             throw handleException(e, false);
         }

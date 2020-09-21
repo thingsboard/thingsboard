@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
-import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.*;
 
 import java.util.ArrayList;
@@ -24,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class OAuth2Utils {
     public static final String ALLOW_OAUTH2_CONFIGURATION = "allowOAuth2Configuration";
@@ -38,10 +35,10 @@ public class OAuth2Utils {
         return client;
     }
 
-    public static List<OAuth2ClientRegistration> toClientRegistrations(TenantId tenantId, List<OAuth2ClientsDomainParams> domainsParams) {
+    public static List<OAuth2ClientRegistration> toClientRegistrations(List<OAuth2ClientsDomainParams> domainsParams) {
         return domainsParams.stream()
                 .flatMap(domainParams -> domainParams.getClientRegistrations().stream()
-                        .map(clientRegistrationDto -> OAuth2Utils.toClientRegistration(tenantId, domainParams.getDomainName(),
+                        .map(clientRegistrationDto -> OAuth2Utils.toClientRegistration(domainParams.getDomainName(),
                                 domainParams.getRedirectUriTemplate(), clientRegistrationDto)
                         ))
                 .collect(Collectors.toList());
@@ -80,11 +77,10 @@ public class OAuth2Utils {
                 .build();
     }
 
-    public static OAuth2ClientRegistration toClientRegistration(TenantId tenantId, String domainName, String redirectUriTemplate,
-                                                                 ClientRegistrationDto clientRegistrationDto) {
+    public static OAuth2ClientRegistration toClientRegistration(String domainName, String redirectUriTemplate,
+                                                                ClientRegistrationDto clientRegistrationDto) {
         OAuth2ClientRegistration clientRegistration = new OAuth2ClientRegistration();
         clientRegistration.setId(clientRegistrationDto.getId());
-        clientRegistration.setTenantId(tenantId);
         clientRegistration.setCreatedTime(clientRegistrationDto.getCreatedTime());
         clientRegistration.setDomainName(domainName);
         clientRegistration.setRedirectUriTemplate(redirectUriTemplate);

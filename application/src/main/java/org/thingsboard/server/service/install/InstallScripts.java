@@ -224,7 +224,6 @@ public class InstallScripts {
                         try {
                             JsonNode oauth2ConfigTemplateJson = objectMapper.readTree(path.toFile());
                             OAuth2ClientRegistrationTemplate clientRegistrationTemplate = objectMapper.treeToValue(oauth2ConfigTemplateJson, OAuth2ClientRegistrationTemplate.class);
-                            clientRegistrationTemplate.setTenantId(TenantId.SYS_TENANT_ID);
                             oAuth2TemplateService.saveClientRegistrationTemplate(clientRegistrationTemplate);
                         } catch (Exception e) {
                             log.error("Unable to load oauth2 config templates from json: [{}]", path.toString());

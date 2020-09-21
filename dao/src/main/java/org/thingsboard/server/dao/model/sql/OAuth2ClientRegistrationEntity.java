@@ -38,9 +38,6 @@ import java.util.UUID;
 @Table(name = ModelConstants.OAUTH2_CLIENT_REGISTRATION_COLUMN_FAMILY_NAME)
 public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRegistration> {
 
-    @Column(name = ModelConstants.OAUTH2_TENANT_ID_PROPERTY, columnDefinition = "uuid")
-    private UUID tenantId;
-
     @Column(name = ModelConstants.OAUTH2_DOMAIN_NAME_PROPERTY)
     private String domainName;
     @Column(name = ModelConstants.OAUTH2_CLIENT_ID_PROPERTY)
@@ -112,9 +109,6 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
         if (clientRegistration.getId() != null) {
             this.setUuid(clientRegistration.getId().getId());
         }
-        if (clientRegistration.getTenantId() != null) {
-            this.tenantId = clientRegistration.getTenantId().getId();
-        }
         this.domainName = clientRegistration.getDomainName();
         this.createdTime = clientRegistration.getCreatedTime();
         this.clientId = clientRegistration.getClientId();
@@ -160,7 +154,6 @@ public class OAuth2ClientRegistrationEntity extends BaseSqlEntity<OAuth2ClientRe
     public OAuth2ClientRegistration toData() {
         OAuth2ClientRegistration clientRegistration = new OAuth2ClientRegistration();
         clientRegistration.setId(new OAuth2ClientRegistrationId(id));
-        clientRegistration.setTenantId(new TenantId(tenantId));
         clientRegistration.setCreatedTime(createdTime);
         clientRegistration.setDomainName(domainName);
         clientRegistration.setAdditionalInfo(additionalInfo);

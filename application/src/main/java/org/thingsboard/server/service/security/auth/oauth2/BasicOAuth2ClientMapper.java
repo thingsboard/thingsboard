@@ -20,7 +20,6 @@ import org.apache.commons.lang3.text.StrSubstitutor;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -35,7 +34,7 @@ public class BasicOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
     private static final String END_PLACEHOLDER_PREFIX = "}";
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, String providerAccessToken, TenantId parentTenantId, OAuth2MapperConfig config) {
+    public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, String providerAccessToken, OAuth2MapperConfig config) {
         OAuth2User oauth2User = new OAuth2User();
         Map<String, Object> attributes = token.getPrincipal().getAttributes();
         String email = getStringAttributeByKey(attributes, config.getBasic().getEmailAttributeKey());
@@ -59,7 +58,7 @@ public class BasicOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
             oauth2User.setDefaultDashboardName(config.getBasic().getDefaultDashboardName());
         }
 
-        return getOrCreateSecurityUserFromOAuth2User(parentTenantId, oauth2User, config.isAllowUserCreation(), config.isActivateUser());
+        return getOrCreateSecurityUserFromOAuth2User(oauth2User, config.isAllowUserCreation(), config.isActivateUser());
     }
 
     private String getTenantName(Map<String, Object> attributes, OAuth2MapperConfig config) {

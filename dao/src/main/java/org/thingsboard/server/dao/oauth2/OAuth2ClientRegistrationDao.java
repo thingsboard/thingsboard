@@ -24,11 +24,7 @@ import java.util.UUID;
 public interface OAuth2ClientRegistrationDao extends Dao<OAuth2ClientRegistration> {
     List<OAuth2ClientRegistration> findAll();
 
-    List<OAuth2ClientRegistration> findByTenantId(UUID tenantId);
-
     List<OAuth2ClientRegistration> findByDomainName(String domainName);
 
-    int removeByTenantIdAndDomainName(UUID tenantId, String domainName);
-
-    int removeByTenantId(UUID tenantId);
+    int removeByDomainName(String domainName);
 }

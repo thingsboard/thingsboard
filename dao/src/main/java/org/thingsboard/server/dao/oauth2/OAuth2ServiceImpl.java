@@ -15,30 +15,22 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.*;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import javax.transaction.Transactional;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.dao.oauth2.OAuth2Utils.ALLOW_OAUTH2_CONFIGURATION;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
@@ -48,9 +40,6 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CLIENT_REGISTRATION_ID = "Incorrect clientRegistrationId ";
     public static final String INCORRECT_DOMAIN_NAME = "Incorrect domainName ";
-
-    @Autowired
-    private TenantService tenantService;
 
     @Autowired
     private OAuth2ClientRegistrationDao clientRegistrationDao;
@@ -66,21 +55,20 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
 
     @Override
     @Transactional
-    public List<OAuth2ClientsDomainParams> saveDomainsParams(TenantId tenantId, List<OAuth2ClientsDomainParams> domainsParams) {
-        log.trace("Executing saveDomainsParams [{}] [{}]", tenantId, domainsParams);
-        clientParamsValidator.accept(tenantId, domainsParams);
-        List<OAuth2ClientRegistration> inputClientRegistrations = OAuth2Utils.toClientRegistrations(tenantId, domainsParams);
+    public List<OAuth2ClientsDomainParams> saveDomainsParams(List<OAuth2ClientsDomainParams> domainsParams) {
+        log.trace("Executing saveDomainsParams [{}]", domainsParams);
+        clientParamsValidator.accept(domainsParams);
+        List<OAuth2ClientRegistration> inputClientRegistrations = OAuth2Utils.toClientRegistrations(domainsParams);
         List<OAuth2ClientRegistration> savedClientRegistrations = inputClientRegistrations.stream()
-                .map(clientRegistration -> clientRegistrationDao.save(clientRegistration.getTenantId(), clientRegistration))
+                .map(clientRegistration -> clientRegistrationDao.save(TenantId.SYS_TENANT_ID, clientRegistration))
                 .collect(Collectors.toList());
         return OAuth2Utils.toDomainsParams(savedClientRegistrations);
     }
 
     @Override
-    public List<OAuth2ClientsDomainParams> findDomainsParamsByTenantId(TenantId tenantId) {
-        log.trace("Executing findDomainsParamsByTenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return OAuth2Utils.toDomainsParams(clientRegistrationDao.findByTenantId(tenantId.getId()));
+    public List<OAuth2ClientsDomainParams> findDomainsParams() {
+        log.trace("Executing findDomainsParams");
+        return OAuth2Utils.toDomainsParams(clientRegistrationDao.findAll());
     }
 
     @Override
@@ -97,45 +85,21 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
     }
 
     @Override
-    @Transactional
-    public void deleteClientRegistrationsByTenantId(TenantId tenantId) {
-        log.trace("Executing deleteClientRegistrationsByTenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        clientRegistrationDao.removeByTenantId(tenantId.getId());
-    }
-
-    @Override
-    public void deleteClientRegistrationById(TenantId tenantId, OAuth2ClientRegistrationId id) {
-        log.trace("Executing deleteClientRegistrationById [{}], [{}]", tenantId, id);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+    public void deleteClientRegistrationById(OAuth2ClientRegistrationId id) {
+        log.trace("Executing deleteClientRegistrationById [{}]", id);
         validateId(id, INCORRECT_CLIENT_REGISTRATION_ID + id);
-        clientRegistrationDao.removeById(tenantId, id.getId());
+        clientRegistrationDao.removeById(TenantId.SYS_TENANT_ID, id.getId());
     }
 
     @Override
     @Transactional
-    public void deleteClientRegistrationsByDomain(TenantId tenantId, String domain) {
-        log.trace("Executing deleteClientRegistrationsByDomain [{}], [{}]", tenantId, domain);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+    public void deleteClientRegistrationsByDomain(String domain) {
+        log.trace("Executing deleteClientRegistrationsByDomain [{}]", domain);
         validateString(domain, INCORRECT_DOMAIN_NAME + domain);
-        clientRegistrationDao.removeByTenantIdAndDomainName(tenantId.getId(), domain);
+        clientRegistrationDao.removeByDomainName(domain);
     }
 
-    @Override
-    public boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId) {
-        log.trace("Executing isOAuth2ClientRegistrationAllowed [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        Tenant tenant = tenantService.findTenantById(tenantId);
-        if (tenant == null) return false;
-        JsonNode allowOAuth2ConfigurationJsonNode = tenant.getAdditionalInfo() != null ? tenant.getAdditionalInfo().get(ALLOW_OAUTH2_CONFIGURATION) : null;
-        if (allowOAuth2ConfigurationJsonNode == null) {
-            return false;
-        } else {
-            return allowOAuth2ConfigurationJsonNode.asBoolean();
-        }
-    }
-
-    private final BiConsumer<TenantId, List<OAuth2ClientsDomainParams>> clientParamsValidator = (tenantId, domainsParams) -> {
+    private final Consumer<List<OAuth2ClientsDomainParams>> clientParamsValidator = domainsParams -> {
         if (domainsParams == null || domainsParams.isEmpty()) {
             throw new DataValidationException("Domain params should be specified!");
         }
@@ -209,14 +173,6 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
                         throw new DataValidationException("Custom mapper URL should be specified!");
                     }
                 }
-            }
-        }
-        if (tenantId == null) {
-            throw new DataValidationException("Client registration should be assigned to tenant!");
-        } else if (!TenantId.SYS_TENANT_ID.equals(tenantId)) {
-            Tenant tenant = tenantService.findTenantById(tenantId);
-            if (tenant == null) {
-                throw new DataValidationException("Client registration is referencing to non-existent tenant!");
             }
         }
     };

@@ -23,16 +23,12 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.*;
-import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientsDomainParams;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @TbCoreComponent
@@ -52,62 +48,39 @@ public class OAuth2Controller extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/oauth2/config", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public List<OAuth2ClientsDomainParams> getCurrentClientsParams() throws ThingsboardException {
         try {
-            Authority authority = getCurrentUser().getAuthority();
-            checkOAuth2ConfigPermissions(Operation.READ);
-            if (Authority.SYS_ADMIN.equals(authority)) {
-                return oAuth2Service.findDomainsParamsByTenantId(TenantId.SYS_TENANT_ID);
-            } else if (Authority.TENANT_ADMIN.equals(authority)) {
-                return oAuth2Service.findDomainsParamsByTenantId(getCurrentUser().getTenantId());
-            } else {
-                throw new IllegalStateException("Authority " + authority + " cannot get client registrations.");
-            }
+            return oAuth2Service.findDomainsParams();
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/oauth2/config", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
     public List<OAuth2ClientsDomainParams> saveClientParams(@RequestBody List<OAuth2ClientsDomainParams> domainsParams) throws ThingsboardException {
         try {
-            TenantId tenantId;
-            Authority authority = getCurrentUser().getAuthority();
-            if (Authority.SYS_ADMIN.equals(authority)) {
-                tenantId = TenantId.SYS_TENANT_ID;
-            } else if (Authority.TENANT_ADMIN.equals(authority)) {
-                tenantId = getCurrentUser().getTenantId();
-            } else {
-                throw new IllegalStateException("Authority " + authority + " cannot save client registrations.");
-            }
-            List<ClientRegistrationDto> clientRegistrationDtos = domainsParams.stream()
-                    .flatMap(domainParams -> domainParams.getClientRegistrations().stream())
-                    .collect(Collectors.toList());
-            for (ClientRegistrationDto clientRegistrationDto : clientRegistrationDtos) {
-                checkEntity(clientRegistrationDto.getId(), () -> tenantId, Resource.OAUTH2_CONFIGURATION);
-            }
-            return oAuth2Service.saveDomainsParams(tenantId, domainsParams);
+            return oAuth2Service.saveDomainsParams(domainsParams);
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/oauth2/config/{clientRegistrationId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteClientRegistration(@PathVariable(CLIENT_REGISTRATION_ID) String strClientRegistrationId) throws ThingsboardException {
         checkParameter(CLIENT_REGISTRATION_ID, strClientRegistrationId);
         try {
             OAuth2ClientRegistrationId clientRegistrationId = new OAuth2ClientRegistrationId(toUUID(strClientRegistrationId));
-            OAuth2ClientRegistration clientRegistration = checkOAuth2ClientRegistrationId(clientRegistrationId, Operation.DELETE);
-            oAuth2Service.deleteClientRegistrationById(getCurrentUser().getTenantId(), clientRegistrationId);
+            oAuth2Service.deleteClientRegistrationById(clientRegistrationId);
 
-            logEntityAction(clientRegistrationId, clientRegistration,
+            logEntityAction(clientRegistrationId,
+                    null,
                     null,
                     ActionType.DELETED, null, strClientRegistrationId);
 
@@ -123,13 +96,13 @@ public class OAuth2Controller extends BaseController {
     }
 
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/oauth2/config/domain/{domain}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteClientRegistrationForDomain(@PathVariable(DOMAIN) String domain) throws ThingsboardException {
         checkParameter(DOMAIN, domain);
         try {
-            oAuth2Service.deleteClientRegistrationsByDomain(getCurrentUser().getTenantId(), domain);
+            oAuth2Service.deleteClientRegistrationsByDomain(domain);
 
             logEntityAction(emptyId(EntityType.OAUTH2_CLIENT_REGISTRATION), null,
                     null,
@@ -143,20 +116,5 @@ public class OAuth2Controller extends BaseController {
 
             throw handleException(e);
         }
-    }
-
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/oauth2/config/isAllowed", method = RequestMethod.GET)
-    @ResponseBody
-    public Boolean isOAuth2ConfigurationAllowed() throws ThingsboardException {
-        try {
-            return oAuth2Service.isOAuth2ClientRegistrationAllowed(getTenantId());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    private void checkOAuth2ConfigPermissions(Operation operation) throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION, operation);
     }
 }

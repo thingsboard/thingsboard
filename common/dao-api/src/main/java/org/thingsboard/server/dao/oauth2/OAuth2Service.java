@@ -27,19 +27,15 @@ import java.util.UUID;
 public interface OAuth2Service {
     List<OAuth2ClientInfo> getOAuth2Clients(String domainName);
 
-    List<OAuth2ClientsDomainParams> saveDomainsParams(TenantId tenantId, List<OAuth2ClientsDomainParams> domainsParams);
+    List<OAuth2ClientsDomainParams> saveDomainsParams(List<OAuth2ClientsDomainParams> domainsParams);
 
-    List<OAuth2ClientsDomainParams> findDomainsParamsByTenantId(TenantId tenantId);
+    List<OAuth2ClientsDomainParams> findDomainsParams();
 
     OAuth2ClientRegistration findClientRegistration(UUID id);
 
     List<OAuth2ClientRegistration> findAllClientRegistrations();
 
-    void deleteClientRegistrationsByTenantId(TenantId tenantId);
+    void deleteClientRegistrationById(OAuth2ClientRegistrationId id);
 
-    void deleteClientRegistrationById(TenantId tenantId, OAuth2ClientRegistrationId id);
-
-    void deleteClientRegistrationsByDomain(TenantId tenantId, String domain);
-
-    boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId);
+    void deleteClientRegistrationsByDomain(String domain);
 }
