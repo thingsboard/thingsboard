@@ -6421,10 +6421,12 @@ ngx-color-picker@^10.0.1:
   dependencies:
     tslib "^2.0.0"
 
-ngx-daterangepicker-material@^3.0.4:
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/ngx-daterangepicker-material/-/ngx-daterangepicker-material-3.0.4.tgz#af759e52fd587fcc9bce1fbcfc8cde828df6a471"
-  integrity sha512-pDg8kdXx/h8es8dpjBI+xbsxQbS0dV3uSPgfsx39t9LIw3Dv50h8T1achT5jUWSzSU7855ywTk+NlNBDTgkeNg==
+ngx-daterangepicker-material@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/ngx-daterangepicker-material/-/ngx-daterangepicker-material-4.0.1.tgz#788c2e32eb4717629d4a0e60a60bf8d6430d8c13"
+  integrity sha512-0gY6DGU+dgYdmoAKrIJSB9xnDqBvj91Yis3II/ZJxxMfZVTG4qMMatck6w8FzdU+CYT64ArCq+Uwa6hJRHX6Nw==
+  dependencies:
+    tslib "^1.10.0"
 
 "ngx-flowchart@git://github.com/thingsboard/ngx-flowchart.git#master":
   version "0.0.0"
