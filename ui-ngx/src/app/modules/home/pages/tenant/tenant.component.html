@@ -54,9 +54,6 @@
           <mat-label translate>tenant.description</mat-label>
           <textarea matInput formControlName="description" rows="2"></textarea>
         </mat-form-field>
-        <mat-checkbox fxFlex formControlName="allowOAuth2Configuration" style="padding-bottom: 16px;">
-          {{ 'tenant.allow-oauth2-configuration' | translate }}
-        </mat-checkbox>
       </div>
       <tb-contact [parentForm]="entityForm" [isEdit]="isEdit"></tb-contact>
       <div fxLayout="column">

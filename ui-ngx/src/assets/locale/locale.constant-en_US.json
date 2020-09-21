@@ -126,7 +126,6 @@
         "add-domain": "Add domain",
         "new-domain": "New domain",
         "add-provider": "Add provider",
-        "settings": "Settings",
         "oauth2": {
           "oauth2": "OAuth2",
           "registration-id": "Registration ID",
@@ -1715,8 +1714,7 @@
         "isolated-tb-core": "Processing in isolated ThingsBoard Core container",
         "isolated-tb-rule-engine": "Processing in isolated ThingsBoard Rule Engine container",
         "isolated-tb-core-details": "Requires separate microservice(s) per isolated Tenant",
-        "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant",
-        "allow-oauth2-configuration": "Allow OAuth2 configuration"
+        "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",

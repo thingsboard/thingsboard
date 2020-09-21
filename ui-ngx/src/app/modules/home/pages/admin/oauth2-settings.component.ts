@@ -60,7 +60,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     additionalInfo: {
       providerName: 'Custom'
     },
-    clientAuthenticationMethod: 'Post',
+    clientAuthenticationMethod: 'POST',
     userNameAttributeName: 'email',
     mapperConfig: {
       allowUserCreation: true,
@@ -249,17 +249,17 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       loginButtonIcon: [registrationData?.loginButtonIcon ? registrationData.loginButtonIcon : null],
       clientId: [registrationData?.clientId ? registrationData.clientId : '', Validators.required],
       clientSecret: [registrationData?.clientSecret ? registrationData.clientSecret : '', Validators.required],
-      accessTokenUri: [registrationData?.accessTokenUri ? registrationData.accessTokenUri : '', [
-        Validators.required,
-        Validators.pattern(this.URL_REGEXP)]],
-      authorizationUri: [registrationData?.authorizationUri ? registrationData.authorizationUri : '', [
-        Validators.required,
-        Validators.pattern(this.URL_REGEXP)]],
+      accessTokenUri: [registrationData?.accessTokenUri ? registrationData.accessTokenUri : '',
+        [Validators.required,
+          Validators.pattern(this.URL_REGEXP)]],
+      authorizationUri: [registrationData?.authorizationUri ? registrationData.authorizationUri : '',
+        [Validators.required,
+          Validators.pattern(this.URL_REGEXP)]],
       scope: this.fb.array(registrationData?.scope ? registrationData.scope : []),
       jwkSetUri: [registrationData?.jwkSetUri ? registrationData.jwkSetUri : '', Validators.pattern(this.URL_REGEXP)],
-      userInfoUri: [registrationData?.userInfoUri ? registrationData.userInfoUri : '', [
-        Validators.required,
-        Validators.pattern(this.URL_REGEXP)]],
+      userInfoUri: [registrationData?.userInfoUri ? registrationData.userInfoUri : '',
+        [Validators.required,
+          Validators.pattern(this.URL_REGEXP)]],
       clientAuthenticationMethod: [
         registrationData?.clientAuthenticationMethod ? registrationData.clientAuthenticationMethod : 'POST', Validators.required],
       userNameAttributeName: [
@@ -285,7 +285,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     this.subscriptions.push(clientRegistration.get('additionalInfo.providerName').valueChanges.subscribe((provider) => {
       (clientRegistration.get('scope') as FormArray).clear();
       if (provider === 'Custom') {
-        clientRegistration.reset(this.defaultProvider, {emitEvent: false});
+        const defaultSettings = {...this.defaultProvider, ...{id: clientRegistration.get('id').value}};
+        clientRegistration.reset(defaultSettings, {emitEvent: false});
         clientRegistration.get('accessTokenUri').enable();
         clientRegistration.get('authorizationUri').enable();
         clientRegistration.get('jwkSetUri').enable();
@@ -294,6 +295,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
         const template = this.templates.get(provider);
         delete template.id;
         delete template.additionalInfo;
+        template.clientId = '';
+        template.clientSecret = '';
         template.scope.forEach(() => {
           (clientRegistration.get('scope') as FormArray).push(this.fb.control(''));
         });
@@ -301,13 +304,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
         clientRegistration.get('authorizationUri').disable();
         clientRegistration.get('jwkSetUri').disable();
         clientRegistration.get('userInfoUri').disable();
-        clientRegistration.patchValue({
-          ...template, ...{
-            clientId: '',
-            clientSecret: '',
-            id: {id: null, entityType: null}
-          }
-        }, {emitEvent: false});
+        clientRegistration.patchValue(template, {emitEvent: false});
       }
     }));
 
@@ -469,7 +466,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     componentRef.onDestroy(() => {
       if (componentRef.instance.result !== null) {
         const attributeValue = componentRef.instance.result;
-        this.clientDomains.at(index).get('redirectUriTemplate').patchValue(attributeValue, {emitEvent: true});
+        this.clientDomains.at(index).get('redirectUriTemplate').patchValue(attributeValue);
+        this.clientDomains.at(index).get('redirectUriTemplate').markAsDirty();
       }
     });
   }

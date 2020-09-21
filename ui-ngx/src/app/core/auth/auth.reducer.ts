@@ -22,7 +22,6 @@ const emptyUserAuthState: AuthPayload = {
   userDetails: null,
   userTokenAccessEnabled: false,
   forceFullscreen: false,
-  allowOAuth2Configuration: false,
   allowedDashboardIds: []
 };
 
