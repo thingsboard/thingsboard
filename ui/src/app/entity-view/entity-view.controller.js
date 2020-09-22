@@ -299,7 +299,7 @@ export function EntityViewController($rootScope, userService, entityViewService,
                         unassignFromEdge($event, item, false);
                     },
                     name: function() { return $translate.instant('action.unassign') },
-                    details: function() { return $translate.instant('entity-view.unassign-from-edge') },
+                    details: function() { return $translate.instant('edge.unassign-from-edge') },
                     icon: "assignment_return"
                 }
             );
