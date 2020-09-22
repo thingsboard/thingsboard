@@ -488,8 +488,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     return column.def;
   }
 
-  public trackByRowIndex(index) {
-    return index;
+  public trackByRowId(index, row: any) {
+    return row.id.id;
   }
 
   public headerStyle(key: EntityColumn): any {

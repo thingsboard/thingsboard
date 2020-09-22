@@ -369,8 +369,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     return header.index;
   }
 
-  public trackByRowIndex(index: number) {
-    return index;
+  public trackByRowId(index: number, row: any) {
+    return row.id.id;
   }
 
   public cellStyle(source: TimeseriesTableSource, index: number, value: any): any {

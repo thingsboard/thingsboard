@@ -61,7 +61,7 @@
       </div>
     </mat-toolbar>
     <div fxFlex class="table-container">
-      <table mat-table [dataSource]="alarmsDatasource" [trackBy]="trackByRowIndex"
+      <table mat-table [dataSource]="alarmsDatasource" [trackBy]="trackByRowId"
                  matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLinkSortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
           <mat-header-cell *matHeaderCellDef style="width: 30px;">

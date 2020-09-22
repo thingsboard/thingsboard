@@ -38,7 +38,7 @@
       </div>
     </mat-toolbar>
     <div fxFlex class="table-container">
-      <table mat-table [dataSource]="entityDatasource" [trackBy]="trackByRowIndex"
+      <table mat-table [dataSource]="entityDatasource" [trackBy]="trackByRowId"
                  matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLinkSortDirection()" matSortDisableClear>
         <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; trackBy: trackByColumnDef;">
           <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header> {{ column.title }} </mat-header-cell>
