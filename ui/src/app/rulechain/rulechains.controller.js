@@ -278,7 +278,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
                         unassignFromEdge($event, item, edgeId);
                     },
                     name: function() { return $translate.instant('action.unassign') },
-                    details: function() { return $translate.instant('rulechain.unassign-from-edge') },
+                    details: function() { return $translate.instant('edge.unassign-from-edge') },
                     icon: "assignment_return",
                     isEnabled: isNonRootRuleChain
                 }
