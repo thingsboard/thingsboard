@@ -770,6 +770,7 @@
         "edge-type": "Type de la bordure",
         "edge-type-required": "El tipo de borde es requerido.",
         "select-edge-type": "Seleccionar tipo de borde",
+        "assign-to-edge": "Asignar al borde",
         "assign-to-customer": "Asignar al cliente",
         "assign-to-customer-text": "Seleccione el cliente para asignar los bordes",
         "assign-edge-to-customer": "Asignar borde(s) al cliente",

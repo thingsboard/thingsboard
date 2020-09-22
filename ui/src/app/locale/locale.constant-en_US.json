@@ -991,6 +991,7 @@
         "entity-view-name-filter-required": "Entity view name filter is required.",
         "entity-view-name-filter-no-entity-view-matched": "No entity views starting with '{{entityView}}' were found.",
         "add": "Add Entity View",
+        "assign-to-edge": "Assign to edge",
         "assign-to-customer": "Assign to customer",
         "assign-entity-view-to-customer": "Assign Entity View(s) To Customer",
         "assign-entity-view-to-customer-text": "Please select the entity views to assign to the customer",
