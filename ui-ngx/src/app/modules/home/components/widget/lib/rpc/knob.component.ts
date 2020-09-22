@@ -168,39 +168,39 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
     this.canvasBar = new CanvasDigitalGauge(canvasBarData).draw();
 
     this.knob.on('click', (e) => {
-        if (this.moving) {
-          this.moving = false;
+      if (this.moving) {
+        this.moving = false;
+        return false;
+      }
+      e.preventDefault();
+
+      const offset = this.knob.offset();
+      const center = {
+        y: offset.top + this.knob.height() / 2,
+        x: offset.left + this.knob.width() / 2
+      };
+      const rad2deg = 180 / Math.PI;
+      const t: Touch = ((e.originalEvent as any).touches) ? (e.originalEvent as any).touches[0] : e;
+      const a = center.y - t.pageY;
+      const b = center.x - t.pageX;
+      let deg = Math.atan2(a, b) * rad2deg;
+      if (deg < 0) {
+        deg = 360 + deg;
+      }
+      if (deg > this.maxDeg) {
+        if (deg - 360 > this.minDeg) {
+          deg = deg - 360;
+        } else {
           return false;
         }
-        e.preventDefault();
-
-        const offset = this.knob.offset();
-        const center = {
-          y: offset.top + this.knob.height() / 2,
-          x: offset.left + this.knob.width() / 2
-        };
-        const rad2deg = 180 / Math.PI;
-        const t: Touch = ((e.originalEvent as any).touches) ? (e.originalEvent as any).touches[0] : e;
-        const a = center.y - t.pageY;
-        const b = center.x - t.pageX;
-        let deg = Math.atan2(a, b) * rad2deg;
-        if (deg < 0) {
-          deg = 360 + deg;
-        }
-        if (deg > this.maxDeg) {
-          if (deg - 360 > this.minDeg) {
-            deg = deg - 360;
-          } else {
-            return false;
-          }
-        }
-        this.currentDeg = deg;
-        this.lastDeg = deg;
-        this.knobTopPointerContainer.css('transform', 'rotate(' + (this.currentDeg) + 'deg)');
-        this.turn(this.degreeToRatio(this.currentDeg));
-        this.rotation = this.currentDeg;
-        this.startDeg = -1;
-        this.rpcUpdateValue(this.newValue);
+      }
+      this.currentDeg = deg;
+      this.lastDeg = deg;
+      this.knobTopPointerContainer.css('transform', 'rotate(' + (this.currentDeg) + 'deg)');
+      this.turn(this.degreeToRatio(this.currentDeg));
+      this.rotation = this.currentDeg;
+      this.startDeg = -1;
+      this.rpcUpdateValue(this.newValue);
     });
 
 
