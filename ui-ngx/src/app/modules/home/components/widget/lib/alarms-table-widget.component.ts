@@ -565,6 +565,10 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     return column.def;
   }
 
+  public trackByRowIndex(index) {
+    return index;
+  }
+
   public headerStyle(key: EntityColumn): any {
     const columnWidth = this.columnWidth[key.def];
     return widthStyle(columnWidth);
