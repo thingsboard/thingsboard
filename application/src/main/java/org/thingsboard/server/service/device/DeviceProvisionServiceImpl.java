@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.device;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
@@ -30,9 +29,11 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.device.data.ProvisionDeviceConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileConfiguration;
+import org.thingsboard.server.common.data.device.profile.ProvisionRequestValidationStrategyType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
@@ -45,6 +46,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -65,8 +67,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
-
 
 @Service
 @Slf4j
@@ -77,9 +77,10 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private static final String DEVICE_PROVISION_STATE = "provisionState";
     private static final String PROVISIONED_STATE = "provisioned";
 
-    private static final UserId PROVISION_USER_ID = UserId.fromString(NULL_UUID.toString());
-
     private final ReentrantLock deviceCreationLock = new ReentrantLock();
+
+    @Autowired
+    DeviceDao deviceDao;
 
     @Autowired
     DeviceProfileDao deviceProfileDao;
@@ -105,39 +106,52 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
     @Override
     public ListenableFuture<ProvisionResponse> provisionDevice(ProvisionRequest provisionRequest) {
-        DeviceProfile targetProfile = deviceProfileDao.findProfileByTenantIdAndProfileDataProvisionConfigurationPair(
+        Device targetDevice = deviceDao.findDeviceByTenantIdAndDeviceDataProvisionConfigurationPair(
                 TenantId.SYS_TENANT_ID,
                 provisionRequest.getCredentials().getProvisionDeviceKey(),
                 provisionRequest.getCredentials().getProvisionDeviceSecret());
 
-        if (targetProfile.getProfileData().getConfiguration().getType() != DeviceProfileType.PROVISION) {
-            return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
-        }
+        if (targetDevice != null) {
+            if (targetDevice.getDeviceData().getConfiguration().getType() != DeviceProfileType.PROVISION) {
+                return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
+            }
 
-        ProvisionDeviceProfileConfiguration currentProfileConfiguration = (ProvisionDeviceProfileConfiguration) targetProfile.getProfileData().getConfiguration();
-        if (!new ProvisionDeviceProfileConfiguration(provisionRequest.getCredentials().getProvisionDeviceKey(), provisionRequest.getCredentials().getProvisionDeviceSecret()).equals(currentProfileConfiguration)) {
-            return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
-        }
+            DeviceProfile targetProfile = deviceProfileDao.findById(TenantId.SYS_TENANT_ID, targetDevice.getDeviceProfileId().getId());
 
-        Device device = deviceService.findDeviceByTenantIdAndName(targetProfile.getTenantId(), provisionRequest.getDeviceName());
-        switch (currentProfileConfiguration.getStrategy()) {
-            case CHECK_NEW_DEVICE:
-                if (device == null) {
-                    return createDevice(provisionRequest, targetProfile);
-                } else {
-                    log.warn("[{}] The device is present and could not be provisioned once more!", device.getName());
-                    notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
+            ProvisionDeviceConfiguration currentProfileConfiguration = (ProvisionDeviceConfiguration) targetDevice.getDeviceData().getConfiguration();
+            if (!new ProvisionDeviceConfiguration(provisionRequest.getCredentials().getProvisionDeviceKey(), provisionRequest.getCredentials().getProvisionDeviceSecret()).equals(currentProfileConfiguration)) {
+                return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
+            }
+            ProvisionRequestValidationStrategyType targetStrategy = getStrategy(targetProfile);
+            switch (targetStrategy) {
+                case CHECK_NEW_DEVICE:
+                    log.warn("[{}] The device is present and could not be provisioned once more!", targetDevice.getName());
+                    notify(targetDevice, provisionRequest, DataConstants.PROVISION_FAILURE, false);
                     return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
-                }
-            case CHECK_PRE_PROVISIONED_DEVICE:
-                if (device == null) {
+                case CHECK_PRE_PROVISIONED_DEVICE:
+                    return processProvision(targetDevice, provisionRequest);
+                default:
+                    throw new RuntimeException("Strategy is not supported - " + targetStrategy.name());
+            }
+        } else {
+            DeviceProfile targetProfile = deviceProfileDao.findProfileByTenantIdAndProfileDataProvisionConfigurationPair(
+                    TenantId.SYS_TENANT_ID,
+                    provisionRequest.getCredentials().getProvisionDeviceKey(),
+                    provisionRequest.getCredentials().getProvisionDeviceSecret()
+            );
+            if (targetProfile.getProfileData().getConfiguration().getType() != DeviceProfileType.PROVISION) {
+                return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
+            }
+            ProvisionRequestValidationStrategyType targetStrategy = getStrategy(targetProfile);
+            switch (targetStrategy) {
+                case CHECK_NEW_DEVICE:
+                    return createDevice(provisionRequest, targetProfile);
+                case CHECK_PRE_PROVISIONED_DEVICE:
                     log.warn("[{}] Failed to find pre provisioned device!", provisionRequest.getDeviceName());
                     return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
-                } else {
-                    return processProvision(device, provisionRequest);
-                }
-            default:
-                throw new RuntimeException("Strategy is not supported - " + currentProfileConfiguration.getStrategy().name());
+                default:
+                    throw new RuntimeException("Strategy is not supported - " + targetStrategy.name());
+            }
         }
     }
 
@@ -176,6 +190,16 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         } finally {
             deviceCreationLock.unlock();
         }
+    }
+
+    private void notify(Device device, ProvisionRequest provisionRequest, String type, boolean success) {
+        pushProvisionEventToRuleEngine(provisionRequest, device, type);
+        logAction(device.getTenantId(), device.getCustomerId(), device, success, provisionRequest);
+    }
+
+    private ProvisionRequestValidationStrategyType getStrategy(DeviceProfile profile) {
+        return ((ProvisionDeviceProfileConfiguration) profile.getProfileData().getConfiguration()).getStrategy();
+
     }
 
     private ListenableFuture<ProvisionResponse> processCreateDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
@@ -221,15 +245,10 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         return credentials;
     }
 
-    private void notify(Device device, ProvisionRequest provisionRequest, String type, boolean success) {
-        pushProvisionEventToRuleEngine(provisionRequest, device, type);
-        logAction(device.getTenantId(), device, success, provisionRequest);
-    }
-
     private void pushProvisionEventToRuleEngine(ProvisionRequest request, Device device, String type) {
         try {
             ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(request);
-            TbMsg msg = new TbMsg(Uuids.timeBased(), type, device.getId(), createTbMsgMetaData(device), JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode), null, null, 0L);
+            TbMsg msg = TbMsg.newMsg(type, device.getId(), createTbMsgMetaData(device), JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
             sendToRuleEngine(device.getTenantId(), msg, null);
         } catch (JsonProcessingException | IllegalArgumentException e) {
             log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), type, e);
@@ -239,7 +258,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private void pushDeviceCreatedEventToRuleEngine(Device device) {
         try {
             ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(device);
-            TbMsg msg = new TbMsg(Uuids.timeBased(), DataConstants.ENTITY_CREATED, device.getId(), createTbMsgMetaData(device), JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode), null, null, 0L);
+            TbMsg msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, device.getId(), createTbMsgMetaData(device), JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
             sendToRuleEngine(device.getTenantId(), msg, null);
         } catch (JsonProcessingException | IllegalArgumentException e) {
             log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), DataConstants.ENTITY_CREATED, e);
@@ -260,8 +279,8 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         return metaData;
     }
 
-    private void logAction(TenantId tenantId, Device device, boolean success, ProvisionRequest provisionRequest) {
+    private void logAction(TenantId tenantId, CustomerId customerId, Device device, boolean success, ProvisionRequest provisionRequest) {
         ActionType actionType = success ? ActionType.PROVISION_SUCCESS : ActionType.PROVISION_FAILURE;
-        auditLogService.logEntityAction(tenantId, null, null, device.getName(), device.getId(), device, actionType, null, provisionRequest);
+        auditLogService.logEntityAction(tenantId, customerId, null, device.getName(), device.getId(), device, actionType, null, provisionRequest);
     }
 }

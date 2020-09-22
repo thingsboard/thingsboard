@@ -34,10 +34,12 @@ import io.netty.handler.codec.mqtt.MqttSubscribeMessage;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import io.netty.handler.codec.mqtt.MqttUnsubscribeMessage;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
@@ -51,6 +53,7 @@ import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
@@ -420,11 +423,19 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void processConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
         log.info("[{}] Processing connect msg for client: {}!", sessionId, msg.payload().clientIdentifier());
-        X509Certificate cert;
-        if (sslHandler != null && (cert = getX509Certificate()) != null) {
-            processX509CertConnect(ctx, cert);
+        String userName = msg.payload().userName();
+        if (DataConstants.PROVISION.equals(userName)) {
+            deviceSessionCtx.setDeviceInfo(new TransportDeviceInfo());
+            deviceSessionCtx.setProvisionOnly(true);
+            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
         } else {
-            processAuthTokenConnect(ctx, msg);
+            X509Certificate cert;
+
+            if (sslHandler != null && (cert = getX509Certificate()) != null) {
+                processX509CertConnect(ctx, cert);
+            } else {
+                processAuthTokenConnect(ctx, msg);
+            }
         }
     }
 

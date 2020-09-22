@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.device.provision;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileConfiguration;
+import org.thingsboard.server.common.data.device.data.ProvisionDeviceConfiguration;
 
 @Data
 @AllArgsConstructor
@@ -25,5 +25,5 @@ public class ProvisionRequest {
     private String deviceName;
     private String deviceType;
     private String x509CertPubKey;
-    private ProvisionDeviceProfileConfiguration credentials;
+    private ProvisionDeviceConfiguration credentials;
 }

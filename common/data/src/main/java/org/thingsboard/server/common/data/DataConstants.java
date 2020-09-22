@@ -72,11 +72,12 @@ public class DataConstants {
     public static final String SECRET_KEY_FIELD_NAME = "secretKey";
     public static final String DURATION_MS_FIELD_NAME = "durationMs";
 
+    public static final String PROVISION = "provision";
+    public static final String PROVISION_KEY = "provisionDeviceKey";
+    public static final String PROVISION_SECRET = "provisionDeviceSecret";
+
     public static final String DEVICE_NAME = "deviceName";
     public static final String DEVICE_TYPE = "deviceType";
     public static final String CERT_PUB_KEY = "x509CertPubKey";
-
-    public static final String PROVISION_KEY = "provisionDeviceKey";
-    public static final String PROVISION_SECRET = "provisionDeviceSecret";
 
 }

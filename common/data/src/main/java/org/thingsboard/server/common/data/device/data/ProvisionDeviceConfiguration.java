@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.device.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceProfileType;
-import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
-import org.thingsboard.server.common.data.device.data.ProvisionDeviceConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileConfiguration;
+import org.thingsboard.server.common.data.device.profile.ProvisionRequestValidationStrategyType;
 
 import java.util.Objects;
 
 @Data
-public class ProvisionDeviceProfileConfiguration implements DeviceProfileConfiguration {
+public class ProvisionDeviceConfiguration implements DeviceConfiguration {
 
     private String provisionDeviceKey;
     private String provisionDeviceSecret;
-
-    private ProvisionRequestValidationStrategyType strategy;
 
     @Override
     public DeviceProfileType getType() {
@@ -38,7 +36,7 @@ public class ProvisionDeviceProfileConfiguration implements DeviceProfileConfigu
     }
 
     @JsonCreator
-    public ProvisionDeviceProfileConfiguration(@JsonProperty("provisionDeviceKey") String provisionProfileKey, @JsonProperty("provisionDeviceSecret") String provisionProfileSecret) {
+    public ProvisionDeviceConfiguration(@JsonProperty("provisionDeviceKey") String provisionProfileKey, @JsonProperty("provisionDeviceSecret") String provisionProfileSecret) {
         this.provisionDeviceKey = provisionProfileKey;
         this.provisionDeviceSecret = provisionProfileSecret;
     }
@@ -47,7 +45,7 @@ public class ProvisionDeviceProfileConfiguration implements DeviceProfileConfigu
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ProvisionDeviceProfileConfiguration that = (ProvisionDeviceProfileConfiguration) o;
+        ProvisionDeviceConfiguration that = (ProvisionDeviceConfiguration) o;
         return provisionDeviceKey.equals(that.provisionDeviceKey) &&
                 provisionDeviceSecret.equals(that.provisionDeviceSecret);
     }
