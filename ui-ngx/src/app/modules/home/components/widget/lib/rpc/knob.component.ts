@@ -25,8 +25,6 @@ import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/
 import * as tinycolor_ from 'tinycolor2';
 import { ResizeObserver } from '@juggle/resize-observer';
 import GenericOptions = CanvasGauges.GenericOptions;
-import {number} from "prop-types";
-import {eventTargetLegacyPatch} from "zone.js/lib/browser/event-target-legacy";
 
 const tinycolor = tinycolor_;
 
@@ -129,7 +127,6 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
     this.textMeasure = $(this.textMeasureRef.nativeElement);
     this.canvasBarElement = this.canvasBarElementRef.nativeElement;
 
-
     this.knobResize$ = new ResizeObserver(() => {
       this.resize();
     });
@@ -170,8 +167,6 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
 
     this.canvasBar = new CanvasDigitalGauge(canvasBarData).draw();
 
-
-
     this.knob.on('click', (e) => {
         if (this.moving) {
           this.moving = false;
@@ -208,11 +203,7 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
         this.rpcUpdateValue(this.newValue);
     });
 
-    $(document).on('mouseup touchend', (e) => {
-      if(this.newValue !== this.rpcValue && this.moving) {
-        this.rpcUpdateValue(this.newValue);
-      }
-    });
+
 
     this.knob.on('mousedown touchstart', (e) => {
       this.moving  = false;
@@ -223,6 +214,12 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
         x: offset.left + this.knob.width()/2
       };
       const rad2deg = 180/Math.PI;
+
+      $(document).on('mouseup touchend', (e) => {
+        if(this.newValue !== this.rpcValue && this.moving) {
+          this.rpcUpdateValue(this.newValue);
+        }
+      });
 
       $(document).on('mousemove.rem touchmove.rem', (ev) => {
         this.moving = true;
@@ -283,7 +280,6 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
 
     });
 
-
     const initialValue = isDefined(settings.initialValue) ? settings.initialValue : this.minValue;
     this.setValue(initialValue);
 
@@ -312,7 +308,6 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
       }
     }
   }
-
 
   private degreeToRatio(degree: number): number {
     return (degree-this.minDeg)/(this.maxDeg-this.minDeg);
