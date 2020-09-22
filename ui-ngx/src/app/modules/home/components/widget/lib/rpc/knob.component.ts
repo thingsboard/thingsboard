@@ -215,12 +215,6 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
       };
       const rad2deg = 180/Math.PI;
 
-      $(document).on('mouseup touchend', (e) => {
-        if(this.newValue !== this.rpcValue && this.moving) {
-          this.rpcUpdateValue(this.newValue);
-        }
-      });
-
       $(document).on('mousemove.rem touchmove.rem', (ev) => {
         this.moving = true;
         const t: Touch = ((ev.originalEvent as any).touches) ? (ev.originalEvent as any).touches[0] : ev;
@@ -272,6 +266,9 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
       });
 
       $(document).on('mouseup.rem  touchend.rem',() => {
+        if(this.newValue !== this.rpcValue && this.moving) {
+          this.rpcUpdateValue(this.newValue);
+        }
         this.knob.off('.rem');
         $(document).off('.rem');
         this.rotation = this.currentDeg;
