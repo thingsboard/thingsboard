@@ -20,7 +20,9 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestM
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetQueueRoutingInfoRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetTenantQueueRoutingInfoRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetQueueRoutingInfoResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetAllQueueRoutingInfoRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
@@ -46,6 +48,10 @@ public interface TransportService {
     GetTenantRoutingInfoResponseMsg getTenantRoutingInfo(GetTenantRoutingInfoRequestMsg msg);
 
     List<GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(GetQueueRoutingInfoRequestMsg msg);
+
+    List<GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(GetTenantQueueRoutingInfoRequestMsg msg);
+
+    List<GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(GetAllQueueRoutingInfoRequestMsg msg);
 
     void process(ValidateDeviceTokenRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback);

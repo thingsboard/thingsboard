@@ -13,26 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.queue;
+package org.thingsboard.server.queue;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.Queue;
-import org.thingsboard.server.dao.Dao;
 
-import java.util.List;
+public interface TbQueueClusterService {
+    void onQueueChange(Queue queue, TbQueueCallback callback);
 
-public interface QueueDao extends Dao<Queue> {
-    Queue findQueueByTenantIdAndTopic(TenantId tenantId, String topic);
-
-    Queue findQueueByTenantIdAndName(TenantId tenantId, String name);
-
-    List<Queue> findAllMainQueues();
-
-    List<Queue> findAllQueues();
-
-    List<Queue> findAllByTenantId(TenantId tenantId);
-
-    PageData<Queue> findQueuesByTenantId(TenantId tenantId, PageLink pageLink);
+    void onQueueDelete(Queue queue, TbQueueCallback callback);
 }

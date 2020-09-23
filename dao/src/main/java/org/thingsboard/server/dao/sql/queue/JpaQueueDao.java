@@ -66,7 +66,13 @@ public class JpaQueueDao extends JpaAbstractDao<QueueEntity, Queue> implements Q
     }
 
     @Override
-    public List<Queue> findAll() {
+    public List<Queue> findAllMainQueues() {
+        List<QueueEntity> entities = Lists.newArrayList(queueRepository.findAllByName("Main"));
+        return DaoUtil.convertDataList(entities);
+    }
+
+    @Override
+    public List<Queue> findAllQueues() {
         List<QueueEntity> entities = Lists.newArrayList(queueRepository.findAll());
         return DaoUtil.convertDataList(entities);
     }

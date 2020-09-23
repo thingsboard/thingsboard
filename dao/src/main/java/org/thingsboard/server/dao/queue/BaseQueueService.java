@@ -38,6 +38,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.TbQueueClusterService;
 
 import java.util.List;
 
@@ -54,16 +55,23 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Autowired
     private TbQueueAdmin tbQueueAdmin;
 
+    @Autowired
+    private TbQueueClusterService queueClusterService;
+
     @Override
     @Transactional
     public Queue createOrUpdateQueue(Queue queue) {
         log.trace("Executing createOrUpdateQueue [{}]", queue);
         queueValidator.validate(queue, Queue::getTenantId);
+        Queue savedQueue;
         if (queue.getId() == null) {
-            return createQueue(queue);
+            savedQueue = createQueue(queue);
         } else {
-            return updateQueue(queue);
+            savedQueue = updateQueue(queue);
         }
+
+        queueClusterService.onQueueChange(savedQueue, null);
+        return savedQueue;
     }
 
     private Queue createQueue(Queue queue) {
@@ -101,10 +109,17 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     public void deleteQueue(TenantId tenantId, QueueId queueId) {
         log.trace("Executing deleteQueue, queueId: [{}]", queueId);
         Queue queue = findQueueById(tenantId, queueId);
+        queueClusterService.onQueueDelete(queue, null);
         boolean result = queueDao.removeById(tenantId, queueId.getId());
         if (result) {
             for (int i = 0; i < queue.getPartitions(); i++) {
-                tbQueueAdmin.deleteTopic(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
+                String fullTopicName = new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName();
+                log.debug("Deleting queue [{}]", fullTopicName);
+                try {
+                    tbQueueAdmin.deleteTopic(fullTopicName);
+                } catch (Exception e) {
+                    log.error("Failed to delete queue [{}]", fullTopicName);
+                }
             }
         }
     }
@@ -123,11 +138,15 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     }
 
     @Override
+    public List<Queue> findAllMainQueues() {
+        log.trace("Executing findAllMainQueues");
+        return queueDao.findAllMainQueues();
+    }
+
+    @Override
     public List<Queue> findAllQueues() {
         log.trace("Executing findAllQueues");
-
-        return queueDao.findAll();
-    }
+        return queueDao.findAllQueues();    }
 
     @Override
     public Queue findQueueById(TenantId tenantId, QueueId queueId) {

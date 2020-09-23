@@ -17,16 +17,12 @@ package org.thingsboard.server.queue.discovery;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
-import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
-import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 
 import javax.annotation.PostConstruct;
 import java.net.InetAddress;
@@ -53,10 +49,6 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     @Getter
     @Value("${service.tenant_id:}")
     private String tenantIdStr;
-
-    @Autowired
-    private QueueRoutingInfoService queueRoutingInfoService;
-
 
     private List<ServiceType> serviceTypes;
     private ServiceInfo serviceInfo;
@@ -89,31 +81,6 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         }
         builder.setTenantIdMSB(tenantId.getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getLeastSignificantBits());
-
-        if (serviceTypes.contains(ServiceType.TB_RULE_ENGINE)) {
-
-
-            queueRoutingInfoService
-                    .getRoutingInfo()
-                    .stream()
-                    .filter(queue -> queue.getTenantId().equals(getIsolatedTenant().orElse(TenantId.SYS_TENANT_ID)))
-                    .forEach(queue -> {
-                        TransportProtos.QueueInfo queueInfo = TransportProtos.QueueInfo.newBuilder()
-                                .setName(queue.getQueueName())
-                                .setTopic(queue.getQueueTopic())
-                                .setPartitions(queue.getPartitions()).build();
-                        builder.addRuleEngineQueues(queueInfo);
-            });
-
-//
-//            for (QueueRoutingInfo queue : queueRoutingInfoService.getRoutingInfo()) {
-//                TransportProtos.QueueInfo queueInfo = TransportProtos.QueueInfo.newBuilder()
-//                        .setName(queue.getQueueName())
-//                        .setTopic(queue.getQueueTopic())
-//                        .setPartitions(queue.getPartitions()).build();
-//                builder.addRuleEngineQueues(queueInfo);
-//            }
-        }
 
         serviceInfo = builder.build();
     }

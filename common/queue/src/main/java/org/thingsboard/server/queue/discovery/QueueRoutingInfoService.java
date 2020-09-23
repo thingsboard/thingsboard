@@ -15,9 +15,15 @@
  */
 package org.thingsboard.server.queue.discovery;
 
+import org.thingsboard.server.common.data.id.TenantId;
+
 import java.util.List;
 
 public interface QueueRoutingInfoService {
 
-    List<QueueRoutingInfo> getRoutingInfo();
+    List<QueueRoutingInfo> getAllQueuesRoutingInfo();
+
+    List<QueueRoutingInfo> getMainQueuesRoutingInfo();
+
+    List<QueueRoutingInfo> getQueuesRoutingInfo(TenantId tenantId);
 }

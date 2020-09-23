@@ -20,8 +20,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.gen.transport.TransportProtos.GetQueueRoutingInfoRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetTenantQueueRoutingInfoRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetAllQueueRoutingInfoRequestMsg;
 import org.thingsboard.server.queue.discovery.QueueRoutingInfo;
 import org.thingsboard.server.queue.discovery.QueueRoutingInfoService;
 
@@ -42,8 +45,20 @@ public class TransportQueueRoutingInfoService implements QueueRoutingInfoService
     }
 
     @Override
-    public List<QueueRoutingInfo> getRoutingInfo() {
+    public List<QueueRoutingInfo> getAllQueuesRoutingInfo() {
+        GetAllQueueRoutingInfoRequestMsg msg = GetAllQueueRoutingInfoRequestMsg.newBuilder().build();
+        return transportService.getQueueRoutingInfo(msg).stream().map(QueueRoutingInfo::new).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<QueueRoutingInfo> getMainQueuesRoutingInfo() {
         GetQueueRoutingInfoRequestMsg msg = GetQueueRoutingInfoRequestMsg.newBuilder().build();
+        return transportService.getQueueRoutingInfo(msg).stream().map(QueueRoutingInfo::new).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<QueueRoutingInfo> getQueuesRoutingInfo(TenantId tenantId) {
+        GetTenantQueueRoutingInfoRequestMsg msg = GetTenantQueueRoutingInfoRequestMsg.newBuilder().build();
         return transportService.getQueueRoutingInfo(msg).stream().map(QueueRoutingInfo::new).collect(Collectors.toList());
     }
 }

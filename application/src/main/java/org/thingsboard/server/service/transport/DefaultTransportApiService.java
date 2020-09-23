@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -59,6 +60,7 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -118,6 +120,10 @@ public class DefaultTransportApiService implements TransportApiService {
             return Futures.transform(handle(transportApiRequestMsg.getGetTenantRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         } else if (transportApiRequestMsg.hasGetQueueRoutingInfoRequestMsg()) {
             return Futures.transform(handle(transportApiRequestMsg.getGetQueueRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
+        } else if (transportApiRequestMsg.hasGetTenantQueueRoutingInfoRequestMsg()) {
+            return Futures.transform(handle(transportApiRequestMsg.getGetTenantQueueRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
+        } else if (transportApiRequestMsg.hasGetAllQueueRoutingInfoRequestMsg()) {
+            return Futures.transform(handle(transportApiRequestMsg.getGetAllQueueRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         }
         return Futures.transform(getEmptyTransportApiResponseFuture(), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
     }
@@ -183,17 +189,27 @@ public class DefaultTransportApiService implements TransportApiService {
     }
 
     private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetQueueRoutingInfoRequestMsg requestMsg) {
+        return queuesToTransportApiResponseMsg(queueService.findAllMainQueues());
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetAllQueueRoutingInfoRequestMsg requestMsg) {
+        return queuesToTransportApiResponseMsg(queueService.findAllQueues());
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetTenantQueueRoutingInfoRequestMsg requestMsg) {
+        TenantId tenantId = new TenantId(new UUID(requestMsg.getTenantIdMSB(), requestMsg.getTenantIdLSB()));
+        return queuesToTransportApiResponseMsg(queueService.findQueues(tenantId));
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> queuesToTransportApiResponseMsg(List<Queue> queues) {
         return Futures.immediateFuture(TransportApiResponseMsg.newBuilder()
-                .addAllGetQueueRoutingInfoResponseMsgs(
-                        queueService
-                                .findAllQueues()
-                                .stream()
-                                .map(queue -> TransportProtos.GetQueueRoutingInfoResponseMsg.newBuilder()
-                                        .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
-                                        .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
-                                        .setQueueName(queue.getName())
-                                        .setQueueTopic(queue.getTopic())
-                                        .setPartitions(queue.getPartitions())
+                .addAllGetQueueRoutingInfoResponseMsgs(queues.stream()
+                        .map(queue -> TransportProtos.GetQueueRoutingInfoResponseMsg.newBuilder()
+                                .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
+                                .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
+                                .setQueueName(queue.getName())
+                                .setQueueTopic(queue.getTopic())
+                                .setPartitions(queue.getPartitions())
                                 .build()).collect(Collectors.toList())).build());
     }
 

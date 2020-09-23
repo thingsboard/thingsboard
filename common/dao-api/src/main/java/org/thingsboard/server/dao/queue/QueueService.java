@@ -30,6 +30,8 @@ public interface QueueService {
 
     List<Queue> findQueues(TenantId tenantId);
 
+    List<Queue> findAllMainQueues();
+
     List<Queue> findAllQueues();
 
     Queue findQueueById(TenantId tenantId, QueueId queueId);

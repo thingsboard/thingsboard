@@ -33,6 +33,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @TbCoreComponent
@@ -42,7 +43,25 @@ public class QueueController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, method = RequestMethod.GET)
     @ResponseBody
-    public List<Queue> getTenantQueuesByServiceType(@RequestParam String serviceType) throws ThingsboardException {
+    public List<String> getTenantQueuesByServiceType(@RequestParam String serviceType) throws ThingsboardException {
+        checkParameter("serviceType", serviceType);
+        try {
+            ServiceType type = ServiceType.valueOf(serviceType);
+            switch (type) {
+                case TB_RULE_ENGINE:
+                    return queueService.findQueues(getTenantId()).stream().map(Queue::getName).collect(Collectors.toList());
+                default:
+                    return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/queues/full", params = {"serviceType"}, method = RequestMethod.GET)
+    @ResponseBody
+    public List<Queue> getFullTenantQueuesByServiceType(@RequestParam String serviceType) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
         try {
             ServiceType type = ServiceType.valueOf(serviceType);
@@ -74,7 +93,6 @@ public class QueueController extends BaseController {
                     queue.setTenantId(getTenantId());
                     Queue savedQueue = queueService.createOrUpdateQueue(queue);
                     checkNotNull(savedQueue);
-                    partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), Collections.emptyList());
                     return savedQueue;
                 default:
                     return null;
@@ -98,7 +116,6 @@ public class QueueController extends BaseController {
             switch (type) {
                 case TB_RULE_ENGINE:
                     queueService.deleteQueue(getTenantId(), queueId);
-                    partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), Collections.emptyList());
             }
         } catch (Exception e) {
             throw handleException(e);

@@ -274,7 +274,7 @@ CREATE TABLE IF NOT EXISTS entity_view (
     additional_info varchar
 );
 
-	CREATE TABLE IF NOT EXISTS queue(
+	CREATE TABLE IF NOT EXISTS queue (
     id uuid NOT NULL CONSTRAINT queue_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid,
@@ -284,7 +284,9 @@ CREATE TABLE IF NOT EXISTS entity_view (
     partitions int,
     pack_processing_timeout bigint,
     submit_strategy varchar(255),
-    processing_strategy varchar(255)
+    processing_strategy varchar(255),
+    CONSTRAINT queue_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT queue_topic_unq_key UNIQUE (tenant_id, topic)
 );
 
 CREATE TABLE IF NOT EXISTS ts_kv_latest (

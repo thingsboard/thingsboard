@@ -31,4 +31,6 @@ public interface QueueRepository extends CrudRepository<QueueEntity, UUID> {
     List<QueueEntity> findByTenantId(UUID tenantId);
 
     Page<QueueEntity> findByTenantId(UUID tenantId, Pageable pageable);
+
+    List<QueueEntity> findAllByName(String name);
 }
