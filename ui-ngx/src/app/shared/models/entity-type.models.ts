@@ -45,7 +45,8 @@ export enum EntityType {
   RULE_NODE = 'RULE_NODE',
   ENTITY_VIEW = 'ENTITY_VIEW',
   WIDGETS_BUNDLE = 'WIDGETS_BUNDLE',
-  WIDGET_TYPE = 'WIDGET_TYPE'
+  WIDGET_TYPE = 'WIDGET_TYPE',
+  QUEUE = 'QUEUE'
 }
 
 export enum AliasEntityType {
