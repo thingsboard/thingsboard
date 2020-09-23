@@ -309,7 +309,6 @@ function KnobController($element, $scope, $document) {
         $scope.$applyAsync(() => {
             vm.value = formatValue(value);
             checkValueSize();
-            // rpcUpdateValue(vm.newValue);
         });
     }
 
