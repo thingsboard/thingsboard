@@ -18,6 +18,7 @@ DROP TABLE IF EXISTS oauth2_client_registration;
 
 CREATE TABLE IF NOT EXISTS oauth2_client_registration (
     id uuid NOT NULL CONSTRAINT oauth2_client_registration_pkey PRIMARY KEY,
+    enabled boolean,
     created_time bigint NOT NULL,
     additional_info varchar,
     domain_name varchar(255),

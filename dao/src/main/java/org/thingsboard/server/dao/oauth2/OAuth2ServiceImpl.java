@@ -48,6 +48,7 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
         log.trace("Executing getOAuth2Clients [{}]", domainName);
         validateString(domainName, INCORRECT_DOMAIN_NAME + domainName);
         return clientRegistrationDao.findByDomainName(domainName).stream()
+                .filter(OAuth2ClientRegistration::isEnabled)
                 .map(OAuth2Utils::toClientInfo)
                 .collect(Collectors.toList());
     }

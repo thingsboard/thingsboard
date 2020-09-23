@@ -29,5 +29,6 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OAuth2ClientsParams {
+    private boolean enabled;
     private List<OAuth2ClientsDomainParams> oAuth2DomainDtos;
 }

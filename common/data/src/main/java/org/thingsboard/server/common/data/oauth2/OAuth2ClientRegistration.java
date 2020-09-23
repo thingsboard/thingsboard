@@ -34,6 +34,7 @@ import java.util.List;
 @NoArgsConstructor
 public class OAuth2ClientRegistration extends SearchTextBasedWithAdditionalInfo<OAuth2ClientRegistrationId> implements HasName {
 
+    private boolean enabled;
     private String domainName;
     private String redirectUriTemplate;
     private OAuth2MapperConfig mapperConfig;
@@ -51,6 +52,7 @@ public class OAuth2ClientRegistration extends SearchTextBasedWithAdditionalInfo<
 
     public OAuth2ClientRegistration(OAuth2ClientRegistration clientRegistration) {
         super(clientRegistration);
+        this.enabled = clientRegistration.enabled;
         this.domainName = clientRegistration.domainName;
         this.redirectUriTemplate = clientRegistration.redirectUriTemplate;
         this.mapperConfig = clientRegistration.mapperConfig;

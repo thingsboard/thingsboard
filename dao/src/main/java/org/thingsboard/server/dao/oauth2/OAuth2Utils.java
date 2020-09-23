@@ -37,15 +37,19 @@ public class OAuth2Utils {
     public static List<OAuth2ClientRegistration> toClientRegistrations(OAuth2ClientsParams oAuth2Params) {
         return oAuth2Params.getOAuth2DomainDtos().stream()
                 .flatMap(domainParams -> domainParams.getClientRegistrations().stream()
-                        .map(clientRegistrationDto -> OAuth2Utils.toClientRegistration(domainParams.getDomainName(),
-                                domainParams.getRedirectUriTemplate(), clientRegistrationDto)
+                        .map(clientRegistrationDto -> OAuth2Utils.toClientRegistration(oAuth2Params.isEnabled(),
+                                domainParams.getDomainName(),
+                                domainParams.getRedirectUriTemplate(),
+                                clientRegistrationDto)
                         ))
                 .collect(Collectors.toList());
     }
 
     public static OAuth2ClientsParams toOAuth2Params(List<OAuth2ClientRegistration> clientRegistrations) {
         Map<String, OAuth2ClientsDomainParams> domainParamsMap = new HashMap<>();
+        boolean enabled = true;
         for (OAuth2ClientRegistration clientRegistration : clientRegistrations) {
+            enabled = clientRegistration.isEnabled();
             String domainName = clientRegistration.getDomainName();
             OAuth2ClientsDomainParams domainParams = domainParamsMap.computeIfAbsent(domainName,
                     key -> new OAuth2ClientsDomainParams(domainName, clientRegistration.getRedirectUriTemplate(), new ArrayList<>())
@@ -53,7 +57,7 @@ public class OAuth2Utils {
             domainParams.getClientRegistrations()
                     .add(toClientRegistrationDto(clientRegistration));
         }
-        return new OAuth2ClientsParams(new ArrayList<>(domainParamsMap.values()));
+        return new OAuth2ClientsParams(enabled, new ArrayList<>(domainParamsMap.values()));
     }
 
     public static ClientRegistrationDto toClientRegistrationDto(OAuth2ClientRegistration oAuth2ClientRegistration) {
@@ -76,10 +80,12 @@ public class OAuth2Utils {
                 .build();
     }
 
-    public static OAuth2ClientRegistration toClientRegistration(String domainName, String redirectUriTemplate,
+    private static OAuth2ClientRegistration toClientRegistration(boolean enabled, String domainName,
+                                                                 String redirectUriTemplate,
                                                                 ClientRegistrationDto clientRegistrationDto) {
         OAuth2ClientRegistration clientRegistration = new OAuth2ClientRegistration();
         clientRegistration.setId(clientRegistrationDto.getId());
+        clientRegistration.setEnabled(enabled);
         clientRegistration.setCreatedTime(clientRegistrationDto.getCreatedTime());
         clientRegistration.setDomainName(domainName);
         clientRegistration.setRedirectUriTemplate(redirectUriTemplate);

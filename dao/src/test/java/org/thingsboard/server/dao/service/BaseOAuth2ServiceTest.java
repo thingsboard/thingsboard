@@ -86,7 +86,9 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
     public void testGetOAuth2Clients() {
         String testDomainName = "test_domain";
         OAuth2ClientRegistration first = validClientRegistration(testDomainName);
+        first.setEnabled(true);
         OAuth2ClientRegistration second = validClientRegistration(testDomainName);
+        second.setEnabled(true);
 
         oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(first)));
         oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(second)));
@@ -153,7 +155,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
     }
 
     private OAuth2ClientRegistration validClientRegistration() {
-        return validClientRegistration("domainName");
+        return validClientRegistration(UUID.randomUUID().toString());
     }
 
     private OAuth2ClientRegistration validClientRegistration(String domainName) {
@@ -166,23 +168,23 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                         .type(MapperType.CUSTOM)
                         .custom(
                                 OAuth2CustomMapperConfig.builder()
-                                        .url("localhost:8082")
+                                        .url("UUID.randomUUID().toString()")
                                         .build()
                         )
                         .build()
         );
-        clientRegistration.setClientId("clientId");
-        clientRegistration.setClientSecret("clientSecret");
-        clientRegistration.setAuthorizationUri("authorizationUri");
-        clientRegistration.setAccessTokenUri("tokenUri");
-        clientRegistration.setRedirectUriTemplate("redirectUriTemplate");
-        clientRegistration.setScope(Arrays.asList("scope1", "scope2"));
-        clientRegistration.setUserInfoUri("userInfoUri");
-        clientRegistration.setUserNameAttributeName("userNameAttributeName");
-        clientRegistration.setJwkSetUri("jwkSetUri");
-        clientRegistration.setClientAuthenticationMethod("clientAuthenticationMethod");
-        clientRegistration.setLoginButtonLabel("loginButtonLabel");
-        clientRegistration.setLoginButtonIcon("loginButtonIcon");
+        clientRegistration.setClientId(UUID.randomUUID().toString());
+        clientRegistration.setClientSecret(UUID.randomUUID().toString());
+        clientRegistration.setAuthorizationUri(UUID.randomUUID().toString());
+        clientRegistration.setAccessTokenUri(UUID.randomUUID().toString());
+        clientRegistration.setRedirectUriTemplate(UUID.randomUUID().toString());
+        clientRegistration.setScope(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+        clientRegistration.setUserInfoUri(UUID.randomUUID().toString());
+        clientRegistration.setUserNameAttributeName(UUID.randomUUID().toString());
+        clientRegistration.setJwkSetUri(UUID.randomUUID().toString());
+        clientRegistration.setClientAuthenticationMethod(UUID.randomUUID().toString());
+        clientRegistration.setLoginButtonLabel(UUID.randomUUID().toString());
+        clientRegistration.setLoginButtonIcon(UUID.randomUUID().toString());
         clientRegistration.setAdditionalInfo(mapper.createObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
         return clientRegistration;
     }
