@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.*;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.tenant.TenantService;
 
 import javax.transaction.Transactional;
 import java.util.*;
@@ -55,20 +54,20 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
 
     @Override
     @Transactional
-    public List<OAuth2ClientsDomainParams> saveDomainsParams(List<OAuth2ClientsDomainParams> domainsParams) {
-        log.trace("Executing saveDomainsParams [{}]", domainsParams);
-        clientParamsValidator.accept(domainsParams);
-        List<OAuth2ClientRegistration> inputClientRegistrations = OAuth2Utils.toClientRegistrations(domainsParams);
+    public OAuth2ClientsParams saveOAuth2Params(OAuth2ClientsParams oauth2Params) {
+        log.trace("Executing saveOAuth2Params [{}]", oauth2Params);
+        clientParamsValidator.accept(oauth2Params);
+        List<OAuth2ClientRegistration> inputClientRegistrations = OAuth2Utils.toClientRegistrations(oauth2Params);
         List<OAuth2ClientRegistration> savedClientRegistrations = inputClientRegistrations.stream()
                 .map(clientRegistration -> clientRegistrationDao.save(TenantId.SYS_TENANT_ID, clientRegistration))
                 .collect(Collectors.toList());
-        return OAuth2Utils.toDomainsParams(savedClientRegistrations);
+        return OAuth2Utils.toOAuth2Params(savedClientRegistrations);
     }
 
     @Override
-    public List<OAuth2ClientsDomainParams> findDomainsParams() {
-        log.trace("Executing findDomainsParams");
-        return OAuth2Utils.toDomainsParams(clientRegistrationDao.findAll());
+    public OAuth2ClientsParams findOAuth2Params() {
+        log.trace("Executing findOAuth2Params");
+        return OAuth2Utils.toOAuth2Params(clientRegistrationDao.findAll());
     }
 
     @Override
@@ -99,11 +98,13 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
         clientRegistrationDao.removeByDomainName(domain);
     }
 
-    private final Consumer<List<OAuth2ClientsDomainParams>> clientParamsValidator = domainsParams -> {
-        if (domainsParams == null || domainsParams.isEmpty()) {
+    private final Consumer<OAuth2ClientsParams> clientParamsValidator = oauth2Params -> {
+        if (oauth2Params == null
+                || oauth2Params.getOAuth2DomainDtos() == null
+                || oauth2Params.getOAuth2DomainDtos().isEmpty()) {
             throw new DataValidationException("Domain params should be specified!");
         }
-        for (OAuth2ClientsDomainParams domainParams : domainsParams) {
+        for (OAuth2ClientsDomainParams domainParams : oauth2Params.getOAuth2DomainDtos()) {
             if (StringUtils.isEmpty(domainParams.getDomainName())) {
                 throw new DataValidationException("Domain name should be specified!");
             }

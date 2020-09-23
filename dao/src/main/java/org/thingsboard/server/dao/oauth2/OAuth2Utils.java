@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OAuth2Utils {
-    public static final String ALLOW_OAUTH2_CONFIGURATION = "allowOAuth2Configuration";
     public static final String OAUTH2_AUTHORIZATION_PATH_TEMPLATE = "/oauth2/authorization/%s";
 
     public static OAuth2ClientInfo toClientInfo(OAuth2ClientRegistration clientRegistration) {
@@ -35,8 +34,8 @@ public class OAuth2Utils {
         return client;
     }
 
-    public static List<OAuth2ClientRegistration> toClientRegistrations(List<OAuth2ClientsDomainParams> domainsParams) {
-        return domainsParams.stream()
+    public static List<OAuth2ClientRegistration> toClientRegistrations(OAuth2ClientsParams oAuth2Params) {
+        return oAuth2Params.getOAuth2DomainDtos().stream()
                 .flatMap(domainParams -> domainParams.getClientRegistrations().stream()
                         .map(clientRegistrationDto -> OAuth2Utils.toClientRegistration(domainParams.getDomainName(),
                                 domainParams.getRedirectUriTemplate(), clientRegistrationDto)
@@ -44,7 +43,7 @@ public class OAuth2Utils {
                 .collect(Collectors.toList());
     }
 
-    public static List<OAuth2ClientsDomainParams> toDomainsParams(List<OAuth2ClientRegistration> clientRegistrations) {
+    public static OAuth2ClientsParams toOAuth2Params(List<OAuth2ClientRegistration> clientRegistrations) {
         Map<String, OAuth2ClientsDomainParams> domainParamsMap = new HashMap<>();
         for (OAuth2ClientRegistration clientRegistration : clientRegistrations) {
             String domainName = clientRegistration.getDomainName();
@@ -54,7 +53,7 @@ public class OAuth2Utils {
             domainParams.getClientRegistrations()
                     .add(toClientRegistrationDto(clientRegistration));
         }
-        return new ArrayList<>(domainParamsMap.values());
+        return new OAuth2ClientsParams(new ArrayList<>(domainParamsMap.values()));
     }
 
     public static ClientRegistrationDto toClientRegistrationDto(OAuth2ClientRegistration oAuth2ClientRegistration) {

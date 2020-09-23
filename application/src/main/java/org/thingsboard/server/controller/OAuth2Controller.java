@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientsDomainParams;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.servlet.http.HttpServletRequest;
@@ -51,9 +52,9 @@ public class OAuth2Controller extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/oauth2/config", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
-    public List<OAuth2ClientsDomainParams> getCurrentClientsParams() throws ThingsboardException {
+    public OAuth2ClientsParams getCurrentOAuth2Params() throws ThingsboardException {
         try {
-            return oAuth2Service.findDomainsParams();
+            return oAuth2Service.findOAuth2Params();
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -62,9 +63,9 @@ public class OAuth2Controller extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/oauth2/config", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public List<OAuth2ClientsDomainParams> saveClientParams(@RequestBody List<OAuth2ClientsDomainParams> domainsParams) throws ThingsboardException {
+    public OAuth2ClientsParams saveOAuth2Params(@RequestBody OAuth2ClientsParams oauth2Params) throws ThingsboardException {
         try {
-            return oAuth2Service.saveDomainsParams(domainsParams);
+            return oAuth2Service.saveOAuth2Params(oauth2Params);
         } catch (Exception e) {
             throw handleException(e);
         }
