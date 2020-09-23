@@ -22,8 +22,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -222,8 +220,8 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     }
 
     @Override
-    public Device findDeviceByTenantIdAndDeviceDataProvisionConfigurationPair(TenantId tenantId, String provisionDeviceKey, String provisionDeviceSecret) {
-        return DaoUtil.getData(deviceRepository.findDeviceByTenantIdAndDeviceDataProvisionConfigurationPair(tenantId.getId(), provisionDeviceKey, provisionDeviceSecret));
+    public Optional<Device> findDeviceByProfileNameAndDeviceDataProvisionConfigurationPair(String profileName, String provisionDeviceKey, String provisionDeviceSecret) {
+        return Optional.ofNullable(DaoUtil.getData(deviceRepository.findDeviceByProfileNameAndDeviceDataProvisionConfigurationPair(profileName, provisionDeviceKey, provisionDeviceSecret)));
     }
 
     private List<EntitySubtype> convertTenantDeviceTypesToDto(UUID tenantId, List<String> types) {

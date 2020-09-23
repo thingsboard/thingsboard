@@ -154,7 +154,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 try {
                     if (topicName.equals(MqttTopics.DEVICE_PROVISION_REQUEST_TOPIC)) {
                         TransportProtos.ProvisionDeviceRequestMsg provisionRequestMsg = adaptor.convertToProvisionRequestMsg(deviceSessionCtx, mqttMsg);
-                        transportService.process(deviceSessionCtx.getSessionInfo(), provisionRequestMsg, (TransportServiceCallback) new DeviceProvisionCallback(ctx, msgId, provisionRequestMsg));
+                        transportService.process(provisionRequestMsg, new DeviceProvisionCallback(ctx, msgId, provisionRequestMsg));
                         log.trace("[{}][{}] Processing publish msg [{}][{}]!", sessionId, deviceSessionCtx.getDeviceId(), topicName, msgId);
                     } else {
                         throw new RuntimeException("Unsupported topic for provisioning requests!");
@@ -167,6 +167,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             case PINGREQ:
                 ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
                 break;
+//            case SUBSCRIBE:
+//                deviceSessionCtx.setDeviceInfo(TransportDeviceInfo);
+//                processSubscribe(ctx, (MqttSubscribeMessage) msg);
+//                break;
             case DISCONNECT:
                 ctx.close();
                 break;
@@ -425,7 +429,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         log.info("[{}] Processing connect msg for client: {}!", sessionId, msg.payload().clientIdentifier());
         String userName = msg.payload().userName();
         if (DataConstants.PROVISION.equals(userName)) {
-            deviceSessionCtx.setDeviceInfo(new TransportDeviceInfo());
             deviceSessionCtx.setProvisionOnly(true);
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
         } else {

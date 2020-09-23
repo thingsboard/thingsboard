@@ -477,7 +477,7 @@ message TransportApiRequestMsg {
   GetTenantRoutingInfoRequestMsg getTenantRoutingInfoRequestMsg = 4;
   GetDeviceProfileRequestMsg getDeviceProfileRequestMsg = 5;
   ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 6;
-//  ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 7;
+  ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 7;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -486,7 +486,7 @@ message TransportApiResponseMsg {
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
   GetTenantRoutingInfoResponseMsg getTenantRoutingInfoResponseMsg = 4;
   GetDeviceProfileResponseMsg getDeviceProfileResponseMsg = 5;
-//  ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 6;
+  ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 6;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */

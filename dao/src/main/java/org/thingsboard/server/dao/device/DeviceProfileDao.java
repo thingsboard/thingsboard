@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface DeviceProfileDao extends Dao<DeviceProfile> {
@@ -38,9 +39,7 @@ public interface DeviceProfileDao extends Dao<DeviceProfile> {
 
     DeviceProfileInfo findDefaultDeviceProfileInfo(TenantId tenantId);
 
-    DeviceProfileInfo findProfileInfoByTenantIdAndProfileDataProvisionConfigurationPair(TenantId tenantId, String provisionDeviceKey, String provisionDeviceSecret);
-
-    DeviceProfile findProfileByTenantIdAndProfileDataProvisionConfigurationPair(TenantId tenantId, String provisionDeviceKey, String provisionDeviceSecret);
+    DeviceProfile findProfileByProfileNameAndProfileDataProvisionConfigurationPair(String profileName, String provisionDeviceKey, String provisionDeviceSecret);
 
     DeviceProfile findByName(TenantId tenantId, String profileName);
 }

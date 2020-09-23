@@ -52,6 +52,8 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
@@ -333,6 +335,16 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
+    public void process(ProvisionDeviceRequestMsg requestMsg, TransportServiceCallback<ProvisionDeviceResponseMsg> callback) {
+        log.trace("Processing msg: {}", requestMsg);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setProvisionDeviceRequestMsg(requestMsg).build());
+        ListenableFuture<ProvisionDeviceResponseMsg> response = Futures.transform(transportApiRequestTemplate.send(protoMsg), tmp ->
+            tmp.getValue().getProvisionDeviceResponseMsg()
+        , MoreExecutors.directExecutor());
+        AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
+    }
+
+    @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscriptionInfoProto msg, TransportServiceCallback<Void> callback) {
         if (log.isTraceEnabled()) {
             log.trace("[{}] Processing msg: {}", toSessionId(sessionInfo), msg);
@@ -481,15 +493,6 @@ public class DefaultTransportService implements TransportService {
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                     .setClaimDevice(msg).build(), callback);
-        }
-    }
-
-    @Override
-    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ProvisionDeviceRequestMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, msg, callback)) {
-            reportActivityInternal(sessionInfo);
-            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                    .setProvisionDevice(msg).build(), callback);
         }
     }
 

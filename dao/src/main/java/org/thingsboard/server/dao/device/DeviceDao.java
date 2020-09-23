@@ -215,6 +215,6 @@ public interface DeviceDao extends Dao<Device> {
      */
     PageData<Device> findDevicesByTenantIdAndProfileId(UUID tenantId, UUID profileId, PageLink pageLink);
 
-    Device findDeviceByTenantIdAndDeviceDataProvisionConfigurationPair(TenantId tenantId, String provisionDeviceKey, String provisionDeviceSecret);
+    Optional<Device> findDeviceByProfileNameAndDeviceDataProvisionConfigurationPair(String profileName, String provisionDeviceKey, String provisionDeviceSecret);
 
 }

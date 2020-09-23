@@ -20,10 +20,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
 import org.thingsboard.server.dao.model.sql.DeviceInfoEntity;
-import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -171,12 +169,12 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
 
     Long countByDeviceProfileId(UUID deviceProfileId);
 
-    @Query(value = "SELECT d FROM Device d " +
-            "WHERE d.tenant_id = :tenantId " +
-            "AND d.device_data::jsonb->>('configuration', 'provisionDeviceKey') = :provisionDeviceKey " +
-            "AND d.device_data::jsonb->>('configuration', 'provisionDeviceSecret') = :provisionDeviceSecret",
+    @Query(value = "SELECT * FROM Device as d " +
+            "WHERE d.device_data->'configuration'->>'provisionDeviceKey' = :provisionDeviceKey " +
+            "AND d.device_data->'configuration'->>'provisionDeviceSecret' = :provisionDeviceSecret " +
+            "AND d.type = :profileName",
             nativeQuery = true)
-    DeviceEntity findDeviceByTenantIdAndDeviceDataProvisionConfigurationPair(@Param("tenantId") UUID tenantId,
-                                                                             @Param("provisionDeviceKey") String provisionDeviceKey,
-                                                                             @Param("provisionDeviceSecret") String provisionDeviceSecret);
+    DeviceEntity findDeviceByProfileNameAndDeviceDataProvisionConfigurationPair(@Param("profileName") String profileName,
+                                                                                @Param("provisionDeviceKey") String provisionDeviceKey,
+                                                                                @Param("provisionDeviceSecret") String provisionDeviceSecret);
 }

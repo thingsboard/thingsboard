@@ -20,9 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
-import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 
 import java.util.UUID;
@@ -58,23 +56,14 @@ public interface DeviceProfileRepository extends PagingAndSortingRepository<Devi
 
     DeviceProfileEntity findByTenantIdAndName(UUID id, String profileName);
 
-    @Query(value = "SELECT d FROM DeviceProfileEntity d " +
-            "WHERE d.tenantId = :tenantId " +
-            "AND d.profileData::jsonb->>{'configuration', 'provisionDeviceKey'} = :provisionDeviceKey " +
-            "AND d.profileData::jsonb->>{'configuration', 'provisionDeviceSecret' = :provisionDeviceSecret}",
+    @Query(value = "SELECT d.* FROM device_profile as d " +
+            "WHERE d.name = :profileName " +
+            "AND d.profile_data->'configuration'->>'provisionDeviceKey' IS NOT NULL " +
+            "AND d.profile_data->'configuration'->>'provisionDeviceSecret' IS NOT NULL " +
+            "AND d.profile_data->'configuration'->>'provisionDeviceKey' = :provisionDeviceKey " +
+            "AND d.profile_data->'configuration'->>'provisionDeviceSecret' = :provisionDeviceSecret",
             nativeQuery = true)
-    DeviceProfileEntity findProfileByTenantIdAndProfileDataProvisionConfigurationPair(@Param("tenantId") UUID tenantId,
-                                                                                      @Param("provisionDeviceKey") String provisionDeviceKey,
-                                                                                      @Param("provisionDeviceSecret") String provisionDeviceSecret);
-
-    @Query(value = "SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.name, d.type, d.transportType) " +
-            " FROM DeviceProfileEntity d " +
-            "WHERE d.tenantId = :tenantId " +
-            "AND d.profileData::jsonb->>{'configuration', 'provisionDeviceKey'} = :provisionDeviceKey " +
-            "AND d.profileData::jsonb->>{'configuration', 'provisionDeviceSecret' = :provisionDeviceSecret}",
-            nativeQuery = true)
-    DeviceProfileInfo findProfileInfoByTenantIdAndProfileDataProvisionConfigurationPair(@Param("tenantId") UUID tenantId,
-                                                                                      @Param("provisionDeviceKey") String provisionDeviceKey,
-                                                                                      @Param("provisionDeviceSecret") String provisionDeviceSecret);
-
+    DeviceProfileEntity findProfileByProfileNameAndProfileDataProvisionConfigurationPair(@Param("profileName") String profileName,
+                                                                                         @Param("provisionDeviceKey") String provisionDeviceKey,
+                                                                                         @Param("provisionDeviceSecret") String provisionDeviceSecret);
 }
