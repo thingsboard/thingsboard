@@ -527,8 +527,6 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
     const rows: TimeseriesRow[]  = [];
 
     for (const value of Object.values(rowsMap)) {
-      this.hideEmptyLines = true;
-
       if (this.hideEmptyLines && isDefinedAndNotNull(value[1])) {
         rows.push(value);
       } else {
