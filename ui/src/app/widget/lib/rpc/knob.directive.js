@@ -50,6 +50,7 @@ function KnobController($element, $scope, $document) {
 
     vm.value = 0;
     vm.error = '';
+    vm.newValue = 0;
 
     var knob = angular.element('.knob', $element),
         knobContainer = angular.element('#knob-container', $element),
@@ -145,9 +146,11 @@ function KnobController($element, $scope, $document) {
             turn(degreeToRatio(currentDeg));
             rotation = currentDeg;
             startDeg = -1;
+            rpcUpdateValue(vm.newValue);
         });
 
         knob.on('mousedown touchstart', (e) => {
+            moving = false;
             e.preventDefault();
             var offset = knob.offset();
             var center = {
@@ -158,7 +161,7 @@ function KnobController($element, $scope, $document) {
             var a, b, deg, tmp,
                 rad2deg = 180/Math.PI;
 
-            knob.on('mousemove.rem touchmove.rem', (e) => {
+            $document.on('mousemove.rem touchmove.rem', (e) => {
                 moving = true;
                 e = (e.originalEvent.touches) ? e.originalEvent.touches[0] : e;
 
@@ -209,6 +212,9 @@ function KnobController($element, $scope, $document) {
             });
 
             $document.on('mouseup.rem  touchend.rem',() => {
+                if(moving) {
+                    rpcUpdateValue(vm.newValue);
+                }
                 knob.off('.rem');
                 $document.off('.rem');
                 rotation = currentDeg;
@@ -269,12 +275,12 @@ function KnobController($element, $scope, $document) {
     }
 
     function turn(ratio) {
-        var value = (vm.minValue + (vm.maxValue - vm.minValue)*ratio).toFixed(vm.ctx.decimals);
-        if (canvasBar.value != value) {
-            canvasBar.value = value;
+        vm.newValue = (vm.minValue + (vm.maxValue - vm.minValue)*ratio).toFixed(vm.ctx.decimals);
+        if (canvasBar.value != vm.newValue) {
+            canvasBar.value = vm.newValue;
         }
         updateColor(canvasBar.getValueColor());
-        onValue(value);
+        onValue(vm.newValue);
     }
 
     function setValue(value) {
@@ -303,7 +309,7 @@ function KnobController($element, $scope, $document) {
         $scope.$applyAsync(() => {
             vm.value = formatValue(value);
             checkValueSize();
-            rpcUpdateValue(value);
+            // rpcUpdateValue(vm.newValue);
         });
     }
 
