@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.edge;
+package org.thingsboard.server.edge.imitator;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.edge.rpc.EdgeGrpcClient;
 import org.thingsboard.edge.rpc.EdgeRpcClient;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
@@ -32,7 +32,6 @@ import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.DownlinkResponseMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
-import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.edge.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
@@ -75,7 +74,7 @@ public class EdgeImitator {
                 this::onUplinkResponse,
                 this::onEdgeUpdate,
                 this::onDownlink,
-                this::onError);
+                this::onClose);
     }
 
     public void disconnect() throws InterruptedException {
@@ -107,30 +106,30 @@ public class EdgeImitator {
         }, MoreExecutors.directExecutor());
     }
 
-    private void onError(Exception e) {
-        log.error("Error during Edge lifecycle: ", e);
+    private void onClose(Exception e) {
+        log.info("onClose: {}", e.getMessage());
     }
 
     private ListenableFuture<List<Void>> processDownlinkMsg(DownlinkMsg downlinkMsg) {
         List<ListenableFuture<Void>> result = new ArrayList<>();
         if (downlinkMsg.getDeviceUpdateMsgList() != null && !downlinkMsg.getDeviceUpdateMsgList().isEmpty()) {
             for (DeviceUpdateMsg deviceUpdateMsg: downlinkMsg.getDeviceUpdateMsgList()) {
-                result.add(storage.processEntity(deviceUpdateMsg.getMsgType(), EdgeEventType.DEVICE, new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB())));
+                result.add(storage.processEntity(deviceUpdateMsg.getMsgType(), EntityType.DEVICE, new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB())));
             }
         }
         if (downlinkMsg.getAssetUpdateMsgList() != null && !downlinkMsg.getAssetUpdateMsgList().isEmpty()) {
             for (AssetUpdateMsg assetUpdateMsg: downlinkMsg.getAssetUpdateMsgList()) {
-                result.add(storage.processEntity(assetUpdateMsg.getMsgType(), EdgeEventType.ASSET, new UUID(assetUpdateMsg.getIdMSB(), assetUpdateMsg.getIdLSB())));
+                result.add(storage.processEntity(assetUpdateMsg.getMsgType(), EntityType.ASSET, new UUID(assetUpdateMsg.getIdMSB(), assetUpdateMsg.getIdLSB())));
             }
         }
         if (downlinkMsg.getRuleChainUpdateMsgList() != null && !downlinkMsg.getRuleChainUpdateMsgList().isEmpty()) {
             for (RuleChainUpdateMsg ruleChainUpdateMsg: downlinkMsg.getRuleChainUpdateMsgList()) {
-                result.add(storage.processEntity(ruleChainUpdateMsg.getMsgType(), EdgeEventType.RULE_CHAIN, new UUID(ruleChainUpdateMsg.getIdMSB(), ruleChainUpdateMsg.getIdLSB())));
+                result.add(storage.processEntity(ruleChainUpdateMsg.getMsgType(), EntityType.RULE_CHAIN, new UUID(ruleChainUpdateMsg.getIdMSB(), ruleChainUpdateMsg.getIdLSB())));
             }
         }
         if (downlinkMsg.getDashboardUpdateMsgList() != null && !downlinkMsg.getDashboardUpdateMsgList().isEmpty()) {
             for (DashboardUpdateMsg dashboardUpdateMsg: downlinkMsg.getDashboardUpdateMsgList()) {
-                result.add(storage.processEntity(dashboardUpdateMsg.getMsgType(), EdgeEventType.DASHBOARD, new UUID(dashboardUpdateMsg.getIdMSB(), dashboardUpdateMsg.getIdLSB())));
+                result.add(storage.processEntity(dashboardUpdateMsg.getMsgType(), EntityType.DASHBOARD, new UUID(dashboardUpdateMsg.getIdMSB(), dashboardUpdateMsg.getIdLSB())));
             }
         }
         if (downlinkMsg.getRelationUpdateMsgList() != null && !downlinkMsg.getRelationUpdateMsgList().isEmpty()) {
@@ -141,13 +140,6 @@ public class EdgeImitator {
         if (downlinkMsg.getAlarmUpdateMsgList() != null && !downlinkMsg.getAlarmUpdateMsgList().isEmpty()) {
             for (AlarmUpdateMsg alarmUpdateMsg: downlinkMsg.getAlarmUpdateMsgList()) {
                 result.add(storage.processAlarm(alarmUpdateMsg));
-            }
-        }
-        if (downlinkMsg.getEntityDataList() != null && !downlinkMsg.getEntityDataList().isEmpty()) {
-            for (EntityDataProto entityDataProto: downlinkMsg.getEntityDataList()) {
-                if (entityDataProto.hasPostTelemetryMsg()) {
-                    result.add(storage.processTelemetry(new UUID(entityDataProto.getEntityIdMSB(), entityDataProto.getEntityIdLSB()), entityDataProto.getPostTelemetryMsg()));
-                }
             }
         }
         return Futures.allAsList(result);

@@ -94,11 +94,6 @@
             <groupId>org.thingsboard</groupId>
             <artifactId>rest-client</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.thingsboard.common</groupId>
-            <artifactId>edge-api</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>

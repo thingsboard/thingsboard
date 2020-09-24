@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 @RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.msa.*EdgeTest"})
+@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.msa.*Test"})
 public class ContainerTestSuite {
 
     private static DockerComposeContainer testContainer;

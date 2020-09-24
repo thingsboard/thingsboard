@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.edge;
+package org.thingsboard.server.edge.imitator;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -29,7 +29,6 @@ import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
-import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,20 +45,17 @@ public class EdgeStorage {
 
     private EdgeConfiguration configuration;
 
-    private Map<UUID, EdgeEventType> entities;
+    private Map<UUID, EntityType> entities;
     private Map<String, AlarmStatus> alarms;
     private List<EntityRelation> relations;
-    private Map<UUID, TransportProtos.PostTelemetryMsg> latestTelemetry;
-
 
     public EdgeStorage() {
         entities = new HashMap<>();
         alarms = new HashMap<>();
         relations = new ArrayList<>();
-        latestTelemetry = new HashMap<>();
     }
 
-    public ListenableFuture<Void> processEntity(UpdateMsgType msgType, EdgeEventType type, UUID uuid) {
+    public ListenableFuture<Void> processEntity(UpdateMsgType msgType, EntityType type, UUID uuid) {
         switch (msgType) {
             case ENTITY_CREATED_RPC_MESSAGE:
             case ENTITY_UPDATED_RPC_MESSAGE:
@@ -105,16 +101,10 @@ public class EdgeStorage {
         return Futures.immediateFuture(null);
     }
 
-    public ListenableFuture<Void> processTelemetry(UUID uuid, TransportProtos.PostTelemetryMsg telemetryMsg) {
-        latestTelemetry.put(uuid, telemetryMsg);
-        return Futures.immediateFuture(null);
-    }
-
-    public Set<UUID> getEntitiesByType(EdgeEventType type) {
-        Map<UUID, EdgeEventType> filtered = entities.entrySet().stream()
+    public Set<UUID> getEntitiesByType(EntityType type) {
+        return entities.entrySet().stream()
                 .filter(entry -> entry.getValue().equals(type))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        return filtered.keySet();
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)).keySet();
     }
 
 }
