@@ -111,6 +111,7 @@ public class EdgeImitator {
     }
 
     private ListenableFuture<List<Void>> processDownlinkMsg(DownlinkMsg downlinkMsg) {
+        log.info(String.valueOf(downlinkMsg));
         List<ListenableFuture<Void>> result = new ArrayList<>();
         if (downlinkMsg.getDeviceUpdateMsgList() != null && !downlinkMsg.getDeviceUpdateMsgList().isEmpty()) {
             for (DeviceUpdateMsg deviceUpdateMsg: downlinkMsg.getDeviceUpdateMsgList()) {

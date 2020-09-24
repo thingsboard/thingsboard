@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -45,11 +46,14 @@ public class EdgeStorage {
 
     private EdgeConfiguration configuration;
 
+    private CountDownLatch latch;
+
     private Map<UUID, EntityType> entities;
     private Map<String, AlarmStatus> alarms;
     private List<EntityRelation> relations;
 
     public EdgeStorage() {
+        latch = new CountDownLatch(0);
         entities = new HashMap<>();
         alarms = new HashMap<>();
         relations = new ArrayList<>();
@@ -60,15 +64,19 @@ public class EdgeStorage {
             case ENTITY_CREATED_RPC_MESSAGE:
             case ENTITY_UPDATED_RPC_MESSAGE:
                 entities.put(uuid, type);
+                latch.countDown();
                 break;
             case ENTITY_DELETED_RPC_MESSAGE:
-                entities.remove(uuid);
+                if (entities.remove(uuid) != null) {
+                    latch.countDown();
+                }
                 break;
         }
         return Futures.immediateFuture(null);
     }
 
     public ListenableFuture<Void> processRelation(RelationUpdateMsg relationMsg) {
+        boolean result = false;
         EntityRelation relation = new EntityRelation();
         relation.setType(relationMsg.getType());
         relation.setTypeGroup(RelationTypeGroup.valueOf(relationMsg.getTypeGroup()));
@@ -77,11 +85,14 @@ public class EdgeStorage {
         switch (relationMsg.getMsgType()) {
             case ENTITY_CREATED_RPC_MESSAGE:
             case ENTITY_UPDATED_RPC_MESSAGE:
-                relations.add(relation);
+                result = relations.add(relation);
                 break;
             case ENTITY_DELETED_RPC_MESSAGE:
-                relations.remove(relation);
+                result = relations.remove(relation);
                 break;
+        }
+        if (result) {
+            latch.countDown();
         }
         return Futures.immediateFuture(null);
     }
@@ -93,9 +104,12 @@ public class EdgeStorage {
             case ALARM_ACK_RPC_MESSAGE:
             case ALARM_CLEAR_RPC_MESSAGE:
                 alarms.put(alarmMsg.getType(), AlarmStatus.valueOf(alarmMsg.getStatus()));
+                latch.countDown();
                 break;
             case ENTITY_DELETED_RPC_MESSAGE:
-                alarms.remove(alarmMsg.getName());
+                if (alarms.remove(alarmMsg.getName()) != null) {
+                    latch.countDown();
+                }
                 break;
         }
         return Futures.immediateFuture(null);
