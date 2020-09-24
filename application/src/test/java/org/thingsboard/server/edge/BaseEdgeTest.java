@@ -45,9 +45,12 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.edge.imitator.EdgeImitator;
-import org.thingsboard.server.gen.edge.*;
+import org.thingsboard.server.gen.edge.EdgeConfiguration;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
