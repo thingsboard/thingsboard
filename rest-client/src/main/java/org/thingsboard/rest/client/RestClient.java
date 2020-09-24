@@ -2251,6 +2251,53 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 }, params).getBody();
     }
 
+    public Optional<RuleChain> addDefaultEdgeRuleChain(RuleChainId ruleChainId) {
+        try {
+            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/ruleChain/{ruleChainId}/defaultEdge", null, RuleChain.class, ruleChainId.getId());
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<RuleChain> removeDefaultEdgeRuleChain(RuleChainId ruleChainId) {
+        try {
+            ResponseEntity<RuleChain> ruleChain = restTemplate.exchange(baseURL + "/api/ruleChain/{ruleChainId}/defaultEdge", HttpMethod.DELETE, HttpEntity.EMPTY, RuleChain.class, ruleChainId.getId());
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public List<RuleChain> getDefaultEdgeRuleChains() {
+        return restTemplate.exchange(baseURL + "/ruleChain/defaultEdgeRuleChains",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<RuleChain>>() {
+                }).getBody();
+    }
+
+    public Optional<RuleChain> setDefaultRootEdgeRuleChain(RuleChainId ruleChainId) {
+        try {
+            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/ruleChain/{ruleChainId}/defaultRootEdge", null, RuleChain.class, ruleChainId.getId());
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
     public TextPageData<Edge> getTenantEdges(String type, TextPageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("type", type);
