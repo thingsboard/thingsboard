@@ -410,10 +410,16 @@ export default abstract class LeafletMap {
     }
 
     convertToCustomFormat(position: L.LatLng): object {
-        return {
-            [this.options.latKeyName]: position.lat % 90,
-            [this.options.lngKeyName]: position.lng % 180
-        };
+      if(position.lng > 180){
+        position.lng = 180;
+      }else if(position.lng < -180){
+        position.lng = -180;
+      };
+
+      return {
+        [this.options.latKeyName]: position.lat,
+        [this.options.lngKeyName]: position.lng
+      };
     }
 
     convertToPolygonFormat(points: Array<any>): Array<any> {
