@@ -75,6 +75,8 @@ public class EdgeImitator {
                 this::onEdgeUpdate,
                 this::onDownlink,
                 this::onClose);
+
+        edgeRpcClient.sendSyncRequestMsg();
     }
 
     public void disconnect() throws InterruptedException {
