@@ -114,6 +114,9 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                         }
                         onError.accept(new EdgeConnectionException("Failed to establish the connection! Response code: " + connectResponseMsg.getResponseCode().name()));
                     }
+                } else if (responseMsg.hasEdgeUpdateMsg()) {
+                    log.debug("[{}] Edge update message received {}", edgeKey, responseMsg.getEdgeUpdateMsg());
+                    onEdgeUpdate.accept(responseMsg.getEdgeUpdateMsg().getConfiguration());
                 } else if (responseMsg.hasUplinkResponseMsg()) {
                     log.debug("[{}] Uplink response message received {}", edgeKey, responseMsg.getUplinkResponseMsg());
                     onUplinkResponse.accept(responseMsg.getUplinkResponseMsg());

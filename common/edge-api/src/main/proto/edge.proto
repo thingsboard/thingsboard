@@ -44,12 +44,17 @@ message ResponseMsg {
   ConnectResponseMsg connectResponseMsg = 1;
   UplinkResponseMsg uplinkResponseMsg = 2;
   DownlinkMsg downlinkMsg = 3;
+  EdgeUpdateMsg edgeUpdateMsg = 4;
 }
 
 enum RequestMsgType {
   CONNECT_RPC_MESSAGE = 0;
   UPLINK_RPC_MESSAGE = 1;
   SYNC_REQUEST_RPC_MESSAGE = 2;
+}
+
+message EdgeUpdateMsg {
+  EdgeConfiguration configuration = 1;
 }
 
 message ConnectRequestMsg {
