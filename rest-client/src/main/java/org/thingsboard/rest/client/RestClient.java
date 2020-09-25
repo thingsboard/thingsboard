@@ -2278,7 +2278,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public List<RuleChain> getDefaultEdgeRuleChains() {
-        return restTemplate.exchange(baseURL + "/ruleChain/defaultEdgeRuleChains",
+        return restTemplate.exchange(baseURL + "/api/ruleChain/defaultEdgeRuleChains",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<RuleChain>>() {
