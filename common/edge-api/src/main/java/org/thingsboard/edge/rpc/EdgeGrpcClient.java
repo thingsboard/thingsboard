@@ -81,7 +81,6 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 throw new RuntimeException(e);
             }
         }
-        gracefulShutdown();
         channel = builder.build();
         EdgeRpcServiceGrpc.EdgeRpcServiceStub stub = EdgeRpcServiceGrpc.newStub(channel);
         log.info("[{}] Sending a connect request to the TB!", edgeKey);
@@ -90,53 +89,6 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 .setMsgType(RequestMsgType.CONNECT_RPC_MESSAGE)
                 .setConnectRequestMsg(ConnectRequestMsg.newBuilder().setEdgeRoutingKey(edgeKey).setEdgeSecret(edgeSecret).build())
                 .build());
-    }
-
-    private void gracefulShutdown() {
-        try {
-            if (channel != null) {
-                channel.shutdown().awaitTermination(timeoutSecs, TimeUnit.SECONDS);
-            }
-        } catch (InterruptedException e) {
-            log.debug("Error during shutdown of the previous channel", e);
-        }
-    }
-
-    @Override
-    public void disconnect() throws InterruptedException {
-        try {
-            inputStream.onCompleted();
-        } catch (Exception e) {
-        }
-        if (channel != null) {
-            channel.shutdown().awaitTermination(timeoutSecs, TimeUnit.SECONDS);
-        }
-    }
-
-    @Override
-    public void sendUplinkMsg(UplinkMsg msg) {
-        try {
-            uplinkMsgLock.lock();
-            this.inputStream.onNext(RequestMsg.newBuilder()
-                    .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
-                    .setUplinkMsg(msg)
-                    .build());
-        } finally {
-            uplinkMsgLock.unlock();
-        }
-    }
-
-    @Override
-    public void sendDownlinkResponseMsg(DownlinkResponseMsg downlinkResponseMsg) {
-        try {
-            uplinkMsgLock.lock();
-            this.inputStream.onNext(RequestMsg.newBuilder()
-                    .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
-                    .setDownlinkResponseMsg(downlinkResponseMsg)
-                    .build());
-        } finally {
-            uplinkMsgLock.unlock();
-        }
     }
 
     private StreamObserver<ResponseMsg> initOutputStream(String edgeKey,
@@ -179,8 +131,52 @@ public class EdgeGrpcClient implements EdgeRpcClient {
             @Override
             public void onCompleted() {
                 log.debug("[{}] The rpc session was closed!", edgeKey);
-                onError.accept(new EdgeConnectionException("[" + edgeKey + "] The rpc session was closed!"));
             }
         };
+    }
+
+    @Override
+    public void disconnect() throws InterruptedException {
+        if (channel != null) {
+            channel.shutdown().awaitTermination(timeoutSecs, TimeUnit.SECONDS);
+        }
+    }
+
+    @Override
+    public void sendUplinkMsg(UplinkMsg msg) {
+        try {
+            uplinkMsgLock.lock();
+            this.inputStream.onNext(RequestMsg.newBuilder()
+                    .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
+                    .setUplinkMsg(msg)
+                    .build());
+        } finally {
+            uplinkMsgLock.unlock();
+        }
+    }
+
+    @Override
+    public void sendSyncRequestMsg() {
+        try {
+            uplinkMsgLock.lock();
+            this.inputStream.onNext(RequestMsg.newBuilder()
+                    .setMsgType(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)
+                    .build());
+        } finally {
+            uplinkMsgLock.unlock();
+        }
+    }
+
+    @Override
+    public void sendDownlinkResponseMsg(DownlinkResponseMsg downlinkResponseMsg) {
+        try {
+            uplinkMsgLock.lock();
+            this.inputStream.onNext(RequestMsg.newBuilder()
+                    .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
+                    .setDownlinkResponseMsg(downlinkResponseMsg)
+                    .build());
+        } finally {
+            uplinkMsgLock.unlock();
+        }
     }
 }

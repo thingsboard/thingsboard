@@ -145,8 +145,15 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         executor.submit(() -> {
             while (!Thread.interrupted()) {
                 try {
-                    for (EdgeGrpcSession session : sessions.values()) {
-                        session.processHandleMessages();
+                    if (sessions.size() > 0) {
+                        for (EdgeGrpcSession session : sessions.values()) {
+                            session.processHandleMessages();
+                        }
+                    } else {
+                        log.trace("No sessions available, sleep for the next run");
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException ignore) {}
                     }
                 } catch (Exception e) {
                     log.warn("Failed to process messages handling!", e);

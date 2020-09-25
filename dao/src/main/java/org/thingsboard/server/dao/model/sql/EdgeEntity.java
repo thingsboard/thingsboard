@@ -36,9 +36,11 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CLOUD_ENDPOINT_KEY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LABEL_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LICENSE_KEY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROOT_RULE_CHAIN_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROUTING_KEY_PROPERTY;
@@ -81,6 +83,12 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
     @Column(name = EDGE_SECRET_PROPERTY)
     private String secret;
 
+    @Column(name = EDGE_LICENSE_KEY_PROPERTY)
+    private String edgeLicenseKey;
+
+    @Column(name = EDGE_CLOUD_ENDPOINT_KEY_PROPERTY)
+    private String cloudEndpoint;
+
     @Type(type = "json")
     @Column(name = ModelConstants.EDGE_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
@@ -111,6 +119,8 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
         this.label = edge.getLabel();
         this.routingKey = edge.getRoutingKey();
         this.secret = edge.getSecret();
+        this.edgeLicenseKey = edge.getEdgeLicenseKey();
+        this.cloudEndpoint = edge.getCloudEndpoint();
         this.configuration = edge.getConfiguration();
         this.additionalInfo = edge.getAdditionalInfo();
     }
@@ -147,6 +157,8 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
         edge.setLabel(label);
         edge.setRoutingKey(routingKey);
         edge.setSecret(secret);
+        edge.setEdgeLicenseKey(edgeLicenseKey);
+        edge.setCloudEndpoint(cloudEndpoint);
         edge.setConfiguration(configuration);
         edge.setAdditionalInfo(additionalInfo);
         return edge;

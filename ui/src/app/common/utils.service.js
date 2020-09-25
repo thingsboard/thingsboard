@@ -33,7 +33,7 @@ export default angular.module('thingsboard.utils', [thingsboardTypes])
 const varsRegex = /\$\{([^}]*)\}/g;
 
 /*@ngInject*/
-function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, types) {
+function Utils($mdColorPalette, $rootScope, $window, $location, $translate, $q, $timeout, types) {
 
     var predefinedFunctions = {},
         predefinedFunctionsList = [],
@@ -142,6 +142,7 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         guid: guid,
         cleanCopy: cleanCopy,
         isLocalUrl: isLocalUrl,
+        baseUrl: baseUrl,
         validateDatasources: validateDatasources,
         createKey: createKey,
         createAdditionalDataKey: createAdditionalDataKey,
@@ -433,6 +434,15 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         } else {
             return false;
         }
+    }
+
+    function baseUrl() {
+        var url = $location.protocol() + '://' + $location.host();
+        var port = $location.port();
+        if (port != 80 && port != 443) {
+            url += ":" + port;
+        }
+        return url;
     }
 
     function validateDatasources(datasources) {

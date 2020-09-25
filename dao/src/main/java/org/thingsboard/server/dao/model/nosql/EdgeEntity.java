@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.model.nosql;
 
 import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
@@ -32,14 +31,13 @@ import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_CUSTOMER_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_TENANT_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ADDITIONAL_INFO_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CLOUD_ENDPOINT_KEY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CONFIGURATION_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LABEL_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LICENSE_KEY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROOT_RULE_CHAIN_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROUTING_KEY_PROPERTY;
@@ -84,6 +82,12 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
     @Column(name = EDGE_ROUTING_KEY_PROPERTY)
     private String routingKey;
 
+    @Column(name = EDGE_LICENSE_KEY_PROPERTY)
+    private String edgeLicenseKey;
+
+    @Column(name = EDGE_CLOUD_ENDPOINT_KEY_PROPERTY)
+    private String cloudEndpoint;
+
     @Column(name = EDGE_SECRET_PROPERTY)
     private String secret;
 
@@ -125,6 +129,8 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
         this.label = edge.getLabel();
         this.routingKey = edge.getRoutingKey();
         this.secret = edge.getSecret();
+        this.edgeLicenseKey = edge.getEdgeLicenseKey();
+        this.cloudEndpoint = edge.getCloudEndpoint();
         this.configuration = edge.getConfiguration();
         this.additionalInfo = edge.getAdditionalInfo();
     }
@@ -152,6 +158,8 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
         edge.setLabel(label);
         edge.setRoutingKey(routingKey);
         edge.setSecret(secret);
+        edge.setEdgeLicenseKey(edgeLicenseKey);
+        edge.setCloudEndpoint(cloudEndpoint);
         edge.setConfiguration(configuration);
         edge.setAdditionalInfo(additionalInfo);
         return edge;

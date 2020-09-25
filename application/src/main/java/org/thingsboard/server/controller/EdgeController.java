@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -408,4 +409,24 @@ public class EdgeController extends BaseController {
         }
     }
 
+    @RequestMapping(value = "/license/checkInstance", method = RequestMethod.POST)
+    @ResponseBody
+    public Object checkInstance(@RequestBody Object request) throws ThingsboardException {
+        try {
+            return edgeService.checkInstance(request);
+        } catch (Exception e) {
+            throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
+        }
+    }
+
+    @RequestMapping(value = "/license/activateInstance", params = {"licenseSecret", "releaseDate"}, method = RequestMethod.POST)
+    @ResponseBody
+    public Object activateInstance(@RequestParam String licenseSecret,
+                                   @RequestParam String releaseDate) throws ThingsboardException {
+        try {
+            return edgeService.activateInstance(licenseSecret, releaseDate);
+        } catch (Exception e) {
+            throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
+        }
+    }
 }

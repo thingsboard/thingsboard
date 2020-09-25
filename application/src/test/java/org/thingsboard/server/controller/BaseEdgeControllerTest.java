@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -90,6 +91,8 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(savedEdge.getCustomerId());
         Assert.assertEquals(NULL_UUID, savedEdge.getCustomerId().getId());
         Assert.assertEquals(edge.getName(), savedEdge.getName());
+        Assert.assertTrue(StringUtils.isNoneBlank(savedEdge.getEdgeLicenseKey()));
+        Assert.assertTrue(StringUtils.isNoneBlank(savedEdge.getCloudEndpoint()));
 
         savedEdge.setName("My new edge");
         doPost("/api/edge", savedEdge, Edge.class);
