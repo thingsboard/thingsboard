@@ -80,7 +80,7 @@ public class EdgeImitator {
     }
 
     public void disconnect() throws InterruptedException {
-        edgeRpcClient.disconnect();
+        edgeRpcClient.disconnect(false);
     }
 
     private void onUplinkResponse(UplinkResponseMsg msg) {
