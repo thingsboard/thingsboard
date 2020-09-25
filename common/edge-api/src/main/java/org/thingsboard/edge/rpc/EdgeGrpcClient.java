@@ -40,6 +40,7 @@ import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 import javax.net.ssl.SSLException;
 import java.io.File;
 import java.net.URISyntaxException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -107,7 +108,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                     } else {
                         log.error("[{}] Failed to establish the connection! Code: {}. Error message: {}.", edgeKey, connectResponseMsg.getResponseCode(), connectResponseMsg.getErrorMsg());
                         try {
-                            EdgeGrpcClient.this.disconnect();
+                            EdgeGrpcClient.this.disconnect(true);
                         } catch (InterruptedException e) {
                             log.error("[{}] Got interruption during disconnect!", edgeKey, e);
                         }
@@ -136,7 +137,12 @@ public class EdgeGrpcClient implements EdgeRpcClient {
     }
 
     @Override
-    public void disconnect() throws InterruptedException {
+    public void disconnect(boolean onError) throws InterruptedException {
+        if (!onError) {
+            try {
+                inputStream.onCompleted();
+            } catch (Exception ignored) {}
+        }
         if (channel != null) {
             channel.shutdown().awaitTermination(timeoutSecs, TimeUnit.SECONDS);
         }
