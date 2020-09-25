@@ -2029,9 +2029,9 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
-    public Optional<RuleChain> setRootRuleChain(RuleChainId ruleChainId, EdgeId edgeId) {
+    public Optional<Edge> setRootRuleChain(EdgeId edgeId, RuleChainId ruleChainId) {
         try {
-            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/edge/{edgeId}/{ruleChainId}/root", null, RuleChain.class, edgeId.getId(), ruleChainId.getId());
+            ResponseEntity<Edge> ruleChain = restTemplate.postForEntity(baseURL + "/api/edge/{edgeId}/{ruleChainId}/root", null, Edge.class, edgeId.getId(), ruleChainId.getId());
             return Optional.ofNullable(ruleChain.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -2249,6 +2249,53 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 HttpMethod.GET, HttpEntity.EMPTY,
                 new ParameterizedTypeReference<TimePageData<RuleChain>>() {
                 }, params).getBody();
+    }
+
+    public Optional<RuleChain> addDefaultEdgeRuleChain(RuleChainId ruleChainId) {
+        try {
+            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/ruleChain/{ruleChainId}/defaultEdge", null, RuleChain.class, ruleChainId.getId());
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<RuleChain> removeDefaultEdgeRuleChain(RuleChainId ruleChainId) {
+        try {
+            ResponseEntity<RuleChain> ruleChain = restTemplate.exchange(baseURL + "/api/ruleChain/{ruleChainId}/defaultEdge", HttpMethod.DELETE, HttpEntity.EMPTY, RuleChain.class, ruleChainId.getId());
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public List<RuleChain> getDefaultEdgeRuleChains() {
+        return restTemplate.exchange(baseURL + "/api/ruleChain/defaultEdgeRuleChains",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<RuleChain>>() {
+                }).getBody();
+    }
+
+    public Optional<RuleChain> setDefaultRootEdgeRuleChain(RuleChainId ruleChainId) {
+        try {
+            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/ruleChain/{ruleChainId}/defaultRootEdge", null, RuleChain.class, ruleChainId.getId());
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
     }
 
     public TextPageData<Edge> getTenantEdges(String type, TextPageLink pageLink) {
