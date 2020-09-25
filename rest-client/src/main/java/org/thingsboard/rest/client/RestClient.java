@@ -2029,9 +2029,9 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
-    public Optional<RuleChain> setRootRuleChain(RuleChainId ruleChainId, EdgeId edgeId) {
+    public Optional<Edge> setRootRuleChain(EdgeId edgeId, RuleChainId ruleChainId) {
         try {
-            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/edge/{edgeId}/{ruleChainId}/root", null, RuleChain.class, edgeId.getId(), ruleChainId.getId());
+            ResponseEntity<Edge> ruleChain = restTemplate.postForEntity(baseURL + "/api/edge/{edgeId}/{ruleChainId}/root", null, Edge.class, edgeId.getId(), ruleChainId.getId());
             return Optional.ofNullable(ruleChain.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
