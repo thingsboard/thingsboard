@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -119,6 +120,14 @@ public class EdgeStorage {
         return entities.entrySet().stream()
                 .filter(entry -> entry.getValue().equals(type))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)).keySet();
+    }
+
+    public void waitForMessages() throws InterruptedException {
+        latch.await(5, TimeUnit.SECONDS);
+    }
+
+    public void expectMessageAmount(int messageAmount) {
+        latch = new CountDownLatch(messageAmount);
     }
 
 }
