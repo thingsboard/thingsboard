@@ -148,6 +148,12 @@ message ValidateDeviceX509CertRequestMsg {
   string hash = 1;
 }
 
+message ValidateBasicMqttCredRequestMsg {
+  string clientId = 1;
+  string userName = 2;
+  string password = 3;
+}
+
 message ValidateDeviceCredentialsResponseMsg {
   DeviceInfoProto deviceInfo = 1;
   string credentialsBody = 2;
@@ -187,6 +193,11 @@ message GetDeviceProfileResponseMsg {
 
 message DeviceProfileUpdateMsg {
   bytes data = 1;
+}
+
+message DeviceProfileDeleteMsg {
+    int64 profileIdMSB = 1;
+    int64 profileIdLSB = 2;
 }
 
 message SessionCloseNotificationProto {
@@ -430,11 +441,12 @@ message TransportApiRequestMsg {
   GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
   GetTenantRoutingInfoRequestMsg getTenantRoutingInfoRequestMsg = 4;
   GetDeviceProfileRequestMsg getDeviceProfileRequestMsg = 5;
+  ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 6;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
 message TransportApiResponseMsg {
-  ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
+  ValidateDeviceCredentialsResponseMsg validateCredResponseMsg = 1;
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
   GetTenantRoutingInfoResponseMsg getTenantRoutingInfoResponseMsg = 4;
   GetDeviceProfileResponseMsg getDeviceProfileResponseMsg = 5;
@@ -479,4 +491,5 @@ message ToTransportMsg {
   ToDeviceRpcRequestMsg toDeviceRequest = 6;
   ToServerRpcResponseMsg toServerResponse = 7;
   DeviceProfileUpdateMsg deviceProfileUpdateMsg = 8;
+  DeviceProfileDeleteMsg deviceProfileDeleteMsg = 9;
 }

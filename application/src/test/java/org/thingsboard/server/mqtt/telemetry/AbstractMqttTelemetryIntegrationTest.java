@@ -21,16 +21,33 @@ import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.junit.Assert;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
 public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractControllerTest {
@@ -38,10 +55,12 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
     protected static final String PAYLOAD_VALUES_STR_V_1 = "{\"key1\":\"value1\", \"key2\":true, \"key3\": 3.0, \"key4\": 4," +
             " \"key5\": {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
 
-    protected static final String PAYLOAD_VALUES_STR_V_2 = "{\"key6\":\"value1\", \"key7\":true, \"key8\": 3.0, \"key9\": 4, \"key10\":" +
-            " {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
-
     protected static final String MQTT_URL = "tcp://localhost:1883";
+
+    private static final AtomicInteger atomicInteger = new AtomicInteger(2);
+
+    private Tenant savedTenant;
+    private User tenantAdmin;
 
     protected Device savedDevice;
     protected String accessToken;
@@ -49,16 +68,26 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
     protected Device savedGateway;
     protected String gatewayAccessToken;
 
-    protected void processBeforeTest(String deviceName, String gatewayName) throws Exception {
-        loginTenantAdmin();
+    protected void processBeforeTest(String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic) throws Exception {
+        loginSysAdmin();
+
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant");
+        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Assert.assertNotNull(savedTenant);
+
+        tenantAdmin = new User();
+        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdmin.setTenantId(savedTenant.getId());
+        tenantAdmin.setEmail("tenant" + atomicInteger.getAndIncrement() + "@thingsboard.org");
+        tenantAdmin.setFirstName("Joe");
+        tenantAdmin.setLastName("Downs");
+
+        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
 
         Device device = new Device();
         device.setName(deviceName);
         device.setType("default");
-        savedDevice = doPost("/api/device", device, Device.class);
-
-        DeviceCredentials deviceCredentials =
-                doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
 
         Device gateway = new Device();
         gateway.setName(gatewayName);
@@ -66,6 +95,19 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
         ObjectNode additionalInfo = mapper.createObjectNode();
         additionalInfo.put("gateway", true);
         gateway.setAdditionalInfo(additionalInfo);
+
+        if (payloadType != null) {
+            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType, telemetryTopic, attributesTopic);
+            DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", mqttDeviceProfile, DeviceProfile.class);
+            device.setDeviceProfileId(savedDeviceProfile.getId());
+            gateway.setDeviceProfileId(savedDeviceProfile.getId());
+        }
+
+        savedDevice = doPost("/api/device", device, Device.class);
+
+        DeviceCredentials deviceCredentials =
+                doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+
         savedGateway = doPost("/api/device", gateway, Device.class);
 
         DeviceCredentials gatewayCredentials =
@@ -78,6 +120,14 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
         assertEquals(savedGateway.getId(), gatewayCredentials.getDeviceId());
         gatewayAccessToken = gatewayCredentials.getCredentialsId();
         assertNotNull(gatewayAccessToken);
+
+    }
+
+    protected void processAfterTest() throws Exception {
+        loginSysAdmin();
+        if (savedTenant != null) {
+            doDelete("/api/tenant/" + savedTenant.getId().getId().toString()).andExpect(status().isOk());
+        }
     }
 
     protected MqttAsyncClient getMqttAsyncClient(String token) throws MqttException, InterruptedException {
@@ -143,6 +193,30 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
                 break;
         }
         return keyValueProtoBuilder.build();
+    }
+
+    private DeviceProfile createMqttDeviceProfile(TransportPayloadType transportPayloadType, String telemetryTopic, String attributesTopic) {
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setName(transportPayloadType.name());
+        deviceProfile.setType(DeviceProfileType.DEFAULT);
+        deviceProfile.setTransportType(DeviceTransportType.MQTT);
+        deviceProfile.setDescription(transportPayloadType.name() + " Test");
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
+        MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
+        transportConfiguration.setTransportPayloadType(transportPayloadType);
+        if (!StringUtils.isEmpty(telemetryTopic)) {
+            transportConfiguration.setDeviceTelemetryTopic(telemetryTopic);
+        }
+        if (!StringUtils.isEmpty(attributesTopic)) {
+            transportConfiguration.setDeviceAttributesTopic(attributesTopic);
+        }
+        deviceProfileData.setTransportConfiguration(transportConfiguration);
+        deviceProfileData.setConfiguration(configuration);
+        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.setDefault(false);
+        deviceProfile.setDefaultRuleChainId(null);
+        return deviceProfile;
     }
 
 }

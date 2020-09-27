@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2020 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,15 +27,21 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
-import org.thingsboard.server.gen.transport.TransportApiProtos;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -46,13 +52,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest {
 
-    private static final String MQTT_URL = "tcp://localhost:1883";
+    protected static final String MQTT_URL = "tcp://localhost:1883";
     protected static final String CUSTOMER_USER_PASSWORD = "customerUser123!";
 
-    private Tenant savedTenant;
-    private User tenantAdmin;
-    private User customerAdmin;
+    protected User tenantAdmin;
+    protected User customerAdmin;
+
+    protected Tenant savedTenant;
     private Customer savedCustomer;
+
+    protected Device savedDevice;
+    protected String accessToken;
 
     protected Device savedGateway;
     protected String gatewayAccessToken;
@@ -62,6 +72,10 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
 
     @Before
     public void beforeTest() throws Exception {
+        processBeforeTest(null);
+    }
+
+    protected void processBeforeTest(TransportPayloadType transportPayloadType) throws Exception {
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
@@ -93,12 +107,34 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
         assertNotNull(customerAdmin);
         assertEquals(customerAdmin.getCustomerId(), savedCustomer.getId());
 
+        Device device = new Device();
+        device.setName("Test Claim device");
+        device.setType("default");
+
+
         Device gateway = new Device();
         gateway.setName("Test Claim gateway");
         gateway.setType("default");
         ObjectNode additionalInfo = mapper.createObjectNode();
         additionalInfo.put("gateway", true);
         gateway.setAdditionalInfo(additionalInfo);
+
+        if (transportPayloadType != null) {
+            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(transportPayloadType);
+            DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", mqttDeviceProfile, DeviceProfile.class);
+            device.setDeviceProfileId(savedDeviceProfile.getId());
+            gateway.setDeviceProfileId(savedDeviceProfile.getId());
+        }
+
+        savedDevice = doPost("/api/device", device, Device.class);
+
+        DeviceCredentials deviceCredentials =
+                doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+
+        assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
+        accessToken = deviceCredentials.getCredentialsId();
+        assertNotNull(accessToken);
+
         savedGateway = doPost("/api/device", gateway, Device.class);
 
         DeviceCredentials gatewayCredentials =
@@ -118,97 +154,40 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
     }
 
     @Test
-    public void testClaimingDeviceV1Json() throws Exception {
-        processTestClaimingDevice("Test claiming device V1 Json", MqttTopics.DEVICE_CLAIM_TOPIC_V1_JSON, false);
+    public void testClaimingDevice() throws Exception {
+        processTestClaimingDevice(false);
     }
 
     @Test
-    public void testClaimingDeviceV2Json() throws Exception {
-        processTestClaimingDevice("Test claiming device V2 Json", MqttTopics.DEVICE_CLAIM_TOPIC_V2_JSON, false);
+    public void testClaimingDeviceWithoutSecretAndDuration() throws Exception {
+        processTestClaimingDevice(true);
     }
 
     @Test
-    public void testClaimingDeviceV2Proto() throws Exception {
-        processTestClaimingDevice("Test claiming device V2 Proto", MqttTopics.DEVICE_CLAIM_TOPIC_V2_PROTO, false);
+    public void testGatewayClaimingDevice() throws Exception {
+        processTestGatewayClaimingDevice("Test claiming gateway device", false);
     }
 
     @Test
-    public void testClaimingDeviceV1JsonWithoutSecretAndDuration() throws Exception {
-        processTestClaimingDevice("Test claiming device empty payload V1 Json", MqttTopics.DEVICE_CLAIM_TOPIC_V1_JSON, true);
+    public void testGatewayClaimingDeviceWithoutSecretAndDuration() throws Exception {
+        processTestGatewayClaimingDevice("Test claiming gateway device empty payload", true);
     }
 
-    @Test
-    public void testClaimingDeviceV2JsonWithoutSecretAndDuration() throws Exception {
-        processTestClaimingDevice("Test claiming device empty payload V2 Json", MqttTopics.DEVICE_CLAIM_TOPIC_V2_JSON, true);
-    }
 
-    @Test
-    public void testClaimingDeviceV2ProtoWithoutSecretAndDuration() throws Exception {
-        processTestClaimingDevice("Test claiming device empty payload V2 Proto", MqttTopics.DEVICE_CLAIM_TOPIC_V2_PROTO, true);
-    }
-
-    @Test
-    public void testGatewayClaimingDeviceV1Json() throws Exception {
-        processTestGatewayClaimingDevice("Test claiming gateway device V1 Json", MqttTopics.GATEWAY_CLAIM_TOPIC_V1_JSON, false);
-    }
-
-    @Test
-    public void testGatewayClaimingDeviceV2Json() throws Exception {
-        processTestGatewayClaimingDevice("Test claiming gateway device V2 Json", MqttTopics.GATEWAY_CLAIM_TOPIC_V2_JSON, false);
-    }
-
-    @Test
-    public void testGatewayClaimingDeviceV2Proto() throws Exception {
-        processTestGatewayClaimingDevice("Test claiming gateway device V2 Proto", MqttTopics.GATEWAY_CLAIM_TOPIC_V2_PROTO, false);
-    }
-
-    @Test
-    public void testGatewayClaimingDeviceV1JsonWithoutSecretAndDuration() throws Exception {
-        processTestGatewayClaimingDevice("Test claiming gateway device empty payload V1 Json", MqttTopics.GATEWAY_CLAIM_TOPIC_V1_JSON, true);
-    }
-
-    @Test
-    public void testGatewayClaimingDeviceV2JsonWithoutSecretAndDuration() throws Exception {
-        processTestGatewayClaimingDevice("Test claiming gateway device empty payload V2 Json", MqttTopics.GATEWAY_CLAIM_TOPIC_V2_JSON, true);
-    }
-
-    @Test
-    public void testGatewayClaimingDeviceV2ProtoWithoutSecretAndDuration() throws Exception {
-        processTestGatewayClaimingDevice("Test claiming gateway device empty payload V2 Proto", MqttTopics.GATEWAY_CLAIM_TOPIC_V2_PROTO, true);
-
-    }
-
-    private void processTestClaimingDevice(String deviceName, String topic, boolean emptyPayload) throws Exception {
-        Device device = new Device();
-        device.setName(deviceName);
-        device.setType("default");
-        Device savedDevice = getSavedDevice(device);
-        assertEquals(savedDevice.getTenantId(), savedTenant.getId());
-        DeviceCredentials deviceCredentials = getDeviceCredentials(savedDevice);
-        assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
-        String accessToken = deviceCredentials.getCredentialsId();
-        assertNotNull(accessToken);
+    protected void processTestClaimingDevice(boolean emptyPayload) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
-
         byte[] payloadBytes;
-        byte[] failurePayloadBytes;
-
-        if (topic.startsWith(MqttTopics.BASE_DEVICE_API_TOPIC_V1_JSON) || topic.startsWith(MqttTopics.BASE_DEVICE_API_TOPIC_V2_JSON)) {
-            if (emptyPayload) {
-                payloadBytes = "{}".getBytes();
-            } else {
-                payloadBytes = "{\"secretKey\":\"value\", \"durationMs\":60000}".getBytes();
-            }
-            failurePayloadBytes = "{\"secretKey\":\"value\", \"durationMs\":1}".getBytes();
+        if (emptyPayload) {
+            payloadBytes = "{}".getBytes();
         } else {
-            if (emptyPayload) {
-                payloadBytes = getClaimDevice(0).toByteArray();
-            } else {
-                payloadBytes = getClaimDevice(60000).toByteArray();
-            }
-            failurePayloadBytes = getClaimDevice(1).toByteArray();
+            payloadBytes = "{\"secretKey\":\"value\", \"durationMs\":60000}".getBytes();
         }
-        client.publish(topic, new MqttMessage(failurePayloadBytes));
+        byte[] failurePayloadBytes = "{\"secretKey\":\"value\", \"durationMs\":1}".getBytes();
+        validateClaimResponse(emptyPayload, client, payloadBytes, failurePayloadBytes);
+    }
+
+    protected void validateClaimResponse(boolean emptyPayload, MqttAsyncClient client, byte[] payloadBytes, byte[] failurePayloadBytes) throws Exception {
+        client.publish(MqttTopics.DEVICE_CLAIM_TOPIC, new MqttMessage(failurePayloadBytes));
 
         Thread.sleep(1000);
 
@@ -220,51 +199,30 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
             claimRequest = new ClaimRequest(null);
         }
 
-        ClaimResponse claimResponse = doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest());
+        ClaimResponse claimResponse = doPostClaimAsync("/api/customer/device/" + savedDevice.getName() + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest());
         assertEquals(claimResponse, ClaimResponse.FAILURE);
 
-        client.publish(topic, new MqttMessage(payloadBytes));
+        client.publish(MqttTopics.DEVICE_CLAIM_TOPIC, new MqttMessage(payloadBytes));
 
         Thread.sleep(2000);
 
-        ClaimResult claimResult = doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResult.class, status().isOk());
+        ClaimResult claimResult = doPostClaimAsync("/api/customer/device/" + savedDevice.getName() + "/claim", claimRequest, ClaimResult.class, status().isOk());
         assertEquals(claimResult.getResponse(), ClaimResponse.SUCCESS);
         Device claimedDevice = claimResult.getDevice();
         assertNotNull(claimedDevice);
         assertNotNull(claimedDevice.getCustomerId());
         assertEquals(customerAdmin.getCustomerId(), claimedDevice.getCustomerId());
 
-        client.publish(topic, new MqttMessage(payloadBytes));
+        client.publish(MqttTopics.DEVICE_CLAIM_TOPIC, new MqttMessage(payloadBytes));
 
         Thread.sleep(1000);
 
-        claimResponse = doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest());
+        claimResponse = doPostClaimAsync("/api/customer/device/" + savedDevice.getName() + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest());
         assertEquals(claimResponse, ClaimResponse.CLAIMED);
     }
 
-    private void processTestGatewayClaimingDevice(String deviceName, String topic, boolean emptyPayload) throws Exception {
-        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
-        byte[] failurePayloadBytes;
-        byte[] payloadBytes;
-        if (topic.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC_V1_JSON) || topic.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC_V2_JSON)) {
-            String failurePayload = "{\"" + deviceName + "\": " + "{\"secretKey\":\"value\", \"durationMs\":1}" + "}";
-            String payload;
-            if (emptyPayload) {
-                payload = "{\"" + deviceName + "\": " + "{}" + "}";
-            } else {
-                payload = "{\"" + deviceName + "\": " + "{\"secretKey\":\"value\", \"durationMs\":60000}" + "}";
-            }
-            payloadBytes = payload.getBytes();
-            failurePayloadBytes = failurePayload.getBytes();
-        } else {
-            if (emptyPayload) {
-                payloadBytes = getGatewayClaimMsg(deviceName, 0).toByteArray();
-            } else {
-                payloadBytes = getGatewayClaimMsg(deviceName, 60000).toByteArray();
-            }
-            failurePayloadBytes = getGatewayClaimMsg(deviceName, 1).toByteArray();
-        }
-        client.publish(topic, new MqttMessage(failurePayloadBytes));
+    protected void validateGatewayClaimResponse(String deviceName, boolean emptyPayload, MqttAsyncClient client, byte[] failurePayloadBytes, byte[] payloadBytes) throws Exception {
+        client.publish(MqttTopics.GATEWAY_CLAIM_TOPIC, new MqttMessage(failurePayloadBytes));
 
         Thread.sleep(1000);
 
@@ -282,7 +240,7 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
         ClaimResponse claimResponse = doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest());
         assertEquals(claimResponse, ClaimResponse.FAILURE);
 
-        client.publish(topic, new MqttMessage(payloadBytes));
+        client.publish(MqttTopics.GATEWAY_CLAIM_TOPIC, new MqttMessage(payloadBytes));
 
         Thread.sleep(2000);
 
@@ -293,45 +251,28 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
         assertNotNull(claimedDevice.getCustomerId());
         assertEquals(customerAdmin.getCustomerId(), claimedDevice.getCustomerId());
 
-        client.publish(topic, new MqttMessage(payloadBytes));
+        client.publish(MqttTopics.GATEWAY_CLAIM_TOPIC, new MqttMessage(payloadBytes));
         claimResponse = doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest());
         assertEquals(claimResponse, ClaimResponse.CLAIMED);
     }
 
-    private TransportApiProtos.GatewayClaimMsg getGatewayClaimMsg(String deviceName, long duration) {
-        TransportApiProtos.GatewayClaimMsg.Builder gatewayClaimMsgBuilder = TransportApiProtos.GatewayClaimMsg.newBuilder();
-        TransportApiProtos.ClaimDeviceMsg.Builder claimDeviceMsgBuilder = TransportApiProtos.ClaimDeviceMsg.newBuilder();
-        TransportApiProtos.ClaimDevice.Builder claimDeviceBuilder = TransportApiProtos.ClaimDevice.newBuilder();
-        if (duration > 0) {
-            claimDeviceBuilder.setSecretKey("value");
-            claimDeviceBuilder.setDurationMs(duration);
+    protected void processTestGatewayClaimingDevice(String deviceName, boolean emptyPayload) throws Exception {
+        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
+        byte[] failurePayloadBytes;
+        byte[] payloadBytes;
+        String failurePayload = "{\"" + deviceName + "\": " + "{\"secretKey\":\"value\", \"durationMs\":1}" + "}";
+        String payload;
+        if (emptyPayload) {
+            payload = "{\"" + deviceName + "\": " + "{}" + "}";
+        } else {
+            payload = "{\"" + deviceName + "\": " + "{\"secretKey\":\"value\", \"durationMs\":60000}" + "}";
         }
-        TransportApiProtos.ClaimDevice claimDevice = claimDeviceBuilder.build();
-        claimDeviceMsgBuilder.setClaimRequest(claimDevice);
-        claimDeviceMsgBuilder.setDeviceName(deviceName);
-        TransportApiProtos.ClaimDeviceMsg claimDeviceMsg = claimDeviceMsgBuilder.build();
-        gatewayClaimMsgBuilder.addMsg(claimDeviceMsg);
-        return gatewayClaimMsgBuilder.build();
+        payloadBytes = payload.getBytes();
+        failurePayloadBytes = failurePayload.getBytes();
+        validateGatewayClaimResponse(deviceName, emptyPayload, client, failurePayloadBytes, payloadBytes);
     }
 
-    private TransportApiProtos.ClaimDevice getClaimDevice(long duration) {
-        TransportApiProtos.ClaimDevice.Builder claimDeviceFailureBuilder = TransportApiProtos.ClaimDevice.newBuilder();
-        if (duration > 0) {
-            claimDeviceFailureBuilder.setSecretKey("value");
-            claimDeviceFailureBuilder.setDurationMs(duration);
-        }
-        return claimDeviceFailureBuilder.build();
-    }
-
-    private Device getSavedDevice(Device device) throws Exception {
-        return doPost("/api/device", device, Device.class);
-    }
-
-    private DeviceCredentials getDeviceCredentials(Device savedDevice) throws Exception {
-        return doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-    }
-
-    private MqttAsyncClient getMqttAsyncClient(String accessToken) throws MqttException {
+    protected MqttAsyncClient getMqttAsyncClient(String accessToken) throws MqttException {
         String clientId = MqttAsyncClient.generateClientId();
         MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
 
@@ -339,6 +280,32 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
         options.setUserName(accessToken);
         client.connect(options).waitForCompletion();
         return client;
+    }
+
+    protected Device getSavedDevice(Device device) throws Exception {
+        return doPost("/api/device", device, Device.class);
+    }
+
+    protected DeviceCredentials getDeviceCredentials(Device savedDevice) throws Exception {
+        return doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+    }
+
+    protected DeviceProfile createMqttDeviceProfile(TransportPayloadType transportPayloadType) {
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setName(transportPayloadType.name());
+        deviceProfile.setType(DeviceProfileType.DEFAULT);
+        deviceProfile.setTransportType(DeviceTransportType.MQTT);
+        deviceProfile.setDescription(transportPayloadType.name() + " Test");
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
+        MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
+        transportConfiguration.setTransportPayloadType(transportPayloadType);
+        deviceProfileData.setTransportConfiguration(transportConfiguration);
+        deviceProfileData.setConfiguration(configuration);
+        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.setDefault(false);
+        deviceProfile.setDefaultRuleChainId(null);
+        return deviceProfile;
     }
 
 

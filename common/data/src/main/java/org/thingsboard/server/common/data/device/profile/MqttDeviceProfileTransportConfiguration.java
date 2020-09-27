@@ -16,15 +16,16 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 
 @Data
 public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
 
-    private String deviceTelemetryTopic = MqttTopics.DEVICE_TELEMETRY_TOPIC_V1_JSON;
-    private String deviceAttributesTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V1_JSON;
-    private String deviceRpcRequestTopic = MqttTopics.DEVICE_RPC_REQUESTS_TOPIC_V1_JSON;
-    private String deviceRpcResponseTopic = MqttTopics.DEVICE_RPC_RESPONSE_TOPIC_V1_JSON;
+    private TransportPayloadType transportPayloadType;
+
+    private String deviceTelemetryTopic = MqttTopics.DEVICE_TELEMETRY_TOPIC;
+    private String deviceAttributesTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
 
     @Override
     public DeviceTransportType getType() {

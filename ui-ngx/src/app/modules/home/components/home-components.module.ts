@@ -98,6 +98,14 @@ import { DeviceProfileDialogComponent } from './profile/device-profile-dialog.co
 import { DeviceProfileAutocompleteComponent } from './profile/device-profile-autocomplete.component';
 import { MqttDeviceProfileTransportConfigurationComponent } from './profile/device/mqtt-device-profile-transport-configuration.component';
 import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/device/lwm2m-device-profile-transport-configuration.component';
+import { DeviceProfileAlarmsComponent } from './profile/alarm/device-profile-alarms.component';
+import { DeviceProfileAlarmComponent } from './profile/alarm/device-profile-alarm.component';
+import { CreateAlarmRulesComponent } from './profile/alarm/create-alarm-rules.component';
+import { AlarmRuleComponent } from './profile/alarm/alarm-rule.component';
+import { AlarmRuleConditionComponent } from './profile/alarm/alarm-rule-condition.component';
+import { AlarmRuleKeyFiltersDialogComponent } from './profile/alarm/alarm-rule-key-filters-dialog.component';
+import { FilterTextComponent } from './filter/filter-text.component';
+import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
 
 @NgModule({
   declarations:
@@ -159,6 +167,7 @@ import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/dev
       FilterDialogComponent,
       FiltersDialogComponent,
       FilterSelectComponent,
+      FilterTextComponent,
       FiltersEditComponent,
       FiltersEditPanelComponent,
       UserFilterDialogComponent,
@@ -176,9 +185,16 @@ import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/dev
       MqttDeviceProfileTransportConfigurationComponent,
       Lwm2mDeviceProfileTransportConfigurationComponent,
       DeviceProfileTransportConfigurationComponent,
+      CreateAlarmRulesComponent,
+      AlarmRuleComponent,
+      AlarmRuleKeyFiltersDialogComponent,
+      AlarmRuleConditionComponent,
+      DeviceProfileAlarmComponent,
+      DeviceProfileAlarmsComponent,
       DeviceProfileDataComponent,
       DeviceProfileComponent,
-      DeviceProfileDialogComponent
+      DeviceProfileDialogComponent,
+      AddDeviceProfileDialogComponent
     ],
   imports: [
     CommonModule,
@@ -233,6 +249,7 @@ import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/dev
     FilterDialogComponent,
     FiltersDialogComponent,
     FilterSelectComponent,
+    FilterTextComponent,
     FiltersEditComponent,
     UserFilterDialogComponent,
     TenantProfileAutocompleteComponent,
@@ -246,9 +263,16 @@ import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/dev
     MqttDeviceProfileTransportConfigurationComponent,
     Lwm2mDeviceProfileTransportConfigurationComponent,
     DeviceProfileTransportConfigurationComponent,
+    CreateAlarmRulesComponent,
+    AlarmRuleComponent,
+    AlarmRuleKeyFiltersDialogComponent,
+    AlarmRuleConditionComponent,
+    DeviceProfileAlarmComponent,
+    DeviceProfileAlarmsComponent,
     DeviceProfileDataComponent,
     DeviceProfileComponent,
-    DeviceProfileDialogComponent
+    DeviceProfileDialogComponent,
+    AddDeviceProfileDialogComponent
   ],
   providers: [
     WidgetComponentService,

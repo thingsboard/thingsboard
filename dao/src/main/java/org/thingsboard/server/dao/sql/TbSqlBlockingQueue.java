@@ -22,6 +22,7 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.stats.MessagesStats;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -30,6 +31,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
@@ -46,7 +48,7 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
     }
 
     @Override
-    public void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction, int index) {
+    public void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction, Comparator<E> batchUpdateComparator, int index) {
         executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("sql-queue-" + index + "-" + params.getLogName().toLowerCase()));
         executor.submit(() -> {
             String logName = params.getLogName();
@@ -65,7 +67,11 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
                     queue.drainTo(entities, batchSize - 1);
                     boolean fullPack = entities.size() == batchSize;
                     log.debug("[{}] Going to save {} entities", logName, entities.size());
-                    saveFunction.accept(entities.stream().map(TbSqlQueueElement::getEntity).collect(Collectors.toList()));
+                    Stream<E> entitiesStream = entities.stream().map(TbSqlQueueElement::getEntity);
+                    saveFunction.accept(
+                            (params.isBatchSortEnabled() ? entitiesStream.sorted(batchUpdateComparator) : entitiesStream)
+                                    .collect(Collectors.toList())
+                    );
                     entities.forEach(v -> v.getFuture().set(null));
                     stats.incrementSuccessful(entities.size());
                     if (!fullPack) {

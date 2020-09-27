@@ -47,12 +47,22 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
   @Input() disabled: boolean;
 
   @Input()
+  set allowUserDynamicSource(allow: boolean) {
+    this.dynamicValueSourceTypes = [DynamicValueSourceType.CURRENT_TENANT,
+      DynamicValueSourceType.CURRENT_CUSTOMER];
+    if (allow) {
+      this.dynamicValueSourceTypes.push(DynamicValueSourceType.CURRENT_USER);
+    }
+  }
+
+  @Input()
   valueType: EntityKeyValueType;
 
   valueTypeEnum = EntityKeyValueType;
 
-  dynamicValueSourceTypes = Object.keys(DynamicValueSourceType);
-  dynamicValueSourceTypeEnum = DynamicValueSourceType;
+  dynamicValueSourceTypes: DynamicValueSourceType[] = [DynamicValueSourceType.CURRENT_TENANT,
+    DynamicValueSourceType.CURRENT_CUSTOMER, DynamicValueSourceType.CURRENT_USER];
+
   dynamicValueSourceTypeTranslations = dynamicValueSourceTypeTranslationMap;
 
   filterPredicateValueFormGroup: FormGroup;

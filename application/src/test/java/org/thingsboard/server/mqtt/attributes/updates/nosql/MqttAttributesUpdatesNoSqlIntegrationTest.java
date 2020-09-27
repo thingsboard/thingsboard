@@ -16,9 +16,9 @@
 package org.thingsboard.server.mqtt.attributes.updates.nosql;
 
 import org.thingsboard.server.dao.service.DaoNoSqlTest;
-import org.thingsboard.server.mqtt.attributes.updates.AbstractMqttAttributesUpdatesIntegrationTest;
+import org.thingsboard.server.mqtt.attributes.updates.AbstractMqttAttributesUpdatesJsonIntegrationTest;
 
 
 @DaoNoSqlTest
-public class MqttAttributesUpdatesNoSqlIntegrationTest extends AbstractMqttAttributesUpdatesIntegrationTest {
+public class MqttAttributesUpdatesNoSqlIntegrationTest extends AbstractMqttAttributesUpdatesJsonIntegrationTest {
 }

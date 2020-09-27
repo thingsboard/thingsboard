@@ -22,8 +22,15 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.junit.Assert;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
@@ -55,7 +62,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractCont
 
     private static final AtomicInteger atomicInteger = new AtomicInteger(2);
 
-    protected void processBeforeTest(String deviceName, String gatewayName) throws Exception {
+    protected void processBeforeTest(String deviceName, String gatewayName, TransportPayloadType payloadType) throws Exception {
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
@@ -75,10 +82,6 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractCont
         Device device = new Device();
         device.setName(deviceName);
         device.setType("default");
-        savedDevice = doPost("/api/device", device, Device.class);
-
-        DeviceCredentials deviceCredentials =
-                doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
 
         Device gateway = new Device();
         gateway.setName(gatewayName);
@@ -86,6 +89,19 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractCont
         ObjectNode additionalInfo = mapper.createObjectNode();
         additionalInfo.put("gateway", true);
         gateway.setAdditionalInfo(additionalInfo);
+
+        if (payloadType != null) {
+            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType);
+            DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", mqttDeviceProfile, DeviceProfile.class);
+            device.setDeviceProfileId(savedDeviceProfile.getId());
+            gateway.setDeviceProfileId(savedDeviceProfile.getId());
+        }
+
+        savedDevice = doPost("/api/device", device, Device.class);
+
+        DeviceCredentials deviceCredentials =
+                doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+
         savedGateway = doPost("/api/device", gateway, Device.class);
 
         DeviceCredentials gatewayCredentials =
@@ -164,5 +180,24 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractCont
         }
         return keyValueProtoBuilder.build();
     }
+
+    private DeviceProfile createMqttDeviceProfile(TransportPayloadType transportPayloadType) {
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setName(transportPayloadType.name());
+        deviceProfile.setType(DeviceProfileType.DEFAULT);
+        deviceProfile.setTransportType(DeviceTransportType.MQTT);
+        deviceProfile.setDescription(transportPayloadType.name() + " Test");
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
+        MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
+        transportConfiguration.setTransportPayloadType(transportPayloadType);
+        deviceProfileData.setTransportConfiguration(transportConfiguration);
+        deviceProfileData.setConfiguration(configuration);
+        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.setDefault(false);
+        deviceProfile.setDefaultRuleChainId(null);
+        return deviceProfile;
+    }
+
 
 }

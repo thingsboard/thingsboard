@@ -76,7 +76,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     public TransportProtos.GetAttributeRequestMsg convertToGetAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         byte[] bytes = toBytes(inbound);
         String topicName = inbound.variableHeader().topicName();
-        int requestId = getRequestId(topicName, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX_V2_PROTO);
+        int requestId = getRequestId(topicName, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX);
         try {
             return ProtoConverter.convertToGetAttributeRequestMessage(bytes, requestId);
         } catch (InvalidProtocolBufferException e) {
@@ -101,7 +101,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         byte[] bytes = toBytes(mqttMsg);
         String topicName = mqttMsg.variableHeader().topicName();
         try {
-            int requestId = getRequestId(topicName, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC_V2_PROTO);
+            int requestId = getRequestId(topicName, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC);
             return ProtoConverter.convertToServerRpcRequest(bytes, requestId);
         } catch (InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
@@ -116,7 +116,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
             int requestId = responseMsg.getRequestId();
             if (requestId >= 0) {
                 return Optional.of(createMqttPublishMsg(ctx,
-                        MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX_V2_PROTO + requestId,
+                        MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX + requestId,
                         responseMsg.toByteArray()));
             }
             return Optional.empty();
@@ -126,17 +126,17 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
-        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC_V2_PROTO + rpcRequest.getRequestId(), rpcRequest.toByteArray()));
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC + rpcRequest.getRequestId(), rpcRequest.toByteArray()));
     }
 
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ToServerRpcResponseMsg rpcResponse) {
-        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_RESPONSE_TOPIC_V2_PROTO + rpcResponse.getRequestId(), rpcResponse.toByteArray()));
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_RESPONSE_TOPIC + rpcResponse.getRequestId(), rpcResponse.toByteArray()));
     }
 
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.AttributeUpdateNotificationMsg notificationMsg) {
-        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_ATTRIBUTES_TOPIC_V2_PROTO, notificationMsg.toByteArray()));
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_ATTRIBUTES_TOPIC, notificationMsg.toByteArray()));
     }
 
     @Override
@@ -148,7 +148,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
             responseMsgBuilder.setDeviceName(deviceName);
             responseMsgBuilder.setResponseMsg(responseMsg);
             byte[] payloadBytes = responseMsgBuilder.build().toByteArray();
-            return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC_V2_PROTO, payloadBytes));
+            return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, payloadBytes));
         }
     }
 
@@ -158,7 +158,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         builder.setDeviceName(deviceName);
         builder.setNotificationMsg(notificationMsg);
         byte[] payloadBytes = builder.build().toByteArray();
-        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_ATTRIBUTES_TOPIC_V2_PROTO, payloadBytes));
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_ATTRIBUTES_TOPIC, payloadBytes));
     }
 
     @Override
@@ -167,7 +167,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         builder.setDeviceName(deviceName);
         builder.setRpcRequestMsg(rpcRequest);
         byte[] payloadBytes = builder.build().toByteArray();
-        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_RPC_TOPIC_V2_PROTO, payloadBytes));
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_RPC_TOPIC, payloadBytes));
     }
 
     public static byte[] toBytes(MqttPublishMessage inbound) {

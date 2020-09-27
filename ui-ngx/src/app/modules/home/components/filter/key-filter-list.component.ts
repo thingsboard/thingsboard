@@ -19,13 +19,18 @@ import {
   AbstractControl,
   ControlValueAccessor,
   FormArray,
-  FormBuilder,
+  FormBuilder, FormControl,
   FormGroup,
   NG_VALUE_ACCESSOR,
   Validators
 } from '@angular/forms';
 import { Observable, Subscription } from 'rxjs';
-import { EntityKeyType, entityKeyTypeTranslationMap, KeyFilterInfo } from '@shared/models/query/query.models';
+import {
+  EntityKeyType,
+  entityKeyTypeTranslationMap,
+  KeyFilter,
+  KeyFilterInfo, keyFilterInfosToKeyFilters
+} from '@shared/models/query/query.models';
 import { MatDialog } from '@angular/material/dialog';
 import { deepClone } from '@core/utils';
 import { KeyFilterDialogComponent, KeyFilterDialogData } from '@home/components/filter/key-filter-dialog.component';
@@ -46,9 +51,17 @@ export class KeyFilterListComponent implements ControlValueAccessor, OnInit {
 
   @Input() disabled: boolean;
 
+  @Input() displayUserParameters = true;
+
+  @Input() allowUserDynamicSource = true;
+
+  @Input() telemetryKeysOnly = false;
+
   keyFilterListFormGroup: FormGroup;
 
   entityKeyTypeTranslations = entityKeyTypeTranslationMap;
+
+  keyFiltersControl: FormControl;
 
   private propagateChange = null;
 
@@ -62,6 +75,7 @@ export class KeyFilterListComponent implements ControlValueAccessor, OnInit {
     this.keyFilterListFormGroup = this.fb.group({});
     this.keyFilterListFormGroup.addControl('keyFilters',
       this.fb.array([]));
+    this.keyFiltersControl = this.fb.control(null);
   }
 
   keyFiltersFormArray(): FormArray {
@@ -79,8 +93,10 @@ export class KeyFilterListComponent implements ControlValueAccessor, OnInit {
     this.disabled = isDisabled;
     if (this.disabled) {
       this.keyFilterListFormGroup.disable({emitEvent: false});
+      this.keyFiltersControl.disable({emitEvent: false});
     } else {
       this.keyFilterListFormGroup.enable({emitEvent: false});
+      this.keyFiltersControl.enable({emitEvent: false});
     }
   }
 
@@ -103,6 +119,8 @@ export class KeyFilterListComponent implements ControlValueAccessor, OnInit {
     } else {
       this.keyFilterListFormGroup.enable({emitEvent: false});
     }
+    const keyFiltersArray = keyFilterInfosToKeyFilters(keyFilters);
+    this.keyFiltersControl.patchValue(keyFiltersArray, {emitEvent: false});
   }
 
   public removeKeyFilter(index: number) {
@@ -147,8 +165,12 @@ export class KeyFilterListComponent implements ControlValueAccessor, OnInit {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        keyFilter: keyFilter ? deepClone(keyFilter): null,
-        isAdd
+        keyFilter: keyFilter ? (this.disabled ? keyFilter : deepClone(keyFilter)) : null,
+        isAdd,
+        readonly: this.disabled,
+        displayUserParameters: this.displayUserParameters,
+        allowUserDynamicSource: this.allowUserDynamicSource,
+        telemetryKeysOnly: this.telemetryKeysOnly
       }
     }).afterClosed();
   }
@@ -160,5 +182,7 @@ export class KeyFilterListComponent implements ControlValueAccessor, OnInit {
     } else {
       this.propagateChange(null);
     }
+    const keyFiltersArray = keyFilterInfosToKeyFilters(keyFilters);
+    this.keyFiltersControl.patchValue(keyFiltersArray, {emitEvent: false});
   }
 }

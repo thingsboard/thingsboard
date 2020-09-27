@@ -22,6 +22,7 @@ import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
@@ -48,85 +49,41 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Post Telemetry device", "Test Post Telemetry gateway");
+        processBeforeTest("Test Post Telemetry device", "Test Post Telemetry gateway", null, null, null);
+    }
+
+    @After
+    public void afterTest() throws Exception {
+        processAfterTest();
     }
 
     @Test
-    public void testPushMqttTelemetryV1Json() throws Exception {
+    public void testPushMqttTelemetry() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC_V1_JSON, expectedKeys, PAYLOAD_VALUES_STR_V_1.getBytes(), false);
+        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC, expectedKeys, PAYLOAD_VALUES_STR_V_1.getBytes(), false);
     }
 
     @Test
-    public void testPushMqttTelemetryV1JsonWithTs() throws Exception {
+    public void testPushMqttTelemetryWithTs() throws Exception {
         String payloadStr = "{\"ts\": 10000, \"values\": " + PAYLOAD_VALUES_STR_V_1 + "}";
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC_V1_JSON, expectedKeys, payloadStr.getBytes(), true);
+        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC, expectedKeys, payloadStr.getBytes(), true);
     }
 
     @Test
-    public void testPushMqttTelemetryV2Json() throws Exception {
-        List<String> expectedKeys = Arrays.asList("key6", "key7", "key8", "key9", "key10");
-        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC_V2_JSON, expectedKeys, PAYLOAD_VALUES_STR_V_2.getBytes(), false);
-    }
-
-    @Test
-    public void testPushMqttTelemetryV2JsonWithTs() throws Exception {
-        String payloadStr = "{\"ts\": 10000, \"values\": " + PAYLOAD_VALUES_STR_V_2 + "}";
-        List<String> expectedKeys = Arrays.asList("key6", "key7", "key8", "key9", "key10");
-        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC_V2_JSON, expectedKeys, payloadStr.getBytes(), true);
-    }
-
-    @Test
-    public void testPushMqttTelemetryV2Proto() throws Exception {
-        List<String> expectedKeys = Arrays.asList("key11", "key12", "key13", "key14", "key15");
-        TransportProtos.TsKvListProto tsKvListProto = getTsKvListProto(expectedKeys, 0);
-        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC_V2_PROTO, expectedKeys, tsKvListProto.toByteArray(), false);
-    }
-
-    @Test
-    public void testPushMqttTelemetryV2ProtoWithTs() throws Exception {
-        List<String> expectedKeys = Arrays.asList("key16", "key17", "key18", "key19", "key20");
-        TransportProtos.TsKvListProto tsKvListProto = getTsKvListProto(expectedKeys, 10000);
-        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC_V2_PROTO, expectedKeys, tsKvListProto.toByteArray(), true);
-    }
-
-    @Test
-    public void testPushMqttTelemetryV1GatewayJson() throws Exception {
+    public void testPushMqttTelemetryGateway() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        String deviceName1 = "Device D";
-        String deviceName2 = "Device E";
+        String deviceName1 = "Device A";
+        String deviceName2 = "Device B";
         String payload = getGatewayTelemetryJsonPayload(deviceName1, deviceName2, "10000", "20000");
-        processGatewayTelemetryTest(MqttTopics.GATEWAY_TELEMETRY_TOPIC_V1_JSON, expectedKeys, payload.getBytes(), deviceName1, deviceName2);
+        processGatewayTelemetryTest(MqttTopics.GATEWAY_TELEMETRY_TOPIC, expectedKeys, payload.getBytes(), deviceName1, deviceName2);
     }
 
     @Test
-    public void testPushMqttTelemetryV2GatewayJson() throws Exception {
-        List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        String deviceName1 = "Device F";
-        String deviceName2 = "Device G";
-        String payload = getGatewayTelemetryJsonPayload(deviceName1, deviceName2, "10000", "20000");
-        processGatewayTelemetryTest(MqttTopics.GATEWAY_TELEMETRY_TOPIC_V2_JSON, expectedKeys, payload.getBytes(), deviceName1, deviceName2);
-    }
-
-    @Test
-    public void testPushMqttTelemetryV2GatewayProto() throws Exception {
-        TransportApiProtos.GatewayTelemetryMsg.Builder gatewayTelemetryMsgProtoBuilder = TransportApiProtos.GatewayTelemetryMsg.newBuilder();
-        List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        String deviceName1 = "Device H";
-        String deviceName2 = "Device I";
-        TransportApiProtos.TelemetryMsg deviceATelemetryMsgProto = getDeviceTelemetryMsgProto(deviceName1, expectedKeys, 10000, 20000);
-        TransportApiProtos.TelemetryMsg deviceBTelemetryMsgProto = getDeviceTelemetryMsgProto(deviceName2, expectedKeys, 10000, 20000);
-        gatewayTelemetryMsgProtoBuilder.addAllMsg(Arrays.asList(deviceATelemetryMsgProto, deviceBTelemetryMsgProto));
-        TransportApiProtos.GatewayTelemetryMsg gatewayTelemetryMsg = gatewayTelemetryMsgProtoBuilder.build();
-        processGatewayTelemetryTest(MqttTopics.GATEWAY_TELEMETRY_TOPIC_V2_PROTO, expectedKeys, gatewayTelemetryMsg.toByteArray(), deviceName1, deviceName2);
-    }
-
-    @Test
-    public void testGatewayConnectJsonV1() throws Exception {
+    public void testGatewayConnect() throws Exception {
         String payload = "{\"device\":\"Device A\"}";
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
-        publishMqttMsg(client, payload.getBytes(), MqttTopics.GATEWAY_CONNECT_TOPIC_V1_JSON);
+        publishMqttMsg(client, payload.getBytes(), MqttTopics.GATEWAY_CONNECT_TOPIC);
 
         Thread.sleep(2000);
 
@@ -135,33 +92,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         assertNotNull(device);
     }
 
-    @Test
-    public void testGatewayConnectJsonV2() throws Exception {
-        String payload = "{\"device\":\"Device B\"}";
-        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
-        publishMqttMsg(client, payload.getBytes(), MqttTopics.GATEWAY_CONNECT_TOPIC_V2_JSON);
-
-        Thread.sleep(2000);
-
-        String deviceName = "Device B";
-        Device device = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
-        assertNotNull(device);
-    }
-
-    @Test
-    public void testGatewayConnectProto() throws Exception {
-        TransportApiProtos.ConnectMsg connectMsgProto = getConnectProto("Device C");
-        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
-        publishMqttMsg(client, connectMsgProto.toByteArray(), MqttTopics.GATEWAY_CONNECT_TOPIC_V2_PROTO);
-
-        Thread.sleep(2000);
-
-        String deviceName = "Device C";
-        Device device = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
-        assertNotNull(device);
-    }
-
-    private void processTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, boolean withTs) throws Exception {
+    protected void processTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, boolean withTs) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
         publishMqttMsg(client, payload, topic);
 
@@ -200,7 +131,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         assertValues(values, 0);
     }
 
-    private void processGatewayTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, String firstDeviceName, String secondDeviceName) throws Exception {
+    protected void processGatewayTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, String firstDeviceName, String secondDeviceName) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
 
         publishMqttMsg(client, payload, topic);
@@ -231,18 +162,16 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
         assertGatewayDeviceData(firstDeviceValues, expectedKeys);
         assertGatewayDeviceData(secondDeviceValues, expectedKeys);
+    }
 
-
+    protected String getGatewayTelemetryJsonPayload(String deviceA, String deviceB, String firstTsValue, String secondTsValue) {
+        String payload = "[{\"ts\": " + firstTsValue + ", \"values\": " + PAYLOAD_VALUES_STR_V_1 + "}, " +
+                "{\"ts\": " + secondTsValue + ", \"values\": " + PAYLOAD_VALUES_STR_V_1 + "}]";
+        return "{\"" + deviceA + "\": " + payload + ",  \"" + deviceB + "\": " + payload + "}";
     }
 
     private String getTelemetryValuesUrl(DeviceId deviceId, Set<String> actualKeySet) {
         return "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?startTs=0&endTs=25000&keys=" + String.join(",", actualKeySet);
-    }
-
-    private String getGatewayTelemetryJsonPayload(String deviceA, String deviceB, String firstTsValue, String secondTsValue) {
-        String payload = "[{\"ts\": " + firstTsValue + ", \"values\": " + PAYLOAD_VALUES_STR_V_1 + "}, " +
-                "{\"ts\": " + secondTsValue + ", \"values\": " + PAYLOAD_VALUES_STR_V_1 + "}]";
-        return "{\"" + deviceA + "\": " + payload + ",  \"" + deviceB + "\": " + payload + "}";
     }
 
     private void assertGatewayDeviceData(Map<String, List<Map<String, String>>> deviceValues, List<String> expectedKeys) {
@@ -268,33 +197,18 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
             String value = tsKv.get(arrayIndex).get("value");
             switch (key) {
                 case "key1":
-                case "key6":
-                case "key11":
-                case "key16":
                     assertEquals("value1", value);
                     break;
                 case "key2":
-                case "key7":
-                case "key12":
-                case "key17":
                     assertEquals("true", value);
                     break;
                 case "key3":
-                case "key8":
-                case "key13":
-                case "key18":
                     assertEquals("3.0", value);
                     break;
                 case "key4":
-                case "key9":
-                case "key14":
-                case "key19":
                     assertEquals("4", value);
                     break;
                 case "key5":
-                case "key10":
-                case "key15":
-                case "key20":
                     assertEquals("{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}", value);
                     break;
             }
