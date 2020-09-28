@@ -55,6 +55,8 @@ public class EdgeGrpcClient implements EdgeRpcClient {
     private int rpcPort;
     @Value("${cloud.rpc.timeout}")
     private int timeoutSecs;
+    @Value("${cloud.rpc.keep_alive_time_sec}")
+    private int keepAliveTimeSec;
     @Value("${cloud.rpc.ssl.enabled}")
     private boolean sslEnabled;
     @Value("${cloud.rpc.ssl.cert}")
@@ -73,7 +75,9 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                         Consumer<EdgeConfiguration> onEdgeUpdate,
                         Consumer<DownlinkMsg> onDownlink,
                         Consumer<Exception> onError) {
-        NettyChannelBuilder builder = NettyChannelBuilder.forAddress(rpcHost, rpcPort).usePlaintext();
+        NettyChannelBuilder builder = NettyChannelBuilder.forAddress(rpcHost, rpcPort)
+                .keepAliveTime(keepAliveTimeSec, TimeUnit.SECONDS)
+                .usePlaintext();
         if (sslEnabled) {
             try {
                 builder.sslContext(GrpcSslContexts.forClient().trustManager(new File(Resources.getResource(certResource).toURI())).build());
