@@ -22,9 +22,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
@@ -32,7 +30,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
-import org.thingsboard.server.common.data.device.data.ProvisionDeviceConfiguration;
+import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -63,7 +61,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFro
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceCredentialsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
@@ -284,7 +281,7 @@ public class DefaultTransportApiService implements TransportApiService {
                         requestMsg.getDeviceName(),
                         requestMsg.getDeviceType(),
                         requestMsg.getX509CertPubKey(),
-                        new ProvisionDeviceConfiguration(
+                        new ProvisionDeviceProfileConfiguration(
                                 requestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceKey(),
                                 requestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceSecret())));
         return Futures.transform(provisionResponseFuture, provisionResponse -> {

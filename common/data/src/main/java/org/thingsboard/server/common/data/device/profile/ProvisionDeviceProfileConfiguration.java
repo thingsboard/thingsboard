@@ -19,8 +19,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceProfileType;
-import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
-import org.thingsboard.server.common.data.device.data.ProvisionDeviceConfiguration;
 
 import java.util.Objects;
 
