@@ -132,8 +132,8 @@ export default abstract class LeafletMap {
                       shadowSize: [41, 41]
                     });
                     const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
-                      mousePositionOnMap.lat = customLatLng[this.options.latKeyName];
-                      mousePositionOnMap.lng = customLatLng[this.options.lngKeyName];
+                    mousePositionOnMap.lat = customLatLng[this.options.latKeyName];
+                    mousePositionOnMap.lng = customLatLng[this.options.lngKeyName];
 
                     const newMarker = L.marker(mousePositionOnMap, { icon }).addTo(this.map);
                     this.addMarkers.push(newMarker);
