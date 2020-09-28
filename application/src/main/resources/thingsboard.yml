@@ -473,9 +473,7 @@ spring:
         enabled: "true"
   jpa:
     open-in-view: "false"
-    show-sql: "true"
     hibernate:
-      format_sql: "true"
       ddl-auto: "none"
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
   datasource:
