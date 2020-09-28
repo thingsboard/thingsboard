@@ -77,7 +77,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         alarmFieldColumnMap.put("originator", "originator_name");
     }
 
-    private static final String SELECT_ORIGINATOR_NAME = " CASE" +
+    private static final String SELECT_ORIGINATOR_NAME = " COALESCE(CASE" +
             " WHEN a.originator_type = " + EntityType.TENANT.ordinal() +
             " THEN (select title from tenant where id = a.originator_id)" +
             " WHEN a.originator_type = " + EntityType.CUSTOMER.ordinal() +
@@ -92,7 +92,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " THEN (select name from device where id = a.originator_id)" +
             " WHEN a.originator_type = " + EntityType.ENTITY_VIEW.ordinal() +
             " THEN (select name from entity_view where id = a.originator_id)" +
-            " END as originator_name";
+            " END, 'Deleted') as originator_name";
 
     private static final String FIELDS_SELECTION = "select a.id as id," +
             " a.created_time as created_time," +
