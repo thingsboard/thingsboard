@@ -24,9 +24,6 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -71,7 +68,7 @@ public class TbMsgAttributesNode implements TbNode {
                 config.getScope(),
                 new ArrayList<>(attributes),
                 new TelemetryNodeCallback(ctx, msg),
-                !(config.isNotNotifyDevice() && StringUtils.isNoneEmpty(notifyDeviceStr) && !Boolean.parseBoolean(notifyDeviceStr)));
+                config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceStr) || Boolean.parseBoolean(notifyDeviceStr));
     }
 
     @Override
