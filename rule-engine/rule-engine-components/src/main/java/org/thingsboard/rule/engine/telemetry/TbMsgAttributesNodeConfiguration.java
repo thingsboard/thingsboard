@@ -24,12 +24,13 @@ public class TbMsgAttributesNodeConfiguration implements NodeConfiguration<TbMsg
 
     private String scope;
 
-    private boolean notNotifyDevice;
+    private Boolean notifyDevice;
 
     @Override
     public TbMsgAttributesNodeConfiguration defaultConfiguration() {
         TbMsgAttributesNodeConfiguration configuration = new TbMsgAttributesNodeConfiguration();
         configuration.setScope(DataConstants.SERVER_SCOPE);
+        configuration.setNotifyDevice(true);
         return configuration;
     }
 }
