@@ -168,13 +168,4 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
     DeviceEntity findByTenantIdAndId(UUID tenantId, UUID id);
 
     Long countByDeviceProfileId(UUID deviceProfileId);
-
-    @Query(value = "SELECT * FROM Device as d " +
-            "WHERE d.device_data->'configuration'->>'provisionDeviceKey' = :provisionDeviceKey " +
-            "AND d.device_data->'configuration'->>'provisionDeviceSecret' = :provisionDeviceSecret " +
-            "AND d.type = :profileName",
-            nativeQuery = true)
-    DeviceEntity findDeviceByProfileNameAndDeviceDataProvisionConfigurationPair(@Param("profileName") String profileName,
-                                                                                @Param("provisionDeviceKey") String provisionDeviceKey,
-                                                                                @Param("provisionDeviceSecret") String provisionDeviceSecret);
 }
