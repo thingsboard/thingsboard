@@ -178,11 +178,11 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     }
 
     @Override
-    public PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink) {
+    public PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink, String transportType) {
         log.trace("Executing findDeviceProfileInfos tenantId [{}], pageLink [{}]", tenantId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validatePageLink(pageLink);
-        return deviceProfileDao.findDeviceProfileInfos(tenantId, pageLink);
+        return deviceProfileDao.findDeviceProfileInfos(tenantId, pageLink, transportType);
     }
 
     @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{#tenantId.id, #name}")
