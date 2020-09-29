@@ -28,7 +28,8 @@ public abstract class AbstractMqttClaimProtoDeviceTest extends AbstractMqttClaim
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest(TransportPayloadType.PROTOBUF);
+        processBeforeTest("Test Claim device", "Test Claim gateway", TransportPayloadType.PROTOBUF, null, null);
+        createCustomerAndUser();
     }
 
     @After

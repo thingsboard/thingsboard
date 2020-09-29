@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
 
 import java.nio.charset.StandardCharsets;
@@ -56,7 +57,7 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Subscribe to attribute updates", "Gateway Test Subscribe to attribute updates", TransportPayloadType.JSON);
+        processBeforeTest("Test Subscribe to attribute updates", "Gateway Test Subscribe to attribute updates", TransportPayloadType.JSON, null, null);
     }
 
     @After
@@ -101,14 +102,14 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
 
     protected void validateUpdateAttributesResponse(TestMqttCallback callback) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
-        String s = new String(callback.getPayloadBytes(), StandardCharsets.UTF_8);
-        assertEquals(POST_ATTRIBUTES_PAYLOAD, s);
+        String response = new String(callback.getPayloadBytes(), StandardCharsets.UTF_8);
+        assertEquals(JacksonUtil.toJsonNode(POST_ATTRIBUTES_PAYLOAD), JacksonUtil.toJsonNode(response));
     }
 
     protected void validateDeleteAttributesResponse(TestMqttCallback callback) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
-        String s = new String(callback.getPayloadBytes(), StandardCharsets.UTF_8);
-        assertEquals(s, RESPONSE_ATTRIBUTES_PAYLOAD_DELETED);
+        String response = new String(callback.getPayloadBytes(), StandardCharsets.UTF_8);
+        assertEquals(JacksonUtil.toJsonNode(RESPONSE_ATTRIBUTES_PAYLOAD_DELETED), JacksonUtil.toJsonNode(response));
     }
 
     protected void processGatewayTestSubscribeToAttributesUpdates() throws Exception {
@@ -124,7 +125,7 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
 
         byte[] connectPayloadBytes = getConnectPayloadBytes();
 
-        publishMqttMsg(client, connectPayloadBytes);
+        publishMqttMsg(client, connectPayloadBytes, MqttTopics.GATEWAY_CONNECT_TOPIC);
 
         Thread.sleep(1000);
 
@@ -165,56 +166,5 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
     protected byte[] getConnectPayloadBytes() {
         String connectPayload = "{\"device\":\"" + "Gateway Device Subscribe to attribute updates" + "\"}";
         return connectPayload.getBytes();
-    }
-
-
-    private TestMqttCallback getTestMqttCallback() {
-        CountDownLatch latch = new CountDownLatch(1);
-        return new TestMqttCallback(latch);
-    }
-
-    private void publishMqttMsg(MqttAsyncClient client, byte[] payload) throws MqttException {
-        MqttMessage message = new MqttMessage();
-        message.setPayload(payload);
-        client.publish(MqttTopics.GATEWAY_CONNECT_TOPIC, message);
-    }
-
-    protected static class TestMqttCallback implements MqttCallback {
-
-        private final CountDownLatch latch;
-        private Integer qoS;
-        private byte[] payloadBytes;
-
-        TestMqttCallback(CountDownLatch latch) {
-            this.latch = latch;
-        }
-
-        int getQoS() {
-            return qoS;
-        }
-
-        byte[] getPayloadBytes() {
-            return payloadBytes;
-        }
-
-        public CountDownLatch getLatch() {
-            return latch;
-        }
-
-        @Override
-        public void connectionLost(Throwable throwable) {
-        }
-
-        @Override
-        public void messageArrived(String requestTopic, MqttMessage mqttMessage) throws Exception {
-            qoS = mqttMessage.getQos();
-            payloadBytes = mqttMessage.getPayload();
-            latch.countDown();
-        }
-
-        @Override
-        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-
-        }
     }
 }

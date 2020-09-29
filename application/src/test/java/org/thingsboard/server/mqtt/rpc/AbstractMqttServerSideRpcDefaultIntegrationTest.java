@@ -68,12 +68,12 @@ public abstract class AbstractMqttServerSideRpcDefaultIntegrationTest extends Ab
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest(null);
+        processBeforeTest("RPC test device", "RPC test gateway", null, null, null);
     }
 
     @After
     public void afterTest() throws Exception {
-        super.afterTest();
+        super.processAfterTest();
     }
 
     @Test

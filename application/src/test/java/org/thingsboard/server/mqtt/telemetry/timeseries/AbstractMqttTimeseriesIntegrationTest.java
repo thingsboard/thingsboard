@@ -60,12 +60,12 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     @Test
     public void testPushMqttTelemetry() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC, expectedKeys, PAYLOAD_VALUES_STR_V_1.getBytes(), false);
+        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes(), false);
     }
 
     @Test
     public void testPushMqttTelemetryWithTs() throws Exception {
-        String payloadStr = "{\"ts\": 10000, \"values\": " + PAYLOAD_VALUES_STR_V_1 + "}";
+        String payloadStr = "{\"ts\": 10000, \"values\": " + PAYLOAD_VALUES_STR + "}";
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC, expectedKeys, payloadStr.getBytes(), true);
     }
@@ -165,8 +165,8 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     }
 
     protected String getGatewayTelemetryJsonPayload(String deviceA, String deviceB, String firstTsValue, String secondTsValue) {
-        String payload = "[{\"ts\": " + firstTsValue + ", \"values\": " + PAYLOAD_VALUES_STR_V_1 + "}, " +
-                "{\"ts\": " + secondTsValue + ", \"values\": " + PAYLOAD_VALUES_STR_V_1 + "}]";
+        String payload = "[{\"ts\": " + firstTsValue + ", \"values\": " + PAYLOAD_VALUES_STR + "}, " +
+                "{\"ts\": " + secondTsValue + ", \"values\": " + PAYLOAD_VALUES_STR + "}]";
         return "{\"" + deviceA + "\": " + payload + ",  \"" + deviceB + "\": " + payload + "}";
     }
 
@@ -221,32 +221,6 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         assertEquals(ts, deviceValues.get(expectedKeys.get(2)).get(arrayIndex).get("ts"));
         assertEquals(ts, deviceValues.get(expectedKeys.get(3)).get(arrayIndex).get("ts"));
         assertEquals(ts, deviceValues.get(expectedKeys.get(4)).get(arrayIndex).get("ts"));
-    }
-
-
-    private TransportApiProtos.ConnectMsg getConnectProto(String deviceName) {
-        TransportApiProtos.ConnectMsg.Builder builder = TransportApiProtos.ConnectMsg.newBuilder();
-        builder.setDeviceName(deviceName);
-        return builder.build();
-    }
-
-    private TransportApiProtos.TelemetryMsg getDeviceTelemetryMsgProto(String deviceName, List<String> expectedKeys, long firstTs, long secondTs) {
-        TransportApiProtos.TelemetryMsg.Builder deviceTelemetryMsgBuilder = TransportApiProtos.TelemetryMsg.newBuilder();
-        TransportProtos.TsKvListProto tsKvListProto1 = getTsKvListProto(expectedKeys, firstTs);
-        TransportProtos.TsKvListProto tsKvListProto2 = getTsKvListProto(expectedKeys, secondTs);
-        TransportProtos.PostTelemetryMsg.Builder msg = TransportProtos.PostTelemetryMsg.newBuilder();
-        msg.addAllTsKvList(Arrays.asList(tsKvListProto1, tsKvListProto2));
-        deviceTelemetryMsgBuilder.setDeviceName(deviceName);
-        deviceTelemetryMsgBuilder.setMsg(msg);
-        return deviceTelemetryMsgBuilder.build();
-    }
-
-    private TransportProtos.TsKvListProto getTsKvListProto(List<String> expectedKeys, long ts) {
-        List<TransportProtos.KeyValueProto> kvProtos = getKvProtos(expectedKeys);
-        TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
-        builder.addAllKv(kvProtos);
-        builder.setTs(ts);
-        return builder.build();
     }
 
     //    @Test - Unstable

@@ -27,21 +27,19 @@ public abstract class AbstractMqttServerSideRpcJsonIntegrationTest extends Abstr
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest(TransportPayloadType.JSON);
+        processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.JSON, null, null);
     }
 
     @After
     public void afterTest() throws Exception {
-        super.afterTest();
+        super.processAfterTest();
     }
 
-    @Ignore
     @Test
     public void testServerMqttOneWayRpc() throws Exception {
         processOneWayRpcTest();
     }
 
-    @Ignore
     @Test
     public void testServerMqttTwoWayRpc() throws Exception {
         processTwoWayRpcTest();

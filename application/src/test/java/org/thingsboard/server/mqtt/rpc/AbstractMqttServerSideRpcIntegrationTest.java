@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.server.mqtt.AbstractMqttIntegrationTest;
 import org.thingsboard.server.service.security.AccessValidator;
 
 import java.util.Arrays;
@@ -63,85 +64,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Valerii Sosliuk
  */
 @Slf4j
-public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractControllerTest {
+public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractMqttIntegrationTest {
 
     protected static final String DEVICE_RESPONSE = "{\"value1\":\"A\",\"value2\":\"B\"}";
-    private static final String MQTT_URL = "tcp://localhost:1883";
-
-    private Tenant savedTenant;
-    private User tenantAdmin;
-
-    protected Device savedDevice;
-    protected String accessToken;
-
-    protected Device savedGateway;
-    protected String gatewayAccessToken;
-
 
     protected Long asyncContextTimeoutToUseRpcPlugin;
 
-    private static final AtomicInteger atomicInteger = new AtomicInteger(2);
-
-    protected void processBeforeTest(TransportPayloadType transportPayloadType) throws Exception {
-        loginSysAdmin();
-
+    protected void processBeforeTest(String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic) throws Exception {
+        super.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic);
         asyncContextTimeoutToUseRpcPlugin = 10000L;
-
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
-        Assert.assertNotNull(savedTenant);
-
-        tenantAdmin = new User();
-        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin.setTenantId(savedTenant.getId());
-        tenantAdmin.setEmail("tenant" + atomicInteger.getAndIncrement() + "@thingsboard.org");
-        tenantAdmin.setFirstName("Joe");
-        tenantAdmin.setLastName("Downs");
-
-        createUserAndLogin(tenantAdmin, "testPassword1");
-
-        Device device = new Device();
-        device.setName("RPC test device");
-        device.setType("default");
-
-        Device gateway = new Device();
-        gateway.setName("RPC test gateway");
-        gateway.setType("default");
-        ObjectNode additionalInfo = mapper.createObjectNode();
-        additionalInfo.put("gateway", true);
-        gateway.setAdditionalInfo(additionalInfo);
-
-        if (transportPayloadType != null) {
-            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(transportPayloadType);
-            DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", mqttDeviceProfile, DeviceProfile.class);
-            device.setDeviceProfileId(savedDeviceProfile.getId());
-            gateway.setDeviceProfileId(savedDeviceProfile.getId());
-        }
-
-        savedDevice = getSavedDevice(device);
-
-        DeviceCredentials deviceCredentials = getDeviceCredentials(savedDevice);
-
-        assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
-        accessToken = deviceCredentials.getCredentialsId();
-        assertNotNull(accessToken);
-
-        savedGateway = doPost("/api/device", gateway, Device.class);
-
-        DeviceCredentials gatewayCredentials = getDeviceCredentials(savedGateway);
-
-        assertEquals(savedGateway.getId(), gatewayCredentials.getDeviceId());
-        gatewayAccessToken = gatewayCredentials.getCredentialsId();
-        assertNotNull(gatewayAccessToken);
-    }
-
-    @After
-    public void afterTest() throws Exception {
-        loginSysAdmin();
-        if (savedTenant != null) {
-            doDelete("/api/tenant/" + savedTenant.getId().getId().toString()).andExpect(status().isOk());
-        }
     }
 
     protected void processOneWayRpcTest() throws Exception {
@@ -243,53 +174,12 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
         String result = doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
         latch.await(3, TimeUnit.SECONDS);
         String expected = "{\"success\":true}";
-        Assert.assertEquals(expected, result);
-    }
-
-    protected MqttAsyncClient getMqttAsyncClient(String accessToken) throws MqttException {
-        String clientId = MqttAsyncClient.generateClientId();
-        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
-
-        MqttConnectOptions options = new MqttConnectOptions();
-        options.setUserName(accessToken);
-        client.connect(options).waitForCompletion();
-        return client;
-    }
-
-    private void publishMqttMsg(MqttAsyncClient client, byte[] payload, String topic) throws MqttException {
-        MqttMessage message = new MqttMessage();
-        message.setPayload(payload);
-        client.publish(topic, message);
-    }
-
-    private Device getSavedDevice(Device device) throws Exception {
-        return doPost("/api/device", device, Device.class);
+        assertEquals(expected, result);
+        assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getQoS());
     }
 
     private Device getDeviceByName(String deviceName) throws Exception {
         return doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
-    }
-
-    private DeviceCredentials getDeviceCredentials(Device savedDevice) throws Exception {
-        return doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-    }
-
-    private DeviceProfile createMqttDeviceProfile(TransportPayloadType transportPayloadType) {
-        DeviceProfile deviceProfile = new DeviceProfile();
-        deviceProfile.setName(transportPayloadType.name());
-        deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setTransportType(DeviceTransportType.MQTT);
-        deviceProfile.setDescription(transportPayloadType.name() + " Test");
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
-        MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
-        transportConfiguration.setTransportPayloadType(transportPayloadType);
-        deviceProfileData.setTransportConfiguration(transportConfiguration);
-        deviceProfileData.setConfiguration(configuration);
-        deviceProfile.setProfileData(deviceProfileData);
-        deviceProfile.setDefault(false);
-        deviceProfile.setDefaultRuleChainId(null);
-        return deviceProfile;
     }
 
     protected MqttMessage processMessageArrived(String requestTopic, MqttMessage mqttMessage) throws MqttException, InvalidProtocolBufferException {

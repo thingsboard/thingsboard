@@ -15,11 +15,8 @@
  */
 package org.thingsboard.server.mqtt.claim;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
 import org.junit.Before;
@@ -27,69 +24,32 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.DeviceProfileType;
-import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
-import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
-
-import java.util.concurrent.atomic.AtomicInteger;
+import org.thingsboard.server.mqtt.AbstractMqttIntegrationTest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest {
+public abstract class AbstractMqttClaimDeviceTest extends AbstractMqttIntegrationTest {
 
-    protected static final String MQTT_URL = "tcp://localhost:1883";
     protected static final String CUSTOMER_USER_PASSWORD = "customerUser123!";
 
-    protected User tenantAdmin;
     protected User customerAdmin;
-
-    protected Tenant savedTenant;
-    private Customer savedCustomer;
-
-    protected Device savedDevice;
-    protected String accessToken;
-
-    protected Device savedGateway;
-    protected String gatewayAccessToken;
-
-    private static final AtomicInteger atomicInteger = new AtomicInteger(2);
-
+    protected Customer savedCustomer;
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest(null);
+        super.processBeforeTest("Test Claim device", "Test Claim gateway", null, null, null);
+        createCustomerAndUser();
     }
 
-    protected void processBeforeTest(TransportPayloadType transportPayloadType) throws Exception {
-        loginSysAdmin();
-
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test Claiming Tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
-        assertNotNull(savedTenant);
-
-        tenantAdmin = new User();
-        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin.setTenantId(savedTenant.getId());
-        tenantAdmin.setEmail("tenant" + atomicInteger.getAndIncrement() + "@thingsboard.org");
-
-        createUserAndLogin(tenantAdmin, "testPassword1");
-
+    protected void createCustomerAndUser() throws Exception {
         Customer customer = new Customer();
         customer.setTenantId(savedTenant.getId());
         customer.setTitle("Test Claiming Customer");
@@ -101,56 +61,16 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
         user.setAuthority(Authority.CUSTOMER_USER);
         user.setTenantId(savedTenant.getId());
         user.setCustomerId(savedCustomer.getId());
-        user.setEmail("customer" + atomicInteger.getAndIncrement() + "@thingsboard.org");
+        user.setEmail("customer@thingsboard.org");
 
         customerAdmin = createUser(user, CUSTOMER_USER_PASSWORD);
         assertNotNull(customerAdmin);
         assertEquals(customerAdmin.getCustomerId(), savedCustomer.getId());
-
-        Device device = new Device();
-        device.setName("Test Claim device");
-        device.setType("default");
-
-
-        Device gateway = new Device();
-        gateway.setName("Test Claim gateway");
-        gateway.setType("default");
-        ObjectNode additionalInfo = mapper.createObjectNode();
-        additionalInfo.put("gateway", true);
-        gateway.setAdditionalInfo(additionalInfo);
-
-        if (transportPayloadType != null) {
-            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(transportPayloadType);
-            DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", mqttDeviceProfile, DeviceProfile.class);
-            device.setDeviceProfileId(savedDeviceProfile.getId());
-            gateway.setDeviceProfileId(savedDeviceProfile.getId());
-        }
-
-        savedDevice = doPost("/api/device", device, Device.class);
-
-        DeviceCredentials deviceCredentials =
-                doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-
-        assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
-        accessToken = deviceCredentials.getCredentialsId();
-        assertNotNull(accessToken);
-
-        savedGateway = doPost("/api/device", gateway, Device.class);
-
-        DeviceCredentials gatewayCredentials =
-                doGet("/api/device/" + savedGateway.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-
-        assertEquals(savedGateway.getId(), gatewayCredentials.getDeviceId());
-        gatewayAccessToken = gatewayCredentials.getCredentialsId();
-        assertNotNull(gatewayAccessToken);
     }
 
     @After
     public void afterTest() throws Exception {
-        loginSysAdmin();
-        if (savedTenant != null) {
-            doDelete("/api/tenant/" + savedTenant.getId().getId().toString()).andExpect(status().isOk());
-        }
+        super.processAfterTest();
     }
 
     @Test
@@ -271,42 +191,5 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractControllerTest
         failurePayloadBytes = failurePayload.getBytes();
         validateGatewayClaimResponse(deviceName, emptyPayload, client, failurePayloadBytes, payloadBytes);
     }
-
-    protected MqttAsyncClient getMqttAsyncClient(String accessToken) throws MqttException {
-        String clientId = MqttAsyncClient.generateClientId();
-        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
-
-        MqttConnectOptions options = new MqttConnectOptions();
-        options.setUserName(accessToken);
-        client.connect(options).waitForCompletion();
-        return client;
-    }
-
-    protected Device getSavedDevice(Device device) throws Exception {
-        return doPost("/api/device", device, Device.class);
-    }
-
-    protected DeviceCredentials getDeviceCredentials(Device savedDevice) throws Exception {
-        return doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-    }
-
-    protected DeviceProfile createMqttDeviceProfile(TransportPayloadType transportPayloadType) {
-        DeviceProfile deviceProfile = new DeviceProfile();
-        deviceProfile.setName(transportPayloadType.name());
-        deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setTransportType(DeviceTransportType.MQTT);
-        deviceProfile.setDescription(transportPayloadType.name() + " Test");
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
-        MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
-        transportConfiguration.setTransportPayloadType(transportPayloadType);
-        deviceProfileData.setTransportConfiguration(transportConfiguration);
-        deviceProfileData.setConfiguration(configuration);
-        deviceProfile.setProfileData(deviceProfileData);
-        deviceProfile.setDefault(false);
-        deviceProfile.setDefaultRuleChainId(null);
-        return deviceProfile;
-    }
-
 
 }

@@ -38,7 +38,7 @@ public abstract class AbstractMqttAttributesUpdatesProtoIntegrationTest extends 
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Subscribe to attribute updates", "Gateway Test Subscribe to attribute updates", TransportPayloadType.PROTOBUF);
+        processBeforeTest("Test Subscribe to attribute updates", "Gateway Test Subscribe to attribute updates", TransportPayloadType.PROTOBUF, null, null);
     }
 
     @After

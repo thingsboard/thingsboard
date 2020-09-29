@@ -46,7 +46,7 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto", TransportPayloadType.PROTOBUF);
+        processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto", TransportPayloadType.PROTOBUF, null, null);
     }
 
     @After
@@ -67,16 +67,20 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
 
     protected void postAttributesAndSubscribeToTopic(Device savedDevice, MqttAsyncClient client) throws Exception {
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
-        TransportProtos.PostAttributeMsg postAttributeMsg = getPostAttributeMsg();
+        String keys = "attribute1,attribute2,attribute3,attribute4,attribute5";
+        List<String> expectedKeys = Arrays.asList(keys.split(","));
+        TransportProtos.PostAttributeMsg postAttributeMsg = getPostAttributeMsg(expectedKeys);
         byte[] payload = postAttributeMsg.toByteArray();
         client.publish(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, new MqttMessage(payload));
         client.subscribe(MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttQoS.AT_MOST_ONCE.value());
     }
 
-    protected void postGatewayDeviceClientAttributes(MqttAsyncClient client, String deviceName) throws Exception {
-        TransportProtos.PostAttributeMsg postAttributeMsg = getPostAttributeMsg();
+    protected void postGatewayDeviceClientAttributes(MqttAsyncClient client) throws Exception {
+        String keys = "attribute1,attribute2,attribute3,attribute4,attribute5";
+        List<String> expectedKeys = Arrays.asList(keys.split(","));
+        TransportProtos.PostAttributeMsg postAttributeMsg = getPostAttributeMsg(expectedKeys);
         TransportApiProtos.AttributesMsg.Builder attributesMsgBuilder = TransportApiProtos.AttributesMsg.newBuilder();
-        attributesMsgBuilder.setDeviceName(deviceName);
+        attributesMsgBuilder.setDeviceName("Gateway Device Request Attributes");
         attributesMsgBuilder.setMsg(postAttributeMsg);
         TransportApiProtos.AttributesMsg attributesMsg = attributesMsgBuilder.build();
         TransportApiProtos.GatewayAttributesMsg.Builder gatewayAttributeMsgBuilder = TransportApiProtos.GatewayAttributesMsg.newBuilder();
@@ -179,20 +183,13 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
         return gatewayAttributeResponseMsg.build();
     }
 
-    private TransportProtos.PostAttributeMsg getPostAttributeMsg() {
-        List<TransportProtos.KeyValueProto> kvProtos = getKvProtos();
-        TransportProtos.PostAttributeMsg.Builder builder = TransportProtos.PostAttributeMsg.newBuilder();
-        builder.addAllKv(kvProtos);
-        return builder.build();
-    }
-
-    private List<TransportProtos.KeyValueProto> getKvProtos() {
+    protected List<TransportProtos.KeyValueProto> getKvProtos(List<String> expectedKeys) {
         List<TransportProtos.KeyValueProto> keyValueProtos = new ArrayList<>();
-        TransportProtos.KeyValueProto strKeyValueProto = getKeyValueProto("attribute1", "value1", TransportProtos.KeyValueType.STRING_V);
-        TransportProtos.KeyValueProto boolKeyValueProto = getKeyValueProto("attribute2", "true", TransportProtos.KeyValueType.BOOLEAN_V);
-        TransportProtos.KeyValueProto dblKeyValueProto = getKeyValueProto("attribute3", "42.0", TransportProtos.KeyValueType.DOUBLE_V);
-        TransportProtos.KeyValueProto longKeyValueProto = getKeyValueProto("attribute4", "73", TransportProtos.KeyValueType.LONG_V);
-        TransportProtos.KeyValueProto jsonKeyValueProto = getKeyValueProto("attribute5", "{\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}", TransportProtos.KeyValueType.JSON_V);
+        TransportProtos.KeyValueProto strKeyValueProto = getKeyValueProto(expectedKeys.get(0), "value1", TransportProtos.KeyValueType.STRING_V);
+        TransportProtos.KeyValueProto boolKeyValueProto = getKeyValueProto(expectedKeys.get(1), "true", TransportProtos.KeyValueType.BOOLEAN_V);
+        TransportProtos.KeyValueProto dblKeyValueProto = getKeyValueProto(expectedKeys.get(2), "42.0", TransportProtos.KeyValueType.DOUBLE_V);
+        TransportProtos.KeyValueProto longKeyValueProto = getKeyValueProto(expectedKeys.get(3), "73", TransportProtos.KeyValueType.LONG_V);
+        TransportProtos.KeyValueProto jsonKeyValueProto = getKeyValueProto(expectedKeys.get(4), "{\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}", TransportProtos.KeyValueType.JSON_V);
         keyValueProtos.add(strKeyValueProto);
         keyValueProtos.add(boolKeyValueProto);
         keyValueProtos.add(dblKeyValueProto);
@@ -200,4 +197,5 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
         keyValueProtos.add(jsonKeyValueProto);
         return keyValueProtos;
     }
+
 }

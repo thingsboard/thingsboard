@@ -15,123 +15,30 @@
  */
 package org.thingsboard.server.mqtt.attributes;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.junit.Assert;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.DeviceProfileType;
-import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.Tenant;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.thingsboard.server.common.data.TransportPayloadType;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
-import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.mqtt.AbstractMqttIntegrationTest;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.util.concurrent.CountDownLatch;
 
 @Slf4j
-public abstract class AbstractMqttAttributesIntegrationTest extends AbstractControllerTest {
+public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqttIntegrationTest {
 
-    protected static final String MQTT_URL = "tcp://localhost:1883";
     protected static final String POST_ATTRIBUTES_PAYLOAD = "{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73," +
             "\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}";
 
-    private Tenant savedTenant;
-    private User tenantAdmin;
-
-    protected Device savedDevice;
-    protected String accessToken;
-
-    protected Device savedGateway;
-    protected String gatewayAccessToken;
-
-    private static final AtomicInteger atomicInteger = new AtomicInteger(2);
-
-    protected void processBeforeTest(String deviceName, String gatewayName, TransportPayloadType payloadType) throws Exception {
-        loginSysAdmin();
-
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
-        Assert.assertNotNull(savedTenant);
-
-        tenantAdmin = new User();
-        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin.setTenantId(savedTenant.getId());
-        tenantAdmin.setEmail("tenant" + atomicInteger.getAndIncrement() + "@thingsboard.org");
-        tenantAdmin.setFirstName("Joe");
-        tenantAdmin.setLastName("Downs");
-
-        createUserAndLogin(tenantAdmin, "testPassword1");
-
-        Device device = new Device();
-        device.setName(deviceName);
-        device.setType("default");
-
-        Device gateway = new Device();
-        gateway.setName(gatewayName);
-        gateway.setType("default");
-        ObjectNode additionalInfo = mapper.createObjectNode();
-        additionalInfo.put("gateway", true);
-        gateway.setAdditionalInfo(additionalInfo);
-
-        if (payloadType != null) {
-            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType);
-            DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", mqttDeviceProfile, DeviceProfile.class);
-            device.setDeviceProfileId(savedDeviceProfile.getId());
-            gateway.setDeviceProfileId(savedDeviceProfile.getId());
-        }
-
-        savedDevice = doPost("/api/device", device, Device.class);
-
-        DeviceCredentials deviceCredentials =
-                doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-
-        savedGateway = doPost("/api/device", gateway, Device.class);
-
-        DeviceCredentials gatewayCredentials =
-                doGet("/api/device/" + savedGateway.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-
-        assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
-        accessToken = deviceCredentials.getCredentialsId();
-        assertNotNull(accessToken);
-
-        assertEquals(savedGateway.getId(), gatewayCredentials.getDeviceId());
-        gatewayAccessToken = gatewayCredentials.getCredentialsId();
-        assertNotNull(gatewayAccessToken);
-
+    protected void processBeforeTest(String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic) throws Exception {
+        super.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic);
     }
 
     protected void processAfterTest() throws Exception {
-        loginSysAdmin();
-        if (savedTenant != null) {
-            doDelete("/api/tenant/" + savedTenant.getId().getId().toString()).andExpect(status().isOk());
-        }
-    }
-
-    protected MqttAsyncClient getMqttAsyncClient(String accessToken) throws MqttException {
-        String clientId = MqttAsyncClient.generateClientId();
-        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
-
-        MqttConnectOptions options = new MqttConnectOptions();
-        options.setUserName(accessToken);
-        client.connect(options).waitForCompletion();
-        return client;
+        super.processAfterTest();
     }
 
     protected List<TransportProtos.TsKvProto> getTsKvProtoList() {
@@ -157,47 +64,48 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractCont
         return tsKvProtoBuilder.build();
     }
 
-    protected TransportProtos.KeyValueProto getKeyValueProto(String key, String strValue, TransportProtos.KeyValueType type) {
-        TransportProtos.KeyValueProto.Builder keyValueProtoBuilder = TransportProtos.KeyValueProto.newBuilder();
-        keyValueProtoBuilder.setKey(key);
-        keyValueProtoBuilder.setType(type);
-        switch (type) {
-            case BOOLEAN_V:
-                keyValueProtoBuilder.setBoolV(Boolean.parseBoolean(strValue));
-                break;
-            case LONG_V:
-                keyValueProtoBuilder.setLongV(Long.parseLong(strValue));
-                break;
-            case DOUBLE_V:
-                keyValueProtoBuilder.setDoubleV(Double.parseDouble(strValue));
-                break;
-            case STRING_V:
-                keyValueProtoBuilder.setStringV(strValue);
-                break;
-            case JSON_V:
-                keyValueProtoBuilder.setJsonV(strValue);
-                break;
+    protected TestMqttCallback getTestMqttCallback() {
+        CountDownLatch latch = new CountDownLatch(1);
+        return new TestMqttCallback(latch);
+    }
+
+    protected static class TestMqttCallback implements MqttCallback {
+
+        private final CountDownLatch latch;
+        private Integer qoS;
+        private byte[] payloadBytes;
+
+        TestMqttCallback(CountDownLatch latch) {
+            this.latch = latch;
         }
-        return keyValueProtoBuilder.build();
-    }
 
-    private DeviceProfile createMqttDeviceProfile(TransportPayloadType transportPayloadType) {
-        DeviceProfile deviceProfile = new DeviceProfile();
-        deviceProfile.setName(transportPayloadType.name());
-        deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setTransportType(DeviceTransportType.MQTT);
-        deviceProfile.setDescription(transportPayloadType.name() + " Test");
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
-        MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
-        transportConfiguration.setTransportPayloadType(transportPayloadType);
-        deviceProfileData.setTransportConfiguration(transportConfiguration);
-        deviceProfileData.setConfiguration(configuration);
-        deviceProfile.setProfileData(deviceProfileData);
-        deviceProfile.setDefault(false);
-        deviceProfile.setDefaultRuleChainId(null);
-        return deviceProfile;
-    }
+        public int getQoS() {
+            return qoS;
+        }
 
+        public byte[] getPayloadBytes() {
+            return payloadBytes;
+        }
+
+        public CountDownLatch getLatch() {
+            return latch;
+        }
+
+        @Override
+        public void connectionLost(Throwable throwable) {
+        }
+
+        @Override
+        public void messageArrived(String requestTopic, MqttMessage mqttMessage) throws Exception {
+            qoS = mqttMessage.getQos();
+            payloadBytes = mqttMessage.getPayload();
+            latch.countDown();
+        }
+
+        @Override
+        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+
+        }
+    }
 
 }

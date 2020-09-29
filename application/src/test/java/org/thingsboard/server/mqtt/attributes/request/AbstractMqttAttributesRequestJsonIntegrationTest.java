@@ -31,7 +31,7 @@ public abstract class AbstractMqttAttributesRequestJsonIntegrationTest extends A
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Request attribute values from the server json", "Gateway Test Request attribute values from the server json", TransportPayloadType.JSON);
+        processBeforeTest("Test Request attribute values from the server json", "Gateway Test Request attribute values from the server json", TransportPayloadType.JSON, null, null);
     }
 
     @After

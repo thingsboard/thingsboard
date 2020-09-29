@@ -26,7 +26,8 @@ public abstract class AbstractMqttClaimJsonDeviceTest extends AbstractMqttClaimD
     
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest(TransportPayloadType.JSON);
+        super.processBeforeTest("Test Claim device", "Test Claim gateway", TransportPayloadType.JSON, null, null);
+        createCustomerAndUser();
     }
 
     @After

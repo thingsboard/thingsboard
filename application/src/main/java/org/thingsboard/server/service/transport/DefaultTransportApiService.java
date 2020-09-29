@@ -225,6 +225,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     device.setName(requestMsg.getDeviceName());
                     device.setType(requestMsg.getDeviceType());
                     device.setCustomerId(gateway.getCustomerId());
+                    device.setDeviceProfileId(gateway.getDeviceProfileId());
                     device = deviceService.saveDevice(device);
                     relationService.saveRelationAsync(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
                     deviceStateService.onDeviceAdded(device);

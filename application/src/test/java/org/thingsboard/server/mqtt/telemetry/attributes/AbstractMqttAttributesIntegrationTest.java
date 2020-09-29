@@ -23,8 +23,6 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.gen.transport.TransportApiProtos;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.mqtt.telemetry.AbstractMqttTelemetryIntegrationTest;
 
 import java.util.Arrays;
@@ -54,7 +52,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
     @Test
     public void testPushMqttAttributes() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, expectedKeys, PAYLOAD_VALUES_STR_V_1.getBytes());
+        processAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes());
     }
 
     @Test
@@ -63,7 +61,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         String deviceName1 = "Device A";
         String deviceName2 = "Device B";
         String payload = getGatewayAttributesJsonPayload(deviceName1, deviceName2);
-        processGatewayAttributesTest(MqttTopics.GATEWAY_ATTRIBUTES_TOPIC, expectedKeys, payload.getBytes(), deviceName1, deviceName2);
+        processGatewayAttributesTest(expectedKeys, payload.getBytes(), deviceName1, deviceName2);
     }
 
     protected void processAttributesTest(String topic, List<String> expectedKeys, byte[] payload) throws Exception {
@@ -100,10 +98,10 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         doDelete(deleteAttributesUrl);
     }
 
-    protected void processGatewayAttributesTest(String topic, List<String> expectedKeys, byte[] payload, String firstDeviceName, String secondDeviceName) throws Exception {
+    protected void processGatewayAttributesTest(List<String> expectedKeys, byte[] payload, String firstDeviceName, String secondDeviceName) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
 
-        publishMqttMsg(client, payload, topic);
+        publishMqttMsg(client, payload, MqttTopics.GATEWAY_ATTRIBUTES_TOPIC);
 
         Thread.sleep(2000);
 
@@ -165,7 +163,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
     }
 
     protected String getGatewayAttributesJsonPayload(String deviceA, String deviceB) {
-        return "{\"" + deviceA + "\": " + PAYLOAD_VALUES_STR_V_1 + ",  \"" + deviceB + "\": " + PAYLOAD_VALUES_STR_V_1 + "}";
+        return "{\"" + deviceA + "\": " + PAYLOAD_VALUES_STR + ",  \"" + deviceB + "\": " + PAYLOAD_VALUES_STR + "}";
     }
 
     private String getAttributesValuesUrl(DeviceId deviceId, Set<String> actualKeySet) {

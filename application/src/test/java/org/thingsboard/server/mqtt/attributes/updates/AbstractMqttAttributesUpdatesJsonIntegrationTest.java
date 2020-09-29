@@ -31,7 +31,7 @@ public abstract class AbstractMqttAttributesUpdatesJsonIntegrationTest extends A
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Subscribe to attribute updates", "Gateway Test Subscribe to attribute updates", TransportPayloadType.JSON);
+        processBeforeTest("Test Subscribe to attribute updates", "Gateway Test Subscribe to attribute updates", TransportPayloadType.JSON, null, null);
     }
 
     @After

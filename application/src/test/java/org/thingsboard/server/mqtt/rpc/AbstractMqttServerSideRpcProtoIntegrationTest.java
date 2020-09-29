@@ -37,12 +37,12 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest(TransportPayloadType.PROTOBUF);
+        processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null);
     }
 
     @After
     public void afterTest() throws Exception {
-        super.afterTest();
+        super.processAfterTest();
     }
 
     @Test
@@ -61,7 +61,7 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
     }
 
     // TODO: 25.09.20 Unstable gateway proto test
-    @Ignore
+//    @Ignore
     @Test
     public void testGatewayServerMqttTwoWayRpc() throws Exception {
         processTwoWayRpcTestGateway("Gateway Device TwoWay RPC Proto");

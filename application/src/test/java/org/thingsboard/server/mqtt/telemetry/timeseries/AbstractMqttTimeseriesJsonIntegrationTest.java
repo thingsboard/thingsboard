@@ -15,36 +15,20 @@
  */
 package org.thingsboard.server.mqtt.telemetry.timeseries;
 
-import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.gen.transport.TransportApiProtos;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.mqtt.telemetry.AbstractMqttTelemetryIntegrationTest;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
 public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends AbstractMqttTimeseriesIntegrationTest {
@@ -64,12 +48,12 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
     @Test
     public void testPushMqttTelemetry() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processTelemetryTest(POST_DATA_TELEMETRY_TOPIC, expectedKeys, PAYLOAD_VALUES_STR_V_1.getBytes(), false);
+        processTelemetryTest(POST_DATA_TELEMETRY_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes(), false);
     }
 
     @Test
     public void testPushMqttTelemetryWithTs() throws Exception {
-        String payloadStr = "{\"ts\": 10000, \"values\": " + PAYLOAD_VALUES_STR_V_1 + "}";
+        String payloadStr = "{\"ts\": 10000, \"values\": " + PAYLOAD_VALUES_STR + "}";
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         processTelemetryTest(POST_DATA_TELEMETRY_TOPIC, expectedKeys, payloadStr.getBytes(), true);
     }

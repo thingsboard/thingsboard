@@ -25,10 +25,10 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
 
 import java.nio.charset.StandardCharsets;
@@ -46,7 +46,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Request attribute values from the server", "Gateway Test Request attribute values from the server", null);
+        processBeforeTest("Test Request attribute values from the server", "Gateway Test Request attribute values from the server", null, null, null);
     }
 
     @After
@@ -72,18 +72,17 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
         Thread.sleep(1000);
 
-        CountDownLatch latch = new CountDownLatch(1);
-        TestMqttCallback callback = new TestMqttCallback(latch);
+        TestMqttCallback callback = getTestMqttCallback();
         client.setCallback(callback);
 
-        validateResponse(client, latch, callback);
+        validateResponse(client, callback.getLatch(), callback);
     }
 
     protected void processTestGatewayRequestAttributesValuesFromTheServer() throws Exception {
 
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
 
-        postGatewayDeviceClientAttributes(client, "Gateway Device Request Attributes");
+        postGatewayDeviceClientAttributes(client);
 
         Thread.sleep(1000);
 
@@ -110,8 +109,8 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         client.subscribe(MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttQoS.AT_MOST_ONCE.value());
     }
 
-    protected void postGatewayDeviceClientAttributes(MqttAsyncClient client, String deviceName) throws Exception {
-        String postClientAttributes = "{\"" + deviceName + "\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}}";
+    protected void postGatewayDeviceClientAttributes(MqttAsyncClient client) throws Exception {
+        String postClientAttributes = "{\"" + "Gateway Device Request Attributes" + "\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}}";
         client.publish(MqttTopics.GATEWAY_ATTRIBUTES_TOPIC, new MqttMessage(postClientAttributes.getBytes()));
     }
 
@@ -124,7 +123,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         latch.await(3, TimeUnit.SECONDS);
         assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getQoS());
         String expectedRequestPayload = "{\"client\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}},\"shared\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}}";
-        assertEquals(expectedRequestPayload, new String(callback.getPayloadBytes(), StandardCharsets.UTF_8));
+        assertEquals(JacksonUtil.toJsonNode(expectedRequestPayload), JacksonUtil.toJsonNode(new String(callback.getPayloadBytes(), StandardCharsets.UTF_8)));
     }
 
     protected void validateClientResponseGateway(MqttAsyncClient client, TestMqttCallback callback) throws MqttException, InterruptedException, InvalidProtocolBufferException {
@@ -135,7 +134,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         callback.getLatch().await(3, TimeUnit.SECONDS);
         assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getQoS());
         String expectedRequestPayload = "{\"id\":1,\"device\":\"" + "Gateway Device Request Attributes" + "\",\"values\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}}";
-        assertEquals(expectedRequestPayload, new String(callback.getPayloadBytes(), StandardCharsets.UTF_8));
+        assertEquals(JacksonUtil.toJsonNode(expectedRequestPayload), JacksonUtil.toJsonNode(new String(callback.getPayloadBytes(), StandardCharsets.UTF_8)));
     }
 
     protected void validateSharedResponseGateway(MqttAsyncClient client, TestMqttCallback callback) throws MqttException, InterruptedException, InvalidProtocolBufferException {
@@ -146,51 +145,6 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         callback.getLatch().await(3, TimeUnit.SECONDS);
         assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getQoS());
         String expectedRequestPayload = "{\"id\":1,\"device\":\"" + "Gateway Device Request Attributes" + "\",\"values\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}}";
-        assertEquals(expectedRequestPayload, new String(callback.getPayloadBytes(), StandardCharsets.UTF_8));
-    }
-
-    protected TestMqttCallback getTestMqttCallback() {
-        CountDownLatch latch = new CountDownLatch(1);
-        return new TestMqttCallback(latch);
-    }
-
-    protected static class TestMqttCallback implements MqttCallback {
-
-        private final CountDownLatch latch;
-        private Integer qoS;
-        private byte[] payloadBytes;
-
-        TestMqttCallback(CountDownLatch latch) {
-            this.latch = latch;
-        }
-
-        int getQoS() {
-            return qoS;
-        }
-
-        byte[] getPayloadBytes() {
-            return payloadBytes;
-        }
-
-        public CountDownLatch getLatch() {
-            return latch;
-        }
-
-        @Override
-        public void connectionLost(Throwable throwable) {
-        }
-
-        @Override
-        public void messageArrived(String requestTopic, MqttMessage mqttMessage) throws Exception {
-            log.info("{}", mqttMessage);
-            qoS = mqttMessage.getQos();
-            payloadBytes = mqttMessage.getPayload();
-            latch.countDown();
-        }
-
-        @Override
-        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-
-        }
+        assertEquals(JacksonUtil.toJsonNode(expectedRequestPayload), JacksonUtil.toJsonNode(new String(callback.getPayloadBytes(), StandardCharsets.UTF_8)));
     }
 }
