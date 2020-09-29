@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.data.DataConstants;
@@ -140,12 +142,23 @@ public class TelemetryProcessor extends BaseProcessor {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(json);
-        attributesService.save(tenantId, entityId, metaData.getValue("scope"), new ArrayList<>(attributes));
-        TbMsg tbMsg = TbMsg.newMsg(DataConstants.ATTRIBUTES_UPDATED, entityId, metaData, gson.toJson(json));
-        tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
+        ListenableFuture<List<Void>> future = attributesService.save(tenantId, entityId, metaData.getValue("scope"), new ArrayList<>(attributes));
+        Futures.addCallback(future, new FutureCallback<List<Void>>() {
             @Override
-            public void onSuccess(TbQueueMsgMetadata metadata) {
-                futureToSet.set(null);
+            public void onSuccess(@Nullable List<Void> voids) {
+                TbMsg tbMsg = TbMsg.newMsg(DataConstants.ATTRIBUTES_UPDATED, entityId, metaData, gson.toJson(json));
+                tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
+                    @Override
+                    public void onSuccess(TbQueueMsgMetadata metadata) {
+                        futureToSet.set(null);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("Can't process post attributes [{}]", msg, t);
+                        futureToSet.setException(t);
+                    }
+                });
             }
 
             @Override
@@ -153,7 +166,7 @@ public class TelemetryProcessor extends BaseProcessor {
                 log.error("Can't process post attributes [{}]", msg, t);
                 futureToSet.setException(t);
             }
-        });
+        }, dbCallbackExecutorService);
         return futureToSet;
     }
 
