@@ -14,9 +14,11 @@
 /// limitations under the License.
 ///
 
+import { HasUUID } from '@shared/models/id/has-uuid';
+
 export declare type MenuSectionType = 'link' | 'toggle';
 
-export class MenuSection {
+export interface MenuSection extends HasUUID{
   name: string;
   type: MenuSectionType;
   path: string;
@@ -26,12 +28,12 @@ export class MenuSection {
   pages?: Array<MenuSection>;
 }
 
-export class HomeSection {
+export interface HomeSection {
   name: string;
   places: Array<HomeSectionPlace>;
 }
 
-export class HomeSectionPlace {
+export interface HomeSectionPlace {
   name: string;
   icon: string;
   isMdiIcon?: boolean;

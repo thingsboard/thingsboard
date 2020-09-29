@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.settings;
+package org.thingsboard.server.common.data.rule;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+
+import java.io.Serializable;
 
 @Data
-public class TbRuleEngineQueueAckStrategyConfiguration {
+@Slf4j
+public class DefaultRuleChainCreateRequest implements Serializable {
 
-    private String type;
-    private int retries;
-    private double failurePercentage;
-    private long pauseBetweenRetries;
-    private long maxPauseBetweenRetries;
+    private static final long serialVersionUID = 5600333716030561537L;
+
+    private String name;
 
 }

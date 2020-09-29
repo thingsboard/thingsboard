@@ -41,11 +41,10 @@
                 {{ 'device-profile.name-required' | translate }}
               </mat-error>
             </mat-form-field>
-            <tb-entity-autocomplete
+            <tb-rule-chain-autocomplete
               labelText="device-profile.default-rule-chain"
-              [entityType]="entityType.RULE_CHAIN"
               formControlName="defaultRuleChainId">
-            </tb-entity-autocomplete>
+            </tb-rule-chain-autocomplete>
             <mat-form-field class="mat-block">
               <mat-label translate>device-profile.type</mat-label>
               <mat-select formControlName="type" required>

@@ -22,6 +22,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
@@ -34,28 +35,37 @@ import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
 
 @Data
 class DeviceProfileAlarmState {
 
     private final EntityId originator;
-    private final DeviceProfileAlarm alarmDefinition;
+    private DeviceProfileAlarm alarmDefinition;
     private volatile Map<AlarmSeverity, AlarmRule> createRulesSortedBySeverityDesc;
     private volatile Alarm currentAlarm;
+    private volatile boolean initialFetchDone;
 
     public DeviceProfileAlarmState(EntityId originator, DeviceProfileAlarm alarmDefinition) {
         this.originator = originator;
-        this.alarmDefinition = alarmDefinition;
-        this.createRulesSortedBySeverityDesc = new TreeMap<>(Comparator.comparingInt(AlarmSeverity::ordinal));
-        this.createRulesSortedBySeverityDesc.putAll(alarmDefinition.getCreateRules());
+        this.updateState(alarmDefinition);
     }
 
-    public void process(TbContext ctx, TbMsg msg, DeviceDataSnapshot data) {
+    public void process(TbContext ctx, TbMsg msg, DeviceDataSnapshot data) throws ExecutionException, InterruptedException {
+        if (!initialFetchDone) {
+            Alarm alarm = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), originator, alarmDefinition.getAlarmType()).get();
+            if (alarm != null && !alarm.getStatus().isCleared()) {
+                currentAlarm = alarm;
+            }
+            initialFetchDone = true;
+        }
+
         AlarmSeverity resultSeverity = null;
         for (Map.Entry<AlarmSeverity, AlarmRule> kv : createRulesSortedBySeverityDesc.entrySet()) {
             AlarmRule alarmRule = kv.getValue();
@@ -69,6 +79,7 @@ class DeviceProfileAlarmState {
         } else if (currentAlarm != null) {
             AlarmRule clearRule = alarmDefinition.getClearRule();
             if (eval(clearRule.getCondition(), data)) {
+                ctx.getAlarmService().clearAlarm(ctx.getTenantId(), currentAlarm.getId(), JacksonUtil.OBJECT_MAPPER.createObjectNode(), System.currentTimeMillis());
                 pushMsg(ctx, new TbAlarmResult(false, false, true, currentAlarm), msg);
                 currentAlarm = null;
             }
@@ -98,6 +109,12 @@ class DeviceProfileAlarmState {
         ctx.tellNext(newMsg, relationType);
     }
 
+    public void updateState(DeviceProfileAlarm alarm) {
+        this.alarmDefinition = alarm;
+        this.createRulesSortedBySeverityDesc = new TreeMap<>(Comparator.comparingInt(AlarmSeverity::ordinal));
+        this.createRulesSortedBySeverityDesc.putAll(alarmDefinition.getCreateRules());
+    }
+
     private TbAlarmResult calculateAlarmResult(TbContext ctx, AlarmSeverity severity) {
         if (currentAlarm != null) {
             currentAlarm.setEndTs(System.currentTimeMillis());
@@ -112,6 +129,8 @@ class DeviceProfileAlarmState {
             }
         } else {
             currentAlarm = new Alarm();
+            currentAlarm.setType(alarmDefinition.getAlarmType());
+            currentAlarm.setStatus(AlarmStatus.ACTIVE_UNACK);
             currentAlarm.setSeverity(severity);
             currentAlarm.setStartTs(System.currentTimeMillis());
             currentAlarm.setEndTs(currentAlarm.getStartTs());
