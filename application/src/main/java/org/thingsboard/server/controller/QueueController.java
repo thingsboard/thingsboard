@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.QueueId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -43,7 +45,7 @@ public class QueueController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, method = RequestMethod.GET)
     @ResponseBody
-    public List<String> getTenantQueuesByServiceType(@RequestParam String serviceType) throws ThingsboardException {
+    public List<String> getTenantQueuesNameByServiceType(@RequestParam String serviceType) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
         try {
             ServiceType type = ServiceType.valueOf(serviceType);
@@ -59,17 +61,23 @@ public class QueueController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/queues/full", params = {"serviceType"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/tenant/queues", params = {"serviceType", "pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public List<Queue> getFullTenantQueuesByServiceType(@RequestParam String serviceType) throws ThingsboardException {
+    public PageData<Queue> getTenantQueuesByServiceType(@RequestParam String serviceType,
+                                                            @RequestParam int pageSize,
+                                                            @RequestParam int page,
+                                                            @RequestParam(required = false) String textSearch,
+                                                            @RequestParam(required = false) String sortProperty,
+                                                            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
         try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             ServiceType type = ServiceType.valueOf(serviceType);
             switch (type) {
                 case TB_RULE_ENGINE:
-                    return queueService.findQueues(getTenantId());
+                    return queueService.findQueues(getTenantId(), pageLink);
                 default:
-                    return Collections.emptyList();
+                    return new PageData<>();
             }
         } catch (Exception e) {
             throw handleException(e);

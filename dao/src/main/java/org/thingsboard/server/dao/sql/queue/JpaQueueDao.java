@@ -30,6 +30,7 @@ import org.thingsboard.server.dao.queue.QueueDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -80,6 +81,6 @@ public class JpaQueueDao extends JpaAbstractDao<QueueEntity, Queue> implements Q
     @Override
     public PageData<Queue> findQueuesByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(queueRepository
-                .findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+                .findByTenantId(tenantId.getId(), Objects.toString(pageLink.getTextSearch(), ""), DaoUtil.toPageable(pageLink)));
     }
 }

@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.queue;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.Queue;
 
 import java.util.List;
@@ -29,6 +31,8 @@ public interface QueueService {
     void deleteQueue(TenantId tenantId, QueueId queueId);
 
     List<Queue> findQueues(TenantId tenantId);
+
+    PageData<Queue> findQueues(TenantId tenantId, PageLink pageLink);
 
     List<Queue> findAllMainQueues();
 

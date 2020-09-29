@@ -131,14 +131,14 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Override
     public List<Queue> findQueues(TenantId tenantId) {
         log.trace("Executing findQueues, tenantId: [{}]", tenantId);
-        if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
-            Tenant tenant = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
-            if (tenant.isIsolatedTbRuleEngine()) {
-                return queueDao.findAllByTenantId(tenantId);
-            }
-        }
+        return queueDao.findAllByTenantId(getSystemOrIsolatedTenantId(tenantId));
+    }
 
-        return queueDao.findAllByTenantId(TenantId.SYS_TENANT_ID);
+    @Override
+    public PageData<Queue> findQueues(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findTQueues pageLink [{}]", pageLink);
+        Validator.validatePageLink(pageLink);
+        return queueDao.findQueuesByTenantId(getSystemOrIsolatedTenantId(tenantId), pageLink);
     }
 
     @Override
@@ -150,7 +150,8 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Override
     public List<Queue> findAllQueues() {
         log.trace("Executing findAllQueues");
-        return queueDao.findAllQueues();    }
+        return queueDao.findAllQueues();
+    }
 
     @Override
     public Queue findQueueById(TenantId tenantId, QueueId queueId) {
@@ -295,4 +296,15 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                     deleteQueue(tenantId, entity.getId());
                 }
             };
+
+    private TenantId getSystemOrIsolatedTenantId(TenantId tenantId) {
+        if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
+            Tenant tenant = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
+            if (tenant.isIsolatedTbRuleEngine()) {
+                return tenantId;
+            }
+        }
+
+        return TenantId.SYS_TENANT_ID;
+    }
 }
