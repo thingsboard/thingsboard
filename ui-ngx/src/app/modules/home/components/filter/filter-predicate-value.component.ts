@@ -52,6 +52,8 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
       DynamicValueSourceType.CURRENT_CUSTOMER];
     if (allow) {
       this.dynamicValueSourceTypes.push(DynamicValueSourceType.CURRENT_USER);
+    } else {
+      this.dynamicValueSourceTypes.push(DynamicValueSourceType.CURRENT_DEVICE);
     }
   }
 

@@ -1347,6 +1347,7 @@
          "current-tenant": "Current tenant",
          "current-customer": "Current customer",
          "current-user": "Current user",
+         "current-device": "Current device",
          "default-value": "Default value",
          "dynamic-source-type": "Dynamic source type",
          "no-dynamic-value": "No dynamic value",
