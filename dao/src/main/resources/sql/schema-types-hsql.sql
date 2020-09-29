@@ -15,6 +15,6 @@
 --
 
 DROP TYPE json IF EXISTS;
-CREATE TYPE json AS text;
+CREATE TYPE json AS varchar;
 DROP TYPE jsonb IF EXISTS;
 CREATE TYPE jsonb AS other;

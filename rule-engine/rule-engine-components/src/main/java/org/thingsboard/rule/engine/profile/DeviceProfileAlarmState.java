@@ -47,16 +47,14 @@ import java.util.concurrent.ExecutionException;
 class DeviceProfileAlarmState {
 
     private final EntityId originator;
-    private final DeviceProfileAlarm alarmDefinition;
+    private DeviceProfileAlarm alarmDefinition;
     private volatile Map<AlarmSeverity, AlarmRule> createRulesSortedBySeverityDesc;
     private volatile Alarm currentAlarm;
     private volatile boolean initialFetchDone;
 
     public DeviceProfileAlarmState(EntityId originator, DeviceProfileAlarm alarmDefinition) {
         this.originator = originator;
-        this.alarmDefinition = alarmDefinition;
-        this.createRulesSortedBySeverityDesc = new TreeMap<>(Comparator.comparingInt(AlarmSeverity::ordinal));
-        this.createRulesSortedBySeverityDesc.putAll(alarmDefinition.getCreateRules());
+        this.updateState(alarmDefinition);
     }
 
     public void process(TbContext ctx, TbMsg msg, DeviceDataSnapshot data) throws ExecutionException, InterruptedException {
@@ -109,6 +107,12 @@ class DeviceProfileAlarmState {
         }
         TbMsg newMsg = ctx.newMsg(originalMsg.getQueueName(), "ALARM", originalMsg.getOriginator(), metaData, data);
         ctx.tellNext(newMsg, relationType);
+    }
+
+    public void updateState(DeviceProfileAlarm alarm) {
+        this.alarmDefinition = alarm;
+        this.createRulesSortedBySeverityDesc = new TreeMap<>(Comparator.comparingInt(AlarmSeverity::ordinal));
+        this.createRulesSortedBySeverityDesc.putAll(alarmDefinition.getCreateRules());
     }
 
     private TbAlarmResult calculateAlarmResult(TbContext ctx, AlarmSeverity severity) {
