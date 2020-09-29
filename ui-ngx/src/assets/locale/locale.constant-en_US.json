@@ -756,7 +756,17 @@
         "search": "Search devices",
         "selected-devices": "{ count, plural, 1 {1 device} other {# devices} } selected",
         "device-configuration": "Device configuration",
-        "transport-configuration": "Transport configuration"
+        "transport-configuration": "Transport configuration",
+        "wizard": {
+            "device-wizard": "Device Wizard",
+            "device-details": "Device details",
+            "profile-configuration": "Profile configuration",
+            "new-device-profile": "New device profile",
+            "existing-device-profile": "Select existing device profile",
+            "specific-configuration": "Specific configuration",
+            "customer-to-assign-device": "Customer to assign the device",
+            "add-credential": "Add credential"
+        }
     },
     "device-profile": {
         "device-profile": "Device profile",

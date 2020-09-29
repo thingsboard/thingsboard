@@ -29,7 +29,7 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { EntityAction } from '@home/models/entity/entity-component.models';
+import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
 import { Device, DeviceCredentials, DeviceInfo } from '@app/shared/models/device.models';
 import { DeviceComponent } from '@modules/home/pages/device/device.component';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -61,6 +61,8 @@ import {
 } from '../../dialogs/add-entities-to-customer-dialog.component';
 import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
+import { DeviceWizardDialogComponent } from '@home/components/wizard/device-wizard-dialog.component';
+import { BaseData, HasId } from '@shared/models/base-data';
 
 @Injectable()
 export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<DeviceInfo>> {
@@ -221,7 +223,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         {
           name: this.translate.instant('device.manage-credentials'),
           icon: 'security',
-          isEnabled: (entity) => true,
+          isEnabled: () => true,
           onAction: ($event, entity) => this.manageCredentials($event, entity)
         }
       );
@@ -243,7 +245,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           {
             name: this.translate.instant('device.manage-credentials'),
             icon: 'security',
-            isEnabled: (entity) => true,
+            isEnabled: () => true,
             onAction: ($event, entity) => this.manageCredentials($event, entity)
           }
         );
@@ -253,7 +255,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         {
           name: this.translate.instant('device.view-credentials'),
           icon: 'security',
-          isEnabled: (entity) => true,
+          isEnabled: () => true,
           onAction: ($event, entity) => this.manageCredentials($event, entity)
         }
       );
@@ -301,7 +303,13 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           icon: 'file_upload',
           isEnabled: () => true,
           onAction: ($event) => this.importDevices($event)
-        }
+        },
+        {
+          name: this.translate.instant('device.wizard.device-wizard'),
+          icon: 'library_add',
+          isEnabled: () => true,
+          onAction: ($event) => this.deviceWizard($event)
+        },
       );
     }
     if (deviceScope === 'customer') {
@@ -324,6 +332,23 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         this.config.table.updateData();
       }
     });
+  }
+
+  deviceWizard($event: Event) {
+    this.dialog.open<DeviceWizardDialogComponent, AddEntityDialogData<BaseData<HasId>>,
+      boolean>(DeviceWizardDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        entitiesTableConfig: this.config.table.entitiesTableConfig
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        if (res) {
+          this.config.table.updateData();
+        }
+      }
+    );
   }
 
   addDevicesToCustomer($event: Event) {
@@ -480,5 +505,4 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     }
     return false;
   }
-
 }
