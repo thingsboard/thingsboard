@@ -55,7 +55,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Autowired
     private TbQueueAdmin tbQueueAdmin;
 
-    @Autowired
+    @Autowired(required = false)
     private TbQueueClusterService queueClusterService;
 
     @Override
@@ -70,7 +70,9 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
             savedQueue = updateQueue(queue);
         }
 
-        queueClusterService.onQueueChange(savedQueue, null);
+        if (queueClusterService != null) {
+            queueClusterService.onQueueChange(savedQueue, null);
+        }
         return savedQueue;
     }
 
@@ -89,7 +91,9 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         int oldPartitions = oldQueue.getPartitions();
         int currentPartitions = queue.getPartitions();
 
+        //TODO: 3.2 remove if partitions change won't be permitted.
         if (currentPartitions != oldPartitions) {
+            queueClusterService.onQueueDelete(queue, null);
             if (currentPartitions > oldPartitions) {
                 for (int i = oldPartitions; i < currentPartitions; i++) {
                     tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());

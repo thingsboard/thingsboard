@@ -240,7 +240,7 @@ public class DefaultTbClusterService implements TbClusterService {
                 toCoreNfs.incrementAndGet();
             }
         } else {
-            //TODO: should be changed with smth like TransportApiRequestTemplate and get responses from all RE's
+            //TODO: 3.2 should be changed with smth like TransportApiRequestTemplate and get responses from all RE's
             Set<TransportProtos.ServiceInfo> tbRuleEngineServices = partitionService.getAllServices(ServiceType.TB_RULE_ENGINE);
             ToRuleEngineNotificationMsg ruleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setQueueDeleteMsg(queueDeleteMsg).build();
             for (TransportProtos.ServiceInfo ruleEngineService : tbRuleEngineServices) {
@@ -252,7 +252,6 @@ public class DefaultTbClusterService implements TbClusterService {
                     toRuleEngineNfs.incrementAndGet();
                 }
             }
-            //TODO: should be removed!!!
             try {
                 Thread.sleep(3000);
             } catch (InterruptedException e) {

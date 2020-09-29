@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 
 import javax.annotation.PostConstruct;
@@ -30,6 +31,7 @@ import java.util.List;
 @EnableAutoConfiguration
 @Configuration
 @ConfigurationProperties(prefix = "queue.rule-engine")
+@Profile("install")
 public class TbQueueYmlRuleEngineSettings {
 
     private String topic;
