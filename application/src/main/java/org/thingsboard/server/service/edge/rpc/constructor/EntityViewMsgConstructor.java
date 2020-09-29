@@ -19,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.EdgeEntityType;
 import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
@@ -53,6 +53,9 @@ public class EntityViewMsgConstructor {
         if (customerId != null) {
             builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
             builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+        }
+        if (entityView.getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(JacksonUtil.toString(entityView.getAdditionalInfo()));
         }
         return builder.build();
     }

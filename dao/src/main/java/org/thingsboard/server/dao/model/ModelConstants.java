@@ -377,6 +377,8 @@ public class ModelConstants {
 
     public static final String EDGE_ROUTING_KEY_PROPERTY = "routing_key";
     public static final String EDGE_SECRET_PROPERTY = "secret";
+    public static final String EDGE_LICENSE_KEY_PROPERTY = "edge_license_key";
+    public static final String EDGE_CLOUD_ENDPOINT_KEY_PROPERTY = "cloud_endpoint";
 
     /**
      * Cassandra edge queue constants.

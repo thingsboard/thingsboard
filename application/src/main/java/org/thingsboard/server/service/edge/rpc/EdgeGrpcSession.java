@@ -83,6 +83,7 @@ import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.DownlinkResponseMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
+import org.thingsboard.server.gen.edge.EdgeUpdateMsg;
 import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.RelationRequestMsg;
@@ -159,10 +160,10 @@ public final class EdgeGrpcSession implements Closeable {
                     if (ConnectResponseCode.ACCEPTED != responseMsg.getResponseCode()) {
                         outputStream.onError(new RuntimeException(responseMsg.getErrorMsg()));
                     }
-                    if (ConnectResponseCode.ACCEPTED == responseMsg.getResponseCode()) {
-                        connected = true;
-                        ctx.getSyncEdgeService().sync(edge);
-                    }
+                }
+                if (!connected && requestMsg.getMsgType().equals(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)) {
+                    connected = true;
+                    ctx.getSyncEdgeService().sync(edge);
                 }
                 if (connected) {
                     if (requestMsg.getMsgType().equals(RequestMsgType.UPLINK_RPC_MESSAGE) && requestMsg.hasUplinkMsg()) {
@@ -182,8 +183,12 @@ public final class EdgeGrpcSession implements Closeable {
             @Override
             public void onCompleted() {
                 connected = false;
-                sessionCloseListener.accept(edge.getId());
-                outputStream.onCompleted();
+                if (edge != null) {
+                    sessionCloseListener.accept(edge.getId());
+                }
+                try {
+                    outputStream.onCompleted();
+                } catch (Exception ignored) {}
             }
         };
     }
@@ -240,12 +245,11 @@ public final class EdgeGrpcSession implements Closeable {
     void onConfigurationUpdate(Edge edge) {
         try {
             this.edge = edge;
-            // TODO: voba - push edge configuration update to edge
-//            sendResponseMsg(org.thingsboard.server.gen.integration.ResponseMsg.newBuilder()
-//                    .setIntegrationUpdateMsg(IntegrationUpdateMsg.newBuilder()
-//                            .setConfiguration(constructIntegrationConfigProto(configuration, defaultConverterProto, downLinkConverterProto))
-//                            .build())
-//                    .build());
+            EdgeUpdateMsg edgeConfig = EdgeUpdateMsg.newBuilder()
+                    .setConfiguration(constructEdgeConfigProto(edge)).build();
+            outputStream.onNext(ResponseMsg.newBuilder()
+                    .setEdgeUpdateMsg(edgeConfig)
+                    .build());
         } catch (Exception e) {
             log.error("Failed to construct proto objects!", e);
         }
@@ -899,7 +903,7 @@ public final class EdgeGrpcSession implements Closeable {
                 }
             }
             if (uplinkMsg.getDeviceRpcCallMsgList() != null && !uplinkMsg.getDeviceRpcCallMsgList().isEmpty()) {
-                for (DeviceRpcCallMsg deviceRpcCallMsg: uplinkMsg.getDeviceRpcCallMsgList()) {
+                for (DeviceRpcCallMsg deviceRpcCallMsg : uplinkMsg.getDeviceRpcCallMsgList()) {
                     result.add(ctx.getDeviceProcessor().processDeviceRpcCallResponseMsg(edge.getTenantId(), deviceRpcCallMsg));
                 }
             }
@@ -948,6 +952,8 @@ public final class EdgeGrpcSession implements Closeable {
                 .setName(edge.getName())
                 .setRoutingKey(edge.getRoutingKey())
                 .setType(edge.getType())
+                .setEdgeLicenseKey(edge.getEdgeLicenseKey())
+                .setCloudEndpoint(edge.getCloudEndpoint())
                 .setCloudType("CE")
                 .build();
     }

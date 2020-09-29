@@ -75,10 +75,12 @@ public class EdgeImitator {
                 this::onEdgeUpdate,
                 this::onDownlink,
                 this::onClose);
+
+        edgeRpcClient.sendSyncRequestMsg();
     }
 
     public void disconnect() throws InterruptedException {
-        edgeRpcClient.disconnect();
+        edgeRpcClient.disconnect(false);
     }
 
     private void onUplinkResponse(UplinkResponseMsg msg) {

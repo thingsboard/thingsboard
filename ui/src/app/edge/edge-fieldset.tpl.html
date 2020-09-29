@@ -83,6 +83,20 @@
             <label translate>edge.description</label>
             <textarea ng-model="edge.additionalInfo.description" rows="2"></textarea>
         </md-input-container>
+        <md-input-container class="md-block">
+            <label translate>edge.edge-license-key</label>
+            <input required name="edgeLicenseKey" ng-model="edge.edgeLicenseKey">
+            <div ng-messages="theForm.edgeLicenseKey.$error">
+                <div translate ng-message="required">edge.edge-license-key-required</div>
+            </div>
+        </md-input-container>
+        <md-input-container class="md-block">
+            <label translate>edge.cloud-endpoint</label>
+            <input required name="cloudEndpoint" ng-model="edge.cloudEndpoint">
+            <div ng-messages="theForm.cloudEndpoint.$error">
+                <div translate ng-message="required">edge.cloud-endpoint-required</div>
+            </div>
+        </md-input-container>
     </fieldset>
     <div layout="row">
         <md-input-container class="md-block" flex>

@@ -35,6 +35,7 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
                 if (!scope.edge.id) {
                     scope.edge.routingKey = utils.guid('');
                     scope.edge.secret = generateSecret(20);
+                    scope.edge.cloudEndpoint = utils.baseUrl();
                 }
                 if (scope.edge.customerId && scope.edge.customerId.id !== types.id.nullUid) {
                     scope.isAssignedToCustomer = true;

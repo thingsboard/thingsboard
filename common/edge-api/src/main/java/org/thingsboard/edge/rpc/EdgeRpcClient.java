@@ -32,7 +32,9 @@ public interface EdgeRpcClient {
                  Consumer<DownlinkMsg> onDownlink,
                  Consumer<Exception> onError);
 
-    void disconnect() throws InterruptedException;
+    void disconnect(boolean onError) throws InterruptedException;
+
+    void sendSyncRequestMsg();
 
     void sendUplinkMsg(UplinkMsg uplinkMsg);
 

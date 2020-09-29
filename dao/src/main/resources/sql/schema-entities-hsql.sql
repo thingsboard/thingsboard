@@ -265,6 +265,8 @@ CREATE TABLE IF NOT EXISTS edge (
     label varchar(255),
     routing_key varchar(255),
     secret varchar(255),
+    edge_license_key varchar(30),
+    cloud_endpoint varchar(255),
     search_text varchar(255),
     tenant_id varchar(31),
     CONSTRAINT edge_name_unq_key UNIQUE (tenant_id, name),

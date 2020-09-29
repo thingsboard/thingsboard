@@ -737,6 +737,8 @@ CREATE TABLE IF NOT EXISTS thingsboard.edge (
     search_text text,
     routing_key text,
     secret text,
+    edge_license_key text,
+    cloud_endpoint text,
     configuration text,
     additional_info text,
     PRIMARY KEY (id, tenant_id, customer_id, type)

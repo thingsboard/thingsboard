@@ -17,11 +17,10 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 
@@ -42,6 +41,9 @@ public class AssetMsgConstructor {
         if (customerId != null) {
             builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
             builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+        }
+        if (asset.getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(JacksonUtil.toString(asset.getAdditionalInfo()));
         }
         return builder.build();
     }

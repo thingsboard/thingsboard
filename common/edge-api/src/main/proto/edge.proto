@@ -44,11 +44,17 @@ message ResponseMsg {
   ConnectResponseMsg connectResponseMsg = 1;
   UplinkResponseMsg uplinkResponseMsg = 2;
   DownlinkMsg downlinkMsg = 3;
+  EdgeUpdateMsg edgeUpdateMsg = 4;
 }
 
 enum RequestMsgType {
   CONNECT_RPC_MESSAGE = 0;
   UPLINK_RPC_MESSAGE = 1;
+  SYNC_REQUEST_RPC_MESSAGE = 2;
+}
+
+message EdgeUpdateMsg {
+  EdgeConfiguration configuration = 1;
 }
 
 message ConnectRequestMsg {
@@ -76,7 +82,9 @@ message EdgeConfiguration {
   string name = 5;
   string routingKey = 6;
   string type = 7;
-  string cloudType = 8;
+  string edgeLicenseKey = 8;
+  string cloudEndpoint = 9;
+  string cloudType = 10;
 }
 
 enum UpdateMsgType {
@@ -169,6 +177,7 @@ message DeviceUpdateMsg {
   string name = 6;
   string type = 7;
   string label = 8;
+  string additionalInfo = 9;
 }
 
 message DeviceCredentialsUpdateMsg {
@@ -188,6 +197,7 @@ message AssetUpdateMsg {
   string name = 6;
   string type = 7;
   string label = 8;
+  string additionalInfo = 9;
 }
 
 message EntityViewUpdateMsg {
@@ -201,6 +211,7 @@ message EntityViewUpdateMsg {
   int64 entityIdMSB = 8;
   int64 entityIdLSB = 9;
   EdgeEntityType entityType = 10;
+  string additionalInfo = 11;
 }
 
 message AlarmUpdateMsg {
