@@ -167,10 +167,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             case PINGREQ:
                 ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
                 break;
-//            case SUBSCRIBE:
-//                deviceSessionCtx.setDeviceInfo(TransportDeviceInfo);
-//                processSubscribe(ctx, (MqttSubscribeMessage) msg);
-//                break;
             case DISCONNECT:
                 ctx.close();
                 break;

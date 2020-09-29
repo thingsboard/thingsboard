@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
-import java.util.Optional;
 import java.util.UUID;
 
 public interface DeviceProfileDao extends Dao<DeviceProfile> {

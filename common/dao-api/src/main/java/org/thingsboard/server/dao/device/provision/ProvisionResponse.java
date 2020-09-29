@@ -15,13 +15,11 @@
  */
 package org.thingsboard.server.dao.device.provision;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
 @Data
-@AllArgsConstructor
 public class ProvisionResponse {
-    private DeviceCredentials deviceCredentials;
-    private ProvisionResponseStatus responseStatus;
+    private final DeviceCredentials deviceCredentials;
+    private final ProvisionResponseStatus responseStatus;
 }

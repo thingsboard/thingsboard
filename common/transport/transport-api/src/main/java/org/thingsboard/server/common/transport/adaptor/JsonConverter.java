@@ -417,8 +417,7 @@ public class JsonConverter {
             if (toGateway) {
                 result.addProperty("id", requestId);
             }
-            result.addProperty("deviceId", new DeviceId(
-                    new UUID(payload.getDeviceCredentials().getDeviceIdMSB(), payload.getDeviceCredentials().getDeviceIdLSB())).toString());
+            result.addProperty("deviceId", new UUID(payload.getDeviceCredentials().getDeviceIdMSB(), payload.getDeviceCredentials().getDeviceIdLSB()).toString());
             result.addProperty("credentialsType", payload.getDeviceCredentials().getCredentialsType().name());
             result.addProperty("credentialsId", payload.getDeviceCredentials().getCredentialsId());
             result.addProperty("credentialsValue",
