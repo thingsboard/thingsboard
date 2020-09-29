@@ -66,7 +66,7 @@ public class TbMsgAttributesNode implements TbNode {
         if (StringUtils.isEmpty(msg.getMetaData().getValue(SCOPE))) {
             msg.getMetaData().putValue(SCOPE, config.getScope());
         }
-        ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getOriginator(), msg.getMetaData().getValue(SCOPE),
+        ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getOriginator(), config.getScope(),
                 new ArrayList<>(attributes), new TelemetryNodeCallback(ctx, msg));
     }
 

@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
+import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.edge.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 
@@ -47,17 +48,20 @@ public class EdgeStorage {
 
     private EdgeConfiguration configuration;
 
-    private CountDownLatch latch;
+    private CountDownLatch messagesLatch;
 
     private Map<UUID, EntityType> entities;
     private Map<String, AlarmStatus> alarms;
     private List<EntityRelation> relations;
 
+    private EntityDataProto latestEntityDataMsg;
+
     public EdgeStorage() {
-        latch = new CountDownLatch(0);
+        messagesLatch = new CountDownLatch(0);
         entities = new HashMap<>();
         alarms = new HashMap<>();
         relations = new ArrayList<>();
+        latestEntityDataMsg = null;
     }
 
     public ListenableFuture<Void> processEntity(UpdateMsgType msgType, EntityType type, UUID uuid) {
@@ -65,11 +69,11 @@ public class EdgeStorage {
             case ENTITY_CREATED_RPC_MESSAGE:
             case ENTITY_UPDATED_RPC_MESSAGE:
                 entities.put(uuid, type);
-                latch.countDown();
+                messagesLatch.countDown();
                 break;
             case ENTITY_DELETED_RPC_MESSAGE:
                 if (entities.remove(uuid) != null) {
-                    latch.countDown();
+                    messagesLatch.countDown();
                 }
                 break;
         }
@@ -93,7 +97,7 @@ public class EdgeStorage {
                 break;
         }
         if (result) {
-            latch.countDown();
+            messagesLatch.countDown();
         }
         return Futures.immediateFuture(null);
     }
@@ -105,14 +109,20 @@ public class EdgeStorage {
             case ALARM_ACK_RPC_MESSAGE:
             case ALARM_CLEAR_RPC_MESSAGE:
                 alarms.put(alarmMsg.getType(), AlarmStatus.valueOf(alarmMsg.getStatus()));
-                latch.countDown();
+                messagesLatch.countDown();
                 break;
             case ENTITY_DELETED_RPC_MESSAGE:
                 if (alarms.remove(alarmMsg.getName()) != null) {
-                    latch.countDown();
+                    messagesLatch.countDown();
                 }
                 break;
         }
+        return Futures.immediateFuture(null);
+    }
+
+    public ListenableFuture<Void> processEntityData(EntityDataProto entityData) {
+        latestEntityDataMsg = entityData;
+        messagesLatch.countDown();
         return Futures.immediateFuture(null);
     }
 
@@ -123,11 +133,10 @@ public class EdgeStorage {
     }
 
     public void waitForMessages() throws InterruptedException {
-        latch.await(5, TimeUnit.SECONDS);
+        messagesLatch.await(5, TimeUnit.SECONDS);
     }
 
     public void expectMessageAmount(int messageAmount) {
-        latch = new CountDownLatch(messageAmount);
+        messagesLatch = new CountDownLatch(messageAmount);
     }
-
 }

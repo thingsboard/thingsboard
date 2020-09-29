@@ -32,14 +32,18 @@ import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.DownlinkResponseMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
+import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.edge.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.UplinkMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class EdgeImitator {
@@ -49,6 +53,8 @@ public class EdgeImitator {
 
     private EdgeRpcClient edgeRpcClient;
 
+    private CountDownLatch responsesLatch;
+
     @Getter
     private EdgeStorage storage;
 
@@ -56,10 +62,12 @@ public class EdgeImitator {
     public EdgeImitator(String host, int port, String routingKey, String routingSecret) throws NoSuchFieldException, IllegalAccessException {
         edgeRpcClient = new EdgeGrpcClient();
         storage = new EdgeStorage();
+        responsesLatch = new CountDownLatch(0);
         this.routingKey = routingKey;
         this.routingSecret = routingSecret;
         setEdgeCredentials("rpcHost", host);
         setEdgeCredentials("rpcPort", port);
+        setEdgeCredentials("keepAliveTimeSec", 300);
     }
 
     private void setEdgeCredentials(String fieldName, Object value) throws NoSuchFieldException, IllegalAccessException {
@@ -83,8 +91,13 @@ public class EdgeImitator {
         edgeRpcClient.disconnect(false);
     }
 
+    public void sendUplinkMsg(UplinkMsg uplinkMsg) {
+        edgeRpcClient.sendUplinkMsg(uplinkMsg);
+    }
+
     private void onUplinkResponse(UplinkResponseMsg msg) {
         log.info("onUplinkResponse: {}", msg);
+        responsesLatch.countDown();
     }
 
     private void onEdgeUpdate(EdgeConfiguration edgeConfiguration) {
@@ -144,7 +157,19 @@ public class EdgeImitator {
                 result.add(storage.processAlarm(alarmUpdateMsg));
             }
         }
+        if (downlinkMsg.getEntityDataList() != null && !downlinkMsg.getEntityDataList().isEmpty()) {
+            for (EntityDataProto entityData: downlinkMsg.getEntityDataList()) {
+                result.add(storage.processEntityData(entityData));
+            }
+        }
         return Futures.allAsList(result);
+    }
+
+    public void waitForResponses() throws InterruptedException { responsesLatch.await(5, TimeUnit.SECONDS);
+    }
+
+    public void expectResponsesAmount(int messageAmount) {
+        responsesLatch = new CountDownLatch(messageAmount);
     }
 
 }
