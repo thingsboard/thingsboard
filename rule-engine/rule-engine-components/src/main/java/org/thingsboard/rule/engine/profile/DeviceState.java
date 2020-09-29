@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.profile;
 
 import com.google.gson.JsonParser;
+import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode;
 import org.thingsboard.server.common.data.DataConstants;
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -77,18 +79,73 @@ class DeviceState {
         }
     }
 
+    public void harvestAlarms(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
+        for (DeviceProfileAlarmState state : alarmStates.values()) {
+            state.process(ctx, ts);
+        }
+    }
+
     public void process(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
         if (latestValues == null) {
             latestValues = fetchLatestValues(ctx, deviceId);
         }
         if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
             processTelemetry(ctx, msg);
+        } else if (msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name())) {
+            processAttributesUpdateRequest(ctx, msg);
+        } else if (msg.getType().equals(DataConstants.ATTRIBUTES_UPDATED)) {
+            processAttributesUpdateNotification(ctx, msg);
+        } else if (msg.getType().equals(DataConstants.ATTRIBUTES_DELETED)) {
+            processAttributesDeleteNotification(ctx, msg);
         } else {
             ctx.tellSuccess(msg);
         }
     }
 
-    private void processTelemetry(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
+    private void processAttributesUpdateNotification(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
+        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
+        String scope = msg.getMetaData().getValue("scope");
+        if (StringUtils.isEmpty(scope)) {
+            scope = DataConstants.CLIENT_SCOPE;
+        }
+        processAttributesUpdate(ctx, msg, attributes, scope);
+    }
+
+    private void processAttributesDeleteNotification(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
+        List<String> keys = new ArrayList<>();
+        new JsonParser().parse(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray().forEach(e -> keys.add(e.getAsString()));
+        String scope = msg.getMetaData().getValue("scope");
+        if (StringUtils.isEmpty(scope)) {
+            scope = DataConstants.CLIENT_SCOPE;
+        }
+        if (!keys.isEmpty()) {
+            EntityKeyType keyType = getKeyTypeFromScope(scope);
+            keys.forEach(key -> latestValues.removeValue(new EntityKey(keyType, key)));
+            for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
+                DeviceProfileAlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(), a -> new DeviceProfileAlarmState(deviceId, alarm));
+                alarmState.process(ctx, msg, latestValues);
+            }
+        }
+        ctx.tellSuccess(msg);
+    }
+
+    protected void processAttributesUpdateRequest(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
+        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
+        processAttributesUpdate(ctx, msg, attributes, DataConstants.CLIENT_SCOPE);
+    }
+
+    private void processAttributesUpdate(TbContext ctx, TbMsg msg, Set<AttributeKvEntry> attributes, String scope) throws ExecutionException, InterruptedException {
+        if (!attributes.isEmpty()) {
+            latestValues = merge(latestValues, attributes, scope);
+            for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
+                DeviceProfileAlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(), a -> new DeviceProfileAlarmState(deviceId, alarm));
+                alarmState.process(ctx, msg, latestValues);
+            }
+        }
+        ctx.tellSuccess(msg);
+    }
+
+    protected void processTelemetry(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToSortedTelemetry(new JsonParser().parse(msg.getData()), TbMsgTimeseriesNode.getTs(msg));
         for (Map.Entry<Long, List<KvEntry>> entry : tsKvMap.entrySet()) {
             Long ts = entry.getKey();
@@ -108,6 +165,28 @@ class DeviceState {
             latestValues.putValue(new EntityKey(EntityKeyType.TIME_SERIES, entry.getKey()), toEntityValue(entry));
         }
         return latestValues;
+    }
+
+    private DeviceDataSnapshot merge(DeviceDataSnapshot latestValues, Set<AttributeKvEntry> attributes, String scope) {
+        long ts = latestValues.getTs();
+        for (AttributeKvEntry entry : attributes) {
+            ts = Math.max(ts, entry.getLastUpdateTs());
+            latestValues.putValue(new EntityKey(getKeyTypeFromScope(scope), entry.getKey()), toEntityValue(entry));
+        }
+        latestValues.setTs(ts);
+        return latestValues;
+    }
+
+    private static EntityKeyType getKeyTypeFromScope(String scope) {
+        switch (scope) {
+            case DataConstants.CLIENT_SCOPE:
+                return EntityKeyType.CLIENT_ATTRIBUTE;
+            case DataConstants.SHARED_SCOPE:
+                return EntityKeyType.SHARED_ATTRIBUTE;
+            case DataConstants.SERVER_SCOPE:
+                return EntityKeyType.SERVER_ATTRIBUTE;
+        }
+        return EntityKeyType.ATTRIBUTE;
     }
 
     private DeviceDataSnapshot fetchLatestValues(TbContext ctx, EntityId originator) throws ExecutionException, InterruptedException {
@@ -224,5 +303,4 @@ class DeviceState {
     public DeviceProfileId getProfileId() {
         return deviceProfile.getProfileId();
     }
-
 }

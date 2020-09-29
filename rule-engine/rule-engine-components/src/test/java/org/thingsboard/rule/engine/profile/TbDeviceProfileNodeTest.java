@@ -124,6 +124,7 @@ public class TbDeviceProfileNodeTest {
 
         DeviceProfile deviceProfile = new DeviceProfile();
         DeviceProfileData deviceProfileData = new DeviceProfileData();
+
         KeyFilter highTempFilter = new KeyFilter();
         highTempFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
         highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
@@ -139,6 +140,20 @@ public class TbDeviceProfileNodeTest {
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule));
+
+        KeyFilter lowTempFilter = new KeyFilter();
+        lowTempFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
+        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
+        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
+        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
+        lowTempFilter.setPredicate(lowTemperaturePredicate);
+        AlarmRule clearRule = new AlarmRule();
+        AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setCondition(Collections.singletonList(lowTempFilter));
+        clearRule.setCondition(clearCondition);
+        dpa.setClearRule(clearRule);
+
         deviceProfileData.setAlarms(Collections.singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
