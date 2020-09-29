@@ -60,8 +60,6 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
         processOneWayRpcTestGateway("Gateway Device OneWay RPC Proto");
     }
 
-    // TODO: 25.09.20 Unstable gateway proto test
-//    @Ignore
     @Test
     public void testGatewayServerMqttTwoWayRpc() throws Exception {
         processTwoWayRpcTestGateway("Gateway Device TwoWay RPC Proto");
