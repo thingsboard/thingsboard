@@ -195,6 +195,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         mainQueueProcessingStrategy.setRetries(3);
         mainQueueProcessingStrategy.setFailurePercentage(0);
         mainQueueProcessingStrategy.setPauseBetweenRetries(3);
+        mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
         mainQueue.setProcessingStrategy(mainQueueProcessingStrategy);
         return createOrUpdateQueue(mainQueue);
     }

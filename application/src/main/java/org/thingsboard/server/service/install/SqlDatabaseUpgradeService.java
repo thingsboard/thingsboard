@@ -102,6 +102,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     @Autowired
     private DeviceProfileService deviceProfileService;
 
+    @Autowired
     private TbQueueYmlRuleEngineSettings ruleEngineSettings;
 
     @Autowired
@@ -427,6 +428,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 processingStrategy.setRetries(queueSettings.getProcessingStrategy().getRetries());
                                 processingStrategy.setFailurePercentage(queueSettings.getProcessingStrategy().getFailurePercentage());
                                 processingStrategy.setPauseBetweenRetries(queueSettings.getProcessingStrategy().getPauseBetweenRetries());
+                                processingStrategy.setMaxPauseBetweenRetries(queueSettings.getProcessingStrategy().getMaxPauseBetweenRetries());
                                 queue.setProcessingStrategy(processingStrategy);
                                 queueService.createOrUpdateQueue(queue);
                             });

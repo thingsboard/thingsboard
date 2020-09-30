@@ -366,6 +366,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         mainQueueProcessingStrategy.setRetries(3);
         mainQueueProcessingStrategy.setFailurePercentage(0);
         mainQueueProcessingStrategy.setPauseBetweenRetries(3);
+        mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
         mainQueue.setProcessingStrategy(mainQueueProcessingStrategy);
         queueService.createOrUpdateQueue(mainQueue);
 
@@ -385,6 +386,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         highPriorityQueueProcessingStrategy.setRetries(0);
         highPriorityQueueProcessingStrategy.setFailurePercentage(0);
         highPriorityQueueProcessingStrategy.setPauseBetweenRetries(5);
+        highPriorityQueueProcessingStrategy.setMaxPauseBetweenRetries(5);
         highPriorityQueue.setProcessingStrategy(highPriorityQueueProcessingStrategy);
         queueService.createOrUpdateQueue(highPriorityQueue);
 
@@ -404,6 +406,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         sequentialByOriginatorQueueProcessingStrategy.setRetries(3);
         sequentialByOriginatorQueueProcessingStrategy.setFailurePercentage(0);
         sequentialByOriginatorQueueProcessingStrategy.setPauseBetweenRetries(5);
+        sequentialByOriginatorQueueProcessingStrategy.setMaxPauseBetweenRetries(5);
         sequentialByOriginatorQueue.setProcessingStrategy(sequentialByOriginatorQueueProcessingStrategy);
         queueService.createOrUpdateQueue(sequentialByOriginatorQueue);
     }
