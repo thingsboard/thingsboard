@@ -287,6 +287,10 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                     if (processingStrategy.getPauseBetweenRetries() < 0) {
                         throw new DataValidationException("Queue processing strategy pause between retries can't be less then 0!");
                     }
+
+                    if (processingStrategy.getMaxPauseBetweenRetries() < processingStrategy.getPauseBetweenRetries()) {
+                        throw new DataValidationException("Queue processing strategy MAX pause between retries can't be less then pause between retries!");
+                    }
                 }
             };
 
