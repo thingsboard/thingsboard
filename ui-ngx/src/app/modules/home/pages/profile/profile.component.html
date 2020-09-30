@@ -57,7 +57,7 @@
           </mat-form-field>
           <mat-form-field class="mat-block">
             <mat-label translate>language.language</mat-label>
-            <mat-select matInput formControlName="language">
+            <mat-select matInput formControlName="language" [disabled]="isLoading$ | async">
               <mat-option *ngFor="let lang of languageList" [value]="lang">
                 {{ lang ? ('language.locales.' + lang | translate) : ''}}
               </mat-option>
