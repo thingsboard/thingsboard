@@ -30,7 +30,7 @@ public class TbMsgAttributesNodeConfiguration implements NodeConfiguration<TbMsg
     public TbMsgAttributesNodeConfiguration defaultConfiguration() {
         TbMsgAttributesNodeConfiguration configuration = new TbMsgAttributesNodeConfiguration();
         configuration.setScope(DataConstants.SERVER_SCOPE);
-        configuration.setNotifyDevice(true);
+        configuration.setNotifyDevice(false);
         return configuration;
     }
 }
