@@ -26,6 +26,9 @@ import java.util.Map;
 @Data
 public class TenantProfileData {
 
+    private int maxNumberOfQueues;
+    private int maxNumberOfPartitionsPerQueue;
+
     @JsonIgnore
     private Map<String, Object> properties = new HashMap<>();
 

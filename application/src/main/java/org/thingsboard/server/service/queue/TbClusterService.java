@@ -27,11 +27,12 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueClusterService;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 
 import java.util.UUID;
 
-public interface TbClusterService {
+public interface TbClusterService extends TbQueueClusterService {
 
     void pushMsgToCore(TopicPartitionInfo tpi, UUID msgKey, ToCoreMsg msg, TbQueueCallback callback);
 

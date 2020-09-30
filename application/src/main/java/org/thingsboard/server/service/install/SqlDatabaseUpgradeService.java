@@ -16,19 +16,28 @@
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.queue.ProcessingStrategy;
+import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
+import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.queue.SubmitStrategy;
+import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
+import org.thingsboard.server.service.queue.upgrade.TbQueueYmlRuleEngineSettings;
 
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -85,9 +94,6 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private InstallScripts installScripts;
 
     @Autowired
-    private SystemDataLoaderService systemDataLoaderService;
-
-    @Autowired
     private TenantService tenantService;
 
     @Autowired
@@ -96,6 +102,13 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     @Autowired
     private DeviceProfileService deviceProfileService;
 
+    private TbQueueYmlRuleEngineSettings ruleEngineSettings;
+
+    @Autowired
+    private QueueService queueService;
+
+    @Autowired
+    private SystemDataLoaderService systemDataLoaderService;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -357,7 +370,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 List<EntitySubtype> deviceTypes = deviceService.findDeviceTypesByTenantId(tenant.getId()).get();
                                 try {
                                     deviceProfileService.createDefaultDeviceProfile(tenant.getId());
-                                } catch (Exception e){}
+                                } catch (Exception e) {
+                                }
                                 for (EntitySubtype deviceType : deviceTypes) {
                                     try {
                                         deviceProfileService.findOrCreateDeviceProfile(tenant.getId(), deviceType.getType());
@@ -375,6 +389,51 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         loadSql(schemaUpdateFile, conn);
 
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3002000;");
+                    }
+                    try {
+                        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS queue ( " +
+                                "id uuid NOT NULL CONSTRAINT queue_pkey PRIMARY KEY, " +
+                                "created_time bigint NOT NULL, " +
+                                "tenant_id uuid, " +
+                                "name varchar(255), " +
+                                "topic varchar(255), " +
+                                "poll_interval int, " +
+                                "partitions int, " +
+                                "pack_processing_timeout bigint, " +
+                                "submit_strategy varchar(255), " +
+                                "processing_strategy varchar(255), " +
+                                "CONSTRAINT queue_name_unq_key UNIQUE (tenant_id, name), " +
+                                "CONSTRAINT queue_topic_unq_key UNIQUE (tenant_id, topic) " +
+                                ");");
+                    } catch (Exception e) {
+                    }
+
+                    try {
+                        if (!CollectionUtils.isEmpty(ruleEngineSettings.getQueues())) {
+                            ruleEngineSettings.getQueues().forEach(queueSettings -> {
+                                Queue queue = new Queue();
+                                queue.setTenantId(TenantId.SYS_TENANT_ID);
+                                queue.setName(queueSettings.getName());
+                                queue.setTopic(queueSettings.getTopic());
+                                queue.setPollInterval(queueSettings.getPollInterval());
+                                queue.setPartitions(queueSettings.getPartitions());
+                                queue.setPackProcessingTimeout(queueSettings.getPackProcessingTimeout());
+                                SubmitStrategy submitStrategy = new SubmitStrategy();
+                                submitStrategy.setBatchSize(queueSettings.getSubmitStrategy().getBatchSize());
+                                submitStrategy.setType(SubmitStrategyType.valueOf(queueSettings.getSubmitStrategy().getType()));
+                                queue.setSubmitStrategy(submitStrategy);
+                                ProcessingStrategy processingStrategy = new ProcessingStrategy();
+                                processingStrategy.setType(ProcessingStrategyType.valueOf(queueSettings.getProcessingStrategy().getType()));
+                                processingStrategy.setRetries(queueSettings.getProcessingStrategy().getRetries());
+                                processingStrategy.setFailurePercentage(queueSettings.getProcessingStrategy().getFailurePercentage());
+                                processingStrategy.setPauseBetweenRetries(queueSettings.getProcessingStrategy().getPauseBetweenRetries());
+                                queue.setProcessingStrategy(processingStrategy);
+                                queueService.createOrUpdateQueue(queue);
+                            });
+                        } else {
+                            systemDataLoaderService.createQueues();
+                        }
+                    } catch (Exception e) {
                     }
                     log.info("Schema updated.");
                 } catch (Exception e) {

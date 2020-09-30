@@ -71,6 +71,11 @@ public class InMemoryTbTransportQueueFactory implements TbTransportQueueFactory 
             public void createTopicIfNotExists(String topic) {}
 
             @Override
+            public void deleteTopic(String topic) {
+
+            }
+
+            @Override
             public void destroy() {}
         });
 

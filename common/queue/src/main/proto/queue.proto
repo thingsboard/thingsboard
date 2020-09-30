@@ -19,11 +19,6 @@ package transport;
 option java_package = "org.thingsboard.server.gen.transport";
 option java_outer_classname = "TransportProtos";
 
-message QueueInfo {
-  string name = 1;
-  string topic = 2;
-  int32 partitions = 3;
-}
 
 /**
  * Service Discovery Data Structures;
@@ -33,7 +28,6 @@ message ServiceInfo {
   repeated string serviceTypes = 2;
   int64 tenantIdMSB = 3;
   int64 tenantIdLSB = 4;
-  repeated QueueInfo ruleEngineQueues = 5;
 }
 
 /**
@@ -197,6 +191,39 @@ message DeviceProfileUpdateMsg {
 message DeviceProfileDeleteMsg {
     int64 profileIdMSB = 1;
     int64 profileIdLSB = 2;
+}
+
+message GetQueueRoutingInfoRequestMsg {
+}
+
+message GetAllQueueRoutingInfoRequestMsg {
+}
+
+message GetTenantQueueRoutingInfoRequestMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+}
+
+message GetQueueRoutingInfoResponseMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string queueName = 3;
+  string queueTopic = 4;
+  int32 partitions = 5;
+}
+
+message QueueUpdateMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string queueName = 3;
+  string queueTopic = 4;
+  int32 partitions = 5;
+}
+
+message QueueDeleteMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string queueName = 3;
 }
 
 message SessionCloseNotificationProto {
@@ -441,6 +468,9 @@ message TransportApiRequestMsg {
   GetTenantRoutingInfoRequestMsg getTenantRoutingInfoRequestMsg = 4;
   GetDeviceProfileRequestMsg getDeviceProfileRequestMsg = 5;
   ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 6;
+  GetQueueRoutingInfoRequestMsg getQueueRoutingInfoRequestMsg = 7;
+  GetTenantQueueRoutingInfoRequestMsg getTenantQueueRoutingInfoRequestMsg = 8;
+  GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 9;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -449,6 +479,7 @@ message TransportApiResponseMsg {
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
   GetTenantRoutingInfoResponseMsg getTenantRoutingInfoResponseMsg = 4;
   GetDeviceProfileResponseMsg getDeviceProfileResponseMsg = 5;
+  repeated GetQueueRoutingInfoResponseMsg getQueueRoutingInfoResponseMsgs = 6;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */
@@ -464,6 +495,8 @@ message ToCoreNotificationMsg {
   LocalSubscriptionServiceMsgProto toLocalSubscriptionServiceMsg = 1;
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
   bytes componentLifecycleMsg = 3;
+  QueueUpdateMsg queueUpdateMsg = 4;
+  QueueDeleteMsg queueDeleteMsg = 5;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -478,6 +511,8 @@ message ToRuleEngineMsg {
 message ToRuleEngineNotificationMsg {
   bytes componentLifecycleMsg = 1;
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
+  QueueUpdateMsg queueUpdateMsg = 3;
+  QueueDeleteMsg queueDeleteMsg = 4;
 }
 
 /* Messages that are handled by ThingsBoard Transport Service */
@@ -491,4 +526,6 @@ message ToTransportMsg {
   ToServerRpcResponseMsg toServerResponse = 7;
   DeviceProfileUpdateMsg deviceProfileUpdateMsg = 8;
   DeviceProfileDeleteMsg deviceProfileDeleteMsg = 9;
+  QueueUpdateMsg queueUpdateMsg = 10;
+  QueueDeleteMsg queueDeleteMsg = 11;
 }

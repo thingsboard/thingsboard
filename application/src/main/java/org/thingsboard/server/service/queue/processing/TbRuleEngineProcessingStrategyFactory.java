@@ -17,6 +17,7 @@ package org.thingsboard.server.service.queue.processing;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -32,20 +33,20 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TbRuleEngineProcessingStrategyFactory {
 
-    public TbRuleEngineProcessingStrategy newInstance(String name, TbRuleEngineQueueAckStrategyConfiguration configuration) {
-        switch (configuration.getType()) {
-            case "SKIP_ALL_FAILURES":
+    public TbRuleEngineProcessingStrategy newInstance(String name, ProcessingStrategy processingStrategy) {
+        switch (processingStrategy.getType()) {
+            case SKIP_ALL_FAILURES:
                 return new SkipStrategy(name);
-            case "RETRY_ALL":
-                return new RetryStrategy(name, true, true, true, configuration);
-            case "RETRY_FAILED":
-                return new RetryStrategy(name, false, true, false, configuration);
-            case "RETRY_TIMED_OUT":
-                return new RetryStrategy(name, false, false, true, configuration);
-            case "RETRY_FAILED_AND_TIMED_OUT":
-                return new RetryStrategy(name, false, true, true, configuration);
+            case RETRY_ALL:
+                return new RetryStrategy(name, true, true, true, processingStrategy);
+            case RETRY_FAILED:
+                return new RetryStrategy(name, false, true, false, processingStrategy);
+            case RETRY_TIMED_OUT:
+                return new RetryStrategy(name, false, false, true, processingStrategy);
+            case RETRY_FAILED_AND_TIMED_OUT:
+                return new RetryStrategy(name, false, true, true, processingStrategy);
             default:
-                throw new RuntimeException("TbRuleEngineProcessingStrategy with type " + configuration.getType() + " is not supported!");
+                throw new RuntimeException("TbRuleEngineProcessingStrategy with type " + processingStrategy.getType() + " is not supported!");
         }
     }
 
@@ -63,15 +64,15 @@ public class TbRuleEngineProcessingStrategyFactory {
         private int initialTotalCount;
         private int retryCount;
 
-        public RetryStrategy(String queueName, boolean retrySuccessful, boolean retryFailed, boolean retryTimeout, TbRuleEngineQueueAckStrategyConfiguration configuration) {
+        public RetryStrategy(String queueName, boolean retrySuccessful, boolean retryFailed, boolean retryTimeout, ProcessingStrategy processingStrategy) {
             this.queueName = queueName;
             this.retrySuccessful = retrySuccessful;
             this.retryFailed = retryFailed;
             this.retryTimeout = retryTimeout;
-            this.maxRetries = configuration.getRetries();
-            this.maxAllowedFailurePercentage = configuration.getFailurePercentage();
-            this.pauseBetweenRetries = configuration.getPauseBetweenRetries();
-            this.maxPauseBetweenRetries = configuration.getMaxPauseBetweenRetries();
+            this.maxRetries = processingStrategy.getRetries();
+            this.maxAllowedFailurePercentage = processingStrategy.getFailurePercentage();
+            this.pauseBetweenRetries = processingStrategy.getPauseBetweenRetries();
+            this.maxPauseBetweenRetries = processingStrategy.getMaxPauseBetweenRetries();
         }
 
         @Override

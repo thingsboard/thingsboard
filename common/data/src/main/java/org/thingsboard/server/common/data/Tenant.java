@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 public class Tenant extends ContactBased<TenantId> implements HasTenantId {
 
     private static final long serialVersionUID = 8057243243859922101L;
-    
+
     private String title;
     private String region;
     private TenantProfileId tenantProfileId;
@@ -37,7 +37,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
     public Tenant(TenantId id) {
         super(id);
     }
-    
+
     public Tenant(Tenant tenant) {
         super(tenant);
         this.title = tenant.getTitle();

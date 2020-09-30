@@ -16,36 +16,114 @@
 package org.thingsboard.server.controller;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.QueueId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
 public class QueueController extends BaseController {
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, method = RequestMethod.GET)
     @ResponseBody
-    public List<String> getTenantQueuesByServiceType(@RequestParam String serviceType) throws ThingsboardException {
+    public List<String> getTenantQueuesNameByServiceType(@RequestParam String serviceType) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
         try {
             ServiceType type = ServiceType.valueOf(serviceType);
             switch (type) {
                 case TB_RULE_ENGINE:
-                    return Arrays.asList("Main", "HighPriority", "SequentialByOriginator");
+                    return queueService.findQueues(getTenantId()).stream().map(Queue::getName).collect(Collectors.toList());
                 default:
                     return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/queues", params = {"serviceType", "pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<Queue> getTenantQueuesByServiceType(@RequestParam String serviceType,
+                                                            @RequestParam int pageSize,
+                                                            @RequestParam int page,
+                                                            @RequestParam(required = false) String textSearch,
+                                                            @RequestParam(required = false) String sortProperty,
+                                                            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        checkParameter("serviceType", serviceType);
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            ServiceType type = ServiceType.valueOf(serviceType);
+            switch (type) {
+                case TB_RULE_ENGINE:
+                    return queueService.findQueues(getTenantId(), pageLink);
+                default:
+                    return new PageData<>();
+            }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, method = RequestMethod.POST)
+    @ResponseBody
+    public Queue saveQueue(@RequestBody Queue queue,
+                           @RequestParam String serviceType) throws ThingsboardException {
+        checkParameter("serviceType", serviceType);
+        try {
+            queue.setTenantId(getCurrentUser().getTenantId());
+
+            checkEntity(queue.getId(), queue, Resource.QUEUE);
+
+            ServiceType type = ServiceType.valueOf(serviceType);
+            switch (type) {
+                case TB_RULE_ENGINE:
+                    queue.setTenantId(getTenantId());
+                    Queue savedQueue = queueService.createOrUpdateQueue(queue);
+                    checkNotNull(savedQueue);
+                    return savedQueue;
+                default:
+                    return null;
+            }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/queues/{queueId}", params = {"serviceType"}, method = RequestMethod.DELETE)
+    @ResponseBody
+    public void deleteQueue(@RequestParam String serviceType,
+                            @PathVariable("queueId") String queueIdStr) throws ThingsboardException {
+        checkParameter("serviceType", serviceType);
+        checkParameter("queueId", queueIdStr);
+        try {
+            ServiceType type = ServiceType.valueOf(serviceType);
+            QueueId queueId = new QueueId(toUUID(queueIdStr));
+            checkQueueId(queueId, Operation.DELETE);
+            switch (type) {
+                case TB_RULE_ENGINE:
+                    queueService.deleteQueue(getTenantId(), queueId);
             }
         } catch (Exception e) {
             throw handleException(e);

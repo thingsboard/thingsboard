@@ -1762,7 +1762,13 @@
         "isolated-tb-core": "Processing in isolated ThingsBoard Core container",
         "isolated-tb-rule-engine": "Processing in isolated ThingsBoard Rule Engine container",
         "isolated-tb-core-details": "Requires separate microservice(s) per isolated Tenant",
-        "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant"
+        "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant",
+        "max-number-of-queues": "Max number of ThingsBoard Rule Engine queues",
+        "max-number-of-queues-required": "Max number of queues is required",
+        "max-number-of-queues-min-length": "Max number of queues can't be less then 1",
+        "max-number-of-partitions-per-queue": "Max number of partitions per ThingsBoard Rule Engine queue",
+        "max-number-of-partitions-per-queue-required": "Max number of partitions per queue is required",
+        "max-number-of-partitions-per-queue-min-length": "Max number of partitions per queue can't be less then 1"
     },
     "tenant-profile": {
         "tenant-profile": "Tenant profile",

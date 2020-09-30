@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.common.data.queue;
 
-public interface TbQueueAdmin {
+import lombok.Data;
 
-    void createTopicIfNotExists(String topic);
-
-    void destroy();
+@Data
+public class ProcessingStrategy {
+    private ProcessingStrategyType type;
+    private int retries;
+    private double failurePercentage;
+    private long pauseBetweenRetries;
+    private long maxPauseBetweenRetries;
 }

@@ -1,3 +1,4 @@
+
 /**
  * Copyright © 2016-2020 The Thingsboard Authors
  *
@@ -13,12 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.common.data.queue;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-import org.thingsboard.server.queue.TbQueueMsg;
-
-public interface TbQueueMsgDecoder<T extends TbQueueMsg> {
-
-    T decode(TbQueueMsg msg) throws InvalidProtocolBufferException;
+public enum ProcessingStrategyType {
+    SKIP_ALL_FAILURES, RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
 }

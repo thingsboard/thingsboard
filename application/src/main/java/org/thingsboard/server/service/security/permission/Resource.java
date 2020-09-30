@@ -33,7 +33,8 @@ public enum Resource {
     WIDGETS_BUNDLE(EntityType.WIDGETS_BUNDLE),
     WIDGET_TYPE(EntityType.WIDGET_TYPE),
     TENANT_PROFILE(EntityType.TENANT_PROFILE),
-    DEVICE_PROFILE(EntityType.DEVICE_PROFILE);
+    DEVICE_PROFILE(EntityType.DEVICE_PROFILE),
+    QUEUE(EntityType.QUEUE);
 
     private final EntityType entityType;
 

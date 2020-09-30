@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.azure.servicebus;
+package org.thingsboard.server.queue.settings;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -22,16 +22,24 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@ConditionalOnExpression("'${queue.type:null}'=='service-bus'")
+@ConditionalOnExpression("'${queue.type:null}'=='aws-sqs'")
 @Component
 @Data
-public class TbServiceBusSettings {
-    @Value("${queue.service_bus.namespace_name}")
-    private String namespaceName;
-    @Value("${queue.service_bus.sas_key_name}")
-    private String sasKeyName;
-    @Value("${queue.service_bus.sas_key}")
-    private String sasKey;
-    @Value("${queue.service_bus.max_messages}")
-    private int maxMessages;
+public class TbAwsSqsSettings {
+
+    @Value("${queue.aws_sqs.use_default_credential_provider_chain}")
+    private Boolean useDefaultCredentialProviderChain;
+
+    @Value("${queue.aws_sqs.access_key_id}")
+    private String accessKeyId;
+
+    @Value("${queue.aws_sqs.secret_access_key}")
+    private String secretAccessKey;
+
+    @Value("${queue.aws_sqs.region}")
+    private String region;
+
+    @Value("${queue.aws_sqs.threads_per_topic}")
+    private int threadsPerTopic;
+
 }

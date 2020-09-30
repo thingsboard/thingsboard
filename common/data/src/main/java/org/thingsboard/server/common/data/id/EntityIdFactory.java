@@ -66,6 +66,8 @@ public class EntityIdFactory {
                 return new DeviceProfileId(uuid);
             case TENANT_PROFILE:
                 return new TenantProfileId(uuid);
+            case QUEUE:
+                return new QueueId(uuid);
         }
         throw new IllegalArgumentException("EntityType " + type + " is not supported!");
     }

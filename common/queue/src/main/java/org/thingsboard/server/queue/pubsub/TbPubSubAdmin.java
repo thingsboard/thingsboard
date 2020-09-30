@@ -30,6 +30,7 @@ import com.google.pubsub.v1.Topic;
 import com.google.pubsub.v1.TopicName;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.settings.TbPubSubSettings;
 
 import java.io.IOException;
 import java.util.Map;
@@ -134,6 +135,37 @@ public class TbPubSubAdmin implements TbQueueAdmin {
             topicSet.add(topicName.toString());
         }
         createSubscriptionIfNotExists(partition, topicName);
+    }
+
+    @Override
+    public void deleteTopic(String topic) {
+        TopicName topicName = TopicName.newBuilder()
+                .setTopic(topic)
+                .setProject(pubSubSettings.getProjectId())
+                .build();
+
+        ProjectSubscriptionName subscriptionName =
+                ProjectSubscriptionName.of(pubSubSettings.getProjectId(), topic);
+
+        if (topicSet.contains(topicName.toString())) {
+            topicAdminClient.deleteTopic(topicName);
+        } else {
+            if (topicAdminClient.getTopic(topicName) != null) {
+                topicAdminClient.deleteTopic(topicName);
+            } else {
+                log.warn("PubSub topic [{}] does not exist.", topic);
+            }
+        }
+
+        if (subscriptionSet.contains(subscriptionName.toString())) {
+            subscriptionAdminClient.deleteSubscription(subscriptionName);
+        } else {
+            if (subscriptionAdminClient.getSubscription(subscriptionName) != null) {
+                subscriptionAdminClient.deleteSubscription(subscriptionName);
+            } else {
+                log.warn("PubSub subscription [{}] does not exist.", topic);
+            }
+        }
     }
 
     private void createSubscriptionIfNotExists(String partition, TopicName topicName) {

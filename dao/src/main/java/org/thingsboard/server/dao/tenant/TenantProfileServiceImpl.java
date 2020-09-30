@@ -23,7 +23,6 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.TenantProfileData;
@@ -36,7 +35,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -221,6 +219,14 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
                             throw new DataValidationException("Another default tenant profile is present!");
                         }
                     }
+                    if (tenantProfile.isIsolatedTbRuleEngine()) {
+                        if (tenantProfile.getProfileData().getMaxNumberOfQueues() < 1) {
+                            throw new DataValidationException("Property maxNumberOfQueues can't be less then 1!");
+                        }
+                        if (tenantProfile.getProfileData().getMaxNumberOfPartitionsPerQueue() < 1) {
+                            throw new DataValidationException("Property maxNumberOfPartitionsPerQueue can't be less then 1!");
+                        }
+                    }
                 }
 
                 @Override
@@ -232,6 +238,13 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
                         throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
                     } else if (old.isIsolatedTbCore() != tenantProfile.isIsolatedTbCore()) {
                         throw new DataValidationException("Can't update isolatedTbCore property!");
+                    } else if (tenantProfile.isIsolatedTbRuleEngine()) {
+                        if (old.getProfileData().getMaxNumberOfQueues() > tenantProfile.getProfileData().getMaxNumberOfQueues()) {
+                            throw new DataValidationException("Can't decrease maxNumberOfQueues property!");
+                        }
+                        if (old.getProfileData().getMaxNumberOfPartitionsPerQueue() > tenantProfile.getProfileData().getMaxNumberOfPartitionsPerQueue()) {
+                            throw new DataValidationException("Can't decrease maxNumberOfPartitionsPerQueue property!");
+                        }
                     }
                 }
             };

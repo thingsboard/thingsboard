@@ -46,7 +46,7 @@ public class TransportTenantRoutingInfoService implements TenantRoutingInfoServi
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .build();
-        GetTenantRoutingInfoResponseMsg routingInfo = transportService.getRoutingInfo(msg);
+        GetTenantRoutingInfoResponseMsg routingInfo = transportService.getTenantRoutingInfo(msg);
         return new TenantRoutingInfo(tenantId, routingInfo.getIsolatedTbCore(), routingInfo.getIsolatedTbRuleEngine());
     }
 }

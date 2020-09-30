@@ -22,6 +22,7 @@ import com.microsoft.azure.servicebus.primitives.MessagingEntityAlreadyExistsExc
 import com.microsoft.azure.servicebus.primitives.ServiceBusException;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.settings.TbServiceBusSettings;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -79,6 +80,31 @@ public class TbServiceBusAdmin implements TbQueueAdmin {
             } else {
                 log.error("Failed to create queue: [{}]", topic, e);
             }
+        }
+    }
+
+    @Override
+    public void deleteTopic(String topic) {
+        if (queues.contains(topic)) {
+            doDelete(topic);
+        } else {
+            try {
+                if (client.getQueue(topic) != null) {
+                    doDelete(topic);
+                } else {
+                    log.warn("Azure Service Bus Queue [{}] is not exist.", topic);
+                }
+            } catch (ServiceBusException | InterruptedException e) {
+                log.error("Failed to delete Azure Service Bus queue [{}]", topic, e);
+            }
+        }
+    }
+
+    private void doDelete(String topic) {
+        try {
+            client.deleteTopic(topic);
+        } catch (ServiceBusException | InterruptedException e) {
+            log.error("Failed to delete Azure Service Bus queue [{}]", topic, e);
         }
     }
 

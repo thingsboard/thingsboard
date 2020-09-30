@@ -23,6 +23,11 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetQueueRoutingInfoRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetTenantQueueRoutingInfoRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetQueueRoutingInfoResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetAllQueueRoutingInfoRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
@@ -38,12 +43,20 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateBasicMqttCre
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 
+import java.util.List;
+
 /**
  * Created by ashvayka on 04.10.18.
  */
 public interface TransportService {
 
-    GetTenantRoutingInfoResponseMsg getRoutingInfo(GetTenantRoutingInfoRequestMsg msg);
+    GetTenantRoutingInfoResponseMsg getTenantRoutingInfo(GetTenantRoutingInfoRequestMsg msg);
+
+    List<GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(GetQueueRoutingInfoRequestMsg msg);
+
+    List<GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(GetTenantQueueRoutingInfoRequestMsg msg);
+
+    List<GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(GetAllQueueRoutingInfoRequestMsg msg);
 
     void process(DeviceTransportType transportType, ValidateDeviceTokenRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
