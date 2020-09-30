@@ -93,7 +93,9 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
         if (payloadType != null) {
             DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType, telemetryTopic, attributesTopic);
             DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", mqttDeviceProfile, DeviceProfile.class);
+            device.setType(savedDeviceProfile.getName());
             device.setDeviceProfileId(savedDeviceProfile.getId());
+            gateway.setType(savedDeviceProfile.getName());
             gateway.setDeviceProfileId(savedDeviceProfile.getId());
         }
 

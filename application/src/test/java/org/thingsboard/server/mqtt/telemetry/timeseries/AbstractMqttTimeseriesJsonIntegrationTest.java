@@ -69,7 +69,7 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
 
     @Test
     public void testGatewayConnect() throws Exception {
-        String payload = "{\"device\":\"Device A\"}";
+        String payload = "{\"device\":\"Device A\", \"type\": \"" + TransportPayloadType.JSON.name() + "\"}";
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
         publishMqttMsg(client, payload.getBytes(), MqttTopics.GATEWAY_CONNECT_TOPIC);
 

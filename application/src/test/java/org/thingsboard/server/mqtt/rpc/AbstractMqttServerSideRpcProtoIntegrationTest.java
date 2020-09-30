@@ -83,6 +83,7 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
     private TransportApiProtos.ConnectMsg getConnectProto(String deviceName) {
         TransportApiProtos.ConnectMsg.Builder builder = TransportApiProtos.ConnectMsg.newBuilder();
         builder.setDeviceName(deviceName);
+        builder.setDeviceType(TransportPayloadType.PROTOBUF.name());
         return builder.build();
     }
 

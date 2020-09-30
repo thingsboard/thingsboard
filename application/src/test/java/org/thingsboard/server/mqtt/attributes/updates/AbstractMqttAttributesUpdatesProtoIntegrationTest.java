@@ -142,6 +142,7 @@ public abstract class AbstractMqttAttributesUpdatesProtoIntegrationTest extends 
     private TransportApiProtos.ConnectMsg getConnectProto() {
         TransportApiProtos.ConnectMsg.Builder builder = TransportApiProtos.ConnectMsg.newBuilder();
         builder.setDeviceName("Gateway Device Subscribe to attribute updates");
+        builder.setDeviceType(TransportPayloadType.PROTOBUF.name());
         return builder.build();
     }
 

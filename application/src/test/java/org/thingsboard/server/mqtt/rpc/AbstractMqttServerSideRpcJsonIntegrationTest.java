@@ -16,6 +16,7 @@
 package org.thingsboard.server.mqtt.rpc;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -53,6 +54,13 @@ public abstract class AbstractMqttServerSideRpcJsonIntegrationTest extends Abstr
     @Test
     public void testGatewayServerMqttTwoWayRpc() throws Exception {
         processTwoWayRpcTestGateway("Gateway Device TwoWay RPC Json");
+    }
+
+    protected void processOneWayRpcTestGateway(String deviceName) throws Exception {
+        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
+        String payload = "{\"device\": \"" + deviceName + "\", \"type\": \"" + TransportPayloadType.JSON.name() + "\"}";
+        byte[] payloadBytes = payload.getBytes();
+        validateOneWayRpcGatewayResponse(deviceName, client, payloadBytes);
     }
 
 }

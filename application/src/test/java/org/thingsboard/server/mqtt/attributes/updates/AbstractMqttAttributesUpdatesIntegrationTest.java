@@ -164,7 +164,7 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
     }
 
     protected byte[] getConnectPayloadBytes() {
-        String connectPayload = "{\"device\":\"" + "Gateway Device Subscribe to attribute updates" + "\"}";
+        String connectPayload = "{\"device\": \"Gateway Device Subscribe to attribute updates\", \"type\": \"" + TransportPayloadType.JSON.name() + "\"}";
         return connectPayload.getBytes();
     }
 }
