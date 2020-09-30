@@ -97,19 +97,21 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractMqttIntegratio
     protected void processTestClaimingDevice(boolean emptyPayload) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
         byte[] payloadBytes;
+        byte[] failurePayloadBytes;
         if (emptyPayload) {
             payloadBytes = "{}".getBytes();
+            failurePayloadBytes = "{\"durationMs\":1}".getBytes();
         } else {
             payloadBytes = "{\"secretKey\":\"value\", \"durationMs\":60000}".getBytes();
+            failurePayloadBytes = "{\"secretKey\":\"value\", \"durationMs\":1}".getBytes();
         }
-        byte[] failurePayloadBytes = "{\"secretKey\":\"value\", \"durationMs\":1}".getBytes();
         validateClaimResponse(emptyPayload, client, payloadBytes, failurePayloadBytes);
     }
 
     protected void validateClaimResponse(boolean emptyPayload, MqttAsyncClient client, byte[] payloadBytes, byte[] failurePayloadBytes) throws Exception {
         client.publish(MqttTopics.DEVICE_CLAIM_TOPIC, new MqttMessage(failurePayloadBytes));
 
-        Thread.sleep(1000);
+        Thread.sleep(2000);
 
         loginUser(customerAdmin.getName(), CUSTOMER_USER_PASSWORD);
         ClaimRequest claimRequest;
@@ -133,10 +135,6 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractMqttIntegratio
         assertNotNull(claimedDevice.getCustomerId());
         assertEquals(customerAdmin.getCustomerId(), claimedDevice.getCustomerId());
 
-        client.publish(MqttTopics.DEVICE_CLAIM_TOPIC, new MqttMessage(payloadBytes));
-
-        Thread.sleep(1000);
-
         claimResponse = doPostClaimAsync("/api/customer/device/" + savedDevice.getName() + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest());
         assertEquals(claimResponse, ClaimResponse.CLAIMED);
     }
@@ -144,7 +142,7 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractMqttIntegratio
     protected void validateGatewayClaimResponse(String deviceName, boolean emptyPayload, MqttAsyncClient client, byte[] failurePayloadBytes, byte[] payloadBytes) throws Exception {
         client.publish(MqttTopics.GATEWAY_CLAIM_TOPIC, new MqttMessage(failurePayloadBytes));
 
-        Thread.sleep(1000);
+        Thread.sleep(2000);
 
         Device savedDevice = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
         assertNotNull(savedDevice);
@@ -171,7 +169,6 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractMqttIntegratio
         assertNotNull(claimedDevice.getCustomerId());
         assertEquals(customerAdmin.getCustomerId(), claimedDevice.getCustomerId());
 
-        client.publish(MqttTopics.GATEWAY_CLAIM_TOPIC, new MqttMessage(payloadBytes));
         claimResponse = doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest());
         assertEquals(claimResponse, ClaimResponse.CLAIMED);
     }
@@ -180,11 +177,13 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractMqttIntegratio
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
         byte[] failurePayloadBytes;
         byte[] payloadBytes;
-        String failurePayload = "{\"" + deviceName + "\": " + "{\"secretKey\":\"value\", \"durationMs\":1}" + "}";
+        String failurePayload;
         String payload;
         if (emptyPayload) {
+            failurePayload = "{\"" + deviceName + "\": " + "{\"durationMs\":1}" + "}";
             payload = "{\"" + deviceName + "\": " + "{}" + "}";
         } else {
+            failurePayload = "{\"" + deviceName + "\": " + "{\"secretKey\":\"value\", \"durationMs\":1}" + "}";
             payload = "{\"" + deviceName + "\": " + "{\"secretKey\":\"value\", \"durationMs\":60000}" + "}";
         }
         payloadBytes = payload.getBytes();

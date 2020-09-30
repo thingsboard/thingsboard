@@ -59,11 +59,11 @@ public abstract class AbstractMqttClaimProtoDeviceTest extends AbstractMqttClaim
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
         byte[] payloadBytes;
         if (emptyPayload) {
-            payloadBytes = getClaimDevice(0).toByteArray();
+            payloadBytes = getClaimDevice(0, emptyPayload).toByteArray();
         } else {
-            payloadBytes = getClaimDevice(60000).toByteArray();
+            payloadBytes = getClaimDevice(60000, emptyPayload).toByteArray();
         }
-        byte[] failurePayloadBytes = getClaimDevice(1).toByteArray();
+        byte[] failurePayloadBytes = getClaimDevice(1, emptyPayload).toByteArray();
         validateClaimResponse(emptyPayload, client, payloadBytes, failurePayloadBytes);
     }
 
@@ -72,21 +72,23 @@ public abstract class AbstractMqttClaimProtoDeviceTest extends AbstractMqttClaim
         byte[] failurePayloadBytes;
         byte[] payloadBytes;
         if (emptyPayload) {
-            payloadBytes = getGatewayClaimMsg(deviceName, 0).toByteArray();
+            payloadBytes = getGatewayClaimMsg(deviceName, 0, emptyPayload).toByteArray();
         } else {
-            payloadBytes = getGatewayClaimMsg(deviceName, 60000).toByteArray();
+            payloadBytes = getGatewayClaimMsg(deviceName, 60000, emptyPayload).toByteArray();
         }
-        failurePayloadBytes = getGatewayClaimMsg(deviceName, 1).toByteArray();
+        failurePayloadBytes = getGatewayClaimMsg(deviceName, 1, emptyPayload).toByteArray();
 
         validateGatewayClaimResponse(deviceName, emptyPayload, client, failurePayloadBytes, payloadBytes);
     }
 
-    private TransportApiProtos.GatewayClaimMsg getGatewayClaimMsg(String deviceName, long duration) {
+    private TransportApiProtos.GatewayClaimMsg getGatewayClaimMsg(String deviceName, long duration, boolean emptyPayload) {
         TransportApiProtos.GatewayClaimMsg.Builder gatewayClaimMsgBuilder = TransportApiProtos.GatewayClaimMsg.newBuilder();
         TransportApiProtos.ClaimDeviceMsg.Builder claimDeviceMsgBuilder = TransportApiProtos.ClaimDeviceMsg.newBuilder();
         TransportApiProtos.ClaimDevice.Builder claimDeviceBuilder = TransportApiProtos.ClaimDevice.newBuilder();
-        if (duration > 0) {
+        if (!emptyPayload) {
             claimDeviceBuilder.setSecretKey("value");
+        }
+        if (duration > 0) {
             claimDeviceBuilder.setDurationMs(duration);
         }
         TransportApiProtos.ClaimDevice claimDevice = claimDeviceBuilder.build();
@@ -97,13 +99,16 @@ public abstract class AbstractMqttClaimProtoDeviceTest extends AbstractMqttClaim
         return gatewayClaimMsgBuilder.build();
     }
 
-    private TransportApiProtos.ClaimDevice getClaimDevice(long duration) {
-        TransportApiProtos.ClaimDevice.Builder claimDeviceFailureBuilder = TransportApiProtos.ClaimDevice.newBuilder();
-        if (duration > 0) {
-            claimDeviceFailureBuilder.setSecretKey("value");
-            claimDeviceFailureBuilder.setDurationMs(duration);
+    private TransportApiProtos.ClaimDevice getClaimDevice(long duration, boolean emptyPayload) {
+        TransportApiProtos.ClaimDevice.Builder claimDeviceBuilder = TransportApiProtos.ClaimDevice.newBuilder();
+        if (!emptyPayload) {
+            claimDeviceBuilder.setSecretKey("value");
         }
-        return claimDeviceFailureBuilder.build();
+        if (duration > 0) {
+            claimDeviceBuilder.setSecretKey("value");
+            claimDeviceBuilder.setDurationMs(duration);
+        }
+        return claimDeviceBuilder.build();
     }
 
 
