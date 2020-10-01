@@ -344,7 +344,7 @@ public class GatewaySessionHandler {
                                 }
                                 try {
                                     TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(deviceEntry.getValue().getAsJsonArray());
-                                    transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
+                                    processPostTelemetryMsg(deviceCtx, postTelemetryMsg, deviceName, msgId);
                                 } catch (Throwable e) {
                                     log.warn("[{}][{}] Failed to convert telemetry: {}", gateway.getDeviceId(), deviceName, deviceEntry.getValue(), e);
                                 }
@@ -375,7 +375,7 @@ public class GatewaySessionHandler {
                                     TransportProtos.PostTelemetryMsg msg = telemetryMsg.getMsg();
                                     try {
                                         TransportProtos.PostTelemetryMsg postTelemetryMsg = ProtoConverter.validatePostTelemetryMsg(msg.toByteArray());
-                                        transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
+                                        processPostTelemetryMsg(deviceCtx, postTelemetryMsg, deviceName, msgId);
                                     } catch (Throwable e) {
                                         log.warn("[{}][{}] Failed to convert telemetry: {}", gateway.getDeviceId(), deviceName, msg, e);
                                     }
@@ -396,6 +396,10 @@ public class GatewaySessionHandler {
         }
     }
 
+    private void processPostTelemetryMsg(GatewayDeviceSessionCtx deviceCtx, TransportProtos.PostTelemetryMsg postTelemetryMsg, String deviceName, int msgId) {
+        transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
+    }
+
     private void onDeviceClaimJson(int msgId, ByteBuf payload) throws AdaptorException {
         JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, payload);
         if (json.isJsonObject()) {
@@ -412,7 +416,7 @@ public class GatewaySessionHandler {
                                 try {
                                     DeviceId deviceId = deviceCtx.getDeviceId();
                                     TransportProtos.ClaimDeviceMsg claimDeviceMsg = JsonConverter.convertToClaimDeviceProto(deviceId, deviceEntry.getValue());
-                                    transportService.process(deviceCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(channel, deviceName, msgId, claimDeviceMsg));
+                                    processClaimDeviceMsg(deviceCtx, claimDeviceMsg, deviceName, msgId);
                                 } catch (Throwable e) {
                                     log.warn("[{}][{}] Failed to convert claim message: {}", gateway.getDeviceId(), deviceName, deviceEntry.getValue(), e);
                                 }
@@ -447,7 +451,7 @@ public class GatewaySessionHandler {
                                     try {
                                         DeviceId deviceId = deviceCtx.getDeviceId();
                                         TransportProtos.ClaimDeviceMsg claimDeviceMsg = ProtoConverter.convertToClaimDeviceProto(deviceId, claimRequest.toByteArray());
-                                        transportService.process(deviceCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(channel, deviceName, msgId, claimDeviceMsg));
+                                        processClaimDeviceMsg(deviceCtx, claimDeviceMsg, deviceName, msgId);
                                     } catch (Throwable e) {
                                         log.warn("[{}][{}] Failed to convert claim message: {}", gateway.getDeviceId(), deviceName, claimRequest, e);
                                     }
@@ -468,6 +472,10 @@ public class GatewaySessionHandler {
         }
     }
 
+    private void processClaimDeviceMsg(GatewayDeviceSessionCtx deviceCtx, TransportProtos.ClaimDeviceMsg claimDeviceMsg, String deviceName, int msgId) {
+        transportService.process(deviceCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(channel, deviceName, msgId, claimDeviceMsg));
+    }
+
     private void onDeviceAttributesJson(int msgId, ByteBuf payload) throws AdaptorException {
         JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, payload);
         if (json.isJsonObject()) {
@@ -482,7 +490,7 @@ public class GatewaySessionHandler {
                                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
                                 }
                                 TransportProtos.PostAttributeMsg postAttributeMsg = JsonConverter.convertToAttributesProto(deviceEntry.getValue().getAsJsonObject());
-                                transportService.process(deviceCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(channel, deviceName, msgId, postAttributeMsg));
+                                processPostAttributesMsg(deviceCtx, postAttributeMsg, deviceName, msgId);
                             }
 
                             @Override
@@ -513,7 +521,7 @@ public class GatewaySessionHandler {
                                     }
                                     try {
                                         TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.validatePostAttributeMsg(kvListProto.toByteArray());
-                                        transportService.process(deviceCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(channel, deviceName, msgId, postAttributeMsg));
+                                        processPostAttributesMsg(deviceCtx, postAttributeMsg, deviceName, msgId);
                                     } catch (Throwable e) {
                                         log.warn("[{}][{}] Failed to process device attributes command: {}", gateway.getDeviceId(), deviceName, kvListProto, e);
                                     }
@@ -532,6 +540,10 @@ public class GatewaySessionHandler {
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
         }
+    }
+
+    private void processPostAttributesMsg(GatewayDeviceSessionCtx deviceCtx, TransportProtos.PostAttributeMsg postAttributeMsg, String deviceName, int msgId) {
+        transportService.process(deviceCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(channel, deviceName, msgId, postAttributeMsg));
     }
 
     private void onDeviceAttributesRequestJson(MqttPublishMessage msg) throws AdaptorException {
@@ -586,7 +598,7 @@ public class GatewaySessionHandler {
                             String data = jsonObj.get("data").toString();
                             TransportProtos.ToDeviceRpcResponseMsg rpcResponseMsg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
                                     .setRequestId(requestId).setPayload(data).build();
-                            transportService.process(deviceCtx.getSessionInfo(), rpcResponseMsg, getPubAckCallback(channel, deviceName, msgId, rpcResponseMsg));
+                            processRpcResponseMsg(deviceCtx, rpcResponseMsg, deviceName, msgId);
                         }
 
                         @Override
@@ -611,7 +623,7 @@ public class GatewaySessionHandler {
                             String data = gatewayRpcResponseMsg.getData();
                             TransportProtos.ToDeviceRpcResponseMsg rpcResponseMsg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
                                     .setRequestId(requestId).setPayload(data).build();
-                            transportService.process(deviceCtx.getSessionInfo(), rpcResponseMsg, getPubAckCallback(channel, deviceName, msgId, rpcResponseMsg));
+                            processRpcResponseMsg(deviceCtx, rpcResponseMsg, deviceName, msgId);
                         }
 
                         @Override
@@ -622,6 +634,10 @@ public class GatewaySessionHandler {
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
         }
+    }
+
+    private void processRpcResponseMsg(GatewayDeviceSessionCtx deviceCtx, TransportProtos.ToDeviceRpcResponseMsg rpcResponseMsg, String deviceName, int msgId) {
+        transportService.process(deviceCtx.getSessionInfo(), rpcResponseMsg, getPubAckCallback(channel, deviceName, msgId, rpcResponseMsg));
     }
 
     private void processGetAttributeRequestMessage(MqttPublishMessage mqttMsg, String deviceName, TransportProtos.GetAttributeRequestMsg requestMsg) {
