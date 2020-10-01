@@ -190,15 +190,31 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
 
         uriVariables.put("action", action == null ? "" : action);
 
-        return UriComponentsBuilder.fromUriString(getRedirectUri(request))
+        String redirectUri = getRedirectUri(request);
+        log.trace("Redirect URI - {}.", redirectUri);
+
+        return UriComponentsBuilder.fromUriString(redirectUri)
                 .buildAndExpand(uriVariables)
                 .toUriString();
     }
 
     private String getRedirectUri(HttpServletRequest request) {
         String loginProcessingUri = oauth2Configuration != null ? oauth2Configuration.getLoginProcessingUrl() : DEFAULT_LOGIN_PROCESSING_URI;
-        String baseUrl= MiscUtils.constructBaseUrl(request);
+
+        String scheme = MiscUtils.getScheme(request);
+        String domainName = MiscUtils.getDomainName(request);
+        int port = MiscUtils.getPort(request);
+        String baseUrl = scheme + "://" + domainName;
+        if (needsPort(scheme, port)){
+            baseUrl += ":" + port;
+        }
         return baseUrl + loginProcessingUri;
+    }
+
+    private boolean needsPort(String scheme, int port) {
+        boolean isHttpDefault = "http".equals(scheme.toLowerCase()) && port == 80;
+        boolean isHttpsDefault = "https".equals(scheme.toLowerCase()) && port == 443;
+        return !isHttpDefault && !isHttpsDefault;
     }
 
     /**
