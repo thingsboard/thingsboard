@@ -45,7 +45,6 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -56,6 +55,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -73,6 +73,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -890,7 +891,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 }, params).getBody();
     }
 
-    public PageData<DashboardInfo> getCustomerDashboards(CustomerId customerId, TimePageLink pageLink) {
+    public PageData<DashboardInfo> getCustomerDashboards(CustomerId customerId, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("customerId", customerId.getId().toString());
         addPageLinkToParam(params, pageLink);
@@ -1634,17 +1635,35 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public List<TsKvEntry> getTimeseries(EntityId entityId, List<String> keys, Long interval, Aggregation agg, TimePageLink pageLink, boolean useStrictDataTypes) {
+        SortOrder sortOrder = pageLink.getSortOrder();
+        return getTimeseries(entityId, keys, interval, agg, sortOrder != null ? sortOrder.getDirection() : null, pageLink.getStartTime(), pageLink.getEndTime(), 100, useStrictDataTypes);
+    }
+
+    public List<TsKvEntry> getTimeseries(EntityId entityId, List<String> keys, Long interval, Aggregation agg, SortOrder.Direction sortOrder, Long startTime, Long endTime, Integer limit, boolean useStrictDataTypes) {
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
         params.put("keys", listToString(keys));
         params.put("interval", interval == null ? "0" : interval.toString());
         params.put("agg", agg == null ? "NONE" : agg.name());
+        params.put("limit", limit != null ? limit.toString() : "100");
+        params.put("orderBy", sortOrder != null ? sortOrder.name() : "DESC");
         params.put("useStrictDataTypes", Boolean.toString(useStrictDataTypes));
-        addPageLinkToParam(params, pageLink);
+
+        StringBuilder urlBuilder = new StringBuilder(baseURL);
+        urlBuilder.append("/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&orderBy={orderBy}");
+
+        if (startTime != null) {
+            urlBuilder.append("&startTs={startTs}");
+            params.put("startTs", String.valueOf(startTime));
+        }
+        if (endTime != null) {
+            urlBuilder.append("&endTs={endTs}");
+            params.put("endTs", String.valueOf(endTime));
+        }
 
         Map<String, List<JsonNode>> timeseries = restTemplate.exchange(
-                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&" + getUrlParamsTs(pageLink),
+                urlBuilder.toString(),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<Map<String, List<JsonNode>>>() {
@@ -1996,23 +2015,12 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     private String getTimeUrlParams(TimePageLink pageLink) {
-        return this.getUrlParams(pageLink);
-    }
-    private String getUrlParams(TimePageLink pageLink) {
-        return getUrlParams(pageLink, "startTime", "endTime");
-    }
-
-    private String getUrlParamsTs(TimePageLink pageLink) {
-        return getUrlParams(pageLink, "startTs", "endTs");
-    }
-
-    private String getUrlParams(TimePageLink pageLink, String startTime, String endTime) {
         String urlParams = "limit={limit}&ascOrder={ascOrder}";
         if (pageLink.getStartTime() != null) {
-            urlParams += "&" + startTime + "={startTime}";
+            urlParams += "&startTime={startTime}";
         }
         if (pageLink.getEndTime() != null) {
-            urlParams += "&" + endTime + "={endTime}";
+            urlParams += "&endTime={endTime}";
         }
         return urlParams;
     }
