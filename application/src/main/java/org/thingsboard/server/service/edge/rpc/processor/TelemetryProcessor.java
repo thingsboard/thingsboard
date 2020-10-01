@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.data.DataConstants;
@@ -52,6 +51,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -68,15 +68,15 @@ public class TelemetryProcessor extends BaseProcessor {
     public List<ListenableFuture<Void>> onTelemetryUpdate(TenantId tenantId, EntityDataProto entityData) {
         List<ListenableFuture<Void>> result = new ArrayList<>();
         EntityId entityId = constructEntityId(entityData);
-        if ((entityData.hasPostAttributesMsg() || entityData.hasPostTelemetryMsg() || entityData.hasAttributesUpdateMsg()) && entityId != null) {
+        if ((entityData.hasPostAttributesMsg() || entityData.hasPostTelemetryMsg() || entityData.hasAttributesUpdatedMsg()) && entityId != null) {
             TbMsgMetaData metaData = constructBaseMsgMetadata(tenantId, entityId);
             metaData.putValue(DataConstants.MSG_SOURCE_KEY, DataConstants.EDGE_MSG_SOURCE);
             if (entityData.hasPostAttributesMsg()) {
                 result.add(processPostAttributes(tenantId, entityId, entityData.getPostAttributesMsg(), metaData));
             }
-            if (entityData.hasAttributesUpdateMsg()) {
+            if (entityData.hasAttributesUpdatedMsg()) {
                 metaData.putValue("scope", entityData.getPostAttributeScope());
-                result.add(processAttributesUpdate(tenantId, entityId, entityData.getAttributesUpdateMsg(), metaData));
+                result.add(processAttributesUpdate(tenantId, entityId, entityData.getAttributesUpdatedMsg(), metaData));
             }
             if (entityData.hasPostTelemetryMsg()) {
                 result.add(processPostTelemetry(tenantId, entityId, entityData.getPostTelemetryMsg(), metaData));

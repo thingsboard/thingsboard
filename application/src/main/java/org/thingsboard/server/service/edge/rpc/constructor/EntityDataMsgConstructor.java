@@ -61,7 +61,7 @@ public class EntityDataMsgConstructor {
                     if (data.has("isPostAttributes") && data.getAsJsonPrimitive("isPostAttributes").getAsBoolean()) {
                         builder.setPostAttributesMsg(postAttributeMsg);
                     } else {
-                        builder.setAttributesUpdateMsg(postAttributeMsg);
+                        builder.setAttributesUpdatedMsg(postAttributeMsg);
                     }
                     builder.setPostAttributeScope(data.getAsJsonPrimitive("scope").getAsString());
                 } catch (Exception e) {
