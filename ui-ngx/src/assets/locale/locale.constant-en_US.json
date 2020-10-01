@@ -119,7 +119,16 @@
         "general-policy": "General policy",
         "max-failed-login-attempts": "Maximum number of failed login attempts, before account is locked",
         "minimum-max-failed-login-attempts-range": "Maximum number of failed login attempts can't be negative",
-        "user-lockout-notification-email": "In case user account lockout, send notification to email"
+        "user-lockout-notification-email": "In case user account lockout, send notification to email",
+        "queue-select-name": "Select queue name",
+        "queue-name": "Name",
+        "queue-name-required": "Queue name is required!",
+        "queues": "Queues",
+        "queue-partitions": "Partitions",
+        "queue-submit-strategy": "Submit strategy",
+        "queue-processing-strategy": "Processing strategy",
+        "delete-queue-title": "Are you sure you want to delete the queue '{{queueName}}'?",
+        "delete-queue-text": "Be careful, after the confirmation the queue and all related data will become unrecoverable."
     },
     "alarm": {
         "alarm": "Alarm",
@@ -1622,9 +1631,25 @@
         "reset-debug-mode": "Reset debug mode in all nodes"
     },
     "queue": {
-      "select_name": "Select queue name",
-      "name": "Queue Name",
-      "name_required": "Queue name is required!"
+      "select-name": "Select queue name",
+      "name": "Name",
+      "name-required": "Queue name is required!",
+      "topic-required": "Queue topic is required!",
+      "queues": "Queues",
+      "search": "Search queue",
+      "add" : "Add queue",
+      "details": "Queue details",
+      "topic": "Topic",
+      "submit-strategy": "Submit Strategy",
+      "processing-strategy": "Processing Strategy",
+      "poll-interval": "Poll interval",
+      "partitions": "Partitions",
+      "processing-timeout": "Processing timeout",
+      "batch-size": "Batch size",
+      "retries": "Retries",
+      "failure-percentage": "Failure Percentage",
+      "pause-between-retries": "Pause between retries",
+      "delete": "Delete queue"
     },
     "tenant": {
         "tenant": "Tenant",

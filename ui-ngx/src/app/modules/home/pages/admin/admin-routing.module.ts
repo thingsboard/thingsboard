@@ -22,6 +22,8 @@ import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { Authority } from '@shared/models/authority.enum';
 import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
+import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
+import { QueuesTableConfigResolver } from './queues-table-config.resolver';
 
 const routes: Routes = [
   {
@@ -77,6 +79,22 @@ const routes: Routes = [
             icon: 'security'
           }
         }
+      },
+      {
+        path: 'queues',
+        component: EntitiesTableComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN],
+          title: 'admin.queues',
+          breadcrumb: {
+            label: 'admin.queues',
+            icon: 'queue'
+          }
+        },
+        resolve: {
+          entitiesTableConfig: QueuesTableConfigResolver
+        }
       }
     ]
   }
@@ -84,6 +102,9 @@ const routes: Routes = [
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
+  providers: [
+    QueuesTableConfigResolver
+  ]
 })
 export class AdminRoutingModule { }

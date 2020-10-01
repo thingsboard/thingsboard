@@ -17,7 +17,7 @@
 -->
 <mat-form-field [formGroup]="queueFormGroup" class="mat-block">
   <mat-label>{{ 'queue.name' | translate }}</mat-label>
-  <input matInput type="text" placeholder="{{ 'queue.select_name' | translate }}"
+  <input matInput type="text" placeholder="{{ 'queue.select-name' | translate }}"
          #queueInput
          formControlName="queue"
          (focusin)="onFocus()"
@@ -38,6 +38,6 @@
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="queueFormGroup.get('queue').hasError('required')">
-    {{ 'queue.name_required' | translate }}
+    {{ 'queue.name-required' | translate }}
   </mat-error>
 </mat-form-field>

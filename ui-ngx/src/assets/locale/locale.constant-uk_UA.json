@@ -123,7 +123,16 @@
         "general-policy": "Загальна політика",
         "max-failed-login-attempts": "Максимальна кількість невдалих спроб входу, перш ніж обліковий запис заблоковано",
         "minimum-max-failed-login-attempts-range": "Максимальна кількість невдалих спроб входу не може бути негативною",
-        "user-lockout-notification-email": "У разі блокування облікового запису користувача, надішліть сповіщення на електронну пошту"
+        "user-lockout-notification-email": "У разі блокування облікового запису користувача, надішліть сповіщення на електронну пошту"б
+        "queue-select-name": "Оберіть ім'я для Queue",
+        "queue-name": "Ім'я для Queue",
+        "queue-name-required": "Поле 'Ім'я для Queue' обов`язкове для заповнення!",
+        "queues": "Черги",
+        "queue-partitions": "Розділи",
+        "queue-submit-strategy": "Стратегія відправки",
+        "queue-processing-strategy": "Стратегія обробки",
+        "delete-queue-title": "Ви впевнені, що хочете видалити чергу '{{queueName}}'?",
+        "delete-queue-text": "Увага, після підтвердження обрана черга і всі пов'язані з нею дані будуть безповоротно видалені."
     },
     "alarm": {
         "alarm": "Сигнал тривоги",
@@ -1823,6 +1832,27 @@
         "help": "Допомога",
         "reset-debug-mode": "Вимкнути режим налогодження у всіх правилах"
     },
+    "queue": {
+      "select-name": "Оберіть ім'я для Queue",
+      "name": "Ім'я для Queue",
+      "name-required": "Поле 'Ім'я для Queue' обов`язкове для заповнення!",
+      "topic-required": "Поле 'Тема для Queue' обов`язкове для заповнення!",
+      "queues": "Черги",
+      "search": "Пошук черги",
+      "add" : "Додати чергу",
+      "details": "Подробиці",
+      "topic": "Тема",
+      "submit-strategy": "Стратегія відправки",
+      "processing-strategy": "Стратегія обробки",
+      "poll-interval": "Інтервал",
+      "partitions": "Розділи",
+      "processing-timeout": "Час очікування обробки",
+      "batch-size": "Розмір пакету передачі",
+      "retries": "Повторні спроби",
+      "failure-percentage": "Процент відмов",
+      "pause-between-retries": "Пауза між повторними спробами",
+      "delete": "Видалити чергу"
+    },
     "scheduler": {
         "scheduler": "Планувальник",
         "scheduler-event": "Подія планувальника",
@@ -1971,11 +2001,6 @@
         "select-timezone": "Вибрати часовий пояс ",
         "no-timezones-matching": "Не знайдено жодних часових поясів, які відповідають '{{timezone}}'.",
         "timezone-required": "Необхідно вказати часовий пояс."
-    },
-    "queue": {
-      "select_name": "Виберіть ім'я для Queue",
-      "name": "Iм'я для Queue",
-      "name_required": "Поле 'Имя для Queue' обязательно к заполнению!"
     },
     "tenant": {
         "tenant": "Власник",

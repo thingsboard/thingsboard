@@ -220,6 +220,14 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
+      EntityType.QUEUE,
+      {
+        add: 'queue.add',
+        search: 'queue.search',
+        details: 'queue.details'
+      }
+    ],
+    [
       AliasEntityType.CURRENT_CUSTOMER,
       {
         type: 'entity.type-current-customer',

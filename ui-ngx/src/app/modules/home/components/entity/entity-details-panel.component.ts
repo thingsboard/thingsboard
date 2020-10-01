@@ -271,10 +271,12 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
   }
 
   helpLinkId(): string {
-    if (this.resources.helpLinkIdForEntity && this.entityComponent.entityForm) {
-      return this.resources.helpLinkIdForEntity(this.entityComponent.entityForm.getRawValue());
-    } else {
-      return this.resources.helpLinkId;
+    if (this.resources) {
+      if (this.resources.helpLinkIdForEntity && this.entityComponent.entityForm) {
+        return this.resources.helpLinkIdForEntity(this.entityComponent.entityForm.getRawValue());
+      } else {
+        return this.resources.helpLinkId;
+      }
     }
   }
 

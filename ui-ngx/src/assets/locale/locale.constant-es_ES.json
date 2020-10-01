@@ -108,7 +108,16 @@
         "general-policy": "Política general",
         "max-failed-login-attempts": "Número máximo de intentos fallidos de inicio de sesión, antes de que la cuenta esté bloqueada",
         "minimum-max-failed-login-attempts-range": "El número máximo de intentos fallidos de inicio de sesión no puede ser negativo",
-        "user-lockout-notification-email": "En caso de bloqueo de la cuenta del usuario, envíe una notificación por correo electrónico"
+        "user-lockout-notification-email": "En caso de bloqueo de la cuenta del usuario, envíe una notificación por correo electrónico",
+        "queue-select-name": "Seleccione el nombre de la cola",
+        "queue-name": "Nombre",
+        "queue-name-required": "El nombre de la cola es obligatorio!",
+        "queues": "Colas",
+        "queue-partitions": "Particiones",
+        "queue-submit-strategy": "Enviar estrategia",
+        "queue-processing-strategy": "Estrategia de procesamiento",
+        "delete-queue-title": "Estás seguro de que quieres eliminar la cola '{{queueName}}'?",
+        "delete-queue-text": "Tenga cuidado, después de la confirmación, la cola y todos los datos relacionados serán irrecuperables."
     },
     "alarm": {
         "alarm": "Alarma",
@@ -1493,10 +1502,25 @@
         "reset-debug-mode": "Restablecer el modo de depuración en todos los nodos"
     },
     "queue": {
-        "select_name": "Selecciona el nombre de la cola",
+        "select-name": "Selecciona el nombre de la cola",
         "name": "Nombre Cola",
-        "name_required": "Necesario especificar el nombre de cola"
-
+        "name-required": "Necesario especificar el nombre de cola",
+        "topic-required": "El tema de la cola es obligatorio!",
+        "queues": "Colas",
+        "search": "Cola de búsqueda",
+        "add" : "Agregar cola",
+        "details": "Detalles de la cola",
+        "topic": "Tema",
+        "submit-strategy": "Enviar estrategia",
+        "processing-strategy": "Estrategia de procesamiento",
+        "poll-interval": "Intervalo de encuesta",
+        "partitions": "Particiones",
+        "processing-timeout": "Tiempo de espera de procesamiento",
+        "batch-size": "Tamaño del lote",
+        "retries": "Reintentos",
+        "failure-percentage": "Porcentaje de fallos",
+        "pause-between-retries": "Pausa entre reintentos",
+        "delete": "Eliminar cola"
     },
     "tenant": {
         "tenant": "Propietario",

@@ -23,13 +23,15 @@ import { MailServerComponent } from '@modules/home/pages/admin/mail-server.compo
 import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
+import { QueueComponent} from './queue.component';
 
 @NgModule({
   declarations:
     [
       GeneralSettingsComponent,
       MailServerComponent,
-      SecuritySettingsComponent
+      SecuritySettingsComponent,
+      QueueComponent,
     ],
   imports: [
     CommonModule,

@@ -162,7 +162,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   dataSource: (dataLoadedFunction: (col?: number, row?: number) => void)
     => EntitiesDataSource<L> = (dataLoadedFunction: (col?: number, row?: number) => void) => {
     return new EntitiesDataSource(this.entitiesFetchFunction, this.entitySelectionEnabled, dataLoadedFunction);
-  };
+  }
   detailsReadonly: EntityBooleanFunction<T> = () => false;
   entitySelectionEnabled: EntityBooleanFunction<L> = () => true;
   deleteEnabled: EntityBooleanFunction<T | L> = () => true;

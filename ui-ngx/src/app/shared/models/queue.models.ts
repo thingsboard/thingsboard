@@ -14,9 +14,65 @@
 /// limitations under the License.
 ///
 
+import { BaseData } from '@shared/models/base-data';
+import { QueueId } from '@shared/models/id/queue-id';
+import { EntityType } from '@shared/models/entity-type.models';
+
 export enum ServiceType {
   TB_CORE = 'TB_CORE',
   TB_RULE_ENGINE = 'TB_RULE_ENGINE',
   TB_TRANSPORT = 'TB_TRANSPORT',
   JS_EXECUTOR = 'JS_EXECUTOR'
 }
+
+export enum QueueSubmitStrategyTypes {
+  SEQUENTIAL_BY_ORIGINATOR = 'SEQUENTIAL_BY_ORIGINATOR',
+  SEQUENTIAL_BY_TENANT = 'SEQUENTIAL_BY_TENANT',
+  SEQUENTIAL = 'SEQUENTIAL',
+  BURST = 'BURST',
+  BATCH = 'BATCH'
+}
+
+export enum QueueProcessingStrategyTypes {
+  RETRY_FAILED_AND_TIMED_OUT = 'RETRY_FAILED_AND_TIMED_OUT',
+  SKIP_ALL_FAILURES = 'SKIP_ALL_FAILURES',
+  RETRY_ALL = 'RETRY_ALL',
+  RETRY_FAILED = 'RETRY_FAILED',
+  RETRY_TIMED_OUT = 'RETRY_TIMED_OUT'
+}
+
+export interface Queue extends BaseData<QueueId> {
+  name: string;
+  type: string;
+  label: string;
+}
+
+export interface QueueInfo extends BaseData<QueueId> {
+  createdTime: number;
+  id: {
+    entityType: EntityType,
+    id: string
+  };
+  name: string;
+  topic: string;
+  packProcessingTimeout: number;
+  partitions: number;
+  pollInterval: number;
+  processingStrategy: {
+    type: QueueProcessingStrategyTypes,
+    retries: number,
+    failurePercentage: number,
+    pauseBetweenRetries: number
+  };
+  processingStrategyType: QueueProcessingStrategyTypes;
+  submitStrategy: {
+    type: QueueSubmitStrategyTypes,
+    batchSize: number,
+  };
+  submitStrategyType: QueueSubmitStrategyTypes;
+  tenantId: {
+    entityType: EntityType,
+    id: string
+  };
+}
+

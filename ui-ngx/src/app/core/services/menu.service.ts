@@ -100,7 +100,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '120px',
+        height: '160px',
         icon: 'settings',
         pages: [
           {
@@ -123,7 +123,14 @@ export class MenuService {
             type: 'link',
             path: '/settings/security-settings',
             icon: 'security'
-          }
+          },
+          {
+            id: guid(),
+            name: 'admin.queues',
+            type: 'link',
+            path: '/settings/queues',
+            icon: 'queue'
+          },
         ]
       }
     );
@@ -170,7 +177,12 @@ export class MenuService {
             name: 'admin.security-settings',
             icon: 'security',
             path: '/settings/security-settings'
-          }
+          },
+          {
+            name: 'admin.queues',
+            icon: 'queue',
+            path: '/settings/queues'
+          },
         ]
       }
     );
