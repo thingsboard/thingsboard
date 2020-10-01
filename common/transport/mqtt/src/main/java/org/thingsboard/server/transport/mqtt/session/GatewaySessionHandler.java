@@ -27,6 +27,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.ProtocolStringList;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
@@ -85,8 +86,8 @@ public class GatewaySessionHandler {
     private final ChannelHandlerContext channel;
     private final DeviceSessionCtx deviceSessionCtx;
 
-    public GatewaySessionHandler(MqttTransportContext context, DeviceSessionCtx deviceSessionCtx, UUID sessionId) {
-        this.context = context;
+    public GatewaySessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId) {
+        this.context = deviceSessionCtx.getContext();
         this.transportService = context.getTransportService();
         this.deviceSessionCtx = deviceSessionCtx;
         this.gateway = deviceSessionCtx.getDeviceInfo();
@@ -98,23 +99,105 @@ public class GatewaySessionHandler {
         this.channel = deviceSessionCtx.getChannel();
     }
 
-    public void onDeviceConnectJson(MqttPublishMessage msg) throws AdaptorException {
-        JsonElement json = getJson(msg);
-        String deviceName = checkDeviceName(getDeviceName(json));
-        String deviceType = getDeviceType(json);
-        processOnConnect(msg, deviceName, deviceType);
+    public void onDeviceConnect(MqttPublishMessage mqttMsg) throws AdaptorException {
+        if (isJsonPayloadType()) {
+            onDeviceConnectJson(mqttMsg);
+        } else {
+            onDeviceConnectProto(mqttMsg);
+        }
     }
 
-    public void onDeviceConnectProto(MqttPublishMessage mqttMsg) throws AdaptorException {
-        byte[] payload = getBytes(mqttMsg);
-        try {
-            TransportApiProtos.ConnectMsg connectProto = TransportApiProtos.ConnectMsg.parseFrom(payload);
-            String deviceName = checkDeviceName(connectProto.getDeviceName());
-            String deviceType = StringUtils.isEmpty(connectProto.getDeviceType()) ? DEFAULT_DEVICE_TYPE : connectProto.getDeviceType();
-            processOnConnect(mqttMsg, deviceName, deviceType);
-        } catch (RuntimeException | InvalidProtocolBufferException e) {
-            throw new AdaptorException(e);
+    public void onDeviceDisconnect(MqttPublishMessage mqttMsg) throws AdaptorException {
+        if (isJsonPayloadType()) {
+            onDeviceDisconnectJson(mqttMsg);
+        } else {
+            onDeviceDisconnectProto(mqttMsg);
         }
+    }
+
+    public void onDeviceTelemetry(MqttPublishMessage mqttMsg) throws AdaptorException {
+        int msgId = getMsgId(mqttMsg);
+        ByteBuf payload = mqttMsg.payload();
+        if (isJsonPayloadType()) {
+            onDeviceTelemetryJson(msgId, payload);
+        } else {
+            onDeviceTelemetryProto(msgId, payload);
+        }
+    }
+
+    public void onDeviceClaim(MqttPublishMessage mqttMsg) throws AdaptorException {
+        int msgId = getMsgId(mqttMsg);
+        ByteBuf payload = mqttMsg.payload();
+        if (isJsonPayloadType()) {
+            onDeviceClaimJson(msgId, payload);
+        } else {
+            onDeviceClaimProto(msgId, payload);
+        }
+    }
+
+    public void onDeviceAttributes(MqttPublishMessage mqttMsg) throws AdaptorException {
+        int msgId = getMsgId(mqttMsg);
+        ByteBuf payload = mqttMsg.payload();
+        if (isJsonPayloadType()) {
+            onDeviceAttributesJson(msgId, payload);
+        } else {
+            onDeviceAttributesProto(msgId, payload);
+        }
+    }
+
+    public void onDeviceAttributesRequest(MqttPublishMessage mqttMsg) throws AdaptorException {
+        if (isJsonPayloadType()) {
+            onDeviceAttributesRequestJson(mqttMsg);
+        } else {
+            onDeviceAttributesRequestProto(mqttMsg);
+        }
+    }
+
+    public void onDeviceRpcResponse(MqttPublishMessage mqttMsg) throws AdaptorException {
+        int msgId = getMsgId(mqttMsg);
+        ByteBuf payload = mqttMsg.payload();
+        if (isJsonPayloadType()) {
+            onDeviceRpcResponseJson(msgId, payload);
+        } else {
+            onDeviceRpcResponseProto(msgId, payload);
+        }
+    }
+
+    public void onGatewayDisconnect() {
+        devices.forEach(this::deregisterSession);
+    }
+
+    public String getNodeId() {
+        return context.getNodeId();
+    }
+
+    public UUID getSessionId() {
+        return sessionId;
+    }
+
+    public MqttTransportAdaptor getPayloadAdaptor() {
+        return deviceSessionCtx.getPayloadAdaptor();
+    }
+
+    void deregisterSession(String deviceName) {
+        GatewayDeviceSessionCtx deviceSessionCtx = devices.remove(deviceName);
+        if (deviceSessionCtx != null) {
+            deregisterSession(deviceName, deviceSessionCtx);
+        } else {
+            log.debug("[{}] Device [{}] was already removed from the gateway session", sessionId, deviceName);
+        }
+    }
+
+    void writeAndFlush(MqttMessage mqttMessage) {
+        channel.writeAndFlush(mqttMessage);
+    }
+
+    int nextMsgId() {
+        return deviceSessionCtx.nextMsgId();
+    }
+
+    private boolean isJsonPayloadType() {
+        return deviceSessionCtx.isJsonPayloadType();
     }
 
     private void processOnConnect(MqttPublishMessage msg, String deviceName, String deviceType) {
@@ -204,40 +287,50 @@ public class GatewaySessionHandler {
         return future;
     }
 
-    public void onDeviceDisconnectJson(MqttPublishMessage msg) throws AdaptorException {
-        String deviceName = checkDeviceName(getDeviceName(getJson(msg)));
-        deregisterSession(deviceName);
-        ack(msg);
+    private int getMsgId(MqttPublishMessage mqttMsg) {
+        return mqttMsg.variableHeader().packetId();
     }
 
-    public void onDeviceDisconnectProto(MqttPublishMessage mqttMsg) throws AdaptorException {
-        byte[] payload = getBytes(mqttMsg);
+    private void onDeviceConnectJson(MqttPublishMessage mqttMsg) throws AdaptorException {
+        JsonElement json = getJson(mqttMsg);
+        String deviceName = checkDeviceName(getDeviceName(json));
+        String deviceType = getDeviceType(json);
+        processOnConnect(mqttMsg, deviceName, deviceType);
+    }
+
+    private void onDeviceConnectProto(MqttPublishMessage mqttMsg) throws AdaptorException {
         try {
-            TransportApiProtos.DisconnectMsg connectProto = TransportApiProtos.DisconnectMsg.parseFrom(payload);
+            TransportApiProtos.ConnectMsg connectProto = TransportApiProtos.ConnectMsg.parseFrom(getBytes(mqttMsg.payload()));
             String deviceName = checkDeviceName(connectProto.getDeviceName());
-            deregisterSession(deviceName);
-            ack(mqttMsg);
+            String deviceType = StringUtils.isEmpty(connectProto.getDeviceType()) ? DEFAULT_DEVICE_TYPE : connectProto.getDeviceType();
+            processOnConnect(mqttMsg, deviceName, deviceType);
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
         }
     }
 
-    void deregisterSession(String deviceName) {
-        GatewayDeviceSessionCtx deviceSessionCtx = devices.remove(deviceName);
-        if (deviceSessionCtx != null) {
-            deregisterSession(deviceName, deviceSessionCtx);
-        } else {
-            log.debug("[{}] Device [{}] was already removed from the gateway session", sessionId, deviceName);
+    private void onDeviceDisconnectJson(MqttPublishMessage msg) throws AdaptorException {
+        String deviceName = checkDeviceName(getDeviceName(getJson(msg)));
+        processOnDisconnect(msg, deviceName);
+    }
+
+    private void onDeviceDisconnectProto(MqttPublishMessage mqttMsg) throws AdaptorException {
+        try {
+            TransportApiProtos.DisconnectMsg connectProto = TransportApiProtos.DisconnectMsg.parseFrom(getBytes(mqttMsg.payload()));
+            String deviceName = checkDeviceName(connectProto.getDeviceName());
+            processOnDisconnect(mqttMsg, deviceName);
+        } catch (RuntimeException | InvalidProtocolBufferException e) {
+            throw new AdaptorException(e);
         }
     }
 
-    public void onGatewayDisconnect() {
-        devices.forEach(this::deregisterSession);
+    private void processOnDisconnect(MqttPublishMessage msg, String deviceName) {
+        deregisterSession(deviceName);
+        ack(msg);
     }
 
-    public void onDeviceTelemetryJson(MqttPublishMessage mqttMsg) throws AdaptorException {
-        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
-        int msgId = mqttMsg.variableHeader().packetId();
+    private void onDeviceTelemetryJson(int msgId, ByteBuf payload) throws AdaptorException {
+        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, payload);
         if (json.isJsonObject()) {
             JsonObject jsonObj = json.getAsJsonObject();
             for (Map.Entry<String, JsonElement> deviceEntry : jsonObj.entrySet()) {
@@ -268,11 +361,9 @@ public class GatewaySessionHandler {
         }
     }
 
-    public void onDeviceTelemetryProto(MqttPublishMessage mqttMsg) throws AdaptorException {
-        byte[] payload = getBytes(mqttMsg);
-        int msgId = mqttMsg.variableHeader().packetId();
+    private void onDeviceTelemetryProto(int msgId, ByteBuf payload) throws AdaptorException {
         try {
-            TransportApiProtos.GatewayTelemetryMsg telemetryMsgProto = TransportApiProtos.GatewayTelemetryMsg.parseFrom(payload);
+            TransportApiProtos.GatewayTelemetryMsg telemetryMsgProto = TransportApiProtos.GatewayTelemetryMsg.parseFrom(getBytes(payload));
             List<TransportApiProtos.TelemetryMsg> deviceMsgList = telemetryMsgProto.getMsgList();
             if (!CollectionUtils.isEmpty(deviceMsgList)) {
                 deviceMsgList.forEach(telemetryMsg -> {
@@ -282,9 +373,6 @@ public class GatewaySessionHandler {
                                 @Override
                                 public void onSuccess(@Nullable GatewayDeviceSessionCtx deviceCtx) {
                                     TransportProtos.PostTelemetryMsg msg = telemetryMsg.getMsg();
-//                                    if (msg == null || CollectionUtils.isEmpty(msg.getTsKvListList())) {
-//                                        throw new IllegalArgumentException("Telemetry for device: " + deviceName + " is empty!");
-//                                    }
                                     try {
                                         TransportProtos.PostTelemetryMsg postTelemetryMsg = ProtoConverter.validatePostTelemetryMsg(msg.toByteArray());
                                         transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
@@ -308,9 +396,8 @@ public class GatewaySessionHandler {
         }
     }
 
-    public void onDeviceClaimJson(MqttPublishMessage mqttMsg) throws AdaptorException {
-        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
-        int msgId = mqttMsg.variableHeader().packetId();
+    private void onDeviceClaimJson(int msgId, ByteBuf payload) throws AdaptorException {
+        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, payload);
         if (json.isJsonObject()) {
             JsonObject jsonObj = json.getAsJsonObject();
             for (Map.Entry<String, JsonElement> deviceEntry : jsonObj.entrySet()) {
@@ -342,11 +429,9 @@ public class GatewaySessionHandler {
         }
     }
 
-    public void onDeviceClaimProto(MqttPublishMessage mqttMsg) throws AdaptorException {
-        byte[] payload = getBytes(mqttMsg);
-        int msgId = mqttMsg.variableHeader().packetId();
+    private void onDeviceClaimProto(int msgId, ByteBuf payload) throws AdaptorException {
         try {
-            TransportApiProtos.GatewayClaimMsg claimMsgProto = TransportApiProtos.GatewayClaimMsg.parseFrom(payload);
+            TransportApiProtos.GatewayClaimMsg claimMsgProto = TransportApiProtos.GatewayClaimMsg.parseFrom(getBytes(payload));
             List<TransportApiProtos.ClaimDeviceMsg> claimMsgList = claimMsgProto.getMsgList();
             if (!CollectionUtils.isEmpty(claimMsgList)) {
                 claimMsgList.forEach(claimDeviceMsg -> {
@@ -383,9 +468,8 @@ public class GatewaySessionHandler {
         }
     }
 
-    public void onDeviceAttributesJson(MqttPublishMessage mqttMsg) throws AdaptorException {
-        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
-        int msgId = mqttMsg.variableHeader().packetId();
+    private void onDeviceAttributesJson(int msgId, ByteBuf payload) throws AdaptorException {
+        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, payload);
         if (json.isJsonObject()) {
             JsonObject jsonObj = json.getAsJsonObject();
             for (Map.Entry<String, JsonElement> deviceEntry : jsonObj.entrySet()) {
@@ -412,11 +496,9 @@ public class GatewaySessionHandler {
         }
     }
 
-    public void onDeviceAttributesProto(MqttPublishMessage mqttMsg) throws AdaptorException {
-        byte[] payload = getBytes(mqttMsg);
-        int msgId = mqttMsg.variableHeader().packetId();
+    private void onDeviceAttributesProto(int msgId, ByteBuf payload) throws AdaptorException {
         try {
-            TransportApiProtos.GatewayAttributesMsg attributesMsgProto = TransportApiProtos.GatewayAttributesMsg.parseFrom(payload);
+            TransportApiProtos.GatewayAttributesMsg attributesMsgProto = TransportApiProtos.GatewayAttributesMsg.parseFrom(getBytes(payload));
             List<TransportApiProtos.AttributesMsg> attributesMsgList = attributesMsgProto.getMsgList();
             if (!CollectionUtils.isEmpty(attributesMsgList)) {
                 attributesMsgList.forEach(attributesMsg -> {
@@ -452,10 +534,47 @@ public class GatewaySessionHandler {
         }
     }
 
+    private void onDeviceAttributesRequestJson(MqttPublishMessage msg) throws AdaptorException {
+        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, msg.payload());
+        if (json.isJsonObject()) {
+            JsonObject jsonObj = json.getAsJsonObject();
+            int requestId = jsonObj.get("id").getAsInt();
+            String deviceName = jsonObj.get(DEVICE_PROPERTY).getAsString();
+            boolean clientScope = jsonObj.get("client").getAsBoolean();
+            Set<String> keys;
+            if (jsonObj.has("key")) {
+                keys = Collections.singleton(jsonObj.get("key").getAsString());
+            } else {
+                JsonArray keysArray = jsonObj.get("keys").getAsJsonArray();
+                keys = new HashSet<>();
+                for (JsonElement keyObj : keysArray) {
+                    keys.add(keyObj.getAsString());
+                }
+            }
+            TransportProtos.GetAttributeRequestMsg requestMsg = toGetAttributeRequestMsg(requestId, clientScope, keys);
+            processGetAttributeRequestMessage(msg, deviceName, requestMsg);
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+        }
+    }
 
-    public void onDeviceRpcResponseJson(MqttPublishMessage mqttMsg) throws AdaptorException {
-        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
-        int msgId = mqttMsg.variableHeader().packetId();
+    private void onDeviceAttributesRequestProto(MqttPublishMessage mqttMsg) throws AdaptorException {
+        try {
+            TransportApiProtos.GatewayAttributesRequestMsg gatewayAttributesRequestMsg = TransportApiProtos.GatewayAttributesRequestMsg.parseFrom(getBytes(mqttMsg.payload()));
+            String deviceName = checkDeviceName(gatewayAttributesRequestMsg.getDeviceName());
+            int requestId = gatewayAttributesRequestMsg.getId();
+            boolean clientScope = gatewayAttributesRequestMsg.getClient();
+            ProtocolStringList keysList = gatewayAttributesRequestMsg.getKeysList();
+            Set<String> keys = new HashSet<>(keysList);
+            TransportProtos.GetAttributeRequestMsg requestMsg = toGetAttributeRequestMsg(requestId, clientScope, keys);
+            processGetAttributeRequestMessage(mqttMsg, deviceName, requestMsg);
+        } catch (RuntimeException | InvalidProtocolBufferException e) {
+            throw new AdaptorException(e);
+        }
+    }
+
+    private void onDeviceRpcResponseJson(int msgId, ByteBuf payload) throws AdaptorException {
+        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, payload);
         if (json.isJsonObject()) {
             JsonObject jsonObj = json.getAsJsonObject();
             String deviceName = jsonObj.get(DEVICE_PROPERTY).getAsString();
@@ -480,11 +599,9 @@ public class GatewaySessionHandler {
         }
     }
 
-    public void onDeviceRpcResponseProto(MqttPublishMessage mqttMsg) throws AdaptorException {
-        byte[] payload = getBytes(mqttMsg);
-        int msgId = mqttMsg.variableHeader().packetId();
+    private void onDeviceRpcResponseProto(int msgId, ByteBuf payload) throws AdaptorException {
         try {
-            TransportApiProtos.GatewayRpcResponseMsg gatewayRpcResponseMsg = TransportApiProtos.GatewayRpcResponseMsg.parseFrom(payload);
+            TransportApiProtos.GatewayRpcResponseMsg gatewayRpcResponseMsg = TransportApiProtos.GatewayRpcResponseMsg.parseFrom(getBytes(payload));
             String deviceName = checkDeviceName(gatewayRpcResponseMsg.getDeviceName());
             Futures.addCallback(checkDeviceConnected(deviceName),
                     new FutureCallback<GatewayDeviceSessionCtx>() {
@@ -507,49 +624,8 @@ public class GatewaySessionHandler {
         }
     }
 
-
-    public void onDeviceAttributesRequestJson(MqttPublishMessage msg) throws AdaptorException {
-        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, msg.payload());
-        if (json.isJsonObject()) {
-            JsonObject jsonObj = json.getAsJsonObject();
-            int requestId = jsonObj.get("id").getAsInt();
-            String deviceName = jsonObj.get(DEVICE_PROPERTY).getAsString();
-            boolean clientScope = jsonObj.get("client").getAsBoolean();
-            Set<String> keys;
-            if (jsonObj.has("key")) {
-                keys = Collections.singleton(jsonObj.get("key").getAsString());
-            } else {
-                JsonArray keysArray = jsonObj.get("keys").getAsJsonArray();
-                keys = new HashSet<>();
-                for (JsonElement keyObj : keysArray) {
-                    keys.add(keyObj.getAsString());
-                }
-            }
-            TransportProtos.GetAttributeRequestMsg requestMsg = toGetAttributeRequestMsg(requestId, clientScope, keys);
-            processGetAttributeRequestMessage(msg, deviceName, requestMsg);
-        } else {
-            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
-        }
-    }
-
-    public void onDeviceAttributesRequestProto(MqttPublishMessage mqttMsg) throws AdaptorException {
-        byte[] payload = getBytes(mqttMsg);
-        try {
-            TransportApiProtos.GatewayAttributesRequestMsg gatewayAttributesRequestMsg = TransportApiProtos.GatewayAttributesRequestMsg.parseFrom(payload);
-            String deviceName = checkDeviceName(gatewayAttributesRequestMsg.getDeviceName());
-            int requestId = gatewayAttributesRequestMsg.getId();
-            boolean clientScope = gatewayAttributesRequestMsg.getClient();
-            ProtocolStringList keysList = gatewayAttributesRequestMsg.getKeysList();
-            Set<String> keys = new HashSet<>(keysList);
-            TransportProtos.GetAttributeRequestMsg requestMsg = toGetAttributeRequestMsg(requestId, clientScope, keys);
-            processGetAttributeRequestMessage(mqttMsg, deviceName, requestMsg);
-        } catch (RuntimeException | InvalidProtocolBufferException e) {
-            throw new AdaptorException(e);
-        }
-    }
-
     private void processGetAttributeRequestMessage(MqttPublishMessage mqttMsg, String deviceName, TransportProtos.GetAttributeRequestMsg requestMsg) {
-        int msgId = mqttMsg.variableHeader().packetId();
+        int msgId = getMsgId(mqttMsg);
         Futures.addCallback(checkDeviceConnected(deviceName),
                 new FutureCallback<GatewayDeviceSessionCtx>() {
                     @Override
@@ -608,22 +684,15 @@ public class GatewaySessionHandler {
         return JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
     }
 
-    private byte[] getBytes(MqttPublishMessage mqttMsg) {
-        return ProtoMqttAdaptor.toBytes(mqttMsg);
+    private byte[] getBytes(ByteBuf payload) {
+        return ProtoMqttAdaptor.toBytes(payload);
     }
 
     private void ack(MqttPublishMessage msg) {
-        if (msg.variableHeader().packetId() > 0) {
-            writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(msg.variableHeader().packetId()));
+        int msgId = getMsgId(msg);
+        if (msgId > 0) {
+            writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(msgId));
         }
-    }
-
-    void writeAndFlush(MqttMessage mqttMessage) {
-        channel.writeAndFlush(mqttMessage);
-    }
-
-    public String getNodeId() {
-        return context.getNodeId();
     }
 
     private void deregisterSession(String deviceName, GatewayDeviceSessionCtx deviceSessionCtx) {
@@ -648,21 +717,5 @@ public class GatewaySessionHandler {
                 ctx.close();
             }
         };
-    }
-
-    public MqttTransportContext getContext() {
-        return context;
-    }
-
-    public DeviceSessionCtx getDeviceSessionContext() {
-        return deviceSessionCtx;
-    }
-
-    int nextMsgId() {
-        return deviceSessionCtx.nextMsgId();
-    }
-
-    public UUID getSessionId() {
-        return sessionId;
     }
 }

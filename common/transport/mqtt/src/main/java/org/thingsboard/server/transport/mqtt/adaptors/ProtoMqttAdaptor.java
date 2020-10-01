@@ -44,7 +44,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
-        byte[] bytes = toBytes(inbound);
+        byte[] bytes = toBytes(inbound.payload());
         try {
             return ProtoConverter.convertToTelemetryProto(bytes);
         } catch (InvalidProtocolBufferException | IllegalArgumentException e) {
@@ -54,7 +54,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public TransportProtos.PostAttributeMsg convertToPostAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
-        byte[] bytes = toBytes(inbound);
+        byte[] bytes = toBytes(inbound.payload());
         try {
             return ProtoConverter.validatePostAttributeMsg(bytes);
         } catch (InvalidProtocolBufferException | IllegalArgumentException e) {
@@ -64,7 +64,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public TransportProtos.ClaimDeviceMsg convertToClaimDevice(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
-        byte[] bytes = toBytes(inbound);
+        byte[] bytes = toBytes(inbound.payload());
         try {
             return ProtoConverter.convertToClaimDeviceProto(ctx.getDeviceId(), bytes);
         } catch (InvalidProtocolBufferException e) {
@@ -74,7 +74,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public TransportProtos.GetAttributeRequestMsg convertToGetAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
-        byte[] bytes = toBytes(inbound);
+        byte[] bytes = toBytes(inbound.payload());
         String topicName = inbound.variableHeader().topicName();
         int requestId = getRequestId(topicName, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX);
         try {
@@ -87,7 +87,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(MqttDeviceAwareSessionContext ctx, MqttPublishMessage mqttMsg) throws AdaptorException {
-        byte[] bytes = toBytes(mqttMsg);
+        byte[] bytes = toBytes(mqttMsg.payload());
         try {
             return TransportProtos.ToDeviceRpcResponseMsg.parseFrom(bytes);
         } catch (RuntimeException | InvalidProtocolBufferException e) {
@@ -98,7 +98,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(MqttDeviceAwareSessionContext ctx, MqttPublishMessage mqttMsg) throws AdaptorException {
-        byte[] bytes = toBytes(mqttMsg);
+        byte[] bytes = toBytes(mqttMsg.payload());
         String topicName = mqttMsg.variableHeader().topicName();
         try {
             int requestId = getRequestId(topicName, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC);
@@ -170,11 +170,10 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_RPC_TOPIC, payloadBytes));
     }
 
-    public static byte[] toBytes(MqttPublishMessage inbound) {
-        ByteBuf byteBuf = inbound.payload();
-        byte[] bytes = new byte[byteBuf.readableBytes()];
-        int readerIndex = byteBuf.readerIndex();
-        byteBuf.getBytes(readerIndex, bytes);
+    public static byte[] toBytes(ByteBuf inbound) {
+        byte[] bytes = new byte[inbound.readableBytes()];
+        int readerIndex = inbound.readerIndex();
+        inbound.getBytes(readerIndex, bytes);
         return bytes;
     }
 

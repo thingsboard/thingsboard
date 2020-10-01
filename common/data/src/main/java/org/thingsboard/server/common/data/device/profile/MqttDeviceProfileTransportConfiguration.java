@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 @Data
 public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
 
-    private TransportPayloadType transportPayloadType;
+    private TransportPayloadType transportPayloadType = TransportPayloadType.JSON;
 
     private String deviceTelemetryTopic = MqttTopics.DEVICE_TELEMETRY_TOPIC;
     private String deviceAttributesTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;

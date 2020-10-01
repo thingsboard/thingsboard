@@ -66,12 +66,11 @@ enum SessionType {
 }
 
 enum KeyValueType {
-  UNKNOWN = 0;
-  BOOLEAN_V = 1;
-  LONG_V = 2;
-  DOUBLE_V = 3;
-  STRING_V = 4;
-  JSON_V = 5;
+  BOOLEAN_V = 0;
+  LONG_V = 1;
+  DOUBLE_V = 2;
+  STRING_V = 3;
+  JSON_V = 4;
 }
 
 message KeyValueProto {

@@ -156,7 +156,6 @@ public class ProtoConverter {
                     }
                     break;
                 case UNRECOGNIZED:
-                case UNKNOWN:
                     throw new IllegalArgumentException("Unsupported keyValueType: " + type + "!");
             }
         });

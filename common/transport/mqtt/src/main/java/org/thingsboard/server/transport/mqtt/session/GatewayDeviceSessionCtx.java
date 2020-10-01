@@ -20,7 +20,6 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 
 import java.util.UUID;
@@ -70,11 +69,7 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     @Override
     public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg response) {
         try {
-            if (parent.getDeviceSessionContext().isJsonPayloadType()) {
-                parent.getContext().getJsonMqttAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), response).ifPresent(parent::writeAndFlush);
-            } else  {
-                parent.getContext().getProtoMqttAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), response).ifPresent(parent::writeAndFlush);
-            }
+            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), response).ifPresent(parent::writeAndFlush);
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
         }
@@ -83,11 +78,16 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     @Override
     public void onAttributeUpdate(TransportProtos.AttributeUpdateNotificationMsg notification) {
         try {
-            if (parent.getDeviceSessionContext().isJsonPayloadType()) {
-                parent.getContext().getJsonMqttAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), notification).ifPresent(parent::writeAndFlush);
-            } else {
-                parent.getContext().getProtoMqttAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), notification).ifPresent(parent::writeAndFlush);
-            }
+            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), notification).ifPresent(parent::writeAndFlush);
+        } catch (Exception e) {
+            log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
+        }
+    }
+
+    @Override
+    public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg request) {
+        try {
+            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), request).ifPresent(parent::writeAndFlush);
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
         }
@@ -96,19 +96,6 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     @Override
     public void onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
         parent.deregisterSession(getDeviceInfo().getDeviceName());
-    }
-
-    @Override
-    public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg request) {
-        try {
-            if (parent.getDeviceSessionContext().isJsonPayloadType()) {
-                parent.getContext().getJsonMqttAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), request).ifPresent(parent::writeAndFlush);
-            } else {
-                parent.getContext().getProtoMqttAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), request).ifPresent(parent::writeAndFlush);
-            }
-        } catch (Exception e) {
-            log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
-        }
     }
 
     @Override

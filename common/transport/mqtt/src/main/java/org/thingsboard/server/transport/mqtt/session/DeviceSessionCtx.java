@@ -19,10 +19,12 @@ import io.netty.channel.ChannelHandlerContext;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
+import org.thingsboard.server.transport.mqtt.MqttTransportContext;
+import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.util.MqttTopicFilter;
 import org.thingsboard.server.transport.mqtt.util.MqttTopicFilterFactory;
 
@@ -38,14 +40,19 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     @Getter
     private ChannelHandlerContext channel;
+
+    @Getter
+    private MqttTransportContext context;
+
     private final AtomicInteger msgIdSeq = new AtomicInteger(0);
 
     private volatile MqttTopicFilter telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
     private volatile MqttTopicFilter attributesTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
     private volatile TransportPayloadType payloadType = TransportPayloadType.JSON;
 
-    public DeviceSessionCtx(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
+    public DeviceSessionCtx(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap, MqttTransportContext context) {
         super(sessionId, mqttQoSMap);
+        this.context = context;
     }
 
     public void setChannel(ChannelHandlerContext channel) {
@@ -60,6 +67,10 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     public boolean isDeviceAttributesTopic(String topicName) {
         return attributesTopicFilter.filter(topicName);
+    }
+
+    public MqttTransportAdaptor getPayloadAdaptor() {
+        return payloadType.equals(TransportPayloadType.JSON) ? context.getJsonMqttAdaptor() : context.getProtoMqttAdaptor();
     }
 
     public boolean isJsonPayloadType() {
