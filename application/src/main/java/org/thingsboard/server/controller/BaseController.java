@@ -104,6 +104,7 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
+import org.thingsboard.server.service.edge.rpc.init.SyncEdgeService;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
@@ -202,11 +203,14 @@ public abstract class BaseController {
     @Autowired
     protected TbQueueProducerProvider producerProvider;
 
-    @Autowired
+    @Autowired(required = false)
     protected EdgeService edgeService;
 
-    @Autowired
+    @Autowired(required = false)
     protected EdgeNotificationService edgeNotificationService;
+
+    @Autowired(required = false)
+    protected SyncEdgeService syncEdgeService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
