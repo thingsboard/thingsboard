@@ -23,4 +23,5 @@ DROP TABLE IF EXISTS device_profile;
 DROP TABLE IF EXISTS tenant_profile;
 DROP TABLE IF EXISTS rule_node;
 DROP TABLE IF EXISTS rule_chain;
+DROP TABLE IF EXISTS queue;
 DROP FUNCTION IF EXISTS to_uuid;

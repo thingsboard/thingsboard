@@ -139,6 +139,8 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
         TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
         savedTenantProfile.setIsolatedTbRuleEngine(true);
+        savedTenantProfile.getProfileData().setMaxNumberOfPartitionsPerQueue(1);
+        savedTenantProfile.getProfileData().setMaxNumberOfQueues(1);
         doPost("/api/tenantProfile", savedTenantProfile).andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Can't update isolatedTbRuleEngine property")));
     }

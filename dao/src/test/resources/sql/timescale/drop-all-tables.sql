@@ -24,3 +24,4 @@ DROP TABLE IF EXISTS entity_view;
 DROP TABLE IF EXISTS device_profile;
 DROP TABLE IF EXISTS tenant_profile;
 DROP TABLE IF EXISTS tb_schema_settings;
+DROP TABLE IF EXISTS queue;

@@ -57,7 +57,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Autowired
     private TenantProfileDao tenantProfileDao;
 
-    @Autowired
+    @Autowired(required = false)
     private TbQueueAdmin tbQueueAdmin;
 
     @Autowired(required = false)
