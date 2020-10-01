@@ -27,6 +27,7 @@ import java.util.UUID;
 
 @Component
 public class HybridClientRegistrationRepository implements ClientRegistrationRepository {
+    private static final String defaultRedirectUriTemplate = "{baseUrl}/login/oauth2/code/{registrationId}";
 
     @Autowired
     private OAuth2Service oAuth2Service;
@@ -52,6 +53,7 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
                 .userNameAttributeName(localClientRegistration.getUserNameAttributeName())
                 .jwkSetUri(localClientRegistration.getJwkSetUri())
                 .clientAuthenticationMethod(new ClientAuthenticationMethod(localClientRegistration.getClientAuthenticationMethod()))
+                .redirectUriTemplate(defaultRedirectUriTemplate)
                 .build();
     }
 }

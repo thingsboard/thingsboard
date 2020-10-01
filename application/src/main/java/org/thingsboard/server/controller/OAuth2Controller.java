@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.utils.MiscUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -37,7 +38,7 @@ public class OAuth2Controller extends BaseController {
     @ResponseBody
     public List<OAuth2ClientInfo> getOAuth2Clients(HttpServletRequest request) throws ThingsboardException {
         try {
-            return oAuth2Service.getOAuth2Clients(request.getScheme(), request.getServerName());
+            return oAuth2Service.getOAuth2Clients(MiscUtils.getScheme(request), MiscUtils.getDomainName(request));
         } catch (Exception e) {
             throw handleException(e);
         }

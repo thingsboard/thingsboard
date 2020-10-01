@@ -32,13 +32,12 @@ import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
-import org.thingsboard.server.utils.WebUtils;
+import org.thingsboard.server.utils.MiscUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
@@ -198,13 +197,8 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
 
     private String getRedirectUri(HttpServletRequest request) {
         String loginProcessingUri = oauth2Configuration != null ? oauth2Configuration.getLoginProcessingUrl() : DEFAULT_LOGIN_PROCESSING_URI;
-
-        String scheme = WebUtils.getScheme(request);
-        String host = WebUtils.getHost(request);
-        String port = WebUtils.getPort(request);
-        log.trace("Scheme - {}, host - {}, port - {}.", scheme, host, port);
-        String requestHost = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-        return requestHost + loginProcessingUri;
+        String baseUrl= MiscUtils.constructBaseUrl(request);
+        return baseUrl + loginProcessingUri;
     }
 
     /**
