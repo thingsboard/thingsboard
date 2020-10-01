@@ -1630,10 +1630,12 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         return RestJsonConverter.toTimeseries(timeseries);
     }
 
+    @Deprecated
     public List<TsKvEntry> getTimeseries(EntityId entityId, List<String> keys, Long interval, Aggregation agg, TimePageLink pageLink) {
         return getTimeseries(entityId, keys, interval, agg, pageLink, true);
     }
 
+    @Deprecated
     public List<TsKvEntry> getTimeseries(EntityId entityId, List<String> keys, Long interval, Aggregation agg, TimePageLink pageLink, boolean useStrictDataTypes) {
         SortOrder sortOrder = pageLink.getSortOrder();
         return getTimeseries(entityId, keys, interval, agg, sortOrder != null ? sortOrder.getDirection() : null, pageLink.getStartTime(), pageLink.getEndTime(), 100, useStrictDataTypes);
