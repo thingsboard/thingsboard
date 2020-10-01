@@ -18,7 +18,6 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,6 +26,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.edge.AttributeDeleteMsg;
 import org.thingsboard.server.gen.edge.EntityDataProto;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.List;
 
@@ -57,7 +57,12 @@ public class EntityDataMsgConstructor {
             case ATTRIBUTES_UPDATED:
                 try {
                     JsonObject data = entityData.getAsJsonObject();
-                    builder.setPostAttributesMsg(JsonConverter.convertToAttributesProto(data.getAsJsonObject("kv")));
+                    TransportProtos.PostAttributeMsg postAttributeMsg = JsonConverter.convertToAttributesProto(data.getAsJsonObject("kv"));
+                    if (data.has("isPostAttributes") && data.getAsJsonPrimitive("isPostAttributes").getAsBoolean()) {
+                        builder.setPostAttributesMsg(postAttributeMsg);
+                    } else {
+                        builder.setAttributesUpdateMsg(postAttributeMsg);
+                    }
                     builder.setPostAttributeScope(data.getAsJsonPrimitive("scope").getAsString());
                 } catch (Exception e) {
                     log.warn("Can't convert to attributes proto, entityData [{}]", entityData, e);

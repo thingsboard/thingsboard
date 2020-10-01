@@ -68,12 +68,15 @@ public class TelemetryProcessor extends BaseProcessor {
     public List<ListenableFuture<Void>> onTelemetryUpdate(TenantId tenantId, EntityDataProto entityData) {
         List<ListenableFuture<Void>> result = new ArrayList<>();
         EntityId entityId = constructEntityId(entityData);
-        if ((entityData.hasPostAttributesMsg() || entityData.hasPostTelemetryMsg()) && entityId != null) {
+        if ((entityData.hasPostAttributesMsg() || entityData.hasPostTelemetryMsg() || entityData.hasAttributesUpdateMsg()) && entityId != null) {
             TbMsgMetaData metaData = constructBaseMsgMetadata(tenantId, entityId);
             metaData.putValue(DataConstants.MSG_SOURCE_KEY, DataConstants.EDGE_MSG_SOURCE);
             if (entityData.hasPostAttributesMsg()) {
-                metaData.putValue("scope", entityData.getPostAttributeScope());
                 result.add(processPostAttributes(tenantId, entityId, entityData.getPostAttributesMsg(), metaData));
+            }
+            if (entityData.hasAttributesUpdateMsg()) {
+                metaData.putValue("scope", entityData.getPostAttributeScope());
+                result.add(processAttributesUpdate(tenantId, entityId, entityData.getAttributesUpdateMsg(), metaData));
             }
             if (entityData.hasPostTelemetryMsg()) {
                 result.add(processPostTelemetry(tenantId, entityId, entityData.getPostTelemetryMsg(), metaData));
@@ -141,6 +144,25 @@ public class TelemetryProcessor extends BaseProcessor {
     private ListenableFuture<Void> processPostAttributes(TenantId tenantId, EntityId entityId, TransportProtos.PostAttributeMsg msg, TbMsgMetaData metaData) {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
+        TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), entityId, metaData, gson.toJson(json));
+        tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
+            @Override
+            public void onSuccess(TbQueueMsgMetadata metadata) {
+                futureToSet.set(null);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("Can't process post attributes [{}]", msg, t);
+                futureToSet.setException(t);
+            }
+        });
+        return futureToSet;
+    }
+
+    private ListenableFuture<Void> processAttributesUpdate(TenantId tenantId, EntityId entityId, TransportProtos.PostAttributeMsg msg, TbMsgMetaData metaData) {
+        SettableFuture<Void> futureToSet = SettableFuture.create();
+        JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(json);
         ListenableFuture<List<Void>> future = attributesService.save(tenantId, entityId, metaData.getValue("scope"), new ArrayList<>(attributes));
         Futures.addCallback(future, new FutureCallback<List<Void>>() {
@@ -155,7 +177,7 @@ public class TelemetryProcessor extends BaseProcessor {
 
                     @Override
                     public void onFailure(Throwable t) {
-                        log.error("Can't process post attributes [{}]", msg, t);
+                        log.error("Can't process attributes update [{}]", msg, t);
                         futureToSet.setException(t);
                     }
                 });
@@ -163,7 +185,7 @@ public class TelemetryProcessor extends BaseProcessor {
 
             @Override
             public void onFailure(Throwable t) {
-                log.error("Can't process post attributes [{}]", msg, t);
+                log.error("Can't process attributes update [{}]", msg, t);
                 futureToSet.setException(t);
             }
         }, dbCallbackExecutorService);
