@@ -543,7 +543,6 @@ public class JsonConverter {
     private static TransportProtos.ProvisionDeviceRequestMsg buildProvisionRequestMsg(JsonObject jo) {
         return TransportProtos.ProvisionDeviceRequestMsg.newBuilder()
                 .setDeviceName(getStrValue(jo, DataConstants.DEVICE_NAME, true))
-                .setDeviceType(getStrValue(jo, DataConstants.DEVICE_TYPE, true))
                 .setX509CertPubKey(getStrValue(jo, DataConstants.CERT_PUB_KEY, false))
                 .setProvisionDeviceCredentialsMsg(buildProvisionDeviceCredentialsMsg(
                         getStrValue(jo, DataConstants.PROVISION_KEY, true),

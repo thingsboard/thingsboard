@@ -56,14 +56,10 @@ public interface DeviceProfileRepository extends PagingAndSortingRepository<Devi
 
     DeviceProfileEntity findByTenantIdAndName(UUID id, String profileName);
 
-    @Query(value = "SELECT d.* FROM device_profile as d " +
-            "WHERE d.name = :profileName " +
-            "AND d.profile_data->'configuration'->>'provisionDeviceKey' IS NOT NULL " +
-            "AND d.profile_data->'configuration'->>'provisionDeviceSecret' IS NOT NULL " +
-            "AND d.profile_data->'configuration'->>'provisionDeviceKey' = :provisionDeviceKey " +
-            "AND d.profile_data->'configuration'->>'provisionDeviceSecret' = :provisionDeviceSecret",
+    @Query(value = "SELECT d.* from device_profile d " +
+            "WHERE d.provision_device_key = :provisionDeviceKey " +
+            "AND d.profile_data->'provisionConfiguration'->>'provisionDeviceSecret' = :provisionDeviceSecret",
             nativeQuery = true)
-    DeviceProfileEntity findProfileByProfileNameAndProfileDataProvisionConfigurationPair(@Param("profileName") String profileName,
-                                                                                         @Param("provisionDeviceKey") String provisionDeviceKey,
-                                                                                         @Param("provisionDeviceSecret") String provisionDeviceSecret);
+    DeviceProfileEntity findByProvisionDeviceKeyAndProvisionDeviceSecret(@Param("provisionDeviceKey") String provisionDeviceKey,
+                                                                         @Param("provisionDeviceSecret") String provisionDeviceSecret);
 }

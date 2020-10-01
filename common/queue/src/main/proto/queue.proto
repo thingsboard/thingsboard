@@ -256,9 +256,8 @@ message DeviceCredentialsProto {
 
 message ProvisionDeviceRequestMsg {
   string deviceName = 1;
-  string deviceType = 2;
-  string x509CertPubKey = 3;
-  ProvisionDeviceCredentialsMsg provisionDeviceCredentialsMsg = 4;
+  string x509CertPubKey = 2;
+  ProvisionDeviceCredentialsMsg provisionDeviceCredentialsMsg = 3;
 }
 
 message ProvisionDeviceCredentialsMsg {

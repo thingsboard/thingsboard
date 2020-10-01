@@ -15,6 +15,17 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-public enum ProvisionRequestValidationStrategyType {
-    CHECK_NEW_DEVICE, CHECK_PRE_PROVISIONED_DEVICE
+import lombok.Data;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
+
+@Data
+public class CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration implements DeviceProfileProvisionConfiguration {
+
+    private final String provisionDeviceSecret;
+
+    @Override
+    public DeviceProfileProvisionType getType() {
+        return DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES;
+    }
+
 }

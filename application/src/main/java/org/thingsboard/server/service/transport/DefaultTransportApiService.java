@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
-import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileConfiguration;
+import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -279,9 +279,8 @@ public class DefaultTransportApiService implements TransportApiService {
         provisionResponseFuture = deviceProvisionService.provisionDevice(
                 new ProvisionRequest(
                         requestMsg.getDeviceName(),
-                        requestMsg.getDeviceType(),
                         requestMsg.getX509CertPubKey(),
-                        new ProvisionDeviceProfileConfiguration(
+                        new ProvisionDeviceProfileCredentials(
                                 requestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceKey(),
                                 requestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceSecret())));
         return Futures.transform(provisionResponseFuture, provisionResponse -> {

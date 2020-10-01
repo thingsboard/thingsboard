@@ -27,10 +27,8 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileConfiguration;
-import org.thingsboard.server.common.data.device.profile.ProvisionRequestValidationStrategyType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -117,21 +115,18 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
         }
 
-        DeviceProfile targetProfile = deviceProfileDao.findProfileByProfileNameAndProfileDataProvisionConfigurationPair(
-                provisionRequest.getDeviceType(),
-                provisionRequestKey,
-                provisionRequestSecret);
+        DeviceProfile targetProfile = deviceProfileDao.findByProvisionDeviceKeyAndProvisionDeviceSecret(provisionRequestKey, provisionRequestSecret);
 
-        if (targetProfile == null || targetProfile.getProfileData().getConfiguration().getType() != DeviceProfileType.PROVISION) {
+        if (targetProfile == null ||
+                !(targetProfile.getProvisionType() != DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES ||
+                  targetProfile.getProvisionType() != DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES)) {
             return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
         }
 
-        ProvisionRequestValidationStrategyType validationStrategy = getStrategy(targetProfile);
-
         Device targetDevice = deviceDao.findDeviceByTenantIdAndName(targetProfile.getTenantId().getId(), provisionRequest.getDeviceName()).orElse(null);
 
-        switch(validationStrategy) {
-            case CHECK_NEW_DEVICE:
+        switch(targetProfile.getProvisionType()) {
+            case ALLOW_CREATE_NEW_DEVICES:
                 if (targetDevice != null) {
                     log.warn("[{}] The device is present and could not be provisioned once more!", targetDevice.getName());
                     notify(targetDevice, provisionRequest, DataConstants.PROVISION_FAILURE, false);
@@ -139,15 +134,15 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
                 } else {
                     return createDevice(provisionRequest, targetProfile);
                 }
-            case CHECK_PRE_PROVISIONED_DEVICE:
-                if (targetDevice != null){
+            case CHECK_PRE_PROVISIONED_DEVICES:
+                if (targetDevice != null && targetDevice.getDeviceProfileId().equals(targetProfile.getId())){
                     return processProvision(targetDevice, provisionRequest);
                 } else {
                     log.warn("[{}] Failed to find pre provisioned device!", provisionRequest.getDeviceName());
                     return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
                 }
             default:
-                throw new RuntimeException("Strategy is not supported - " + validationStrategy.name());
+                throw new RuntimeException("Strategy is not supported - " + targetProfile.getProvisionType().name());
         }
     }
 
@@ -193,11 +188,6 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         logAction(device.getTenantId(), device.getCustomerId(), device, success, provisionRequest);
     }
 
-    private ProvisionRequestValidationStrategyType getStrategy(DeviceProfile profile) {
-        return ((ProvisionDeviceProfileConfiguration) profile.getProfileData().getConfiguration()).getStrategy();
-
-    }
-
     private ListenableFuture<ProvisionResponse> processCreateDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
         Device device = deviceService.findDeviceByTenantIdAndName(profile.getTenantId(), provisionRequest.getDeviceName());
         if (device == null) {
@@ -226,7 +216,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
         Device device = new Device();
         device.setName(provisionRequest.getDeviceName());
-        device.setType(provisionRequest.getDeviceType());
+        device.setType(profile.getName());
         device.setTenantId(profile.getTenantId());
         return deviceService.saveDevice(device);
     }

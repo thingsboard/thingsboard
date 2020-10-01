@@ -27,8 +27,7 @@ import org.thingsboard.server.common.data.DeviceProfileType;
         include = JsonTypeInfo.As.PROPERTY,
         property = "type")
 @JsonSubTypes({
-         @JsonSubTypes.Type(value = DefaultDeviceProfileConfiguration.class, name = "DEFAULT"),
-         @JsonSubTypes.Type(value = ProvisionDeviceProfileConfiguration.class, name = "PROVISION")})
+         @JsonSubTypes.Type(value = DefaultDeviceProfileConfiguration.class, name = "DEFAULT")})
 public interface DeviceProfileConfiguration {
 
     @JsonIgnore
