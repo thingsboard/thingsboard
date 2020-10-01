@@ -19,11 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.*;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 import javax.transaction.Transactional;
 import java.util.*;
@@ -39,78 +39,89 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CLIENT_REGISTRATION_ID = "Incorrect clientRegistrationId ";
     public static final String INCORRECT_DOMAIN_NAME = "Incorrect domainName ";
+    public static final String INCORRECT_DOMAIN_SCHEME = "Incorrect domainScheme ";
 
+    @Autowired
+    private OAuth2ClientRegistrationInfoDao clientRegistrationInfoDao;
     @Autowired
     private OAuth2ClientRegistrationDao clientRegistrationDao;
 
     @Override
-    public List<OAuth2ClientInfo> getOAuth2Clients(String domainName) {
-        log.trace("Executing getOAuth2Clients [{}]", domainName);
+    public List<OAuth2ClientInfo> getOAuth2Clients(String domainSchemeStr, String domainName) {
+        log.trace("Executing getOAuth2Clients [{}://{}]", domainSchemeStr, domainName);
+        if (domainSchemeStr == null) {
+            throw new IncorrectParameterException(INCORRECT_DOMAIN_SCHEME);
+        }
+        SchemeType domainScheme;
+        try {
+            domainScheme = SchemeType.valueOf(domainSchemeStr.toUpperCase());
+        } catch (IllegalArgumentException e){
+            throw new IncorrectParameterException(INCORRECT_DOMAIN_SCHEME);
+        }
         validateString(domainName, INCORRECT_DOMAIN_NAME + domainName);
-        return clientRegistrationDao.findByDomainName(domainName).stream()
-                .filter(OAuth2ClientRegistration::isEnabled)
+        return clientRegistrationInfoDao.findByDomainSchemesAndDomainName(Arrays.asList(domainScheme, SchemeType.MIXED), domainName).stream()
+                .filter(OAuth2ClientRegistrationInfo::isEnabled)
                 .map(OAuth2Utils::toClientInfo)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public OAuth2ClientsParams saveOAuth2Params(OAuth2ClientsParams oauth2Params) {
+    public void saveOAuth2Params(OAuth2ClientsParams oauth2Params) {
         log.trace("Executing saveOAuth2Params [{}]", oauth2Params);
         clientParamsValidator.accept(oauth2Params);
-        List<OAuth2ClientRegistration> inputClientRegistrations = OAuth2Utils.toClientRegistrations(oauth2Params);
-        List<OAuth2ClientRegistration> savedClientRegistrations = inputClientRegistrations.stream()
-                .map(clientRegistration -> clientRegistrationDao.save(TenantId.SYS_TENANT_ID, clientRegistration))
-                .collect(Collectors.toList());
-        return OAuth2Utils.toOAuth2Params(savedClientRegistrations);
+        clientRegistrationDao.deleteAll();
+        clientRegistrationInfoDao.deleteAll();
+        oauth2Params.getOAuth2DomainDtos().forEach(domainParams -> {
+            domainParams.getClientRegistrations().forEach(clientRegistrationDto -> {
+                OAuth2ClientRegistrationInfo oAuth2ClientRegistrationInfo = OAuth2Utils.toClientRegistrationInfo(oauth2Params.isEnabled(), clientRegistrationDto);
+                OAuth2ClientRegistrationInfo savedClientRegistrationInfo = clientRegistrationInfoDao.save(TenantId.SYS_TENANT_ID, oAuth2ClientRegistrationInfo);
+                domainParams.getDomainInfos().forEach(domainInfo -> {
+                    OAuth2ClientRegistration oAuth2ClientRegistration = OAuth2Utils.toClientRegistration(savedClientRegistrationInfo.getId(),
+                            domainInfo.getScheme(), domainInfo.getName());
+                    clientRegistrationDao.save(TenantId.SYS_TENANT_ID, oAuth2ClientRegistration);
+                });
+            });
+        });
     }
 
     @Override
     public OAuth2ClientsParams findOAuth2Params() {
         log.trace("Executing findOAuth2Params");
-        return OAuth2Utils.toOAuth2Params(clientRegistrationDao.findAll());
+        List<ExtendedOAuth2ClientRegistrationInfo> extendedInfos = clientRegistrationInfoDao.findAllExtended();
+        return OAuth2Utils.toOAuth2Params(extendedInfos);
     }
 
     @Override
-    public OAuth2ClientRegistration findClientRegistration(UUID id) {
-        log.trace("Executing findClientRegistration [{}]", id);
+    public OAuth2ClientRegistrationInfo findClientRegistrationInfo(UUID id) {
+        log.trace("Executing findClientRegistrationInfo [{}]", id);
         validateId(id, INCORRECT_CLIENT_REGISTRATION_ID + id);
-        return clientRegistrationDao.findById(null, id);
+        return clientRegistrationInfoDao.findById(null, id);
     }
 
     @Override
-    public List<OAuth2ClientRegistration> findAllClientRegistrations() {
-        log.trace("Executing findAllClientRegistrations");
-        return clientRegistrationDao.findAll();
-    }
-
-    @Override
-    public void deleteClientRegistrationById(OAuth2ClientRegistrationId id) {
-        log.trace("Executing deleteClientRegistrationById [{}]", id);
-        validateId(id, INCORRECT_CLIENT_REGISTRATION_ID + id);
-        clientRegistrationDao.removeById(TenantId.SYS_TENANT_ID, id.getId());
-    }
-
-    @Override
-    @Transactional
-    public void deleteClientRegistrationsByDomain(String domain) {
-        log.trace("Executing deleteClientRegistrationsByDomain [{}]", domain);
-        validateString(domain, INCORRECT_DOMAIN_NAME + domain);
-        clientRegistrationDao.removeByDomainName(domain);
+    public List<OAuth2ClientRegistrationInfo> findAllClientRegistrationInfos() {
+        log.trace("Executing findAllClientRegistrationInfos");
+        return clientRegistrationInfoDao.findAll();
     }
 
     private final Consumer<OAuth2ClientsParams> clientParamsValidator = oauth2Params -> {
         if (oauth2Params == null
-                || oauth2Params.getOAuth2DomainDtos() == null
-                || oauth2Params.getOAuth2DomainDtos().isEmpty()) {
+                || oauth2Params.getOAuth2DomainDtos() == null) {
             throw new DataValidationException("Domain params should be specified!");
         }
         for (OAuth2ClientsDomainParams domainParams : oauth2Params.getOAuth2DomainDtos()) {
-            if (StringUtils.isEmpty(domainParams.getDomainName())) {
-                throw new DataValidationException("Domain name should be specified!");
+            if (domainParams.getDomainInfos() == null
+                    || domainParams.getDomainInfos().isEmpty()) {
+                throw new DataValidationException("List of domain configuration should be specified!");
             }
-            if (StringUtils.isEmpty(domainParams.getRedirectUriTemplate())) {
-                throw new DataValidationException("Redirect URI template should be specified!");
+            for (DomainInfo domainInfo : domainParams.getDomainInfos()) {
+                if (StringUtils.isEmpty(domainInfo.getName())) {
+                    throw new DataValidationException("Domain name should be specified!");
+                }
+                if (StringUtils.isEmpty(domainInfo.getScheme())) {
+                    throw new DataValidationException("Domain scheme should be specified!");
+                }
             }
             if (domainParams.getClientRegistrations() == null || domainParams.getClientRegistrations().isEmpty()) {
                 throw new DataValidationException("Client registrations should be specified!");

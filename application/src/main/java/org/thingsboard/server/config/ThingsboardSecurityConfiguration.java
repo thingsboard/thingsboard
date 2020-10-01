@@ -32,6 +32,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -175,6 +176,9 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
         web.ignoring().antMatchers("/*.js","/*.css","/*.ico","/assets/**","/static/**");
     }
 
+    @Autowired
+    private OAuth2AuthorizationRequestResolver oAuth2AuthorizationRequestResolver;
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.headers().cacheControl().and().frameOptions().disable()
@@ -209,6 +213,8 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
                 .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
         if (oauth2Configuration != null) {
             http.oauth2Login()
+                    .authorizationEndpoint().authorizationRequestResolver(oAuth2AuthorizationRequestResolver)
+                    .and()
                     .loginPage("/oauth2Login")
                     .loginProcessingUrl(oauth2Configuration.getLoginProcessingUrl())
                     .successHandler(oauth2AuthenticationSuccessHandler)

@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.common.data.oauth2;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.*;
-import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationInfoId;
 
 import java.util.List;
 
@@ -30,8 +28,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ClientRegistrationDto {
-    private OAuth2ClientRegistrationId id;
-    private long createdTime;
     private OAuth2MapperConfig mapperConfig;
     private String clientId;
     private String clientSecret;

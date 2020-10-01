@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
+import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,170 +23,413 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.oauth2.*;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
-import org.thingsboard.server.dao.oauth2.OAuth2Utils;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.dao.oauth2.OAuth2Utils.toClientRegistrations;
-
 public class BaseOAuth2ServiceTest extends AbstractServiceTest {
+    private static final OAuth2ClientsParams EMPTY_PARAMS = new OAuth2ClientsParams(false, new HashSet<>());
 
     @Autowired
     protected OAuth2Service oAuth2Service;
 
     @Before
     public void beforeRun() {
-        Assert.assertTrue(oAuth2Service.findAllClientRegistrations().isEmpty());
+        Assert.assertTrue(oAuth2Service.findAllClientRegistrationInfos().isEmpty());
     }
 
     @After
     public void after() {
-        oAuth2Service.findAllClientRegistrations().forEach(clientRegistration -> {
-            oAuth2Service.deleteClientRegistrationById(clientRegistration.getId());
-        });
-        Assert.assertTrue(oAuth2Service.findAllClientRegistrations().isEmpty());
+        oAuth2Service.saveOAuth2Params(EMPTY_PARAMS);
+        Assert.assertTrue(oAuth2Service.findAllClientRegistrationInfos().isEmpty());
+        Assert.assertTrue(oAuth2Service.findOAuth2Params().getOAuth2DomainDtos().isEmpty());
     }
 
     @Test
-    public void testCreateNewParams() {
-        OAuth2ClientRegistration clientRegistration = validClientRegistration("domain-name");
-        OAuth2ClientsParams savedOAuth2Params = oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(clientRegistration)));
-        Assert.assertNotNull(savedOAuth2Params);
-
-        List<OAuth2ClientRegistration> savedClientRegistrations = OAuth2Utils.toClientRegistrations(savedOAuth2Params);
-        Assert.assertEquals(1, savedClientRegistrations.size());
-
-        OAuth2ClientRegistration savedClientRegistration = savedClientRegistrations.get(0);
-        Assert.assertNotNull(savedClientRegistration.getId());
-        clientRegistration.setId(savedClientRegistration.getId());
-        clientRegistration.setCreatedTime(savedClientRegistration.getCreatedTime());
-        Assert.assertEquals(clientRegistration, savedClientRegistration);
-
-        oAuth2Service.deleteClientRegistrationsByDomain("domain-name");
+    public void testCreateAndFindParams() {
+        OAuth2ClientsParams clientsParams = createDefaultClientsParams();
+        oAuth2Service.saveOAuth2Params(clientsParams);
+        OAuth2ClientsParams foundClientsParams = oAuth2Service.findOAuth2Params();
+        Assert.assertNotNull(foundClientsParams);
+        // TODO ask if it's safe to check equality on AdditionalProperties
+        Assert.assertEquals(clientsParams, foundClientsParams);
     }
 
     @Test
-    public void testFindDomainParams() {
-        OAuth2ClientRegistration clientRegistration = validClientRegistration();
-        oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(clientRegistration)));
+    public void testDisableParams() {
+        OAuth2ClientsParams clientsParams = createDefaultClientsParams();
+        clientsParams.setEnabled(true);
+        oAuth2Service.saveOAuth2Params(clientsParams);
+        OAuth2ClientsParams foundClientsParams = oAuth2Service.findOAuth2Params();
+        Assert.assertNotNull(foundClientsParams);
+        Assert.assertEquals(clientsParams, foundClientsParams);
 
-        OAuth2ClientsParams foundOAuth2Params = oAuth2Service.findOAuth2Params();
-        Assert.assertEquals(1, foundOAuth2Params.getOAuth2DomainDtos().size());
-        Assert.assertEquals(1, oAuth2Service.findAllClientRegistrations().size());
+        clientsParams.setEnabled(false);
+        oAuth2Service.saveOAuth2Params(clientsParams);
+        OAuth2ClientsParams foundDisabledClientsParams = oAuth2Service.findOAuth2Params();
+        Assert.assertEquals(clientsParams, foundDisabledClientsParams);
+    }
 
-        List<OAuth2ClientRegistration> foundClientRegistrations = OAuth2Utils.toClientRegistrations(foundOAuth2Params);
-        OAuth2ClientRegistration foundClientRegistration = foundClientRegistrations.get(0);
-        Assert.assertNotNull(foundClientRegistration);
-        clientRegistration.setId(foundClientRegistration.getId());
-        clientRegistration.setCreatedTime(foundClientRegistration.getCreatedTime());
-        Assert.assertEquals(clientRegistration, foundClientRegistration);
+    @Test
+    public void testClearDomainParams() {
+        OAuth2ClientsParams clientsParams = createDefaultClientsParams();
+        oAuth2Service.saveOAuth2Params(clientsParams);
+        OAuth2ClientsParams foundClientsParams = oAuth2Service.findOAuth2Params();
+        Assert.assertNotNull(foundClientsParams);
+        Assert.assertEquals(clientsParams, foundClientsParams);
+
+        oAuth2Service.saveOAuth2Params(EMPTY_PARAMS);
+        OAuth2ClientsParams foundAfterClearClientsParams = oAuth2Service.findOAuth2Params();
+        Assert.assertNotNull(foundAfterClearClientsParams);
+        Assert.assertEquals(EMPTY_PARAMS, foundAfterClearClientsParams);
+    }
+
+    @Test
+    public void testUpdateClientsParams() {
+        OAuth2ClientsParams clientsParams = createDefaultClientsParams();
+        oAuth2Service.saveOAuth2Params(clientsParams);
+        OAuth2ClientsParams foundClientsParams = oAuth2Service.findOAuth2Params();
+        Assert.assertNotNull(foundClientsParams);
+        Assert.assertEquals(clientsParams, foundClientsParams);
+
+        OAuth2ClientsParams newClientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("another-domain").scheme(SchemeType.HTTPS).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto()
+                        ))
+                        .build(),
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("test-domain").scheme(SchemeType.MIXED).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto()
+                        ))
+                        .build()
+        ));
+        oAuth2Service.saveOAuth2Params(newClientsParams);
+        OAuth2ClientsParams foundAfterUpdateClientsParams = oAuth2Service.findOAuth2Params();
+        Assert.assertNotNull(foundAfterUpdateClientsParams);
+        Assert.assertEquals(newClientsParams, foundAfterUpdateClientsParams);
     }
 
     @Test
     public void testGetOAuth2Clients() {
-        String testDomainName = "test_domain";
-        OAuth2ClientRegistration first = validClientRegistration(testDomainName);
-        first.setEnabled(true);
-        OAuth2ClientRegistration second = validClientRegistration(testDomainName);
-        second.setEnabled(true);
-
-        oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(first)));
-        oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(second)));
-
-        List<OAuth2ClientInfo> oAuth2Clients = oAuth2Service.getOAuth2Clients(testDomainName);
-
-        Set<String> actualLabels = new HashSet<>(Arrays.asList(first.getLoginButtonLabel(),
-                second.getLoginButtonLabel()));
-
-        Set<String> foundLabels = oAuth2Clients.stream().map(OAuth2ClientInfo::getName).collect(Collectors.toSet());
-        Assert.assertEquals(actualLabels, foundLabels);
-    }
-
-    @Test
-    public void testGetEmptyOAuth2Clients() {
-        String testDomainName = "test_domain";
-        OAuth2ClientRegistration tenantClientRegistration = validClientRegistration(testDomainName);
-        OAuth2ClientRegistration sysAdminClientRegistration = validClientRegistration(testDomainName);
-        oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(tenantClientRegistration)));
-        oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(sysAdminClientRegistration)));
-        List<OAuth2ClientInfo> oAuth2Clients = oAuth2Service.getOAuth2Clients("random-domain");
-        Assert.assertTrue(oAuth2Clients.isEmpty());
-    }
-
-    @Test
-    public void testDeleteOAuth2ClientRegistration() {
-        OAuth2ClientRegistration first = validClientRegistration();
-        OAuth2ClientRegistration second = validClientRegistration();
-
-        OAuth2ClientsParams savedFirstOAuth2Params = oAuth2Service.saveOAuth2Params(
-                OAuth2Utils.toOAuth2Params(Collections.singletonList(first)));
-        OAuth2ClientsParams savedSecondOAuth2Params = oAuth2Service.saveOAuth2Params(
-                OAuth2Utils.toOAuth2Params(Collections.singletonList(second)));
-
-        OAuth2ClientRegistration savedFirstRegistration = toClientRegistrations(savedFirstOAuth2Params).get(0);
-        OAuth2ClientRegistration savedSecondRegistration = toClientRegistrations(savedSecondOAuth2Params).get(0);
-
-        oAuth2Service.deleteClientRegistrationById(savedFirstRegistration.getId());
-        List<OAuth2ClientRegistration> foundRegistrations = oAuth2Service.findAllClientRegistrations();
-        Assert.assertEquals(1, foundRegistrations.size());
-        Assert.assertEquals(savedSecondRegistration, foundRegistrations.get(0));
-    }
-
-    @Test
-    public void testDeleteDomainOAuth2ClientRegistrations() {
-        oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Arrays.asList(
-                validClientRegistration("domain1"),
-                validClientRegistration("domain1"),
-                validClientRegistration("domain2")
-        )));
-        oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Arrays.asList(
-                validClientRegistration("domain2")
-        )));
-        Assert.assertEquals(4, oAuth2Service.findAllClientRegistrations().size());
-        OAuth2ClientsParams oAuth2Params = oAuth2Service.findOAuth2Params();
-        List<OAuth2ClientRegistration> clientRegistrations = toClientRegistrations(oAuth2Params);
-        Assert.assertEquals(2, oAuth2Params.getOAuth2DomainDtos().size());
-        Assert.assertEquals(4, clientRegistrations.size());
-
-        oAuth2Service.deleteClientRegistrationsByDomain("domain1");
-        Assert.assertEquals(2, oAuth2Service.findAllClientRegistrations().size());
-        Assert.assertEquals(1, oAuth2Service.findOAuth2Params().getOAuth2DomainDtos().size());
-        Assert.assertEquals(2, toClientRegistrations(oAuth2Service.findOAuth2Params()).size());
-    }
-
-    private OAuth2ClientRegistration validClientRegistration() {
-        return validClientRegistration(UUID.randomUUID().toString());
-    }
-
-    private OAuth2ClientRegistration validClientRegistration(String domainName) {
-        OAuth2ClientRegistration clientRegistration = new OAuth2ClientRegistration();
-        clientRegistration.setDomainName(domainName);
-        clientRegistration.setMapperConfig(
-                OAuth2MapperConfig.builder()
-                        .allowUserCreation(true)
-                        .activateUser(true)
-                        .type(MapperType.CUSTOM)
-                        .custom(
-                                OAuth2CustomMapperConfig.builder()
-                                        .url("UUID.randomUUID().toString()")
-                                        .build()
-                        )
-                        .build()
+        Set<ClientRegistrationDto> firstGroup = Sets.newHashSet(
+                validClientRegistrationDto(),
+                validClientRegistrationDto(),
+                validClientRegistrationDto(),
+                validClientRegistrationDto()
         );
-        clientRegistration.setClientId(UUID.randomUUID().toString());
-        clientRegistration.setClientSecret(UUID.randomUUID().toString());
-        clientRegistration.setAuthorizationUri(UUID.randomUUID().toString());
-        clientRegistration.setAccessTokenUri(UUID.randomUUID().toString());
-        clientRegistration.setRedirectUriTemplate(UUID.randomUUID().toString());
-        clientRegistration.setScope(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-        clientRegistration.setUserInfoUri(UUID.randomUUID().toString());
-        clientRegistration.setUserNameAttributeName(UUID.randomUUID().toString());
-        clientRegistration.setJwkSetUri(UUID.randomUUID().toString());
-        clientRegistration.setClientAuthenticationMethod(UUID.randomUUID().toString());
-        clientRegistration.setLoginButtonLabel(UUID.randomUUID().toString());
-        clientRegistration.setLoginButtonIcon(UUID.randomUUID().toString());
-        clientRegistration.setAdditionalInfo(mapper.createObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-        return clientRegistration;
+        Set<ClientRegistrationDto> secondGroup = Sets.newHashSet(
+                validClientRegistrationDto(),
+                validClientRegistrationDto()
+        );
+        Set<ClientRegistrationDto> thirdGroup = Sets.newHashSet(
+                validClientRegistrationDto()
+        );
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
+                                DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
+                        ))
+                        .clientRegistrations(firstGroup)
+                        .build(),
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTP).build(),
+                                DomainInfo.builder().name("fourth-domain").scheme(SchemeType.MIXED).build()
+                        ))
+                        .clientRegistrations(secondGroup)
+                        .build(),
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTPS).build(),
+                                DomainInfo.builder().name("fifth-domain").scheme(SchemeType.HTTP).build()
+                        ))
+                        .clientRegistrations(thirdGroup)
+                        .build()
+        ));
+
+        oAuth2Service.saveOAuth2Params(clientsParams);
+        OAuth2ClientsParams foundClientsParams = oAuth2Service.findOAuth2Params();
+        Assert.assertNotNull(foundClientsParams);
+        Assert.assertEquals(clientsParams, foundClientsParams);
+
+        List<OAuth2ClientInfo> firstGroupClientInfos = firstGroup.stream()
+                .map(clientRegistrationDto -> new OAuth2ClientInfo(
+                        clientRegistrationDto.getLoginButtonLabel(), clientRegistrationDto.getLoginButtonIcon(), null))
+                .collect(Collectors.toList());
+        List<OAuth2ClientInfo> secondGroupClientInfos = secondGroup.stream()
+                .map(clientRegistrationDto -> new OAuth2ClientInfo(
+                        clientRegistrationDto.getLoginButtonLabel(), clientRegistrationDto.getLoginButtonIcon(), null))
+                .collect(Collectors.toList());
+        List<OAuth2ClientInfo> thirdGroupClientInfos = thirdGroup.stream()
+                .map(clientRegistrationDto -> new OAuth2ClientInfo(
+                        clientRegistrationDto.getLoginButtonLabel(), clientRegistrationDto.getLoginButtonIcon(), null))
+                .collect(Collectors.toList());
+
+        List<OAuth2ClientInfo> nonExistentDomainClients = oAuth2Service.getOAuth2Clients("http", "non-existent-domain");
+        Assert.assertTrue(nonExistentDomainClients.isEmpty());
+
+        List<OAuth2ClientInfo> firstDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "first-domain");
+        Assert.assertEquals(firstDomainHttpClients.size(), firstDomainHttpClients.size());
+        firstGroupClientInfos.forEach(firstGroupClientInfo -> {
+            Assert.assertTrue(
+                    firstDomainHttpClients.stream().anyMatch(clientInfo ->
+                            clientInfo.getIcon().equals(firstGroupClientInfo.getIcon())
+                                    && clientInfo.getName().equals(firstGroupClientInfo.getName()))
+            );
+        });
+
+        List<OAuth2ClientInfo> firstDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "first-domain");
+        Assert.assertTrue(firstDomainHttpsClients.isEmpty());
+
+        List<OAuth2ClientInfo> fourthDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "fourth-domain");
+        Assert.assertEquals(fourthDomainHttpClients.size(), secondGroupClientInfos.size());
+        secondGroupClientInfos.forEach(secondGroupClientInfo -> {
+            Assert.assertTrue(
+                    fourthDomainHttpClients.stream().anyMatch(clientInfo ->
+                            clientInfo.getIcon().equals(secondGroupClientInfo.getIcon())
+                                    && clientInfo.getName().equals(secondGroupClientInfo.getName()))
+            );
+        });
+        List<OAuth2ClientInfo> fourthDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "fourth-domain");
+        Assert.assertEquals(fourthDomainHttpsClients.size(), secondGroupClientInfos.size());
+        secondGroupClientInfos.forEach(secondGroupClientInfo -> {
+            Assert.assertTrue(
+                    fourthDomainHttpsClients.stream().anyMatch(clientInfo ->
+                            clientInfo.getIcon().equals(secondGroupClientInfo.getIcon())
+                                    && clientInfo.getName().equals(secondGroupClientInfo.getName()))
+            );
+        });
+
+        List<OAuth2ClientInfo> secondDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "second-domain");
+        Assert.assertEquals(secondDomainHttpClients.size(), firstGroupClientInfos.size() + secondGroupClientInfos.size());
+        firstGroupClientInfos.forEach(firstGroupClientInfo -> {
+            Assert.assertTrue(
+                    secondDomainHttpClients.stream().anyMatch(clientInfo ->
+                            clientInfo.getIcon().equals(firstGroupClientInfo.getIcon())
+                                    && clientInfo.getName().equals(firstGroupClientInfo.getName()))
+            );
+        });
+        secondGroupClientInfos.forEach(secondGroupClientInfo -> {
+            Assert.assertTrue(
+                    secondDomainHttpClients.stream().anyMatch(clientInfo ->
+                            clientInfo.getIcon().equals(secondGroupClientInfo.getIcon())
+                                    && clientInfo.getName().equals(secondGroupClientInfo.getName()))
+            );
+        });
+
+        List<OAuth2ClientInfo> secondDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "second-domain");
+        Assert.assertEquals(secondDomainHttpsClients.size(), firstGroupClientInfos.size() + thirdGroupClientInfos.size());
+        firstGroupClientInfos.forEach(firstGroupClientInfo -> {
+            Assert.assertTrue(
+                    secondDomainHttpsClients.stream().anyMatch(clientInfo ->
+                            clientInfo.getIcon().equals(firstGroupClientInfo.getIcon())
+                                    && clientInfo.getName().equals(firstGroupClientInfo.getName()))
+            );
+        });
+        thirdGroupClientInfos.forEach(thirdGroupClientInfo -> {
+            Assert.assertTrue(
+                    secondDomainHttpsClients.stream().anyMatch(clientInfo ->
+                            clientInfo.getIcon().equals(thirdGroupClientInfo.getIcon())
+                                    && clientInfo.getName().equals(thirdGroupClientInfo.getName()))
+            );
+        });
+    }
+
+    @Test
+    public void testGetDisabledOAuth2Clients() {
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
+                                DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto()
+                        ))
+                        .build(),
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTP).build(),
+                                DomainInfo.builder().name("fourth-domain").scheme(SchemeType.MIXED).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto()
+                        ))
+                        .build()
+        ));
+
+        oAuth2Service.saveOAuth2Params(clientsParams);
+
+        List<OAuth2ClientInfo> secondDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "second-domain");
+        Assert.assertEquals(5, secondDomainHttpClients.size());
+
+        clientsParams.setEnabled(false);
+        oAuth2Service.saveOAuth2Params(clientsParams);
+
+        List<OAuth2ClientInfo> secondDomainHttpDisabledClients = oAuth2Service.getOAuth2Clients("http", "second-domain");
+        Assert.assertEquals(0, secondDomainHttpDisabledClients.size());
+    }
+
+    @Test
+    public void testFindAllClientRegistrationInfos() {
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
+                                DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto()
+                        ))
+                        .build(),
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTP).build(),
+                                DomainInfo.builder().name("fourth-domain").scheme(SchemeType.MIXED).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto()
+                        ))
+                        .build(),
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTPS).build(),
+                                DomainInfo.builder().name("fifth-domain").scheme(SchemeType.HTTP).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto()
+                        ))
+                        .build()
+        ));
+
+        oAuth2Service.saveOAuth2Params(clientsParams);
+        List<OAuth2ClientRegistrationInfo> foundClientRegistrationInfos = oAuth2Service.findAllClientRegistrationInfos();
+        Assert.assertEquals(6, foundClientRegistrationInfos.size());
+        clientsParams.getOAuth2DomainDtos().stream()
+                .flatMap(domainParams -> domainParams.getClientRegistrations().stream())
+                .forEach(clientRegistrationDto ->
+                        Assert.assertTrue(
+                                foundClientRegistrationInfos.stream()
+                                        .anyMatch(clientRegistrationInfo -> clientRegistrationInfo.getClientId().equals(clientRegistrationDto.getClientId()))
+                        )
+                );
+    }
+
+    @Test
+    public void testFindClientRegistrationById() {
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
+                                DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto()
+                        ))
+                        .build(),
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTP).build(),
+                                DomainInfo.builder().name("fourth-domain").scheme(SchemeType.MIXED).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto()
+                        ))
+                        .build(),
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTPS).build(),
+                                DomainInfo.builder().name("fifth-domain").scheme(SchemeType.HTTP).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto()
+                        ))
+                        .build()
+        ));
+
+        oAuth2Service.saveOAuth2Params(clientsParams);
+        List<OAuth2ClientRegistrationInfo> clientRegistrationInfos = oAuth2Service.findAllClientRegistrationInfos();
+        clientRegistrationInfos.forEach(clientRegistrationInfo -> {
+            OAuth2ClientRegistrationInfo foundClientRegistrationInfo = oAuth2Service.findClientRegistrationInfo(clientRegistrationInfo.getUuidId());
+            Assert.assertEquals(clientRegistrationInfo, foundClientRegistrationInfo);
+        });
+    }
+
+    private OAuth2ClientsParams createDefaultClientsParams() {
+        return new OAuth2ClientsParams(true, Sets.newHashSet(
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
+                                DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto()
+                        ))
+                        .build(),
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
+                                DomainInfo.builder().name("fourth-domain").scheme(SchemeType.MIXED).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto()
+                        ))
+                        .build()
+        ));
+    }
+
+    private ClientRegistrationDto validClientRegistrationDto() {
+        return ClientRegistrationDto.builder()
+                .clientId(UUID.randomUUID().toString())
+                .clientSecret(UUID.randomUUID().toString())
+                .authorizationUri(UUID.randomUUID().toString())
+                .accessTokenUri(UUID.randomUUID().toString())
+                .scope(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()))
+                .userInfoUri(UUID.randomUUID().toString())
+                .userNameAttributeName(UUID.randomUUID().toString())
+                .jwkSetUri(UUID.randomUUID().toString())
+                .clientAuthenticationMethod(UUID.randomUUID().toString())
+                .loginButtonLabel(UUID.randomUUID().toString())
+                .loginButtonIcon(UUID.randomUUID().toString())
+                .additionalInfo(mapper.createObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()))
+                .mapperConfig(
+                        OAuth2MapperConfig.builder()
+                                .allowUserCreation(true)
+                                .activateUser(true)
+                                .type(MapperType.CUSTOM)
+                                .custom(
+                                        OAuth2CustomMapperConfig.builder()
+                                                .url(UUID.randomUUID().toString())
+                                                .build()
+                                )
+                                .build()
+                )
+                .build();
     }
 }

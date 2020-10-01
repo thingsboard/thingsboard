@@ -22,7 +22,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationInfo;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -68,7 +68,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
 
-            OAuth2ClientRegistration clientRegistration = oAuth2Service.findClientRegistration(UUID.fromString(token.getAuthorizedClientRegistrationId()));
+            OAuth2ClientRegistrationInfo clientRegistration = oAuth2Service.findClientRegistrationInfo(UUID.fromString(token.getAuthorizedClientRegistrationId()));
             OAuth2AuthorizedClient oAuth2AuthorizedClient = oAuth2AuthorizedClientService.loadAuthorizedClient(
                     token.getAuthorizedClientRegistrationId(),
                     token.getPrincipal().getName());

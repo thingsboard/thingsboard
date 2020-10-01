@@ -17,12 +17,13 @@ package org.thingsboard.server.common.data.oauth2;
 
 import lombok.*;
 
+@EqualsAndHashCode
 @Data
 @ToString
-@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExtendedOAuth2ClientRegistration {
-    private String redirectUriTemplate;
-    private OAuth2ClientRegistration clientRegistration;
+@Builder
+public class DomainInfo {
+    private SchemeType scheme;
+    private String name;
 }

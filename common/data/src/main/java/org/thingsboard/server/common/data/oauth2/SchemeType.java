@@ -15,16 +15,6 @@
  */
 package org.thingsboard.server.common.data.oauth2;
 
-import lombok.*;
-import java.util.Set;
-
-@EqualsAndHashCode
-@Data
-@ToString
-@Builder(toBuilder = true)
-@NoArgsConstructor
-@AllArgsConstructor
-public class OAuth2ClientsParams {
-    private boolean enabled;
-    private Set<OAuth2ClientsDomainParams> oAuth2DomainDtos;
+public enum SchemeType {
+    HTTP, HTTPS, MIXED;
 }

@@ -19,13 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientsDomainParams;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
+import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.servlet.http.HttpServletRequest;
@@ -36,14 +33,11 @@ import java.util.List;
 @RequestMapping("/api")
 @Slf4j
 public class OAuth2Controller extends BaseController {
-    private static final String CLIENT_REGISTRATION_ID = "clientRegistrationId";
-    private static final String DOMAIN = "domain";
-
     @RequestMapping(value = "/noauth/oauth2Clients", method = RequestMethod.POST)
     @ResponseBody
     public List<OAuth2ClientInfo> getOAuth2Clients(HttpServletRequest request) throws ThingsboardException {
         try {
-            return oAuth2Service.getOAuth2Clients(request.getServerName());
+            return oAuth2Service.getOAuth2Clients(request.getScheme(), request.getServerName());
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -65,56 +59,9 @@ public class OAuth2Controller extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public OAuth2ClientsParams saveOAuth2Params(@RequestBody OAuth2ClientsParams oauth2Params) throws ThingsboardException {
         try {
-            return oAuth2Service.saveOAuth2Params(oauth2Params);
+            oAuth2Service.saveOAuth2Params(oauth2Params);
+            return oAuth2Service.findOAuth2Params();
         } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/oauth2/config/{clientRegistrationId}", method = RequestMethod.DELETE)
-    @ResponseStatus(value = HttpStatus.OK)
-    public void deleteClientRegistration(@PathVariable(CLIENT_REGISTRATION_ID) String strClientRegistrationId) throws ThingsboardException {
-        checkParameter(CLIENT_REGISTRATION_ID, strClientRegistrationId);
-        try {
-            OAuth2ClientRegistrationId clientRegistrationId = new OAuth2ClientRegistrationId(toUUID(strClientRegistrationId));
-            oAuth2Service.deleteClientRegistrationById(clientRegistrationId);
-
-            logEntityAction(clientRegistrationId,
-                    null,
-                    null,
-                    ActionType.DELETED, null, strClientRegistrationId);
-
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.OAUTH2_CLIENT_REGISTRATION),
-                    null,
-                    null,
-                    ActionType.DELETED, e, strClientRegistrationId);
-
-            throw handleException(e);
-        }
-    }
-
-
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/oauth2/config/domain/{domain}", method = RequestMethod.DELETE)
-    @ResponseStatus(value = HttpStatus.OK)
-    public void deleteClientRegistrationForDomain(@PathVariable(DOMAIN) String domain) throws ThingsboardException {
-        checkParameter(DOMAIN, domain);
-        try {
-            oAuth2Service.deleteClientRegistrationsByDomain(domain);
-
-            logEntityAction(emptyId(EntityType.OAUTH2_CLIENT_REGISTRATION), null,
-                    null,
-                    ActionType.DELETED, null, domain);
-
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.OAUTH2_CLIENT_REGISTRATION),
-                    null,
-                    null,
-                    ActionType.DELETED, e, domain);
-
             throw handleException(e);
         }
     }
