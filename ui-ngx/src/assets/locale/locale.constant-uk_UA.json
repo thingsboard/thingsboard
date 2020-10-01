@@ -1851,6 +1851,7 @@
       "retries": "Повторні спроби",
       "failure-percentage": "Процент відмов",
       "pause-between-retries": "Пауза між повторними спробами",
+      "max-pause-between-retries": "Максимальна пауза між повторними спробами",
       "delete": "Видалити чергу"
     },
     "scheduler": {

@@ -22,7 +22,7 @@ import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { Authority } from '@shared/models/authority.enum';
 import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
-import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
+import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { QueuesTableConfigResolver } from './queues-table-config.resolver';
 
 const routes: Routes = [
@@ -88,8 +88,9 @@ const routes: Routes = [
           auth: [Authority.SYS_ADMIN],
           title: 'admin.queues',
           breadcrumb: {
+            isMdiIcon: true,
             label: 'admin.queues',
-            icon: 'queue'
+            icon: 'queues-list'
           }
         },
         resolve: {

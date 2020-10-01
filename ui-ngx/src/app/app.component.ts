@@ -67,6 +67,16 @@ export class AppComponent implements OnInit {
         '0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" /></svg>'
       )
     );
+    this.matIconRegistry.addSvgIconLiteral(
+      'queues-list',
+      this.domSanitizer.bypassSecurityTrustHtml(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' +
+        '<path fill="#fff" d="M9 4V2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h5v-2H4V4h5z"/>' +
+        '<path fill="#fff" d="M7 18V6h2v12H7zM11 6v12h2V6h-2zM15 20v2h5a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-5v2h5v16h-5z"/>' +
+        '<path fill="#fff" d="M15 18V6h2v12h-2z"/>' +
+        '</svg>'
+      )
+    );
 
     this.storageService.testLocalStorage();
 

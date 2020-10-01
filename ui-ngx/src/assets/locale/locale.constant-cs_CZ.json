@@ -1553,6 +1553,7 @@
       "retries": "Pokusy",
       "failure-percentage": "Procento selhání",
       "pause-between-retries": "Pauza mezi opakováním",
+      "max-pause-between-retries": "Maximální pauza mezi opakováním",
       "delete": "Odstranit frontu"
     },
     "tenant": {

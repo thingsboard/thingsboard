@@ -1520,6 +1520,7 @@
         "retries": "Reintentos",
         "failure-percentage": "Porcentaje de fallos",
         "pause-between-retries": "Pausa entre reintentos",
+        "max-pause-between-retries": "Pausa máxima entre reintentos",
         "delete": "Eliminar cola"
     },
     "tenant": {

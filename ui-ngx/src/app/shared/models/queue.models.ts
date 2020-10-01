@@ -14,9 +14,8 @@
 /// limitations under the License.
 ///
 
-import { BaseData } from '@shared/models/base-data';
-import { QueueId } from '@shared/models/id/queue-id';
-import { EntityType } from '@shared/models/entity-type.models';
+import { BaseData, HasId } from '@shared/models/base-data';
+import { TenantId } from '@shared/models/id/tenant-id';
 
 export enum ServiceType {
   TB_CORE = 'TB_CORE',
@@ -41,20 +40,7 @@ export enum QueueProcessingStrategyTypes {
   RETRY_TIMED_OUT = 'RETRY_TIMED_OUT'
 }
 
-export interface Queue extends BaseData<QueueId> {
-  name: string;
-  type: string;
-  label: string;
-}
-
-export interface QueueInfo extends BaseData<QueueId> {
-  createdTime: number;
-  id: {
-    entityType: EntityType,
-    id: string
-  };
-  name: string;
-  topic: string;
+export interface QueueInfo extends BaseData<HasId> {
   packProcessingTimeout: number;
   partitions: number;
   pollInterval: number;
@@ -62,7 +48,8 @@ export interface QueueInfo extends BaseData<QueueId> {
     type: QueueProcessingStrategyTypes,
     retries: number,
     failurePercentage: number,
-    pauseBetweenRetries: number
+    pauseBetweenRetries: number,
+    maxPauseBetweenRetries: number
   };
   processingStrategyType: QueueProcessingStrategyTypes;
   submitStrategy: {
@@ -70,9 +57,6 @@ export interface QueueInfo extends BaseData<QueueId> {
     batchSize: number,
   };
   submitStrategyType: QueueSubmitStrategyTypes;
-  tenantId: {
-    entityType: EntityType,
-    id: string
-  };
+  tenantId: TenantId;
 }
 

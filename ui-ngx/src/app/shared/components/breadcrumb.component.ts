@@ -92,7 +92,7 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
           ignoreTranslate = false;
         }
         const icon = breadcrumbConfig.icon || 'home';
-        const isMdiIcon = icon.startsWith('mdi:');
+        const isMdiIcon = icon.startsWith('mdi:') || breadcrumbConfig.isMdiIcon;
         const link = [ route.pathFromRoot.map(v => v.url.map(segment => segment.toString()).join('/')).join('/') ];
         const breadcrumb = {
           id: guid(),

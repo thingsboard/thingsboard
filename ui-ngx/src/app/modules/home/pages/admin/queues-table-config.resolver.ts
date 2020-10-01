@@ -19,20 +19,20 @@ import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { EntityTableColumn, EntityTableConfig } from '../../models/entity/entities-table-config.models';
 import { QueueInfo, ServiceType } from '../../../../shared/models/queue.models';
 import { select, Store } from '@ngrx/store';
-import { AppState } from '../../../../core/core.state';
-import { BroadcastService } from '../../../../core/services/broadcast.service';
-import { CustomerService } from '../../../../core/http/customer.service';
-import { DialogService } from '../../../../core/services/dialog.service';
-import { HomeDialogsService } from '../../dialogs/home-dialogs.service';
+import { AppState } from '@core/core.state';
+import { BroadcastService } from '@core/services/broadcast.service';
+import { CustomerService } from '@core/http/customer.service';
+import { DialogService } from '@core/services/dialog.service';
+import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 import { map, mergeMap, take } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { EntityType, entityTypeResources, entityTypeTranslations } from '../../../../shared/models/entity-type.models';
+import { EntityType, entityTypeResources, entityTypeTranslations } from '@app/shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
 import { QueueComponent } from './queue.component';
-import { QueueService } from '../../../../core/http/queue.service';
-import { selectAuthUser } from '../../../../core/auth/auth.selectors';
-import { PageData } from '../../../../shared/models/page/page-data';
-import { PageLink } from '../../../../shared/models/page/page-link';
+import { QueueService } from '@core/http/queue.service';
+import { selectAuthUser } from '@core/auth/auth.selectors';
+import { PageData } from '@shared/models/page/page-data';
+import { PageLink } from '@shared/models/page/page-link';
 
 @Injectable()
 export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<QueueInfo>> {

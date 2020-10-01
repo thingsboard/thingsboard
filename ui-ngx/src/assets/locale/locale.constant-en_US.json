@@ -1649,6 +1649,7 @@
       "retries": "Retries",
       "failure-percentage": "Failure Percentage",
       "pause-between-retries": "Pause between retries",
+      "max-pause-between-retries": "Maximal pause between retries",
       "delete": "Delete queue"
     },
     "tenant": {

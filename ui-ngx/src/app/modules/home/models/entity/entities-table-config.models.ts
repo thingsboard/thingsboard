@@ -29,7 +29,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { EntityTableHeaderComponent } from '@home/components/entity/entity-table-header.component';
 import { ActivatedRoute } from '@angular/router';
-import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
+import { EntityTabsComponent } from '@home/components/entity/entity-tabs.component';
 
 export type EntityBooleanFunction<T extends BaseData<HasId>> = (entity: T) => boolean;
 export type EntityStringFunction<T extends BaseData<HasId>> = (entity: T) => string;

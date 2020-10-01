@@ -35,13 +35,6 @@
         </mat-error>
       </mat-form-field>
       <mat-form-field class="mat-block">
-        <mat-label translate>queue.topic</mat-label>
-        <input matInput formControlName="topic" required>
-        <mat-error *ngIf="entityForm.get('topic').hasError('required')">
-          {{ 'queue.topic-required' | translate }}
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field class="mat-block">
         <mat-label translate>queue.poll-interval</mat-label>
         <input type="number" matInput formControlName="pollInterval">
       </mat-form-field>
@@ -57,7 +50,6 @@
       <div class="mat-accordion-container">
 
         <mat-accordion [multi]="true">
-
           <mat-expansion-panel #panel1 hideToggle>
             <mat-expansion-panel-header>
               <mat-panel-title>
@@ -80,7 +72,6 @@
               </mat-form-field>
             </div>
           </mat-expansion-panel>
-
           <mat-expansion-panel #panel2 hideToggle>
           <mat-expansion-panel-header>
             <mat-panel-title>
@@ -110,9 +101,12 @@
               <mat-label translate>queue.pause-between-retries</mat-label>
               <input type="number" matInput formControlName="pauseBetweenRetries">
             </mat-form-field>
+            <mat-form-field class="mat-block">
+              <mat-label translate>queue.max-pause-between-retries</mat-label>
+              <input type="number" matInput formControlName="maxPauseBetweenRetries">
+            </mat-form-field>
           </div>
         </mat-expansion-panel>
-
         </mat-accordion>
 
       </div>

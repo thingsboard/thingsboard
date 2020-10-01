@@ -128,8 +128,9 @@ export class MenuService {
             id: guid(),
             name: 'admin.queues',
             type: 'link',
+            isMdiIcon: true,
             path: '/settings/queues',
-            icon: 'queue'
+            icon: 'queues-list'
           },
         ]
       }
@@ -180,7 +181,8 @@ export class MenuService {
           },
           {
             name: 'admin.queues',
-            icon: 'queue',
+            icon: 'queues-list',
+            isMdiIcon: true,
             path: '/settings/queues'
           },
         ]

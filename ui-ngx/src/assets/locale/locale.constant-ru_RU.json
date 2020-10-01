@@ -1434,6 +1434,7 @@
       "retries": "Повторные попытки",
       "failure-percentage": "Процент отказов",
       "pause-between-retries": "Пауза между повторными попытками",
+      "max-pause-between-retries": "Максимальная пауза между повторными попытками",
       "delete": "Удалить очередь"
     },
     "tenant": {

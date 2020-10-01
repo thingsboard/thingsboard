@@ -1,12 +1,12 @@
-import {Component, Inject, OnInit} from '@angular/core';
-import {EntityType} from '../../../../shared/models/entity-type.models';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {EntityComponent} from '../../components/entity/entity.component';
-import {QueueInfo, QueueProcessingStrategyTypes, QueueSubmitStrategyTypes} from '../../../../shared/models/queue.models';
-import {Store} from '@ngrx/store';
-import {AppState} from '../../../../core/core.state';
-import {TranslateService} from '@ngx-translate/core';
-import {EntityTableConfig} from '../../models/entity/entities-table-config.models';
+import { Component, Inject} from '@angular/core';
+import { EntityType } from '@shared/models/entity-type.models';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { EntityComponent } from '@home/components/entity/entity.component';
+import { QueueInfo, QueueProcessingStrategyTypes, QueueSubmitStrategyTypes } from '@shared/models/queue.models';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { TranslateService } from '@ngx-translate/core';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
   selector: 'tb-queue',
@@ -26,9 +26,6 @@ export class QueueComponent extends EntityComponent<QueueInfo> {
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<QueueInfo>,
               public fb: FormBuilder) {
     super(store, fb, entityValue, entitiesTableConfigValue);
-  }
-
-  ngOnInit(): void {
     this.submitStrategies = Object.values(QueueSubmitStrategyTypes);
     this.processingStrategies = Object.values(QueueProcessingStrategyTypes);
   }
@@ -37,23 +34,29 @@ export class QueueComponent extends EntityComponent<QueueInfo> {
     return this.fb.group(
       {
         name: [entity ? entity.name : '', [Validators.required]],
-        topic: [entity ? entity.topic : '', [Validators.required]],
         pollInterval: [entity && entity.pollInterval ? entity.pollInterval : 25,
-          [Validators.min(1)]],
+          [Validators.min(1), Validators.required]],
         partitions: [entity && entity.partitions ? entity.partitions : 10,
-          [Validators.min(1)]],
+          [Validators.min(1), Validators.required]],
         packProcessingTimeout: [entity && entity.packProcessingTimeout ? entity.packProcessingTimeout : 2000,
-          [Validators.min(1)]],
+          [Validators.min(1), Validators.required]],
         submitStrategy: this.fb.group({
           type: [entity ? entity.submitStrategy?.type : null, [Validators.required]],
-          batchSize: [entity && entity.submitStrategy?.batchSize ? entity.submitStrategy?.batchSize : 1000],
+          batchSize: [entity && entity.submitStrategy?.batchSize ? entity.submitStrategy?.batchSize : 1000,
+          [Validators.min(1), Validators.required]],
         }),
         processingStrategy: this.fb.group({
           type: [entity ? entity.processingStrategy?.type : null, [Validators.required]],
-          retries: [entity && entity.processingStrategy?.retries ? entity.processingStrategy?.retries : 3],
-          failurePercentage: [entity && entity.processingStrategy?.failurePercentage ? entity.processingStrategy?.failurePercentage : 0],
+          retries: [entity && entity.processingStrategy?.retries ? entity.processingStrategy?.retries : 3,
+            [Validators.min(1), Validators.required]],
+          failurePercentage: [entity && entity.processingStrategy?.failurePercentage ? entity.processingStrategy?.failurePercentage : 0,
+            [Validators.min(1), Validators.required]],
           pauseBetweenRetries:
-            [entity && entity.processingStrategy?.pauseBetweenRetries ? entity.processingStrategy?.pauseBetweenRetries : 3],
+            [entity && entity.processingStrategy?.pauseBetweenRetries ? entity.processingStrategy?.pauseBetweenRetries : 3,
+            [Validators.min(1), Validators.required]],
+          maxPauseBetweenRetries:
+            [entity && entity.processingStrategy?.maxPauseBetweenRetries ? entity.processingStrategy?.maxPauseBetweenRetries : 3,
+            [Validators.min(1), Validators.required]],
         })
       }
     );
@@ -68,21 +71,27 @@ export class QueueComponent extends EntityComponent<QueueInfo> {
   }
 
   updateForm(entity: QueueInfo) {
-    this.entityForm.patchValue({name: entity.name});
-    this.entityForm.patchValue({topic: entity.topic});
-    this.entityForm.patchValue({pollInterval: entity.pollInterval});
-    this.entityForm.patchValue({partitions: entity.partitions});
-    this.entityForm.patchValue({packProcessingTimeout: entity.packProcessingTimeout});
-    this.entityForm.patchValue({submitStrategy: {
-      type: entity.submitStrategy?.type,
-      batchSize: entity.submitStrategy?.batchSize,
-    }});
-    this.entityForm.patchValue({processingStrategy: {
-      type: entity.processingStrategy?.type,
-      retries: entity.processingStrategy?.retries,
-      failurePercentage: entity.processingStrategy?.failurePercentage,
-      pauseBetweenRetries: entity.processingStrategy?.pauseBetweenRetries,
-    }});
+    this.entityForm.patchValue({
+      name: entity.name,
+      pollInterval: entity.pollInterval,
+      partitions: entity.partitions,
+      packProcessingTimeout: entity.packProcessingTimeout,
+      submitStrategy: {
+        type: entity.submitStrategy?.type,
+        batchSize: entity.submitStrategy?.batchSize,
+      },
+      processingStrategy: {
+        type: entity.processingStrategy?.type,
+        retries: entity.processingStrategy?.retries,
+        failurePercentage: entity.processingStrategy?.failurePercentage,
+        pauseBetweenRetries: entity.processingStrategy?.pauseBetweenRetries,
+        maxPauseBetweenRetries: entity.processingStrategy?.maxPauseBetweenRetries,
+      }
+    });
+
+    if (!this.isAdd) {
+      this.entityForm.get('name').disable({emitEvent: false});
+    }
   }
 
 }
