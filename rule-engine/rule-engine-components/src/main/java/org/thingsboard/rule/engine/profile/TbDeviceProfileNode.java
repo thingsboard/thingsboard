@@ -16,13 +16,14 @@
 package org.thingsboard.rule.engine.profile;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.profile.state.PersistedDeviceState;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -30,11 +31,14 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -45,25 +49,23 @@ import java.util.concurrent.TimeUnit;
         name = "device profile",
         customRelations = true,
         relationTypes = {"Alarm Created", "Alarm Updated", "Alarm Severity Updated", "Alarm Cleared", "Success", "Failure"},
-        configClazz = EmptyNodeConfiguration.class,
+        configClazz = TbDeviceProfileNodeConfiguration.class,
         nodeDescription = "Process device messages based on device profile settings",
-        nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. Generates ",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbNodeEmptyConfig"
+        nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. Generates "
 )
 public class TbDeviceProfileNode implements TbNode {
     private static final String PERIODIC_MSG_TYPE = "TbDeviceProfilePeriodicMsg";
 
+    private TbDeviceProfileNodeConfiguration config;
     private RuleEngineDeviceProfileCache cache;
     private final Map<DeviceId, DeviceState> deviceStates = new ConcurrentHashMap<>();
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        cache = ctx.getDeviceProfileCache();
+        this.config = TbNodeUtils.convert(configuration, TbDeviceProfileNodeConfiguration.class);
+        this.cache = ctx.getDeviceProfileCache();
         scheduleAlarmHarvesting(ctx);
-        //TODO: check that I am in root rule chain.
-        // If Yes - Init for all device profiles that do not have default rule chain id in device profile.
-        // If No - find device profiles with this rule chain id.
+        //TODO: launch a process of fetching the alarm rule states from the database;
     }
 
     /**
@@ -127,7 +129,7 @@ public class TbDeviceProfileNode implements TbNode {
         if (deviceState == null) {
             DeviceProfile deviceProfile = cache.get(ctx.getTenantId(), deviceId);
             if (deviceProfile != null) {
-                deviceState = new DeviceState(deviceId, new DeviceProfileState(deviceProfile));
+                deviceState = new DeviceState(ctx, config, deviceId, new DeviceProfileState(deviceProfile));
                 deviceStates.put(deviceId, deviceState);
             }
         }

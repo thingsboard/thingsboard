@@ -146,6 +146,17 @@ CREATE TABLE IF NOT EXISTS rule_node (
     search_text varchar(255)
 );
 
+CREATE TABLE IF NOT EXISTS rule_node_state (
+    id uuid NOT NULL CONSTRAINT rule_node_state_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    rule_node_id uuid NOT NULL,
+    entity_type varchar(32) NOT NULL,
+    entity_id uuid NOT NULL,
+    state_data varchar(16384) NOT NULL,
+    CONSTRAINT rule_node_state_unq_key UNIQUE (rule_node_id, entity_id),
+    CONSTRAINT fk_rule_node_state_node_id FOREIGN KEY (rule_node_id) REFERENCES rule_node(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS device_profile (
     id uuid NOT NULL CONSTRAINT device_profile_pkey PRIMARY KEY,
     created_time bigint NOT NULL,

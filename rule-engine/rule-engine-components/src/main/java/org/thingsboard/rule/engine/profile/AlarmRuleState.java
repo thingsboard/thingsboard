@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.profile;
 
 import lombok.Data;
+import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
@@ -32,12 +33,17 @@ public class AlarmRuleState {
     private final AlarmSeverity severity;
     private final AlarmRule alarmRule;
     private final long requiredDurationInMs;
-    private long lastEventTs;
-    private long duration;
+    private PersistedAlarmRuleState state;
+    private boolean updateFlag;
 
-    public AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule) {
+    public AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule, PersistedAlarmRuleState state) {
         this.severity = severity;
         this.alarmRule = alarmRule;
+        if (state != null) {
+            this.state = state;
+        } else {
+            this.state = new PersistedAlarmRuleState(0L, 0L);
+        }
         if (alarmRule.getCondition().getDurationValue() > 0) {
             requiredDurationInMs = alarmRule.getCondition().getDurationUnit().toMillis(alarmRule.getCondition().getDurationValue());
         } else {
@@ -45,23 +51,35 @@ public class AlarmRuleState {
         }
     }
 
+    public boolean checkUpdate() {
+        if (updateFlag) {
+            updateFlag = false;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public boolean eval(DeviceDataSnapshot data) {
         if (requiredDurationInMs > 0) {
             boolean eval = eval(alarmRule.getCondition(), data);
             if (eval) {
-                if (lastEventTs > 0) {
-                    if (data.getTs() > lastEventTs) {
-                        duration += data.getTs() - lastEventTs;
-                        lastEventTs = data.getTs();
+                if (state.getLastEventTs() > 0) {
+                    if (data.getTs() > state.getLastEventTs()) {
+                        state.setDuration(state.getDuration() + (data.getTs() - state.getLastEventTs()));
+                        state.setLastEventTs(data.getTs());
+                        updateFlag = true;
                     }
                 } else {
-                    lastEventTs = data.getTs();
-                    duration = 0;
+                    state.setLastEventTs(data.getTs());
+                    state.setDuration(0L);
+                    updateFlag = true;
                 }
-                return duration > requiredDurationInMs;
+                return state.getDuration() > requiredDurationInMs;
             } else {
-                lastEventTs = 0;
-                duration = 0;
+                state.setLastEventTs(0L);
+                state.setDuration(0L);
+                updateFlag = true;
                 return false;
             }
         } else {
@@ -70,8 +88,8 @@ public class AlarmRuleState {
     }
 
     public boolean eval(long ts) {
-        if (requiredDurationInMs > 0 && lastEventTs > 0 && ts > lastEventTs) {
-            duration += ts - lastEventTs;
+        if (requiredDurationInMs > 0 && state.getLastEventTs() > 0 && ts > state.getLastEventTs()) {
+            long duration = state.getDuration() + (ts - state.getLastEventTs());
             return duration > requiredDurationInMs;
         } else {
             return false;
@@ -87,7 +105,6 @@ public class AlarmRuleState {
             }
             eval = eval && eval(value, keyFilter.getPredicate());
         }
-        //TODO: use condition duration;
         return eval;
     }
 
