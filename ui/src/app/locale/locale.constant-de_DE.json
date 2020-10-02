@@ -756,6 +756,8 @@
     "details": "Details",
     "copy-id": "Regelketten-ID kopieren",
     "id-copied-message": "Regelketten-ID wurde in die Zwischenablage kopiert",
+    "sync": "Sync Edge",
+    "sync-message": "Edge wurde synchronisiert",
     "permissions": "Berechtigungen",
     "edge-required": "Rand ist erforderlich.",
     "edge-type": "Randtyp",

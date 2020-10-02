@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -47,6 +46,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.EdgeGrpcSession;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -415,8 +415,13 @@ public class EdgeController extends BaseController {
     public void syncEdge(@RequestBody EdgeId edgeId) throws ThingsboardException {
         try {
             edgeId = checkNotNull(edgeId);
-            Edge edge = checkEdgeId(edgeId, Operation.READ);
-            syncEdgeService.sync(edge);
+            if (isEdgesSupportEnabled()) {
+                EdgeGrpcSession session = edgeGrpcService.getEdgeGrpcSessionById(edgeId);
+                Edge edge = session.getEdge();
+                syncEdgeService.sync(edge);
+            } else {
+                throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
+            }
         } catch (Exception e) {
             throw handleException(e);
         }

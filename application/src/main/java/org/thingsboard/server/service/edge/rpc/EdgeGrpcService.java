@@ -146,6 +146,15 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         save(edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, System.currentTimeMillis());
     }
 
+    public EdgeGrpcSession getEdgeGrpcSessionById(EdgeId edgeId) {
+        EdgeGrpcSession session = sessions.get(edgeId);
+        if (session != null && session.isConnected()) {
+            return session;
+        } else {
+            throw new RuntimeException("Edge is not connected");
+        }
+    }
+
     private void processHandleMessages() {
         executor.submit(() -> {
             while (!Thread.interrupted()) {

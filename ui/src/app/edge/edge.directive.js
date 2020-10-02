@@ -20,7 +20,7 @@ import edgeFieldsetTemplate from './edge-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EdgeDirective($compile, $templateCache, $translate, $mdDialog, $document, utils, toast, types, customerService) {
+export default function EdgeDirective($compile, $templateCache, $translate, $mdDialog, $document, utils, toast, types, customerService, edgeService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(edgeFieldsetTemplate);
         element.html(template);
@@ -68,6 +68,17 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
         scope.onEdgeIdCopied = function() {
             toast.showSuccess($translate.instant('edge.id-copied-message'), 750, angular.element(element).parent().parent(), 'bottom left');
         };
+
+        scope.onEdgeSync = function (edgeId) {
+            edgeService.syncEdge(edgeId).then(
+                function success() {
+                    toast.showSuccess($translate.instant('edge.sync-message'), 750, angular.element(element).parent().parent(), 'bottom left');
+                },
+                function fail(error) {
+                    toast.showError(error);
+                }
+            );
+        }
 
         $compile(element.contents())(scope);
 
