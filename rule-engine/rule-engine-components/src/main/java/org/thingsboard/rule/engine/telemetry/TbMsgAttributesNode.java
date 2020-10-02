@@ -63,9 +63,7 @@ public class TbMsgAttributesNode implements TbNode {
         }
         String src = msg.getData();
         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(src));
-        if (StringUtils.isEmpty(msg.getMetaData().getValue(SCOPE))) {
-            msg.getMetaData().putValue(SCOPE, config.getScope());
-        }
+        msg.getMetaData().putValue(SCOPE, config.getScope());
         ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getOriginator(), config.getScope(),
                 new ArrayList<>(attributes), new TelemetryNodeCallback(ctx, msg));
     }
