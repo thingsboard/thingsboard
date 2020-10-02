@@ -19,12 +19,12 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.protobuf.AbstractMessage;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.edge.rpc.EdgeGrpcClient;
 import org.thingsboard.edge.rpc.EdgeRpcClient;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
@@ -41,7 +41,7 @@ import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -53,16 +53,19 @@ public class EdgeImitator {
 
     private EdgeRpcClient edgeRpcClient;
 
+    private CountDownLatch messagesLatch;
     private CountDownLatch responsesLatch;
 
     @Getter
-    private EdgeStorage storage;
-
+    private EdgeConfiguration configuration;
+    @Getter
+    private List<AbstractMessage> downlinkMsgs;
 
     public EdgeImitator(String host, int port, String routingKey, String routingSecret) throws NoSuchFieldException, IllegalAccessException {
         edgeRpcClient = new EdgeGrpcClient();
-        storage = new EdgeStorage();
+        messagesLatch = new CountDownLatch(0);
         responsesLatch = new CountDownLatch(0);
+        downlinkMsgs = new ArrayList<>();
         this.routingKey = routingKey;
         this.routingSecret = routingSecret;
         setEdgeCredentials("rpcHost", host);
@@ -101,7 +104,7 @@ public class EdgeImitator {
     }
 
     private void onEdgeUpdate(EdgeConfiguration edgeConfiguration) {
-        storage.setConfiguration(edgeConfiguration);
+        this.configuration = edgeConfiguration;
     }
 
     private void onDownlink(DownlinkMsg downlinkMsg) {
@@ -129,47 +132,68 @@ public class EdgeImitator {
         List<ListenableFuture<Void>> result = new ArrayList<>();
         if (downlinkMsg.getDeviceUpdateMsgList() != null && !downlinkMsg.getDeviceUpdateMsgList().isEmpty()) {
             for (DeviceUpdateMsg deviceUpdateMsg: downlinkMsg.getDeviceUpdateMsgList()) {
-                result.add(storage.processEntity(deviceUpdateMsg.getMsgType(), EntityType.DEVICE, new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB())));
+                saveDownlinkMsg(deviceUpdateMsg);
             }
         }
         if (downlinkMsg.getAssetUpdateMsgList() != null && !downlinkMsg.getAssetUpdateMsgList().isEmpty()) {
             for (AssetUpdateMsg assetUpdateMsg: downlinkMsg.getAssetUpdateMsgList()) {
-                result.add(storage.processEntity(assetUpdateMsg.getMsgType(), EntityType.ASSET, new UUID(assetUpdateMsg.getIdMSB(), assetUpdateMsg.getIdLSB())));
+                saveDownlinkMsg(assetUpdateMsg);
             }
         }
         if (downlinkMsg.getRuleChainUpdateMsgList() != null && !downlinkMsg.getRuleChainUpdateMsgList().isEmpty()) {
             for (RuleChainUpdateMsg ruleChainUpdateMsg: downlinkMsg.getRuleChainUpdateMsgList()) {
-                result.add(storage.processEntity(ruleChainUpdateMsg.getMsgType(), EntityType.RULE_CHAIN, new UUID(ruleChainUpdateMsg.getIdMSB(), ruleChainUpdateMsg.getIdLSB())));
+                saveDownlinkMsg(ruleChainUpdateMsg);
             }
         }
         if (downlinkMsg.getDashboardUpdateMsgList() != null && !downlinkMsg.getDashboardUpdateMsgList().isEmpty()) {
             for (DashboardUpdateMsg dashboardUpdateMsg: downlinkMsg.getDashboardUpdateMsgList()) {
-                result.add(storage.processEntity(dashboardUpdateMsg.getMsgType(), EntityType.DASHBOARD, new UUID(dashboardUpdateMsg.getIdMSB(), dashboardUpdateMsg.getIdLSB())));
+                saveDownlinkMsg(dashboardUpdateMsg);
             }
         }
         if (downlinkMsg.getRelationUpdateMsgList() != null && !downlinkMsg.getRelationUpdateMsgList().isEmpty()) {
             for (RelationUpdateMsg relationUpdateMsg: downlinkMsg.getRelationUpdateMsgList()) {
-                result.add(storage.processRelation(relationUpdateMsg));
+                saveDownlinkMsg(relationUpdateMsg);
             }
         }
         if (downlinkMsg.getAlarmUpdateMsgList() != null && !downlinkMsg.getAlarmUpdateMsgList().isEmpty()) {
             for (AlarmUpdateMsg alarmUpdateMsg: downlinkMsg.getAlarmUpdateMsgList()) {
-                result.add(storage.processAlarm(alarmUpdateMsg));
+                saveDownlinkMsg(alarmUpdateMsg);
             }
         }
         if (downlinkMsg.getEntityDataList() != null && !downlinkMsg.getEntityDataList().isEmpty()) {
             for (EntityDataProto entityData: downlinkMsg.getEntityDataList()) {
-                result.add(storage.processEntityData(entityData));
+                saveDownlinkMsg(entityData);
             }
         }
         return Futures.allAsList(result);
     }
 
-    public void waitForResponses() throws InterruptedException { responsesLatch.await(5, TimeUnit.SECONDS);
+    private ListenableFuture<Void> saveDownlinkMsg(AbstractMessage message) {
+        downlinkMsgs.add(message);
+        messagesLatch.countDown();
+        return Futures.immediateFuture(null);
     }
+
+    public void waitForMessages() throws InterruptedException {
+        messagesLatch.await(5, TimeUnit.SECONDS);
+    }
+
+    public void expectMessageAmount(int messageAmount) {
+        messagesLatch = new CountDownLatch(messageAmount);
+    }
+
+    public void waitForResponses() throws InterruptedException { responsesLatch.await(5, TimeUnit.SECONDS); }
 
     public void expectResponsesAmount(int messageAmount) {
         responsesLatch = new CountDownLatch(messageAmount);
+    }
+
+    public <T> Optional<T> findMessageByType(Class<T> tClass) {
+        return (Optional<T>) downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg.getClass().isAssignableFrom(tClass)).findAny();
+    }
+
+    public AbstractMessage getLatestMessage() {
+        return downlinkMsgs.get(downlinkMsgs.size() - 1);
     }
 
 }
