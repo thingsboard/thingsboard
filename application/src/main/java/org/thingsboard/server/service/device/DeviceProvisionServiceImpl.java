@@ -27,8 +27,9 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -115,11 +116,9 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
         }
 
-        DeviceProfile targetProfile = deviceProfileDao.findByProvisionDeviceKeyAndProvisionDeviceSecret(provisionRequestKey, provisionRequestSecret);
+        DeviceProfile targetProfile = deviceProfileDao.findByProvisionDeviceKey(provisionRequestKey);
 
-        if (targetProfile == null ||
-                !(targetProfile.getProvisionType() != DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES ||
-                  targetProfile.getProvisionType() != DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES)) {
+        if (targetProfile == null) {
             return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
         }
 
@@ -127,23 +126,28 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
         switch(targetProfile.getProvisionType()) {
             case ALLOW_CREATE_NEW_DEVICES:
-                if (targetDevice != null) {
-                    log.warn("[{}] The device is present and could not be provisioned once more!", targetDevice.getName());
-                    notify(targetDevice, provisionRequest, DataConstants.PROVISION_FAILURE, false);
-                    return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
-                } else {
-                    return createDevice(provisionRequest, targetProfile);
+                if (((AllowCreateNewDevicesDeviceProfileProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration()).getProvisionDeviceSecret().equals(provisionRequestSecret)){
+                    if (targetDevice != null) {
+                        log.warn("[{}] The device is present and could not be provisioned once more!", targetDevice.getName());
+                        notify(targetDevice, provisionRequest, DataConstants.PROVISION_FAILURE, false);
+                        return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
+                    } else {
+                        return createDevice(provisionRequest, targetProfile);
+                    }
                 }
+                break;
             case CHECK_PRE_PROVISIONED_DEVICES:
-                if (targetDevice != null && targetDevice.getDeviceProfileId().equals(targetProfile.getId())){
-                    return processProvision(targetDevice, provisionRequest);
-                } else {
-                    log.warn("[{}] Failed to find pre provisioned device!", provisionRequest.getDeviceName());
-                    return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
+                if (((CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration()).getProvisionDeviceSecret().equals(provisionRequestSecret)) {
+                    if (targetDevice != null && targetDevice.getDeviceProfileId().equals(targetProfile.getId())) {
+                        return processProvision(targetDevice, provisionRequest);
+                    } else {
+                        log.warn("[{}] Failed to find pre provisioned device!", provisionRequest.getDeviceName());
+                        return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
+                    }
                 }
-            default:
-                throw new RuntimeException("Strategy is not supported - " + targetProfile.getProvisionType().name());
+                break;
         }
+        return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
     }
 
     private ListenableFuture<ProvisionResponse> processProvision(Device device, ProvisionRequest provisionRequest) {

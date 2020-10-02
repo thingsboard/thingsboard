@@ -81,8 +81,8 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
     }
 
     @Override
-    public DeviceProfile findByProvisionDeviceKeyAndProvisionDeviceSecret(String provisionDeviceKey, String provisionDeviceSecret) {
-        return DaoUtil.getData(deviceProfileRepository.findByProvisionDeviceKeyAndProvisionDeviceSecret(provisionDeviceKey, provisionDeviceSecret));
+    public DeviceProfile findByProvisionDeviceKey(String provisionDeviceKey) {
+        return DaoUtil.getData(deviceProfileRepository.findByProvisionDeviceKey(provisionDeviceKey));
     }
 
     @Override
