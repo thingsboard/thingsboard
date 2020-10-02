@@ -138,16 +138,37 @@ public class TbMsgPushToEdgeNode implements TbNode {
     }
 
     private EdgeEvent buildEdgeEvent(TbMsg msg, TbContext ctx) throws JsonProcessingException {
-        if (DataConstants.ALARM.equals(msg.getType())) {
+        String msgType = msg.getType();
+        if (DataConstants.ALARM.equals(msgType)) {
             return buildEdgeEvent(ctx.getTenantId(), ActionType.ADDED, getUUIDFromMsgData(msg), EdgeEventType.ALARM, null);
         } else {
             EdgeEventType edgeEventTypeByEntityType = EdgeUtils.getEdgeEventTypeByEntityType(msg.getOriginator().getEntityType());
             if (edgeEventTypeByEntityType == null) {
                 return null;
             }
-            ActionType actionType = getActionTypeByMsgType(msg.getType());
-            JsonNode entityBody = getEntityBody(actionType, msg.getData(), msg.getMetaData().getData());
-            return buildEdgeEvent(ctx.getTenantId(), actionType, msg.getOriginator().getId(), edgeEventTypeByEntityType, entityBody);
+            ActionType actionType = getActionTypeByMsgType(msgType);
+            Map<String, Object> entityBody = new HashMap<>();
+            Map<String, String> metadata = msg.getMetaData().getData();
+            JsonNode dataJson = json.readTree(msg.getData());
+            switch (actionType) {
+                case ATTRIBUTES_UPDATED:
+                    entityBody.put("kv", dataJson);
+                    entityBody.put("scope", metadata.get("scope"));
+                    if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)) {
+                        entityBody.put("isPostAttributes", true);
+                    }
+                    break;
+                case ATTRIBUTES_DELETED:
+                    List<String> keys = json.treeToValue(dataJson.get("attributes"), List.class);
+                    entityBody.put("keys", keys);
+                    entityBody.put("scope", metadata.get("scope"));
+                    break;
+                case TIMESERIES_UPDATED:
+                    entityBody.put("data", dataJson);
+                    entityBody.put("ts", metadata.get("ts"));
+                    break;
+            }
+            return buildEdgeEvent(ctx.getTenantId(), actionType, msg.getOriginator().getId(), edgeEventTypeByEntityType, json.valueToTree(entityBody));
         }
     }
 
@@ -159,27 +180,6 @@ public class TbMsgPushToEdgeNode implements TbNode {
         edgeEvent.setType(edgeEventType);
         edgeEvent.setBody(entityBody);
         return edgeEvent;
-    }
-
-    private JsonNode getEntityBody(ActionType actionType, String data, Map<String, String> metadata) throws JsonProcessingException {
-        Map<String, Object> entityBody = new HashMap<>();
-        JsonNode dataJson = json.readTree(data);
-        switch (actionType) {
-            case ATTRIBUTES_UPDATED:
-                entityBody.put("kv", dataJson);
-                entityBody.put("scope", metadata.get("scope"));
-                break;
-            case ATTRIBUTES_DELETED:
-                List<String> keys = json.treeToValue(dataJson.get("attributes"), List.class);
-                entityBody.put("keys", keys);
-                entityBody.put("scope", metadata.get("scope"));
-                break;
-            case TIMESERIES_UPDATED:
-                entityBody.put("data", dataJson);
-                entityBody.put("ts", metadata.get("ts"));
-                break;
-        }
-        return json.valueToTree(entityBody);
     }
 
     private UUID getUUIDFromMsgData(TbMsg msg) throws JsonProcessingException {

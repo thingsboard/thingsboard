@@ -102,8 +102,9 @@ message EntityDataProto {
   string entityType = 3;
   transport.PostTelemetryMsg postTelemetryMsg = 4;
   transport.PostAttributeMsg postAttributesMsg = 5;
-  string postAttributeScope = 6;
-  AttributeDeleteMsg attributeDeleteMsg = 7;
+  transport.PostAttributeMsg attributesUpdatedMsg = 6;
+  string postAttributeScope = 7;
+  AttributeDeleteMsg attributeDeleteMsg = 8;
   // transport.ToDeviceRpcRequestMsg ???
 }
 
