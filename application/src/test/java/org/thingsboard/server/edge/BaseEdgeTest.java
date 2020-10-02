@@ -19,6 +19,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -441,11 +442,11 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Device device = edgeDevices.get(0);
         Assert.assertEquals("Edge Device 1", device.getName());
 
-        String attributesData = "{\"scope\":\"SERVER_SCOPE\",\"kv\":{\"test\":\"test\"}}";
+        String attributesData = "{\"scope\":\"SERVER_SCOPE\",\"kv\":{\"key\":\"value\"}}";
         JsonNode attributesEntityData = mapper.readTree(attributesData);
-        EdgeEvent edgeEvent2 = constructEdgeEvent(tenantId, edge.getId(), ActionType.ATTRIBUTES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, attributesEntityData);
+        EdgeEvent edgeEvent1 = constructEdgeEvent(tenantId, edge.getId(), ActionType.ATTRIBUTES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, attributesEntityData);
         edgeImitator.getStorage().expectMessageAmount(1);
-        edgeEventService.saveAsync(edgeEvent2);
+        edgeEventService.saveAsync(edgeEvent1);
         edgeImitator.getStorage().waitForMessages();
 
         EntityDataProto latestEntityDataMsg = edgeImitator.getStorage().getLatestEntityDataMsg();
@@ -454,14 +455,36 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(device.getId().getId(), uuid);
         Assert.assertEquals(device.getId().getEntityType().name(), latestEntityDataMsg.getEntityType());
         Assert.assertEquals(attributesEntityData.get("scope").asText(), latestEntityDataMsg.getPostAttributeScope());
+        Assert.assertTrue(latestEntityDataMsg.hasAttributesUpdatedMsg());
+
+        TransportProtos.PostAttributeMsg attributesUpdatedMsg = latestEntityDataMsg.getAttributesUpdatedMsg();
+        Assert.assertEquals(1, attributesUpdatedMsg.getKvCount());
+        TransportProtos.KeyValueProto keyValueProto = attributesUpdatedMsg.getKv(0);
+        Assert.assertEquals("key", keyValueProto.getKey());
+        Assert.assertEquals("value", keyValueProto.getStringV());
+        edgeImitator.getStorage().setLatestEntityDataMsg(null);
+
+        ((ObjectNode) attributesEntityData).put("isPostAttributes", true);
+        EdgeEvent edgeEvent2 = constructEdgeEvent(tenantId, edge.getId(), ActionType.ATTRIBUTES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, attributesEntityData);
+        edgeImitator.getStorage().expectMessageAmount(1);
+        edgeEventService.saveAsync(edgeEvent2);
+        edgeImitator.getStorage().waitForMessages();
+
+        latestEntityDataMsg = edgeImitator.getStorage().getLatestEntityDataMsg();
+        Assert.assertNotNull(latestEntityDataMsg);
+        uuid = new UUID(latestEntityDataMsg.getEntityIdMSB(), latestEntityDataMsg.getEntityIdLSB());
+        Assert.assertEquals(device.getId().getId(), uuid);
+        Assert.assertEquals(device.getId().getEntityType().name(), latestEntityDataMsg.getEntityType());
+        Assert.assertEquals(attributesEntityData.get("scope").asText(), latestEntityDataMsg.getPostAttributeScope());
         Assert.assertTrue(latestEntityDataMsg.hasPostAttributesMsg());
 
         TransportProtos.PostAttributeMsg postAttributeMsg = latestEntityDataMsg.getPostAttributesMsg();
         Assert.assertEquals(1, postAttributeMsg.getKvCount());
-        TransportProtos.KeyValueProto keyValueProto = postAttributeMsg.getKv(0);
-        Assert.assertEquals("test", keyValueProto.getKey());
-        Assert.assertEquals("test", keyValueProto.getStringV());
+        keyValueProto = postAttributeMsg.getKv(0);
+        Assert.assertEquals("key", keyValueProto.getKey());
+        Assert.assertEquals("value", keyValueProto.getStringV());
         edgeImitator.getStorage().setLatestEntityDataMsg(null);
+
         log.info("Attributes tested successfully");
     }
 
@@ -600,7 +623,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         entityDataBuilder2.setEntityType(device.getId().getEntityType().name());
         entityDataBuilder2.setEntityIdMSB(device.getId().getId().getMostSignificantBits());
         entityDataBuilder2.setEntityIdLSB(device.getId().getId().getLeastSignificantBits());
-        entityDataBuilder2.setPostAttributesMsg(JsonConverter.convertToAttributesProto(attributesData));
+        entityDataBuilder2.setAttributesUpdatedMsg(JsonConverter.convertToAttributesProto(attributesData));
         entityDataBuilder2.setPostAttributeScope(DataConstants.SERVER_SCOPE);
         builder2.addEntityData(entityDataBuilder2.build());
         edgeImitator.sendUplinkMsg(builder2.build());
