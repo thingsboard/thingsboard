@@ -53,6 +53,7 @@ import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
+import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
@@ -207,23 +208,24 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void processDevicePublish(ChannelHandlerContext ctx, MqttPublishMessage mqttMsg, String topicName, int msgId) {
         try {
+            MqttTransportAdaptor payloadAdaptor = deviceSessionCtx.getPayloadAdaptor();
             if (deviceSessionCtx.isDeviceTelemetryTopic(topicName)) {
-                TransportProtos.PostTelemetryMsg postTelemetryMsg = deviceSessionCtx.getPayloadAdaptor().convertToPostTelemetry(deviceSessionCtx, mqttMsg);
+                TransportProtos.PostTelemetryMsg postTelemetryMsg = payloadAdaptor.convertToPostTelemetry(deviceSessionCtx, mqttMsg);
                 transportService.process(deviceSessionCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(ctx, msgId, postTelemetryMsg));
             } else if (deviceSessionCtx.isDeviceAttributesTopic(topicName)) {
-                TransportProtos.PostAttributeMsg postAttributeMsg = deviceSessionCtx.getPayloadAdaptor().convertToPostAttributes(deviceSessionCtx, mqttMsg);
+                TransportProtos.PostAttributeMsg postAttributeMsg = payloadAdaptor.convertToPostAttributes(deviceSessionCtx, mqttMsg);
                 transportService.process(deviceSessionCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(ctx, msgId, postAttributeMsg));
             } else if (topicName.startsWith(MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX)) {
-                TransportProtos.GetAttributeRequestMsg getAttributeMsg = deviceSessionCtx.getPayloadAdaptor().convertToGetAttributes(deviceSessionCtx, mqttMsg);
+                TransportProtos.GetAttributeRequestMsg getAttributeMsg = payloadAdaptor.convertToGetAttributes(deviceSessionCtx, mqttMsg);
                 transportService.process(deviceSessionCtx.getSessionInfo(), getAttributeMsg, getPubAckCallback(ctx, msgId, getAttributeMsg));
             } else if (topicName.startsWith(MqttTopics.DEVICE_RPC_RESPONSE_TOPIC)) {
-                TransportProtos.ToDeviceRpcResponseMsg rpcResponseMsg = deviceSessionCtx.getPayloadAdaptor().convertToDeviceRpcResponse(deviceSessionCtx, mqttMsg);
+                TransportProtos.ToDeviceRpcResponseMsg rpcResponseMsg = payloadAdaptor.convertToDeviceRpcResponse(deviceSessionCtx, mqttMsg);
                 transportService.process(deviceSessionCtx.getSessionInfo(), rpcResponseMsg, getPubAckCallback(ctx, msgId, rpcResponseMsg));
             } else if (topicName.startsWith(MqttTopics.DEVICE_RPC_REQUESTS_TOPIC)) {
-                TransportProtos.ToServerRpcRequestMsg rpcRequestMsg = deviceSessionCtx.getPayloadAdaptor().convertToServerRpcRequest(deviceSessionCtx, mqttMsg);
+                TransportProtos.ToServerRpcRequestMsg rpcRequestMsg = payloadAdaptor.convertToServerRpcRequest(deviceSessionCtx, mqttMsg);
                 transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequestMsg, getPubAckCallback(ctx, msgId, rpcRequestMsg));
             } else if (topicName.equals(MqttTopics.DEVICE_CLAIM_TOPIC)) {
-                TransportProtos.ClaimDeviceMsg claimDeviceMsg = deviceSessionCtx.getPayloadAdaptor().convertToClaimDevice(deviceSessionCtx, mqttMsg);
+                TransportProtos.ClaimDeviceMsg claimDeviceMsg = payloadAdaptor.convertToClaimDevice(deviceSessionCtx, mqttMsg);
                 transportService.process(deviceSessionCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(ctx, msgId, claimDeviceMsg));
             } else {
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
@@ -280,13 +282,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     }
                     case MqttTopics.DEVICE_RPC_RESPONSE_SUB_TOPIC:
                     case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC:
-
                     case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
-
                     case MqttTopics.GATEWAY_RPC_TOPIC:
-
                     case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
-
                         registerSubQoS(topic, grantedQoSList, reqQoS);
                         break;
                     default:
