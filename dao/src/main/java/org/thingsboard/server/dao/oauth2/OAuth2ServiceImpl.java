@@ -72,7 +72,7 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
         clientParamsValidator.accept(oauth2Params);
         clientRegistrationDao.deleteAll();
         clientRegistrationInfoDao.deleteAll();
-        oauth2Params.getOAuth2DomainDtos().forEach(domainParams -> {
+        oauth2Params.getDomainsParams().forEach(domainParams -> {
             domainParams.getClientRegistrations().forEach(clientRegistrationDto -> {
                 OAuth2ClientRegistrationInfo oAuth2ClientRegistrationInfo = OAuth2Utils.toClientRegistrationInfo(oauth2Params.isEnabled(), clientRegistrationDto);
                 OAuth2ClientRegistrationInfo savedClientRegistrationInfo = clientRegistrationInfoDao.save(TenantId.SYS_TENANT_ID, oAuth2ClientRegistrationInfo);
@@ -107,10 +107,10 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
 
     private final Consumer<OAuth2ClientsParams> clientParamsValidator = oauth2Params -> {
         if (oauth2Params == null
-                || oauth2Params.getOAuth2DomainDtos() == null) {
+                || oauth2Params.getDomainsParams() == null) {
             throw new DataValidationException("Domain params should be specified!");
         }
-        for (OAuth2ClientsDomainParams domainParams : oauth2Params.getOAuth2DomainDtos()) {
+        for (OAuth2ClientsDomainParams domainParams : oauth2Params.getDomainsParams()) {
             if (domainParams.getDomainInfos() == null
                     || domainParams.getDomainInfos().isEmpty()) {
                 throw new DataValidationException("List of domain configuration should be specified!");

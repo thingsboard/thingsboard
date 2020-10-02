@@ -42,7 +42,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
     public void after() {
         oAuth2Service.saveOAuth2Params(EMPTY_PARAMS);
         Assert.assertTrue(oAuth2Service.findAllClientRegistrationInfos().isEmpty());
-        Assert.assertTrue(oAuth2Service.findOAuth2Params().getOAuth2DomainDtos().isEmpty());
+        Assert.assertTrue(oAuth2Service.findOAuth2Params().getDomainsParams().isEmpty());
     }
 
     @Test
@@ -322,7 +322,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         oAuth2Service.saveOAuth2Params(clientsParams);
         List<OAuth2ClientRegistrationInfo> foundClientRegistrationInfos = oAuth2Service.findAllClientRegistrationInfos();
         Assert.assertEquals(6, foundClientRegistrationInfos.size());
-        clientsParams.getOAuth2DomainDtos().stream()
+        clientsParams.getDomainsParams().stream()
                 .flatMap(domainParams -> domainParams.getClientRegistrations().stream())
                 .forEach(clientRegistrationDto ->
                         Assert.assertTrue(

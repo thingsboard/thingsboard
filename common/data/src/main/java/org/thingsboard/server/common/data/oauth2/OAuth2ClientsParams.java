@@ -26,5 +26,5 @@ import java.util.Set;
 @AllArgsConstructor
 public class OAuth2ClientsParams {
     private boolean enabled;
-    private Set<OAuth2ClientsDomainParams> oAuth2DomainDtos;
+    private Set<OAuth2ClientsDomainParams> domainsParams;
 }
