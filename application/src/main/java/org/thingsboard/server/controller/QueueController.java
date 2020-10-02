@@ -135,7 +135,6 @@ public class QueueController extends BaseController {
             QueueId queueId = new QueueId(toUUID(queueIdStr));
             checkQueueId(queueId, Operation.DELETE);
             queueService.deleteQueue(getTenantId(), queueId);
-
         } catch (Exception e) {
             throw handleException(e);
         }

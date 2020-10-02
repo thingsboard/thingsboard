@@ -416,6 +416,15 @@ public class ModelConstants {
     public static final String QUEUE_PROCESSING_STRATEGY_PROPERTY = "processing_strategy";
     public static final String QUEUE_COLUMN_FAMILY_NAME = "queue";
 
+    /**
+     * Queue Stats constants.
+     */
+
+    public static final String QUEUE_STATS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String QUEUE_STATS_QUEUE_ID_PROPERTY = "queue_id";
+    public static final String QUEUE_STATS_NAME_PROPERTY = "name";
+    public static final String QUEUE_STATS_COLUMN_FAMILY_NAME = "queue_stats";
+
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 
     protected static final String[] COUNT_AGGREGATION_COLUMNS = new String[]{count(LONG_VALUE_COLUMN), count(DOUBLE_VALUE_COLUMN), count(BOOLEAN_VALUE_COLUMN), count(STRING_VALUE_COLUMN), count(JSON_VALUE_COLUMN)};

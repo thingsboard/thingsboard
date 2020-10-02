@@ -19,15 +19,17 @@ import com.google.common.util.concurrent.FutureCallback;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
@@ -63,14 +65,19 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TelemetrySubscriptionService tsService;
     private final Lock lock = new ReentrantLock();
-    private final AssetService assetService;
-    private final ConcurrentMap<TenantQueueKey, AssetId> tenantQueueAssets;
+    private final QueueStatsService queueStatsService;
+    private final QueueService queueService;
+    private final ConcurrentMap<TenantQueueKey, QueueStatsId> tenantQueueStats;
 
-    public DefaultRuleEngineStatisticsService(TelemetrySubscriptionService tsService, TbServiceInfoProvider serviceInfoProvider, AssetService assetService) {
+    public DefaultRuleEngineStatisticsService(TelemetrySubscriptionService tsService,
+                                              TbServiceInfoProvider serviceInfoProvider,
+                                              QueueStatsService queueStatsService,
+                                              QueueService queueService) {
         this.tsService = tsService;
         this.serviceInfoProvider = serviceInfoProvider;
-        this.assetService = assetService;
-        this.tenantQueueAssets = new ConcurrentHashMap<>();
+        this.queueStatsService = queueStatsService;
+        this.queueService = queueService;
+        this.tenantQueueStats = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -79,13 +86,13 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
         ruleEngineStats.getTenantStats().forEach((id, stats) -> {
             TenantId tenantId = new TenantId(id);
             try {
-                AssetId serviceAssetId = getServiceAssetId(tenantId, queueName);
+                QueueStatsId queueStatsId = getQueueStatsId(tenantId, queueName);
                 if (stats.getTotalMsgCounter().get() > 0) {
                     List<TsKvEntry> tsList = stats.getCounters().entrySet().stream()
                             .map(kv -> new BasicTsKvEntry(ts, new LongDataEntry(kv.getKey(), (long) kv.getValue().get())))
                             .collect(Collectors.toList());
                     if (!tsList.isEmpty()) {
-                        tsService.saveAndNotify(tenantId, serviceAssetId, tsList, CALLBACK);
+                        tsService.saveAndNotify(tenantId, queueStatsId, tsList, CALLBACK);
                     }
                 }
             } catch (DataValidationException e) {
@@ -97,7 +104,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
         ruleEngineStats.getTenantExceptions().forEach((tenantId, e) -> {
             TsKvEntry tsKv = new BasicTsKvEntry(ts, new JsonDataEntry("ruleEngineException", e.toJsonString()));
             try {
-                tsService.saveAndNotify(tenantId, getServiceAssetId(tenantId, queueName), Collections.singletonList(tsKv), CALLBACK);
+                tsService.saveAndNotify(tenantId, getQueueStatsId(tenantId, queueName), Collections.singletonList(tsKv), CALLBACK);
             } catch (DataValidationException e2) {
                 if (!e2.getMessage().equalsIgnoreCase("Asset is referencing to non-existent tenant!")) {
                     throw e2;
@@ -106,30 +113,33 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
         });
     }
 
-    private AssetId getServiceAssetId(TenantId tenantId, String queueName) {
+    private QueueStatsId getQueueStatsId(TenantId tenantId, String queueName) {
         TenantQueueKey key = new TenantQueueKey(tenantId, queueName);
-        AssetId assetId = tenantQueueAssets.get(key);
-        if (assetId == null) {
+        QueueStatsId queueStatsId = tenantQueueStats.get(key);
+        if (queueStatsId == null) {
             lock.lock();
             try {
-                assetId = tenantQueueAssets.get(key);
-                if (assetId == null) {
-                    Asset asset = assetService.findAssetByTenantIdAndName(tenantId, queueName + "_" + serviceInfoProvider.getServiceId());
-                    if (asset == null) {
-                        asset = new Asset();
-                        asset.setTenantId(tenantId);
-                        asset.setName(queueName + "_" + serviceInfoProvider.getServiceId());
-                        asset.setType(TB_SERVICE_QUEUE);
-                        asset = assetService.saveAsset(asset);
+                queueStatsId = tenantQueueStats.get(key);
+                if (queueStatsId == null) {
+                    QueueStats queueStats = queueStatsService.findByTenantIdAndName(tenantId, queueName + "_" + serviceInfoProvider.getServiceId());
+                    if (queueStats == null) {
+                        Queue queue = queueService.findQueueByTenantIdAndName(tenantId, queueName);
+                        if (queue == null) {
+                            throw new RuntimeException("Queue with name " + queueName + " is not exist.");
+                        }
+                        queueStats = new QueueStats();
+                        queueStats.setTenantId(tenantId);
+                        queueStats.setName(queueName + "_" + serviceInfoProvider.getServiceId());
+                        queueStats.setQueueId(queue.getId());
                     }
-                    assetId = asset.getId();
-                    tenantQueueAssets.put(key, assetId);
+                    queueStatsId = queueStats.getId();
+                    tenantQueueStats.put(key, queueStatsId);
                 }
             } finally {
                 lock.unlock();
             }
         }
-        return assetId;
+        return queueStatsId;
     }
 
     @Data

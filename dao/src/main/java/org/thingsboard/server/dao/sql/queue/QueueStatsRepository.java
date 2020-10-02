@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.sql.queue;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, TENANT_PROFILE, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, DEVICE_PROFILE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE, QUEUE, QUEUE_STATS
+import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.dao.model.sql.QueueStatsEntity;
+
+import java.util.UUID;
+
+public interface QueueStatsRepository extends CrudRepository<QueueStatsEntity, UUID> {
 }

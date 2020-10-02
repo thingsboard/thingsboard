@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
@@ -29,6 +28,7 @@ import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
@@ -42,8 +42,6 @@ import java.util.UUID;
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.QUEUE_COLUMN_FAMILY_NAME)
 public class QueueEntity extends BaseSqlEntity<Queue> {
-
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Column(name = ModelConstants.QUEUE_TENANT_ID_PROPERTY)
     private UUID tenantId;
@@ -84,8 +82,8 @@ public class QueueEntity extends BaseSqlEntity<Queue> {
         this.pollInterval = queue.getPollInterval();
         this.partitions = queue.getPartitions();
         this.packProcessingTimeout = queue.getPackProcessingTimeout();
-        this.submitStrategy = mapper.valueToTree(queue.getSubmitStrategy());
-        this.processingStrategy = mapper.valueToTree(queue.getProcessingStrategy());
+        this.submitStrategy = JacksonUtil.valueToTree(queue.getSubmitStrategy());
+        this.processingStrategy = JacksonUtil.valueToTree(queue.getProcessingStrategy());
     }
 
     @Override
@@ -98,8 +96,8 @@ public class QueueEntity extends BaseSqlEntity<Queue> {
         queue.setPollInterval(pollInterval);
         queue.setPartitions(partitions);
         queue.setPackProcessingTimeout(packProcessingTimeout);
-        queue.setSubmitStrategy(mapper.convertValue(this.submitStrategy, SubmitStrategy.class));
-        queue.setProcessingStrategy(mapper.convertValue(this.processingStrategy, ProcessingStrategy.class));
+        queue.setSubmitStrategy(JacksonUtil.convertValue(this.submitStrategy, SubmitStrategy.class));
+        queue.setProcessingStrategy(JacksonUtil.convertValue(this.processingStrategy, ProcessingStrategy.class));
         return queue;
     }
 }
