@@ -35,6 +35,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -64,11 +65,11 @@ public class QueueController extends BaseController {
     @RequestMapping(value = "/tenant/queues", params = {"serviceType", "pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<Queue> getTenantQueuesByServiceType(@RequestParam String serviceType,
-                                                            @RequestParam int pageSize,
-                                                            @RequestParam int page,
-                                                            @RequestParam(required = false) String textSearch,
-                                                            @RequestParam(required = false) String sortProperty,
-                                                            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+                                                        @RequestParam int pageSize,
+                                                        @RequestParam int page,
+                                                        @RequestParam(required = false) String textSearch,
+                                                        @RequestParam(required = false) String sortProperty,
+                                                        @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
@@ -82,6 +83,21 @@ public class QueueController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/queues/{queueId}", method = RequestMethod.GET)
+    @ResponseBody
+    public Queue getQueueById(@PathVariable("queueId") String queueIdStr) throws ThingsboardException {
+        checkParameter("queueId", queueIdStr);
+        try {
+            QueueId queueId = new QueueId(UUID.fromString(queueIdStr));
+            return checkNotNull(queueService.findQueueById(getTenantId(), queueId));
+        } catch (
+                Exception e) {
+            throw handleException(e);
+        }
+
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -111,20 +127,15 @@ public class QueueController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/queues/{queueId}", params = {"serviceType"}, method = RequestMethod.DELETE)
+    @RequestMapping(value = "/tenant/queues/{queueId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public void deleteQueue(@RequestParam String serviceType,
-                            @PathVariable("queueId") String queueIdStr) throws ThingsboardException {
-        checkParameter("serviceType", serviceType);
+    public void deleteQueue(@PathVariable("queueId") String queueIdStr) throws ThingsboardException {
         checkParameter("queueId", queueIdStr);
         try {
-            ServiceType type = ServiceType.valueOf(serviceType);
             QueueId queueId = new QueueId(toUUID(queueIdStr));
             checkQueueId(queueId, Operation.DELETE);
-            switch (type) {
-                case TB_RULE_ENGINE:
-                    queueService.deleteQueue(getTenantId(), queueId);
-            }
+            queueService.deleteQueue(getTenantId(), queueId);
+
         } catch (Exception e) {
             throw handleException(e);
         }
