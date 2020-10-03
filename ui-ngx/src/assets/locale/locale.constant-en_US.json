@@ -840,7 +840,17 @@
         "alarm-details": "Alarm details",
         "alarm-rule-condition": "Alarm rule condition",
         "enter-alarm-rule-condition-prompt": "Please add alarm rule condition",
-        "edit-alarm-rule-condition": "Edit alarm rule condition"
+        "edit-alarm-rule-condition": "Edit alarm rule condition",
+        "device-provisioning": "Device provisioning",
+        "provision-strategy": "Provision strategy",
+        "provision-strategy-required": "Provision strategy is required.",
+        "provision-strategy-disabled": "Disabled",
+        "provision-strategy-created-new": "Allow create new devices",
+        "provision-strategy-check-pre-provisioned": "Check pre provisioned devices",
+        "provision-device-key": "Provision device key",
+        "provision-device-key-required": "Provision device key is required.",
+        "provision-device-secret": "Provision device secret",
+        "provision-device-secret-required": "Provision device secret is required."
     },
     "dialog": {
         "close": "Close dialog"

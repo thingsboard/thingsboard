@@ -51,5 +51,15 @@
         formControlName="alarms">
       </tb-device-profile-alarms>
     </mat-expansion-panel>
+    <mat-expansion-panel [expanded]="true">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <div translate>device-profile.device-provisioning</div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <tb-device-profile-provision-configuration
+        formControlName="provisionConfiguration">
+      </tb-device-profile-provision-configuration>
+    </mat-expansion-panel>
   </mat-accordion>
 </div>
