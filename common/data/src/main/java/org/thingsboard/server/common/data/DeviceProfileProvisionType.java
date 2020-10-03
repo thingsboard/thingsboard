@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.session;
+package org.thingsboard.server.common.data;
 
-public enum FeatureType {
-    ATTRIBUTES, TELEMETRY, RPC, CLAIM, PROVISION
+public enum DeviceProfileProvisionType {
+    DISABLED,
+    ALLOW_CREATE_NEW_DEVICES,
+    CHECK_PRE_PROVISIONED_DEVICES
 }

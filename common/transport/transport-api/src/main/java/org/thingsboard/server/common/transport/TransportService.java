@@ -27,6 +27,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfo
 import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEventMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscribeToAttributeUpdatesMsg;
@@ -56,6 +58,9 @@ public interface TransportService {
 
     void process(GetOrCreateDeviceFromGatewayRequestMsg msg,
                  TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse> callback);
+
+    void process(ProvisionDeviceRequestMsg msg,
+                 TransportServiceCallback<ProvisionDeviceResponseMsg> callback);
 
     void getDeviceProfile(DeviceProfileId deviceProfileId, TransportServiceCallback<DeviceProfile> callback);
 
@@ -90,5 +95,4 @@ public interface TransportService {
     void reportActivity(SessionInfoProto sessionInfo);
 
     void deregisterSession(SessionInfoProto sessionInfo);
-
 }

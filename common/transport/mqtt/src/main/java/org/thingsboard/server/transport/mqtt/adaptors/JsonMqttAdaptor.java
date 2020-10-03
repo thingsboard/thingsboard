@@ -184,6 +184,28 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_RESPONSE_TOPIC + rpcResponse.getRequestId(), JsonConverter.toJson(rpcResponse)));
     }
 
+    @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ProvisionDeviceResponseMsg provisionResponse) {
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC, JsonConverter.toJson(provisionResponse)));
+    }
+
+    @Override
+    public TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        String payload = validatePayload(ctx.getSessionId(), inbound.payload(), false);
+        try {
+            return JsonConverter.convertToProvisionRequestMsg(payload);
+        } catch (IllegalStateException | JsonSyntaxException ex) {
+            throw new AdaptorException(ex);
+        }
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ProvisionDeviceResponseMsg responseMsg, int requestId) {
+        return Optional.of(createMqttPublishMsg(ctx,
+                MqttTopics.GATEWAY_PROVISION_REQUEST_TOPIC,
+                JsonConverter.toJson(responseMsg, requestId)));
+    }
+
     private MqttPublishMessage createMqttPublishMsg(MqttDeviceAwareSessionContext ctx, String topic, JsonElement json) {
         MqttFixedHeader mqttFixedHeader =
                 new MqttFixedHeader(MqttMessageType.PUBLISH, false, ctx.getQoSForTopic(topic), false, 0);

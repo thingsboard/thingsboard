@@ -52,6 +52,8 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
@@ -330,6 +332,16 @@ public class DefaultTransportService implements TransportService {
         tdi.setDeviceName(di.getDeviceName());
         tdi.setDeviceType(di.getDeviceType());
         return tdi;
+    }
+
+    @Override
+    public void process(ProvisionDeviceRequestMsg requestMsg, TransportServiceCallback<ProvisionDeviceResponseMsg> callback) {
+        log.trace("Processing msg: {}", requestMsg);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setProvisionDeviceRequestMsg(requestMsg).build());
+        ListenableFuture<ProvisionDeviceResponseMsg> response = Futures.transform(transportApiRequestTemplate.send(protoMsg), tmp ->
+            tmp.getValue().getProvisionDeviceResponseMsg()
+        , MoreExecutors.directExecutor());
+        AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
     }
 
     @Override

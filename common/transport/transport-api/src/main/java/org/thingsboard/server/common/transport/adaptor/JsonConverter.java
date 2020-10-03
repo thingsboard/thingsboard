@@ -42,6 +42,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
@@ -53,6 +54,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -397,6 +399,33 @@ public class JsonConverter {
         }
     }
 
+    public static JsonObject toJson(ProvisionDeviceResponseMsg payload) {
+        return toJson(payload, false, 0);
+    }
+
+    public static JsonObject toJson(ProvisionDeviceResponseMsg payload, int requestId) {
+        return toJson(payload, true, requestId);
+    }
+
+    private static JsonObject toJson(ProvisionDeviceResponseMsg payload, boolean toGateway, int requestId) {
+        JsonObject result = new JsonObject();
+        if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.NOT_FOUND) {
+            result.addProperty("errorMsg", "Provision data was not found!");
+        } else if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.FAILURE) {
+            result.addProperty("errorMsg", "Failed to provision device!");
+        } else {
+            if (toGateway) {
+                result.addProperty("id", requestId);
+            }
+            result.addProperty("deviceId", new UUID(payload.getDeviceCredentials().getDeviceIdMSB(), payload.getDeviceCredentials().getDeviceIdLSB()).toString());
+            result.addProperty("credentialsType", payload.getDeviceCredentials().getCredentialsType().name());
+            result.addProperty("credentialsId", payload.getDeviceCredentials().getCredentialsId());
+            result.addProperty("credentialsValue",
+                    StringUtils.isEmpty(payload.getDeviceCredentials().getCredentialsValue()) ? null : payload.getDeviceCredentials().getCredentialsValue());
+        }
+        return result;
+    }
+
     public static JsonElement toErrorJson(String errorMsg) {
         JsonObject error = new JsonObject();
         error.addProperty("error", errorMsg);
@@ -498,4 +527,43 @@ public class JsonConverter {
         maxStringValueLength = length;
     }
 
+    public static TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(String json) {
+        JsonElement jsonElement = new JsonParser().parse(json);
+        if (jsonElement.isJsonObject()) {
+            return buildProvisionRequestMsg(jsonElement.getAsJsonObject());
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
+        }
+    }
+
+    public static TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(JsonObject jo) {
+        return buildProvisionRequestMsg(jo);
+    }
+
+    private static TransportProtos.ProvisionDeviceRequestMsg buildProvisionRequestMsg(JsonObject jo) {
+        return TransportProtos.ProvisionDeviceRequestMsg.newBuilder()
+                .setDeviceName(getStrValue(jo, DataConstants.DEVICE_NAME, true))
+                .setX509CertPubKey(getStrValue(jo, DataConstants.CERT_PUB_KEY, false))
+                .setProvisionDeviceCredentialsMsg(buildProvisionDeviceCredentialsMsg(
+                        getStrValue(jo, DataConstants.PROVISION_KEY, true),
+                        getStrValue(jo, DataConstants.PROVISION_SECRET, true)))
+                .build();
+    }
+
+    private static TransportProtos.ProvisionDeviceCredentialsMsg buildProvisionDeviceCredentialsMsg(String provisionKey, String provisionSecret) {
+        return TransportProtos.ProvisionDeviceCredentialsMsg.newBuilder()
+                .setProvisionDeviceKey(provisionKey)
+                .setProvisionDeviceSecret(provisionSecret)
+                .build();
+    }
+    private static String getStrValue(JsonObject jo, String field, boolean requiredField) {
+        if (jo.has(field)) {
+            return jo.get(field).getAsString();
+        } else {
+            if (requiredField) {
+                throw new RuntimeException("Failed to find the field " + field + " in JSON body " + jo + "!");
+            }
+            return "";
+        }
+    }
 }

@@ -31,6 +31,8 @@ public class MqttTopics {
     public static final String DEVICE_TELEMETRY_TOPIC = BASE_DEVICE_API_TOPIC + "/telemetry";
     public static final String DEVICE_CLAIM_TOPIC = BASE_DEVICE_API_TOPIC + "/claim";
     public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + "/attributes";
+    public static final String DEVICE_PROVISION_REQUEST_TOPIC = BASE_DEVICE_API_TOPIC + "/provision";
+    public static final String DEVICE_PROVISION_RESPONSE_TOPIC = BASE_DEVICE_API_TOPIC + "/provision/response";
 
     public static final String BASE_GATEWAY_API_TOPIC = "v1/gateway";
     public static final String GATEWAY_CONNECT_TOPIC = BASE_GATEWAY_API_TOPIC + "/connect";
@@ -41,6 +43,8 @@ public class MqttTopics {
     public static final String GATEWAY_RPC_TOPIC = BASE_GATEWAY_API_TOPIC + "/rpc";
     public static final String GATEWAY_ATTRIBUTES_REQUEST_TOPIC = BASE_GATEWAY_API_TOPIC + "/attributes/request";
     public static final String GATEWAY_ATTRIBUTES_RESPONSE_TOPIC = BASE_GATEWAY_API_TOPIC + "/attributes/response";
+    public static final String GATEWAY_PROVISION_REQUEST_TOPIC = BASE_GATEWAY_API_TOPIC + "/provision";
+    public static final String GATEWAY_PROVISION_RESPONSE_TOPIC = BASE_GATEWAY_API_TOPIC + "/provision/response";
 
 
     private MqttTopics() {

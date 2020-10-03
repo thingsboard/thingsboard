@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.session;
+package org.thingsboard.server.dao.device.provision;
 
-public enum FeatureType {
-    ATTRIBUTES, TELEMETRY, RPC, CLAIM, PROVISION
+public enum ProvisionResponseStatus {
+
+    SUCCESS,
+    NOT_FOUND,
+    FAILURE
+
 }

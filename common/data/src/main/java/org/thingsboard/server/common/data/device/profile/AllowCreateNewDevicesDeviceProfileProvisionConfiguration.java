@@ -13,8 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.session;
+package org.thingsboard.server.common.data.device.profile;
 
-public enum FeatureType {
-    ATTRIBUTES, TELEMETRY, RPC, CLAIM, PROVISION
+import lombok.Data;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
+
+@Data
+public class AllowCreateNewDevicesDeviceProfileProvisionConfiguration implements DeviceProfileProvisionConfiguration {
+
+    private final String provisionDeviceSecret;
+
+    @Override
+    public DeviceProfileProvisionType getType() {
+        return DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES;
+    }
+
 }

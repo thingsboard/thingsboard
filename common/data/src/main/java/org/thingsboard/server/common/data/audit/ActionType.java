@@ -42,7 +42,9 @@ public enum ActionType {
     LOGOUT(false),
     LOCKOUT(false),
     ASSIGNED_FROM_TENANT(false),
-    ASSIGNED_TO_TENANT(false);
+    ASSIGNED_TO_TENANT(false),
+    PROVISION_SUCCESS(false),
+    PROVISION_FAILURE(false);
 
     private final boolean isRead;
 

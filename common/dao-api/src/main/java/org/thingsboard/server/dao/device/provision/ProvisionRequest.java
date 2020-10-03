@@ -13,8 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.session;
+package org.thingsboard.server.dao.device.provision;
 
-public enum FeatureType {
-    ATTRIBUTES, TELEMETRY, RPC, CLAIM, PROVISION
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
+
+@Data
+@AllArgsConstructor
+public class ProvisionRequest {
+    private String deviceName;
+    private String x509CertPubKey;
+    private ProvisionDeviceProfileCredentials credentials;
 }
