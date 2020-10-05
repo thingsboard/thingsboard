@@ -667,12 +667,11 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
                 + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
 
         EdgeImitator edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        // should be 4, but 4 events from sync service + 3 from controller. will be fixed in next releases
-        edgeImitator.expectMessageAmount(7);
+        edgeImitator.expectMessageAmount(8);
         edgeImitator.connect();
         edgeImitator.waitForMessages();
 
-        Assert.assertEquals(7, edgeImitator.getDownlinkMsgs().size());
+        Assert.assertEquals(8, edgeImitator.getDownlinkMsgs().size());
         Assert.assertTrue(edgeImitator.findMessageByType(RuleChainUpdateMsg.class).isPresent());
         Assert.assertTrue(edgeImitator.findMessageByType(DeviceUpdateMsg.class).isPresent());
         Assert.assertTrue(edgeImitator.findMessageByType(AssetUpdateMsg.class).isPresent());
