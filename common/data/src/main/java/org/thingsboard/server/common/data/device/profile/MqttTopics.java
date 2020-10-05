@@ -34,8 +34,8 @@ public class MqttTopics {
     private static final String ATTRIBUTES_RESPONSE = ATTRIBUTES + RESPONSE;
     private static final String ATTRIBUTES_REQUEST = ATTRIBUTES + REQUEST;
 
-    private static final String DEVICE_RPC_RESPONSE = RPC + RESPONSE;
-    private static final String DEVICE_RPC_REQUEST = RPC + REQUEST;
+    private static final String DEVICE_RPC_RESPONSE = RPC + RESPONSE + "/";
+    private static final String DEVICE_RPC_REQUEST = RPC + REQUEST + "/";
 
     private static final String DEVICE_ATTRIBUTES_RESPONSE = ATTRIBUTES_RESPONSE + "/";
     private static final String DEVICE_ATTRIBUTES_REQUEST = ATTRIBUTES_REQUEST + "/";
