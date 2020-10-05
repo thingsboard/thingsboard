@@ -49,7 +49,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     @Getter
     @Setter
-    private boolean provisionOnly;
+    private boolean provisionOnly = false;
 
     private volatile MqttTopicFilter telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
     private volatile MqttTopicFilter attributesTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();

@@ -175,7 +175,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
                 break;
             case DISCONNECT:
-                ctx.close();
+                if (checkConnected(ctx, msg)) {
+                    processDisconnect(ctx);
+                }
                 break;
         }
     }
