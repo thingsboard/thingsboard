@@ -93,6 +93,14 @@
           </tb-device-profile-alarms>
         </form>
       </mat-step>
+      <mat-step [stepControl]="provisionConfigurationFormGroup">
+        <form [formGroup]="provisionConfigurationFormGroup" style="padding-bottom: 16px;">
+          <ng-template matStepLabel>{{'device-profile.device-provisioning' | translate }}</ng-template>
+          <tb-device-profile-provision-configuration
+            formControlName="provisionConfiguration">
+          </tb-device-profile-provision-configuration>
+        </form>
+      </mat-step>
     </mat-horizontal-stepper>
   </div>
   <div mat-dialog-actions fxLayout="row wrap" fxLayoutAlign="space-between center">
@@ -107,7 +115,7 @@
       <button mat-raised-button
               [disabled]="(isLoading$ | async) || selectedForm().invalid"
               color="primary"
-              (click)="nextStep()">{{ (selectedIndex === 2 ? 'action.add' : 'action.continue') | translate }}</button>
+              (click)="nextStep()">{{ (selectedIndex === 3 ? 'action.add' : 'action.continue') | translate }}</button>
     </div>
   </div>
 </div>

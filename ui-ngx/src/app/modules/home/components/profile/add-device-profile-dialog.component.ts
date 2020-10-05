@@ -77,6 +77,8 @@ export class AddDeviceProfileDialogComponent extends
 
   alarmRulesFormGroup: FormGroup;
 
+  provisionConfigurationFormGroup: FormGroup;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AddDeviceProfileDialogData,
@@ -111,6 +113,12 @@ export class AddDeviceProfileDialogComponent extends
         alarms: [null]
       }
     );
+
+    this.provisionConfigurationFormGroup = this.fb.group(
+      {
+        provisionConfiguration: [null]
+      }
+    )
   }
 
   private deviceProfileTransportTypeChanged() {
@@ -131,7 +139,7 @@ export class AddDeviceProfileDialogComponent extends
   }
 
   nextStep() {
-    if (this.selectedIndex < 2) {
+    if (this.selectedIndex < 3) {
       this.addDeviceProfileStepper.next();
     } else {
       this.add();
@@ -146,6 +154,8 @@ export class AddDeviceProfileDialogComponent extends
         return this.transportConfigFormGroup;
       case 2:
         return this.alarmRulesFormGroup;
+      case 3:
+        return this.provisionConfigurationFormGroup;
     }
   }
 
@@ -154,11 +164,17 @@ export class AddDeviceProfileDialogComponent extends
       name: this.deviceProfileDetailsFormGroup.get('name').value,
       type: this.deviceProfileDetailsFormGroup.get('type').value,
       transportType: this.transportConfigFormGroup.get('transportType').value,
+      provisionType: this.provisionConfigurationFormGroup.get('provisionConfiguration').value.type,
+      provisionDeviceKey: this.provisionConfigurationFormGroup.get('provisionConfiguration').value.provisionDeviceKey,
       description: this.deviceProfileDetailsFormGroup.get('description').value,
       profileData: {
         configuration: createDeviceProfileConfiguration(DeviceProfileType.DEFAULT),
         transportConfiguration: this.transportConfigFormGroup.get('transportConfiguration').value,
-        alarms: this.alarmRulesFormGroup.get('alarms').value
+        alarms: this.alarmRulesFormGroup.get('alarms').value,
+        provisionConfiguration: {
+          type: this.provisionConfigurationFormGroup.get('provisionConfiguration').value.type,
+          provisionDeviceSecret: this.provisionConfigurationFormGroup.get('provisionConfiguration').value.provisionDeviceSecret
+        }
       }
     };
     if (this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value) {

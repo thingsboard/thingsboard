@@ -126,6 +126,10 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
   }
 
   updateForm(entity: DeviceProfile) {
+    if(entity?.profileData?.provisionConfiguration) {
+      entity.profileData.provisionConfiguration.provisionDeviceKey = entity?.provisionDeviceKey;
+    }
+
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({type: entity.type}, {emitEvent: false});
     this.entityForm.patchValue({transportType: entity.transportType}, {emitEvent: false});
@@ -138,7 +142,11 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     if (formValue.defaultRuleChainId) {
       formValue.defaultRuleChainId = new RuleChainId(formValue.defaultRuleChainId);
     }
-    return formValue;
+    formValue.provisionType = formValue.profileData.provisionConfiguration.type;
+    formValue.provisionDeviceKey = formValue.profileData.provisionConfiguration.provisionDeviceKey;
+    delete formValue.profileData.provisionConfiguration.provisionDeviceKey;
+
+    return super.prepareFormValue(formValue);
   }
 
   onDeviceProfileIdCopied(event) {

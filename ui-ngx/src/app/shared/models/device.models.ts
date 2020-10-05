@@ -41,6 +41,12 @@ export enum MqttTransportPayloadType {
   PROTOBUF = 'PROTOBUF'
 }
 
+export enum DeviceProvisionType {
+  DISABLED = 'DISABLED',
+  ALLOW_CREATE_NEW_DEVICES = 'ALLOW_CREATE_NEW_DEVICES',
+  CHECK_PRE_PROVISIONED_DEVICES = 'CHECK_PRE_PROVISIONED_DEVICES'
+}
+
 export interface DeviceConfigurationFormInfo {
   hasProfileConfiguration: boolean;
   hasDeviceConfiguration: boolean;
@@ -71,6 +77,15 @@ export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, st
     [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
   ]
 );
+
+
+export const deviceProvisionTypeTranslationMap = new Map<DeviceProvisionType, string>(
+  [
+    [DeviceProvisionType.DISABLED, 'device-profile.provision-strategy-disabled'],
+    [DeviceProvisionType.ALLOW_CREATE_NEW_DEVICES, 'device-profile.provision-strategy-created-new'],
+    [DeviceProvisionType.CHECK_PRE_PROVISIONED_DEVICES, 'device-profile.provision-strategy-check-pre-provisioned']
+  ]
+)
 
 export const mqttTransportPayloadTypeTranslationMap = new Map<MqttTransportPayloadType, string>(
   [
@@ -136,6 +151,12 @@ export type DeviceProfileTransportConfigurations = DefaultDeviceProfileTransport
 
 export interface DeviceProfileTransportConfiguration extends DeviceProfileTransportConfigurations {
   type: DeviceTransportType;
+}
+
+export interface DeviceProvisionConfiguration {
+  type: DeviceProvisionType;
+  provisionDeviceSecret?: string;
+  provisionDeviceKey?: string;
 }
 
 export function createDeviceProfileConfiguration(type: DeviceProfileType): DeviceProfileConfiguration {
@@ -234,6 +255,7 @@ export interface DeviceProfileData {
   configuration: DeviceProfileConfiguration;
   transportConfiguration: DeviceProfileTransportConfiguration;
   alarms?: Array<DeviceProfileAlarm>;
+  provisionConfiguration?: DeviceProvisionConfiguration;
 }
 
 export interface DeviceProfile extends BaseData<DeviceProfileId> {
@@ -243,6 +265,8 @@ export interface DeviceProfile extends BaseData<DeviceProfileId> {
   default?: boolean;
   type: DeviceProfileType;
   transportType: DeviceTransportType;
+  provisionType: DeviceProvisionType;
+  provisionDeviceKey?: string;
   defaultRuleChainId?: RuleChainId;
   profileData: DeviceProfileData;
 }
