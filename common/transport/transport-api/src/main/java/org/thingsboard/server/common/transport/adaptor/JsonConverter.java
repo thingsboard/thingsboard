@@ -439,6 +439,13 @@ public class JsonConverter {
         return result;
     }
 
+    public static JsonElement toGatewayJson(String deviceName, TransportProtos.ProvisionDeviceResponseMsg responseRequest) {
+        JsonObject result = new JsonObject();
+        result.addProperty(DEVICE_PROPERTY, deviceName);
+        result.add("data", JsonConverter.toJson(responseRequest));
+        return result;
+    }
+
     public static Set<AttributeKvEntry> convertToAttributes(JsonElement element) {
         Set<AttributeKvEntry> result = new HashSet<>();
         long ts = System.currentTimeMillis();

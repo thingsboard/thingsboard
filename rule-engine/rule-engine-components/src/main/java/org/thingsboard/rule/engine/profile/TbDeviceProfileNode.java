@@ -23,16 +23,21 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RuleNode(
@@ -47,53 +52,77 @@ import java.util.concurrent.ExecutionException;
         configDirective = "tbNodeEmptyConfig"
 )
 public class TbDeviceProfileNode implements TbNode {
+    private static final String PERIODIC_MSG_TYPE = "TbDeviceProfilePeriodicMsg";
 
     private RuleEngineDeviceProfileCache cache;
-    private Map<DeviceId, DeviceState> deviceStates = new ConcurrentHashMap<>();
+    private final Map<DeviceId, DeviceState> deviceStates = new ConcurrentHashMap<>();
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         cache = ctx.getDeviceProfileCache();
+        scheduleAlarmHarvesting(ctx);
+        //TODO: check that I am in root rule chain.
+        // If Yes - Init for all device profiles that do not have default rule chain id in device profile.
+        // If No - find device profiles with this rule chain id.
     }
 
     /**
-     * TODO:
-     * 1. Duration in the alarm conditions;
-     * 3. Update of the Device attributes (client, server and shared);
-     * 4. Dynamic values evaluation;
+     * 2. Dynamic values evaluation;
      */
-
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
         EntityType originatorType = msg.getOriginator().getEntityType();
-        if (EntityType.DEVICE.equals(originatorType)) {
-            DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
-            if (msg.getType().equals("ENTITY_UPDATED")) {
-                //TODO: handle if device profile id has changed.
-            } else {
-                DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId);
-                if (deviceState != null) {
-                    deviceState.process(ctx, msg);
+        if (msg.getType().equals(PERIODIC_MSG_TYPE)) {
+            scheduleAlarmHarvesting(ctx);
+            harvestAlarms(ctx, System.currentTimeMillis());
+        } else {
+            if (EntityType.DEVICE.equals(originatorType)) {
+                DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
+                if (msg.getType().equals(DataConstants.ENTITY_UPDATED)) {
+                    invalidateDeviceProfileCache(deviceId, msg.getData());
+                } else if (msg.getType().equals(DataConstants.ENTITY_DELETED)) {
+                    deviceStates.remove(deviceId);
                 } else {
-                    ctx.tellFailure(msg, new IllegalStateException("Device profile for device [" + deviceId + "] not found!"));
-                }
-            }
-        } else if (EntityType.DEVICE_PROFILE.equals(originatorType)) {
-            if (msg.getType().equals("ENTITY_UPDATED")) {
-                DeviceProfile deviceProfile = JacksonUtil.fromString(msg.getData(), DeviceProfile.class);
-                for (DeviceState state : deviceStates.values()) {
-                    if (deviceProfile.getId().equals(state.getProfileId())) {
-                        state.updateProfile(ctx, deviceProfile);
+                    DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId);
+                    if (deviceState != null) {
+                        deviceState.process(ctx, msg);
+                    } else {
+                        ctx.tellFailure(msg, new IllegalStateException("Device profile for device [" + deviceId + "] not found!"));
                     }
                 }
+            } else if (EntityType.DEVICE_PROFILE.equals(originatorType)) {
+                if (msg.getType().equals("ENTITY_UPDATED")) {
+                    DeviceProfile deviceProfile = JacksonUtil.fromString(msg.getData(), DeviceProfile.class);
+                    for (DeviceState state : deviceStates.values()) {
+                        if (deviceProfile.getId().equals(state.getProfileId())) {
+                            state.updateProfile(ctx, deviceProfile);
+                        }
+                    }
+                }
+                ctx.tellSuccess(msg);
+            } else {
+                ctx.tellSuccess(msg);
             }
-            ctx.tellSuccess(msg);
-        } else {
-            ctx.tellSuccess(msg);
         }
     }
 
-    private DeviceState getOrCreateDeviceState(TbContext ctx, DeviceId deviceId) {
+    public void invalidateDeviceProfileCache(DeviceId deviceId, String deviceJson) {
+        DeviceState deviceState = deviceStates.get(deviceId);
+        if (deviceState != null) {
+            DeviceProfileId currentProfileId = deviceState.getProfileId();
+            Device device = JacksonUtil.fromString(deviceJson, Device.class);
+            if (!currentProfileId.equals(device.getDeviceProfileId())) {
+                deviceStates.remove(deviceId);
+            }
+        }
+    }
+
+    @Override
+    public void destroy() {
+        deviceStates.clear();
+    }
+
+    protected DeviceState getOrCreateDeviceState(TbContext ctx, DeviceId deviceId) {
         DeviceState deviceState = deviceStates.get(deviceId);
         if (deviceState == null) {
             DeviceProfile deviceProfile = cache.get(ctx.getTenantId(), deviceId);
@@ -105,9 +134,15 @@ public class TbDeviceProfileNode implements TbNode {
         return deviceState;
     }
 
-    @Override
-    public void destroy() {
+    protected void scheduleAlarmHarvesting(TbContext ctx) {
+        TbMsg periodicCheck = TbMsg.newMsg(PERIODIC_MSG_TYPE, ctx.getTenantId(), TbMsgMetaData.EMPTY, "{}");
+        ctx.tellSelf(periodicCheck, TimeUnit.MINUTES.toMillis(1));
+    }
 
+    protected void harvestAlarms(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
+        for (DeviceState state : deviceStates.values()) {
+            state.harvestAlarms(ctx, ts);
+        }
     }
 
 }

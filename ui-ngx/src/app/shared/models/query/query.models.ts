@@ -269,14 +269,16 @@ export const complexOperationTranslationMap = new Map<ComplexOperation, string>(
 export enum DynamicValueSourceType {
   CURRENT_TENANT = 'CURRENT_TENANT',
   CURRENT_CUSTOMER = 'CURRENT_CUSTOMER',
-  CURRENT_USER = 'CURRENT_USER'
+  CURRENT_USER = 'CURRENT_USER',
+  CURRENT_DEVICE = 'CURRENT_DEVICE'
 }
 
 export const dynamicValueSourceTypeTranslationMap = new Map<DynamicValueSourceType, string>(
   [
     [DynamicValueSourceType.CURRENT_TENANT, 'filter.current-tenant'],
     [DynamicValueSourceType.CURRENT_CUSTOMER, 'filter.current-customer'],
-    [DynamicValueSourceType.CURRENT_USER, 'filter.current-user']
+    [DynamicValueSourceType.CURRENT_USER, 'filter.current-user'],
+    [DynamicValueSourceType.CURRENT_DEVICE, 'filter.current-device']
   ]
 );
 

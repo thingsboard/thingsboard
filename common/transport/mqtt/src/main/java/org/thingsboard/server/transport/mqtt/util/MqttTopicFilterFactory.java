@@ -20,7 +20,6 @@ import org.thingsboard.server.common.data.device.profile.MqttTopics;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.regex.Pattern;
 
 @Slf4j
 public class MqttTopicFilterFactory {

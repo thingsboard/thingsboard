@@ -393,6 +393,7 @@ public class DefaultTransportService implements TransportService {
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("deviceName", sessionInfo.getDeviceName());
             metaData.putValue("deviceType", sessionInfo.getDeviceType());
+            metaData.putValue("notifyDevice", "false");
             RuleChainId ruleChainId = resolveRuleChainId(sessionInfo);
             TbMsg tbMsg = TbMsg.newMsg(ServiceQueue.MAIN, SessionMsgType.POST_ATTRIBUTES_REQUEST.name(),
                     deviceId, metaData, gson.toJson(json), ruleChainId, null);

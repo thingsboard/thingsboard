@@ -36,6 +36,11 @@ export enum DeviceTransportType {
   LWM2M = 'LWM2M'
 }
 
+export enum MqttTransportPayloadType {
+  JSON = 'JSON',
+  PROTOBUF = 'PROTOBUF'
+}
+
 export interface DeviceConfigurationFormInfo {
   hasProfileConfiguration: boolean;
   hasDeviceConfiguration: boolean;
@@ -66,6 +71,14 @@ export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, st
     [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
   ]
 );
+
+export const mqttTransportPayloadTypeTranslationMap = new Map<MqttTransportPayloadType, string>(
+  [
+    [MqttTransportPayloadType.JSON, 'device-profile.mqtt-device-payload-type-json'],
+    [MqttTransportPayloadType.PROTOBUF, 'device-profile.mqtt-device-payload-type-proto']
+  ]
+);
+
 
 export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportType, DeviceConfigurationFormInfo>(
   [
@@ -162,7 +175,8 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
       case DeviceTransportType.MQTT:
         const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {
           deviceTelemetryTopic: 'v1/devices/me/telemetry',
-          deviceAttributesTopic: 'v1/devices/me/attributes'
+          deviceAttributesTopic: 'v1/devices/me/attributes',
+          transportPayloadType: MqttTransportPayloadType.JSON
         };
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
