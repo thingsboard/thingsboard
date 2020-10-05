@@ -24,9 +24,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,6 +36,10 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.edge.imitator.EdgeImitator;
+import org.thingsboard.server.gen.edge.AssetUpdateMsg;
+import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
+import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -639,6 +645,56 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
                 }, pageLink, type2);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    @Test
+    public void testSyncEdge() throws Exception {
+        Edge edge = doPost("/api/edge", constructEdge("Test Edge", "test"), Edge.class);
+
+        Device device = new Device();
+        device.setName("Edge Device 1");
+        device.setType("test");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        doPost("/api/edge/" + edge.getId().getId().toString()
+                + "/device/" + savedDevice.getId().getId().toString(), Device.class);
+
+        Asset asset = new Asset();
+        asset.setName("Edge Asset 1");
+        asset.setType("test");
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+        doPost("/api/edge/" + edge.getId().getId().toString()
+                + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+
+        EdgeImitator edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
+        // should be 3, but 3 events from sync service + 3 from controller. will be fixed in next releases
+        edgeImitator.expectMessageAmount(6);
+        edgeImitator.connect();
+        edgeImitator.waitForMessages();
+
+        Assert.assertEquals(6, edgeImitator.getDownlinkMsgs().size());
+        Assert.assertTrue(edgeImitator.findMessageByType(RuleChainUpdateMsg.class).isPresent());
+        Assert.assertTrue(edgeImitator.findMessageByType(DeviceUpdateMsg.class).isPresent());
+        Assert.assertTrue(edgeImitator.findMessageByType(AssetUpdateMsg.class).isPresent());
+
+        edgeImitator.getDownlinkMsgs().clear();
+
+        edgeImitator.expectMessageAmount(3);
+        doPost("/api/edge/sync", edge.getId());
+        edgeImitator.waitForMessages();
+
+        Assert.assertEquals(3, edgeImitator.getDownlinkMsgs().size());
+        Assert.assertTrue(edgeImitator.findMessageByType(RuleChainUpdateMsg.class).isPresent());
+        Assert.assertTrue(edgeImitator.findMessageByType(DeviceUpdateMsg.class).isPresent());
+        Assert.assertTrue(edgeImitator.findMessageByType(AssetUpdateMsg.class).isPresent());
+
+        edgeImitator.disconnect();
+
+        doDelete("/api/device/" + savedDevice.getId().getId().toString())
+                .andExpect(status().isOk());
+        doDelete("/api/asset/" + savedAsset.getId().getId().toString())
+                .andExpect(status().isOk());
+        doDelete("/api/edge/" + edge.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
 }

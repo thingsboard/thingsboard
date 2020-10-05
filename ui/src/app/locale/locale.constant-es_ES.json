@@ -769,6 +769,8 @@
         "details": "Detalles",
         "copy-id": "Copiar ID de borde",
         "id-copied-message": "El ID de borde se ha copiado al portapapeles",
+        "sync": "Sinc Edge",
+        "sync-message": "Edge se ha sincronizado",
         "permissions": "Permisos",
         "edge-required": "Edge required",
         "edge-type": "Type de la bordure",

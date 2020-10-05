@@ -33,7 +33,8 @@ function EdgeService($http, $q, customerService) {
         unassignEdgeFromCustomer: unassignEdgeFromCustomer,
         makeEdgePublic: makeEdgePublic,
         setRootRuleChain: setRootRuleChain,
-        getEdgeEvents: getEdgeEvents
+        getEdgeEvents: getEdgeEvents,
+        syncEdge: syncEdge
     };
 
     return service;
@@ -257,6 +258,17 @@ function EdgeService($http, $q, customerService) {
         }
         $http.get(url, null).then(function success(response) {
             deferred.resolve(response.data);
+        }, function fail(response) {
+            deferred.reject(response.data);
+        });
+        return deferred.promise;
+    }
+
+    function syncEdge(edgeId) {
+        var deferred = $q.defer();
+        var url = '/api/edge/sync';
+        $http.post(url, edgeId).then(function success(response) {
+            deferred.resolve(response);
         }, function fail(response) {
             deferred.reject(response.data);
         });

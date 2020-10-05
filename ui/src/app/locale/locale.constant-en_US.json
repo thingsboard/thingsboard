@@ -788,6 +788,8 @@
         "events": "Events",
         "copy-id": "Copy Edge Id",
         "id-copied-message": "Edge Id has been copied to clipboard",
+        "sync": "Sync Edge",
+        "sync-message": "Edge has been synchronized",
         "permissions": "Permissions",
         "edge-required": "Edge required",
         "edge-type": "Edge type",

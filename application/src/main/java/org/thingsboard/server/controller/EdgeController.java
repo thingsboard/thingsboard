@@ -46,6 +46,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.EdgeGrpcSession;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -404,6 +405,23 @@ public class EdgeController extends BaseController {
             TenantId tenantId = user.getTenantId();
             ListenableFuture<List<EntitySubtype>> edgeTypes = edgeService.findEdgeTypesByTenantId(tenantId);
             return checkNotNull(edgeTypes.get());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/sync", method = RequestMethod.POST)
+    public void syncEdge(@RequestBody EdgeId edgeId) throws ThingsboardException {
+        try {
+            edgeId = checkNotNull(edgeId);
+            if (isEdgesSupportEnabled()) {
+                EdgeGrpcSession session = edgeGrpcService.getEdgeGrpcSessionById(edgeId);
+                Edge edge = session.getEdge();
+                syncEdgeService.sync(edge);
+            } else {
+                throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
+            }
         } catch (Exception e) {
             throw handleException(e);
         }

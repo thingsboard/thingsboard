@@ -774,6 +774,8 @@
         "details": "Détails de l'entité",
         "copy-id": "Copier borudre Id",
         "id-copied-message": "Id de la bordure a été copié dans le presse-papier",
+        "sync": "Sync Edge",
+        "sync-message": "Edge a été synchronisé",
         "permissions": "Autorisations",
         "edge-required": "Bordure est requise",
         "edge-type": "Type de la bordure",
