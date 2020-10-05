@@ -47,6 +47,8 @@ interface MultipleInputWidgetSettings {
   widgetTitle: string;
   showActionButtons: boolean;
   updateAllValues: boolean;
+  saveButtonLabel: string;
+  resetButtonLabel: string;
   showResultMessage: boolean;
   showGroupTitle: boolean;
   groupTitle: string;
@@ -67,19 +69,12 @@ interface MultipleInputWidgetDataKeySettings {
   maxValue?: number;
   requiredErrorMessage?: string;
   invalidDateErrorMessage?: string;
-  minErrorMessage?: string;
-  maxErrorMessage?: string;
+  minValueErrorMessage?: string;
+  maxValueErrorMessage?: string;
   icon: string;
   inputTypeNumber?: boolean;
   readOnly?: boolean;
   disabledOnCondition?: boolean;
-}
-
-interface MultipleInputWidgetDataKeyErrorMessages {
-  requiredErrorMessage?: string;
-  invalidDateErrorMessage?: string;
-  minErrorMessage?: string;
-  maxErrorMessage?: string;
 }
 
 interface MultipleInputWidgetDataKey extends DataKey {
@@ -87,7 +82,6 @@ interface MultipleInputWidgetDataKey extends DataKey {
   settings: MultipleInputWidgetDataKeySettings;
   isFocused: boolean;
   value?: any;
-  errorMessages?: MultipleInputWidgetDataKeyErrorMessages;
 }
 
 interface MultipleInputWidgetSource {
@@ -169,6 +163,17 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     }
 
     this.settings.groupTitle = this.settings.groupTitle || '${entityName}';
+
+    if (this.settings.saveButtonLabel && this.settings.saveButtonLabel.length) {
+      this.settings.saveButtonLabel = this.utils.customTranslation(this.settings.saveButtonLabel, this.settings.saveButtonLabel);
+    } else {
+      this.settings.saveButtonLabel = this.translate.instant('action.save');
+    }
+    if (this.settings.resetButtonLabel && this.settings.resetButtonLabel.length) {
+      this.settings.resetButtonLabel = this.utils.customTranslation(this.settings.resetButtonLabel, this.settings.resetButtonLabel);
+    } else {
+      this.settings.resetButtonLabel = this.translate.instant('action.undo');
+    }
 
     // For backward compatibility
     if (isUndefined(this.settings.showActionButtons)) {
@@ -338,25 +343,40 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
 
   private updateWidgetDisplaying() {
     this.changeAlignment = (this.ctx.$container && this.ctx.$container[0].offsetWidth < 620);
-    this.smallWidthContainer = (this.ctx.$container && this.ctx.$container[0].offsetWidth < 420);
   }
 
   public onDataUpdated() {
-    this.ngZone.run(() => {
+    // this.ngZone.run(() => {
       this.updateWidgetData(this.subscription.data);
       this.ctx.detectChanges();
-    });
+    // });
   }
 
   private resize() {
-    this.ngZone.run(() => {
+    // this.ngZone.run(() => {
       this.updateWidgetDisplaying();
       this.ctx.detectChanges();
-    });
+    // });
   }
 
   public getGroupTitle(datasource: Datasource): string {
-    return createLabelFromDatasource(datasource, this.settings.groupTitle);
+    const groupTitle = createLabelFromDatasource(datasource, this.settings.groupTitle);
+    return this.utils.customTranslation(groupTitle, groupTitle);
+  }
+
+  public getErrorMessageText(errorMessage, defaultMessage, messageValues?): string {
+    let messageText;
+    if (errorMessage && errorMessage.length) {
+      messageText = this.utils.customTranslation(errorMessage, errorMessage);
+    } else if (defaultMessage && defaultMessage.length) {
+      if (!messageValues) {
+        messageValues = {};
+      }
+      messageText = this.translate.instant(defaultMessage, messageValues);
+    } else {
+      messageText = '';
+    }
+    return messageText;
   }
 
   public visibleKeys(source: MultipleInputWidgetSource): MultipleInputWidgetDataKey[] {
@@ -480,8 +500,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     if (tasks.length) {
       forkJoin(tasks).subscribe(
         () => {
-          // this.multipleInputFormGroup.reset(undefined, {emitEvent: false});
           this.multipleInputFormGroup.markAsPristine();
+          this.ctx.detectChanges();
           if (this.settings.showResultMessage) {
             this.ctx.showSuccessToast(this.translate.instant('widgets.input-widgets.update-successful'),
               1000, 'bottom', 'left', this.toastTargetId);
@@ -494,8 +514,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
           }
         });
     } else {
-      // this.multipleInputFormGroup.reset(undefined, {emitEvent: false});
       this.multipleInputFormGroup.markAsPristine();
+      this.ctx.detectChanges();
     }
   }
 
