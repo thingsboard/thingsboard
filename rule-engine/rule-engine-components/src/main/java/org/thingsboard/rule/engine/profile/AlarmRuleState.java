@@ -21,15 +21,24 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
+import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
+import org.thingsboard.server.common.data.device.profile.CustomTimeScheduleItem;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.SpecificTimeSchedule;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
+import org.thingsboard.server.common.msg.tools.SchedulerUtils;
+
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Calendar;
 
 @Data
 public class AlarmRuleState {
@@ -85,21 +94,72 @@ public class AlarmRuleState {
     }
 
     public boolean eval(DeviceDataSnapshot data) {
+        boolean active = isActive(data.getTs());
         switch (spec.getType()) {
             case SIMPLE:
-                return eval(alarmRule.getCondition(), data);
+                return active && eval(alarmRule.getCondition(), data);
             case DURATION:
-                return evalDuration(data);
+                return evalDuration(data, active);
             case REPEATING:
-                return evalRepeating(data);
+                return evalRepeating(data, active);
             default:
                 return false;
         }
     }
 
-    private boolean evalRepeating(DeviceDataSnapshot data) {
-        boolean eval = eval(alarmRule.getCondition(), data);
-        if (eval) {
+    private boolean isActive(long eventTs) {
+        if (eventTs == 0L) {
+            eventTs = System.currentTimeMillis();
+        }
+        if (alarmRule.getSchedule() == null) {
+            return true;
+        }
+        switch (alarmRule.getSchedule().getType()) {
+            case ANY_TIME:
+                return true;
+            case SPECIFIC_TIME:
+                return isActiveSpecific((SpecificTimeSchedule) alarmRule.getSchedule(), eventTs);
+            case CUSTOM:
+                return isActiveCustom((CustomTimeSchedule) alarmRule.getSchedule(), eventTs);
+            default:
+                throw new RuntimeException("Unsupported schedule type: " + alarmRule.getSchedule().getType());
+        }
+    }
+
+    private boolean isActiveSpecific(SpecificTimeSchedule schedule, long eventTs) {
+        ZoneId zoneId = SchedulerUtils.getZoneId(schedule.getTimezone());
+        ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(eventTs), zoneId);
+        if (schedule.getDaysOfWeek().size() != 7) {
+            int dayOfWeek = zdt.getDayOfWeek().getValue();
+            if (!schedule.getDaysOfWeek().contains(dayOfWeek)) {
+                return false;
+            }
+        }
+        long startOfDay = zdt.toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli();
+        long msFromStartOfDay = eventTs - startOfDay;
+        return schedule.getStartsOn() <= msFromStartOfDay && schedule.getEndsOn() > msFromStartOfDay;
+    }
+
+    private boolean isActiveCustom(CustomTimeSchedule schedule, long eventTs) {
+        ZoneId zoneId = SchedulerUtils.getZoneId(schedule.getTimezone());
+        ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(eventTs), zoneId);
+        int dayOfWeek = zdt.toLocalDate().getDayOfWeek().getValue();
+        for (CustomTimeScheduleItem item : schedule.getItems()) {
+            if (item.getDayOfWeek() == dayOfWeek) {
+                if (item.isEnabled()) {
+                    long startOfDay = zdt.toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli();
+                    long msFromStartOfDay = eventTs - startOfDay;
+                    return item.getStartsOn() <= msFromStartOfDay && item.getEndsOn() > msFromStartOfDay;
+                } else {
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean evalRepeating(DeviceDataSnapshot data, boolean active) {
+        if (active && eval(alarmRule.getCondition(), data)) {
             state.setEventCount(state.getEventCount() + 1);
             updateFlag = true;
             return state.getEventCount() > requiredRepeats;
@@ -112,9 +172,8 @@ public class AlarmRuleState {
         }
     }
 
-    private boolean evalDuration(DeviceDataSnapshot data) {
-        boolean eval = eval(alarmRule.getCondition(), data);
-        if (eval) {
+    private boolean evalDuration(DeviceDataSnapshot data, boolean active) {
+        if (active && eval(alarmRule.getCondition(), data)) {
             if (state.getLastEventTs() > 0) {
                 if (data.getTs() > state.getLastEventTs()) {
                     state.setDuration(state.getDuration() + (data.getTs() - state.getLastEventTs()));
@@ -145,7 +204,13 @@ public class AlarmRuleState {
             case DURATION:
                 if (requiredDurationInMs > 0 && state.getLastEventTs() > 0 && ts > state.getLastEventTs()) {
                     long duration = state.getDuration() + (ts - state.getLastEventTs());
-                    return duration > requiredDurationInMs;
+                    boolean result = duration > requiredDurationInMs && isActive(ts);
+                    if (result) {
+                        state.setLastEventTs(0L);
+                        state.setDuration(0L);
+                        updateFlag = true;
+                    }
+                    return result;
                 }
             default:
                 return false;

@@ -29,6 +29,6 @@ public class DurationAlarmConditionSpec implements AlarmConditionSpec {
 
     @Override
     public AlarmConditionSpecType getType() {
-        return AlarmConditionSpecType.SIMPLE;
+        return AlarmConditionSpecType.DURATION;
     }
 }
