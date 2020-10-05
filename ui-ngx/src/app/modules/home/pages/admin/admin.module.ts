@@ -24,7 +24,6 @@ import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-sett
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { OAuth2SettingsComponent } from '@modules/home/pages/admin/oauth2-settings.component';
-import { EditRedirectUriPanelComponent } from './edit-redirect-uri-panel.component';
 
 @NgModule({
   declarations:
@@ -32,8 +31,7 @@ import { EditRedirectUriPanelComponent } from './edit-redirect-uri-panel.compone
       GeneralSettingsComponent,
       MailServerComponent,
       SecuritySettingsComponent,
-      OAuth2SettingsComponent,
-      EditRedirectUriPanelComponent
+      OAuth2SettingsComponent
     ],
   imports: [
     CommonModule,

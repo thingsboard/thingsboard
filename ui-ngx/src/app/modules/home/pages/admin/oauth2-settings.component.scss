@@ -15,11 +15,11 @@
  */
 :host{
   .checkbox-row {
-    margin-top: 16px;
+    margin-top: 1em;
   }
 
   .registration-card{
-    margin-bottom: 8px;
+    margin-bottom: 0.5em;
     border: 1px solid rgba(0, 0, 0, 0.2);
 
     .custom-settings{
@@ -31,7 +31,15 @@
   }
 
   .container{
-    margin-bottom: 16px;
+    margin-bottom: 1em;
+
+    .tb-highlight{
+      margin: 0;
+    }
+
+    .tb-hint{
+      padding-bottom: 0;
+    }
   }
 }
 
@@ -39,7 +47,7 @@
   .registration-card{
     .custom-settings{
       .mat-expansion-panel-body{
-        padding: 0 2px 16px;
+        padding: 0 2px 1em;
       }
       .mat-tab-label{
         text-transform: none;
@@ -47,6 +55,12 @@
       .mat-form-field-suffix .mat-icon-button .mat-icon{
         font-size: 18px;
       }
+    }
+  }
+  .domains-list{
+    margin-bottom: 1.5em;
+    .mat-form-field-suffix .mat-icon-button .mat-icon{
+      font-size: 24px;
     }
   }
 }

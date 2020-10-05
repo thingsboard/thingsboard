@@ -26,10 +26,6 @@ export interface AdminSettings<T> {
 
 export declare type SmtpProtocol = 'smtp' | 'smtps';
 
-export declare type ClientAuthenticationMethod = 'BASIC' | 'POST';
-export declare type MapperConfigType = 'BASIC' | 'CUSTOM';
-export declare type TenantNameStrategy = 'DOMAIN' | 'EMAIL' | 'CUSTOM';
-
 export interface MailServerSettings {
   mailFrom: string;
   smtpProtocol: SmtpProtocol;
@@ -69,9 +65,43 @@ export interface UpdateMessage {
 }
 
 export interface OAuth2Settings {
-  domainName: string;
-  redirectUriTemplate: string;
+  enabled: boolean;
+  domainsParams: DomainsParam[];
+}
+
+export interface DomainsParam {
   clientRegistrations: ClientRegistration[];
+  domainInfos: DomainInfo[];
+}
+
+export interface DomainInfo {
+  name: string;
+  scheme: DomainSchema;
+}
+
+export enum DomainSchema{
+  HTTP = 'HTTP',
+  HTTPS = 'HTTPS',
+  MIXED = 'MIXED'
+}
+
+export const domainSchemaTranslations = new Map<DomainSchema, string>(
+  [
+    [DomainSchema.HTTP, 'admin.oauth2.domain-schema-http'],
+    [DomainSchema.HTTPS, 'admin.oauth2.domain-schema-https'],
+    [DomainSchema.MIXED, 'admin.oauth2.domain-schema-mixed']
+  ]
+);
+
+export enum MapperConfigType{
+  BASIC = 'BASIC',
+  CUSTOM = 'CUSTOM'
+}
+
+export enum TenantNameStrategy{
+  DOMAIN = 'DOMAIN',
+  EMAIL = 'EMAIL',
+  CUSTOM = 'CUSTOM'
 }
 
 export interface ClientProviderTemplated extends ClientRegistration{
@@ -98,6 +128,11 @@ export interface ClientRegistration {
   mapperConfig: MapperConfig;
   id?: EntityId;
   additionalInfo: string;
+}
+
+export enum ClientAuthenticationMethod {
+  BASIC = 'BASIC',
+  POST = 'POST'
 }
 
 export interface MapperConfig {

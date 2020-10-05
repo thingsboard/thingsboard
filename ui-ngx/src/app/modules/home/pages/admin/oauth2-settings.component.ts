@@ -14,12 +14,16 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewContainerRef } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   ClientAuthenticationMethod,
   ClientProviderTemplated,
   ClientRegistration,
+  DomainInfo,
+  DomainSchema,
+  domainSchemaTranslations,
+  DomainsParam,
   MapperConfig,
   MapperConfigBasic,
   MapperConfigCustom,
@@ -38,13 +42,7 @@ import { WINDOW } from '@core/services/window.service';
 import { forkJoin, Subscription } from 'rxjs';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
-import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
-import {
-  EDIT_REDIRECT_URI_PANEL_DATA,
-  EditRedirectUriPanelComponent,
-  EditRedirectUriPanelData
-} from './edit-redirect-uri-panel.component';
+import { isDefined } from '@core/utils';
 
 @Component({
   selector: 'tb-oauth2-settings',
@@ -60,15 +58,15 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     additionalInfo: {
       providerName: 'Custom'
     },
-    clientAuthenticationMethod: 'POST',
+    clientAuthenticationMethod: ClientAuthenticationMethod.POST,
     userNameAttributeName: 'email',
     mapperConfig: {
       allowUserCreation: true,
       activateUser: false,
-      type: 'BASIC',
+      type: MapperConfigType.BASIC,
       basic: {
         emailAttributeKey: 'email',
-        tenantNameStrategy: 'DOMAIN',
+        tenantNameStrategy: TenantNameStrategy.DOMAIN,
         alwaysFullScreen: false
       }
     }
@@ -77,19 +75,18 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   readonly separatorKeysCodes: number[] = [ENTER, COMMA];
 
   oauth2SettingsForm: FormGroup;
-  oauth2Settings: OAuth2Settings[];
+  oauth2Settings: OAuth2Settings;
 
-  clientAuthenticationMethods: ClientAuthenticationMethod[] = ['BASIC', 'POST'];
-  converterTypesExternalUser: MapperConfigType[] = ['BASIC', 'CUSTOM'];
-  tenantNameStrategies: TenantNameStrategy[] = ['DOMAIN', 'EMAIL', 'CUSTOM'];
+  clientAuthenticationMethods = Object.keys(ClientAuthenticationMethod);
+  converterTypesExternalUser = Object.keys(MapperConfigType);
+  tenantNameStrategies = Object.keys(TenantNameStrategy);
+  protocols = Object.keys(DomainSchema);
+  domainSchemaTranslations = domainSchemaTranslations;
 
   templateProvider = ['Custom'];
 
   constructor(protected store: Store<AppState>,
               private adminService: AdminService,
-              private overlay: Overlay,
-              private viewContainerRef: ViewContainerRef,
-              private cd: ChangeDetectorRef,
               private fb: FormBuilder,
               private dialogService: DialogService,
               private translate: TranslateService,
@@ -124,8 +121,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     this.templateProvider.sort();
   }
 
-  get clientDomains(): FormArray {
-    return this.oauth2SettingsForm.get('clientDomains') as FormArray;
+  get domainsParams(): FormArray {
+    return this.oauth2SettingsForm.get('domainsParams') as FormArray;
   }
 
   private formBasicGroup(mapperConfigBasic?: MapperConfigBasic): FormGroup {
@@ -139,7 +136,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       emailAttributeKey: [mapperConfigBasic?.emailAttributeKey ? mapperConfigBasic.emailAttributeKey : 'email', Validators.required],
       firstNameAttributeKey: [mapperConfigBasic?.firstNameAttributeKey ? mapperConfigBasic.firstNameAttributeKey : ''],
       lastNameAttributeKey: [mapperConfigBasic?.lastNameAttributeKey ? mapperConfigBasic.lastNameAttributeKey : ''],
-      tenantNameStrategy: [mapperConfigBasic?.tenantNameStrategy ? mapperConfigBasic.tenantNameStrategy : 'DOMAIN'],
+      tenantNameStrategy: [mapperConfigBasic?.tenantNameStrategy ? mapperConfigBasic.tenantNameStrategy : TenantNameStrategy.DOMAIN],
       tenantNamePattern: [tenantNamePattern, Validators.required],
       customerNamePattern: [mapperConfigBasic?.customerNamePattern ? mapperConfigBasic.customerNamePattern : null],
       defaultDashboardName: [mapperConfigBasic?.defaultDashboardName ? mapperConfigBasic.defaultDashboardName : null],
@@ -167,69 +164,78 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
   private buildOAuth2SettingsForm(): void {
     this.oauth2SettingsForm = this.fb.group({
-      clientDomains: this.fb.array([])
+      domainsParams: this.fb.array([]),
+      enabled: [false]
     });
   }
 
-  private initOAuth2Settings(oauth2Settings: OAuth2Settings[]): void {
+  private initOAuth2Settings(oauth2Settings: OAuth2Settings): void {
     if (oauth2Settings) {
-      oauth2Settings.forEach((domain) => {
-        this.clientDomains.push(this.buildSettingsDomain(domain));
+      this.oauth2SettingsForm.patchValue({enabled: oauth2Settings.enabled}, {emitEvent: false});
+      oauth2Settings.domainsParams.forEach((domain) => {
+        this.domainsParams.push(this.buildDomainsForm(domain));
       });
     }
   }
 
   private uniqueDomainValidator(control: AbstractControl): { [key: string]: boolean } | null {
-    if (control.root.value.clientDomains?.length > 1) {
-      const listDomainName = [];
-      control.root.value.clientDomains.forEach((domain) => {
-        listDomainName.push(domain.domainName);
-      });
-      if (listDomainName.indexOf(control.value) > -1) {
+    if (control.parent?.parent?.value) {
+      const domain = control.value;
+      const listProtocols = control.parent.parent.value
+        .filter((domainInfo) => domainInfo.name === domain)
+        .map((domainInfo) => domainInfo.scheme);
+      if (listProtocols.length > 1 && listProtocols.indexOf(DomainSchema.MIXED) > -1) {
         return {unique: true};
       }
     }
     return null;
   }
 
-  private buildSettingsDomain(domainParams?: OAuth2Settings): FormGroup {
-    let url = this.window.location.protocol + '//' + this.window.location.hostname;
-    const port = this.window.location.port;
-    if (port !== '80' && port !== '443') {
-      url += ':' + port;
+  public domainListTittle(control: AbstractControl): string {
+    const domainInfos = control.get('domainInfos').value as DomainInfo[];
+    if (domainInfos.length) {
+      const domainList = new Set<string>();
+      domainInfos.forEach((domain) => {
+        domainList.add(domain.name);
+      });
+      return Array.from(domainList).join(', ');
     }
-    url += '/login/oauth2/code/';
+    return this.translate.instant('admin.oauth2.new-domain');
+  }
+
+  private buildDomainsForm(domainParams?: DomainsParam): FormGroup {
     const formDomain = this.fb.group({
-      domainName: [domainParams?.domainName ? domainParams.domainName : this.window.location.hostname, [
-        Validators.required,
-        Validators.pattern('((?![:/]).)*$'),
-        this.uniqueDomainValidator]],
-      redirectUriTemplate: [domainParams?.redirectUriTemplate ? domainParams.redirectUriTemplate : url, [
-        Validators.required,
-        Validators.pattern(this.URL_REGEXP)]],
+      domainInfos: this.fb.array([], Validators.required),
       clientRegistrations: this.fb.array([], Validators.required)
     });
 
-    this.subscriptions.push(formDomain.get('domainName').valueChanges.subscribe((domain) => {
-      if (!domain) {
-        domain = this.window.location.hostname;
-      }
-      const uri = this.window.location.protocol + `//${domain}/login/oauth2/code/`;
-      formDomain.get('redirectUriTemplate').patchValue(uri, {emitEvent: false});
-    }));
-
     if (domainParams) {
+      domainParams.domainInfos.forEach((domain) => {
+        this.clientDomainInfos(formDomain).push(this.buildDomainForm(domain));
+      });
       domainParams.clientRegistrations.forEach((registration) => {
-        this.clientDomainRegistrations(formDomain).push(this.buildSettingsRegistration(registration));
+        this.clientDomainProviders(formDomain).push(this.buildProviderForm(registration));
       });
     } else {
-      this.clientDomainRegistrations(formDomain).push(this.buildSettingsRegistration());
+      this.clientDomainProviders(formDomain).push(this.buildProviderForm());
+      this.clientDomainInfos(formDomain).push(this.buildDomainForm());
     }
 
     return formDomain;
   }
 
-  private buildSettingsRegistration(registrationData?: ClientRegistration): FormGroup {
+  private buildDomainForm(domainInfo?: DomainInfo): FormGroup {
+    const domain = this.fb.group({
+      name: [domainInfo ? domainInfo.name : this.window.location.hostname, [
+        Validators.required,
+        Validators.pattern('((?![:/]).)*$'),
+        this.uniqueDomainValidator]],
+      scheme: [domainInfo?.scheme ? domainInfo.scheme : DomainSchema.HTTPS, Validators.required]
+    });
+    return domain;
+  }
+
+  private buildProviderForm(registrationData?: ClientRegistration): FormGroup {
     let additionalInfo = null;
     if (registrationData?.additionalInfo) {
       additionalInfo = JSON.parse(registrationData.additionalInfo);
@@ -237,13 +243,18 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
         additionalInfo.providerName = 'Custom';
       }
     }
+    let defaultProviderName = 'Custom';
+    if (this.templateProvider.indexOf('Google')) {
+      defaultProviderName = 'Google';
+    }
+
     const clientRegistration = this.fb.group({
       id: this.fb.group({
         id: [registrationData?.id?.id ? registrationData.id.id : null],
         entityType: [registrationData?.id?.entityType ? registrationData.id.entityType : null]
       }),
       additionalInfo: this.fb.group({
-        providerName: [additionalInfo?.providerName ? additionalInfo?.providerName : 'Custom', Validators.required]
+        providerName: [additionalInfo?.providerName ? additionalInfo?.providerName : defaultProviderName, Validators.required]
       }),
       loginButtonLabel: [registrationData?.loginButtonLabel ? registrationData.loginButtonLabel : null, Validators.required],
       loginButtonIcon: [registrationData?.loginButtonIcon ? registrationData.loginButtonIcon : null],
@@ -255,19 +266,20 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       authorizationUri: [registrationData?.authorizationUri ? registrationData.authorizationUri : '',
         [Validators.required,
           Validators.pattern(this.URL_REGEXP)]],
-      scope: this.fb.array(registrationData?.scope ? registrationData.scope : []),
+      scope: this.fb.array(registrationData?.scope ? registrationData.scope : [], Validators.required),
       jwkSetUri: [registrationData?.jwkSetUri ? registrationData.jwkSetUri : '', Validators.pattern(this.URL_REGEXP)],
       userInfoUri: [registrationData?.userInfoUri ? registrationData.userInfoUri : '',
         [Validators.required,
           Validators.pattern(this.URL_REGEXP)]],
       clientAuthenticationMethod: [
-        registrationData?.clientAuthenticationMethod ? registrationData.clientAuthenticationMethod : 'POST', Validators.required],
+        registrationData?.clientAuthenticationMethod ? registrationData.clientAuthenticationMethod : ClientAuthenticationMethod.POST,
+        Validators.required],
       userNameAttributeName: [
         registrationData?.userNameAttributeName ? registrationData.userNameAttributeName : 'email', Validators.required],
       mapperConfig: this.fb.group({
           allowUserCreation: [registrationData?.mapperConfig?.allowUserCreation ? registrationData.mapperConfig.allowUserCreation : true],
           activateUser: [registrationData?.mapperConfig?.activateUser ? registrationData.mapperConfig.activateUser : false],
-          type: [registrationData?.mapperConfig?.type ? registrationData.mapperConfig.type : 'BASIC', Validators.required]
+          type: [registrationData?.mapperConfig?.type ? registrationData.mapperConfig.type : MapperConfigType.BASIC, Validators.required]
         }
       )
     });
@@ -275,7 +287,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     if (registrationData) {
       this.changeMapperConfigType(clientRegistration, registrationData.mapperConfig.type, registrationData.mapperConfig);
     } else {
-      this.changeMapperConfigType(clientRegistration, 'BASIC');
+      this.changeMapperConfigType(clientRegistration, MapperConfigType.BASIC);
     }
 
     this.subscriptions.push(clientRegistration.get('mapperConfig.type').valueChanges.subscribe((value) => {
@@ -313,7 +325,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
   private changeMapperConfigType(control: AbstractControl, type: MapperConfigType, predefinedValue?: MapperConfig) {
     const mapperConfig = control.get('mapperConfig') as FormGroup;
-    if (type === 'BASIC') {
+    if (type === MapperConfigType.BASIC) {
       mapperConfig.removeControl('custom');
       mapperConfig.addControl('basic', this.formBasicGroup(predefinedValue?.basic));
     } else {
@@ -323,7 +335,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   }
 
   save(): void {
-    const setting = this.prepareFormValue(this.oauth2SettingsForm.getRawValue().clientDomains);
+    const setting = this.prepareFormValue(this.oauth2SettingsForm.getRawValue());
     this.adminService.saveOAuth2Settings(setting).subscribe(
       (oauth2Settings) => {
         this.oauth2Settings = oauth2Settings;
@@ -333,20 +345,16 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     );
   }
 
-  private prepareFormValue(formValue: OAuth2Settings[]): OAuth2Settings[]{
-    const prepereValue = [];
-    formValue.forEach((setting, index) => {
-      if (this.clientDomains.at(index).dirty) {
-        setting.clientRegistrations.forEach((registration) => {
-          registration.additionalInfo = JSON.stringify(registration.additionalInfo);
-          if (registration.id.id === null) {
-            delete registration.id;
-          }
-        });
-        prepereValue.push(setting);
-      }
+  private prepareFormValue(formValue: OAuth2Settings): OAuth2Settings{
+    formValue.domainsParams.forEach((setting, index) => {
+      setting.clientRegistrations.forEach((registration) => {
+        registration.additionalInfo = JSON.stringify(registration.additionalInfo);
+        if (registration.id.id === null) {
+          delete registration.id;
+        }
+      });
     });
-    return prepereValue;
+    return formValue;
   }
 
   confirmForm(): FormGroup {
@@ -359,6 +367,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     const controller = control.get('scope') as FormArray;
     if ((value.trim() !== '')) {
       controller.push(this.fb.control(value.trim()));
+      controller.markAsDirty();
     }
 
     if (input) {
@@ -369,10 +378,12 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   removeScope(i: number, control: AbstractControl): void {
     const controller = control.get('scope') as FormArray;
     controller.removeAt(i);
+    controller.markAsTouched();
+    controller.markAsDirty();
   }
 
   addDomain(): void {
-    this.clientDomains.push(this.buildSettingsDomain());
+    this.domainsParams.push(this.buildDomainsForm());
   }
 
   deleteDomain($event: Event, index: number): void {
@@ -381,97 +392,48 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       $event.preventDefault();
     }
 
-    const domainName = this.clientDomains.at(index).get('domainName').value;
+    const domainName = this.domainListTittle(this.domainsParams.at(index));
     this.dialogService.confirm(
       this.translate.instant('admin.oauth2.delete-domain-title', {domainName: domainName || ''}),
       this.translate.instant('admin.oauth2.delete-domain-text'), null,
       this.translate.instant('action.delete')
     ).subscribe((data) => {
       if (data) {
-        if (index < this.oauth2Settings.length) {
-          this.adminService.deleteOAuth2Domain(this.oauth2Settings[index].domainName).subscribe(() => {
-            this.oauth2Settings.splice(index, 1);
-            this.clientDomains.removeAt(index);
-          });
-        } else {
-          this.clientDomains.removeAt(index);
-        }
+        this.domainsParams.removeAt(index);
+        this.domainsParams.markAsTouched();
+        this.domainsParams.markAsDirty();
       }
     });
   }
 
-  clientDomainRegistrations(control: AbstractControl): FormArray {
+  clientDomainProviders(control: AbstractControl): FormArray {
     return control.get('clientRegistrations') as FormArray;
   }
 
-  addRegistration(control: AbstractControl): void {
-    this.clientDomainRegistrations(control).push(this.buildSettingsRegistration());
+  clientDomainInfos(control: AbstractControl): FormArray {
+    return control.get('domainInfos') as FormArray;
   }
 
-  deleteRegistration($event: Event, control: AbstractControl, index: number): void {
+  addProvider(control: AbstractControl): void {
+    this.clientDomainProviders(control).push(this.buildProviderForm());
+  }
+
+  deleteProvider($event: Event, control: AbstractControl, index: number): void {
     if ($event) {
       $event.stopPropagation();
       $event.preventDefault();
     }
 
-    const providerName = this.clientDomainRegistrations(control).at(index).get('additionalInfo.providerName').value;
+    const providerName = this.clientDomainProviders(control).at(index).get('additionalInfo.providerName').value;
     this.dialogService.confirm(
       this.translate.instant('admin.oauth2.delete-registration-title', {name: providerName || ''}),
       this.translate.instant('admin.oauth2.delete-registration-text'), null,
       this.translate.instant('action.delete')
     ).subscribe((data) => {
       if (data) {
-        const registrationId = this.clientDomainRegistrations(control).at(index).get('id.id').value;
-        if (registrationId) {
-          this.adminService.deleteOAuthCclientRegistrationId(registrationId).subscribe(() => {
-            this.clientDomainRegistrations(control).removeAt(index);
-          });
-        } else {
-          this.clientDomainRegistrations(control).removeAt(index);
-        }
-      }
-    });
-  }
-
-  editRedirectURI($event: MouseEvent, index: number) {
-    if ($event) {
-      $event.stopPropagation();
-      $event.preventDefault();
-    }
-    const target = $event.target || $event.currentTarget;
-    const config = new OverlayConfig();
-    config.backdropClass = 'cdk-overlay-transparent-backdrop';
-    config.hasBackdrop = true;
-    const connectedPosition: ConnectedPosition = {
-      originX: 'end',
-      originY: 'bottom',
-      overlayX: 'end',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
-      .withPositions([connectedPosition]);
-
-    const overlayRef = this.overlay.create(config);
-    overlayRef.backdropClick().subscribe(() => {
-      overlayRef.dispose();
-    });
-
-    const redirectURI = this.clientDomains.at(index).get('redirectUriTemplate').value;
-
-    const injectionTokens = new WeakMap<any, any>([
-      [EDIT_REDIRECT_URI_PANEL_DATA, {
-        redirectURI
-      } as EditRedirectUriPanelData],
-      [OverlayRef, overlayRef]
-    ]);
-    const injector = new PortalInjector(this.viewContainerRef.injector, injectionTokens);
-    const componentRef = overlayRef.attach(new ComponentPortal(EditRedirectUriPanelComponent,
-      this.viewContainerRef, injector));
-    componentRef.onDestroy(() => {
-      if (componentRef.instance.result !== null) {
-        const attributeValue = componentRef.instance.result;
-        this.clientDomains.at(index).get('redirectUriTemplate').patchValue(attributeValue);
-        this.clientDomains.at(index).get('redirectUriTemplate').markAsDirty();
+        this.clientDomainProviders(control).removeAt(index);
+        this.clientDomainProviders(control).markAsTouched();
+        this.clientDomainProviders(control).markAsDirty();
       }
     });
   }
@@ -490,5 +452,44 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       return '';
     }
     return this.templates.get(provider).helpLink;
+  }
+
+  addDomainInfo(control: AbstractControl): void {
+    this.clientDomainInfos(control).push(this.buildDomainForm({
+      name: '',
+      scheme: DomainSchema.HTTPS
+    }));
+  }
+
+  removeDomain($event: Event, control: AbstractControl, index: number): void {
+    if ($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+    }
+    this.clientDomainInfos(control).removeAt(index);
+    this.clientDomainInfos(control).markAsTouched();
+    this.clientDomainInfos(control).markAsDirty();
+  }
+
+  redirectURI(control: AbstractControl, schema?: DomainSchema): string {
+    const domainInfo = control.value as DomainInfo;
+    if (domainInfo.name !== '') {
+      let protocol;
+      if (isDefined(schema)) {
+        protocol = schema.toLowerCase();
+      } else {
+        protocol = domainInfo.scheme === DomainSchema.MIXED ? DomainSchema.HTTPS.toLowerCase() : domainInfo.scheme.toLowerCase();
+      }
+      return `${protocol}://${domainInfo.name}/login/oauth2/code/`;
+    }
+    return '';
+  }
+
+  redirectURIMixed(control: AbstractControl): string {
+    return this.redirectURI(control, DomainSchema.HTTP);
+  }
+
+  trackByParams(index: number): number {
+    return index;
   }
 }
