@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.dao.rule;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Data;
-import org.thingsboard.server.common.data.query.KeyFilter;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.rule.RuleNodeState;
+import org.thingsboard.server.dao.Dao;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 
-@Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class AlarmCondition {
+/**
+ * Created by igor on 3/12/18.
+ */
+public interface RuleNodeStateDao extends Dao<RuleNodeState> {
 
-    private List<KeyFilter> condition;
-    private AlarmConditionSpec spec;
+    PageData<RuleNodeState> findByRuleNodeId(UUID ruleNodeId, PageLink pageLink);
 
+    RuleNodeState findByRuleNodeIdAndEntityId(UUID ruleNodeId, UUID entityId);
 }

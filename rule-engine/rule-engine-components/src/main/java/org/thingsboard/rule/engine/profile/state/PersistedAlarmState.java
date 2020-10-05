@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.rule.engine.profile.state;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-import org.thingsboard.server.common.data.query.KeyFilter;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class AlarmCondition {
+public class PersistedAlarmState {
 
-    private List<KeyFilter> condition;
-    private AlarmConditionSpec spec;
+    private Map<AlarmSeverity, PersistedAlarmRuleState> createRuleStates;
+    private PersistedAlarmRuleState clearRuleState;
 
 }

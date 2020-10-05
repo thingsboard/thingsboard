@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.id;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Data;
-import org.thingsboard.server.common.data.query.KeyFilter;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 
-@Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class AlarmCondition {
+public class RuleNodeStateId extends UUIDBased {
 
-    private List<KeyFilter> condition;
-    private AlarmConditionSpec spec;
+    private static final long serialVersionUID = 1L;
 
+    @JsonCreator
+    public RuleNodeStateId(@JsonProperty("id") UUID id) {
+        super(id);
+    }
+
+    public static RuleNodeStateId fromString(String eventId) {
+        return new RuleNodeStateId(UUID.fromString(eventId));
+    }
 }

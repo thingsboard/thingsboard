@@ -40,13 +40,15 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
@@ -68,7 +70,6 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -430,6 +431,30 @@ class DefaultTbContext implements TbContext {
         return mainCtx.getRedisTemplate();
     }
 
+    @Override
+    public PageData<RuleNodeState> findRuleNodeStates(PageLink pageLink) {
+        if (log.isDebugEnabled()) {
+            log.debug("[{}][{}] Fetch Rule Node States.", getTenantId(), getSelfId());
+        }
+        return mainCtx.getRuleNodeStateService().findByRuleNodeId(getTenantId(), getSelfId(), pageLink);
+    }
+
+    @Override
+    public RuleNodeState findRuleNodeStateForEntity(EntityId entityId) {
+        if (log.isDebugEnabled()) {
+            log.debug("[{}][{}][{}] Fetch Rule Node State for entity.", getTenantId(), getSelfId(), entityId);
+        }
+        return mainCtx.getRuleNodeStateService().findByRuleNodeIdAndEntityId(getTenantId(), getSelfId(), entityId);
+    }
+
+    @Override
+    public RuleNodeState saveRuleNodeState(RuleNodeState state) {
+        if (log.isDebugEnabled()) {
+            log.debug("[{}][{}][{}] Persist Rule Node State for entity: {}", getTenantId(), getSelfId(), state.getEntityId(), state.getStateData());
+        }
+        state.setRuleNodeId(getSelfId());
+        return mainCtx.getRuleNodeStateService().save(getTenantId(), state);
+    }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {
         TbMsgMetaData metaData = new TbMsgMetaData();

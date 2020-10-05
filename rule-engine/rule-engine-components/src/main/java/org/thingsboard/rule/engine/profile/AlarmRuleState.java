@@ -16,9 +16,14 @@
 package org.thingsboard.rule.engine.profile;
 
 import lombok.Data;
+import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
+import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.KeyFilter;
@@ -31,50 +36,119 @@ public class AlarmRuleState {
 
     private final AlarmSeverity severity;
     private final AlarmRule alarmRule;
+    private final AlarmConditionSpec spec;
     private final long requiredDurationInMs;
-    private long lastEventTs;
-    private long duration;
+    private final long requiredRepeats;
+    private PersistedAlarmRuleState state;
+    private boolean updateFlag;
 
-    public AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule) {
+    public AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule, PersistedAlarmRuleState state) {
         this.severity = severity;
         this.alarmRule = alarmRule;
-        if (alarmRule.getCondition().getDurationValue() > 0) {
-            requiredDurationInMs = alarmRule.getCondition().getDurationUnit().toMillis(alarmRule.getCondition().getDurationValue());
+        if (state != null) {
+            this.state = state;
         } else {
-            requiredDurationInMs = 0;
+            this.state = new PersistedAlarmRuleState(0L, 0L, 0L);
+        }
+        this.spec = getSpec(alarmRule);
+        long requiredDurationInMs = 0;
+        long requiredRepeats = 0;
+        switch (spec.getType()) {
+            case DURATION:
+                DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
+                requiredDurationInMs = duration.getUnit().toMillis(duration.getValue());
+                break;
+            case REPEATING:
+                RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
+                requiredRepeats = repeating.getCount();
+                break;
+        }
+        this.requiredDurationInMs = requiredDurationInMs;
+        this.requiredRepeats = requiredRepeats;
+    }
+
+    public AlarmConditionSpec getSpec(AlarmRule alarmRule) {
+        AlarmConditionSpec spec = alarmRule.getCondition().getSpec();
+        if (spec == null) {
+            spec = new SimpleAlarmConditionSpec();
+        }
+        return spec;
+    }
+
+    public boolean checkUpdate() {
+        if (updateFlag) {
+            updateFlag = false;
+            return true;
+        } else {
+            return false;
         }
     }
 
     public boolean eval(DeviceDataSnapshot data) {
-        if (requiredDurationInMs > 0) {
-            boolean eval = eval(alarmRule.getCondition(), data);
-            if (eval) {
-                if (lastEventTs > 0) {
-                    if (data.getTs() > lastEventTs) {
-                        duration += data.getTs() - lastEventTs;
-                        lastEventTs = data.getTs();
-                    }
-                } else {
-                    lastEventTs = data.getTs();
-                    duration = 0;
-                }
-                return duration > requiredDurationInMs;
-            } else {
-                lastEventTs = 0;
-                duration = 0;
+        switch (spec.getType()) {
+            case SIMPLE:
+                return eval(alarmRule.getCondition(), data);
+            case DURATION:
+                return evalDuration(data);
+            case REPEATING:
+                return evalRepeating(data);
+            default:
                 return false;
-            }
+        }
+    }
+
+    private boolean evalRepeating(DeviceDataSnapshot data) {
+        boolean eval = eval(alarmRule.getCondition(), data);
+        if (eval) {
+            state.setEventCount(state.getEventCount() + 1);
+            updateFlag = true;
+            return state.getEventCount() > requiredRepeats;
         } else {
-            return eval(alarmRule.getCondition(), data);
+            if (state.getEventCount() > 0) {
+                state.setEventCount(0L);
+                updateFlag = true;
+            }
+            return false;
+        }
+    }
+
+    private boolean evalDuration(DeviceDataSnapshot data) {
+        boolean eval = eval(alarmRule.getCondition(), data);
+        if (eval) {
+            if (state.getLastEventTs() > 0) {
+                if (data.getTs() > state.getLastEventTs()) {
+                    state.setDuration(state.getDuration() + (data.getTs() - state.getLastEventTs()));
+                    state.setLastEventTs(data.getTs());
+                    updateFlag = true;
+                }
+            } else {
+                state.setLastEventTs(data.getTs());
+                state.setDuration(0L);
+                updateFlag = true;
+            }
+            return state.getDuration() > requiredDurationInMs;
+        } else {
+            if (state.getLastEventTs() > 0 || state.getDuration() > 0) {
+                state.setLastEventTs(0L);
+                state.setDuration(0L);
+                updateFlag = true;
+            }
+            return false;
         }
     }
 
     public boolean eval(long ts) {
-        if (requiredDurationInMs > 0 && lastEventTs > 0 && ts > lastEventTs) {
-            duration += ts - lastEventTs;
-            return duration > requiredDurationInMs;
-        } else {
-            return false;
+        switch (spec.getType()) {
+            case SIMPLE:
+            case REPEATING:
+                return false;
+            case DURATION:
+                if (requiredDurationInMs > 0 && state.getLastEventTs() > 0 && ts > state.getLastEventTs()) {
+                    long duration = state.getDuration() + (ts - state.getLastEventTs());
+                    return duration > requiredDurationInMs;
+                }
+            default:
+                return false;
         }
     }
 
@@ -87,7 +161,6 @@ public class AlarmRuleState {
             }
             eval = eval && eval(value, keyFilter.getPredicate());
         }
-        //TODO: use condition duration;
         return eval;
     }
 
@@ -126,7 +199,6 @@ public class AlarmRuleState {
                 throw new RuntimeException("Operation not supported: " + predicate.getOperation());
         }
     }
-
 
     private boolean evalBoolPredicate(EntityKeyValue ekv, BooleanFilterPredicate predicate) {
         Boolean value;
