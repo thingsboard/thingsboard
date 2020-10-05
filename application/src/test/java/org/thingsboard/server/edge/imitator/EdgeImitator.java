@@ -132,37 +132,37 @@ public class EdgeImitator {
         List<ListenableFuture<Void>> result = new ArrayList<>();
         if (downlinkMsg.getDeviceUpdateMsgList() != null && !downlinkMsg.getDeviceUpdateMsgList().isEmpty()) {
             for (DeviceUpdateMsg deviceUpdateMsg: downlinkMsg.getDeviceUpdateMsgList()) {
-                saveDownlinkMsg(deviceUpdateMsg);
+                result.add(saveDownlinkMsg(deviceUpdateMsg));
             }
         }
         if (downlinkMsg.getAssetUpdateMsgList() != null && !downlinkMsg.getAssetUpdateMsgList().isEmpty()) {
             for (AssetUpdateMsg assetUpdateMsg: downlinkMsg.getAssetUpdateMsgList()) {
-                saveDownlinkMsg(assetUpdateMsg);
+                result.add(saveDownlinkMsg(assetUpdateMsg));
             }
         }
         if (downlinkMsg.getRuleChainUpdateMsgList() != null && !downlinkMsg.getRuleChainUpdateMsgList().isEmpty()) {
             for (RuleChainUpdateMsg ruleChainUpdateMsg: downlinkMsg.getRuleChainUpdateMsgList()) {
-                saveDownlinkMsg(ruleChainUpdateMsg);
+                result.add(saveDownlinkMsg(ruleChainUpdateMsg));
             }
         }
         if (downlinkMsg.getDashboardUpdateMsgList() != null && !downlinkMsg.getDashboardUpdateMsgList().isEmpty()) {
             for (DashboardUpdateMsg dashboardUpdateMsg: downlinkMsg.getDashboardUpdateMsgList()) {
-                saveDownlinkMsg(dashboardUpdateMsg);
+                result.add(saveDownlinkMsg(dashboardUpdateMsg));
             }
         }
         if (downlinkMsg.getRelationUpdateMsgList() != null && !downlinkMsg.getRelationUpdateMsgList().isEmpty()) {
             for (RelationUpdateMsg relationUpdateMsg: downlinkMsg.getRelationUpdateMsgList()) {
-                saveDownlinkMsg(relationUpdateMsg);
+                result.add(saveDownlinkMsg(relationUpdateMsg));
             }
         }
         if (downlinkMsg.getAlarmUpdateMsgList() != null && !downlinkMsg.getAlarmUpdateMsgList().isEmpty()) {
             for (AlarmUpdateMsg alarmUpdateMsg: downlinkMsg.getAlarmUpdateMsgList()) {
-                saveDownlinkMsg(alarmUpdateMsg);
+                result.add(saveDownlinkMsg(alarmUpdateMsg));
             }
         }
         if (downlinkMsg.getEntityDataList() != null && !downlinkMsg.getEntityDataList().isEmpty()) {
             for (EntityDataProto entityData: downlinkMsg.getEntityDataList()) {
-                saveDownlinkMsg(entityData);
+                result.add(saveDownlinkMsg(entityData));
             }
         }
         return Futures.allAsList(result);
