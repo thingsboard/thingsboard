@@ -29,17 +29,17 @@
   </mat-form-field>
   <section *ngIf="provisionConfigurationFormGroup.get('type').value !== deviceProvisionType.DISABLED" fxLayoutGap.gt-xs="8px" fxLayout="row" fxLayout.xs="column">
     <mat-form-field fxFlex class="mat-block">
-      <mat-label translate>device-profile.provision-device-secret</mat-label>
-      <input matInput formControlName="provisionDeviceSecret" required/>
-      <mat-error *ngIf="provisionConfigurationFormGroup.get('provisionDeviceSecret').hasError('required')">
-        {{ 'device-profile.provision-device-secret-required' | translate }}
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field fxFlex class="mat-block">
       <mat-label translate>device-profile.provision-device-key</mat-label>
       <input matInput formControlName="provisionDeviceKey" required/>
       <mat-error *ngIf="provisionConfigurationFormGroup.get('provisionDeviceKey').hasError('required')">
         {{ 'device-profile.provision-device-key-required' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>device-profile.provision-device-secret</mat-label>
+      <input matInput formControlName="provisionDeviceSecret" required/>
+      <mat-error *ngIf="provisionConfigurationFormGroup.get('provisionDeviceSecret').hasError('required')">
+        {{ 'device-profile.provision-device-secret-required' | translate }}
       </mat-error>
     </mat-form-field>
   </section>
