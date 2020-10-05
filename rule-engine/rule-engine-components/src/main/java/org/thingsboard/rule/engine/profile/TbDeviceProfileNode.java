@@ -30,6 +30,8 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -65,11 +67,28 @@ public class TbDeviceProfileNode implements TbNode {
         this.config = TbNodeUtils.convert(configuration, TbDeviceProfileNodeConfiguration.class);
         this.cache = ctx.getDeviceProfileCache();
         scheduleAlarmHarvesting(ctx);
-        //TODO: launch a process of fetching the alarm rule states from the database;
+        if (config.isFetchAlarmRulesStateOnStart()) {
+            PageLink pageLink = new PageLink(1024);
+            while (true) {
+                PageData<RuleNodeState> states = ctx.findRuleNodeStates(pageLink);
+                if (!states.getData().isEmpty()) {
+                    for (RuleNodeState rns : states.getData()) {
+                        if (rns.getEntityId().getEntityType().equals(EntityType.DEVICE) && ctx.isLocalEntity(rns.getEntityId())) {
+                            getOrCreateDeviceState(ctx, new DeviceId(rns.getEntityId().getId()), rns);
+                        }
+                    }
+                }
+                if (!states.hasNext()) {
+                    break;
+                } else {
+                    pageLink = pageLink.nextPageLink();
+                }
+            }
+        }
     }
 
     /**
-     * 2. Dynamic values evaluation;
+     * TODO: Dynamic values evaluation;
      */
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
@@ -85,7 +104,7 @@ public class TbDeviceProfileNode implements TbNode {
                 } else if (msg.getType().equals(DataConstants.ENTITY_DELETED)) {
                     deviceStates.remove(deviceId);
                 } else {
-                    DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId);
+                    DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId, null);
                     if (deviceState != null) {
                         deviceState.process(ctx, msg);
                     } else {
@@ -124,12 +143,12 @@ public class TbDeviceProfileNode implements TbNode {
         deviceStates.clear();
     }
 
-    protected DeviceState getOrCreateDeviceState(TbContext ctx, DeviceId deviceId) {
+    protected DeviceState getOrCreateDeviceState(TbContext ctx, DeviceId deviceId, RuleNodeState rns) {
         DeviceState deviceState = deviceStates.get(deviceId);
         if (deviceState == null) {
             DeviceProfile deviceProfile = cache.get(ctx.getTenantId(), deviceId);
             if (deviceProfile != null) {
-                deviceState = new DeviceState(ctx, config, deviceId, new DeviceProfileState(deviceProfile));
+                deviceState = new DeviceState(ctx, config, deviceId, new DeviceProfileState(deviceProfile), rns);
                 deviceStates.put(deviceId, deviceState);
             }
         }

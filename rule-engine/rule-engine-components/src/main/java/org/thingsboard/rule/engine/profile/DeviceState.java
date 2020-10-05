@@ -62,18 +62,22 @@ class DeviceState {
     private DeviceDataSnapshot latestValues;
     private final ConcurrentMap<String, DeviceProfileAlarmState> alarmStates = new ConcurrentHashMap<>();
 
-    public DeviceState(TbContext ctx, TbDeviceProfileNodeConfiguration config, DeviceId deviceId, DeviceProfileState deviceProfile) {
+    public DeviceState(TbContext ctx, TbDeviceProfileNodeConfiguration config, DeviceId deviceId, DeviceProfileState deviceProfile, RuleNodeState state) {
         this.persistState = config.isPersistAlarmRulesState();
         this.deviceId = deviceId;
         this.deviceProfile = deviceProfile;
         if (config.isPersistAlarmRulesState()) {
-            state = ctx.findRuleNodeStateForEntity(deviceId);
             if (state != null) {
-                pds = JacksonUtil.fromString(state.getStateData(), PersistedDeviceState.class);
+                this.state = state;
             } else {
-                state = new RuleNodeState();
-                state.setRuleNodeId(ctx.getSelfId());
-                state.setEntityId(deviceId);
+                this.state = ctx.findRuleNodeStateForEntity(deviceId);
+            }
+            if (this.state != null) {
+                pds = JacksonUtil.fromString(this.state.getStateData(), PersistedDeviceState.class);
+            } else {
+                this.state = new RuleNodeState();
+                this.state.setRuleNodeId(ctx.getSelfId());
+                this.state.setEntityId(deviceId);
                 pds = new PersistedDeviceState();
                 pds.setAlarmStates(new HashMap<>());
             }
