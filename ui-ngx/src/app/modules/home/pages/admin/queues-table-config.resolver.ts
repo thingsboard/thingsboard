@@ -42,7 +42,6 @@ export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<Queu
   private readonly config: EntityTableConfig<QueueInfo> = new EntityTableConfig<QueueInfo>();
 
   private allQueues: Observable<PageData<QueueInfo>>;
-  private pageLink: PageLink = null;
 
   constructor(private store: Store<AppState>,
               private broadcast: BroadcastService,
@@ -79,7 +78,6 @@ export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<Queu
   }
 
   fetchFunction(pageLink: PageLink, queueType: ServiceType): Observable<PageData<QueueInfo>> {
-    this.pageLink = pageLink;
     return this.getAllQueues(pageLink, queueType).pipe(
       map((data) => this.addInnerObjectPropsForColumns(pageLink.filterData(data.data)))
     );
@@ -112,17 +110,10 @@ export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<Queu
 
   configureEntityFunctions(): void {
     this.config.entitiesFetchFunction = pageLink => this.fetchFunction(pageLink, this.queueType);
-    this.config.loadEntity = id => this.getQueueInfo(this.pageLink, this.queueType, id.id);
+    this.config.loadEntity = id => this.queueService.getQueueById(id.id);
     this.config.saveEntity = queue => this.queueService.saveQueue(queue, this.queueType).pipe(
-      mergeMap((savedQueue) => this.getQueueInfo(this.pageLink, this.queueType, savedQueue.id.id)
+      mergeMap((savedQueue) => this.queueService.getQueueById(savedQueue.id.id)
       ));
     this.config.deleteEntity = id => this.queueService.deleteQueue(id.id);
-  }
-
-  getQueueInfo(pageLink: PageLink, queueType: ServiceType, id: string): Observable<QueueInfo> {
-    return this.queueService.getTenantQueuesByServiceType(this.pageLink, this.queueType).pipe(
-      map(data => {
-        return data.data.find(queue => queue.id.id === id);
-      }));
   }
 }
