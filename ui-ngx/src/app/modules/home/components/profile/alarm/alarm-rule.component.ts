@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, forwardRef, Input, NgZone, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -25,9 +25,9 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { AlarmRule } from '@shared/models/device.models';
+import { AlarmConditionType, AlarmConditionTypeTranslationMap, AlarmRule } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
-import { TimeUnit, timeUnitTranslationMap } from '../../../../../shared/models/time/time.models';
+import { TimeUnit, timeUnitTranslationMap } from '@shared/models/time/time.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({
@@ -51,6 +51,9 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
 
   timeUnits = Object.keys(TimeUnit);
   timeUnitTranslations = timeUnitTranslationMap;
+  alarmConditionTypes = Object.keys(AlarmConditionType);
+  AlarmConditionType = AlarmConditionType;
+  alarmConditionTypeTranslation = AlarmConditionTypeTranslationMap;
 
   @Input()
   disabled: boolean;
@@ -63,8 +66,6 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
   set required(value: boolean) {
     this.requiredValue = coerceBooleanProperty(value);
   }
-
-  enableDuration = false;
 
   private modelValue: AlarmRule;
 
@@ -87,10 +88,17 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
     this.alarmRuleFormGroup = this.fb.group({
       condition:  this.fb.group({
         condition: [null, Validators.required],
-        durationUnit: [null],
-        durationValue: [null]
+        spec: this.fb.group({
+          type: [AlarmConditionType.SIMPLE, Validators.required],
+          unit: [{value: null, disable: true}, Validators.required],
+          value: [{value: null, disable: true}, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]],
+          count: [{value: null, disable: true}, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]]
+        })
       }, Validators.required),
       alarmDetails: [null]
+    });
+    this.alarmRuleFormGroup.get('condition.spec.type').valueChanges.subscribe((type) => {
+      this.updateValidators(type, true, true);
     });
     this.alarmRuleFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -108,9 +116,13 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
 
   writeValue(value: AlarmRule): void {
     this.modelValue = value;
-    this.enableDuration = value && !!value.condition.durationValue;
+    if (this.modelValue?.condition?.spec === null) {
+      this.modelValue.condition.spec = {
+        type: AlarmConditionType.SIMPLE
+      };
+    }
     this.alarmRuleFormGroup.reset(this.modelValue || undefined, {emitEvent: false});
-    this.updateValidators();
+    this.updateValidators(this.modelValue?.condition?.spec?.type);
   }
 
   public validate(c: FormControl) {
@@ -121,31 +133,45 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
     };
   }
 
-  public enableDurationChanged(enableDuration) {
-    this.enableDuration = enableDuration;
-    this.updateValidators(true, true);
-  }
-
-  private updateValidators(resetDuration = false, emitEvent = false) {
-    if (this.enableDuration) {
-      this.alarmRuleFormGroup.get('condition').get('durationValue')
-        .setValidators([Validators.required, Validators.min(1), Validators.max(2147483647)]);
-      this.alarmRuleFormGroup.get('condition').get('durationUnit')
-        .setValidators([Validators.required]);
-    } else {
-      this.alarmRuleFormGroup.get('condition').get('durationValue')
-        .setValidators([]);
-      this.alarmRuleFormGroup.get('condition').get('durationUnit')
-        .setValidators([]);
-      if (resetDuration) {
-        this.alarmRuleFormGroup.get('condition').patchValue({
-          durationValue: null,
-          durationUnit: null
-        });
-      }
+  private updateValidators(type: AlarmConditionType, resetDuration = false, emitEvent = false) {
+    switch (type) {
+      case AlarmConditionType.DURATION:
+        this.alarmRuleFormGroup.get('condition.spec.value').enable();
+        this.alarmRuleFormGroup.get('condition.spec.unit').enable();
+        this.alarmRuleFormGroup.get('condition.spec.count').disable();
+        if (resetDuration) {
+          this.alarmRuleFormGroup.get('condition.spec').patchValue({
+            count: null
+          });
+        }
+        break;
+      case AlarmConditionType.REPEATING:
+        this.alarmRuleFormGroup.get('condition.spec.count').enable();
+        this.alarmRuleFormGroup.get('condition.spec.value').disable();
+        this.alarmRuleFormGroup.get('condition.spec.unit').disable();
+        if (resetDuration) {
+          this.alarmRuleFormGroup.get('condition.spec').patchValue({
+            value: null,
+            unit: null
+          });
+        }
+        break;
+      case AlarmConditionType.SIMPLE:
+        this.alarmRuleFormGroup.get('condition.spec.value').disable();
+        this.alarmRuleFormGroup.get('condition.spec.unit').disable();
+        this.alarmRuleFormGroup.get('condition.spec.count').disable();
+        if (resetDuration) {
+          this.alarmRuleFormGroup.get('condition.spec').patchValue({
+            value: null,
+            unit: null,
+            count: null
+          });
+        }
+        break;
     }
-    this.alarmRuleFormGroup.get('condition').get('durationValue').updateValueAndValidity({emitEvent});
-    this.alarmRuleFormGroup.get('condition').get('durationUnit').updateValueAndValidity({emitEvent});
+    this.alarmRuleFormGroup.get('condition.spec.value').updateValueAndValidity({emitEvent});
+    this.alarmRuleFormGroup.get('condition.spec.unit').updateValueAndValidity({emitEvent});
+    this.alarmRuleFormGroup.get('condition.spec.count').updateValueAndValidity({emitEvent});
   }
 
   private updateModel() {

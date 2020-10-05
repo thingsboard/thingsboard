@@ -210,10 +210,30 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
   return transportConfiguration;
 }
 
+export enum AlarmConditionType {
+  SIMPLE = 'SIMPLE',
+  DURATION = 'DURATION',
+  REPEATING = 'REPEATING'
+}
+
+export const AlarmConditionTypeTranslationMap = new Map<AlarmConditionType, string>(
+  [
+    [AlarmConditionType.SIMPLE, 'device-profile.condition-type-simple'],
+    [AlarmConditionType.DURATION, 'device-profile.condition-type-duration'],
+    [AlarmConditionType.REPEATING, 'device-profile.condition-type-repeating']
+  ]
+);
+
+export interface AlarmConditionSpec{
+  type?: AlarmConditionType;
+  unit?: TimeUnit;
+  value?: number;
+  count?: number;
+}
+
 export interface AlarmCondition {
   condition: Array<KeyFilter>;
-  durationUnit?: TimeUnit;
-  durationValue?: number;
+  spec?: AlarmConditionSpec;
 }
 
 export interface AlarmRule {
