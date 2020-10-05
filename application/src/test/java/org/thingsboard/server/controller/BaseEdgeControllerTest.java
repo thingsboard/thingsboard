@@ -40,6 +40,7 @@ import org.thingsboard.server.edge.imitator.EdgeImitator;
 import org.thingsboard.server.gen.edge.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.UserUpdateMsg;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -666,26 +667,28 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
                 + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
 
         EdgeImitator edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        // should be 3, but 3 events from sync service + 3 from controller. will be fixed in next releases
-        edgeImitator.expectMessageAmount(6);
+        // should be 4, but 4 events from sync service + 3 from controller. will be fixed in next releases
+        edgeImitator.expectMessageAmount(7);
         edgeImitator.connect();
         edgeImitator.waitForMessages();
 
-        Assert.assertEquals(6, edgeImitator.getDownlinkMsgs().size());
+        Assert.assertEquals(7, edgeImitator.getDownlinkMsgs().size());
         Assert.assertTrue(edgeImitator.findMessageByType(RuleChainUpdateMsg.class).isPresent());
         Assert.assertTrue(edgeImitator.findMessageByType(DeviceUpdateMsg.class).isPresent());
         Assert.assertTrue(edgeImitator.findMessageByType(AssetUpdateMsg.class).isPresent());
+        Assert.assertTrue(edgeImitator.findMessageByType(UserUpdateMsg.class).isPresent());
 
         edgeImitator.getDownlinkMsgs().clear();
 
-        edgeImitator.expectMessageAmount(3);
+        edgeImitator.expectMessageAmount(4);
         doPost("/api/edge/sync", edge.getId());
         edgeImitator.waitForMessages();
 
-        Assert.assertEquals(3, edgeImitator.getDownlinkMsgs().size());
+        Assert.assertEquals(4, edgeImitator.getDownlinkMsgs().size());
         Assert.assertTrue(edgeImitator.findMessageByType(RuleChainUpdateMsg.class).isPresent());
         Assert.assertTrue(edgeImitator.findMessageByType(DeviceUpdateMsg.class).isPresent());
         Assert.assertTrue(edgeImitator.findMessageByType(AssetUpdateMsg.class).isPresent());
+        Assert.assertTrue(edgeImitator.findMessageByType(UserUpdateMsg.class).isPresent());
 
         edgeImitator.disconnect();
 
