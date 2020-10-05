@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
@@ -36,9 +38,11 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.edge.AttributeDeleteMsg;
 import org.thingsboard.server.gen.edge.EntityDataProto;
@@ -47,6 +51,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -63,12 +68,15 @@ public class TelemetryProcessor extends BaseProcessor {
     public List<ListenableFuture<Void>> onTelemetryUpdate(TenantId tenantId, EntityDataProto entityData) {
         List<ListenableFuture<Void>> result = new ArrayList<>();
         EntityId entityId = constructEntityId(entityData);
-        if ((entityData.hasPostAttributesMsg() || entityData.hasPostTelemetryMsg()) && entityId != null) {
+        if ((entityData.hasPostAttributesMsg() || entityData.hasPostTelemetryMsg() || entityData.hasAttributesUpdatedMsg()) && entityId != null) {
             TbMsgMetaData metaData = constructBaseMsgMetadata(tenantId, entityId);
             metaData.putValue(DataConstants.MSG_SOURCE_KEY, DataConstants.EDGE_MSG_SOURCE);
             if (entityData.hasPostAttributesMsg()) {
-                metaData.putValue("scope", entityData.getPostAttributeScope());
                 result.add(processPostAttributes(tenantId, entityId, entityData.getPostAttributesMsg(), metaData));
+            }
+            if (entityData.hasAttributesUpdatedMsg()) {
+                metaData.putValue("scope", entityData.getPostAttributeScope());
+                result.add(processAttributesUpdate(tenantId, entityId, entityData.getAttributesUpdatedMsg(), metaData));
             }
             if (entityData.hasPostTelemetryMsg()) {
                 result.add(processPostTelemetry(tenantId, entityId, entityData.getPostTelemetryMsg(), metaData));
@@ -149,6 +157,38 @@ public class TelemetryProcessor extends BaseProcessor {
                 futureToSet.setException(t);
             }
         });
+        return futureToSet;
+    }
+
+    private ListenableFuture<Void> processAttributesUpdate(TenantId tenantId, EntityId entityId, TransportProtos.PostAttributeMsg msg, TbMsgMetaData metaData) {
+        SettableFuture<Void> futureToSet = SettableFuture.create();
+        JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
+        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(json);
+        ListenableFuture<List<Void>> future = attributesService.save(tenantId, entityId, metaData.getValue("scope"), new ArrayList<>(attributes));
+        Futures.addCallback(future, new FutureCallback<List<Void>>() {
+            @Override
+            public void onSuccess(@Nullable List<Void> voids) {
+                TbMsg tbMsg = TbMsg.newMsg(DataConstants.ATTRIBUTES_UPDATED, entityId, metaData, gson.toJson(json));
+                tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
+                    @Override
+                    public void onSuccess(TbQueueMsgMetadata metadata) {
+                        futureToSet.set(null);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("Can't process attributes update [{}]", msg, t);
+                        futureToSet.setException(t);
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("Can't process attributes update [{}]", msg, t);
+                futureToSet.setException(t);
+            }
+        }, dbCallbackExecutorService);
         return futureToSet;
     }
 
