@@ -19,7 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.QueueStats;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.QueueStatsEntity;
 import org.thingsboard.server.dao.queue.QueueStatsDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -41,5 +43,10 @@ public class JpaQueueStatsDao extends JpaAbstractDao<QueueStatsEntity, QueueStat
     @Override
     protected CrudRepository<QueueStatsEntity, UUID> getCrudRepository() {
         return queueStatsRepository;
+    }
+
+    @Override
+    public QueueStats findByTenantIdAndName(TenantId tenantId, String queueStatsName) {
+        return DaoUtil.getData(queueStatsRepository.findByTenantIdAndName(tenantId.getId(), queueStatsName));
     }
 }

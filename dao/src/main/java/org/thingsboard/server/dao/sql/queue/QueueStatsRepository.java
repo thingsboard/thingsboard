@@ -21,4 +21,6 @@ import org.thingsboard.server.dao.model.sql.QueueStatsEntity;
 import java.util.UUID;
 
 public interface QueueStatsRepository extends CrudRepository<QueueStatsEntity, UUID> {
+
+    QueueStatsEntity findByTenantIdAndName(UUID tenantId, String name);
 }

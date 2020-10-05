@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.dao.queue;
 
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.dao.Dao;
 
 public interface QueueStatsDao extends Dao<QueueStats> {
 
+    QueueStats findByTenantIdAndName(TenantId tenantId, String queueStatsName);
 }
