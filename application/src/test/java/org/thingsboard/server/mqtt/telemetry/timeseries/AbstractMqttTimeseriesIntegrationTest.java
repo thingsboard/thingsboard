@@ -22,6 +22,7 @@ import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -228,7 +229,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     //    @Test - Unstable
     public void testMqttQoSLevel() throws Exception {
         String clientId = MqttAsyncClient.generateClientId();
-        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
+        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
 
         MqttConnectOptions options = new MqttConnectOptions();
         options.setUserName(accessToken);

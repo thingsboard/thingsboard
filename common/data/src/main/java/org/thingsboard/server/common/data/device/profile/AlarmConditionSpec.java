@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = RepeatingAlarmConditionSpec.class, name = "REPEATING")})
 public interface AlarmConditionSpec {
 
+    @JsonIgnore
     AlarmConditionSpecType getType();
 
 }

@@ -23,7 +23,7 @@ import java.util.List;
 public class CustomTimeScheduleItem {
 
     private boolean enabled;
-    private Integer dayOfWeek;
+    private int dayOfWeek;
     private long startsOn;
     private long endsOn;
 

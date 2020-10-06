@@ -25,9 +25,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         include = JsonTypeInfo.As.PROPERTY,
         property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = SimpleAlarmConditionSpec.class, name = "ANY_TIME"),
-        @JsonSubTypes.Type(value = DurationAlarmConditionSpec.class, name = "SPECIFIC_TIME"),
-        @JsonSubTypes.Type(value = RepeatingAlarmConditionSpec.class, name = "CUSTOM")})
+        @JsonSubTypes.Type(value = AnyTimeSchedule.class, name = "ANY_TIME"),
+        @JsonSubTypes.Type(value = SpecificTimeSchedule.class, name = "SPECIFIC_TIME"),
+        @JsonSubTypes.Type(value = CustomTimeSchedule.class, name = "CUSTOM")})
 public interface AlarmSchedule {
 
     AlarmScheduleType getType();
