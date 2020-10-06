@@ -128,7 +128,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
         // should be less, but events from SyncEdgeService stack with events from controller. will be fixed in next releases
-        edgeImitator.expectMessageAmount(8);
+        edgeImitator.expectMessageAmount(7);
         edgeImitator.connect();
     }
 

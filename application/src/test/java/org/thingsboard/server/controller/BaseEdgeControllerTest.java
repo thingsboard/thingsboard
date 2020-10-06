@@ -40,6 +40,7 @@ import org.thingsboard.server.edge.imitator.EdgeImitator;
 import org.thingsboard.server.gen.edge.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.UserUpdateMsg;
 
 import java.util.ArrayList;
@@ -667,11 +668,12 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
                 + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
 
         EdgeImitator edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        edgeImitator.expectMessageAmount(8);
+        edgeImitator.ignoreType(UserCredentialsUpdateMsg.class);
+        edgeImitator.expectMessageAmount(7);
         edgeImitator.connect();
         edgeImitator.waitForMessages();
 
-        Assert.assertEquals(8, edgeImitator.getDownlinkMsgs().size());
+        Assert.assertEquals(7, edgeImitator.getDownlinkMsgs().size());
         Assert.assertTrue(edgeImitator.findMessageByType(RuleChainUpdateMsg.class).isPresent());
         Assert.assertTrue(edgeImitator.findMessageByType(DeviceUpdateMsg.class).isPresent());
         Assert.assertTrue(edgeImitator.findMessageByType(AssetUpdateMsg.class).isPresent());
@@ -689,6 +691,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(edgeImitator.findMessageByType(AssetUpdateMsg.class).isPresent());
         Assert.assertTrue(edgeImitator.findMessageByType(UserUpdateMsg.class).isPresent());
 
+        edgeImitator.allowIgnoredTypes();
         edgeImitator.disconnect();
 
         doDelete("/api/device/" + savedDevice.getId().getId().toString())
