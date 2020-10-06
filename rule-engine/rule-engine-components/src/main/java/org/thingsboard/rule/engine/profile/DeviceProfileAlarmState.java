@@ -53,7 +53,6 @@ class DeviceProfileAlarmState {
     public DeviceProfileAlarmState(EntityId originator, DeviceProfileAlarm alarmDefinition, PersistedAlarmState alarmState) {
         this.originator = originator;
         this.updateState(alarmDefinition, alarmState);
-
     }
 
     public boolean process(TbContext ctx, TbMsg msg, DeviceDataSnapshot data) throws ExecutionException, InterruptedException {
@@ -179,5 +178,15 @@ class DeviceProfileAlarmState {
         }
     }
 
-
+    public boolean processAlarmClear(TbContext ctx, Alarm alarmNf) {
+        boolean updated = false;
+        if (currentAlarm != null && currentAlarm.getId().equals(alarmNf.getId())) {
+            currentAlarm = null;
+            for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
+                state.clear();
+                updated |= state.checkUpdate();
+            }
+        }
+        return updated;
+    }
 }

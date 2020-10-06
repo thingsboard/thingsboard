@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -130,6 +131,8 @@ class DeviceState {
             stateChanged = processAttributesUpdateNotification(ctx, msg);
         } else if (msg.getType().equals(DataConstants.ATTRIBUTES_DELETED)) {
             stateChanged = processAttributesDeleteNotification(ctx, msg);
+        } else if (msg.getType().equals(DataConstants.ALARM_CLEAR)) {
+            stateChanged = processAlarmClearNotification(ctx, msg);
         } else {
             ctx.tellSuccess(msg);
         }
@@ -137,6 +140,18 @@ class DeviceState {
             state.setStateData(JacksonUtil.toString(pds));
             state = ctx.saveRuleNodeState(state);
         }
+    }
+
+    private boolean processAlarmClearNotification(TbContext ctx, TbMsg msg) {
+        boolean stateChanged = false;
+        Alarm alarmNf = JacksonUtil.fromString(msg.getData(), Alarm.class);
+        for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
+            DeviceProfileAlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
+                    a -> new DeviceProfileAlarmState(deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+            stateChanged |= alarmState.processAlarmClear(ctx, alarmNf);
+        }
+        ctx.tellSuccess(msg);
+        return stateChanged;
     }
 
     private boolean processAttributesUpdateNotification(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {

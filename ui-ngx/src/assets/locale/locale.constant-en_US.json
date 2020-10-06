@@ -834,6 +834,7 @@
         "condition-duration-value": "Duration value",
         "condition-duration-time-unit": "Time unit",
         "condition-duration-value-range": "Duration value should be in a range from 1 to 2147483647.",
+        "condition-duration-value-pattern": "Duration value should be integers.",
         "condition-duration-value-required": "Duration value is required.",
         "condition-duration-time-unit-required": "Time unit is required.",
         "advanced-settings": "Advanced settings",
@@ -855,6 +856,17 @@
         "provision-device-key-required": "Provision device key is required.",
         "provision-device-secret": "Provision device secret",
         "provision-device-secret-required": "Provision device secret is required."
+        "condition": "Condition",
+        "condition-type": "Condition type",
+        "condition-type-simple": "Simple",
+        "condition-type-duration": "Duration",
+        "condition-type-repeating": "Repeating",
+        "condition-type-required": "Condition type is required.",
+        "condition-repeating-value": "Count of events",
+        "condition-repeating-value-range": "Count of events should be in a range from 1 to 2147483647.",
+        "condition-repeating-value-pattern": "Count of events should be integers.",
+        "condition-repeating-value-required": "Count of events is required.",
+        "schedule": "Schedule"
     },
     "dialog": {
         "close": "Close dialog"

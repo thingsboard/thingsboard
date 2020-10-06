@@ -19,7 +19,7 @@
   <div *ngFor="let createAlarmRuleControl of createAlarmRulesFormArray().controls; let $index = index;
                last as isLast;" fxLayout="row" fxLayoutAlign="start center"
                fxLayoutGap="8px" style="padding-bottom: 8px;" [formGroup]="createAlarmRuleControl">
-    <div class="create-alarm-rule" fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start">
+    <div class="create-alarm-rule" fxFlex fxLayout="column" fxLayoutGap="8px" fxLayoutAlign="start">
       <mat-form-field class="severity mat-block" floatLabel="always" hideRequiredMarker>
         <mat-label translate>alarm.severity</mat-label>
         <mat-select formControlName="severity"

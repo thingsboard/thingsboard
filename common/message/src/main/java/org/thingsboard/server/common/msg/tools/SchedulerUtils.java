@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.msg.tools;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Data;
+import java.time.ZoneId;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-import java.util.concurrent.TimeUnit;
+public class SchedulerUtils {
 
-@Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class RepeatingAlarmConditionSpec implements AlarmConditionSpec {
+    private static final ConcurrentMap<String, ZoneId> tzMap = new ConcurrentHashMap<>();
 
-    private int count;
-
-    @Override
-    public AlarmConditionSpecType getType() {
-        return AlarmConditionSpecType.REPEATING;
+    public static ZoneId getZoneId(String tz) {
+        return tzMap.computeIfAbsent(tz == null || tz.isEmpty() ? "UTC" : tz, ZoneId::of);
     }
+
 }
