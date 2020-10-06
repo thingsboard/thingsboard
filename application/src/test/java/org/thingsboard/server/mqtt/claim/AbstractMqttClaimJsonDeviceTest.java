@@ -18,6 +18,7 @@ package org.thingsboard.server.mqtt.claim;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
 
@@ -51,6 +52,7 @@ public abstract class AbstractMqttClaimJsonDeviceTest extends AbstractMqttClaimD
     }
 
     @Test
+    @Ignore
     public void testGatewayClaimingDeviceWithoutSecretAndDuration() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device empty payload Json", true);
     }

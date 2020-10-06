@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
@@ -36,21 +37,25 @@ public abstract class AbstractMqttClaimProtoDeviceTest extends AbstractMqttClaim
     public void afterTest() throws Exception { super.afterTest(); }
 
     @Test
+    @Ignore
     public void testClaimingDevice() throws Exception {
         processTestClaimingDevice(false);
     }
 
     @Test
+    @Ignore
     public void testClaimingDeviceWithoutSecretAndDuration() throws Exception {
         processTestClaimingDevice(true);
     }
 
     @Test
+    @Ignore
     public void testGatewayClaimingDevice() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device Proto", false);
     }
 
     @Test
+    @Ignore
     public void testGatewayClaimingDeviceWithoutSecretAndDuration() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device empty payload Proto", true);
     }

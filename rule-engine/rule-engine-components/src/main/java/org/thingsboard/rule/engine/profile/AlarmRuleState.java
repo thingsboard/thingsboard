@@ -158,16 +158,21 @@ public class AlarmRuleState {
         return false;
     }
 
+    public void clear() {
+        if (state.getEventCount() > 0 || state.getLastEventTs() > 0 || state.getDuration() > 0) {
+            state.setEventCount(0L);
+            state.setLastEventTs(0L);
+            state.setDuration(0L);
+            updateFlag = true;
+        }
+    }
+
     private boolean evalRepeating(DeviceDataSnapshot data, boolean active) {
         if (active && eval(alarmRule.getCondition(), data)) {
             state.setEventCount(state.getEventCount() + 1);
             updateFlag = true;
-            return state.getEventCount() > requiredRepeats;
+            return state.getEventCount() >= requiredRepeats;
         } else {
-            if (state.getEventCount() > 0) {
-                state.setEventCount(0L);
-                updateFlag = true;
-            }
             return false;
         }
     }
@@ -187,11 +192,6 @@ public class AlarmRuleState {
             }
             return state.getDuration() > requiredDurationInMs;
         } else {
-            if (state.getLastEventTs() > 0 || state.getDuration() > 0) {
-                state.setLastEventTs(0L);
-                state.setDuration(0L);
-                updateFlag = true;
-            }
             return false;
         }
     }
@@ -204,13 +204,7 @@ public class AlarmRuleState {
             case DURATION:
                 if (requiredDurationInMs > 0 && state.getLastEventTs() > 0 && ts > state.getLastEventTs()) {
                     long duration = state.getDuration() + (ts - state.getLastEventTs());
-                    boolean result = duration > requiredDurationInMs && isActive(ts);
-                    if (result) {
-                        state.setLastEventTs(0L);
-                        state.setDuration(0L);
-                        updateFlag = true;
-                    }
-                    return result;
+                    return duration > requiredDurationInMs && isActive(ts);
                 }
             default:
                 return false;

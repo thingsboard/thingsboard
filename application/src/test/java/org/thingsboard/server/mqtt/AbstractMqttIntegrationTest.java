@@ -21,6 +21,7 @@ import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.Assert;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
@@ -128,7 +129,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
 
     protected MqttAsyncClient getMqttAsyncClient(String accessToken) throws MqttException {
         String clientId = MqttAsyncClient.generateClientId();
-        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
+        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
 
         MqttConnectOptions options = new MqttConnectOptions();
         options.setUserName(accessToken);
