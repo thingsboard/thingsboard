@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -31,6 +30,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ADDITIONAL_INFO_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_COLUMN_FAMILY_NAME;
@@ -49,16 +49,16 @@ import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TYPE_PROP
 public final class RelationEntity implements ToData<EntityRelation> {
 
     @Id
-    @Column(name = RELATION_FROM_ID_PROPERTY)
-    private String fromId;
+    @Column(name = RELATION_FROM_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID fromId;
 
     @Id
     @Column(name = RELATION_FROM_TYPE_PROPERTY)
     private String fromType;
 
     @Id
-    @Column(name = RELATION_TO_ID_PROPERTY)
-    private String toId;
+    @Column(name = RELATION_TO_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID toId;
 
     @Id
     @Column(name = RELATION_TO_TYPE_PROPERTY)
@@ -82,11 +82,11 @@ public final class RelationEntity implements ToData<EntityRelation> {
 
     public RelationEntity(EntityRelation relation) {
         if (relation.getTo() != null) {
-            this.toId = UUIDConverter.fromTimeUUID(relation.getTo().getId());
+            this.toId = relation.getTo().getId();
             this.toType = relation.getTo().getEntityType().name();
         }
         if (relation.getFrom() != null) {
-            this.fromId = UUIDConverter.fromTimeUUID(relation.getFrom().getId());
+            this.fromId = relation.getFrom().getId();
             this.fromType = relation.getFrom().getEntityType().name();
         }
         this.relationType = relation.getType();
@@ -98,10 +98,10 @@ public final class RelationEntity implements ToData<EntityRelation> {
     public EntityRelation toData() {
         EntityRelation relation = new EntityRelation();
         if (toId != null && toType != null) {
-            relation.setTo(EntityIdFactory.getByTypeAndUuid(toType, UUIDConverter.fromString(toId)));
+            relation.setTo(EntityIdFactory.getByTypeAndUuid(toType, toId));
         }
         if (fromId != null && fromType != null) {
-            relation.setFrom(EntityIdFactory.getByTypeAndUuid(fromType, UUIDConverter.fromString(fromId)));
+            relation.setFrom(EntityIdFactory.getByTypeAndUuid(fromType, fromId));
         }
         relation.setType(relationType);
         relation.setTypeGroup(RelationTypeGroup.valueOf(relationTypeGroup));

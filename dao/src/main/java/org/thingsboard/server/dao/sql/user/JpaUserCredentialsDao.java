@@ -18,14 +18,12 @@ package org.thingsboard.server.dao.sql.user;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.user.UserCredentialsDao;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
 
@@ -33,7 +31,6 @@ import java.util.UUID;
  * Created by Valerii Sosliuk on 4/22/2017.
  */
 @Component
-@SqlDao
 public class JpaUserCredentialsDao extends JpaAbstractDao<UserCredentialsEntity, UserCredentials> implements UserCredentialsDao {
 
     @Autowired
@@ -45,13 +42,13 @@ public class JpaUserCredentialsDao extends JpaAbstractDao<UserCredentialsEntity,
     }
 
     @Override
-    protected CrudRepository<UserCredentialsEntity, String> getCrudRepository() {
+    protected CrudRepository<UserCredentialsEntity, UUID> getCrudRepository() {
         return userCredentialsRepository;
     }
 
     @Override
     public UserCredentials findByUserId(TenantId tenantId, UUID userId) {
-        return DaoUtil.getData(userCredentialsRepository.findByUserId(UUIDConverter.fromTimeUUID(userId)));
+        return DaoUtil.getData(userCredentialsRepository.findByUserId(userId));
     }
 
     @Override

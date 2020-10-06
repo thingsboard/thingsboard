@@ -62,14 +62,14 @@
 <!--                <mat-form-field fxFlex class="mat-block">-->
 <!--                    <mat-label>Integer Value</mat-label>-->
 <!--                    <input type="number" step="1" matInput formControlName="number">-->
-<!--                    <mat-error *ngIf="editEntityFormGroup.get('attributes').get('number').hasError('pattern')">-->
+<!--                    <mat-error *ngIf="editEntityFormGroup.get('attributes.number').hasError('pattern')">-->
 <!--                        Invalid integer value.-->
 <!--                    </mat-error>-->
 <!--                </mat-form-field>-->
 <!--                <div class="boolean-value-input" fxLayout="column" fxLayoutAlign="center start" fxFlex>-->
 <!--                    <label class="checkbox-label">Boolean Value</label>-->
 <!--                    <mat-checkbox formControlName="booleanValue" style="margin-bottom: 40px;">-->
-<!--                        {{ (editEntityFormGroup.get('attributes').get('booleanValue').value ? "value.true" : "value.false") | translate }}-->
+<!--                        {{ (editEntityFormGroup.get('attributes.booleanValue').value ? "value.true" : "value.false") | translate }}-->
 <!--                    </mat-checkbox>-->
 <!--                </div>-->
 <!--            </div>-->
@@ -184,7 +184,6 @@
 <!--            Save-->
 <!--        </button>-->
 <!--        <button mat-button color="primary"-->
-<!--                style="margin-right: 20px;"-->
 <!--                type="button"-->
 <!--                [disabled]="(isLoading$ | async)"-->
 <!--                (click)="cancel()" cdkFocusInitial>-->
@@ -270,14 +269,14 @@
 <!--                <mat-form-field fxFlex class="mat-block">-->
 <!--                    <mat-label>Integer Value</mat-label>-->
 <!--                    <input type="number" step="1" matInput formControlName="number">-->
-<!--                    <mat-error *ngIf="addEntityFormGroup.get('attributes').get('number').hasError('pattern')">-->
+<!--                    <mat-error *ngIf="addEntityFormGroup.get('attributes.number').hasError('pattern')">-->
 <!--                        Invalid integer value.-->
 <!--                    </mat-error>-->
 <!--                </mat-form-field>-->
 <!--                <div class="boolean-value-input" fxLayout="column" fxLayoutAlign="center start" fxFlex>-->
 <!--                    <label class="checkbox-label">Boolean Value</label>-->
 <!--                    <mat-checkbox formControlName="booleanValue" style="margin-bottom: 40px;">-->
-<!--                        {{ (addEntityFormGroup.get('attributes').get('booleanValue').value ? "value.true" : "value.false") | translate }}-->
+<!--                        {{ (addEntityFormGroup.get('attributes.booleanValue').value ? "value.true" : "value.false") | translate }}-->
 <!--                    </mat-checkbox>-->
 <!--                </div>-->
 <!--            </div>-->
@@ -345,7 +344,6 @@
 <!--            Create-->
 <!--        </button>-->
 <!--        <button mat-button color="primary"-->
-<!--                style="margin-right: 20px;"-->
 <!--                type="button"-->
 <!--                [disabled]="(isLoading$ | async)"-->
 <!--                (click)="cancel()" cdkFocusInitial>-->

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { OnDestroy } from '@angular/core';
+import { Directive, OnDestroy } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Observable, Subscription } from 'rxjs';
@@ -22,6 +22,7 @@ import { selectIsLoading } from '@core/interceptors/load.selectors';
 import { delay, share } from 'rxjs/operators';
 import { AbstractControl } from '@angular/forms';
 
+@Directive()
 export abstract class PageComponent implements OnDestroy {
 
   isLoading$: Observable<boolean>;

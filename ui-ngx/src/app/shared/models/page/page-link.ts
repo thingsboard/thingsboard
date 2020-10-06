@@ -65,6 +65,28 @@ const defaultPageLinkSearch: PageLinkSearchFunction<any> =
     return false;
   };
 
+export function sortItems(item1: any, item2: any, property: string, asc: boolean): number {
+  const item1Value = getDescendantProp(item1, property);
+  const item2Value = getDescendantProp(item2, property);
+  let result = 0;
+  if (item1Value !== item2Value) {
+    const item1Type = typeof item1Value;
+    const item2Type = typeof item2Value;
+    if (item1Type === 'number' && item2Type === 'number') {
+      result = item1Value - item2Value;
+    } else if (item1Type === 'string' && item2Type === 'string') {
+      result = item1Value.localeCompare(item2Value);
+    } else if ((item1Type === 'boolean' && item2Type === 'boolean') || (item1Type !== item2Type)) {
+      if (item1Value && !item2Value) {
+        result = 1;
+      } else if (!item1Value && item2Value) {
+        result = -1;
+      }
+    }
+  }
+  return asc ? result : result * -1;
+}
+
 export class PageLink {
 
   textSearch: string;
@@ -96,26 +118,9 @@ export class PageLink {
 
   public sort(item1: any, item2: any): number {
     if (this.sortOrder) {
-      const property = this.sortOrder.property;
-      const item1Value = getDescendantProp(item1, property);
-      const item2Value = getDescendantProp(item2, property);
-      let result = 0;
-      if (item1Value !== item2Value) {
-        if (typeof item1Value === 'number' && typeof item2Value === 'number') {
-          result = item1Value - item2Value;
-        } else if (typeof item1Value === 'string' && typeof item2Value === 'string') {
-          result = item1Value.localeCompare(item2Value);
-        } else if (typeof item1Value === 'boolean' && typeof item2Value === 'boolean') {
-          if (item1Value && !item2Value) {
-            result = 1;
-          } else if (!item1Value && item2Value) {
-            result = -1;
-          }
-        } else if (typeof item1Value !== typeof item2Value) {
-          result = 1;
-        }
-      }
-      return this.sortOrder.direction === Direction.ASC ? result : result * -1;
+      const sortProperty = this.sortOrder.property;
+      const asc = this.sortOrder.direction === Direction.ASC;
+      return sortItems(item1, item2, sortProperty, asc);
     }
     return 0;
   }
@@ -130,7 +135,9 @@ export class PageLink {
     pageData.totalElements = pageData.data.length;
     pageData.totalPages = this.pageSize === Number.POSITIVE_INFINITY ? 1 : Math.ceil(pageData.totalElements / this.pageSize);
     if (this.sortOrder) {
-      pageData.data = pageData.data.sort((a, b) => this.sort(a, b));
+      const sortProperty = this.sortOrder.property;
+      const asc = this.sortOrder.direction === Direction.ASC;
+      pageData.data = pageData.data.sort((a, b) => sortItems(a, b, sortProperty, asc));
     }
     if (this.pageSize !== Number.POSITIVE_INFINITY) {
       const startIndex = this.pageSize * this.page;

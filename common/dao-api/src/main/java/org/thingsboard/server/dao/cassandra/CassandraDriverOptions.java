@@ -80,8 +80,22 @@ public class CassandraDriverOptions {
 
     @Value("${cassandra.compression}")
     private String compression;
-    @Value("${cassandra.ssl}")
+    
+    @Value("${cassandra.ssl.enabled}")
     private Boolean ssl;
+    @Value("${cassandra.ssl.key_store}")
+    private String sslKeyStore;
+    @Value("${cassandra.ssl.key_store_password}")
+    private String sslKeyStorePassword;
+    @Value("${cassandra.ssl.trust_store}")
+    private String sslTrustStore;
+    @Value("${cassandra.ssl.trust_store_password}")
+    private String sslTrustStorePassword;
+    @Value("${cassandra.ssl.hostname_validation}")
+    private Boolean sslHostnameValidation;
+    @Value("${cassandra.ssl.cipher_suites}")
+    private List<String> sslCipherSuites;
+    
     @Value("${cassandra.metrics}")
     private Boolean metrics;
 
@@ -120,7 +134,19 @@ public class CassandraDriverOptions {
 
         if (this.ssl) {
             driverConfigBuilder.withString(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS,
-                    "DefaultSslEngineFactory");
+                    "DefaultSslEngineFactory")
+                .withBoolean(DefaultDriverOption.SSL_HOSTNAME_VALIDATION, this.sslHostnameValidation);
+            if(!this.sslTrustStore.isEmpty()) {
+                driverConfigBuilder.withString(DefaultDriverOption.SSL_TRUSTSTORE_PATH, this.sslTrustStore)
+                    .withString(DefaultDriverOption.SSL_TRUSTSTORE_PASSWORD, this.sslTrustStorePassword);
+            }
+            if(!this.sslKeyStore.isEmpty()) {
+                driverConfigBuilder.withString(DefaultDriverOption.SSL_KEYSTORE_PATH, this.sslKeyStore)
+                    .withString(DefaultDriverOption.SSL_KEYSTORE_PASSWORD, this.sslKeyStorePassword);
+            }
+            if(!this.sslCipherSuites.isEmpty()) {
+                driverConfigBuilder.withStringList(DefaultDriverOption.SSL_CIPHER_SUITES, this.sslCipherSuites);
+            }
         }
 
         if (this.metrics) {

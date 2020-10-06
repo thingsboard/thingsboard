@@ -25,11 +25,11 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.AdminSettingsEntity;
 import org.thingsboard.server.dao.settings.AdminSettingsDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
-import org.thingsboard.server.dao.util.SqlDao;
+
+import java.util.UUID;
 
 @Component
 @Slf4j
-@SqlDao
 public class JpaAdminSettingsDao extends JpaAbstractDao<AdminSettingsEntity, AdminSettings> implements AdminSettingsDao {
 
     @Autowired
@@ -41,7 +41,7 @@ public class JpaAdminSettingsDao extends JpaAbstractDao<AdminSettingsEntity, Adm
     }
 
     @Override
-    protected CrudRepository<AdminSettingsEntity, String> getCrudRepository() {
+    protected CrudRepository<AdminSettingsEntity, UUID> getCrudRepository() {
         return adminSettingsRepository;
     }
 

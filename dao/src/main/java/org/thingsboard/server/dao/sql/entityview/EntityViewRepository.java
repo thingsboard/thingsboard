@@ -18,30 +18,28 @@ package org.thingsboard.server.dao.sql.entityview;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.EntityViewEntity;
 import org.thingsboard.server.dao.model.sql.EntityViewInfoEntity;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by Victor Basanets on 8/31/2017.
  */
-@SqlDao
-public interface EntityViewRepository extends PagingAndSortingRepository<EntityViewEntity, String> {
+public interface EntityViewRepository extends PagingAndSortingRepository<EntityViewEntity, UUID> {
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.EntityViewInfoEntity(e, c.title, c.additionalInfo) " +
             "FROM EntityViewEntity e " +
             "LEFT JOIN CustomerEntity c on c.id = e.customerId " +
             "WHERE e.id = :entityViewId")
-    EntityViewInfoEntity findEntityViewInfoById(@Param("entityViewId") String entityViewId);
+    EntityViewInfoEntity findEntityViewInfoById(@Param("entityViewId") UUID entityViewId);
 
     @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
             "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
-    Page<EntityViewEntity> findByTenantId(@Param("tenantId") String tenantId,
+    Page<EntityViewEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                           @Param("textSearch") String textSearch,
                                           Pageable pageable);
 
@@ -50,14 +48,14 @@ public interface EntityViewRepository extends PagingAndSortingRepository<EntityV
             "LEFT JOIN CustomerEntity c on c.id = e.customerId " +
             "WHERE e.tenantId = :tenantId " +
             "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
-    Page<EntityViewInfoEntity> findEntityViewInfosByTenantId(@Param("tenantId") String tenantId,
+    Page<EntityViewInfoEntity> findEntityViewInfosByTenantId(@Param("tenantId") UUID tenantId,
                                                              @Param("textSearch") String textSearch,
                                                              Pageable pageable);
 
     @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
             "AND e.type = :type " +
             "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
-    Page<EntityViewEntity> findByTenantIdAndType(@Param("tenantId") String tenantId,
+    Page<EntityViewEntity> findByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                                  @Param("type") String type,
                                                  @Param("textSearch") String textSearch,
                                                  Pageable pageable);
@@ -68,7 +66,7 @@ public interface EntityViewRepository extends PagingAndSortingRepository<EntityV
             "WHERE e.tenantId = :tenantId " +
             "AND e.type = :type " +
             "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
-    Page<EntityViewInfoEntity> findEntityViewInfosByTenantIdAndType(@Param("tenantId") String tenantId,
+    Page<EntityViewInfoEntity> findEntityViewInfosByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                                                     @Param("type") String type,
                                                                     @Param("textSearch") String textSearch,
                                                                     Pageable pageable);
@@ -76,8 +74,8 @@ public interface EntityViewRepository extends PagingAndSortingRepository<EntityV
     @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
             "AND e.customerId = :customerId " +
             "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
-    Page<EntityViewEntity> findByTenantIdAndCustomerId(@Param("tenantId") String tenantId,
-                                                       @Param("customerId") String customerId,
+    Page<EntityViewEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
+                                                       @Param("customerId") UUID customerId,
                                                        @Param("searchText") String searchText,
                                                        Pageable pageable);
 
@@ -87,8 +85,8 @@ public interface EntityViewRepository extends PagingAndSortingRepository<EntityV
             "WHERE e.tenantId = :tenantId " +
             "AND e.customerId = :customerId " +
             "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
-    Page<EntityViewInfoEntity> findEntityViewInfosByTenantIdAndCustomerId(@Param("tenantId") String tenantId,
-                                                                          @Param("customerId") String customerId,
+    Page<EntityViewInfoEntity> findEntityViewInfosByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
+                                                                          @Param("customerId") UUID customerId,
                                                                           @Param("searchText") String searchText,
                                                                           Pageable pageable);
 
@@ -96,8 +94,8 @@ public interface EntityViewRepository extends PagingAndSortingRepository<EntityV
             "AND e.customerId = :customerId " +
             "AND e.type = :type " +
             "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
-    Page<EntityViewEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") String tenantId,
-                                                              @Param("customerId") String customerId,
+    Page<EntityViewEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
+                                                              @Param("customerId") UUID customerId,
                                                               @Param("type") String type,
                                                               @Param("searchText") String searchText,
                                                               Pageable pageable);
@@ -109,16 +107,16 @@ public interface EntityViewRepository extends PagingAndSortingRepository<EntityV
             "AND e.customerId = :customerId " +
             "AND e.type = :type " +
             "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
-    Page<EntityViewInfoEntity> findEntityViewInfosByTenantIdAndCustomerIdAndType(@Param("tenantId") String tenantId,
-                                                                                 @Param("customerId") String customerId,
+    Page<EntityViewInfoEntity> findEntityViewInfosByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
+                                                                                 @Param("customerId") UUID customerId,
                                                                                  @Param("type") String type,
                                                                                  @Param("textSearch") String textSearch,
                                                                                  Pageable pageable);
 
-    EntityViewEntity findByTenantIdAndName(String tenantId, String name);
+    EntityViewEntity findByTenantIdAndName(UUID tenantId, String name);
 
-    List<EntityViewEntity> findAllByTenantIdAndEntityId(String tenantId, String entityId);
+    List<EntityViewEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
     @Query("SELECT DISTINCT ev.type FROM EntityViewEntity ev WHERE ev.tenantId = :tenantId")
-    List<String> findTenantEntityViewTypes(@Param("tenantId") String tenantId);
+    List<String> findTenantEntityViewTypes(@Param("tenantId") UUID tenantId);
 }

@@ -21,6 +21,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 @TimescaleDBTsDao
 @Service
@@ -28,8 +29,8 @@ import java.sql.Connection;
 public class TimescaleTimeseriesCleanUpService extends AbstractTimeseriesCleanUpService {
 
     @Override
-    protected void doCleanUp(Connection connection) {
-        long totalEntitiesTelemetryRemoved = executeQuery(connection, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID_STR + "'," + systemTtl + ", 0);");
+    protected void doCleanUp(Connection connection) throws SQLException {
+        long totalEntitiesTelemetryRemoved = executeQuery(connection, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID + "'," + systemTtl + ", 0);");
         log.info("Total telemetry removed stats by TTL for entities: [{}]", totalEntitiesTelemetryRemoved);
     }
 }

@@ -32,6 +32,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.DataConstants;
@@ -44,7 +45,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
-import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
@@ -58,17 +58,20 @@ import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateExecutor;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.rule.RuleNodeStateService;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
+import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
 import org.thingsboard.server.service.mail.MailExecutorService;
+import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
@@ -76,6 +79,7 @@ import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.transport.TbCoreToTransportService;
 
@@ -88,7 +92,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
@@ -126,6 +129,10 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
+    private TbDeviceProfileCache deviceProfileCache;
+
+    @Autowired
+    @Getter
     private AssetService assetService;
 
     @Autowired
@@ -138,6 +145,10 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
+    private TenantProfileService tenantProfileService;
+
+    @Autowired
+    @Getter
     private CustomerService customerService;
 
     @Autowired
@@ -147,6 +158,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private RuleChainService ruleChainService;
+
+    @Autowired
+    @Getter
+    private RuleNodeStateService ruleNodeStateService;
 
     @Autowired
     private PartitionService partitionService;
@@ -169,10 +184,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private AlarmService alarmService;
-
-    @Autowired
-    @Getter
     private RelationService relationService;
 
     @Autowired
@@ -186,6 +197,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private TelemetrySubscriptionService tsSubService;
+
+    @Autowired
+    @Getter
+    private AlarmSubscriptionService alarmService;
 
     @Autowired
     @Getter
@@ -218,6 +233,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private ClaimDevicesService claimDevicesService;
+
+    @Autowired
+    @Getter
+    private JsInvokeStats jsInvokeStats;
 
     //TODO: separate context for TbCore and TbRuleEngine
     @Autowired(required = false)
@@ -272,19 +291,14 @@ public class ActorSystemContext {
     @Getter
     private long statisticsPersistFrequency;
 
-    @Getter
-    private final AtomicInteger jsInvokeRequestsCount = new AtomicInteger(0);
-    @Getter
-    private final AtomicInteger jsInvokeResponsesCount = new AtomicInteger(0);
-    @Getter
-    private final AtomicInteger jsInvokeFailuresCount = new AtomicInteger(0);
 
     @Scheduled(fixedDelayString = "${actors.statistics.js_print_interval_ms}")
     public void printStats() {
         if (statisticsEnabled) {
-            if (jsInvokeRequestsCount.get() > 0 || jsInvokeResponsesCount.get() > 0 || jsInvokeFailuresCount.get() > 0) {
+            if (jsInvokeStats.getRequests() > 0 || jsInvokeStats.getResponses() > 0 || jsInvokeStats.getFailures() > 0) {
                 log.info("Rule Engine JS Invoke Stats: requests [{}] responses [{}] failures [{}]",
-                        jsInvokeRequestsCount.getAndSet(0), jsInvokeResponsesCount.getAndSet(0), jsInvokeFailuresCount.getAndSet(0));
+                        jsInvokeStats.getRequests(), jsInvokeStats.getResponses(), jsInvokeStats.getFailures());
+                jsInvokeStats.reset();
             }
         }
     }
@@ -527,4 +541,5 @@ public class ActorSystemContext {
         log.debug("Scheduling msg {} with delay {} ms", msg, delayInMs);
         getScheduler().schedule(() -> ctx.tell(msg), delayInMs, TimeUnit.MILLISECONDS);
     }
+
 }

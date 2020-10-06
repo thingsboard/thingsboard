@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Inject, Injectable, Type } from '@angular/core';
+import { Inject, Injectable, Optional, Type } from '@angular/core';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { WidgetService } from '@core/http/widget.service';
 import { forkJoin, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
@@ -41,6 +41,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetTypeId } from '@app/shared/models/id/widget-type-id';
 import { TenantId } from '@app/shared/models/id/tenant-id';
 import { SharedModule } from '@shared/shared.module';
+import { MODULES_MAP } from '@shared/public-api';
 
 // @dynamic
 @Injectable()
@@ -59,6 +60,7 @@ export class WidgetComponentService {
   private editingWidgetType: WidgetType;
 
   constructor(@Inject(WINDOW) private window: Window,
+              @Optional() @Inject(MODULES_MAP) private modulesMap: {[key: string]: any},
               private dynamicComponentFactoryService: DynamicComponentFactoryService,
               private widgetService: WidgetService,
               private utils: UtilsService,
@@ -105,8 +107,8 @@ export class WidgetComponentService {
       const initSubject = new ReplaySubject();
       this.init$ = initSubject.asObservable();
       const loadDefaultWidgetInfoTasks = [
-        this.loadWidgetResources(this.missingWidgetType, 'global-widget-missing-type', [SharedModule]),
-        this.loadWidgetResources(this.errorWidgetType, 'global-widget-error-type', [SharedModule]),
+        this.loadWidgetResources(this.missingWidgetType, 'global-widget-missing-type', [SharedModule, WidgetComponentsModule]),
+        this.loadWidgetResources(this.errorWidgetType, 'global-widget-error-type', [SharedModule, WidgetComponentsModule]),
       ];
       forkJoin(loadDefaultWidgetInfoTasks).subscribe(
         () => {
@@ -218,31 +220,71 @@ export class WidgetComponentService {
     this.cssParser.cssPreviewNamespace = widgetNamespace;
     this.cssParser.createStyleElement(widgetNamespace, widgetInfo.templateCss);
     const resourceTasks: Observable<string>[] = [];
+    const modulesTasks: Observable<Type<any>[] | string>[] = [];
     if (widgetInfo.resources.length > 0) {
-      widgetInfo.resources.forEach((resource) => {
+      widgetInfo.resources.filter(r => r.isModule).forEach(
+        (resource) => {
+          modulesTasks.push(
+            this.resources.loadModules(resource.url, this.modulesMap).pipe(
+              catchError((e: Error) => of(e?.message ? e.message : `Failed to load widget resource module: '${resource.url}'`))
+            )
+          );
+        }
+      );
+    }
+    widgetInfo.resources.filter(r => !r.isModule).forEach(
+      (resource) => {
         resourceTasks.push(
           this.resources.loadResource(resource.url).pipe(
             catchError(e => of(`Failed to load widget resource: '${resource.url}'`))
           )
         );
-      });
-    }
-    resourceTasks.push(
-      this.dynamicComponentFactoryService.createDynamicComponentFactory(
-        class DynamicWidgetComponentInstance extends DynamicWidgetComponent {},
-        widgetInfo.templateHtml,
-        modules
-      ).pipe(
-        map((factory) => {
-          widgetInfo.componentFactory = factory;
-          return null;
-        }),
-        catchError(e => {
-          const details = this.utils.parseException(e);
-          const errorMessage = `Failed to compile widget html. \n Error: ${details.message}`;
-          return of(errorMessage);
+      }
+    );
+
+    let modulesObservable: Observable<string | Type<any>[]>;
+    if (modulesTasks.length) {
+      modulesObservable = forkJoin(modulesTasks).pipe(
+        map(res => {
+          const msg = res.find(r => typeof r === 'string');
+          if (msg) {
+            return msg as string;
+          } else {
+            let resModules = (res as Type<any>[][]).flat();
+            if (modules && modules.length) {
+              resModules = resModules.concat(modules);
+            }
+            return resModules;
+          }
         })
-      )
+      );
+    } else {
+      modulesObservable = modules && modules.length ? of(modules) : of([]);
+    }
+
+    resourceTasks.push(
+      modulesObservable.pipe(
+        mergeMap((resolvedModules) => {
+          if (typeof resolvedModules === 'string') {
+            return of(resolvedModules);
+          } else {
+            return this.dynamicComponentFactoryService.createDynamicComponentFactory(
+              class DynamicWidgetComponentInstance extends DynamicWidgetComponent {},
+              widgetInfo.templateHtml,
+              resolvedModules
+            ).pipe(
+              map((factory) => {
+                widgetInfo.componentFactory = factory;
+                return null;
+              }),
+              catchError(e => {
+                const details = this.utils.parseException(e);
+                const errorMessage = `Failed to compile widget html. \n Error: ${details.message}`;
+                return of(errorMessage);
+              })
+            );
+          }
+        }))
     );
     return forkJoin(resourceTasks).pipe(
       switchMap(msgs => {
@@ -346,11 +388,20 @@ export class WidgetComponentService {
       } else {
         result.typeParameters.useCustomDatasources = false;
       }
+      if (isUndefined(result.typeParameters.hasDataPageLink)) {
+        result.typeParameters.hasDataPageLink = false;
+      }
       if (isUndefined(result.typeParameters.maxDatasources)) {
         result.typeParameters.maxDatasources = -1;
       }
       if (isUndefined(result.typeParameters.maxDataKeys)) {
         result.typeParameters.maxDataKeys = -1;
+      }
+      if (isUndefined(result.typeParameters.singleEntity)) {
+        result.typeParameters.singleEntity = false;
+      }
+      if (isUndefined(result.typeParameters.warnOnPageDataOverflow)) {
+        result.typeParameters.warnOnPageDataOverflow = true;
       }
       if (isUndefined(result.typeParameters.dataKeysOptional)) {
         result.typeParameters.dataKeysOptional = false;

@@ -242,7 +242,7 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
     const aliasesArray = this.entityAliasesFormGroup.get('entityAliases').value as any[];
     for (const aliasValue of aliasesArray) {
       const aliasId: string = aliasValue.id;
-      const alias: string = aliasValue.alias;
+      const alias: string = aliasValue.alias.trim();
       const filter: EntityAliasFilter = aliasValue.filter;
       if (uniqueAliasList[alias]) {
         valid = false;

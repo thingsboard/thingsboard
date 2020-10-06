@@ -20,7 +20,7 @@ import { SharedModule } from '@app/shared/shared.module';
 import { EntitiesTableWidgetComponent } from '@home/components/widget/lib/entities-table-widget.component';
 import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/display-columns-panel.component';
 import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarms-table-widget.component';
-import { AlarmStatusFilterPanelComponent } from '@home/components/widget/lib/alarm-status-filter-panel.component';
+import { AlarmFilterPanelComponent } from '@home/components/widget/lib/alarm-filter-panel.component';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/timeseries-table-widget.component';
 import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entities-hierarchy-widget.component';
@@ -40,7 +40,7 @@ import { ImportExportService } from '@home/components/import-export/import-expor
   declarations:
     [
       DisplayColumnsPanelComponent,
-      AlarmStatusFilterPanelComponent,
+      AlarmFilterPanelComponent,
       EntitiesTableWidgetComponent,
       AlarmsTableWidgetComponent,
       TimeseriesTableWidgetComponent,

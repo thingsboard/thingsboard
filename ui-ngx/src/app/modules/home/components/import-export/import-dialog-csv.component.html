@@ -38,8 +38,8 @@
             <tb-file-input formControlName="importData"
                            required
                            label="{{importFileLabel | translate}}"
-                           [allowedExtensions]="'csv'"
-                           [accept]="'.csv,application/csv,text/csv'"
+                           [allowedExtensions]="'csv,txt'"
+                           [accept]="'.csv,application/csv,text/csv,.txt,text/plain'"
                            dropLabel="{{'import.drop-file-csv' | translate}}">
             </tb-file-input>
           </fieldset>

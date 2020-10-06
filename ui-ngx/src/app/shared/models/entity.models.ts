@@ -14,18 +14,21 @@
 /// limitations under the License.
 ///
 
-import { BaseData } from '@shared/models/base-data';
 import { EntityType } from '@shared/models/entity-type.models';
-import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeData } from './telemetry/telemetry.models';
+import { EntityId } from '@shared/models/id/entity-id';
 
 export interface EntityInfo {
-  origEntity?: BaseData<EntityId>;
   name?: string;
   label?: string;
   entityType?: EntityType;
   id?: string;
   entityDescription?: string;
+}
+
+export interface EntityInfoData {
+  id: EntityId;
+  name: string;
 }
 
 export interface ImportEntityData {

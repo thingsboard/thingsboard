@@ -14,6 +14,8 @@
 /// limitations under the License.
 ///
 
+import { InjectionToken } from '@angular/core';
+
 export const Constants = {
   serverErrorCode: {
     general: 2,
@@ -61,6 +63,7 @@ export const HelpLinks = {
     ruleEngine: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/overview/',
     ruleNodeCheckRelation: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#check-relation-filter-node',
     ruleNodeCheckExistenceFields: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#check-existence-fields-node',
+    ruleNodeGpsGeofencingFilter: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#gps-geofencing-filter-node',
     ruleNodeJsFilter: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#script-filter-node',
     ruleNodeJsSwitch: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#switch-node',
     ruleNodeMessageTypeFilter: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#message-type-filter-node',
@@ -69,34 +72,46 @@ export const HelpLinks = {
     ruleNodeOriginatorTypeSwitch: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#originator-type-switch-node',
     ruleNodeOriginatorAttributes: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/enrichment-nodes/#originator-attributes',
     ruleNodeOriginatorFields: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/enrichment-nodes/#originator-fields',
+    ruleNodeOriginatorTelemetry: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/enrichment-nodes/#originator-telemetry',
     ruleNodeCustomerAttributes: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/enrichment-nodes/#customer-attributes',
+    ruleNodeCustomerDetails: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/enrichment-nodes/#customer-details',
     ruleNodeDeviceAttributes: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/enrichment-nodes/#device-attributes',
     ruleNodeRelatedAttributes: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/enrichment-nodes/#related-attributes',
     ruleNodeTenantAttributes: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/enrichment-nodes/#tenant-attributes',
+    ruleNodeTenantDetails: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/enrichment-nodes/#tenant-details',
     ruleNodeChangeOriginator: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/transformation-nodes/#change-originator',
     ruleNodeTransformMsg: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/transformation-nodes/#script-transformation-node',
     ruleNodeMsgToEmail: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/transformation-nodes/#to-email-node',
+    ruleNodeAssignToCustomer: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/transformation-nodes/#assign-to-customer-node',
+    ruleNodeUnassignFromCustomer: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/transformation-nodes/#unassign-from-customer-node',
     ruleNodeClearAlarm: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#clear-alarm-node',
     ruleNodeCreateAlarm: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#create-alarm-node',
+    ruleNodeCreateRelation: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#create-relation-node',
+    ruleNodeDeleteRelation: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#delete-relation-node',
     ruleNodeMsgDelay: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#delay-node',
     ruleNodeMsgGenerator: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#generator-node',
+    ruleNodeGpsGeofencingEvents: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#gps-geofencing-events-node',
     ruleNodeLog: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#log-node',
     ruleNodeRpcCallReply: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#rpc-call-reply-node',
     ruleNodeRpcCallRequest: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#rpc-call-request-node',
     ruleNodeSaveAttributes: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#save-attributes-node',
     ruleNodeSaveTimeseries: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#save-timeseries-node',
+    ruleNodeSaveToCustomTable: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#save-to-custom-table',
     ruleNodeRuleChain: helpBaseUrl + '/docs/user-guide/ui/rule-chains/',
     ruleNodeAwsSns: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#aws-sns-node',
     ruleNodeAwsSqs: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#aws-sqs-node',
     ruleNodeKafka: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#kafka-node',
     ruleNodeMqtt: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#mqtt-node',
+    ruleNodeAzureIotHub: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#azure-iot-hub-node',
     ruleNodeRabbitMq: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#rabbitmq-node',
     ruleNodeRestApiCall: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#rest-api-call-node',
     ruleNodeSendEmail: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-email-node',
     tenants: helpBaseUrl + '/docs/user-guide/ui/tenants',
-    customers: helpBaseUrl + '/docs/user-guide/customers',
+    tenantProfiles: helpBaseUrl + '/docs/user-guide/ui/tenant-profiles',
+    customers: helpBaseUrl + '/docs/user-guide/ui/customers',
     users: helpBaseUrl + '/docs/user-guide/ui/users',
     devices: helpBaseUrl + '/docs/user-guide/ui/devices',
+    deviceProfiles: helpBaseUrl + '/docs/user-guide/ui/device-profiles',
     assets: helpBaseUrl + '/docs/user-guide/ui/assets',
     entityViews: helpBaseUrl + '/docs/user-guide/ui/entity-views',
     entitiesImport: helpBaseUrl + '/docs/user-guide/bulk-provisioning',
@@ -203,3 +218,5 @@ export const contentTypesMap = new Map<ContentType, ContentTypeData>(
 );
 
 export const customTranslationsPrefix = 'custom.';
+
+export const MODULES_MAP = new InjectionToken<{[key: string]: any}>('ModulesMap');

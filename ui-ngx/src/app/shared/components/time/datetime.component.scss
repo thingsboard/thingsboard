@@ -24,4 +24,11 @@
     width: auto;
     min-width: 100px;
   }
+  mat-form-field {
+    &.no-label {
+      .mat-form-field-infix {
+        border-top-width: 0.2em;
+      }
+    }
+  }
 }

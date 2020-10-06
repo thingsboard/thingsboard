@@ -52,8 +52,9 @@ export class LegendComponent implements OnInit {
   }
 
   toggleHideData(index: number) {
-    if (!this.legendData.keys[index].dataKey.settings.disableDataHiding) {
-      this.legendData.keys[index].dataKey.hidden = !this.legendData.keys[index].dataKey.hidden;
+    const dataKey = this.legendData.keys.find(key => key.dataIndex === index).dataKey;
+    if (!dataKey.settings.disableDataHiding) {
+      dataKey.hidden = !dataKey.hidden;
       this.legendKeyHiddenChange.emit(index);
     }
   }

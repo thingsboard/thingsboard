@@ -126,7 +126,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
 
     @Override
     public Response convertToPublish(CoapTransportResource.CoapSessionListener session, TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
-        if (msg.getClientAttributeListCount() == 0 && msg.getSharedAttributeListCount() == 0 && msg.getDeletedAttributeKeysCount() == 0) {
+        if (msg.getClientAttributeListCount() == 0 && msg.getSharedAttributeListCount() == 0) {
             return new Response(CoAP.ResponseCode.NOT_FOUND);
         } else {
             Response response = new Response(CoAP.ResponseCode.CONTENT);

@@ -50,6 +50,8 @@
           "datasources": [
             {
               "type": "entity",
+              "name": null,
+              "entityAliasId": "68a058e1-fdda-8482-715b-3ae4a488568e",
               "dataKeys": [
                 {
                   "name": "active",
@@ -92,9 +94,36 @@
                   "_hash": 0.5726727868178358,
                   "units": "%",
                   "decimals": 0
+                },
+                {
+                  "name": "latitude",
+                  "type": "attribute",
+                  "label": "latitude",
+                  "color": "#ffc107",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": ""
+                  },
+                  "_hash": 0.16055765877264894
+                },
+                {
+                  "name": "longitude",
+                  "type": "attribute",
+                  "label": "longitude",
+                  "color": "#607d8b",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": ""
+                  },
+                  "_hash": 0.10969512220289346
                 }
-              ],
-              "entityAliasId": "68a058e1-fdda-8482-715b-3ae4a488568e"
+              ]
             }
           ],
           "showTitleIcon": false,
@@ -882,11 +911,11 @@
           "actions": {
             "tooltipAction": [
               {
-                "id": "54c293c4-9ca6-e34f-dc6a-0271944c1c66",
                 "name": "delete",
                 "icon": "more_horiz",
                 "type": "custom",
-                "customFunction": "var $rootScope = widgetContext.$scope.$injector.get('$rootScope');\nvar entityDatasource = widgetContext.map.subscription.datasources.filter(\n    function(entity) {\n        return entity.entityId === entityId.id\n    });\n\nwidgetContext.map.saveMarkerLocation(entityDatasource[0],\n    widgetContext.map.locations[0], {\n        \"lat\": null,\n        \"lng\": null\n    }).then(function succes() {\n        $rootScope.$broadcast('widgetForceReInit');\n    });"
+                "customFunction": "var entityDatasource = widgetContext.mapInstance.datasources.filter(\n    function(entity) {\n        return entity.entityId === entityId.id\n    });\n\nwidgetContext.mapInstance.saveMarkerLocation(entityDatasource[0], null, null).subscribe(function success() {\n        widgetContext.updateAliases();\n});",
+                "id": "54c293c4-9ca6-e34f-dc6a-0271944c1c66"
               }
             ]
           },
@@ -1017,11 +1046,11 @@
           "actions": {
             "tooltipAction": [
               {
-                "id": "54c293c4-9ca6-e34f-dc6a-0271944c1c66",
                 "name": "delete",
                 "icon": "more_horiz",
                 "type": "custom",
-                "customFunction": "var $rootScope = widgetContext.$scope.$injector.get('$rootScope');\nvar entityDatasource = widgetContext.map.subscription.datasources.filter(\n    function(entity) {\n        return entity.entityId === entityId.id\n    });\n\nwidgetContext.map.saveMarkerLocation(entityDatasource[0],\n    widgetContext.map.locations[0], {\n        \"lat\": null,\n        \"lng\": null\n    }).then(function succes() {\n        $rootScope.$broadcast('widgetForceReInit');\n    });"
+                "customFunction": "var entityDatasource = widgetContext.mapInstance.datasources.filter(\n    function(entity) {\n        return entity.entityId === entityId.id\n    });\n\nwidgetContext.mapInstance.saveMarkerLocation(entityDatasource[0], null, null).subscribe(function success() {\n        widgetContext.updateAliases();\n});",
+                "id": "54c293c4-9ca6-e34f-dc6a-0271944c1c66"
               }
             ]
           },
@@ -1033,6 +1062,61 @@
           "displayTimewindow": true
         },
         "id": "0a430429-9078-9ae6-2b67-e4a15a2bf8bf"
+      },
+      "f4bb2f2d-0164-60bc-f3e8-9b1e7b5a59b3": {
+        "isSystemType": true,
+        "bundleAlias": "input_widgets",
+        "typeAlias": "update_double_timeseries",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "12ae98c7-1ea2-52cf-64d5-763e9d993547",
+              "dataKeys": [
+                {
+                  "name": "temperature",
+                  "type": "timeseries",
+                  "label": "temperature",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.4164505192982848
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "showResultMessage": true,
+            "showLabel": true
+          },
+          "title": "New Update double timeseries",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {}
+        },
+        "row": 0,
+        "col": 0,
+        "id": "f4bb2f2d-0164-60bc-f3e8-9b1e7b5a59b3"
       }
     },
     "states": {
@@ -1130,6 +1214,12 @@
                 "sizeX": 6,
                 "sizeY": 6,
                 "row": 6,
+                "col": 0
+              },
+              "f4bb2f2d-0164-60bc-f3e8-9b1e7b5a59b3": {
+                "sizeX": 7.5,
+                "sizeY": 3,
+                "row": 12,
                 "col": 0
               }
             },

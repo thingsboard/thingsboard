@@ -41,11 +41,10 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
-
 @Component
 @Slf4j
-@SqlTsDao
 @PsqlDao
+@SqlTsDao
 public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao {
 
     private final Map<Long, PsqlPartition> partitions = new ConcurrentHashMap<>();

@@ -40,7 +40,7 @@ public class TsKvQueryCursor extends QueryCursor {
 
     public TsKvQueryCursor(String entityType, UUID entityId, ReadTsKvQuery baseQuery, List<Long> partitions) {
         super(entityType, entityId, baseQuery, partitions);
-        this.orderBy = baseQuery.getOrderBy();
+        this.orderBy = baseQuery.getOrder();
         this.partitionIndex = isDesc() ? partitions.size() - 1 : 0;
         this.data = new ArrayList<>();
         this.currentLimit = baseQuery.getLimit();

@@ -15,6 +15,23 @@
     limitations under the License.
 
 -->
+<mat-tab *ngIf="entity"
+         label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
+  <tb-attribute-table [defaultAttributeScope]="attributeScopes.SERVER_SCOPE"
+                      [active]="attributesTab.isActive"
+                      [entityId]="entity.id"
+                      [entityName]="entity.name">
+  </tb-attribute-table>
+</mat-tab>
+<mat-tab *ngIf="entity"
+         label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
+  <tb-attribute-table [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
+                      disableAttributeScopeSelection
+                      [active]="telemetryTab.isActive"
+                      [entityId]="entity.id"
+                      [entityName]="entity.name">
+  </tb-attribute-table>
+</mat-tab>
 <mat-tab *ngIf="entity && authUser.authority === authorities.TENANT_ADMIN"
          label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
   <tb-audit-log-table [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.USER" [userId]="entity.id" detailsMode="true"></tb-audit-log-table>

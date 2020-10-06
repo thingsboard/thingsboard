@@ -18,13 +18,12 @@ import { Injectable, NgZone } from '@angular/core';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { HttpClient } from '@angular/common/http';
 
-import { forkJoin, Observable, of, throwError } from 'rxjs';
+import { forkJoin, Observable, of, throwError, ReplaySubject } from 'rxjs';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 
 import { LoginRequest, LoginResponse, OAuth2Client, PublicLoginRequest } from '@shared/models/login.models';
 import { ActivatedRoute, Router, UrlTree } from '@angular/router';
 import { defaultHttpOptions } from '../http/http-utils';
-import { ReplaySubject } from 'rxjs/internal/ReplaySubject';
 import { UserService } from '../http/user.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '../core.state';
@@ -159,7 +158,8 @@ export class AuthService {
   }
 
   public resendEmailActivation(email: string) {
-    return this.http.post(`/api/noauth/resendEmailActivation?email=${email}`,
+    const encodeEmail = encodeURIComponent(email);
+    return this.http.post(`/api/noauth/resendEmailActivation?email=${encodeEmail}`,
       null, defaultHttpOptions());
   }
 

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.msg;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Builder;
@@ -25,6 +26,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.gen.MsgProtos;
+import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
@@ -51,6 +53,7 @@ public final class TbMsg implements Serializable {
     private final RuleChainId ruleChainId;
     private final RuleNodeId ruleNodeId;
     //This field is not serialized because we use queues and there is no need to do it
+    @JsonIgnore
     transient private final TbMsgCallback callback;
 
     public static TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
@@ -82,6 +85,11 @@ public final class TbMsg implements Serializable {
                 data, origMsg.getRuleChainId(), origMsg.getRuleNodeId(), origMsg.getCallback());
     }
 
+    public static TbMsg transformMsg(TbMsg origMsg, RuleChainId ruleChainId) {
+        return new TbMsg(origMsg.queueName, origMsg.id, origMsg.ts, origMsg.type, origMsg.originator, origMsg.metaData, origMsg.dataType,
+                origMsg.data, ruleChainId, null, origMsg.getCallback());
+    }
+
     public static TbMsg newMsg(TbMsg tbMsg, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
         return new TbMsg(tbMsg.getQueueName(), UUID.randomUUID(), tbMsg.getTs(), tbMsg.getType(), tbMsg.getOriginator(), tbMsg.getMetaData().copy(),
                 tbMsg.getDataType(), tbMsg.getData(), ruleChainId, ruleNodeId, TbMsgCallback.EMPTY);
@@ -106,7 +114,6 @@ public final class TbMsg implements Serializable {
         if (callback != null) {
             this.callback = callback;
         } else {
-            log.warn("[{}] Created message with empty callback: {}", originator, type);
             this.callback = TbMsgCallback.EMPTY;
         }
     }

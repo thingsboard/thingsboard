@@ -6,35 +6,19 @@
   },
   "widgetTypes": [
     {
-      "alias": "digital_bar",
-      "name": "Digital horizontal bar",
+      "alias": "gauge_justgage",
+      "name": "Gauge - justGage",
       "descriptor": {
         "type": "latest",
-        "sizeX": 6,
-        "sizeY": 2.5,
-        "resources": [],
-        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
-        "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
-        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}",
-        "settingsSchema": "{}",
-        "dataKeySettingsSchema": "{}\n",
-        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Speed\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < 80) {\\n\\tvalue = 80;\\n} else if (value > 160) {\\n\\tvalue = 160;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#000000\",\"color\":\"rgba(255, 254, 254, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":180,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[\"#008000\",\"#fbc02d\",\"#f44336\"],\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Segment7Standard\",\"style\":\"normal\",\"weight\":\"500\",\"size\":18},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#ffffff\"},\"neonGlowBrightness\":40,\"dashThickness\":1.5,\"unitTitle\":\"MPH\",\"showUnitTitle\":true,\"gaugeColor\":\"#171a1c\",\"gaugeType\":\"horizontalBar\",\"showTitle\":false,\"animation\":true,\"animationDuration\":500,\"animationRule\":\"linear\"},\"title\":\"Digital horizontal bar\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"widgetStyle\":{},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
-      }
-    },
-    {
-      "alias": "digital_speedometer",
-      "name": "Digital speedometer",
-      "descriptor": {
-        "type": "latest",
-        "sizeX": 5,
+        "sizeX": 4,
         "sizeY": 3,
         "resources": [],
         "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
         "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
-        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n",
+        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
         "settingsSchema": "{}",
         "dataKeySettingsSchema": "{}\n",
-        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Speed\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < 45) {\\n\\tvalue = 45;\\n} else if (value > 130) {\\n\\tvalue = 130;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#000000\",\"color\":\"rgba(255, 254, 254, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":180,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[\"#008000\",\"#fbc02d\",\"#f44336\"],\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Segment7Standard\",\"style\":\"normal\",\"weight\":\"500\",\"size\":32},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#ffffff\"},\"neonGlowBrightness\":40,\"dashThickness\":1.5,\"unitTitle\":\"MPH\",\"showUnitTitle\":true,\"gaugeColor\":\"#171a1c\",\"gaugeType\":\"arc\",\"animation\":true,\"animationDuration\":500,\"animationRule\":\"linear\"},\"title\":\"Digital speedometer\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"widgetStyle\":{},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
+        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#ffffff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":100,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"refreshAnimationType\":\">\",\"refreshAnimationTime\":700,\"startAnimationType\":\">\",\"startAnimationTime\":700,\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#999999\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Roboto\",\"style\":\"normal\",\"weight\":\"500\",\"size\":36,\"color\":\"#666666\"},\"minMaxFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#666666\"},\"neonGlowBrightness\":0,\"decimals\":0,\"dashThickness\":0,\"gaugeColor\":\"#eeeeee\",\"showTitle\":true,\"gaugeType\":\"arc\"},\"title\":\"Gauge - justGage\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
       }
     },
     {
@@ -47,79 +31,15 @@
         "resources": [],
         "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
         "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
-        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
+        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
         "settingsSchema": "{}",
         "dataKeySettingsSchema": "{}\n",
         "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < -60) {\\n\\tvalue = 60;\\n} else if (value > 60) {\\n\\tvalue = 60;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#000000\",\"color\":\"rgba(255, 254, 254, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":60,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":1,\"levelColors\":[\"#304ffe\",\"#7e57c2\",\"#ff4081\",\"#d32f2f\"],\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Segment7Standard\",\"style\":\"normal\",\"weight\":\"500\",\"size\":18},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"dashThickness\":1.5,\"minValue\":-60,\"gaugeColor\":\"#333333\",\"neonGlowBrightness\":35,\"gaugeType\":\"donut\",\"animation\":true,\"animationDuration\":500,\"animationRule\":\"linear\"},\"title\":\"Digital thermometer\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"widgetStyle\":{},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
       }
     },
     {
-      "alias": "digital_vertical_bar",
-      "name": "Digital vertical bar",
-      "descriptor": {
-        "type": "latest",
-        "sizeX": 2.5,
-        "sizeY": 4.5,
-        "resources": [],
-        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
-        "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
-        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
-        "settingsSchema": "{}",
-        "dataKeySettingsSchema": "{}\n",
-        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < -60) {\\n\\tvalue = -60;\\n} else if (value > 60) {\\n\\tvalue = 60;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#000000\",\"color\":\"rgba(255, 254, 254, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":60,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[\"#3d5afe\",\"#f44336\"],\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Segment7Standard\",\"style\":\"normal\",\"weight\":\"500\",\"size\":14},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":8,\"style\":\"normal\",\"weight\":\"normal\",\"color\":\"#cccccc\"},\"neonGlowBrightness\":20,\"showUnitTitle\":true,\"gaugeColor\":\"#171a1c\",\"gaugeType\":\"verticalBar\",\"showTitle\":false,\"minValue\":-60,\"dashThickness\":1.2,\"animation\":true,\"animationDuration\":500,\"animationRule\":\"linear\"},\"title\":\"Digital vertical bar\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"widgetStyle\":{},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
-      }
-    },
-    {
-      "alias": "gauge_justgage",
-      "name": "Gauge - justGage",
-      "descriptor": {
-        "type": "latest",
-        "sizeX": 4,
-        "sizeY": 3,
-        "resources": [],
-        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
-        "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
-        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
-        "settingsSchema": "{}",
-        "dataKeySettingsSchema": "{}\n",
-        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#ffffff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":100,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"refreshAnimationType\":\">\",\"refreshAnimationTime\":700,\"startAnimationType\":\">\",\"startAnimationTime\":700,\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#999999\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Roboto\",\"style\":\"normal\",\"weight\":\"500\",\"size\":36,\"color\":\"#666666\"},\"minMaxFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#666666\"},\"neonGlowBrightness\":0,\"decimals\":0,\"dashThickness\":0,\"gaugeColor\":\"#eeeeee\",\"showTitle\":true,\"gaugeType\":\"arc\"},\"title\":\"Gauge - justGage\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
-      }
-    },
-    {
-      "alias": "horizontal_bar_justgage",
-      "name": "Horizontal bar - justGage",
-      "descriptor": {
-        "type": "latest",
-        "sizeX": 7,
-        "sizeY": 3,
-        "resources": [],
-        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>\n",
-        "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
-        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
-        "settingsSchema": "{}",
-        "dataKeySettingsSchema": "{}\n",
-        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#f44336\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#ffffff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":100,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"refreshAnimationType\":\">\",\"refreshAnimationTime\":700,\"startAnimationType\":\">\",\"startAnimationTime\":700,\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#999999\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Roboto\",\"style\":\"normal\",\"weight\":\"500\",\"size\":18,\"color\":\"#666666\"},\"minMaxFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#666666\"},\"neonGlowBrightness\":0,\"decimals\":0,\"dashThickness\":0,\"gaugeColor\":\"#eeeeee\",\"showTitle\":true,\"gaugeType\":\"horizontalBar\"},\"title\":\"Horizontal bar - justGage\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
-      }
-    },
-    {
-      "alias": "lcd_bar_gauge",
-      "name": "LCD bar gauge",
-      "descriptor": {
-        "type": "latest",
-        "sizeX": 2,
-        "sizeY": 3.5,
-        "resources": [],
-        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
-        "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
-        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n",
-        "settingsSchema": "{}",
-        "dataKeySettingsSchema": "{}\n",
-        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Humidity\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#babab2\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":100,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"refreshAnimationType\":\"linear\",\"refreshAnimationTime\":700,\"startAnimationType\":\"linear\",\"startAnimationTime\":700,\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Roboto\",\"style\":\"normal\",\"weight\":\"400\",\"size\":16},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"neonGlowBrightness\":0,\"dashThickness\":1.5,\"decimals\":0,\"showUnitTitle\":true,\"defaultColor\":\"#444444\",\"gaugeType\":\"verticalBar\",\"units\":\"%\"},\"title\":\"LCD bar gauge\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
-      }
-    },
-    {
-      "alias": "lcd_gauge",
-      "name": "LCD gauge",
+      "alias": "digital_speedometer",
+      "name": "Digital speedometer",
       "descriptor": {
         "type": "latest",
         "sizeX": 5,
@@ -127,26 +47,10 @@
         "resources": [],
         "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
         "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
-        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n",
+        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n",
         "settingsSchema": "{}",
         "dataKeySettingsSchema": "{}\n",
-        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Speed\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 180) {\\n\\tvalue = 180;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#babab2\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":180,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"refreshAnimationType\":\"linear\",\"refreshAnimationTime\":700,\"startAnimationType\":\"linear\",\"startAnimationTime\":700,\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Segment7Standard\",\"style\":\"normal\",\"weight\":\"500\",\"size\":32},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"neonGlowBrightness\":0,\"dashThickness\":1.5,\"decimals\":0,\"unitTitle\":\"MPH\",\"showUnitTitle\":true,\"defaultColor\":\"#444444\",\"gaugeType\":\"arc\"},\"title\":\"LCD gauge\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
-      }
-    },
-    {
-      "alias": "mini_gauge_justgage",
-      "name": "Mini gauge - justGage",
-      "descriptor": {
-        "type": "latest",
-        "sizeX": 2,
-        "sizeY": 2,
-        "resources": [],
-        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
-        "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
-        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
-        "settingsSchema": "{}",
-        "dataKeySettingsSchema": "{}\n",
-        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#7cb342\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#ffffff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":100,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"refreshAnimationType\":\">\",\"refreshAnimationTime\":700,\"startAnimationType\":\">\",\"startAnimationTime\":700,\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Roboto\",\"style\":\"normal\",\"weight\":\"500\",\"size\":32},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"neonGlowBrightness\":0,\"dashThickness\":0,\"decimals\":0,\"roundedLineCap\":true,\"gaugeType\":\"donut\"},\"title\":\"Mini gauge - justGage\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
+        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Speed\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < 45) {\\n\\tvalue = 45;\\n} else if (value > 130) {\\n\\tvalue = 130;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#000000\",\"color\":\"rgba(255, 254, 254, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":180,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[\"#008000\",\"#fbc02d\",\"#f44336\"],\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Segment7Standard\",\"style\":\"normal\",\"weight\":\"500\",\"size\":32},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#ffffff\"},\"neonGlowBrightness\":40,\"dashThickness\":1.5,\"unitTitle\":\"MPH\",\"showUnitTitle\":true,\"gaugeColor\":\"#171a1c\",\"gaugeType\":\"arc\",\"animation\":true,\"animationDuration\":500,\"animationRule\":\"linear\"},\"title\":\"Digital speedometer\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"widgetStyle\":{},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
       }
     },
     {
@@ -159,26 +63,42 @@
         "resources": [],
         "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
         "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
-        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
+        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
         "settingsSchema": "{}",
         "dataKeySettingsSchema": "{}\n",
         "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#000000\",\"color\":\"rgba(255, 254, 254, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":100,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Segment7Standard\",\"style\":\"normal\",\"weight\":\"500\",\"size\":32},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"neonGlowBrightness\":70,\"dashThickness\":1,\"gaugeType\":\"arc\",\"animation\":true,\"animationDuration\":500,\"animationRule\":\"linear\"},\"title\":\"Neon gauge - justGage\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"widgetStyle\":{},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
       }
     },
     {
-      "alias": "simple_gauge_justgage",
-      "name": "Simple gauge - justGage",
+      "alias": "lcd_gauge",
+      "name": "LCD gauge",
+      "descriptor": {
+        "type": "latest",
+        "sizeX": 5,
+        "sizeY": 3,
+        "resources": [],
+        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
+        "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
+        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n",
+        "settingsSchema": "{}",
+        "dataKeySettingsSchema": "{}\n",
+        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Speed\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 180) {\\n\\tvalue = 180;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#babab2\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":180,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"refreshAnimationType\":\"linear\",\"refreshAnimationTime\":700,\"startAnimationType\":\"linear\",\"startAnimationTime\":700,\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Segment7Standard\",\"style\":\"normal\",\"weight\":\"500\",\"size\":32},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"neonGlowBrightness\":0,\"dashThickness\":1.5,\"decimals\":0,\"unitTitle\":\"MPH\",\"showUnitTitle\":true,\"defaultColor\":\"#444444\",\"gaugeType\":\"arc\"},\"title\":\"LCD gauge\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
+      }
+    },
+    {
+      "alias": "lcd_bar_gauge",
+      "name": "LCD bar gauge",
       "descriptor": {
         "type": "latest",
         "sizeX": 2,
-        "sizeY": 2,
+        "sizeY": 3.5,
         "resources": [],
-        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>\n",
+        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
         "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
-        "controllerScript": "\nself.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
+        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n",
         "settingsSchema": "{}",
         "dataKeySettingsSchema": "{}\n",
-        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#ef6c00\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#ffffff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":100,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"refreshAnimationType\":\">\",\"refreshAnimationTime\":700,\"startAnimationType\":\">\",\"startAnimationTime\":700,\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Roboto\",\"style\":\"normal\",\"weight\":\"500\",\"size\":32,\"color\":\"#666666\"},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"neonGlowBrightness\":0,\"dashThickness\":0,\"decimals\":0,\"gaugeColor\":\"#eeeeee\",\"gaugeType\":\"donut\"},\"title\":\"Simple gauge - justGage\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
+        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Humidity\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#babab2\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":100,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"refreshAnimationType\":\"linear\",\"refreshAnimationTime\":700,\"startAnimationType\":\"linear\",\"startAnimationTime\":700,\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Roboto\",\"style\":\"normal\",\"weight\":\"400\",\"size\":16},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"neonGlowBrightness\":0,\"dashThickness\":1.5,\"decimals\":0,\"showUnitTitle\":true,\"defaultColor\":\"#444444\",\"gaugeType\":\"verticalBar\",\"units\":\"%\"},\"title\":\"LCD bar gauge\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
       }
     },
     {
@@ -191,7 +111,7 @@
         "resources": [],
         "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
         "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
-        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
+        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
         "settingsSchema": "{}",
         "dataKeySettingsSchema": "{}\n",
         "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#388e3c\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#000000\",\"color\":\"rgba(255, 254, 254, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":100,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":1,\"levelColors\":[],\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Segment7Standard\",\"style\":\"normal\",\"weight\":\"500\",\"size\":32},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"neonGlowBrightness\":40,\"dashThickness\":1.5,\"gaugeType\":\"donut\",\"animation\":true,\"animationDuration\":500,\"animationRule\":\"linear\"},\"title\":\"Simple neon gauge - justGage\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"widgetStyle\":{},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
@@ -207,10 +127,90 @@
         "resources": [],
         "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
         "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
-        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
+        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
         "settingsSchema": "{}",
         "dataKeySettingsSchema": "{}\n",
         "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#f57c00\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#ffffff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":100,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"refreshAnimationType\":\">\",\"refreshAnimationTime\":700,\"startAnimationType\":\">\",\"startAnimationTime\":700,\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#999999\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Roboto\",\"style\":\"normal\",\"weight\":\"500\",\"size\":12,\"color\":\"#666666\"},\"minMaxFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#666666\"},\"neonGlowBrightness\":0,\"decimals\":0,\"dashThickness\":1.5,\"gaugeColor\":\"#eeeeee\",\"showTitle\":false,\"gaugeType\":\"verticalBar\"},\"title\":\"Vertical bar - justGage\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
+      }
+    },
+    {
+      "alias": "simple_gauge_justgage",
+      "name": "Simple gauge - justGage",
+      "descriptor": {
+        "type": "latest",
+        "sizeX": 2,
+        "sizeY": 2,
+        "resources": [],
+        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>\n",
+        "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
+        "controllerScript": "\nself.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
+        "settingsSchema": "{}",
+        "dataKeySettingsSchema": "{}\n",
+        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#ef6c00\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#ffffff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":100,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"refreshAnimationType\":\">\",\"refreshAnimationTime\":700,\"startAnimationType\":\">\",\"startAnimationTime\":700,\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Roboto\",\"style\":\"normal\",\"weight\":\"500\",\"size\":32,\"color\":\"#666666\"},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"neonGlowBrightness\":0,\"dashThickness\":0,\"decimals\":0,\"gaugeColor\":\"#eeeeee\",\"gaugeType\":\"donut\"},\"title\":\"Simple gauge - justGage\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
+      }
+    },
+    {
+      "alias": "digital_bar",
+      "name": "Digital horizontal bar",
+      "descriptor": {
+        "type": "latest",
+        "sizeX": 6,
+        "sizeY": 2.5,
+        "resources": [],
+        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
+        "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
+        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}",
+        "settingsSchema": "{}",
+        "dataKeySettingsSchema": "{}\n",
+        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Speed\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < 80) {\\n\\tvalue = 80;\\n} else if (value > 160) {\\n\\tvalue = 160;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#000000\",\"color\":\"rgba(255, 254, 254, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":180,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[\"#008000\",\"#fbc02d\",\"#f44336\"],\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Segment7Standard\",\"style\":\"normal\",\"weight\":\"500\",\"size\":18},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#ffffff\"},\"neonGlowBrightness\":40,\"dashThickness\":1.5,\"unitTitle\":\"MPH\",\"showUnitTitle\":true,\"gaugeColor\":\"#171a1c\",\"gaugeType\":\"horizontalBar\",\"showTitle\":false,\"animation\":true,\"animationDuration\":500,\"animationRule\":\"linear\"},\"title\":\"Digital horizontal bar\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"widgetStyle\":{},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
+      }
+    },
+    {
+      "alias": "mini_gauge_justgage",
+      "name": "Mini gauge - justGage",
+      "descriptor": {
+        "type": "latest",
+        "sizeX": 2,
+        "sizeY": 2,
+        "resources": [],
+        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
+        "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
+        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
+        "settingsSchema": "{}",
+        "dataKeySettingsSchema": "{}\n",
+        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#7cb342\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#ffffff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":100,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"refreshAnimationType\":\">\",\"refreshAnimationTime\":700,\"startAnimationType\":\">\",\"startAnimationTime\":700,\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Roboto\",\"style\":\"normal\",\"weight\":\"500\",\"size\":32},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"neonGlowBrightness\":0,\"dashThickness\":0,\"decimals\":0,\"roundedLineCap\":true,\"gaugeType\":\"donut\"},\"title\":\"Mini gauge - justGage\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
+      }
+    },
+    {
+      "alias": "horizontal_bar_justgage",
+      "name": "Horizontal bar - justGage",
+      "descriptor": {
+        "type": "latest",
+        "sizeX": 7,
+        "sizeY": 3,
+        "resources": [],
+        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>\n",
+        "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
+        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
+        "settingsSchema": "{}",
+        "dataKeySettingsSchema": "{}\n",
+        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#f44336\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#ffffff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":100,\"minValue\":0,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[],\"refreshAnimationType\":\">\",\"refreshAnimationTime\":700,\"startAnimationType\":\">\",\"startAnimationTime\":700,\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#999999\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Roboto\",\"style\":\"normal\",\"weight\":\"500\",\"size\":18,\"color\":\"#666666\"},\"minMaxFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\",\"color\":\"#666666\"},\"neonGlowBrightness\":0,\"decimals\":0,\"dashThickness\":0,\"gaugeColor\":\"#eeeeee\",\"showTitle\":true,\"gaugeType\":\"horizontalBar\"},\"title\":\"Horizontal bar - justGage\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
+      }
+    },
+    {
+      "alias": "digital_vertical_bar",
+      "name": "Digital vertical bar",
+      "descriptor": {
+        "type": "latest",
+        "sizeX": 2.5,
+        "sizeY": 4.5,
+        "resources": [],
+        "templateHtml": "<canvas id=\"digitalGauge\"></canvas>",
+        "templateCss": "#gauge {\n    text-align: center;\n   /* margin-left: -100px;\n    margin-right: -100px;*/\n    /*margin-top: -50px;*/\n    \n}\n",
+        "controllerScript": "self.onInit = function() {\n    self.ctx.gauge = new TbCanvasDigitalGauge(self.ctx, 'digitalGauge');    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.gauge.update();\n}\n\nself.onResize = function() {\n    self.ctx.gauge.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbCanvasDigitalGauge.settingsSchema;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.gauge.mobileModeChanged();\n}\n\nself.onDestroy = function() {\n}\n\n",
+        "settingsSchema": "{}",
+        "dataKeySettingsSchema": "{}\n",
+        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temp\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.7282710489093589,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < -60) {\\n\\tvalue = -60;\\n} else if (value > 60) {\\n\\tvalue = 60;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#000000\",\"color\":\"rgba(255, 254, 254, 0.87)\",\"padding\":\"0px\",\"settings\":{\"maxValue\":60,\"donutStartAngle\":90,\"showValue\":true,\"showMinMax\":true,\"gaugeWidthScale\":0.75,\"levelColors\":[\"#3d5afe\",\"#f44336\"],\"titleFont\":{\"family\":\"Roboto\",\"size\":12,\"style\":\"normal\",\"weight\":\"500\"},\"labelFont\":{\"family\":\"Roboto\",\"size\":8,\"style\":\"normal\",\"weight\":\"500\"},\"valueFont\":{\"family\":\"Segment7Standard\",\"style\":\"normal\",\"weight\":\"500\",\"size\":14},\"minMaxFont\":{\"family\":\"Segment7Standard\",\"size\":8,\"style\":\"normal\",\"weight\":\"normal\",\"color\":\"#cccccc\"},\"neonGlowBrightness\":20,\"showUnitTitle\":true,\"gaugeColor\":\"#171a1c\",\"gaugeType\":\"verticalBar\",\"showTitle\":false,\"minValue\":-60,\"dashThickness\":1.2,\"animation\":true,\"animationDuration\":500,\"animationRule\":\"linear\"},\"title\":\"Digital vertical bar\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"widgetStyle\":{},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
       }
     }
   ]

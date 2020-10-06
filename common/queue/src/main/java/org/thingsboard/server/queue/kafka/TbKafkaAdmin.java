@@ -37,6 +37,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
     private final AdminClient client;
     private final Map<String, String> topicConfigs;
     private final Set<String> topics = ConcurrentHashMap.newKeySet();
+    private final int numPartitions;
 
     private final short replicationFactor;
 
@@ -50,6 +51,13 @@ public class TbKafkaAdmin implements TbQueueAdmin {
             log.error("Failed to get all topics.", e);
         }
 
+        String numPartitionsStr = topicConfigs.get("partitions");
+        if (numPartitionsStr != null) {
+            numPartitions = Integer.parseInt(numPartitionsStr);
+            topicConfigs.remove("partitions");
+        } else {
+            numPartitions = 1;
+        }
         replicationFactor = settings.getReplicationFactor();
     }
 
@@ -59,7 +67,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
             return;
         }
         try {
-            NewTopic newTopic = new NewTopic(topic, 1, replicationFactor).configs(topicConfigs);
+            NewTopic newTopic = new NewTopic(topic, numPartitions, replicationFactor).configs(topicConfigs);
             createTopic(newTopic).values().get(topic).get();
             topics.add(topic);
         } catch (ExecutionException ee) {

@@ -44,4 +44,8 @@ export class MenuToggleComponent implements OnInit {
       return '0px';
     }
   }
+
+  trackBySectionPages(index: number, section: MenuSection){
+    return section.id;
+  }
 }

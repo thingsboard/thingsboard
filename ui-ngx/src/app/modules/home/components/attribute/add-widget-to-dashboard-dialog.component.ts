@@ -24,7 +24,7 @@ import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
 import { Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
-import { objToBase64 } from '@core/utils';
+import { objToBase64URI } from '@core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { Widget } from '@app/shared/models/widget.models';
@@ -39,6 +39,7 @@ import { mergeMap } from 'rxjs/operators';
 import { AliasesInfo } from '@shared/models/alias.models';
 import { ItemBufferService } from '@core/services/item-buffer.service';
 import { StateObject } from '@core/api/widget-api.models';
+import { FiltersInfo } from '@shared/models/query/query.models';
 
 export interface AddWidgetToDashboardDialogData {
   entityId: EntityId;
@@ -182,8 +183,11 @@ export class AddWidgetToDashboardDialogComponent extends
       alias: this.data.entityName,
       filter: this.dashboardUtils.createSingleEntityFilter(this.data.entityId)
     };
+    const filtersInfo: FiltersInfo = {
+      datasourceFilters: {}
+    };
     this.itembuffer.addWidgetToDashboard(dashboard, targetState,
-      targetLayout, this.data.widget, aliasesInfo, null,
+      targetLayout, this.data.widget, aliasesInfo, filtersInfo, null, null,
       48, null, -1, -1).pipe(
       mergeMap((theDashboard) => {
         return this.dashboardService.saveDashboard(theDashboard);
@@ -201,7 +205,7 @@ export class AddWidgetToDashboardDialogComponent extends
               id: targetState,
               params: {}
             };
-            const state = objToBase64([ stateObject ]);
+            const state = objToBase64URI([ stateObject ]);
             url = `/dashboards/${theDashboard.id.id}?state=${state}`;
           } else {
             url = `/dashboards/${theDashboard.id.id}`;

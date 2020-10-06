@@ -198,10 +198,9 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
                     MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(message.variableHeader().packetId());
                     MqttMessage pubrecMessage = new MqttMessage(fixedHeader, variableHeader);
 
-                    MqttIncomingQos2Publish incomingQos2Publish = new MqttIncomingQos2Publish(message, pubrecMessage);
+                    MqttIncomingQos2Publish incomingQos2Publish = new MqttIncomingQos2Publish(message);
                     this.client.getQos2PendingIncomingPublishes().put(message.variableHeader().packetId(), incomingQos2Publish);
                     message.payload().retain();
-                    incomingQos2Publish.startPubrecRetransmitTimer(this.client.getEventLoop().next(), this.client::sendAndFlushPacket);
 
                     channel.writeAndFlush(pubrecMessage);
                 }
@@ -248,7 +247,6 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
         if (this.client.getQos2PendingIncomingPublishes().containsKey(((MqttMessageIdVariableHeader) message.variableHeader()).messageId())) {
             MqttIncomingQos2Publish incomingQos2Publish = this.client.getQos2PendingIncomingPublishes().get(((MqttMessageIdVariableHeader) message.variableHeader()).messageId());
             this.invokeHandlersForIncomingPublish(incomingQos2Publish.getIncomingPublish());
-            incomingQos2Publish.onPubrelReceived();
             this.client.getQos2PendingIncomingPublishes().remove(incomingQos2Publish.getIncomingPublish().variableHeader().packetId());
         }
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBCOMP, false, MqttQoS.AT_MOST_ONCE, false, 0);

@@ -21,18 +21,20 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -75,8 +77,16 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     }
 
     private DeviceCredentials saveOrUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
-        if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
-            formatCertData(deviceCredentials);
+        if(deviceCredentials.getCredentialsType() == null){
+            throw new DataValidationException("Device credentials type should be specified");
+        }
+        switch (deviceCredentials.getCredentialsType()) {
+            case X509_CERTIFICATE:
+                formatCertData(deviceCredentials);
+                break;
+            case MQTT_BASIC:
+                formatSimpleMqttCredentials(deviceCredentials);
+                break;
         }
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
         credentialsValidator.validate(deviceCredentials, id -> tenantId);
@@ -84,12 +94,39 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
             return deviceCredentialsDao.save(tenantId, deviceCredentials);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_credentials_id_unq_key")) {
+            if (e != null && e.getConstraintName() != null
+                    && (e.getConstraintName().equalsIgnoreCase("device_credentials_id_unq_key") || e.getConstraintName().equalsIgnoreCase("device_credentials_device_id_unq_key"))) {
                 throw new DataValidationException("Specified credentials are already registered!");
             } else {
                 throw t;
             }
         }
+    }
+
+    private void formatSimpleMqttCredentials(DeviceCredentials deviceCredentials) {
+        BasicMqttCredentials mqttCredentials;
+        try {
+            mqttCredentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), BasicMqttCredentials.class);
+            if (mqttCredentials == null) {
+                throw new IllegalArgumentException();
+            }
+        } catch (IllegalArgumentException e) {
+            throw new DataValidationException("Invalid credentials body for simple mqtt credentials!");
+        }
+        if (StringUtils.isEmpty(mqttCredentials.getClientId()) && StringUtils.isEmpty(mqttCredentials.getUserName())) {
+            throw new DataValidationException("Both mqtt client id and user name are empty!");
+        }
+        if (StringUtils.isEmpty(mqttCredentials.getClientId())) {
+            deviceCredentials.setCredentialsId(mqttCredentials.getUserName());
+        } else if (StringUtils.isEmpty(mqttCredentials.getUserName())) {
+            deviceCredentials.setCredentialsId(EncryptionUtil.getSha3Hash(mqttCredentials.getClientId()));
+        } else {
+            deviceCredentials.setCredentialsId(EncryptionUtil.getSha3Hash("|", mqttCredentials.getClientId(), mqttCredentials.getUserName()));
+        }
+        if (!StringUtils.isEmpty(mqttCredentials.getPassword())) {
+            mqttCredentials.setPassword(mqttCredentials.getPassword());
+        }
+        deviceCredentials.setCredentialsValue(JacksonUtil.toString(mqttCredentials));
     }
 
     private void formatCertData(DeviceCredentials deviceCredentials) {
@@ -111,13 +148,22 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
 
                 @Override
                 protected void validateCreate(TenantId tenantId, DeviceCredentials deviceCredentials) {
+                    if (deviceCredentialsDao.findByDeviceId(tenantId, deviceCredentials.getDeviceId().getId()) != null) {
+                        throw new DataValidationException("Credentials for this device are already specified!");
+                    }
+                    if (deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId()) != null) {
+                        throw new DataValidationException("Device credentials are already assigned to another device!");
+                    }
                 }
 
                 @Override
                 protected void validateUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
-                    DeviceCredentials existingCredentials = deviceCredentialsDao.findById(tenantId, deviceCredentials.getUuidId());
-                    if (existingCredentials == null) {
+                    if (deviceCredentialsDao.findById(tenantId, deviceCredentials.getUuidId()) == null) {
                         throw new DataValidationException("Unable to update non-existent device credentials!");
+                    }
+                    DeviceCredentials existingCredentials = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
+                    if (existingCredentials != null && !existingCredentials.getId().equals(deviceCredentials.getId())) {
+                        throw new DataValidationException("Device credentials are already assigned to another device!");
                     }
                 }
 

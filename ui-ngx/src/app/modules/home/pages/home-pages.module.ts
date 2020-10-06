@@ -29,13 +29,19 @@ import { EntityViewModule } from '@modules/home/pages/entity-view/entity-view.mo
 import { RuleChainModule } from '@modules/home/pages/rulechain/rulechain.module';
 import { WidgetLibraryModule } from '@modules/home/pages/widget/widget-library.module';
 import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module';
+import { TenantProfileModule } from './tenant-profile/tenant-profile.module';
+import { MODULES_MAP } from '@shared/public-api';
+import { modulesMap } from '../../common/modules-map';
+import { DeviceProfileModule } from './device-profile/device-profile.module';
 
 @NgModule({
   exports: [
     AdminModule,
     HomeLinksModule,
     ProfileModule,
+    TenantProfileModule,
     TenantModule,
+    DeviceProfileModule,
     DeviceModule,
     AssetModule,
     EntityViewModule,
@@ -45,6 +51,12 @@ import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module'
     DashboardModule,
     AuditLogModule,
     UserModule
+  ],
+  providers: [
+    {
+      provide: MODULES_MAP,
+      useValue: modulesMap
+    }
   ]
 })
 export class HomePagesModule { }

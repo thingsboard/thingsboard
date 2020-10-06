@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.transport;
 
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
@@ -37,6 +38,8 @@ public interface SessionMsgListener {
 
     void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse);
 
-    void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto toTransportUpdateCredentials);
+    default void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto toTransportUpdateCredentials){}
+
+    default void onProfileUpdate(DeviceProfile deviceProfile) {}
 
 }

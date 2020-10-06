@@ -37,6 +37,8 @@ import { AttributeService } from '@core/http/attribute.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { Observable } from 'rxjs';
+import { isString } from '@core/utils';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 interface WebCameraInputWidgetSettings {
   widgetTitle: string;
@@ -62,6 +64,7 @@ export class WebCameraInputWidgetComponent extends PageComponent implements OnIn
               private overlay: Overlay,
               private utils: UtilsService,
               private attributeService: AttributeService,
+              private sanitizer: DomSanitizer
   ) {
     super(store);
   }
@@ -109,8 +112,8 @@ export class WebCameraInputWidgetComponent extends PageComponent implements OnIn
   isPreviewPhoto = false;
   singleDevice = true;
   updatePhoto = false;
-  previewPhoto: any;
-  lastPhoto: any;
+  previewPhoto: SafeUrl;
+  lastPhoto: SafeUrl;
 
   private static hasGetUserMedia(): boolean {
     return !!(window.navigator.mediaDevices && window.navigator.mediaDevices.getUserMedia);
@@ -159,8 +162,8 @@ export class WebCameraInputWidgetComponent extends PageComponent implements OnIn
 
   private updateWidgetData(data: Array<DatasourceData>) {
     const keyData = data[0].data;
-    if (keyData && keyData.length) {
-      this.lastPhoto = keyData[0][1];
+    if (keyData?.length && isString(keyData[0][1]) && keyData[0][1].startsWith('data:image/')) {
+      this.lastPhoto = this.sanitizer.bypassSecurityTrustUrl(keyData[0][1]);
     }
   }
 
@@ -256,7 +259,7 @@ export class WebCameraInputWidgetComponent extends PageComponent implements OnIn
 
     const mimeType: string = this.settings.imageFormat ? this.settings.imageFormat : WebCameraInputWidgetComponent.DEFAULT_IMAGE_TYPE;
     const quality: number = this.settings.imageQuality ? this.settings.imageQuality : WebCameraInputWidgetComponent.DEFAULT_IMAGE_QUALITY;
-    this.previewPhoto = this.canvasElement.toDataURL(mimeType, quality);
+    this.previewPhoto = this.sanitizer.bypassSecurityTrustUrl(this.canvasElement.toDataURL(mimeType, quality));
     this.isPreviewPhoto = true;
   }
 

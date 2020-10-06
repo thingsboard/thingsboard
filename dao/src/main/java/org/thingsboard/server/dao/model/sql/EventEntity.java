@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -36,7 +35,6 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
-
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.EPOCH_DIFF;
@@ -55,17 +53,17 @@ import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = EVENT_COLUMN_FAMILY_NAME)
 @NoArgsConstructor
-public class EventEntity  extends BaseSqlEntity<Event> implements BaseEntity<Event> {
+public class EventEntity extends BaseSqlEntity<Event> implements BaseEntity<Event> {
 
     @Column(name = EVENT_TENANT_ID_PROPERTY)
-    private String tenantId;
+    private UUID tenantId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = EVENT_ENTITY_TYPE_PROPERTY)
     private EntityType entityType;
 
     @Column(name = EVENT_ENTITY_ID_PROPERTY)
-    private String entityId;
+    private UUID entityId;
 
     @Column(name = EVENT_TYPE_PROPERTY)
     private String eventType;
@@ -87,12 +85,13 @@ public class EventEntity  extends BaseSqlEntity<Event> implements BaseEntity<Eve
         } else {
             this.ts = System.currentTimeMillis();
         }
+        this.setCreatedTime(event.getCreatedTime());
         if (event.getTenantId() != null) {
-            this.tenantId = toString(event.getTenantId().getId());
+            this.tenantId = event.getTenantId().getId();
         }
         if (event.getEntityId() != null) {
             this.entityType = event.getEntityId().getEntityType();
-            this.entityId = toString(event.getEntityId().getId());
+            this.entityId = event.getEntityId().getId();
         }
         this.eventType = event.getType();
         this.eventUid = event.getUid();
@@ -103,9 +102,9 @@ public class EventEntity  extends BaseSqlEntity<Event> implements BaseEntity<Eve
     @Override
     public Event toData() {
         Event event = new Event(new EventId(this.getUuid()));
-        event.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
-        event.setTenantId(new TenantId(toUUID(tenantId)));
-        event.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, toUUID(entityId)));
+        event.setCreatedTime(createdTime);
+        event.setTenantId(new TenantId(tenantId));
+        event.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
         event.setBody(body);
         event.setType(eventType);
         event.setUid(eventUid);

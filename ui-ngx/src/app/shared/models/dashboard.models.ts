@@ -21,6 +21,7 @@ import { ShortCustomerInfo } from '@shared/models/customer.model';
 import { Widget } from './widget.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { EntityAliases } from './alias.models';
+import { Filters } from '@shared/models/query/query.models';
 
 export interface DashboardInfo extends BaseData<DashboardId> {
   tenantId?: TenantId;
@@ -84,6 +85,7 @@ export interface DashboardSettings {
   showTitle?: boolean;
   showDashboardsSelect?: boolean;
   showEntitiesSelect?: boolean;
+  showFilters?: boolean;
   showDashboardTimewindow?: boolean;
   showDashboardExport?: boolean;
   toolbarAlwaysOpen?: boolean;
@@ -96,6 +98,7 @@ export interface DashboardConfiguration {
   widgets?: {[id: string]: Widget } | Widget[];
   states?: {[id: string]: DashboardState };
   entityAliases?: EntityAliases;
+  filters?: Filters;
   [key: string]: any;
 }
 

@@ -28,8 +28,7 @@ import { AuthService } from '@core/auth/auth.service';
 import { Constants } from '@shared/models/constants';
 import { InterceptorHttpParams } from './interceptor-http-params';
 import { catchError, delay, mergeMap, switchMap, tap } from 'rxjs/operators';
-import { throwError } from 'rxjs/internal/observable/throwError';
-import { of } from 'rxjs/internal/observable/of';
+import { throwError, of } from 'rxjs';
 import { InterceptorConfig } from './interceptor-config';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -250,7 +249,7 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
       } else {
         this.activeRequests--;
       }
-      if (this.activeRequests === 1) {
+      if (this.activeRequests === 1 && isLoading) {
         this.store.dispatch(new ActionLoadStart());
       } else if (this.activeRequests === 0) {
         this.store.dispatch(new ActionLoadFinish());

@@ -19,11 +19,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.util.PsqlTsDao;
+import org.thingsboard.server.dao.util.PsqlDao;
+import org.thingsboard.server.dao.util.SqlTsDao;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
-@PsqlTsDao
+@SqlTsDao
+@PsqlDao
 @Service
 @Slf4j
 public class PsqlTimeseriesCleanUpService extends AbstractTimeseriesCleanUpService {
@@ -32,10 +35,10 @@ public class PsqlTimeseriesCleanUpService extends AbstractTimeseriesCleanUpServi
     private String partitionType;
 
     @Override
-    protected void doCleanUp(Connection connection) {
+    protected void doCleanUp(Connection connection) throws SQLException {
             long totalPartitionsRemoved = executeQuery(connection, "call drop_partitions_by_max_ttl('" + partitionType + "'," + systemTtl + ", 0);");
             log.info("Total partitions removed by TTL: [{}]", totalPartitionsRemoved);
-            long totalEntitiesTelemetryRemoved = executeQuery(connection, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID_STR + "'," + systemTtl + ", 0);");
+            long totalEntitiesTelemetryRemoved = executeQuery(connection, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID + "'," + systemTtl + ", 0);");
             log.info("Total telemetry removed stats by TTL for entities: [{}]", totalEntitiesTelemetryRemoved);
     }
 }

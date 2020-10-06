@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.sql.widget;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -26,19 +25,17 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
-import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
  * Created by Valerii Sosliuk on 4/23/2017.
  */
 @Component
-@SqlDao
 public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleEntity, WidgetsBundle> implements WidgetsBundleDao {
 
     @Autowired
@@ -50,13 +47,13 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
     }
 
     @Override
-    protected CrudRepository<WidgetsBundleEntity, String> getCrudRepository() {
+    protected CrudRepository<WidgetsBundleEntity, UUID> getCrudRepository() {
         return widgetsBundleRepository;
     }
 
     @Override
     public WidgetsBundle findWidgetsBundleByTenantIdAndAlias(UUID tenantId, String alias) {
-        return DaoUtil.getData(widgetsBundleRepository.findWidgetsBundleByTenantIdAndAlias(UUIDConverter.fromTimeUUID(tenantId), alias));
+        return DaoUtil.getData(widgetsBundleRepository.findWidgetsBundleByTenantIdAndAlias(tenantId, alias));
     }
 
     @Override
@@ -64,7 +61,7 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
         return DaoUtil.toPageData(
                 widgetsBundleRepository
                         .findSystemWidgetsBundles(
-                                NULL_UUID_STR,
+                                NULL_UUID,
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 DaoUtil.toPageable(pageLink)));
     }
@@ -74,7 +71,7 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
         return DaoUtil.toPageData(
                 widgetsBundleRepository
                         .findTenantWidgetsBundlesByTenantId(
-                                UUIDConverter.fromTimeUUID(tenantId),
+                                tenantId,
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 DaoUtil.toPageable(pageLink)));
     }
@@ -84,8 +81,8 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
         return DaoUtil.toPageData(
                 widgetsBundleRepository
                         .findAllTenantWidgetsBundlesByTenantId(
-                                UUIDConverter.fromTimeUUID(tenantId),
-                                NULL_UUID_STR,
+                                tenantId,
+                                NULL_UUID,
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 DaoUtil.toPageable(pageLink)));
     }

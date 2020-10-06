@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.RuleNodeException;
+import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 
 /**
  * @author Andrew Shvayka
@@ -38,6 +39,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private RuleNode ruleNode;
     private TbNode tbNode;
     private DefaultTbContext defaultCtx;
+    private RuleNodeInfo info;
 
     RuleNodeActorMessageProcessor(TenantId tenantId, String ruleChainName, RuleNodeId ruleNodeId, ActorSystemContext systemContext
             , TbActorRef parent, TbActorRef self) {
@@ -46,6 +48,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         this.self = self;
         this.ruleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
         this.defaultCtx = new DefaultTbContext(systemContext, new RuleNodeCtx(tenantId, parent, self, ruleNode));
+        this.info = new RuleNodeInfo(ruleNodeId, ruleChainName, ruleNode != null ? ruleNode.getName() : "Unknown");
     }
 
     @Override
@@ -59,6 +62,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     @Override
     public void onUpdate(TbActorCtx context) throws Exception {
         RuleNode newRuleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
+        this.info = new RuleNodeInfo(entityId, ruleChainName, newRuleNode != null ? newRuleNode.getName() : "Unknown");
         boolean restartRequired = state != ComponentLifecycleState.ACTIVE ||
                 !(ruleNode.getType().equals(newRuleNode.getType()) && ruleNode.getConfiguration().equals(newRuleNode.getConfiguration()));
         this.ruleNode = newRuleNode;
@@ -99,6 +103,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     void onRuleChainToRuleNodeMsg(RuleChainToRuleNodeMsg msg) throws Exception {
+        msg.getMsg().getCallback().onProcessingStart(info);
         checkActive(msg.getMsg());
         if (ruleNode.isDebugMode()) {
             systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), msg.getFromRelationType());

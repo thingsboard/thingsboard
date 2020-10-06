@@ -38,7 +38,7 @@ import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSetting
 import javax.annotation.PreDestroy;
 
 @Component
-@ConditionalOnExpression("'${queue.type:null}'=='service-bus' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport')")
+@ConditionalOnExpression("'${queue.type:null}'=='service-bus' && (('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true') || '${service.type:null}'=='tb-transport')")
 @Slf4j
 public class ServiceBusTransportQueueFactory implements TbTransportQueueFactory {
     private final TbQueueTransportApiSettings transportApiSettings;

@@ -20,6 +20,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.net.InetSocketAddress;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -36,12 +37,15 @@ public class TelemetryWebSocketSessionRef {
     private final InetSocketAddress localAddress;
     @Getter
     private final InetSocketAddress remoteAddress;
+    @Getter
+    private final AtomicInteger sessionSubIdSeq;
 
     public TelemetryWebSocketSessionRef(String sessionId, SecurityUser securityCtx, InetSocketAddress localAddress, InetSocketAddress remoteAddress) {
         this.sessionId = sessionId;
         this.securityCtx = securityCtx;
         this.localAddress = localAddress;
         this.remoteAddress = remoteAddress;
+        this.sessionSubIdSeq = new AtomicInteger();
     }
 
     @Override
