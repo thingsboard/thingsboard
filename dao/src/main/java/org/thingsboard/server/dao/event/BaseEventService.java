@@ -37,7 +37,7 @@ import java.util.Optional;
 @Slf4j
 public class BaseEventService implements EventService {
 
-    private static final int MAX_DEBUG_EVENT_IN_BYTES = 10 * 1024;
+    private static final int MAX_DEBUG_EVENT_SYMBOLS = 4 * 1024;
 
     @Autowired
     public EventDao eventDao;
@@ -66,12 +66,12 @@ public class BaseEventService implements EventService {
     }
 
     private void checkAndTruncateDebugEvent(Event event) {
-        if (event.getType().startsWith("DEBUG")) {
+        if (event.getType().startsWith("DEBUG") && event.getBody() != null && event.getBody().has("data")) {
             String dataStr = event.getBody().get("data").asText();
-            int dataSize = dataStr.getBytes(StandardCharsets.UTF_8).length;
-            if (dataSize > MAX_DEBUG_EVENT_IN_BYTES) {
-                ((ObjectNode) event.getBody()).put("data", dataStr.substring(0, 1024));
-                log.trace("[{}] Event was truncated.", event.getId());
+            int length = dataStr.length();
+            if (length > MAX_DEBUG_EVENT_SYMBOLS) {
+                ((ObjectNode) event.getBody()).put("data", dataStr.substring(0, MAX_DEBUG_EVENT_SYMBOLS) + "...[truncated " + (length - MAX_DEBUG_EVENT_SYMBOLS) + " symbols]");
+                log.trace("[{}] Event was truncated: {}", event.getId(), dataStr);
             }
         }
     }
