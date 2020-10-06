@@ -37,14 +37,35 @@
       <mat-form-field class="mat-block">
         <mat-label translate>queue.poll-interval</mat-label>
         <input type="number" matInput formControlName="pollInterval">
+        <mat-error *ngIf="entityForm.get('pollInterval').hasError('required')">
+          {{ 'queue.poll-interval-required' | translate }}
+        </mat-error>
+        <mat-error *ngIf="entityForm.get('pollInterval').hasError('min') &&
+                   !entityForm.get('pollInterval').hasError('required')">
+          {{ 'queue.poll-interval-min-value' | translate }}
+        </mat-error>
       </mat-form-field>
       <mat-form-field class="mat-block">
         <mat-label translate>queue.partitions</mat-label>
         <input type="number" matInput formControlName="partitions">
+        <mat-error *ngIf="entityForm.get('partitions').hasError('required')">
+          {{ 'queue.partitions-required' | translate }}
+        </mat-error>
+        <mat-error *ngIf="entityForm.get('partitions').hasError('min') &&
+                   !entityForm.get('partitions').hasError('required')">
+          {{ 'queue.partitions-min-value' | translate }}
+        </mat-error>
       </mat-form-field>
       <mat-form-field class="mat-block">
         <mat-label translate>queue.processing-timeout</mat-label>
         <input type="number" matInput formControlName="packProcessingTimeout">
+        <mat-error *ngIf="entityForm.get('packProcessingTimeout').hasError('required')">
+          {{ 'queue.pack-processing-timeout-required' | translate }}
+        </mat-error>
+        <mat-error *ngIf="entityForm.get('packProcessingTimeout').hasError('min') &&
+                   !entityForm.get('packProcessingTimeout').hasError('required')">
+          {{ 'queue.pack-processing-timeout-min-value' | translate }}
+        </mat-error>
       </mat-form-field>
 
       <div class="mat-accordion-container">
@@ -65,10 +86,20 @@
                     {{ strategy }}
                   </mat-option>
                 </mat-select>
+                <mat-error *ngIf="entityForm.get('submitStrategy.type').hasError('required')">
+                  {{ 'queue.submit-strategy-type-required' | translate }}
+                </mat-error>
               </mat-form-field>
-              <mat-form-field class="mat-block">
+              <mat-form-field class="mat-block" *ngIf="submitStrategyType === QueueSubmitStrategyTypes.BATCH">
                 <mat-label translate>queue.batch-size</mat-label>
                 <input type="number" matInput formControlName="batchSize">
+                <mat-error *ngIf="entityForm.get('submitStrategy.batchSize').hasError('required')">
+                  {{ 'queue.batch-size-required' | translate }}
+                </mat-error>
+                <mat-error *ngIf="entityForm.get('submitStrategy.batchSize').hasError('min') &&
+                   !entityForm.get('submitStrategy.batchSize').hasError('required')">
+                  {{ 'queue.batch-size-min-value' | translate }}
+                </mat-error>
               </mat-form-field>
             </div>
           </mat-expansion-panel>
@@ -88,22 +119,49 @@
                   {{ strategy }}
                 </mat-option>
               </mat-select>
+              <mat-error *ngIf="entityForm.get('processingStrategy.type').hasError('required')">
+                {{ 'queue.processing-strategy-type-required' | translate }}
+              </mat-error>
             </mat-form-field>
             <mat-form-field class="mat-block">
               <mat-label translate>queue.retries</mat-label>
               <input type="number" matInput formControlName="retries">
+              <mat-error *ngIf="entityForm.get('processingStrategy.retries').hasError('required')">
+                {{ 'queue.retries-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="entityForm.get('processingStrategy.retries').hasError('min') &&
+                   !entityForm.get('processingStrategy.retries').hasError('required')">
+                {{ 'queue.retries-min-value' | translate }}
+              </mat-error>
             </mat-form-field>
             <mat-form-field class="mat-block">
               <mat-label translate>queue.failure-percentage</mat-label>
               <input type="number" matInput formControlName="failurePercentage">
+              <mat-error *ngIf="entityForm.get('processingStrategy.failurePercentage').hasError('required')">
+                {{ 'queue.failure-percentage-required' | translate }}
+              </mat-error>
             </mat-form-field>
             <mat-form-field class="mat-block">
               <mat-label translate>queue.pause-between-retries</mat-label>
               <input type="number" matInput formControlName="pauseBetweenRetries">
+              <mat-error *ngIf="entityForm.get('processingStrategy.pauseBetweenRetries').hasError('required')">
+                {{ 'queue.pause-between-retries-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="entityForm.get('processingStrategy.pauseBetweenRetries').hasError('min') &&
+                   !entityForm.get('processingStrategy.pauseBetweenRetries').hasError('required')">
+                {{ 'queue.pause-between-retries-min-value' | translate }}
+              </mat-error>
             </mat-form-field>
             <mat-form-field class="mat-block">
               <mat-label translate>queue.max-pause-between-retries</mat-label>
               <input type="number" matInput formControlName="maxPauseBetweenRetries">
+              <mat-error *ngIf="entityForm.get('processingStrategy.maxPauseBetweenRetries').hasError('required')">
+                {{ 'queue.max-pause-between-retries-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="entityForm.get('processingStrategy.maxPauseBetweenRetries').hasError('min') &&
+                   !entityForm.get('processingStrategy.maxPauseBetweenRetries').hasError('required')">
+                {{ 'queue.max-pause-between-retries-min-value' | translate }}
+              </mat-error>
             </mat-form-field>
           </div>
         </mat-expansion-panel>

@@ -1,4 +1,4 @@
-import { Component, Inject} from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { EntityType } from '@shared/models/entity-type.models';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EntityComponent } from '@home/components/entity/entity.component';
@@ -19,6 +19,8 @@ export class QueueComponent extends EntityComponent<QueueInfo> {
   entityType = EntityType;
   submitStrategies: string[] = [];
   processingStrategies: string[] = [];
+
+  QueueSubmitStrategyTypes = QueueSubmitStrategyTypes;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -92,6 +94,10 @@ export class QueueComponent extends EntityComponent<QueueInfo> {
     if (!this.isAdd) {
       this.entityForm.get('name').disable({emitEvent: false});
     }
+  }
+
+  get submitStrategyType(): QueueSubmitStrategyTypes {
+    return this.entityForm.get('submitStrategy').value.type;
   }
 
 }

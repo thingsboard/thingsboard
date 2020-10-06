@@ -115,6 +115,7 @@ export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<Queu
       mergeMap((savedQueue) => this.queueService.getQueueById(savedQueue.id.id)
       ));
     this.config.deleteEntity = id => this.queueService.deleteQueue(id.id);
+    this.config.deleteEnabled = (queue) => queue && queue.name !== 'Main';
   }
 
   private addTopicForQueue(queue: QueueInfo): QueueInfo {
