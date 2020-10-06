@@ -40,7 +40,7 @@ import {
 } from '@shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { hashCode, isDefined, isNumber } from '@core/utils';
+import {hashCode, isDefined, isDefinedAndNotNull, isNumber} from '@core/utils';
 import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
@@ -197,11 +197,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   }
 
   public onDataUpdated() {
-    this.ngZone.run(() => {
-      this.sources.forEach((source) => {
-        source.timeseriesDatasource.dataUpdated(this.data);
-      });
-      this.ctx.detectChanges();
+    this.sources.forEach((source) => {
+      source.timeseriesDatasource.dataUpdated(this.data);
     });
   }
 
@@ -410,7 +407,18 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         const units = contentInfo.units || this.ctx.widgetConfig.units;
         content = this.ctx.utils.formatValue(value, decimals, units, true);
       }
-      return isDefined(content) ? this.domSanitizer.bypassSecurityTrustHtml(content) : '';
+
+      if (!isDefined(content)) {
+        return '';
+
+      } else {
+        switch (typeof content) {
+          case 'string':
+            return this.domSanitizer.bypassSecurityTrustHtml(content);
+          default:
+            return content;
+        }
+      }
     }
   }
 
@@ -515,25 +523,19 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
         row[d + 1] = cellData[1];
       });
     }
+
     const rows: TimeseriesRow[]  = [];
-    for (const t of Object.keys(rowsMap)) {
-      if (this.hideEmptyLines) {
-        let hideLine = true;
-        for (let c = 0; (c < data.length) && hideLine; c++) {
-          if (rowsMap[t][c + 1]) {
-            hideLine = false;
-          }
-        }
-        if (!hideLine) {
-          rows.push(rowsMap[t]);
-        }
+
+    for (const value of Object.values(rowsMap)) {
+      if (this.hideEmptyLines && isDefinedAndNotNull(value[1])) {
+        rows.push(value);
       } else {
-        rows.push(rowsMap[t]);
+        rows.push(value);
       }
     }
+
     return rows;
   }
-
 
   isEmpty(): Observable<boolean> {
     return this.rowsSubject.pipe(
