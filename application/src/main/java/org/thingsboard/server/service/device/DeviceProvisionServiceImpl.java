@@ -60,6 +60,7 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.state.DeviceStateService;
 
 import java.util.Collections;
@@ -70,6 +71,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @Slf4j
+@TbCoreComponent
 public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
