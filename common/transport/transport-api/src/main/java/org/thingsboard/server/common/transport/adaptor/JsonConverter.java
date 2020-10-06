@@ -43,6 +43,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionResponseStatus;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
@@ -411,8 +412,10 @@ public class JsonConverter {
         JsonObject result = new JsonObject();
         if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.NOT_FOUND) {
             result.addProperty("errorMsg", "Provision data was not found!");
+            result.addProperty("provisionDeviceStatus", ProvisionResponseStatus.NOT_FOUND.name());
         } else if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.FAILURE) {
             result.addProperty("errorMsg", "Failed to provision device!");
+            result.addProperty("provisionDeviceStatus", ProvisionResponseStatus.FAILURE.name());
         } else {
             if (toGateway) {
                 result.addProperty("id", requestId);
@@ -422,6 +425,7 @@ public class JsonConverter {
             result.addProperty("credentialsId", payload.getDeviceCredentials().getCredentialsId());
             result.addProperty("credentialsValue",
                     StringUtils.isEmpty(payload.getDeviceCredentials().getCredentialsValue()) ? null : payload.getDeviceCredentials().getCredentialsValue());
+            result.addProperty("provisionDeviceStatus", ProvisionResponseStatus.SUCCESS.name());
         }
         return result;
     }

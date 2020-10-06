@@ -315,6 +315,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 .setCredentialsValue(deviceCredentials.getCredentialsValue() != null ? deviceCredentials.getCredentialsValue() : "")
                 .build();
     }
+
     private ListenableFuture<TransportApiResponseMsg> handle(GetTenantRoutingInfoRequestMsg requestMsg) {
         TenantId tenantId = new TenantId(new UUID(requestMsg.getTenantIdMSB(), requestMsg.getTenantIdLSB()));
         // TODO: Tenant Profile from cache

@@ -271,9 +271,10 @@ message ProvisionDeviceResponseMsg {
 }
 
 enum ProvisionResponseStatus {
-  SUCCESS = 0;
-  NOT_FOUND = 1;
-  FAILURE = 2;
+  UNKNOWN = 0;
+  SUCCESS = 1;
+  NOT_FOUND = 2;
+  FAILURE = 3;
 }
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
 message SubscriptionInfoProto {
