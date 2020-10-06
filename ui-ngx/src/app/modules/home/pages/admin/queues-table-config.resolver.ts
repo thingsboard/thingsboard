@@ -111,9 +111,15 @@ export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<Queu
   configureEntityFunctions(): void {
     this.config.entitiesFetchFunction = pageLink => this.fetchFunction(pageLink, this.queueType);
     this.config.loadEntity = id => this.queueService.getQueueById(id.id);
-    this.config.saveEntity = queue => this.queueService.saveQueue(queue, this.queueType).pipe(
+    this.config.saveEntity = queue => this.queueService.saveQueue(this.addTopicForQueue(queue), this.queueType).pipe(
       mergeMap((savedQueue) => this.queueService.getQueueById(savedQueue.id.id)
       ));
     this.config.deleteEntity = id => this.queueService.deleteQueue(id.id);
+  }
+
+  private addTopicForQueue(queue: QueueInfo): QueueInfo {
+    const modifiedQueue = Object.assign({}, queue);
+    modifiedQueue.topic = `tb_rule_engine.${queue.name}`;
+    return modifiedQueue;
   }
 }

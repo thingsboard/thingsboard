@@ -58,5 +58,6 @@ export interface QueueInfo extends BaseData<HasId> {
   };
   submitStrategyType: QueueSubmitStrategyTypes;
   tenantId: TenantId;
+  topic: string;
 }
 
