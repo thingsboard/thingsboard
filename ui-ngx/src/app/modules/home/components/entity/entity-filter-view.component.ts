@@ -101,6 +101,9 @@ export class EntityFilterViewComponent implements ControlValueAccessor {
               {deviceType});
           }
           break;
+        case AliasFilterType.ruleEngineStats:
+            this.filterDisplayValue = this.translate.instant('alias.filter-rule-engine-stats-description');
+          break;
         case AliasFilterType.entityViewType:
           const entityView = this.filter.entityViewType;
           prefix = this.filter.entityViewNameFilter;

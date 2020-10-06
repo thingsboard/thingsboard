@@ -96,7 +96,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                     }
                 }
             } catch (DataValidationException e) {
-                if (!e.getMessage().equalsIgnoreCase("Asset is referencing to non-existent tenant!")) {
+                if (!e.getMessage().equalsIgnoreCase("Queue Stats is referencing to non-existent tenant!")) {
                     throw e;
                 }
             }
@@ -131,6 +131,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                         queueStats.setTenantId(tenantId);
                         queueStats.setName(queueName + "_" + serviceInfoProvider.getServiceId());
                         queueStats.setQueueId(queue.getId());
+                        queueStats = queueStatsService.save(tenantId, queueStats);
                     }
                     queueStatsId = queueStats.getId();
                     tenantQueueStats.put(key, queueStatsId);

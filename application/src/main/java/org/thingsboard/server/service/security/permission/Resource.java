@@ -34,7 +34,8 @@ public enum Resource {
     WIDGET_TYPE(EntityType.WIDGET_TYPE),
     TENANT_PROFILE(EntityType.TENANT_PROFILE),
     DEVICE_PROFILE(EntityType.DEVICE_PROFILE),
-    QUEUE(EntityType.QUEUE);
+    QUEUE(EntityType.QUEUE),
+    QUEUE_STATS(EntityType.QUEUE_STATS);
 
     private final EntityType entityType;
 

@@ -24,4 +24,5 @@ DROP TABLE IF EXISTS tenant_profile;
 DROP TABLE IF EXISTS rule_node;
 DROP TABLE IF EXISTS rule_chain;
 DROP TABLE IF EXISTS queue;
+DROP TABLE IF EXISTS queue_stats;
 DROP TABLE IF EXISTS tb_schema_settings;

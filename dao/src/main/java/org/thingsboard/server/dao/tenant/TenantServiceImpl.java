@@ -37,6 +37,7 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -88,6 +89,9 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
     @Autowired
     private QueueService queueService;
+
+    @Autowired
+    private QueueStatsService queueStatsService;
 
     @Override
     public Tenant findTenantById(TenantId tenantId) {
@@ -144,6 +148,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
         deviceProfileService.deleteDeviceProfilesByTenantId(tenantId);
         userService.deleteTenantAdmins(tenantId);
         ruleChainService.deleteRuleChainsByTenantId(tenantId);
+        queueService.deleteQueuesByTenantId(tenantId);
         queueService.deleteQueuesByTenantId(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());
         deleteEntityRelations(tenantId, tenantId);

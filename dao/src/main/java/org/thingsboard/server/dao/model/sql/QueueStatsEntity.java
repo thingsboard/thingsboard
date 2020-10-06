@@ -58,6 +58,7 @@ public class QueueStatsEntity extends BaseSqlEntity<QueueStats> {
         this.createdTime = queueStats.getCreatedTime();
         this.tenantId = DaoUtil.getId(queueStats.getTenantId());
         this.name = queueStats.getName();
+        this.queueId = DaoUtil.getId( queueStats.getQueueId());
     }
 
     @Override

@@ -219,6 +219,8 @@
         "filter-type-device-search-query-description": "Devices with types {{deviceTypes}} that have {{relationType}} relation {{direction}} {{rootEntity}}",
         "filter-type-entity-view-search-query": "Entity view search query",
         "filter-type-entity-view-search-query-description": "Entity views with types {{entityViewTypes}} that have {{relationType}} relation {{direction}} {{rootEntity}}",
+        "filter-type-rule-engine-stats": "Rule Engine stats",
+        "filter-rule-engine-stats-description": "Queue Stats",
         "entity-filter": "Entity filter",
         "resolve-multiple": "Resolve as multiple entities",
         "filter-type": "Filter type",
@@ -954,6 +956,8 @@
         "type-current-tenant": "Current Tenant",
         "type-current-user": "Current User",
         "type-current-user-owner": "Current User Owner",
+        "type-queue-stats": "Queue Stats",
+        "list-of-queue-stats": "{ count, plural, 1 {One queue stats} other {List of # queue stats} }",
         "search": "Search entities",
         "selected-entities": "{ count, plural, 1 {1 entity} other {# entities} } selected",
         "entity-name": "Entity name",
@@ -2002,6 +2006,12 @@
         "search": "Search widget bundles",
         "selected-widgets-bundles": "{ count, plural, 1 {1 widgets bundle} other {# widgets bundles} } selected",
         "open-widgets-bundle": "Open widgets bundle"
+    },
+    "queue-stats" : {
+      "name": "Name",
+      "queue-stats": "Queue Stats",
+      "no-queue-stats-matching": "No queue stats matching '{{entity}}' were found.",
+      "queue-stats-required": "Queue stats is required."
     },
     "widget-config": {
         "data": "Data",

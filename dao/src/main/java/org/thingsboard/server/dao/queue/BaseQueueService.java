@@ -63,6 +63,9 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Autowired(required = false)
     private TbQueueClusterService queueClusterService;
 
+    @Autowired
+    private QueueStatsService queueStatsService;
+
     @Override
     @Transactional
     public Queue createOrUpdateQueue(Queue queue) {
@@ -119,6 +122,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         log.trace("Executing deleteQueue, queueId: [{}]", queueId);
         Queue queue = findQueueById(tenantId, queueId);
         queueClusterService.onQueueDelete(queue, null);
+        queueStatsService.deleteQueueStatsByQueueId(tenantId, queueId);
         boolean result = queueDao.removeById(tenantId, queueId.getId());
         if (result) {
             for (int i = 0; i < queue.getPartitions(); i++) {
@@ -141,7 +145,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
 
     @Override
     public PageData<Queue> findQueues(TenantId tenantId, PageLink pageLink) {
-        log.trace("Executing findTQueues pageLink [{}]", pageLink);
+        log.trace("Executing findQueues pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink);
         return queueDao.findQueuesByTenantId(getSystemOrIsolatedTenantId(tenantId), pageLink);
     }
@@ -167,12 +171,12 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Override
     public Queue findQueueByTenantIdAndName(TenantId tenantId, String queueName) {
         log.trace("Executing findQueueByTenantIdAndName, tenantId: [{}] queueName: [{}]", tenantId, queueName);
-        return queueDao.findQueueByTenantIdAndName(tenantId, queueName);
+        return queueDao.findQueueByTenantIdAndName(getSystemOrIsolatedTenantId(tenantId), queueName);
     }
 
     @Override
     public void deleteQueuesByTenantId(TenantId tenantId) {
-        Validator.validateId(tenantId, "Incorrect tenant id for delete rule chains request.");
+        Validator.validateId(tenantId, "Incorrect tenant id for delete queues request.");
         tenantQueuesRemover.removeEntities(tenantId, tenantId);
     }
 

@@ -15,12 +15,31 @@
  */
 package org.thingsboard.server.dao.sql.queue;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.QueueStatsEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface QueueStatsRepository extends CrudRepository<QueueStatsEntity, UUID> {
 
     QueueStatsEntity findByTenantIdAndName(UUID tenantId, String name);
+
+    @Query("SELECT q FROM QueueStatsEntity q WHERE q.tenantId = :tenantId " +
+            "AND LOWER(q.name) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<QueueStatsEntity> findByTenantId(@Param("tenantId") UUID tenantId,
+                                          @Param("textSearch") String textSearch,
+                                          Pageable pageable);
+
+    @Query("SELECT q FROM QueueStatsEntity q WHERE q.queueId = :queueId " +
+            "AND LOWER(q.name) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<QueueStatsEntity> findByQueueId(@Param("queueId") UUID queueId,
+                                         @Param("textSearch") String textSearch,
+                                         Pageable pageable);
+
+    List<QueueStatsEntity> findAllByTenantIdAndIdIn(UUID tenantId, List<UUID> queueStatsIds);
 }

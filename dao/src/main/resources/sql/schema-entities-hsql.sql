@@ -318,6 +318,14 @@ CREATE TABLE IF NOT EXISTS entity_view (
     CONSTRAINT queue_topic_unq_key UNIQUE (tenant_id, topic)
 );
 
+CREATE TABLE IF NOT EXISTS queue_stats (
+    id uuid NOT NULL CONSTRAINT queue_stats_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    name varchar(255) NOT NULL,
+    queue_id uuid NOT NULL,
+    CONSTRAINT queue_stats_name_unq_key UNIQUE (tenant_id, name));
+
 CREATE TABLE IF NOT EXISTS ts_kv_latest (
     entity_id uuid NOT NULL,
     key int NOT NULL,

@@ -37,8 +37,6 @@ export interface Tenant extends ContactBased<TenantId> {
   region: string;
   tenantProfileId: TenantProfileId;
   additionalInfo?: any;
-  maxNumberOfQueues: number;
-  maxNumberOfPartitionsPerQueue: number;
 }
 
 export interface TenantInfo extends Tenant {

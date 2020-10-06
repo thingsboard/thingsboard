@@ -40,10 +40,12 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.controller.HttpValidationCallback;
@@ -53,6 +55,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
@@ -80,6 +83,7 @@ public class AccessValidator {
     public static final String SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION = "System administrator is not allowed to perform this operation!";
     public static final String DEVICE_WITH_REQUESTED_ID_NOT_FOUND = "Device with requested id wasn't found!";
     public static final String ENTITY_VIEW_WITH_REQUESTED_ID_NOT_FOUND = "Entity-view with requested id wasn't found!";
+    public static final String QUEUE_STATS_WITH_REQUESTED_ID_NOT_FOUND = "Queue Stats with requested id wasn't found!";
 
     @Autowired
     protected TenantService tenantService;
@@ -110,6 +114,9 @@ public class AccessValidator {
 
     @Autowired
     protected AccessControlService accessControlService;
+
+    @Autowired
+    protected QueueStatsService queueStatsService;
 
     private ExecutorService executor;
 
@@ -192,6 +199,9 @@ public class AccessValidator {
                 return;
             case ENTITY_VIEW:
                 validateEntityView(currentUser, operation, entityId, callback);
+                return;
+            case QUEUE_STATS:
+                validateQueueStats(currentUser, operation, entityId, callback);
                 return;
             default:
                 //TODO: add support of other entities
@@ -383,6 +393,26 @@ public class AccessValidator {
                         return ValidationResult.accessDenied(e.getMessage());
                     }
                     return ValidationResult.ok(entityView);
+                }
+            }), executor);
+        }
+    }
+
+    private void validateQueueStats(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
+        if (currentUser.isSystemAdmin()) {
+            callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
+        } else {
+            ListenableFuture<QueueStats> queueStatsFuture = queueStatsService.findQueueStatsByIdAsync(currentUser.getTenantId(), new QueueStatsId(entityId.getId()));
+            Futures.addCallback(queueStatsFuture, getCallback(callback, queueStats -> {
+                if (queueStats == null) {
+                    return ValidationResult.entityNotFound(QUEUE_STATS_WITH_REQUESTED_ID_NOT_FOUND);
+                } else {
+                    try {
+                        accessControlService.checkPermission(currentUser, Resource.QUEUE_STATS, operation, entityId, queueStats);
+                    } catch (ThingsboardException e) {
+                        return ValidationResult.accessDenied(e.getMessage());
+                    }
+                    return ValidationResult.ok(queueStats);
                 }
             }), executor);
         }

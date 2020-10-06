@@ -56,6 +56,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateExecutor;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -245,6 +246,10 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private TbCoreToTransportService tbCoreToTransportService;
+
+    @Autowired
+    @Getter
+    private QueueStatsService queueStatsService;
 
     /**
      * The following Service will be null if we operate in tb-core mode

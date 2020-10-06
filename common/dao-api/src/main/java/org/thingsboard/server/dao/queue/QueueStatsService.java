@@ -15,9 +15,34 @@
  */
 package org.thingsboard.server.dao.queue;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.id.QueueId;
+import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.QueueStats;
 
+import java.util.List;
+
 public interface QueueStatsService {
+    QueueStats save(TenantId tenantId, QueueStats queueStats);
+
     QueueStats findByTenantIdAndName(TenantId tenantId, String queueStatsName);
+
+    PageData<QueueStats> findQueueStats(TenantId tenantId, PageLink pageLink);
+
+    QueueStats findQueueStatsById(TenantId tenantId, QueueStatsId queueStatsId);
+
+    ListenableFuture<QueueStats> findQueueStatsByIdAsync(TenantId tenantId, QueueStatsId queueStatsId);
+
+    ListenableFuture<List<QueueStats>> findQueueStatsByTenantIdAndIdsAsync(TenantId tenantId, List<QueueStatsId> queueStatsIds);
+
+    void deleteQueueStats(TenantId tenantId, QueueStatsId queueStatsId);
+
+    void deleteQueueStatsByQueueId(TenantId tenantId, QueueId queueId);
+
+    void deleteQueueStatsByTenantId(TenantId tenantId);
+
+
 }
