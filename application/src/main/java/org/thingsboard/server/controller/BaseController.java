@@ -670,6 +670,9 @@ public abstract class BaseController {
         validateId(queueId, "Incorrect queueId " + queueId);
         Queue queue = queueService.findQueueById(getCurrentUser().getTenantId(), queueId);
         checkNotNull(queue);
+        if (operation.equals(Operation.DELETE) && queue.getName().equals("Main")) {
+            throw new ThingsboardException("Main queue can't be deleted!", ThingsboardErrorCode.GENERAL);
+        }
         accessControlService.checkPermission(getCurrentUser(), Resource.QUEUE, operation, queueId, queue);
         return queue;
     }
