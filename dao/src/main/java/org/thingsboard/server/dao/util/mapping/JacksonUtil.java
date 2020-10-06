@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.util.mapping;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.thingsboard.server.common.data.alarm.Alarm;
 
 import java.io.IOException;
 
@@ -30,28 +31,28 @@ public class JacksonUtil {
 
     public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
         try {
-            return OBJECT_MAPPER.convertValue(fromValue, toValueType);
+            return fromValue != null ? OBJECT_MAPPER.convertValue(fromValue, toValueType) : null;
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("The given object value: "
-                    + fromValue + " cannot be converted to " + toValueType);
+                    + fromValue + " cannot be converted to " + toValueType, e);
         }
     }
 
     public static <T> T fromString(String string, Class<T> clazz) {
         try {
-            return OBJECT_MAPPER.readValue(string, clazz);
+            return string != null ? OBJECT_MAPPER.readValue(string, clazz) : null;
         } catch (IOException e) {
             throw new IllegalArgumentException("The given string value: "
-                    + string + " cannot be transformed to Json object");
+                    + string + " cannot be transformed to Json object", e);
         }
     }
 
     public static String toString(Object value) {
         try {
-            return OBJECT_MAPPER.writeValueAsString(value);
+            return value != null ? OBJECT_MAPPER.writeValueAsString(value) : null;
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("The given Json object value: "
-                    + value + " cannot be transformed to a String");
+                    + value + " cannot be transformed to a String", e);
         }
     }
 
@@ -68,5 +69,9 @@ public class JacksonUtil {
 
     public static <T> T clone(T value) {
         return fromString(toString(value), (Class<T>) value.getClass());
+    }
+
+    public static <T> JsonNode valueToTree(T alarm) {
+        return OBJECT_MAPPER.valueToTree(alarm);
     }
 }

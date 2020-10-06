@@ -210,6 +210,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.CUSTOMER, "customer");
         entityTableMap.put(EntityType.USER, "tb_user");
         entityTableMap.put(EntityType.TENANT, "tenant");
+        entityTableMap.put(EntityType.QUEUE_STATS, "queue_stats");
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
@@ -431,6 +432,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case DEVICE_SEARCH_QUERY:
             case ASSET_SEARCH_QUERY:
             case ENTITY_VIEW_SEARCH_QUERY:
+            case RULE_ENGINE_STATS:
                 return "";
             default:
                 throw new RuntimeException("Not implemented!");
@@ -651,6 +653,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 return EntityType.ENTITY_VIEW;
             case RELATIONS_QUERY:
                 return ((RelationsQueryFilter) entityFilter).getRootEntity().getEntityType();
+            case RULE_ENGINE_STATS:
+                return EntityType.QUEUE_STATS;
             default:
                 throw new RuntimeException("Not implemented!");
         }

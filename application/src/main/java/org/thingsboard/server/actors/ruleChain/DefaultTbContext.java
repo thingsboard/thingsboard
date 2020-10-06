@@ -23,6 +23,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -55,6 +56,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -391,6 +393,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public RuleEngineDeviceProfileCache getDeviceProfileCache() {
+        return mainCtx.getDeviceProfileCache();
+    }
+
+    @Override
     public EventLoopGroup getSharedEventLoop() {
         return mainCtx.getSharedEventLoopGroupService().getSharedEventLoopGroup();
     }
@@ -402,6 +409,11 @@ class DefaultTbContext implements TbContext {
         } else {
             throw new RuntimeException("Access to System Mail Service is forbidden!");
         }
+    }
+
+    @Override
+    public QueueStatsService getQueueStatsService() {
+        return mainCtx.getQueueStatsService();
     }
 
     @Override

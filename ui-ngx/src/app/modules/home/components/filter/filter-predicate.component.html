@@ -19,27 +19,35 @@
 <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="filterPredicateFormGroup">
   <div fxFlex fxLayout="column" [ngSwitch]="type">
     <ng-template [ngSwitchCase]="filterPredicateType.STRING">
-      <tb-string-filter-predicate formControlName="predicate">
+      <tb-string-filter-predicate
+        [allowUserDynamicSource]="allowUserDynamicSource"
+        formControlName="predicate">
       </tb-string-filter-predicate>
     </ng-template>
     <ng-template [ngSwitchCase]="filterPredicateType.NUMERIC">
-      <tb-numeric-filter-predicate [valueType]="valueType"
-                                   formControlName="predicate">
+      <tb-numeric-filter-predicate
+        [allowUserDynamicSource]="allowUserDynamicSource"
+        [valueType]="valueType"
+        formControlName="predicate">
       </tb-numeric-filter-predicate>
     </ng-template>
     <ng-template [ngSwitchCase]="filterPredicateType.BOOLEAN">
-      <tb-boolean-filter-predicate formControlName="predicate">
+      <tb-boolean-filter-predicate
+        [allowUserDynamicSource]="allowUserDynamicSource"
+        formControlName="predicate">
       </tb-boolean-filter-predicate>
     </ng-template>
     <ng-template [ngSwitchCase]="filterPredicateType.COMPLEX">
       <tb-complex-filter-predicate
+        [allowUserDynamicSource]="allowUserDynamicSource"
         [key]="key"
         [valueType]="valueType"
+        [displayUserParameters]="displayUserParameters"
         formControlName="predicate">
       </tb-complex-filter-predicate>
     </ng-template>
   </div>
-  <tb-filter-user-info *ngIf="type !== filterPredicateType.COMPLEX"
+  <tb-filter-user-info *ngIf="type !== filterPredicateType.COMPLEX && displayUserParameters"
                        style="width: 60px;"
                        fxLayout="row" fxLayoutAlign="center"
                        [valueType]="valueType"

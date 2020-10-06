@@ -14,42 +14,43 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
-import { EMPTY, forkJoin, Observable, of, throwError } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
-import { PageLink } from '@shared/models/page/page-link';
-import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
-import { BaseData } from '@shared/models/base-data';
-import { EntityId } from '@shared/models/id/entity-id';
-import { DeviceService } from '@core/http/device.service';
-import { TenantService } from '@core/http/tenant.service';
-import { CustomerService } from '@core/http/customer.service';
-import { UserService } from './user.service';
-import { DashboardService } from '@core/http/dashboard.service';
-import { Direction } from '@shared/models/page/sort-order';
-import { PageData } from '@shared/models/page/page-data';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { Authority } from '@shared/models/authority.enum';
-import { Tenant } from '@shared/models/tenant.model';
-import { catchError, concatMap, expand, map, mergeMap, toArray } from 'rxjs/operators';
-import { Customer } from '@app/shared/models/customer.model';
-import { AssetService } from '@core/http/asset.service';
-import { EntityViewService } from '@core/http/entity-view.service';
-import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
-import { RuleChainService } from '@core/http/rule-chain.service';
-import { AliasInfo, StateParams, SubscriptionInfo } from '@core/api/widget-api.models';
-import { Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.models';
-import { UtilsService } from '@core/services/utils.service';
-import { AliasFilterType, EntityAlias, EntityAliasFilter, EntityAliasFilterResult } from '@shared/models/alias.models';
-import { entityFields, EntityInfo, ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
-import { EntityRelationService } from '@core/http/entity-relation.service';
-import { deepClone, isDefined, isDefinedAndNotNull } from '@core/utils';
-import { Asset } from '@shared/models/asset.models';
-import { Device, DeviceCredentialsType } from '@shared/models/device.models';
-import { AttributeService } from '@core/http/attribute.service';
+import {Injectable} from '@angular/core';
+import {EMPTY, forkJoin, Observable, of, throwError} from 'rxjs';
+import {HttpClient} from '@angular/common/http';
+import {PageLink} from '@shared/models/page/page-link';
+import {AliasEntityType, EntityType} from '@shared/models/entity-type.models';
+import {BaseData} from '@shared/models/base-data';
+import {EntityId} from '@shared/models/id/entity-id';
+import {DeviceService} from '@core/http/device.service';
+import {TenantService} from '@core/http/tenant.service';
+import {CustomerService} from '@core/http/customer.service';
+import {UserService} from './user.service';
+import {DashboardService} from '@core/http/dashboard.service';
+import {Direction} from '@shared/models/page/sort-order';
+import {PageData} from '@shared/models/page/page-data';
+import {getCurrentAuthUser} from '@core/auth/auth.selectors';
+import {Store} from '@ngrx/store';
+import {AppState} from '@core/core.state';
+import {Authority} from '@shared/models/authority.enum';
+import {Tenant} from '@shared/models/tenant.model';
+import {catchError, concatMap, expand, map, mergeMap, toArray} from 'rxjs/operators';
+import {Customer} from '@app/shared/models/customer.model';
+import {AssetService} from '@core/http/asset.service';
+import {EntityViewService} from '@core/http/entity-view.service';
+import {AttributeScope, DataKeyType} from '@shared/models/telemetry/telemetry.models';
+import {defaultHttpOptionsFromConfig, RequestConfig} from '@core/http/http-utils';
+import {RuleChainService} from '@core/http/rule-chain.service';
+import {AliasInfo, StateParams, SubscriptionInfo} from '@core/api/widget-api.models';
+import {Datasource, DatasourceType, KeyInfo} from '@app/shared/models/widget.models';
+import {UtilsService} from '@core/services/utils.service';
+import {QueueStatsService} from '@core/http/queue-stats.service';
+import {AliasFilterType, EntityAlias, EntityAliasFilter, EntityAliasFilterResult} from '@shared/models/alias.models';
+import {entityFields, EntityInfo, ImportEntitiesResultInfo, ImportEntityData} from '@shared/models/entity.models';
+import {EntityRelationService} from '@core/http/entity-relation.service';
+import {deepClone, isDefined, isDefinedAndNotNull} from '@core/utils';
+import {Asset} from '@shared/models/asset.models';
+import {Device, DeviceCredentialsType} from '@shared/models/device.models';
+import {AttributeService} from '@core/http/attribute.service';
 import {
   AlarmData,
   AlarmDataQuery,
@@ -62,11 +63,12 @@ import {
   entityInfoFields,
   EntityKey,
   EntityKeyType,
+  EntityKeyValueType,
   FilterPredicateType,
   singleEntityDataPageLink,
   StringOperation
 } from '@shared/models/query/query.models';
-import { alarmFields } from '@shared/models/alarm.models';
+import {alarmFields} from '@shared/models/alarm.models';
 
 @Injectable({
   providedIn: 'root'
@@ -86,7 +88,8 @@ export class EntityService {
     private dashboardService: DashboardService,
     private entityRelationService: EntityRelationService,
     private attributeService: AttributeService,
-    private utils: UtilsService
+    private utils: UtilsService,
+    private queueStatsService: QueueStatsService
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -117,6 +120,9 @@ export class EntityService {
         break;
       case EntityType.RULE_CHAIN:
         observable = this.ruleChainService.getRuleChain(entityId, config);
+        break;
+      case EntityType.QUEUE_STATS:
+        observable = this.queueStatsService.getSingleQueueStats(entityId, config)
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entity is not implemented!');
@@ -191,6 +197,9 @@ export class EntityService {
         observable = this.getEntitiesByIdsObservable(
           (id) => this.userService.getUser(id, config),
           entityIds);
+        break;
+      case EntityType.QUEUE_STATS:
+        observable = this.queueStatsService.getQueueStatsByIds(entityIds, config);
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entity is not implemented!');
@@ -316,6 +325,10 @@ export class EntityService {
         pageLink.sortOrder.property = 'email';
         entitiesObservable = this.userService.getUsers(pageLink);
         break;
+      case EntityType.QUEUE_STATS:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.queueStatsService.getQueueStats(pageLink);
+        break;
       case EntityType.ALARM:
         console.error('Get Alarm Entities is not implemented!');
         break;
@@ -399,6 +412,7 @@ export class EntityService {
       keyFilters: searchText && searchText.length ? [
         {
           key: nameField,
+          valueType: EntityKeyValueType.STRING,
           predicate: {
             type: FilterPredicateType.STRING,
             operation: StringOperation.STARTS_WITH,
@@ -560,6 +574,7 @@ export class EntityService {
         entityTypes.push(EntityType.CUSTOMER);
         entityTypes.push(EntityType.USER);
         entityTypes.push(EntityType.DASHBOARD);
+        // entityTypes.push(EntityType.QUEUE_STATS);
         if (useAliasEntityTypes) {
           entityTypes.push(AliasEntityType.CURRENT_CUSTOMER);
           entityTypes.push(AliasEntityType.CURRENT_TENANT);
@@ -593,10 +608,10 @@ export class EntityService {
     return entityTypes;
   }
 
-  private getEntityFieldKeys (entityType: EntityType, searchText: string): Array<string> {
+  private getEntityFieldKeys(entityType: EntityType, searchText: string): Array<string> {
     const entityFieldKeys: string[] = [entityFields.createdTime.keyName];
     const query = searchText.toLowerCase();
-    switch(entityType) {
+    switch (entityType) {
       case EntityType.USER:
         entityFieldKeys.push(entityFields.name.keyName);
         entityFieldKeys.push(entityFields.email.keyName);
@@ -627,6 +642,9 @@ export class EntityService {
         break;
       case EntityType.DASHBOARD:
         entityFieldKeys.push(entityFields.title.keyName);
+        break;
+      case EntityType.QUEUE_STATS:
+        entityFieldKeys.push(entityFields.name.keyName);
         break;
     }
     return query ? entityFieldKeys.filter((entityField) => entityField.toLowerCase().indexOf(query) === 0) : entityFieldKeys;
@@ -747,6 +765,8 @@ export class EntityService {
         return of(result);
       case AliasFilterType.deviceType:
         result.entityFilter = deepClone(filter);
+      case AliasFilterType.ruleEngineStats:
+        result.entityFilter = deepClone(filter);
         return of(result);
       case AliasFilterType.entityViewType:
         result.entityFilter = deepClone(filter);
@@ -863,7 +883,7 @@ export class EntityService {
               const tasks: Observable<any>[] = [];
               const result: Device | Asset = entity as (Device | Asset);
               const additionalInfo = result.additionalInfo || {};
-              if(result.label !== entityData.label ||
+              if (result.label !== entityData.label ||
                  result.type !== entityData.type ||
                  additionalInfo.description !== entityData.description ||
                  (result.id.entityType === EntityType.DEVICE && (additionalInfo.gateway !== entityData.gateway)) ) {

@@ -29,7 +29,9 @@ import java.util.Arrays;
 @ComponentScan({"org.thingsboard.server.install",
         "org.thingsboard.server.service.component",
         "org.thingsboard.server.service.install",
+        "org.thingsboard.server.service.queue.upgrade",
         "org.thingsboard.server.dao",
+        "org.thingsboard.server.queue.settings",
         "org.thingsboard.server.common.stats"})
 public class ThingsboardInstallApplication {
 

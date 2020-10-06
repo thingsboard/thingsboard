@@ -19,7 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.discovery.TenantRoutingInfo;
 import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
@@ -31,15 +33,20 @@ public class DefaultTenantRoutingInfoService implements TenantRoutingInfoService
 
     private final TenantService tenantService;
 
-    public DefaultTenantRoutingInfoService(TenantService tenantService) {
+    private final TenantProfileService tenantProfileService;
+
+    public DefaultTenantRoutingInfoService(TenantService tenantService, TenantProfileService tenantProfileService) {
         this.tenantService = tenantService;
+        this.tenantProfileService = tenantProfileService;
     }
 
     @Override
     public TenantRoutingInfo getRoutingInfo(TenantId tenantId) {
         Tenant tenant = tenantService.findTenantById(tenantId);
         if (tenant != null) {
-            return new TenantRoutingInfo(tenantId, tenant.isIsolatedTbCore(), tenant.isIsolatedTbRuleEngine());
+            // TODO: Tenant Profile from cache
+            TenantProfile tenantProfile = tenantProfileService.findTenantProfileById(tenantId, tenant.getTenantProfileId());
+            return new TenantRoutingInfo(tenantId, tenantProfile.isIsolatedTbCore(), tenantProfile.isIsolatedTbRuleEngine());
         } else {
             throw new RuntimeException("Tenant not found!");
         }

@@ -93,6 +93,8 @@
         <input matInput formControlName="deviceNameFilter">
       </mat-form-field>
     </ng-template>
+    <ng-template [ngSwitchCase]="aliasFilterType.ruleEngineStats">
+    </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.entityViewType">
       <tb-entity-subtype-autocomplete required
                                       formControlName="entityViewType"

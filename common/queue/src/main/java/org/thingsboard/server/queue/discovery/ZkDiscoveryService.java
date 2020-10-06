@@ -152,8 +152,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         }
         try {
             TransportProtos.ServiceInfo self = serviceInfoProvider.getServiceInfo();
-            TransportProtos.ServiceInfo registeredServerInfo = null;
-            registeredServerInfo = TransportProtos.ServiceInfo.parseFrom(client.getData().forPath(nodePath));
+            TransportProtos.ServiceInfo registeredServerInfo = TransportProtos.ServiceInfo.parseFrom(client.getData().forPath(nodePath));
             if (self.equals(registeredServerInfo)) {
                 return true;
             }

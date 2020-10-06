@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,8 +60,16 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -304,6 +313,23 @@ public abstract class AbstractWebTest {
         }
     }
 
+    protected DeviceProfile createDeviceProfile(String name) {
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setName(name);
+        deviceProfile.setType(DeviceProfileType.DEFAULT);
+        deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
+        deviceProfile.setDescription(name + " Test");
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
+        DefaultDeviceProfileTransportConfiguration transportConfiguration = new DefaultDeviceProfileTransportConfiguration();
+        deviceProfileData.setConfiguration(configuration);
+        deviceProfileData.setTransportConfiguration(transportConfiguration);
+        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.setDefault(false);
+        deviceProfile.setDefaultRuleChainId(null);
+        return deviceProfile;
+    }
+
     protected ResultActions doGet(String urlTemplate, Object... urlVariables) throws Exception {
         MockHttpServletRequestBuilder getRequest = get(urlTemplate, urlVariables);
         setJwtToken(getRequest);
@@ -486,7 +512,7 @@ public abstract class AbstractWebTest {
         return mapper.readerFor(type).readValue(content);
     }
 
-    public class IdComparator<D extends BaseData<? extends UUIDBased>> implements Comparator<D> {
+    public class IdComparator<D extends HasId> implements Comparator<D> {
         @Override
         public int compare(D o1, D o2) {
             return o1.getId().getId().compareTo(o2.getId().getId());

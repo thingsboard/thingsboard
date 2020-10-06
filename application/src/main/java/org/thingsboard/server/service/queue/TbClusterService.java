@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.queue;
 
 import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -25,11 +27,12 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueClusterService;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 
 import java.util.UUID;
 
-public interface TbClusterService {
+public interface TbClusterService extends TbQueueClusterService {
 
     void pushMsgToCore(TopicPartitionInfo tpi, UUID msgKey, ToCoreMsg msg, TbQueueCallback callback);
 
@@ -49,4 +52,7 @@ public interface TbClusterService {
 
     void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
 
+    void onDeviceProfileChange(DeviceProfile deviceProfile, TbQueueCallback callback);
+
+    void onDeviceProfileDelete(DeviceProfile deviceProfileId, TbQueueCallback callback);
 }

@@ -43,3 +43,6 @@ VALUES ( '6eaaefa6-4612-11e7-a919-92ebcb67fe33', 1592576748000, 'mail', '{
 	"username": "",
 	"password": ""
 }' );
+
+INSERT INTO queue (id, created_time, tenant_id, name, topic, poll_interval, partitions, pack_processing_timeout, submit_strategy, processing_strategy)
+VALUES ('6a441950-4611-11e7-a919-92ebcb67fe33', 1592576748000, '13814000-1dd2-11b2-8080-808080808080', 'Main', 'tb_rule_engine.main', 25, 10, 60000, '{"type":"BURST","batchSize":1000}', '{"type":"SKIP_ALL_FAILURES","retries":3,"failurePercentage":0.0,"pauseBetweenRetries":3,"maxPauseBetweenRetries":3}')

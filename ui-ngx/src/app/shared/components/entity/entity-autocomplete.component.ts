@@ -77,6 +77,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   @Input()
   excludeEntityIds: Array<string>;
 
+  @Input()
+  labelText: string;
+
+  @Input()
+  requiredText: string;
+
   private requiredValue: boolean;
   get required(): boolean {
     return this.requiredValue;
@@ -193,6 +199,11 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.noEntitiesMatchingText = 'alarm.no-alarms-matching';
           this.entityRequiredText = 'alarm.alarm-required';
           break;
+        case EntityType.QUEUE_STATS:
+          this.entityText = 'queue-stats.queue-stats';
+          this.noEntitiesMatchingText = 'queue-stats.no-queue-stats-matching';
+          this.entityRequiredText = 'queue-stats.queue-stats-required';
+          break;
         case AliasEntityType.CURRENT_CUSTOMER:
           this.entityText = 'customer.default-customer';
           this.noEntitiesMatchingText = 'customer.no-customers-matching';
@@ -211,6 +222,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           }
           break;
       }
+    }
+    if (this.labelText && this.labelText.length) {
+      this.entityText = this.labelText;
+    }
+    if (this.requiredText && this.requiredText.length) {
+      this.entityRequiredText = this.requiredText;
     }
     const currentEntity = this.getCurrentEntity();
     if (currentEntity) {

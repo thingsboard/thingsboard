@@ -35,7 +35,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = RelationsQueryFilter.class, name = "relationsQuery"),
         @JsonSubTypes.Type(value = AssetSearchQueryFilter.class, name = "assetSearchQuery"),
         @JsonSubTypes.Type(value = DeviceSearchQueryFilter.class, name = "deviceSearchQuery"),
-        @JsonSubTypes.Type(value = EntityViewSearchQueryFilter.class, name = "entityViewSearchQuery")})
+        @JsonSubTypes.Type(value = EntityViewSearchQueryFilter.class, name = "entityViewSearchQuery"),
+        @JsonSubTypes.Type(value = RuleEngineStatsFilter.class, name = "ruleEngineStats")})
 public interface EntityFilter {
 
     @JsonIgnore

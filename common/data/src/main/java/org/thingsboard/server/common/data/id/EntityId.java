@@ -29,7 +29,7 @@ import java.util.UUID;
 
 @JsonDeserialize(using = EntityIdDeserializer.class)
 @JsonSerialize(using = EntityIdSerializer.class)
-public interface EntityId extends Serializable { //NOSONAR, the constant is closely related to EntityId
+public interface EntityId extends HasUUID, Serializable { //NOSONAR, the constant is closely related to EntityId
 
     UUID NULL_UUID = UUID.fromString("13814000-1dd2-11b2-8080-808080808080");
 

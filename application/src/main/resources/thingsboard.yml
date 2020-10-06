@@ -387,6 +387,12 @@ caffeine:
     securitySettings:
       timeToLiveInMinutes: 1440
       maxSize: 0
+    tenantProfiles:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
+    deviceProfiles:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
 
 redis:
   # standalone or cluster
@@ -498,6 +504,7 @@ audit-log:
       "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}"
       "alarm": "${AUDIT_LOG_MASK_ALARM:W}"
       "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}"
+      "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}"
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"

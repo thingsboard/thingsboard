@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.rule;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.BaseData;
@@ -358,12 +359,21 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     private void checkRuleNodesAndDelete(TenantId tenantId, RuleChainId ruleChainId) {
+        try{
+            ruleChainDao.removeById(tenantId, ruleChainId.getId());
+        } catch (Exception t) {
+            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_rule_chain_device_profile")) {
+                throw new DataValidationException("The rule chain referenced by the device profiles cannot be deleted!");
+            } else {
+                throw t;
+            }
+        }
         List<EntityRelation> nodeRelations = getRuleChainToNodeRelations(tenantId, ruleChainId);
         for (EntityRelation relation : nodeRelations) {
             deleteRuleNode(tenantId, relation.getTo());
         }
         deleteEntityRelations(tenantId, ruleChainId);
-        ruleChainDao.removeById(tenantId, ruleChainId.getId());
     }
 
     private List<EntityRelation> getRuleChainToNodeRelations(TenantId tenantId, RuleChainId ruleChainId) {

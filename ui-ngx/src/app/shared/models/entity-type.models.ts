@@ -35,18 +35,21 @@ import { BaseData, HasId } from '@shared/models/base-data';
 
 export enum EntityType {
   TENANT = 'TENANT',
+  TENANT_PROFILE = 'TENANT_PROFILE',
   CUSTOMER = 'CUSTOMER',
   USER = 'USER',
   DASHBOARD = 'DASHBOARD',
   ASSET = 'ASSET',
   DEVICE = 'DEVICE',
+  DEVICE_PROFILE = 'DEVICE_PROFILE',
   ALARM = 'ALARM',
   RULE_CHAIN = 'RULE_CHAIN',
   RULE_NODE = 'RULE_NODE',
   ENTITY_VIEW = 'ENTITY_VIEW',
   WIDGETS_BUNDLE = 'WIDGETS_BUNDLE',
   WIDGET_TYPE = 'WIDGET_TYPE',
-  QUEUE = 'QUEUE'
+  QUEUE = 'QUEUE',
+  QUEUE_STATS = 'QUEUE_STATS'
 }
 
 export enum AliasEntityType {
@@ -90,6 +93,20 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
+      EntityType.TENANT_PROFILE,
+      {
+        type: 'entity.type-tenant-profile',
+        typePlural: 'entity.type-tenant-profiles',
+        list: 'entity.list-of-tenant-profiles',
+        nameStartsWith: 'entity.tenant-profile-name-starts-with',
+        details: 'tenant-profile.tenant-profile-details',
+        add: 'tenant-profile.add',
+        noEntities: 'tenant-profile.no-tenant-profiles-text',
+        search: 'tenant-profile.search',
+        selectedEntities: 'tenant-profile.selected-tenant-profiles'
+      }
+    ],
+    [
       EntityType.CUSTOMER,
       {
         type: 'entity.type-customer',
@@ -129,6 +146,20 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         noEntities: 'device.no-devices-text',
         search: 'device.search',
         selectedEntities: 'device.selected-devices'
+      }
+    ],
+    [
+      EntityType.DEVICE_PROFILE,
+      {
+        type: 'entity.type-device-profile',
+        typePlural: 'entity.type-device-profiles',
+        list: 'entity.list-of-device-profiles',
+        nameStartsWith: 'entity.device-profile-name-starts-with',
+        details: 'device-profile.device-profile-details',
+        add: 'device-profile.add',
+        noEntities: 'device-profile.no-device-profiles-text',
+        search: 'device-profile.search',
+        selectedEntities: 'device-profile.selected-device-profiles'
       }
     ],
     [
@@ -228,6 +259,13 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
+      EntityType.QUEUE_STATS,
+      {
+        type: 'entity.type-queue-stats',
+        list: 'entity.type-queue-stats'
+      }
+    ],
+    [
       AliasEntityType.CURRENT_CUSTOMER,
       {
         type: 'entity.type-current-customer',
@@ -267,6 +305,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       }
     ],
     [
+      EntityType.TENANT_PROFILE,
+      {
+        helpLinkId: 'tenantProfiles'
+      }
+    ],
+    [
       EntityType.CUSTOMER,
       {
         helpLinkId: 'customers'
@@ -282,6 +326,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       EntityType.DEVICE,
       {
         helpLinkId: 'devices'
+      }
+    ],
+    [
+      EntityType.DEVICE_PROFILE,
+      {
+        helpLinkId: 'deviceProfiles'
       }
     ],
     [

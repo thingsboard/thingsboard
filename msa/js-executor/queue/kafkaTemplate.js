@@ -27,20 +27,10 @@ let kafkaAdmin;
 let consumer;
 let producer;
 
-const topics = [];
 const configEntries = [];
 
 function KafkaProducer() {
     this.send = async (responseTopic, scriptId, rawResponse, headers) => {
-
-        if (!topics.includes(responseTopic)) {
-            let createResponseTopicResult = await createTopic(responseTopic, 1);
-            topics.push(responseTopic);
-            if (createResponseTopicResult) {
-                logger.info('Created new topic: %s', requestTopic);
-            }
-        }
-
         return producer.send(
             {
                 topic: responseTopic,
@@ -99,10 +89,13 @@ function KafkaProducer() {
             }
         }
 
-        let createRequestTopicResult = await createTopic(requestTopic, partitions);
+        let topics = await kafkaAdmin.listTopics();
 
-        if (createRequestTopicResult) {
-            logger.info('Created new topic: %s', requestTopic);
+        if (!topics.includes(requestTopic)) {
+            let createRequestTopicResult = await createTopic(requestTopic, partitions);
+            if (createRequestTopicResult) {
+                logger.info('Created new topic: %s', requestTopic);
+            }
         }
 
         consumer = kafkaClient.consumer({groupId: 'js-executor-group'});

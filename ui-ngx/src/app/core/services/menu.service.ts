@@ -90,6 +90,14 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'tenant-profile.tenant-profiles',
+        type: 'link',
+        path: '/tenantProfiles',
+        icon: 'mdi:alpha-t-box',
+        isMdiIcon: true
+      },
+      {
+        id: guid(),
         name: 'widget.widget-library',
         type: 'link',
         path: '/widgets-bundles',
@@ -148,7 +156,13 @@ export class MenuService {
             name: 'tenant.tenants',
             icon: 'supervisor_account',
             path: '/tenants'
-          }
+          },
+          {
+            name: 'tenant-profile.tenant-profiles',
+            icon: 'mdi:alpha-t-box',
+            isMdiIcon: true,
+            path: '/tenantProfiles'
+          },
         ]
       },
       {
@@ -231,6 +245,14 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'device-profile.device-profiles',
+        type: 'link',
+        path: '/deviceProfiles',
+        icon: 'mdi:alpha-d-box',
+        isMdiIcon: true
+      },
+      {
+        id: guid(),
         name: 'entity-view.entity-views',
         type: 'link',
         path: '/entityViews',
@@ -301,6 +323,12 @@ export class MenuService {
             name: 'device.devices',
             icon: 'devices_other',
             path: '/devices'
+          },
+          {
+            name: 'device-profile.device-profiles',
+            icon: 'mdi:alpha-d-box',
+            isMdiIcon: true,
+            path: '/deviceProfiles'
           }
         ]
       },

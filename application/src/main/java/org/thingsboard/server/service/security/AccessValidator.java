@@ -27,6 +27,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -35,21 +36,26 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.controller.HttpValidationCallback;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
@@ -72,10 +78,12 @@ import java.util.function.BiConsumer;
 @Component
 public class AccessValidator {
 
+    public static final String ONLY_SYSTEM_ADMINISTRATOR_IS_ALLOWED_TO_PERFORM_THIS_OPERATION = "Only system administrator is allowed to perform this operation!";
     public static final String CUSTOMER_USER_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION = "Customer user is not allowed to perform this operation!";
     public static final String SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION = "System administrator is not allowed to perform this operation!";
     public static final String DEVICE_WITH_REQUESTED_ID_NOT_FOUND = "Device with requested id wasn't found!";
     public static final String ENTITY_VIEW_WITH_REQUESTED_ID_NOT_FOUND = "Entity-view with requested id wasn't found!";
+    public static final String QUEUE_STATS_WITH_REQUESTED_ID_NOT_FOUND = "Queue Stats with requested id wasn't found!";
 
     @Autowired
     protected TenantService tenantService;
@@ -88,6 +96,9 @@ public class AccessValidator {
 
     @Autowired
     protected DeviceService deviceService;
+
+    @Autowired
+    protected DeviceProfileService deviceProfileService;
 
     @Autowired
     protected AssetService assetService;
@@ -103,6 +114,9 @@ public class AccessValidator {
 
     @Autowired
     protected AccessControlService accessControlService;
+
+    @Autowired
+    protected QueueStatsService queueStatsService;
 
     private ExecutorService executor;
 
@@ -162,6 +176,9 @@ public class AccessValidator {
             case DEVICE:
                 validateDevice(currentUser, operation, entityId, callback);
                 return;
+            case DEVICE_PROFILE:
+                validateDeviceProfile(currentUser, operation, entityId, callback);
+                return;
             case ASSET:
                 validateAsset(currentUser, operation, entityId, callback);
                 return;
@@ -174,11 +191,17 @@ public class AccessValidator {
             case TENANT:
                 validateTenant(currentUser, operation, entityId, callback);
                 return;
+            case TENANT_PROFILE:
+                validateTenantProfile(currentUser, operation, entityId, callback);
+                return;
             case USER:
                 validateUser(currentUser, operation, entityId, callback);
                 return;
             case ENTITY_VIEW:
                 validateEntityView(currentUser, operation, entityId, callback);
+                return;
+            case QUEUE_STATS:
+                validateQueueStats(currentUser, operation, entityId, callback);
                 return;
             default:
                 //TODO: add support of other entities
@@ -203,6 +226,24 @@ public class AccessValidator {
                     return ValidationResult.ok(device);
                 }
             }), executor);
+        }
+    }
+
+    private void validateDeviceProfile(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
+        if (currentUser.isSystemAdmin()) {
+            callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
+        } else {
+            DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(currentUser.getTenantId(), new DeviceProfileId(entityId.getId()));
+            if (deviceProfile == null) {
+                callback.onSuccess(ValidationResult.entityNotFound("Device profile with requested id wasn't found!"));
+            } else {
+                try {
+                    accessControlService.checkPermission(currentUser, Resource.DEVICE_PROFILE, operation, entityId, deviceProfile);
+                } catch (ThingsboardException e) {
+                    callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                }
+                callback.onSuccess(ValidationResult.ok(deviceProfile));
+            }
         }
     }
 
@@ -313,6 +354,14 @@ public class AccessValidator {
         }
     }
 
+    private void validateTenantProfile(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
+        if (currentUser.isSystemAdmin()) {
+            callback.onSuccess(ValidationResult.ok(null));
+        } else {
+            callback.onSuccess(ValidationResult.accessDenied(ONLY_SYSTEM_ADMINISTRATOR_IS_ALLOWED_TO_PERFORM_THIS_OPERATION));
+        }
+    }
+
     private void validateUser(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
         ListenableFuture<User> userFuture = userService.findUserByIdAsync(currentUser.getTenantId(), new UserId(entityId.getId()));
         Futures.addCallback(userFuture, getCallback(callback, user -> {
@@ -344,6 +393,26 @@ public class AccessValidator {
                         return ValidationResult.accessDenied(e.getMessage());
                     }
                     return ValidationResult.ok(entityView);
+                }
+            }), executor);
+        }
+    }
+
+    private void validateQueueStats(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
+        if (currentUser.isSystemAdmin()) {
+            callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
+        } else {
+            ListenableFuture<QueueStats> queueStatsFuture = queueStatsService.findQueueStatsByIdAsync(currentUser.getTenantId(), new QueueStatsId(entityId.getId()));
+            Futures.addCallback(queueStatsFuture, getCallback(callback, queueStats -> {
+                if (queueStats == null) {
+                    return ValidationResult.entityNotFound(QUEUE_STATS_WITH_REQUESTED_ID_NOT_FOUND);
+                } else {
+                    try {
+                        accessControlService.checkPermission(currentUser, Resource.QUEUE_STATS, operation, entityId, queueStats);
+                    } catch (ThingsboardException e) {
+                        return ValidationResult.accessDenied(e.getMessage());
+                    }
+                    return ValidationResult.ok(queueStats);
                 }
             }), executor);
         }

@@ -114,10 +114,20 @@ public class ModelConstants {
     public static final String TENANT_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String TENANT_REGION_PROPERTY = "region";
     public static final String TENANT_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
-    public static final String TENANT_ISOLATED_TB_CORE = "isolated_tb_core";
-    public static final String TENANT_ISOLATED_TB_RULE_ENGINE = "isolated_tb_rule_engine";
+    public static final String TENANT_TENANT_PROFILE_ID_PROPERTY = "tenant_profile_id";
 
-    public static final String TENANT_BY_REGION_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "tenant_by_region_and_search_text";
+    /**
+     * Tenant profile constants.
+     */
+    public static final String TENANT_PROFILE_COLUMN_FAMILY_NAME = "tenant_profile";
+    public static final String TENANT_PROFILE_NAME_PROPERTY = "name";
+    public static final String TENANT_PROFILE_PROFILE_DATA_PROPERTY = "profile_data";
+    public static final String TENANT_PROFILE_DESCRIPTION_PROPERTY = "description";
+    public static final String TENANT_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
+    public static final String TENANT_PROFILE_ISOLATED_TB_CORE = "isolated_tb_core";
+    public static final String TENANT_PROFILE_ISOLATED_TB_RULE_ENGINE = "isolated_tb_rule_engine";
+    public static final String TENANT_PROFILE_MAX_NUMBER_OF_QUEUES = "max_number_of_queues";
+    public static final String TENANT_PROFILE_MAX_NUMBER_OF_PARTITIONS_PER_QUEUE = "max_number_of_partitions_per_queue";
 
     /**
      * Cassandra customer constants.
@@ -141,12 +151,28 @@ public class ModelConstants {
     public static final String DEVICE_TYPE_PROPERTY = "type";
     public static final String DEVICE_LABEL_PROPERTY = "label";
     public static final String DEVICE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String DEVICE_DEVICE_PROFILE_ID_PROPERTY = "device_profile_id";
+    public static final String DEVICE_DEVICE_DATA_PROPERTY = "device_data";
+
     public static final String DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_and_search_text";
     public static final String DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_by_type_and_search_text";
     public static final String DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_customer_and_search_text";
     public static final String DEVICE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_customer_by_type_and_search_text";
     public static final String DEVICE_BY_TENANT_AND_NAME_VIEW_NAME = "device_by_tenant_and_name";
     public static final String DEVICE_TYPES_BY_TENANT_VIEW_NAME = "device_types_by_tenant";
+
+    /**
+     * Device profile constants.
+     */
+    public static final String DEVICE_PROFILE_COLUMN_FAMILY_NAME = "device_profile";
+    public static final String DEVICE_PROFILE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String DEVICE_PROFILE_NAME_PROPERTY = "name";
+    public static final String DEVICE_PROFILE_TYPE_PROPERTY = "type";
+    public static final String DEVICE_PROFILE_TRANSPORT_TYPE_PROPERTY = "transport_type";
+    public static final String DEVICE_PROFILE_PROFILE_DATA_PROPERTY = "profile_data";
+    public static final String DEVICE_PROFILE_DESCRIPTION_PROPERTY = "description";
+    public static final String DEVICE_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
+    public static final String DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
 
     /**
      * Cassandra entityView constants.
@@ -375,6 +401,29 @@ public class ModelConstants {
     public static final String LONG_VALUE_COLUMN = "long_v";
     public static final String DOUBLE_VALUE_COLUMN = "dbl_v";
     public static final String JSON_VALUE_COLUMN = "json_v";
+
+    /**
+     * Queue constants.
+     */
+
+    public static final String QUEUE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String QUEUE_NAME_PROPERTY = "name";
+    public static final String QUEUE_TOPIC_PROPERTY = "topic";
+    public static final String QUEUE_POLL_INTERVAL_PROPERTY = "poll_interval";
+    public static final String QUEUE_PARTITIONS_PROPERTY = "partitions";
+    public static final String QUEUE_PACK_PROCESSING_TIMEOUT_PROPERTY = "pack_processing_timeout";
+    public static final String QUEUE_SUBMIT_STRATEGY_PROPERTY = "submit_strategy";
+    public static final String QUEUE_PROCESSING_STRATEGY_PROPERTY = "processing_strategy";
+    public static final String QUEUE_COLUMN_FAMILY_NAME = "queue";
+
+    /**
+     * Queue Stats constants.
+     */
+
+    public static final String QUEUE_STATS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String QUEUE_STATS_QUEUE_ID_PROPERTY = "queue_id";
+    public static final String QUEUE_STATS_NAME_PROPERTY = "name";
+    public static final String QUEUE_STATS_COLUMN_FAMILY_NAME = "queue_stats";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

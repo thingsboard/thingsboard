@@ -58,7 +58,7 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
   }
 
   get isAdd(): boolean {
-    return this.entityValue && !this.entityValue.id;
+    return this.entityValue && (!this.entityValue.id || !this.entityValue.id.id);
   }
 
   @Input()

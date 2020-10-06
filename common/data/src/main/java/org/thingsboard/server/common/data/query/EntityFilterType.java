@@ -25,7 +25,8 @@ public enum EntityFilterType {
     RELATIONS_QUERY("relationsQuery"),
     ASSET_SEARCH_QUERY("assetSearchQuery"),
     DEVICE_SEARCH_QUERY("deviceSearchQuery"),
-    ENTITY_VIEW_SEARCH_QUERY("entityViewSearchQuery");
+    ENTITY_VIEW_SEARCH_QUERY("entityViewSearchQuery"),
+    RULE_ENGINE_STATS("ruleEngineStats");
 
     private final String label;
 

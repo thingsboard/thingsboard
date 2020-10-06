@@ -23,18 +23,21 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.GetQueueUrlResult;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.settings.TbAwsSqsSettings;
 
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class TbAwsSqsAdmin implements TbQueueAdmin {
 
     private final Map<String, String> attributes;
     private final AmazonSQS sqsClient;
-    private final Set<String> queues;
+    private final Map<String, String> queues;
 
     public TbAwsSqsAdmin(TbAwsSqsSettings sqsSettings, Map<String, String> attributes) {
         this.attributes = attributes;
@@ -57,18 +60,37 @@ public class TbAwsSqsAdmin implements TbQueueAdmin {
                 .getQueueUrls()
                 .stream()
                 .map(this::getQueueNameFromUrl)
-                .collect(Collectors.toCollection(ConcurrentHashMap::newKeySet));
+                .collect(Collectors.toMap(this::convertTopicToQueueName, Function.identity()));
     }
 
     @Override
     public void createTopicIfNotExists(String topic) {
-        String queueName = topic.replaceAll("\\.", "_") + ".fifo";
-        if (queues.contains(queueName)) {
+        String queueName = convertTopicToQueueName(topic);
+        if (queues.containsKey(queueName)) {
             return;
         }
         final CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName).withAttributes(attributes);
         String queueUrl = sqsClient.createQueue(createQueueRequest).getQueueUrl();
-        queues.add(getQueueNameFromUrl(queueUrl));
+        queues.put(getQueueNameFromUrl(queueUrl), queueUrl);
+    }
+
+    private String convertTopicToQueueName(String topic) {
+        return topic.replaceAll("\\.", "_") + ".fifo";
+    }
+
+    @Override
+    public void deleteTopic(String topic) {
+        String queueName = convertTopicToQueueName(topic);
+        if (queues.containsKey(queueName)) {
+            sqsClient.deleteQueue(queues.get(queueName));
+        } else {
+            GetQueueUrlResult queueUrl = sqsClient.getQueueUrl(queueName);
+            if (queueUrl != null) {
+                sqsClient.deleteQueue(queueUrl.getQueueUrl());
+            } else {
+                log.warn("Aws SQS queue [{}] does not exist!", queueName);
+            }
+        }
     }
 
     private String getQueueNameFromUrl(String queueUrl) {

@@ -36,8 +36,8 @@ import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSetting
 import org.thingsboard.server.queue.sqs.TbAwsSqsAdmin;
 import org.thingsboard.server.queue.sqs.TbAwsSqsConsumerTemplate;
 import org.thingsboard.server.queue.sqs.TbAwsSqsProducerTemplate;
-import org.thingsboard.server.queue.sqs.TbAwsSqsQueueAttributes;
-import org.thingsboard.server.queue.sqs.TbAwsSqsSettings;
+import org.thingsboard.server.queue.settings.TbAwsSqsQueueAttributes;
+import org.thingsboard.server.queue.settings.TbAwsSqsSettings;
 
 import javax.annotation.PreDestroy;
 

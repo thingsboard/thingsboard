@@ -17,7 +17,6 @@
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntitySearchDirection, EntityTypeFilter } from '@shared/models/relation.models';
-import { EntityInfo } from './entity.models';
 import { EntityFilter } from '@shared/models/query/query.models';
 
 export enum AliasFilterType {
@@ -31,7 +30,8 @@ export enum AliasFilterType {
   relationsQuery = 'relationsQuery',
   assetSearchQuery = 'assetSearchQuery',
   deviceSearchQuery = 'deviceSearchQuery',
-  entityViewSearchQuery = 'entityViewSearchQuery'
+  entityViewSearchQuery = 'entityViewSearchQuery',
+  ruleEngineStats = 'ruleEngineStats'
 }
 
 export const aliasFilterTypeTranslationMap = new Map<AliasFilterType, string>(
@@ -46,12 +46,17 @@ export const aliasFilterTypeTranslationMap = new Map<AliasFilterType, string>(
     [ AliasFilterType.relationsQuery, 'alias.filter-type-relations-query' ],
     [ AliasFilterType.assetSearchQuery, 'alias.filter-type-asset-search-query' ],
     [ AliasFilterType.deviceSearchQuery, 'alias.filter-type-device-search-query' ],
-    [ AliasFilterType.entityViewSearchQuery, 'alias.filter-type-entity-view-search-query' ]
+    [ AliasFilterType.entityViewSearchQuery, 'alias.filter-type-entity-view-search-query' ],
+    [ AliasFilterType.ruleEngineStats, 'alias.filter-type-rule-engine-stats' ],
   ]
 );
 
 export interface SingleEntityFilter {
   singleEntity?: EntityId;
+}
+
+export interface RuleEngineStatsFilter {
+
 }
 
 export interface EntityListFilter {
@@ -129,7 +134,8 @@ export type EntityFilters =
   RelationsQueryFilter &
   AssetSearchQueryFilter &
   DeviceSearchQueryFilter &
-  EntityViewSearchQueryFilter;
+  EntityViewSearchQueryFilter &
+  RuleEngineStatsFilter;
 
 export interface EntityAliasFilter extends EntityFilters {
   type?: AliasFilterType;

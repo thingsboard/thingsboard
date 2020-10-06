@@ -17,10 +17,9 @@
 -->
 <button mat-icon-button color="primary"
         class="tb-mat-32"
-        [fxShow]="!disabled"
         type="button"
         (click)="openFilterUserInfoDialog()"
-        matTooltip="{{ 'filter.edit-filter-user-params' | translate }}"
+        matTooltip="{{ (disabled ? 'filter.filter-user-params' : 'filter.edit-filter-user-params') | translate }}"
         matTooltipPosition="above">
   <mat-icon>settings</mat-icon>
 </button>

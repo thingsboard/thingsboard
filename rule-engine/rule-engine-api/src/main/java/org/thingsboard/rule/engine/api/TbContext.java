@@ -37,6 +37,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -183,6 +184,8 @@ public interface TbContext {
 
     EntityViewService getEntityViewService();
 
+    RuleEngineDeviceProfileCache getDeviceProfileCache();
+
     ListeningExecutor getJsExecutor();
 
     ListeningExecutor getMailExecutor();
@@ -192,6 +195,8 @@ public interface TbContext {
     ListeningExecutor getExternalCallExecutor();
 
     MailService getMailService();
+
+    QueueStatsService getQueueStatsService();
 
     ScriptEngine createJsScriptEngine(String script, String... argNames);
 
