@@ -93,7 +93,9 @@
       </section>
     </mat-tab>
     <mat-tab label="{{ 'device-profile.schedule' | translate }}">
-      <div class="row">{{ 'device-profile.schedule' | translate }}</div>
+      <tb-alarm-schedule fxFlex class="row"
+                         formControlName="schedule">
+      </tb-alarm-schedule>
     </mat-tab>
     <mat-tab label="{{ 'device-profile.alarm-rule-details' | translate }}">
       <mat-form-field class="mat-block row">

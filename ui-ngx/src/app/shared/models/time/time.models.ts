@@ -467,7 +467,6 @@ export const defaultTimeIntervals = new Array<TimeInterval>(
 );
 
 export enum TimeUnit {
-  MILLISECONDS = 'MILLISECONDS',
   SECONDS = 'SECONDS',
   MINUTES = 'MINUTES',
   HOURS = 'HOURS',
@@ -476,7 +475,6 @@ export enum TimeUnit {
 
 export const timeUnitTranslationMap = new Map<TimeUnit, string>(
   [
-    [TimeUnit.MILLISECONDS, 'timeunit.milliseconds'],
     [TimeUnit.SECONDS, 'timeunit.seconds'],
     [TimeUnit.MINUTES, 'timeunit.minutes'],
     [TimeUnit.HOURS, 'timeunit.hours'],
