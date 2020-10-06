@@ -65,6 +65,7 @@ public class EdgeImitator {
 
     private CountDownLatch messagesLatch;
     private CountDownLatch responsesLatch;
+    private List<Class<? extends AbstractMessage>> ignoredTypes;
 
     @Getter
     private EdgeConfiguration configuration;
@@ -78,6 +79,7 @@ public class EdgeImitator {
         messagesLatch = new CountDownLatch(0);
         responsesLatch = new CountDownLatch(0);
         downlinkMsgs = new ArrayList<>();
+        ignoredTypes = new ArrayList<>();
         this.routingKey = routingKey;
         this.routingSecret = routingSecret;
         setEdgeCredentials("rpcHost", host);
@@ -226,8 +228,10 @@ public class EdgeImitator {
     }
 
     private ListenableFuture<Void> saveDownlinkMsg(AbstractMessage message) {
-        downlinkMsgs.add(message);
-        messagesLatch.countDown();
+        if (!ignoredTypes.contains(message.getClass())) {
+            downlinkMsgs.add(message);
+            messagesLatch.countDown();
+        }
         return Futures.immediateFuture(null);
     }
 
@@ -251,6 +255,14 @@ public class EdgeImitator {
 
     public AbstractMessage getLatestMessage() {
         return downlinkMsgs.get(downlinkMsgs.size() - 1);
+    }
+
+    public void ignoreType(Class<? extends AbstractMessage> type) {
+        ignoredTypes.add(type);
+    }
+
+    public void allowIgnoredTypes() {
+        ignoredTypes.clear();
     }
 
 }
