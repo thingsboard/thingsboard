@@ -613,7 +613,7 @@ transport:
         bind_port: "${LWM2M_BIND_PORT_SEC:5686}"
         bind_port_cert: "${LWM2M_BIND_PORT_SEC_CERT:5688}"
         # Only RPK: Public & Private Key
-        create_rpk: "${CREATE_RPK:}"
+#        create_rpk: "${CREATE_RPK:}"
         public_x: "${LWM2M_SERVER_PUBLIC_X:405354ea8893471d9296afbc8b020a5c6201b0bb25812a53b849d4480fa5f069}"
         public_y: "${LWM2M_SERVER_PUBLIC_Y:30c9237e946a3a1692c1cafaa01a238a077f632c99371348337512363f28212b}"
         private_s: "${LWM2M_SERVER_PRIVATE_S:274671fe40ce937b8a6352cf0a418e8a39e4bf0bb9bf74c910db953c20c73802}"

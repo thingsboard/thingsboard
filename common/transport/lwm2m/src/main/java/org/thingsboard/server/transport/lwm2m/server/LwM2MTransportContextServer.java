@@ -108,10 +108,6 @@ public class LwM2MTransportContextServer extends TransportContext {
     private Integer serverSecurePortCert;
 
     @Getter
-    @Value("${transport.lwm2m.server.secure.create_rpk:}")
-    private Boolean serverCreateRPK;
-
-    @Getter
     @Value("${transport.lwm2m.server.secure.public_x:}")
     private String serverPublicX;
 
@@ -135,7 +131,4 @@ public class LwM2MTransportContextServer extends TransportContext {
     @Value("${transport.lwm2m.secure.redis_url:}")
     private String redisUrl;
 
-//    @Getter
-//    @Setter
-//    private Map<String /** clientEndPoint */, ModelClient> sessions;
 }

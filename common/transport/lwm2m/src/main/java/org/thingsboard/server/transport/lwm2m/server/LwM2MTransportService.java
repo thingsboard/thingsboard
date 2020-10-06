@@ -25,6 +25,7 @@ import org.eclipse.leshan.core.node.*;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.*;
 import org.eclipse.leshan.core.response.*;
+import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.*;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
 
 
@@ -123,7 +125,7 @@ public class LwM2MTransportService {
      */
     public void unReg(Registration registration, Collection<Observation> observations) {
         SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration.getId());
-        doCloseSession (sessionInfo);
+        doCloseSession(sessionInfo);
         this.doDisconnect(sessionInfo);
         lwM2mInMemorySecurityStore.setRemoveSessions(registration.getId());
         lwM2mInMemorySecurityStore.remove();
@@ -381,9 +383,11 @@ public class LwM2MTransportService {
         if (modelObject.getInstances().get(pathIds.getInstanceId()) != null) {
             LwM2mObjectInstance instance = modelObject.getInstances().get(pathIds.getInstanceId());
             if (instance.getResource(pathIds.getResourceId()) != null) {
-                resValue = (instance.getResource(pathIds.getResourceId()).isMultiInstances()) ?
-                        instance.getResource(pathIds.getResourceId()).getValues().toString() :
-                        instance.getResource(pathIds.getResourceId()).getValue().toString();
+                resValue = instance.getResource(pathIds.getResourceId()).getType() == OPAQUE ?
+                        Hex.encodeHexString((byte[]) instance.getResource(pathIds.getResourceId()).getValue()).toLowerCase() :
+                        (instance.getResource(pathIds.getResourceId()).isMultiInstances()) ?
+                                instance.getResource(pathIds.getResourceId()).getValues().toString() :
+                                instance.getResource(pathIds.getResourceId()).getValue().toString();
             }
         }
         return resValue;
@@ -816,8 +820,8 @@ public class LwM2MTransportService {
 
     private ResultsAnalyzerParameters getAnalyzerParametersIn(Set<String> parametersObserve, Set<String> parameters) {
         ResultsAnalyzerParameters analyzerParameters = new ResultsAnalyzerParameters();
-            analyzerParameters.setPathPostParametersAdd(parametersObserve
-                    .stream().filter(p -> parameters.contains(p)).collect(Collectors.toSet()));
+        analyzerParameters.setPathPostParametersAdd(parametersObserve
+                .stream().filter(p -> parameters.contains(p)).collect(Collectors.toSet()));
         return analyzerParameters;
     }
 
@@ -865,18 +869,20 @@ public class LwM2MTransportService {
 
     /**
      * Session device in thingsboard is closed
+     *
      * @param sessionInfo - lwm2m client
      */
-    private void doCloseSession (SessionInfoProto sessionInfo) {
+    private void doCloseSession(SessionInfoProto sessionInfo) {
         TransportProtos.SessionEvent event = SessionEvent.CLOSED;
         TransportProtos.SessionEventMsg msg = TransportProtos.SessionEventMsg.newBuilder()
-                    .setSessionType(TransportProtos.SessionType.ASYNC)
-                    .setEvent(event).build();
+                .setSessionType(TransportProtos.SessionType.ASYNC)
+                .setEvent(event).build();
         transportService.process(sessionInfo, msg, null);
     }
 
     /**
      * Deregister session in transport
+     *
      * @param sessionInfo - lwm2m client
      */
     private void doDisconnect(SessionInfoProto sessionInfo) {
