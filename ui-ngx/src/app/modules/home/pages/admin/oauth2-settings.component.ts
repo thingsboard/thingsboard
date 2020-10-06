@@ -178,13 +178,14 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     }
   }
 
-  private uniqueDomainValidator(control: AbstractControl): { [key: string]: boolean } | null {
-    if (control.parent?.parent?.value) {
-      const domain = control.value;
-      const listProtocols = control.parent.parent.value
+  private uniqueDomainValidator(control: FormGroup): { [key: string]: boolean } | null {
+    if (control.parent?.value) {
+      const domain = control.value.name;
+      const listProtocols = control.parent.getRawValue()
         .filter((domainInfo) => domainInfo.name === domain)
         .map((domainInfo) => domainInfo.scheme);
-      if (listProtocols.length > 1 && listProtocols.indexOf(DomainSchema.MIXED) > -1) {
+      if (listProtocols.length > 1 && listProtocols.indexOf(DomainSchema.MIXED) > -1 ||
+        new Set(listProtocols).size !== listProtocols.length) {
         return {unique: true};
       }
     }
@@ -228,10 +229,9 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     const domain = this.fb.group({
       name: [domainInfo ? domainInfo.name : this.window.location.hostname, [
         Validators.required,
-        Validators.pattern('((?![:/]).)*$'),
-        this.uniqueDomainValidator]],
+        Validators.pattern('((?![:/]).)*$')]],
       scheme: [domainInfo?.scheme ? domainInfo.scheme : DomainSchema.HTTPS, Validators.required]
-    });
+    }, {validators: this.uniqueDomainValidator});
     return domain;
   }
 
@@ -288,6 +288,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       this.changeMapperConfigType(clientRegistration, registrationData.mapperConfig.type, registrationData.mapperConfig);
     } else {
       this.changeMapperConfigType(clientRegistration, MapperConfigType.BASIC);
+      this.setProviderDefaultValue(defaultProviderName, clientRegistration);
     }
 
     this.subscriptions.push(clientRegistration.get('mapperConfig.type').valueChanges.subscribe((value) => {
@@ -296,31 +297,35 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
     this.subscriptions.push(clientRegistration.get('additionalInfo.providerName').valueChanges.subscribe((provider) => {
       (clientRegistration.get('scope') as FormArray).clear();
-      if (provider === 'Custom') {
-        const defaultSettings = {...this.defaultProvider, ...{id: clientRegistration.get('id').value}};
-        clientRegistration.reset(defaultSettings, {emitEvent: false});
-        clientRegistration.get('accessTokenUri').enable();
-        clientRegistration.get('authorizationUri').enable();
-        clientRegistration.get('jwkSetUri').enable();
-        clientRegistration.get('userInfoUri').enable();
-      } else {
-        const template = this.templates.get(provider);
-        delete template.id;
-        delete template.additionalInfo;
-        template.clientId = '';
-        template.clientSecret = '';
-        template.scope.forEach(() => {
-          (clientRegistration.get('scope') as FormArray).push(this.fb.control(''));
-        });
-        clientRegistration.get('accessTokenUri').disable();
-        clientRegistration.get('authorizationUri').disable();
-        clientRegistration.get('jwkSetUri').disable();
-        clientRegistration.get('userInfoUri').disable();
-        clientRegistration.patchValue(template, {emitEvent: false});
-      }
+      this.setProviderDefaultValue(provider, clientRegistration);
     }));
 
     return clientRegistration;
+  }
+
+  private setProviderDefaultValue(provider: string, clientRegistration: FormGroup) {
+    if (provider === 'Custom') {
+      const defaultSettings = {...this.defaultProvider, ...{id: clientRegistration.get('id').value}};
+      clientRegistration.reset(defaultSettings, {emitEvent: false});
+      clientRegistration.get('accessTokenUri').enable();
+      clientRegistration.get('authorizationUri').enable();
+      clientRegistration.get('jwkSetUri').enable();
+      clientRegistration.get('userInfoUri').enable();
+    } else {
+      const template = this.templates.get(provider);
+      delete template.id;
+      delete template.additionalInfo;
+      template.clientId = '';
+      template.clientSecret = '';
+      template.scope.forEach(() => {
+        (clientRegistration.get('scope') as FormArray).push(this.fb.control(''));
+      });
+      clientRegistration.get('accessTokenUri').disable();
+      clientRegistration.get('authorizationUri').disable();
+      clientRegistration.get('jwkSetUri').disable();
+      clientRegistration.get('userInfoUri').disable();
+      clientRegistration.patchValue(template, {emitEvent: false});
+    }
   }
 
   private changeMapperConfigType(control: AbstractControl, type: MapperConfigType, predefinedValue?: MapperConfig) {

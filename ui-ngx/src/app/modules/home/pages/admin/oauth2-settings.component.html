@@ -59,30 +59,31 @@
                           <section *ngFor="let domainInfo of clientDomainInfos(domain).controls; let n = index; trackBy: trackByParams"
                             class="domains-list">
                             <div [formGroupName]="n" fxLayout="row" fxLayoutGap="8px">
-                              <div fxLayout="row" fxLayout.xs="column" fxFlex fxLayoutGap="8px">
-                                <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px" fxFlex.gt-xs="50">
-                                  <mat-form-field fxFlex="30" fxFlex.xs class="mat-block">
-                                    <mat-label translate>admin.oauth2.protocol</mat-label>
-                                    <mat-select formControlName="scheme">
-                                      <mat-option *ngFor="let protocol of protocols" [value]="protocol">
-                                        {{ domainSchemaTranslations.get(protocol) | translate | uppercase }}
-                                      </mat-option>
-                                    </mat-select>
-                                  </mat-form-field>
-
-                                  <mat-form-field fxFlex class="mat-block">
-                                    <mat-label translate>admin.domain-name</mat-label>
-                                    <input matInput formControlName="name" required>
-                                    <mat-error *ngIf="domainInfo.get('name').hasError('pattern')">
-                                      {{ 'admin.error-verification-url' | translate }}
-                                    </mat-error>
-                                    <mat-error *ngIf="domainInfo.get('name').hasError('unique')">
-                                      {{ 'admin.domain-name-unique' | translate }}
-                                    </mat-error>
-                                  </mat-form-field>
+                              <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
+                                <div fxLayout="column" fxFlex.sm="60" fxFlex.gt-sm="50">
+                                  <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
+                                    <mat-form-field fxFlex="30" fxFlex.xs class="mat-block">
+                                      <mat-label translate>admin.oauth2.protocol</mat-label>
+                                      <mat-select formControlName="scheme">
+                                        <mat-option *ngFor="let protocol of protocols" [value]="protocol">
+                                          {{ domainSchemaTranslations.get(protocol) | translate | uppercase }}
+                                        </mat-option>
+                                      </mat-select>
+                                    </mat-form-field>
+                                    <mat-form-field fxFlex class="mat-block">
+                                      <mat-label translate>admin.domain-name</mat-label>
+                                      <input matInput formControlName="name" required>
+                                      <mat-error *ngIf="domainInfo.get('name').hasError('pattern')">
+                                        {{ 'admin.error-verification-url' | translate }}
+                                      </mat-error>
+                                    </mat-form-field>
+                                  </div>
+                                  <mat-error *ngIf="domainInfo.hasError('unique')">
+                                    {{ 'admin.domain-name-unique' | translate }}
+                                  </mat-error>
                                 </div>
 
-                                <div fxFlex>
+                                <div fxFlex fxLayout="column">
                                   <mat-form-field fxFlex class="mat-block">
                                     <mat-label translate>admin.oauth2.redirect-uri-template</mat-label>
                                     <input matInput [value]="redirectURI(domainInfo)" readonly>
@@ -94,8 +95,7 @@
                                     </button>
                                   </mat-form-field>
 
-                                  <mat-form-field fxFlex *ngIf="domainInfo.get('scheme').value === 'MIXED'"
-                                                  class="mat-block">
+                                  <mat-form-field fxFlex *ngIf="domainInfo.get('scheme').value === 'MIXED'" class="mat-block">
                                     <mat-label></mat-label>
                                     <input matInput [value]="redirectURIMixed(domainInfo)" readonly>
                                     <button mat-icon-button color="primary" matSuffix type="button"
@@ -106,7 +106,6 @@
                                     </button>
                                   </mat-form-field>
                                 </div>
-
                               </div>
 
                               <div fxLayout="column" fxLayoutAlign="center start">

@@ -121,7 +121,7 @@
         "minimum-max-failed-login-attempts-range": "Maximum number of failed login attempts can't be negative",
         "user-lockout-notification-email": "In case user account lockout, send notification to email",
         "domain-name": "Domain name",
-        "domain-name-unique": "Domain name need to unique for the system.",
+        "domain-name-unique": "Domain name and protocol need to unique.",
         "error-verification-url": "A domain name shouldn't contain symbols '/' and ':'. Example: thingsboard.io",
         "oauth2": {
           "access-token-uri": "Access token URI",
