@@ -119,10 +119,17 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
                 if (StringUtils.isEmpty(domainInfo.getName())) {
                     throw new DataValidationException("Domain name should be specified!");
                 }
-                if (StringUtils.isEmpty(domainInfo.getScheme())) {
+                if (domainInfo.getScheme() == null) {
                     throw new DataValidationException("Domain scheme should be specified!");
                 }
             }
+            domainParams.getDomainInfos().stream()
+                    .collect(Collectors.groupingBy(DomainInfo::getName))
+                    .forEach((domainName, domainInfos) -> {
+                        if (domainInfos.size() > 1 && domainInfos.stream().anyMatch(domainInfo -> domainInfo.getScheme() == SchemeType.MIXED)) {
+                            throw new DataValidationException("MIXED scheme type shouldn't be combined with another scheme type!");
+                        }
+                    });
             if (domainParams.getClientRegistrations() == null || domainParams.getClientRegistrations().isEmpty()) {
                 throw new DataValidationException("Client registrations should be specified!");
             }

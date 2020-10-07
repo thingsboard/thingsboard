@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.oauth2.*;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 
 import java.util.*;
@@ -43,6 +44,44 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         oAuth2Service.saveOAuth2Params(EMPTY_PARAMS);
         Assert.assertTrue(oAuth2Service.findAllClientRegistrationInfos().isEmpty());
         Assert.assertTrue(oAuth2Service.findOAuth2Params().getDomainsParams().isEmpty());
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testSaveHttpAndMixedDomainsTogether() {
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
+                                DomainInfo.builder().name("first-domain").scheme(SchemeType.MIXED).build(),
+                                DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto()
+                        ))
+                        .build()
+        ));
+        oAuth2Service.saveOAuth2Params(clientsParams);
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testSaveHttpsAndMixedDomainsTogether() {
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTPS).build(),
+                                DomainInfo.builder().name("first-domain").scheme(SchemeType.MIXED).build(),
+                                DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
+                        ))
+                        .clientRegistrations(Sets.newHashSet(
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto(),
+                                validClientRegistrationDto()
+                        ))
+                        .build()
+        ));
+        oAuth2Service.saveOAuth2Params(clientsParams);
     }
 
     @Test
@@ -178,7 +217,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         Assert.assertTrue(nonExistentDomainClients.isEmpty());
 
         List<OAuth2ClientInfo> firstDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "first-domain");
-        Assert.assertEquals(firstDomainHttpClients.size(), firstDomainHttpClients.size());
+        Assert.assertEquals(firstGroupClientInfos.size(), firstDomainHttpClients.size());
         firstGroupClientInfos.forEach(firstGroupClientInfo -> {
             Assert.assertTrue(
                     firstDomainHttpClients.stream().anyMatch(clientInfo ->
@@ -191,7 +230,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         Assert.assertTrue(firstDomainHttpsClients.isEmpty());
 
         List<OAuth2ClientInfo> fourthDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "fourth-domain");
-        Assert.assertEquals(fourthDomainHttpClients.size(), secondGroupClientInfos.size());
+        Assert.assertEquals(secondGroupClientInfos.size(), fourthDomainHttpClients.size());
         secondGroupClientInfos.forEach(secondGroupClientInfo -> {
             Assert.assertTrue(
                     fourthDomainHttpClients.stream().anyMatch(clientInfo ->
@@ -200,7 +239,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
             );
         });
         List<OAuth2ClientInfo> fourthDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "fourth-domain");
-        Assert.assertEquals(fourthDomainHttpsClients.size(), secondGroupClientInfos.size());
+        Assert.assertEquals(secondGroupClientInfos.size(), fourthDomainHttpsClients.size());
         secondGroupClientInfos.forEach(secondGroupClientInfo -> {
             Assert.assertTrue(
                     fourthDomainHttpsClients.stream().anyMatch(clientInfo ->
@@ -210,7 +249,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         });
 
         List<OAuth2ClientInfo> secondDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "second-domain");
-        Assert.assertEquals(secondDomainHttpClients.size(), firstGroupClientInfos.size() + secondGroupClientInfos.size());
+        Assert.assertEquals(firstGroupClientInfos.size() + secondGroupClientInfos.size(), secondDomainHttpClients.size());
         firstGroupClientInfos.forEach(firstGroupClientInfo -> {
             Assert.assertTrue(
                     secondDomainHttpClients.stream().anyMatch(clientInfo ->
@@ -227,7 +266,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         });
 
         List<OAuth2ClientInfo> secondDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "second-domain");
-        Assert.assertEquals(secondDomainHttpsClients.size(), firstGroupClientInfos.size() + thirdGroupClientInfos.size());
+        Assert.assertEquals(firstGroupClientInfos.size() + thirdGroupClientInfos.size(), secondDomainHttpsClients.size());
         firstGroupClientInfos.forEach(firstGroupClientInfo -> {
             Assert.assertTrue(
                     secondDomainHttpsClients.stream().anyMatch(clientInfo ->
@@ -240,6 +279,56 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                     secondDomainHttpsClients.stream().anyMatch(clientInfo ->
                             clientInfo.getIcon().equals(thirdGroupClientInfo.getIcon())
                                     && clientInfo.getName().equals(thirdGroupClientInfo.getName()))
+            );
+        });
+    }
+
+    @Test
+    public void testGetOAuth2ClientsForHttpAndHttps() {
+        Set<ClientRegistrationDto> firstGroup = Sets.newHashSet(
+                validClientRegistrationDto(),
+                validClientRegistrationDto(),
+                validClientRegistrationDto(),
+                validClientRegistrationDto()
+        );
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+                OAuth2ClientsDomainParams.builder()
+                        .domainInfos(Sets.newHashSet(
+                                DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
+                                DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
+                                DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTPS).build()
+                        ))
+                        .clientRegistrations(firstGroup)
+                        .build()
+        ));
+
+        oAuth2Service.saveOAuth2Params(clientsParams);
+        OAuth2ClientsParams foundClientsParams = oAuth2Service.findOAuth2Params();
+        Assert.assertNotNull(foundClientsParams);
+        Assert.assertEquals(clientsParams, foundClientsParams);
+
+        List<OAuth2ClientInfo> firstGroupClientInfos = firstGroup.stream()
+                .map(clientRegistrationDto -> new OAuth2ClientInfo(
+                        clientRegistrationDto.getLoginButtonLabel(), clientRegistrationDto.getLoginButtonIcon(), null))
+                .collect(Collectors.toList());
+
+        List<OAuth2ClientInfo> firstDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "first-domain");
+        Assert.assertEquals(firstGroupClientInfos.size(), firstDomainHttpClients.size());
+        firstGroupClientInfos.forEach(firstGroupClientInfo -> {
+            Assert.assertTrue(
+                    firstDomainHttpClients.stream().anyMatch(clientInfo ->
+                            clientInfo.getIcon().equals(firstGroupClientInfo.getIcon())
+                                    && clientInfo.getName().equals(firstGroupClientInfo.getName()))
+            );
+        });
+
+        List<OAuth2ClientInfo> firstDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "first-domain");
+        Assert.assertEquals(firstGroupClientInfos.size(), firstDomainHttpsClients.size());
+        firstGroupClientInfos.forEach(firstGroupClientInfo -> {
+            Assert.assertTrue(
+                    firstDomainHttpsClients.stream().anyMatch(clientInfo ->
+                            clientInfo.getIcon().equals(firstGroupClientInfo.getIcon())
+                                    && clientInfo.getName().equals(firstGroupClientInfo.getName()))
             );
         });
     }
