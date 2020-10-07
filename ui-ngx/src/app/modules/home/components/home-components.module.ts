@@ -108,6 +108,7 @@ import { FilterTextComponent } from './filter/filter-text.component';
 import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
 import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
 import { DeviceProfileProvisionConfigurationComponent } from "./profile/device-profile-provision-configuration.component";
+import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component';
 
 @NgModule({
   declarations:
@@ -198,7 +199,8 @@ import { DeviceProfileProvisionConfigurationComponent } from "./profile/device-p
       DeviceProfileDialogComponent,
       AddDeviceProfileDialogComponent,
       RuleChainAutocompleteComponent,
-      DeviceProfileProvisionConfigurationComponent
+      DeviceProfileProvisionConfigurationComponent,
+      AlarmScheduleComponent
     ],
   imports: [
     CommonModule,
@@ -278,7 +280,8 @@ import { DeviceProfileProvisionConfigurationComponent } from "./profile/device-p
     DeviceProfileDialogComponent,
     AddDeviceProfileDialogComponent,
     RuleChainAutocompleteComponent,
-    DeviceProfileProvisionConfigurationComponent
+    DeviceProfileProvisionConfigurationComponent,
+    AlarmScheduleComponent
   ],
   providers: [
     WidgetComponentService,

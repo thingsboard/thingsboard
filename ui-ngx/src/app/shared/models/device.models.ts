@@ -257,9 +257,40 @@ export interface AlarmCondition {
   spec?: AlarmConditionSpec;
 }
 
+export enum AlarmScheduleType {
+  ANY_TIME = 'ANY_TIME',
+  SPECIFIC_TIME = 'SPECIFIC_TIME',
+  CUSTOM = 'CUSTOM'
+}
+
+export const AlarmScheduleTypeTranslationMap = new Map<AlarmScheduleType, string>(
+  [
+    [AlarmScheduleType.ANY_TIME, 'device-profile.schedule-any-time'],
+    [AlarmScheduleType.SPECIFIC_TIME, 'device-profile.schedule-specific-time'],
+    [AlarmScheduleType.CUSTOM, 'device-profile.schedule-custom']
+  ]
+);
+
+export interface AlarmSchedule{
+  type: AlarmScheduleType;
+  timezone?: string;
+  daysOfWeek?: number[];
+  startsOn?: number;
+  endsOn?: number;
+  items?: CustomTimeSchedulerItem[];
+}
+
+export interface CustomTimeSchedulerItem{
+  enabled: boolean;
+  dayOfWeek: number;
+  startsOn: number;
+  endsOn: number;
+}
+
 export interface AlarmRule {
   condition: AlarmCondition;
   alarmDetails?: string;
+  schedule?: AlarmSchedule;
 }
 
 export interface DeviceProfileAlarm {

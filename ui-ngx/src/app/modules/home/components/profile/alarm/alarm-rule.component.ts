@@ -95,6 +95,7 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
           count: [{value: null, disable: true}, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]]
         })
       }, Validators.required),
+      schedule: [null],
       alarmDetails: [null]
     });
     this.alarmRuleFormGroup.get('condition.spec.type').valueChanges.subscribe((type) => {

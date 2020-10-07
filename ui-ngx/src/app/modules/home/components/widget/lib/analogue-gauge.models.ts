@@ -1002,7 +1002,8 @@ export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends
       // animations
       animation: settings.animation !== false && !this.ctx.isMobile,
       animationDuration: (isDefined(settings.animationDuration) && settings.animationDuration !== null) ? settings.animationDuration : 500,
-      animationRule: settings.animationRule || 'cycle'
+      animationRule: settings.animationRule || 'cycle',
+      animatedValue: true
     } as O;
 
     this.prepareGaugeOptions(settings, gaugeData);

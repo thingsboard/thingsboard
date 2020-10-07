@@ -866,7 +866,25 @@
         "condition-repeating-value-range": "Count of events should be in a range from 1 to 2147483647.",
         "condition-repeating-value-pattern": "Count of events should be integers.",
         "condition-repeating-value-required": "Count of events is required.",
-        "schedule": "Schedule"
+        "schedule-type": "Scheduler type",
+        "schedule-type-required": "Scheduler type is required.",
+        "schedule": "Schedule",
+        "schedule-any-time": "Active all the time",
+        "schedule-specific-time": "Active at a specific time",
+        "schedule-custom": "Custom",
+        "schedule-day": {
+          "monday": "Monday",
+          "tuesday": "Tuesday",
+          "wednesday": "Wednesday",
+          "thursday": "Thursday",
+          "friday": "Friday",
+          "saturday": "Saturday",
+          "sunday": "Sunday"
+        },
+        "schedule-days": "Days",
+        "schedule-time": "Time",
+        "schedule-time-from": "From",
+        "schedule-time-to": "To"
     },
     "dialog": {
         "close": "Close dialog"
@@ -1752,6 +1770,12 @@
         "help": "Help",
         "reset-debug-mode": "Reset debug mode in all nodes"
     },
+    "timezone": {
+      "timezone": "Timezone",
+      "select-timezone": "Select timezone",
+      "no-timezones-matching": "No timezones matching '{{timezone}}' were found.",
+      "timezone-required": "Timezone is required."
+    },
     "queue": {
       "select_name": "Select queue name",
       "name": "Queue Name",
@@ -1831,7 +1855,6 @@
         "advanced": "Advanced"
     },
     "timeunit": {
-        "milliseconds": "Milliseconds",
         "seconds": "Seconds",
         "minutes": "Minutes",
         "hours": "Hours",

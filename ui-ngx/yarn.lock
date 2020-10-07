@@ -1397,24 +1397,17 @@
   dependencies:
     "@types/jquery" "*"
 
-"@types/jszip@^3.4.1":
-  version "3.4.1"
-  resolved "https://registry.yarnpkg.com/@types/jszip/-/jszip-3.4.1.tgz#e7a4059486e494c949ef750933d009684227846f"
-  integrity sha512-TezXjmf3lj+zQ651r6hPqvSScqBLvyPI9FxdXBqpEwBijNGQ2NXpaFW/7joGzveYkKQUil7iiDHLo6LV71Pc0A==
-  dependencies:
-    jszip "*"
-
-"@types/leaflet-markercluster@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@types/leaflet-markercluster/-/leaflet-markercluster-1.0.3.tgz#64151be453f6490e8751500482deb961064e782c"
-  integrity sha1-ZBUb5FP2SQ6HUVAEgt65YQZOeCw=
-  dependencies:
-    "@types/leaflet" "*"
-
 "@types/leaflet-polylinedecorator@^1.6.0":
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/@types/leaflet-polylinedecorator/-/leaflet-polylinedecorator-1.6.0.tgz#1572131ffedb3154c6e18e682d2fb700e203af19"
   integrity sha512-Z2BXZDjKEqHclwrAmhYdF1RwyFfa/NFxsoF79sitzaj5D/4YWHp/zDRcUZar5cQFKRgK66AYEIF7nKVuMzUGdw==
+  dependencies:
+    "@types/leaflet" "*"
+
+"@types/leaflet.markercluster@^1.4.2":
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/@types/leaflet.markercluster/-/leaflet.markercluster-1.4.2.tgz#86b8ab7ca2397b48d9ba637757aaf7a6d1cc6f0f"
+  integrity sha512-QQ//hevAxMH2dlRQdRre7V/1G+TbtuDtZnZF/75TNwVIgklrsQVCIcS/cvLsl7UUryfPJ6xmoYHfFzK5iGVgpg==
   dependencies:
     "@types/leaflet" "*"
 
@@ -1434,6 +1427,13 @@
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.3.tgz#3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d"
   integrity sha512-tHq6qdbT9U1IRSGf14CL0pUlULksvY9OZ+5eEgl1N7t+OA3tGvNpxJCzuKQlsNgCVwbAs670L1vcVQi8j9HjnA==
+
+"@types/moment-timezone@^0.5.30":
+  version "0.5.30"
+  resolved "https://registry.yarnpkg.com/@types/moment-timezone/-/moment-timezone-0.5.30.tgz#340ed45fe3e715f4a011f5cfceb7cb52aad46fc7"
+  integrity sha512-aDVfCsjYnAQaV/E9Qc24C5Njx1CoDjXsEgkxtp9NyXDpYu4CCbmclb6QhWloS9UTU/8YROUEEdEkWI0D7DxnKg==
+  dependencies:
+    moment-timezone "*"
 
 "@types/mousetrap@^1.6.0":
   version "1.6.3"
@@ -5632,7 +5632,7 @@ jstree@^3.3.10:
   dependencies:
     jquery ">=1.9.1"
 
-jszip@*, jszip@^3.1.3, jszip@^3.5.0:
+jszip@^3.1.3, jszip@^3.5.0:
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/jszip/-/jszip-3.5.0.tgz#b4fd1f368245346658e781fec9675802489e15f6"
   integrity sha512-WRtu7TPCmYePR1nazfrtuF216cIVon/3GWOvHS9QR5bIwSbnxtdpma6un3jyGGNhHsKCSzn5Ypk+EkDRvTGiFA==
@@ -6296,6 +6296,18 @@ mkdirp@^1.0.3, mkdirp@^1.0.4:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
 
+moment-timezone@*, moment-timezone@^0.5.31:
+  version "0.5.31"
+  resolved "https://registry.yarnpkg.com/moment-timezone/-/moment-timezone-0.5.31.tgz#9c40d8c5026f0c7ab46eda3d63e49c155148de05"
+  integrity sha512-+GgHNg8xRhMXfEbv81iDtrVeTcWt0kWmTEY1XQK14dICTXnWJnT0dxdlPspwqF3keKMVPXwayEsk1DI0AA/jdA==
+  dependencies:
+    moment ">= 2.9.0"
+
+"moment@>= 2.9.0":
+  version "2.29.0"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.0.tgz#fcbef955844d91deb55438613ddcec56e86a3425"
+  integrity sha512-z6IJ5HXYiuxvFTI6eiQ9dm77uE0gyy1yXNApVHqTcnIKfY9tIwEjlzsZ6u1LQXvVgKeTnv9Xm7NDvJ7lso3MtA==
+
 moment@^2.27.0:
   version "2.27.0"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.27.0.tgz#8bff4e3e26a236220dfe3e36de756b6ebaa0105d"
@@ -6421,10 +6433,12 @@ ngx-color-picker@^10.0.1:
   dependencies:
     tslib "^2.0.0"
 
-ngx-daterangepicker-material@^3.0.4:
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/ngx-daterangepicker-material/-/ngx-daterangepicker-material-3.0.4.tgz#af759e52fd587fcc9bce1fbcfc8cde828df6a471"
-  integrity sha512-pDg8kdXx/h8es8dpjBI+xbsxQbS0dV3uSPgfsx39t9LIw3Dv50h8T1achT5jUWSzSU7855ywTk+NlNBDTgkeNg==
+ngx-daterangepicker-material@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/ngx-daterangepicker-material/-/ngx-daterangepicker-material-4.0.1.tgz#788c2e32eb4717629d4a0e60a60bf8d6430d8c13"
+  integrity sha512-0gY6DGU+dgYdmoAKrIJSB9xnDqBvj91Yis3II/ZJxxMfZVTG4qMMatck6w8FzdU+CYT64ArCq+Uwa6hJRHX6Nw==
+  dependencies:
+    tslib "^1.10.0"
 
 "ngx-flowchart@git://github.com/thingsboard/ngx-flowchart.git#master":
   version "0.0.0"

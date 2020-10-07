@@ -206,11 +206,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   }
 
   public onDataUpdated() {
-    this.ngZone.run(() => {
-      this.updateTitle(true);
-      this.entityDatasource.dataUpdated();
-      this.ctx.detectChanges();
-    });
+    this.updateTitle(true);
+    this.entityDatasource.dataUpdated();
   }
 
   public pageLinkSortDirection(): SortDirection {
@@ -488,6 +485,10 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     return column.def;
   }
 
+  public trackByRowIndex(index: number) {
+    return index;
+  }
+
   public headerStyle(key: EntityColumn): any {
     const columnWidth = this.columnWidth[key.def];
     return widthStyle(columnWidth);
@@ -529,7 +530,19 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       } else {
         content = this.defaultContent(key, contentInfo, value);
       }
-      return isDefined(content) ? this.domSanitizer.bypassSecurityTrustHtml(content) : '';
+
+      if (!isDefined(content)) {
+        return '';
+
+      } else {
+        switch (typeof content) {
+          case 'string':
+            return this.domSanitizer.bypassSecurityTrustHtml(content);
+          default:
+            return content;
+        }
+      }
+
     } else {
       return '';
     }
