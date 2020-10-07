@@ -69,7 +69,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
     protected String gatewayAccessToken;
 
     protected void processBeforeTest (String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic) throws Exception {
-        this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, null, null, null);
+        this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, DeviceProfileProvisionType.DISABLED, null, null);
     }
 
     protected void processBeforeTest(String deviceName,
@@ -196,12 +196,6 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
                 break;
         }
         return keyValueProtoBuilder.build();
-    }
-
-    protected DeviceProfile createMqttDeviceProfile(TransportPayloadType transportPayloadType,
-                                                    String telemetryTopic, String attributesTopic
-                                                    ) {
-        return this.createMqttDeviceProfile(transportPayloadType, telemetryTopic, attributesTopic, null, null, null);
     }
 
     protected DeviceProfile createMqttDeviceProfile(TransportPayloadType transportPayloadType,
