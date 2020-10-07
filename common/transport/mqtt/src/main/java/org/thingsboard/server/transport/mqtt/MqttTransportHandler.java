@@ -383,6 +383,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void processX509CertConnect(ChannelHandlerContext ctx, X509Certificate cert) {
         try {
+            if(!context.isSkipValidityCheckForClientCert()){
+                cert.checkValidity();
+            }
             String strCert = SslUtil.getX509CertificateString(cert);
             String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
             transportService.process(ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
