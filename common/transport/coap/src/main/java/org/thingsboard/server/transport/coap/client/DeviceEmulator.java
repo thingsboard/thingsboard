@@ -153,7 +153,13 @@ public class DeviceEmulator {
     }
 
     public static void main(String args[]) {
-        if (args.length != 4) {
+        String host = "localhost";
+        String  port = "0";
+        String token = "kSzbDRGwaZqZ6Y25gTLF";
+        String keys = "";
+        String [] args1 = new String[]{host, port, token, keys};
+        if (args1.length != 4) {
+//        if (args.length != 4) {
             System.out.println("Usage: java -jar " + DeviceEmulator.class.getSimpleName() + ".jar host port device_token keys");
         }
         /**
@@ -161,11 +167,12 @@ public class DeviceEmulator {
          * args[]:
          * host = "localhost",
          * port = 0,
-         * token = "{Tokrn device from thingboard}"),
+         * token = "{Tokrn device from thingboard}"), kSzbDRGwaZqZ6Y25gTLF
          * keys = "{Telemetry}"
          *
          */
-        final DeviceEmulator emulator = new DeviceEmulator(args[0], Integer.parseInt(args[1]), args[2], args[3]);
+//        final DeviceEmulator emulator = new DeviceEmulator(args[0], Integer.parseInt(args[1]), args[2], args[3]);
+        final DeviceEmulator emulator = new DeviceEmulator(args1[0], Integer.parseInt(args1[1]), args1[2], args1[3]);
 
         emulator.start();
         Runtime.getRuntime().addShutdownHook(new Thread() {

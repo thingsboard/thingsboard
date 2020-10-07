@@ -16,7 +16,7 @@
 
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
@@ -38,6 +38,15 @@ import {
 } from '@shared/models/device.models';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
+import {SecurityConfigComponent} from "./lwm2m/security-config.component";
+import {
+  DEFAULT_END_POINT,
+  DeviceCredentialsDialogLwm2mData, END_POINT,
+  getDefaultSecurityConfig, JSON_ALL_CONFIG,
+  SecurityConfigModels
+} from "./lwm2m/security-config.models";
+import {TranslateService} from "@ngx-translate/core";
+import {WINDOW} from "../../../../core/services/window.service";
 
 export interface DeviceCredentialsDialogData {
   isReadOnly: boolean;
@@ -75,9 +84,9 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<DeviceCredentialsDialogComponent, DeviceCredentials>,
               public fb: FormBuilder,
-            //  private translate: TranslateService,
-             // private dialog: MatDialog,
-             // @Inject(WINDOW) private window: Window
+             private translate: TranslateService,
+             private dialog: MatDialog,
+             @Inject(WINDOW) private window: Window
               ) {
     super(store, router, dialogRef);
 
@@ -165,12 +174,12 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
         this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([]);
         this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity();
       // TODO: @nickAS21
-      // case DeviceCredentialsType.LWM2M_CREDENTIALS:
-      //   this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([Validators.required]);
-      //   this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity();
-      //   this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
-      //   this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity();
-      //   break;
+      case DeviceCredentialsType.LWM2M_CREDENTIALS:
+        this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([Validators.required]);
+        this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity();
+        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
+        this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity();
+        break;
     }
   }
 
@@ -205,28 +214,30 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
   }
 
   // TODO: @nickAS21
-  // openSecurityInfoLwM2mDialog($event: Event, value: string, id: string): void {
-  //   if ($event) {
-  //     $event.stopPropagation();
-  //     $event.preventDefault();
-  //   }
-  //   this.dialog.open<SecurityConfigComponent, DeviceCredentialsDialogLwm2mData, object>(SecurityConfigComponent, {
-  //     disableClose: true,
-  //     panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-  //     data: {
-  //       jsonAllConfig: (value === null || value.length === 0) ? getDefaultSecurityConfig(this.window.location.hostname)  as SecurityConfigModels : JSON.parse(value) as SecurityConfigModels,
-  //       endPoint: (id === null) ? DEFAULT_END_POINT : id,
-  //       isNew: (id === null || value === null || value.length === 0) ? true : false
-  //     }
-  //   }).afterClosed().subscribe(
-  //     (res) => {
-  //       if (res) {
-  //         this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res[JSON_ALL_CONFIG]).length === 0 || JSON.stringify(res[JSON_ALL_CONFIG]) === "[{}]") ? null : JSON.stringify(res[JSON_ALL_CONFIG]));
-  //         this.deviceCredentialsFormGroup.get('credentialsId').patchValue((Object.keys(res[END_POINT]).length === 0 || JSON.stringify(res[END_POINT]) === "[{}]") ? null : JSON.stringify(res[END_POINT]).split('\"').join(''));
-  //         this.deviceCredentialsFormGroup.get('credentialsValue').markAsDirty();
-  //       }
-  //     }
-  //   );
+  openSecurityInfoLwM2mDialog($event: Event, value: string, id: string): void {
+    if ($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+    }
+    this.dialog.open<SecurityConfigComponent, DeviceCredentialsDialogLwm2mData, object>(SecurityConfigComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        jsonAllConfig: (value === null || value.length === 0) ? getDefaultSecurityConfig(this.window.location.hostname) as SecurityConfigModels : JSON.parse(value) as SecurityConfigModels,
+        endPoint: (id === null) ? DEFAULT_END_POINT : id,
+        isNew: (id === null || value === null || value.length === 0) ? true : false
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        if (res) {
+          this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res[JSON_ALL_CONFIG]).length === 0 || JSON.stringify(res[JSON_ALL_CONFIG]) === "[{}]") ? null : JSON.stringify(res[JSON_ALL_CONFIG]));
+          this.deviceCredentialsFormGroup.get('credentialsId').patchValue((Object.keys(res[END_POINT]).length === 0 || JSON.stringify(res[END_POINT]) === "[{}]") ? null : JSON.stringify(res[END_POINT]).split('\"').join(''));
+          this.deviceCredentialsFormGroup.get('credentialsValue').markAsDirty();
+        }
+      }
+    );
+  }
+
   passwordChanged() {
     const value = this.deviceCredentialsFormGroup.get('credentialsBasic.password').value;
     if (value !== '') {

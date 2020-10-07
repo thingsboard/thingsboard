@@ -335,9 +335,9 @@ export const credentialTypeNames = new Map<DeviceCredentialsType, string>(
   [
     [DeviceCredentialsType.ACCESS_TOKEN, 'Access token'],
     [DeviceCredentialsType.X509_CERTIFICATE, 'MQTT X.509'],
-    [DeviceCredentialsType.MQTT_BASIC, 'MQTT Basic']
-    [DeviceCredentialsType.LWM2M_CREDENTIALS, 'LwM2M Credentials'],
-    [DeviceCredentialsType.X509_CERTIFICATE, 'MQTT X.509']
+    [DeviceCredentialsType.MQTT_BASIC, 'MQTT Basic'],
+    [DeviceCredentialsType.LWM2M_CREDENTIALS, 'LwM2M Credentials']
+    // [DeviceCredentialsType.X509_CERTIFICATE, 'MQTT X.509']
   ]
 );
 
