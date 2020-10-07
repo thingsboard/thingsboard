@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.state;
 
+import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
@@ -392,7 +393,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
             if (stateData != null) {
                 DeviceState state = stateData.getState();
                 state.setActive(ts < state.getLastActivityTime() + state.getInactivityTimeout());
-                if (!state.isActive() && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() < state.getLastActivityTime())) {
+                if (!state.isActive() && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() < state.getLastActivityTime()) && UUIDs.unixTimestamp(deviceId.getId()) + state.getInactivityTimeout() < ts) {
                     state.setLastInactivityAlarmTime(ts);
                     pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
                     save(deviceId, INACTIVITY_ALARM_TIME, ts);
