@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.mqtt;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -158,7 +159,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                             transportService.process(provisionRequestMsg, new DeviceProvisionCallback(ctx, msgId, provisionRequestMsg));
                             log.trace("[{}][{}] Processing provision publish msg [{}][{}]!", sessionId, deviceSessionCtx.getDeviceId(), topicName, msgId);
                         } catch (Exception e) {
-                            if (e.getCause().toString().contains("JsonSyntaxException")) {
+                            if (e instanceof JsonParseException || (e.getCause() != null && e.getCause() instanceof JsonParseException)) {
                                 TransportProtos.ProvisionDeviceRequestMsg provisionRequestMsg = deviceSessionCtx.getContext().getProtoMqttAdaptor().convertToProvisionRequestMsg(deviceSessionCtx, mqttMsg);
                                 transportService.process(provisionRequestMsg, new DeviceProvisionCallback(ctx, msgId, provisionRequestMsg));
                                 deviceSessionCtx.setProvisionPayloadType(TransportPayloadType.PROTOBUF);
@@ -334,6 +335,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 } else {
                     deviceSessionCtx.getContext().getProtoMqttAdaptor().convertToPublish(deviceSessionCtx, provisionResponseMsg).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
                 }
+
+                //TODO: close session with some delay.
+                //transportService.getScheduler().submit task with 60 seconds delay to close the session.
             } catch (Exception e) {
                 log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
             }
@@ -448,7 +452,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
         } else {
             X509Certificate cert;
-
             if (sslHandler != null && (cert = getX509Certificate()) != null) {
                 processX509CertConnect(ctx, cert);
             } else {

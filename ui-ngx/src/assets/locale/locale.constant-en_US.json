@@ -855,7 +855,7 @@
         "provision-device-key": "Provision device key",
         "provision-device-key-required": "Provision device key is required.",
         "provision-device-secret": "Provision device secret",
-        "provision-device-secret-required": "Provision device secret is required."
+        "provision-device-secret-required": "Provision device secret is required.",
         "condition": "Condition",
         "condition-type": "Condition type",
         "condition-type-simple": "Simple",
