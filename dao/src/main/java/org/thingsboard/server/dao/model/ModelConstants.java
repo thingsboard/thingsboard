@@ -169,10 +169,12 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_NAME_PROPERTY = "name";
     public static final String DEVICE_PROFILE_TYPE_PROPERTY = "type";
     public static final String DEVICE_PROFILE_TRANSPORT_TYPE_PROPERTY = "transport_type";
+    public static final String DEVICE_PROFILE_PROVISION_TYPE_PROPERTY = "provision_type";
     public static final String DEVICE_PROFILE_PROFILE_DATA_PROPERTY = "profile_data";
     public static final String DEVICE_PROFILE_DESCRIPTION_PROPERTY = "description";
     public static final String DEVICE_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
     public static final String DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
+    public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
 
     /**
      * Cassandra entityView constants.

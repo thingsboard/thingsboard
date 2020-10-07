@@ -15,7 +15,10 @@
  */
 package org.thingsboard.server.common.transport.adaptor;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
@@ -130,6 +133,9 @@ public class ProtoConverter {
         }
     }
 
+    public static TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(byte[] bytes) throws InvalidProtocolBufferException {
+        return TransportProtos.ProvisionDeviceRequestMsg.parseFrom(bytes);
+    }
 
     private static List<TransportProtos.KeyValueProto> validateKeyValueProtos(List<TransportProtos.KeyValueProto> kvList) {
         kvList.forEach(keyValueProto -> {

@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.session;
+package org.thingsboard.server.mqtt.provision.sql;
 
-public enum FeatureType {
-    ATTRIBUTES, TELEMETRY, RPC, CLAIM, PROVISION
+import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.mqtt.provision.AbstractMqttProvisionJsonDeviceTest;
+
+@DaoSqlTest
+public class MqttProvisionDeviceJsonSqlTest extends AbstractMqttProvisionJsonDeviceTest {
 }

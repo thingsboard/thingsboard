@@ -107,6 +107,7 @@ import { AlarmRuleKeyFiltersDialogComponent } from './profile/alarm/alarm-rule-k
 import { FilterTextComponent } from './filter/filter-text.component';
 import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
 import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
+import { DeviceProfileProvisionConfigurationComponent } from "./profile/device-profile-provision-configuration.component";
 import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component';
 
 @NgModule({
@@ -198,6 +199,7 @@ import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component
       DeviceProfileDialogComponent,
       AddDeviceProfileDialogComponent,
       RuleChainAutocompleteComponent,
+      DeviceProfileProvisionConfigurationComponent,
       AlarmScheduleComponent
     ],
   imports: [
@@ -278,6 +280,7 @@ import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component
     DeviceProfileDialogComponent,
     AddDeviceProfileDialogComponent,
     RuleChainAutocompleteComponent,
+    DeviceProfileProvisionConfigurationComponent,
     AlarmScheduleComponent
   ],
   providers: [
