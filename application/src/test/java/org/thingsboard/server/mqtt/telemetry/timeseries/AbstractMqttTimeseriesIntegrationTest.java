@@ -104,7 +104,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         String deviceId = savedDevice.getId().getId().toString();
 
         long start = System.currentTimeMillis();
-        long end = System.currentTimeMillis() + 2000;
+        long end = System.currentTimeMillis() + 5000;
 
         List<String> actualKeys = null;
         while (start <= end) {
