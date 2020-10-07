@@ -99,14 +99,16 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         int oldPartitions = oldQueue.getPartitions();
         int currentPartitions = queue.getPartitions();
 
-        //TODO: 3.2 remove if partitions change won't be permitted.
+        //TODO: 3.2 remove if partitions can't be deleted.
         if (currentPartitions != oldPartitions) {
             queueClusterService.onQueueDelete(queue, null);
             if (currentPartitions > oldPartitions) {
+                log.info("Added [{}] new partitions to [{}] queue", currentPartitions - oldPartitions, queue.getName());
                 for (int i = oldPartitions; i < currentPartitions; i++) {
                     tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
                 }
             } else {
+                log.info("Removed [{}] partitions from [{}] queue", oldPartitions - currentPartitions, queue.getName());
                 for (int i = currentPartitions; i < oldPartitions; i++) {
                     tbQueueAdmin.deleteTopic(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
                 }

@@ -74,6 +74,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @TbRuleEngineComponent
@@ -102,6 +104,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TenantId tenantId;
 
+    private final Lock consumerLock;
+
     public DefaultTbRuleEngineConsumerService(TbRuleEngineProcessingStrategyFactory processingStrategyFactory,
                                               TbRuleEngineSubmitStrategyFactory submitStrategyFactory,
                                               TbRuleEngineQueueFactory tbRuleEngineQueueFactory,
@@ -125,6 +129,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         this.partitionService = partitionService;
         this.serviceInfoProvider = serviceInfoProvider;
         this.tenantId = actorContext.getServiceInfoProvider().getIsolatedTenant().orElse(TenantId.SYS_TENANT_ID);
+        this.consumerLock = new ReentrantLock();
     }
 
     @PostConstruct
@@ -227,27 +232,37 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     private void updateQueue(TransportProtos.QueueUpdateMsg queueUpdateMsg) {
-        String queueName = queueUpdateMsg.getQueueName();
-        ConsumerManager manager = consumerManagers.get(queueName);
-        Queue queue = queueService.findQueueByTenantIdAndName(tenantId, queueName);
-        if (manager == null) {
-            manager = initQueue(queue);
-            manager.start();
-            partitionService.addNewQueue(queueUpdateMsg);
-            partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), new ArrayList<>(partitionService.getOtherServices(ServiceType.TB_RULE_ENGINE)));
-        } else {
-            manager.stop();
-            manager.setQueue(queue);
-            manager.start();
+        try {
+            consumerLock.lock();
+            String queueName = queueUpdateMsg.getQueueName();
+            ConsumerManager manager = consumerManagers.get(queueName);
+            Queue queue = queueService.findQueueByTenantIdAndName(tenantId, queueName);
+            if (manager == null) {
+                manager = initQueue(queue);
+                manager.start();
+                partitionService.addNewQueue(queueUpdateMsg);
+                partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), new ArrayList<>(partitionService.getOtherServices(ServiceType.TB_RULE_ENGINE)));
+            } else {
+                manager.stop();
+                manager.setQueue(queue);
+                manager.start();
+            }
+        } finally {
+            consumerLock.unlock();
         }
     }
 
     private void deleteQueue(TransportProtos.QueueDeleteMsg queueDeleteMsg) {
-        partitionService.removeQueue(queueDeleteMsg);
-        String queueName = queueDeleteMsg.getQueueName();
-        ConsumerManager manager = consumerManagers.remove(queueName);
-        manager.unsubscribe();
-        manager.stop();
+        try {
+            consumerLock.lock();
+            partitionService.removeQueue(queueDeleteMsg);
+            String queueName = queueDeleteMsg.getQueueName();
+            ConsumerManager manager = consumerManagers.remove(queueName);
+            manager.unsubscribe();
+            manager.stop();
+        } finally {
+            consumerLock.unlock();
+        }
     }
 
     private void forwardToRuleEngineActor(String queueName, TenantId tenantId, ToRuleEngineMsg toRuleEngineMsg, TbMsgCallback callback) {
