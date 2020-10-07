@@ -115,9 +115,7 @@
         "queues": "Colas",
         "queue-partitions": "Particiones",
         "queue-submit-strategy": "Enviar estrategia",
-        "queue-processing-strategy": "Estrategia de procesamiento",
-        "delete-queue-title": "Estás seguro de que quieres eliminar la cola '{{queueName}}'?",
-        "delete-queue-text": "Tenga cuidado, después de la confirmación, la cola y todos los datos relacionados serán irrecuperables."
+        "queue-processing-strategy": "Estrategia de procesamiento"
     },
     "alarm": {
         "alarm": "Alarma",

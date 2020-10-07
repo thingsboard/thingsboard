@@ -126,9 +126,7 @@
         "queues": "Fronty",
         "queue-partitions": "Příčky",
         "queue-submit-strategy": "Odeslat strategii",
-        "queue-processing-strategy": "Strategie zpracování",
-        "delete-queue-title": "Opravdu chcete odstranit frontu '{{queueName}}'?",
-        "delete-queue-text": "Buďte opatrní, po potvrzení bude fronta a všechna související data neopravitelná."
+        "queue-processing-strategy": "Strategie zpracování"
     },
     "alarm": {
         "alarm": "Alarm",

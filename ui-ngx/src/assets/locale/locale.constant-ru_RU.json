@@ -114,9 +114,7 @@
         "queues": "Очереди",
         "queue-partitions": "Разделы",
         "queue-submit-strategy": "Стратегия отправки",
-        "queue-processing-strategy": "Стратегия обработки",
-        "delete-queue-title": "Вы уверены, что хотите удалить очередь '{{queueName}}'?",
-        "delete-queue-text": "Внимание, после подтверждения выбранная очередь и все связанные с ней данные будут безвозвратно удалены."
+        "queue-processing-strategy": "Стратегия обработки"
     },
     "alarm": {
         "alarm": "Оповещение",

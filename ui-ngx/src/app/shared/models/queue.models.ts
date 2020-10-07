@@ -51,12 +51,10 @@ export interface QueueInfo extends BaseData<HasId> {
     pauseBetweenRetries: number,
     maxPauseBetweenRetries: number
   };
-  processingStrategyType: QueueProcessingStrategyTypes;
   submitStrategy: {
     type: QueueSubmitStrategyTypes,
     batchSize: number,
   };
-  submitStrategyType: QueueSubmitStrategyTypes;
   tenantId: TenantId;
   topic: string;
 }

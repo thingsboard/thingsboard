@@ -255,7 +255,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       {
         add: 'queue.add',
         search: 'queue.search',
-        details: 'queue.details'
+        details: 'queue.details',
+        selectedEntities: 'queue.selected-queues'
       }
     ],
     [

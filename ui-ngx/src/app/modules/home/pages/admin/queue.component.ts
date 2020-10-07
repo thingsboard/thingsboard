@@ -68,7 +68,7 @@ export class QueueComponent extends EntityComponent<QueueInfo> {
           retries: [entity && entity.processingStrategy?.retries ? entity.processingStrategy?.retries : 3,
             [Validators.min(1), Validators.required]],
           failurePercentage: [entity && entity.processingStrategy?.failurePercentage ? entity.processingStrategy?.failurePercentage : 0,
-            [Validators.required]],
+            [Validators.min(0), Validators.required, Validators.max(100)]],
           pauseBetweenRetries:
             [entity && entity.processingStrategy?.pauseBetweenRetries ? entity.processingStrategy?.pauseBetweenRetries : 3,
             [Validators.min(1), Validators.required]],

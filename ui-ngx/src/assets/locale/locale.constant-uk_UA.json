@@ -130,9 +130,7 @@
         "queues": "Черги",
         "queue-partitions": "Розділи",
         "queue-submit-strategy": "Стратегія відправки",
-        "queue-processing-strategy": "Стратегія обробки",
-        "delete-queue-title": "Ви впевнені, що хочете видалити чергу '{{queueName}}'?",
-        "delete-queue-text": "Увага, після підтвердження обрана черга і всі пов'язані з нею дані будуть безповоротно видалені."
+        "queue-processing-strategy": "Стратегія обробки"
     },
     "alarm": {
         "alarm": "Сигнал тривоги",

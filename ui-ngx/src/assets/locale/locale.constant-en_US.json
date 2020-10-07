@@ -126,9 +126,7 @@
         "queues": "Queues",
         "queue-partitions": "Partitions",
         "queue-submit-strategy": "Submit strategy",
-        "queue-processing-strategy": "Processing strategy",
-        "delete-queue-title": "Are you sure you want to delete the queue '{{queueName}}'?",
-        "delete-queue-text": "Be careful, after the confirmation the queue and all related data will become unrecoverable."
+        "queue-processing-strategy": "Processing strategy"
     },
     "alarm": {
         "alarm": "Alarm",
@@ -1755,7 +1753,8 @@
       "retries-required": "Retries is required!",
       "retries-min-value": "Retries value can't be less then 1",
       "failure-percentage-required": "Failure percentage is required!",
-      "failure-percentage-min-value": "Failure percentage value can't be less then 1",
+      "failure-percentage-min-value": "Failure percentage value can't be less then 0",
+      "failure-percentage-max-value": "Failure percentage value can't be more then 100",
       "pause-between-retries-required": "Pause between retries is required!",
       "pause-between-retries-min-value": "Pause between retries value can't be less then 1",
       "max-pause-between-retries-required": "Max pause between retries is required!",
@@ -1763,6 +1762,11 @@
       "submit-strategy-type-required": "Submit strategy type is required!",
       "processing-strategy-type-required": "Processing strategy type is required!",
       "queues": "Queues",
+      "selected-queues": "{ count, plural, 1 {1 queue} other {# queues} } selected",
+      "delete-queue-title": "Are you sure you want to delete the queue '{{queueName}}'?",
+      "delete-queues-title": "Are you sure you want to delete { count, plural, 1 {1 queue} other {# queues} }?",
+      "delete-queue-text": "Be careful, after the confirmation the queue and all related data will become unrecoverable.",
+      "delete-queues-text": "After the confirmation all selected queues will be deleted and won't be accessible.",
       "search": "Search queue",
       "add" : "Add queue",
       "details": "Queue details",

@@ -36,7 +36,7 @@
       </mat-form-field>
       <mat-form-field class="mat-block">
         <mat-label translate>queue.poll-interval</mat-label>
-        <input type="number" matInput formControlName="pollInterval">
+        <input type="number" matInput formControlName="pollInterval" required>
         <mat-error *ngIf="entityForm.get('pollInterval').hasError('required')">
           {{ 'queue.poll-interval-required' | translate }}
         </mat-error>
@@ -47,7 +47,7 @@
       </mat-form-field>
       <mat-form-field class="mat-block">
         <mat-label translate>queue.partitions</mat-label>
-        <input type="number" matInput formControlName="partitions">
+        <input type="number" matInput formControlName="partitions" required>
         <mat-error *ngIf="entityForm.get('partitions').hasError('required')">
           {{ 'queue.partitions-required' | translate }}
         </mat-error>
@@ -58,7 +58,7 @@
       </mat-form-field>
       <mat-form-field class="mat-block">
         <mat-label translate>queue.processing-timeout</mat-label>
-        <input type="number" matInput formControlName="packProcessingTimeout">
+        <input type="number" matInput formControlName="packProcessingTimeout" required>
         <mat-error *ngIf="entityForm.get('packProcessingTimeout').hasError('required')">
           {{ 'queue.pack-processing-timeout-required' | translate }}
         </mat-error>
@@ -92,7 +92,7 @@
               </mat-form-field>
               <mat-form-field class="mat-block" *ngIf="submitStrategyType === QueueSubmitStrategyTypes.BATCH">
                 <mat-label translate>queue.batch-size</mat-label>
-                <input type="number" matInput formControlName="batchSize">
+                <input type="number" matInput formControlName="batchSize" required>
                 <mat-error *ngIf="entityForm.get('submitStrategy.batchSize').hasError('required')">
                   {{ 'queue.batch-size-required' | translate }}
                 </mat-error>
@@ -125,7 +125,7 @@
             </mat-form-field>
             <mat-form-field class="mat-block">
               <mat-label translate>queue.retries</mat-label>
-              <input type="number" matInput formControlName="retries">
+              <input type="number" matInput formControlName="retries" required>
               <mat-error *ngIf="entityForm.get('processingStrategy.retries').hasError('required')">
                 {{ 'queue.retries-required' | translate }}
               </mat-error>
@@ -136,14 +136,24 @@
             </mat-form-field>
             <mat-form-field class="mat-block">
               <mat-label translate>queue.failure-percentage</mat-label>
-              <input type="number" matInput formControlName="failurePercentage">
+              <input type="number" matInput formControlName="failurePercentage" required>
               <mat-error *ngIf="entityForm.get('processingStrategy.failurePercentage').hasError('required')">
                 {{ 'queue.failure-percentage-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="entityForm.get('processingStrategy.failurePercentage').hasError('min') &&
+                   !entityForm.get('processingStrategy.failurePercentage').hasError('required') &&
+                   !entityForm.get('processingStrategy.failurePercentage').hasError('max')">
+                {{ 'queue.failure-percentage-min-value' | translate }}
+              </mat-error>
+              <mat-error *ngIf="entityForm.get('processingStrategy.failurePercentage').hasError('max') &&
+                   !entityForm.get('processingStrategy.failurePercentage').hasError('required') &&
+                   !entityForm.get('processingStrategy.failurePercentage').hasError('min')">
+                {{ 'queue.failure-percentage-max-value' | translate }}
               </mat-error>
             </mat-form-field>
             <mat-form-field class="mat-block">
               <mat-label translate>queue.pause-between-retries</mat-label>
-              <input type="number" matInput formControlName="pauseBetweenRetries">
+              <input type="number" matInput formControlName="pauseBetweenRetries" required>
               <mat-error *ngIf="entityForm.get('processingStrategy.pauseBetweenRetries').hasError('required')">
                 {{ 'queue.pause-between-retries-required' | translate }}
               </mat-error>
@@ -154,7 +164,7 @@
             </mat-form-field>
             <mat-form-field class="mat-block">
               <mat-label translate>queue.max-pause-between-retries</mat-label>
-              <input type="number" matInput formControlName="maxPauseBetweenRetries">
+              <input type="number" matInput formControlName="maxPauseBetweenRetries" required>
               <mat-error *ngIf="entityForm.get('processingStrategy.maxPauseBetweenRetries').hasError('required')">
                 {{ 'queue.max-pause-between-retries-required' | translate }}
               </mat-error>

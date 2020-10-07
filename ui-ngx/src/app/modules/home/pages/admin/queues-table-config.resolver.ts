@@ -16,7 +16,10 @@
 
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { EntityTableColumn, EntityTableConfig } from '../../models/entity/entities-table-config.models';
+import {
+  EntityTableColumn,
+  EntityTableConfig
+} from '../../models/entity/entities-table-config.models';
 import { QueueInfo, ServiceType } from '../../../../shared/models/queue.models';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -31,8 +34,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { QueueComponent } from './queue.component';
 import { QueueService } from '@core/http/queue.service';
 import { selectAuthUser } from '@core/auth/auth.selectors';
-import { PageData } from '@shared/models/page/page-data';
-import { PageLink } from '@shared/models/page/page-link';
 
 @Injectable()
 export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<QueueInfo>> {
@@ -40,8 +41,6 @@ export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<Queu
   readonly queueType = ServiceType.TB_RULE_ENGINE;
 
   private readonly config: EntityTableConfig<QueueInfo> = new EntityTableConfig<QueueInfo>();
-
-  private allQueues: Observable<PageData<QueueInfo>>;
 
   constructor(private store: Store<AppState>,
               private broadcast: BroadcastService,
@@ -56,10 +55,10 @@ export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<Queu
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.QUEUE);
     this.config.entityResources = entityTypeResources.get(EntityType.QUEUE);
 
-    this.config.deleteEntityTitle = queue => this.translate.instant('admin.delete-queue-title', {queueName: queue.name});
-    this.config.deleteEntityContent = () => this.translate.instant('admin.delete-queue-text');
-    this.config.deleteEntitiesTitle = count => this.translate.instant('admin.delete-queue-title', {count});
-    this.config.deleteEntitiesContent = () => this.translate.instant('admin.delete-queue-text');
+    this.config.deleteEntityTitle = queue => this.translate.instant('queue.delete-queue-title', {queueName: queue.name});
+    this.config.deleteEntityContent = () => this.translate.instant('queue.delete-queue-text');
+    this.config.deleteEntitiesTitle = count => this.translate.instant('queue.delete-queues-title', {count});
+    this.config.deleteEntitiesContent = () => this.translate.instant('queue.delete-queues-text');
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<QueueInfo>> {
@@ -77,39 +76,29 @@ export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<Queu
     );
   }
 
-  fetchFunction(pageLink: PageLink, queueType: ServiceType): Observable<PageData<QueueInfo>> {
-    return this.getAllQueues(pageLink, queueType).pipe(
-      map((data) => this.addInnerObjectPropsForColumns(pageLink.filterData(data.data)))
-    );
-  }
-
-  addInnerObjectPropsForColumns(data: PageData<QueueInfo>): PageData<QueueInfo> {
-    const modifiedData = Object.assign({}, data);
-    modifiedData.data.forEach(item => {
-      item.processingStrategyType = item.processingStrategy?.type;
-      item.submitStrategyType = item.submitStrategy?.type;
-    });
-    return modifiedData;
-  }
-
-  getAllQueues(pageLink: PageLink, queueType: ServiceType): Observable<PageData<QueueInfo>> {
-    if (!this.allQueues) {
-      this.allQueues = this.queueService.getTenantQueuesByServiceType(pageLink, queueType);
-    }
-    return this.allQueues;
-  }
-
   configureColumns(): Array<EntityTableColumn<QueueInfo>> {
     return [
       new EntityTableColumn<QueueInfo>('name', 'admin.queue-name', '25%'),
       new EntityTableColumn<QueueInfo>('partitions', 'admin.queue-partitions', '25%'),
-      new EntityTableColumn<QueueInfo>('submitStrategyType', 'admin.queue-submit-strategy', '25%'),
-      new EntityTableColumn<QueueInfo>('processingStrategyType', 'admin.queue-processing-strategy', '25%')
+      new EntityTableColumn<QueueInfo>('submitStrategy', 'admin.queue-submit-strategy', '25%',
+        (entity: QueueInfo) => {
+          return entity.submitStrategy.type;
+        },
+        () => ({}),
+        false
+      ),
+      new EntityTableColumn<QueueInfo>('processingStrategy', 'admin.queue-processing-strategy', '25%',
+        (entity: QueueInfo) => {
+          return entity.processingStrategy.type;
+        },
+        () => ({}),
+        false
+      )
     ];
   }
 
   configureEntityFunctions(): void {
-    this.config.entitiesFetchFunction = pageLink => this.fetchFunction(pageLink, this.queueType);
+    this.config.entitiesFetchFunction = pageLink => this.queueService.getTenantQueuesByServiceType(pageLink, this.queueType);
     this.config.loadEntity = id => this.queueService.getQueueById(id.id);
     this.config.saveEntity = queue => this.queueService.saveQueue(this.addTopicForQueue(queue), this.queueType).pipe(
       mergeMap((savedQueue) => this.queueService.getQueueById(savedQueue.id.id)
