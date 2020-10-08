@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.CredentialsDataProto.Builder;
 import org.thingsboard.server.gen.transport.TransportProtos.CredentialsType;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
@@ -52,7 +51,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateBasicMqttCre
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 
-import javax.xml.crypto.Data;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -560,7 +558,7 @@ public class JsonConverter {
     private static TransportProtos.ProvisionDeviceRequestMsg buildProvisionRequestMsg(JsonObject jo) {
         return TransportProtos.ProvisionDeviceRequestMsg.newBuilder()
                 .setDeviceName(getStrValue(jo, DataConstants.DEVICE_NAME, true))
-                .setCredentialsType(TransportProtos.CredentialsType.valueOf(getStrValue(jo, DataConstants.CREDENTIALS_TYPE, false)))
+                .setCredentialsType(jo.get(DataConstants.CREDENTIALS_TYPE) != null ? TransportProtos.CredentialsType.valueOf(getStrValue(jo, DataConstants.CREDENTIALS_TYPE, false)) : CredentialsType.ACCESS_TOKEN)
                 .setCredentialsDataProto(TransportProtos.CredentialsDataProto.newBuilder()
                         .setValidateDeviceTokenRequestMsg(ValidateDeviceTokenRequestMsg.newBuilder().setToken(getStrValue(jo, DataConstants.TOKEN, false)).build())
                         .setValidateBasicMqttCredRequestMsg(ValidateBasicMqttCredRequestMsg.newBuilder()
@@ -570,7 +568,7 @@ public class JsonConverter {
                                 .build())
                         .setValidateDeviceX509CertRequestMsg(ValidateDeviceX509CertRequestMsg.newBuilder()
                                 .setHash(getStrValue(jo, DataConstants.PASSWORD, false)).build())
-                .build())
+                        .build())
                 .setProvisionDeviceCredentialsMsg(buildProvisionDeviceCredentialsMsg(
                         getStrValue(jo, DataConstants.PROVISION_KEY, true),
                         getStrValue(jo, DataConstants.PROVISION_SECRET, true)))

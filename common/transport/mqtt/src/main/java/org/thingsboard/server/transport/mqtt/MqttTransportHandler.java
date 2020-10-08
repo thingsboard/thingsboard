@@ -154,13 +154,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     if (topicName.equals(MqttTopics.DEVICE_PROVISION_REQUEST_TOPIC)) {
                         try {
                             TransportProtos.ProvisionDeviceRequestMsg provisionRequestMsg = deviceSessionCtx.getContext().getJsonMqttAdaptor().convertToProvisionRequestMsg(deviceSessionCtx, mqttMsg);
-                            validateProvisionMessage(provisionRequestMsg);
                             transportService.process(provisionRequestMsg, new DeviceProvisionCallback(ctx, msgId, provisionRequestMsg));
                             log.trace("[{}][{}] Processing provision publish msg [{}][{}]!", sessionId, deviceSessionCtx.getDeviceId(), topicName, msgId);
                         } catch (Exception e) {
                             if (e instanceof JsonParseException || (e.getCause() != null && e.getCause() instanceof JsonParseException)) {
                                 TransportProtos.ProvisionDeviceRequestMsg provisionRequestMsg = deviceSessionCtx.getContext().getProtoMqttAdaptor().convertToProvisionRequestMsg(deviceSessionCtx, mqttMsg);
-                                validateProvisionMessage(provisionRequestMsg);
                                 transportService.process(provisionRequestMsg, new DeviceProvisionCallback(ctx, msgId, provisionRequestMsg));
                                 deviceSessionCtx.setProvisionPayloadType(TransportPayloadType.PROTOBUF);
                                 log.trace("[{}][{}] Processing provision publish msg [{}][{}]!", sessionId, deviceSessionCtx.getDeviceId(), topicName, msgId);
@@ -185,13 +183,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 }
                 break;
         }
-    }
-
-    private void validateProvisionMessage(TransportProtos.ProvisionDeviceRequestMsg provisionRequestMsg) {
-        if (provisionRequestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceKey() != null &&
-                provisionRequestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceSecret() != null &&
-                provisionRequestMsg.getDeviceName() != null)
-            throw new RuntimeException("Wrong credentials!");
     }
 
     private void processRegularSessionMsg(ChannelHandlerContext ctx, MqttMessage msg) {
@@ -493,7 +484,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void processX509CertConnect(ChannelHandlerContext ctx, X509Certificate cert) {
         try {
-            if(!context.isSkipValidityCheckForClientCert()){
+            if (!context.isSkipValidityCheckForClientCert()) {
                 cert.checkValidity();
             }
             String strCert = SslUtil.getX509CertificateString(cert);

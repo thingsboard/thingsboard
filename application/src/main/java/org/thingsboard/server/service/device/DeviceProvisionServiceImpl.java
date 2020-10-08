@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -134,9 +133,9 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
         Device targetDevice = deviceDao.findDeviceByTenantIdAndName(targetProfile.getTenantId().getId(), provisionRequest.getDeviceName()).orElse(null);
 
-        switch(targetProfile.getProvisionType()) {
+        switch (targetProfile.getProvisionType()) {
             case ALLOW_CREATE_NEW_DEVICES:
-                if (((AllowCreateNewDevicesDeviceProfileProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration()).getProvisionDeviceSecret().equals(provisionRequestSecret)){
+                if (((AllowCreateNewDevicesDeviceProfileProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration()).getProvisionDeviceSecret().equals(provisionRequestSecret)) {
                     if (targetDevice != null) {
                         log.warn("[{}] The device is present and could not be provisioned once more!", targetDevice.getName());
                         notify(targetDevice, provisionRequest, DataConstants.PROVISION_FAILURE, false);
@@ -170,8 +169,8 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
                 break;
             case MQTT_BASIC:
                 if (StringUtils.isEmpty(provisionRequest.getCredentialsData().getClientId()) ||
-                    StringUtils.isEmpty(provisionRequest.getCredentialsData().getUsername()) ||
-                    StringUtils.isEmpty(provisionRequest.getCredentialsData().getPassword())) {
+                        StringUtils.isEmpty(provisionRequest.getCredentialsData().getUsername()) ||
+                        StringUtils.isEmpty(provisionRequest.getCredentialsData().getPassword())) {
                     log.error("Failed to get basic mqtt credentials from credentials data!");
                     return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
                 }
@@ -259,7 +258,11 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         device.setType(profile.getName());
         device.setTenantId(profile.getTenantId());
         Device savedDevice = deviceService.saveDevice(device);
-        if (provisionRequest.getCredentialsType() != null) {
+        if (!StringUtils.isEmpty(provisionRequest.getCredentialsData().getToken()) ||
+                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getHash()) ||
+                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getUsername()) ||
+                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getPassword()) ||
+                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getClientId())) {
             DeviceCredentials deviceCredentials = new DeviceCredentials();
             deviceCredentials.setCredentialsType(provisionRequest.getCredentialsType());
             switch (provisionRequest.getCredentialsType()) {
