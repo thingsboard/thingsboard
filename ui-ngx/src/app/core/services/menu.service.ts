@@ -133,6 +133,7 @@ export class MenuService {
             icon: 'security'
           },
           {
+            id: guid(),
             name: 'admin.oauth2.oauth2',
             type: 'link',
             path: '/settings/oauth2',
