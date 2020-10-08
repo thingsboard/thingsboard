@@ -90,6 +90,8 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
         assertNotNull(savedDevice);
 
+        Thread.sleep(1000);
+
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
 
         Thread.sleep(1000);
