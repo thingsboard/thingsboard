@@ -45,7 +45,7 @@
               labelText="device-profile.default-rule-chain"
               formControlName="defaultRuleChainId">
             </tb-rule-chain-autocomplete>
-            <mat-form-field class="mat-block">
+            <mat-form-field fxHide class="mat-block">
               <mat-label translate>device-profile.type</mat-label>
               <mat-select formControlName="type" required>
                 <mat-option *ngFor="let type of deviceProfileTypes" [value]="type">
