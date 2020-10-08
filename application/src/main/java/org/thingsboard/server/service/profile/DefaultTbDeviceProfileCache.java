@@ -50,9 +50,9 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
     public DeviceProfile get(TenantId tenantId, DeviceProfileId deviceProfileId) {
         DeviceProfile profile = deviceProfilesMap.get(deviceProfileId);
         if (profile == null) {
-            deviceProfileFetchLock.lock();
             profile = deviceProfilesMap.get(deviceProfileId);
             if (profile == null) {
+                deviceProfileFetchLock.lock();
                 try {
                     profile = deviceProfileService.findDeviceProfileById(tenantId, deviceProfileId);
                     if (profile != null) {
