@@ -18,7 +18,7 @@ import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
-import { DeviceProfile } from '@shared/models/device.models';
+import { DeviceProfile, DeviceTransportType, deviceTransportTypeTranslationMap } from '@shared/models/device.models';
 
 @Component({
   selector: 'tb-device-profile-tabs',
@@ -26,6 +26,9 @@ import { DeviceProfile } from '@shared/models/device.models';
   styleUrls: []
 })
 export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfile> {
+
+  deviceTransportTypes = Object.keys(DeviceTransportType);
+  deviceTransportTypeTranslations = deviceTransportTypeTranslationMap;
 
   constructor(protected store: Store<AppState>) {
     super(store);
