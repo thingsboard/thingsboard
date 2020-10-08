@@ -62,16 +62,7 @@ public class TbMsgTimeseriesNode implements TbNode {
             ctx.tellFailure(msg, new IllegalArgumentException("Unsupported msg type: " + msg.getType()));
             return;
         }
-        long ts = -1;
-        String tsStr = msg.getMetaData().getValue("ts");
-        if (!StringUtils.isEmpty(tsStr)) {
-            try {
-                ts = Long.parseLong(tsStr);
-            } catch (NumberFormatException e) {
-            }
-        } else {
-            ts = msg.getTs();
-        }
+        long ts = getTs(msg);
         String src = msg.getData();
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(new JsonParser().parse(src), ts);
         if (tsKvMap.isEmpty()) {
@@ -87,6 +78,20 @@ public class TbMsgTimeseriesNode implements TbNode {
         String ttlValue = msg.getMetaData().getValue("TTL");
         long ttl = !StringUtils.isEmpty(ttlValue) ? Long.parseLong(ttlValue) : config.getDefaultTTL();
         ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
+    }
+
+    public static long getTs(TbMsg msg) {
+        long ts = -1;
+        String tsStr = msg.getMetaData().getValue("ts");
+        if (!StringUtils.isEmpty(tsStr)) {
+            try {
+                ts = Long.parseLong(tsStr);
+            } catch (NumberFormatException e) {
+            }
+        } else {
+            ts = msg.getTs();
+        }
+        return ts;
     }
 
     @Override

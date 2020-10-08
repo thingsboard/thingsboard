@@ -84,6 +84,30 @@ import { UserFilterDialogComponent } from '@home/components/filter/user-filter-d
 import { FilterUserInfoComponent } from './filter/filter-user-info.component';
 import { FilterUserInfoDialogComponent } from './filter/filter-user-info-dialog.component';
 import { FilterPredicateValueComponent } from './filter/filter-predicate-value.component';
+import { TenantProfileAutocompleteComponent } from './profile/tenant-profile-autocomplete.component';
+import { TenantProfileComponent } from './profile/tenant-profile.component';
+import { TenantProfileDialogComponent } from './profile/tenant-profile-dialog.component';
+import { TenantProfileDataComponent } from './profile/tenant-profile-data.component';
+import { DefaultDeviceProfileConfigurationComponent } from './profile/device/default-device-profile-configuration.component';
+import { DeviceProfileConfigurationComponent } from './profile/device/device-profile-configuration.component';
+import { DeviceProfileDataComponent } from './profile/device-profile-data.component';
+import { DeviceProfileComponent } from './profile/device-profile.component';
+import { DefaultDeviceProfileTransportConfigurationComponent } from './profile/device/default-device-profile-transport-configuration.component';
+import { DeviceProfileTransportConfigurationComponent } from './profile/device/device-profile-transport-configuration.component';
+import { DeviceProfileDialogComponent } from './profile/device-profile-dialog.component';
+import { DeviceProfileAutocompleteComponent } from './profile/device-profile-autocomplete.component';
+import { MqttDeviceProfileTransportConfigurationComponent } from './profile/device/mqtt-device-profile-transport-configuration.component';
+import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/device/lwm2m-device-profile-transport-configuration.component';
+import { DeviceProfileAlarmsComponent } from './profile/alarm/device-profile-alarms.component';
+import { DeviceProfileAlarmComponent } from './profile/alarm/device-profile-alarm.component';
+import { CreateAlarmRulesComponent } from './profile/alarm/create-alarm-rules.component';
+import { AlarmRuleComponent } from './profile/alarm/alarm-rule.component';
+import { AlarmRuleConditionComponent } from './profile/alarm/alarm-rule-condition.component';
+import { AlarmRuleKeyFiltersDialogComponent } from './profile/alarm/alarm-rule-key-filters-dialog.component';
+import { FilterTextComponent } from './filter/filter-text.component';
+import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
+import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
+import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component';
 
 @NgModule({
   declarations:
@@ -145,12 +169,36 @@ import { FilterPredicateValueComponent } from './filter/filter-predicate-value.c
       FilterDialogComponent,
       FiltersDialogComponent,
       FilterSelectComponent,
+      FilterTextComponent,
       FiltersEditComponent,
       FiltersEditPanelComponent,
       UserFilterDialogComponent,
       FilterUserInfoComponent,
       FilterUserInfoDialogComponent,
-      FilterPredicateValueComponent
+      FilterPredicateValueComponent,
+      TenantProfileAutocompleteComponent,
+      TenantProfileDataComponent,
+      TenantProfileComponent,
+      TenantProfileDialogComponent,
+      DeviceProfileAutocompleteComponent,
+      DefaultDeviceProfileConfigurationComponent,
+      DeviceProfileConfigurationComponent,
+      DefaultDeviceProfileTransportConfigurationComponent,
+      MqttDeviceProfileTransportConfigurationComponent,
+      Lwm2mDeviceProfileTransportConfigurationComponent,
+      DeviceProfileTransportConfigurationComponent,
+      CreateAlarmRulesComponent,
+      AlarmRuleComponent,
+      AlarmRuleKeyFiltersDialogComponent,
+      AlarmRuleConditionComponent,
+      DeviceProfileAlarmComponent,
+      DeviceProfileAlarmsComponent,
+      DeviceProfileDataComponent,
+      DeviceProfileComponent,
+      DeviceProfileDialogComponent,
+      AddDeviceProfileDialogComponent,
+      RuleChainAutocompleteComponent,
+      AlarmScheduleComponent
     ],
   imports: [
     CommonModule,
@@ -205,8 +253,32 @@ import { FilterPredicateValueComponent } from './filter/filter-predicate-value.c
     FilterDialogComponent,
     FiltersDialogComponent,
     FilterSelectComponent,
+    FilterTextComponent,
     FiltersEditComponent,
-    UserFilterDialogComponent
+    UserFilterDialogComponent,
+    TenantProfileAutocompleteComponent,
+    TenantProfileDataComponent,
+    TenantProfileComponent,
+    TenantProfileDialogComponent,
+    DeviceProfileAutocompleteComponent,
+    DefaultDeviceProfileConfigurationComponent,
+    DeviceProfileConfigurationComponent,
+    DefaultDeviceProfileTransportConfigurationComponent,
+    MqttDeviceProfileTransportConfigurationComponent,
+    Lwm2mDeviceProfileTransportConfigurationComponent,
+    DeviceProfileTransportConfigurationComponent,
+    CreateAlarmRulesComponent,
+    AlarmRuleComponent,
+    AlarmRuleKeyFiltersDialogComponent,
+    AlarmRuleConditionComponent,
+    DeviceProfileAlarmComponent,
+    DeviceProfileAlarmsComponent,
+    DeviceProfileDataComponent,
+    DeviceProfileComponent,
+    DeviceProfileDialogComponent,
+    AddDeviceProfileDialogComponent,
+    RuleChainAutocompleteComponent,
+    AlarmScheduleComponent
   ],
   providers: [
     WidgetComponentService,

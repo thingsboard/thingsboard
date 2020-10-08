@@ -51,6 +51,8 @@ message SessionInfoProto {
   string deviceType = 9;
   int64 gwSessionIdMSB = 10;
   int64 gwSessionIdLSB = 11;
+  int64 deviceProfileIdMSB = 12;
+  int64 deviceProfileIdLSB = 13;
 }
 
 enum SessionEvent {
@@ -99,6 +101,8 @@ message DeviceInfoProto {
   string deviceName = 5;
   string deviceType = 6;
   string additionalInfo = 7;
+  int64 deviceProfileIdMSB = 8;
+  int64 deviceProfileIdLSB = 9;
 }
 
 /**
@@ -127,7 +131,6 @@ message GetAttributeResponseMsg {
   int32 requestId = 1;
   repeated TsKvProto clientAttributeList = 2;
   repeated TsKvProto sharedAttributeList = 3;
-  repeated string deletedAttributeKeys = 4;
   string error = 5;
 }
 
@@ -144,9 +147,16 @@ message ValidateDeviceX509CertRequestMsg {
   string hash = 1;
 }
 
+message ValidateBasicMqttCredRequestMsg {
+  string clientId = 1;
+  string userName = 2;
+  string password = 3;
+}
+
 message ValidateDeviceCredentialsResponseMsg {
   DeviceInfoProto deviceInfo = 1;
   string credentialsBody = 2;
+  bytes profileBody = 3;
 }
 
 message GetOrCreateDeviceFromGatewayRequestMsg {
@@ -158,6 +168,7 @@ message GetOrCreateDeviceFromGatewayRequestMsg {
 
 message GetOrCreateDeviceFromGatewayResponseMsg {
   DeviceInfoProto deviceInfo = 1;
+  bytes profileBody = 2;
 }
 
 message GetTenantRoutingInfoRequestMsg {
@@ -168,6 +179,24 @@ message GetTenantRoutingInfoRequestMsg {
 message GetTenantRoutingInfoResponseMsg {
   bool isolatedTbCore = 1;
   bool isolatedTbRuleEngine = 2;
+}
+
+message GetDeviceProfileRequestMsg {
+  int64 profileIdMSB = 1;
+  int64 profileIdLSB = 2;
+}
+
+message GetDeviceProfileResponseMsg {
+  bytes data = 1;
+}
+
+message DeviceProfileUpdateMsg {
+  bytes data = 1;
+}
+
+message DeviceProfileDeleteMsg {
+    int64 profileIdMSB = 1;
+    int64 profileIdLSB = 2;
 }
 
 message SessionCloseNotificationProto {
@@ -399,6 +428,7 @@ message FromDeviceRPCResponseProto {
   string response = 3;
   int32 error = 4;
 }
+
 /**
  * Main messages;
  */
@@ -409,13 +439,16 @@ message TransportApiRequestMsg {
   ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
   GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
   GetTenantRoutingInfoRequestMsg getTenantRoutingInfoRequestMsg = 4;
+  GetDeviceProfileRequestMsg getDeviceProfileRequestMsg = 5;
+  ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 6;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
 message TransportApiResponseMsg {
-  ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
+  ValidateDeviceCredentialsResponseMsg validateCredResponseMsg = 1;
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
   GetTenantRoutingInfoResponseMsg getTenantRoutingInfoResponseMsg = 4;
+  GetDeviceProfileResponseMsg getDeviceProfileResponseMsg = 5;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */
@@ -456,4 +489,6 @@ message ToTransportMsg {
   AttributeUpdateNotificationMsg attributeUpdateNotification = 5;
   ToDeviceRpcRequestMsg toDeviceRequest = 6;
   ToServerRpcResponseMsg toServerResponse = 7;
+  DeviceProfileUpdateMsg deviceProfileUpdateMsg = 8;
+  DeviceProfileDeleteMsg deviceProfileDeleteMsg = 9;
 }

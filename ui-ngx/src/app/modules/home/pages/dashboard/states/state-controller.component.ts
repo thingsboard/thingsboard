@@ -100,7 +100,7 @@ export abstract class StateControllerComponent implements IStateControllerCompon
     this.rxSubscriptions.push(this.route.queryParamMap.subscribe((paramMap) => {
       const dashboardId = this.route.snapshot.params.dashboardId;
       if (this.dashboardId === dashboardId) {
-        const newState = decodeURIComponent(paramMap.get('state'));
+        const newState = this.decodeStateParam(paramMap.get('state'));
         if (this.currentState !== newState) {
           this.currentState = newState;
           if (this.inited) {
@@ -147,8 +147,13 @@ export abstract class StateControllerComponent implements IStateControllerCompon
   }
 
   public reInit() {
-    this.currentState = decodeURIComponent(this.route.snapshot.queryParamMap.get('state'));
+    this.preservedState = null;
+    this.currentState = this.decodeStateParam(this.route.snapshot.queryParamMap.get('state'));
     this.init();
+  }
+
+  private decodeStateParam(stateURI: string): string{
+    return stateURI !== null ? decodeURIComponent(stateURI) : null;
   }
 
   protected abstract init();

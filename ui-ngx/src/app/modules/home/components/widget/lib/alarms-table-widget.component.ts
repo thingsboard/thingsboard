@@ -247,11 +247,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   }
 
   public onDataUpdated() {
-    this.ngZone.run(() => {
-      this.updateTitle(true);
-      this.alarmsDatasource.updateAlarms();
-      this.ctx.detectChanges();
-    });
+    this.updateTitle(true);
+    this.alarmsDatasource.updateAlarms();
   }
 
   public pageLinkSortDirection(): SortDirection {
@@ -565,6 +562,10 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     return column.def;
   }
 
+  public trackByRowIndex(index: number) {
+    return index;
+  }
+
   public headerStyle(key: EntityColumn): any {
     const columnWidth = this.columnWidth[key.def];
     return widthStyle(columnWidth);
@@ -606,7 +607,19 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       } else {
         content = this.defaultContent(key, contentInfo, value);
       }
-      return isDefined(content) ? this.domSanitizer.bypassSecurityTrustHtml(content) : '';
+
+      if (!isDefined(content)) {
+        return '';
+
+      } else {
+        switch (typeof content) {
+          case 'string':
+            return this.domSanitizer.bypassSecurityTrustHtml(content);
+          default:
+            return content;
+        }
+      }
+
     } else {
       return '';
     }
@@ -804,7 +817,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       const alarmField = alarmFields[key.name];
       if (alarmField) {
         if (alarmField.time) {
-          return this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss');
+          return value ? this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss') : '';
         } else if (alarmField.value === alarmFields.severity.value) {
           return this.translate.instant(alarmSeverityTranslations.get(value));
         } else if (alarmField.value === alarmFields.status.value) {

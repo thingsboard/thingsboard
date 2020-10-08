@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import javax.net.ssl.*;
 import java.io.File;
@@ -71,7 +72,7 @@ public class MqttSslClient {
 
             MqttConnectOptions options = new MqttConnectOptions();
             options.setSocketFactory(sslContext.getSocketFactory());
-            MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, CLIENT_ID);
+            MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, CLIENT_ID, new MemoryPersistence());
             client.connect(options);
             Thread.sleep(3000);
             MqttMessage message = new MqttMessage();

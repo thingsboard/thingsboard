@@ -19,7 +19,16 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DeviceInfo } from '@shared/models/device.models';
+import {
+  createDeviceConfiguration,
+  createDeviceProfileConfiguration, createDeviceTransportConfiguration,
+  DeviceData,
+  DeviceInfo,
+  DeviceProfileData,
+  DeviceProfileInfo,
+  DeviceProfileType,
+  DeviceTransportType
+} from '@shared/models/device.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
@@ -70,8 +79,9 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
     return this.fb.group(
       {
         name: [entity ? entity.name : '', [Validators.required]],
-        type: [entity ? entity.type : null, [Validators.required]],
+        deviceProfileId: [entity ? entity.deviceProfileId : null, [Validators.required]],
         label: [entity ? entity.label : ''],
+        deviceData: [entity ? entity.deviceData : null, [Validators.required]],
         additionalInfo: this.fb.group(
           {
             gateway: [entity && entity.additionalInfo ? entity.additionalInfo.gateway : false],
@@ -84,8 +94,9 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
 
   updateForm(entity: DeviceInfo) {
     this.entityForm.patchValue({name: entity.name});
-    this.entityForm.patchValue({type: entity.type});
+    this.entityForm.patchValue({deviceProfileId: entity.deviceProfileId});
     this.entityForm.patchValue({label: entity.label});
+    this.entityForm.patchValue({deviceData: entity.deviceData});
     this.entityForm.patchValue({additionalInfo:
         {gateway: entity.additionalInfo ? entity.additionalInfo.gateway : false}});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
@@ -120,6 +131,40 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
           }
         }
       );
+    }
+  }
+
+  onDeviceProfileUpdated() {
+    this.entitiesTableConfig.table.updateData(false);
+  }
+
+  onDeviceProfileChanged(deviceProfile: DeviceProfileInfo) {
+    if (deviceProfile && this.isEdit) {
+      const deviceProfileType: DeviceProfileType = deviceProfile.type;
+      const deviceTransportType: DeviceTransportType = deviceProfile.transportType;
+      let deviceData: DeviceData = this.entityForm.getRawValue().deviceData;
+      if (!deviceData) {
+        deviceData = {
+          configuration: createDeviceConfiguration(deviceProfileType),
+          transportConfiguration: createDeviceTransportConfiguration(deviceTransportType)
+        };
+        this.entityForm.patchValue({deviceData});
+        this.entityForm.markAsDirty();
+      } else {
+        let changed = false;
+        if (deviceData.configuration.type !== deviceProfileType) {
+          deviceData.configuration = createDeviceConfiguration(deviceProfileType);
+          changed = true;
+        }
+        if (deviceData.transportConfiguration.type !== deviceTransportType) {
+          deviceData.transportConfiguration = createDeviceTransportConfiguration(deviceTransportType);
+          changed = true;
+        }
+        if (changed) {
+          this.entityForm.patchValue({deviceData});
+          this.entityForm.markAsDirty();
+        }
+      }
     }
   }
 }

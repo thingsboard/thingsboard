@@ -380,7 +380,7 @@ export class TbFlot {
     const yaxesMap: {[units: string]: TbFlotAxisOptions} = {};
     const predefinedThresholds: TbFlotThresholdMarking[] = [];
     const thresholdsDatasources: Datasource[] = [];
-    if (this.settings.customLegendEnabled) {
+    if (this.settings.customLegendEnabled && this.settings.dataKeysListForLabels?.length) {
       this.labelPatternsSourcesData = [];
       const labelPatternsDatasources: Datasource[] = [];
       this.settings.dataKeysListForLabels.forEach((item) => {

@@ -66,6 +66,10 @@ public class EntityIdFactory {
                 return new OAuth2ClientRegistrationInfoId(uuid);
             case OAUTH2_CLIENT_REGISTRATION_TEMPLATE:
                 return new OAuth2ClientRegistrationTemplateId(uuid);
+            case DEVICE_PROFILE:
+                return new DeviceProfileId(uuid);
+            case TENANT_PROFILE:
+                return new TenantProfileId(uuid);
         }
         throw new IllegalArgumentException("EntityType " + type + " is not supported!");
     }

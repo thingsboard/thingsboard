@@ -163,7 +163,7 @@ export const analogueCompassSettingsSchema: JsonSettingsSchema = {
   form: [
     {
       key: 'majorTicks',
-      items:[
+      items: [
         'majorTicks[]'
       ]
     },
@@ -267,7 +267,7 @@ export const analogueCompassSettingsSchema: JsonSettingsSchema = {
             },
             {
               value: '700',
-              label: '800'
+              label: '700'
             },
             {
               value: '800',

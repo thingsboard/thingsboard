@@ -31,6 +31,7 @@ import { CustomerService } from '@core/http/customer.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import { UserService } from '@core/http/user.service';
 import { AlarmService } from '@core/http/alarm.service';
+import { Router } from '@angular/router';
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
@@ -49,6 +50,7 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['date', DatePipe],
    ['utils', UtilsService],
    ['translate', TranslateService],
-   ['http', HttpClient]
+   ['http', HttpClient],
+   ['router', Router]
   ]
 );

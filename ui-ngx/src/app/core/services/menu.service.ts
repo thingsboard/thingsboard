@@ -24,6 +24,7 @@ import { HomeSection, MenuSection } from '@core/services/menu.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { AuthUser } from '@shared/models/user.model';
+import { guid } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -74,24 +75,36 @@ export class MenuService {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
+        id: guid(),
         name: 'home.home',
         type: 'link',
         path: '/home',
         icon: 'home'
       },
       {
+        id: guid(),
         name: 'tenant.tenants',
         type: 'link',
         path: '/tenants',
         icon: 'supervisor_account'
       },
       {
+        id: guid(),
+        name: 'tenant-profile.tenant-profiles',
+        type: 'link',
+        path: '/tenantProfiles',
+        icon: 'mdi:alpha-t-box',
+        isMdiIcon: true
+      },
+      {
+        id: guid(),
         name: 'widget.widget-library',
         type: 'link',
         path: '/widgets-bundles',
         icon: 'now_widgets'
       },
       {
+        id: guid(),
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
@@ -99,18 +112,21 @@ export class MenuService {
         icon: 'settings',
         pages: [
           {
+            id: guid(),
             name: 'admin.general',
             type: 'link',
             path: '/settings/general',
             icon: 'settings_applications'
           },
           {
+            id: guid(),
             name: 'admin.outgoing-mail',
             type: 'link',
             path: '/settings/outgoing-mail',
             icon: 'mail'
           },
           {
+            id: guid(),
             name: 'admin.security-settings',
             type: 'link',
             path: '/settings/security-settings',
@@ -138,7 +154,13 @@ export class MenuService {
             name: 'tenant.tenants',
             icon: 'supervisor_account',
             path: '/tenants'
-          }
+          },
+          {
+            name: 'tenant-profile.tenant-profiles',
+            icon: 'mdi:alpha-t-box',
+            isMdiIcon: true,
+            path: '/tenantProfiles'
+          },
         ]
       },
       {
@@ -179,54 +201,71 @@ export class MenuService {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
+        id: guid(),
         name: 'home.home',
         type: 'link',
         path: '/home',
         icon: 'home'
       },
       {
+        id: guid(),
         name: 'rulechain.rulechains',
         type: 'link',
         path: '/ruleChains',
         icon: 'settings_ethernet'
       },
       {
+        id: guid(),
         name: 'customer.customers',
         type: 'link',
         path: '/customers',
         icon: 'supervisor_account'
       },
       {
+        id: guid(),
         name: 'asset.assets',
         type: 'link',
         path: '/assets',
         icon: 'domain'
       },
       {
+        id: guid(),
         name: 'device.devices',
         type: 'link',
         path: '/devices',
         icon: 'devices_other'
       },
       {
+        id: guid(),
+        name: 'device-profile.device-profiles',
+        type: 'link',
+        path: '/deviceProfiles',
+        icon: 'mdi:alpha-d-box',
+        isMdiIcon: true
+      },
+      {
+        id: guid(),
         name: 'entity-view.entity-views',
         type: 'link',
         path: '/entityViews',
         icon: 'view_quilt'
       },
       {
+        id: guid(),
         name: 'widget.widget-library',
         type: 'link',
         path: '/widgets-bundles',
         icon: 'now_widgets'
       },
       {
+        id: guid(),
         name: 'dashboard.dashboards',
         type: 'link',
         path: '/dashboards',
         icon: 'dashboards'
       },
       {
+        id: guid(),
         name: 'audit-log.audit-logs',
         type: 'link',
         path: '/auditLogs',
@@ -276,6 +315,12 @@ export class MenuService {
             name: 'device.devices',
             icon: 'devices_other',
             path: '/devices'
+          },
+          {
+            name: 'device-profile.device-profiles',
+            icon: 'mdi:alpha-d-box',
+            isMdiIcon: true,
+            path: '/deviceProfiles'
           }
         ]
       },
@@ -322,30 +367,35 @@ export class MenuService {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
+        id: guid(),
         name: 'home.home',
         type: 'link',
         path: '/home',
         icon: 'home'
       },
       {
+        id: guid(),
         name: 'asset.assets',
         type: 'link',
         path: '/assets',
         icon: 'domain'
       },
       {
+        id: guid(),
         name: 'device.devices',
         type: 'link',
         path: '/devices',
         icon: 'devices_other'
       },
       {
+        id: guid(),
         name: 'entity-view.entity-views',
         type: 'link',
         path: '/entityViews',
         icon: 'view_quilt'
       },
       {
+        id: guid(),
         name: 'dashboard.dashboards',
         type: 'link',
         path: '/dashboards',

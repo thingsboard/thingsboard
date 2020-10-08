@@ -35,7 +35,7 @@ import java.util.function.Consumer;
 @Slf4j
 public abstract class SearchTextBasedWithAdditionalInfo<I extends UUIDBased> extends SearchTextBased<I> implements HasAdditionalInfo {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    public static final ObjectMapper mapper = new ObjectMapper();
     private transient JsonNode additionalInfo;
     @JsonIgnore
     private byte[] additionalInfoBytes;
@@ -85,7 +85,7 @@ public abstract class SearchTextBasedWithAdditionalInfo<I extends UUIDBased> ext
             byte[] data = binaryData.get();
             if (data != null) {
                 try {
-                    return new ObjectMapper().readTree(new ByteArrayInputStream(data));
+                    return mapper.readTree(new ByteArrayInputStream(data));
                 } catch (IOException e) {
                     log.warn("Can't deserialize json data: ", e);
                     return null;

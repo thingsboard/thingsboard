@@ -20,7 +20,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
 import java.nio.charset.Charset;
@@ -34,6 +41,7 @@ import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.List;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
 import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
@@ -75,6 +83,19 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
     @Autowired
     private InstallScripts installScripts;
+
+    @Autowired
+    private SystemDataLoaderService systemDataLoaderService;
+
+    @Autowired
+    private TenantService tenantService;
+
+    @Autowired
+    private DeviceService deviceService;
+
+    @Autowired
+    private DeviceProfileService deviceProfileService;
+
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -303,11 +324,72 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.info("Schema updated.");
                 }
                 break;
-            case "3.1.1":
+            case "3.1.2":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
-                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.1", "schema_update.sql");
-                    loadSql(schemaUpdateFile, conn);
+                    if (isOldSchema(conn, 3001000)) {
+
+                        try {
+                            conn.createStatement().execute("ALTER TABLE device ADD COLUMN device_profile_id uuid, ADD COLUMN device_data jsonb");
+                        } catch (Exception e) {
+                        }
+
+                        try {
+                            conn.createStatement().execute("ALTER TABLE tenant ADD COLUMN tenant_profile_id uuid");
+                        } catch (Exception e) {
+                        }
+
+                        try {
+                            conn.createStatement().execute("CREATE TABLE IF NOT EXISTS rule_node_state (" +
+                                    " id uuid NOT NULL CONSTRAINT rule_node_state_pkey PRIMARY KEY," +
+                                    " created_time bigint NOT NULL," +
+                                    " rule_node_id uuid NOT NULL," +
+                                    " entity_type varchar(32) NOT NULL," +
+                                    " entity_id uuid NOT NULL," +
+                                    " state_data varchar(16384) NOT NULL," +
+                                    " CONSTRAINT rule_node_state_unq_key UNIQUE (rule_node_id, entity_id)," +
+                                    " CONSTRAINT fk_rule_node_state_node_id FOREIGN KEY (rule_node_id) REFERENCES rule_node(id) ON DELETE CASCADE)");
+                        } catch (Exception e) {
+                        }
+
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.2", "schema_update_before.sql");
+                        loadSql(schemaUpdateFile, conn);
+
+                        log.info("Creating default tenant profiles...");
+                        systemDataLoaderService.createDefaultTenantProfiles();
+
+                        log.info("Updating tenant profiles...");
+                        conn.createStatement().execute("call update_tenant_profiles()");
+
+                        log.info("Creating default device profiles...");
+                        PageLink pageLink = new PageLink(100);
+                        PageData<Tenant> pageData;
+                        do {
+                            pageData = tenantService.findTenants(pageLink);
+                            for (Tenant tenant : pageData.getData()) {
+                                List<EntitySubtype> deviceTypes = deviceService.findDeviceTypesByTenantId(tenant.getId()).get();
+                                try {
+                                    deviceProfileService.createDefaultDeviceProfile(tenant.getId());
+                                } catch (Exception e) {
+                                }
+                                for (EntitySubtype deviceType : deviceTypes) {
+                                    try {
+                                        deviceProfileService.findOrCreateDeviceProfile(tenant.getId(), deviceType.getType());
+                                    } catch (Exception e) {
+                                    }
+                                }
+                            }
+                            pageLink = pageLink.nextPageLink();
+                        } while (pageData.hasNext());
+
+                        log.info("Updating device profiles...");
+                        conn.createStatement().execute("call update_device_profiles()");
+
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.2", "schema_update_after.sql");
+                        loadSql(schemaUpdateFile, conn);
+
+                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3002000;");
+                    }
                     log.info("Schema updated.");
                 } catch (Exception e) {
                     log.error("Failed updating schema!!!", e);

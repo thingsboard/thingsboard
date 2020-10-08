@@ -84,6 +84,7 @@ BEGIN
                                AND tablename like 'ts_kv_' || '%'
                                AND tablename != 'ts_kv_latest'
                                AND tablename != 'ts_kv_dictionary'
+                               AND tablename != 'ts_kv_indefinite'
                 LOOP
                     IF partition != partition_by_max_ttl_date THEN
                         IF partition_year IS NOT NULL THEN
@@ -187,8 +188,8 @@ $$
 DECLARE
     tenant_cursor CURSOR FOR select tenant.id as tenant_id
                              from tenant;
-    tenant_id_record     varchar;
-    customer_id_record   varchar;
+    tenant_id_record     uuid;
+    customer_id_record   uuid;
     tenant_ttl           bigint;
     customer_ttl         bigint;
     deleted_for_entities bigint;
