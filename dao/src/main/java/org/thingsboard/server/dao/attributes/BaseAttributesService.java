@@ -61,12 +61,6 @@ public class BaseAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<EntityAttributeKvEntry>> findAllByAttributeKey(String attributeKey) {
-        Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
-        return attributesDao.findAllByAttributeKey(attributeKey);
-    }
-
-    @Override
     public ListenableFuture<List<Void>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
         attributes.forEach(attribute -> validate(attribute));

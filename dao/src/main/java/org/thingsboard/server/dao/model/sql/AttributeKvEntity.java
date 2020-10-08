@@ -16,10 +16,20 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.kv.*;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.dao.model.ToData;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.io.Serializable;
 
 import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
@@ -32,7 +42,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUM
 @Data
 @Entity
 @Table(name = "attribute_kv")
-// TODO maybe move ToData<AttributeKvEntry> to local field as well (or implement ToData<EntityAttributeKvEntry> differently)
 public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable {
 
     @EmbeddedId
@@ -73,22 +82,4 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable
 
         return new BaseAttributeKvEntry(kvEntry, lastUpdateTs);
     }
-
-    @Transient
-    public final ToData<EntityAttributeKvEntry> toEntityAttributeKvEntry = () -> {
-        KvEntry kvEntry = null;
-        if (strValue != null) {
-            kvEntry = new StringDataEntry(id.getAttributeKey(), strValue);
-        } else if (booleanValue != null) {
-            kvEntry = new BooleanDataEntry(id.getAttributeKey(), booleanValue);
-        } else if (doubleValue != null) {
-            kvEntry = new DoubleDataEntry(id.getAttributeKey(), doubleValue);
-        } else if (longValue != null) {
-            kvEntry = new LongDataEntry(id.getAttributeKey(), longValue);
-        } else if (jsonValue != null) {
-            kvEntry = new JsonDataEntry(id.getAttributeKey(), jsonValue);
-        }
-
-        return new BaseEntityAttributeKvEntry(id.getEntityId(), lastUpdateTs, kvEntry);
-    };
 }
