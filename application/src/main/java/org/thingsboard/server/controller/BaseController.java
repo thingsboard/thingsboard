@@ -431,9 +431,6 @@ public abstract class BaseController {
                 case WIDGET_TYPE:
                     checkWidgetTypeId(new WidgetTypeId(entityId.getId()), operation);
                     return;
-                case OAUTH2_CLIENT_REGISTRATION_INFO:
-                case OAUTH2_CLIENT_REGISTRATION_TEMPLATE:
-                    return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
             }

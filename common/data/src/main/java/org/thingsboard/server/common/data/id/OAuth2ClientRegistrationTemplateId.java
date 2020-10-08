@@ -17,11 +17,10 @@ package org.thingsboard.server.common.data.id;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
 
-public class OAuth2ClientRegistrationTemplateId extends UUIDBased implements EntityId {
+public class OAuth2ClientRegistrationTemplateId extends UUIDBased {
 
     @JsonCreator
     public OAuth2ClientRegistrationTemplateId(@JsonProperty("id") UUID id) {
@@ -30,10 +29,5 @@ public class OAuth2ClientRegistrationTemplateId extends UUIDBased implements Ent
 
     public static OAuth2ClientRegistrationTemplateId fromString(String clientRegistrationTemplateId) {
         return new OAuth2ClientRegistrationTemplateId(UUID.fromString(clientRegistrationTemplateId));
-    }
-
-    @Override
-    public EntityType getEntityType() {
-        return EntityType.OAUTH2_CLIENT_REGISTRATION_TEMPLATE;
     }
 }

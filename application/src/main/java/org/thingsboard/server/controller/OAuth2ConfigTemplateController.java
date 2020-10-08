@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 
@@ -40,6 +42,7 @@ public class OAuth2ConfigTemplateController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public OAuth2ClientRegistrationTemplate saveClientRegistrationTemplate(@RequestBody OAuth2ClientRegistrationTemplate clientRegistrationTemplate) throws ThingsboardException {
         try {
+            accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION_TEMPLATE, Operation.WRITE);
             return oAuth2ConfigTemplateService.saveClientRegistrationTemplate(clientRegistrationTemplate);
         } catch (Exception e) {
             throw handleException(e);
@@ -52,21 +55,10 @@ public class OAuth2ConfigTemplateController extends BaseController {
     public void deleteClientRegistrationTemplate(@PathVariable(CLIENT_REGISTRATION_TEMPLATE_ID) String strClientRegistrationTemplateId) throws ThingsboardException {
         checkParameter(CLIENT_REGISTRATION_TEMPLATE_ID, strClientRegistrationTemplateId);
         try {
+            accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION_TEMPLATE, Operation.DELETE);
             OAuth2ClientRegistrationTemplateId clientRegistrationTemplateId = new OAuth2ClientRegistrationTemplateId(toUUID(strClientRegistrationTemplateId));
             oAuth2ConfigTemplateService.deleteClientRegistrationTemplateById(clientRegistrationTemplateId);
-
-            logEntityAction(clientRegistrationTemplateId,
-                    null,
-                    null,
-                    ActionType.DELETED, null, strClientRegistrationTemplateId);
-
         } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.OAUTH2_CLIENT_REGISTRATION_TEMPLATE),
-                    null,
-                    null,
-                    ActionType.DELETED, e, strClientRegistrationTemplateId);
-
             throw handleException(e);
         }
     }
@@ -76,6 +68,7 @@ public class OAuth2ConfigTemplateController extends BaseController {
     @ResponseBody
     public List<OAuth2ClientRegistrationTemplate> getClientRegistrationTemplates() throws ThingsboardException {
         try {
+            accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION_TEMPLATE, Operation.READ);
             return oAuth2ConfigTemplateService.findAllClientRegistrationTemplates();
         } catch (Exception e) {
             throw handleException(e);

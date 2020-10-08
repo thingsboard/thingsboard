@@ -62,10 +62,6 @@ public class EntityIdFactory {
                 return new WidgetsBundleId(uuid);
             case WIDGET_TYPE:
                 return new WidgetTypeId(uuid);
-            case OAUTH2_CLIENT_REGISTRATION_INFO:
-                return new OAuth2ClientRegistrationInfoId(uuid);
-            case OAUTH2_CLIENT_REGISTRATION_TEMPLATE:
-                return new OAuth2ClientRegistrationTemplateId(uuid);
             case DEVICE_PROFILE:
                 return new DeviceProfileId(uuid);
             case TENANT_PROFILE:

@@ -24,6 +24,8 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.utils.MiscUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -49,6 +51,7 @@ public class OAuth2Controller extends BaseController {
     @ResponseBody
     public OAuth2ClientsParams getCurrentOAuth2Params() throws ThingsboardException {
         try {
+            accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION_INFO, Operation.READ);
             return oAuth2Service.findOAuth2Params();
         } catch (Exception e) {
             throw handleException(e);
@@ -60,6 +63,7 @@ public class OAuth2Controller extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public OAuth2ClientsParams saveOAuth2Params(@RequestBody OAuth2ClientsParams oauth2Params) throws ThingsboardException {
         try {
+            accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION_INFO, Operation.WRITE);
             oAuth2Service.saveOAuth2Params(oauth2Params);
             return oAuth2Service.findOAuth2Params();
         } catch (Exception e) {
