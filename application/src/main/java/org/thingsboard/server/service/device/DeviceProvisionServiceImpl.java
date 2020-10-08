@@ -161,12 +161,6 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
     private ListenableFuture<ProvisionResponse> validateCredentials(ProvisionRequest provisionRequest) {
         switch (provisionRequest.getCredentialsType()) {
-            case ACCESS_TOKEN:
-                if (StringUtils.isEmpty(provisionRequest.getCredentialsData().getToken())) {
-                    log.error("Failed to get token from credentials data!");
-                    return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
-                }
-                break;
             case MQTT_BASIC:
                 if (StringUtils.isEmpty(provisionRequest.getCredentialsData().getClientId()) ||
                         StringUtils.isEmpty(provisionRequest.getCredentialsData().getUsername()) ||
