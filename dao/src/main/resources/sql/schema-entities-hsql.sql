@@ -386,6 +386,7 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
     user_name_attribute_name varchar(255),
     jwk_set_uri varchar(255),
     client_authentication_method varchar(255),
+    type varchar(31),
     basic_email_attribute_key varchar(31),
     basic_first_name_attribute_key varchar(31),
     basic_last_name_attribute_key varchar(31),

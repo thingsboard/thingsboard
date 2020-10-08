@@ -184,6 +184,22 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
                         throw new DataValidationException("Tenant name pattern should be specified!");
                     }
                 }
+                if (mapperConfig.getType() == MapperType.GITHUB) {
+                    OAuth2BasicMapperConfig basicConfig = mapperConfig.getBasic();
+                    if (basicConfig == null) {
+                        throw new DataValidationException("Basic config should be specified!");
+                    }
+                    if (!StringUtils.isEmpty(basicConfig.getEmailAttributeKey())) {
+                        throw new DataValidationException("Email attribute key cannot be configured for GITHUB mapper type!");
+                    }
+                    if (basicConfig.getTenantNameStrategy() == null) {
+                        throw new DataValidationException("Tenant name strategy should be specified!");
+                    }
+                    if (basicConfig.getTenantNameStrategy() == TenantNameStrategyType.CUSTOM
+                            && StringUtils.isEmpty(basicConfig.getTenantNamePattern())) {
+                        throw new DataValidationException("Tenant name pattern should be specified!");
+                    }
+                }
                 if (mapperConfig.getType() == MapperType.CUSTOM) {
                     OAuth2CustomMapperConfig customConfig = mapperConfig.getCustom();
                     if (customConfig == null) {

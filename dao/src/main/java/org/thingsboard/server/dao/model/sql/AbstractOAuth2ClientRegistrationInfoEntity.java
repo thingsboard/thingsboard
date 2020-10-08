@@ -190,7 +190,7 @@ public abstract class AbstractOAuth2ClientRegistrationInfoEntity<T extends OAuth
                         .activateUser(activateUser)
                         .type(type)
                         .basic(
-                                type == MapperType.BASIC ?
+                                (type == MapperType.BASIC || type == MapperType.GITHUB) ?
                                         OAuth2BasicMapperConfig.builder()
                                                 .emailAttributeKey(emailAttributeKey)
                                                 .firstNameAttributeKey(firstNameAttributeKey)

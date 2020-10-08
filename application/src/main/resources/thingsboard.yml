@@ -115,6 +115,8 @@ security:
   oauth2:
     # Redirect URL where access code from external user management system will be processed
     loginProcessingUrl: "${SECURITY_OAUTH2_LOGIN_PROCESSING_URL:/login/oauth2/code/}"
+    githubMapper:
+      emailUrl: "${SECURITY_OAUTH2_GITHUB_MAPPER_EMAIL_URL_KEY:https://api.github.com/user/emails}"
 
 # Dashboard parameters
 dashboard:

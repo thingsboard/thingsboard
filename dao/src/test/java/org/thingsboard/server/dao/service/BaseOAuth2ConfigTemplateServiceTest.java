@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2BasicMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -105,6 +106,7 @@ public class BaseOAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
         OAuth2ClientRegistrationTemplate clientRegistrationTemplate = new OAuth2ClientRegistrationTemplate();
         clientRegistrationTemplate.setProviderId(providerId);
         clientRegistrationTemplate.setAdditionalInfo(mapper.createObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+        clientRegistrationTemplate.setMapperType(MapperType.BASIC);
         clientRegistrationTemplate.setBasic(
                 OAuth2BasicMapperConfig.builder()
                         .firstNameAttributeKey("firstName")

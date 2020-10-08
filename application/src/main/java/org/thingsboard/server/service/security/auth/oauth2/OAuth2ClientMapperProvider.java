@@ -33,12 +33,18 @@ public class OAuth2ClientMapperProvider {
     @Qualifier("customOAuth2ClientMapper")
     private OAuth2ClientMapper customOAuth2ClientMapper;
 
+    @Autowired
+    @Qualifier("githubOAuth2ClientMapper")
+    private OAuth2ClientMapper githubOAuth2ClientMapper;
+
     public OAuth2ClientMapper getOAuth2ClientMapperByType(MapperType oauth2MapperType) {
         switch (oauth2MapperType) {
             case CUSTOM:
                 return customOAuth2ClientMapper;
             case BASIC:
                 return basicOAuth2ClientMapper;
+            case GITHUB:
+                return githubOAuth2ClientMapper;
             default:
                 throw new RuntimeException("OAuth2ClientRegistrationMapper with type " + oauth2MapperType + " is not supported!");
         }

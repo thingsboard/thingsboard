@@ -55,6 +55,9 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
     private String jwkSetUri;
     @Column(name = ModelConstants.OAUTH2_CLIENT_AUTHENTICATION_METHOD_PROPERTY)
     private String clientAuthenticationMethod;
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.OAUTH2_MAPPER_TYPE_PROPERTY)
+    private MapperType type;
     @Column(name = ModelConstants.OAUTH2_EMAIL_ATTRIBUTE_KEY_PROPERTY)
     private String emailAttributeKey;
     @Column(name = ModelConstants.OAUTH2_FIRST_NAME_ATTRIBUTE_KEY_PROPERTY)
@@ -106,6 +109,7 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
         this.loginButtonLabel = clientRegistrationTemplate.getLoginButtonLabel();
         this.helpLink = clientRegistrationTemplate.getHelpLink();
         this.additionalInfo = clientRegistrationTemplate.getAdditionalInfo();
+        this.type = clientRegistrationTemplate.getMapperType();
         OAuth2BasicMapperConfig basicConfig = clientRegistrationTemplate.getBasic();
         if (basicConfig != null) {
             this.emailAttributeKey = basicConfig.getEmailAttributeKey();
@@ -126,6 +130,7 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
         clientRegistrationTemplate.setCreatedTime(createdTime);
         clientRegistrationTemplate.setAdditionalInfo(additionalInfo);
 
+        clientRegistrationTemplate.setMapperType(type);
         clientRegistrationTemplate.setProviderId(providerId);
         clientRegistrationTemplate.setBasic(
                 OAuth2BasicMapperConfig.builder()
