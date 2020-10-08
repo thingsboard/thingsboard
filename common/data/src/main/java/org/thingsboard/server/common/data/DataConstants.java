@@ -79,5 +79,11 @@ public class DataConstants {
     public static final String DEVICE_NAME = "deviceName";
     public static final String DEVICE_TYPE = "deviceType";
     public static final String CERT_PUB_KEY = "x509CertPubKey";
+    public static final String CREDENTIALS_TYPE = "credentialsType";
+    public static final String TOKEN = "token";
+    public static final String HASH = "hash";
+    public static final String CLIENT_ID = "clientId";
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
 
 }

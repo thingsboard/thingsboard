@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device.provision;
+package org.thingsboard.server.common.data.device.credentials;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.device.credentials.ProvisionDeviceCredentialsData;
-import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
-import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 
 @Data
-@AllArgsConstructor
-public class ProvisionRequest {
-    private String deviceName;
-    private DeviceCredentialsType credentialsType;
-    private ProvisionDeviceCredentialsData credentialsData;
-    private ProvisionDeviceProfileCredentials credentials;
+public class ProvisionDeviceCredentialsData {
+    private final String token;
+    private final String clientId;
+    private final String username;
+    private final String password;
+    private final String hash;
 }

@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -118,6 +119,13 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
         }
 
+        if (provisionRequest.getCredentialsType() != null) {
+            ListenableFuture<ProvisionResponse> error = validateCredentials(provisionRequest);
+            if (error != null) {
+                return error;
+            }
+        }
+
         DeviceProfile targetProfile = deviceProfileDao.findByProvisionDeviceKey(provisionRequestKey);
 
         if (targetProfile == null) {
@@ -150,6 +158,32 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
                 break;
         }
         return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
+    }
+
+    private ListenableFuture<ProvisionResponse> validateCredentials(ProvisionRequest provisionRequest) {
+        switch (provisionRequest.getCredentialsType()) {
+            case ACCESS_TOKEN:
+                if (StringUtils.isEmpty(provisionRequest.getCredentialsData().getToken())) {
+                    log.error("Failed to get token from credentials data!");
+                    return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
+                }
+                break;
+            case MQTT_BASIC:
+                if (StringUtils.isEmpty(provisionRequest.getCredentialsData().getClientId()) ||
+                    StringUtils.isEmpty(provisionRequest.getCredentialsData().getUsername()) ||
+                    StringUtils.isEmpty(provisionRequest.getCredentialsData().getPassword())) {
+                    log.error("Failed to get basic mqtt credentials from credentials data!");
+                    return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
+                }
+                break;
+            case X509_CERTIFICATE:
+                if (StringUtils.isEmpty(provisionRequest.getCredentialsData().getHash())) {
+                    log.error("Failed to get hash from credentials data!");
+                    return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
+                }
+                break;
+        }
+        return null;
     }
 
     private ListenableFuture<ProvisionResponse> processProvision(Device device, ProvisionRequest provisionRequest) {
@@ -205,7 +239,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
             return Futures.transform(saveProvisionStateAttribute(savedDevice), input ->
                     new ProvisionResponse(
-                            getDeviceCredentials(savedDevice, provisionRequest.getX509CertPubKey()),
+                            getDeviceCredentials(savedDevice),
                             ProvisionResponseStatus.SUCCESS), MoreExecutors.directExecutor());
         }
         log.warn("[{}] The device is already provisioned!", device.getName());
@@ -224,17 +258,33 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         device.setName(provisionRequest.getDeviceName());
         device.setType(profile.getName());
         device.setTenantId(profile.getTenantId());
-        return deviceService.saveDevice(device);
+        Device savedDevice = deviceService.saveDevice(device);
+        if (provisionRequest.getCredentialsType() != null) {
+            DeviceCredentials deviceCredentials = new DeviceCredentials();
+            deviceCredentials.setCredentialsType(provisionRequest.getCredentialsType());
+            switch (provisionRequest.getCredentialsType()) {
+                case ACCESS_TOKEN:
+                    deviceCredentials.setDeviceId(savedDevice.getId());
+                    deviceCredentials.setCredentialsId(provisionRequest.getCredentialsData().getToken());
+                    break;
+                case MQTT_BASIC:
+                    BasicMqttCredentials mqttCredentials = new BasicMqttCredentials();
+                    mqttCredentials.setClientId(provisionRequest.getCredentialsData().getClientId());
+                    mqttCredentials.setUserName(provisionRequest.getCredentialsData().getUsername());
+                    mqttCredentials.setPassword(provisionRequest.getCredentialsData().getPassword());
+                    deviceCredentials.setCredentialsValue(JacksonUtil.toString(mqttCredentials));
+                    break;
+                case X509_CERTIFICATE:
+                    deviceCredentials.setCredentialsValue(provisionRequest.getCredentialsData().getHash());
+                    break;
+            }
+            deviceCredentialsService.updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
+        }
+        return savedDevice;
     }
 
-    private DeviceCredentials getDeviceCredentials(Device device, String x509CertPubKey) {
-        DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
-        if (!StringUtils.isEmpty(x509CertPubKey)) {
-            credentials.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
-            credentials.setCredentialsValue(x509CertPubKey);
-            return deviceCredentialsService.updateDeviceCredentials(device.getTenantId(), credentials);
-        }
-        return credentials;
+    private DeviceCredentials getDeviceCredentials(Device device) {
+        return deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
     }
 
     private void pushProvisionEventToRuleEngine(ProvisionRequest request, Device device, String type) {

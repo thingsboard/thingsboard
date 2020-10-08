@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
+import org.thingsboard.server.common.data.device.credentials.ProvisionDeviceCredentialsData;
 import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -281,7 +282,12 @@ public class DefaultTransportApiService implements TransportApiService {
         provisionResponseFuture = deviceProvisionService.provisionDevice(
                 new ProvisionRequest(
                         requestMsg.getDeviceName(),
-                        requestMsg.getX509CertPubKey(),
+                        requestMsg.getCredentialsType() != null ? DeviceCredentialsType.valueOf(requestMsg.getCredentialsType().name()) : null,
+                        new ProvisionDeviceCredentialsData(requestMsg.getCredentialsDataProto().getValidateDeviceTokenRequestMsg().getToken(),
+                                requestMsg.getCredentialsDataProto().getValidateBasicMqttCredRequestMsg().getClientId(),
+                                requestMsg.getCredentialsDataProto().getValidateBasicMqttCredRequestMsg().getUserName(),
+                                requestMsg.getCredentialsDataProto().getValidateBasicMqttCredRequestMsg().getPassword(),
+                                requestMsg.getCredentialsDataProto().getValidateDeviceX509CertRequestMsg().getHash()),
                         new ProvisionDeviceProfileCredentials(
                                 requestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceKey(),
                                 requestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceSecret())));

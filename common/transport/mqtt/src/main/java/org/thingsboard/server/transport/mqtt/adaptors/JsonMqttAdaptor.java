@@ -153,13 +153,6 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC, JsonConverter.toJson(provisionResponse)));
     }
 
-    @Override
-    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.ProvisionDeviceResponseMsg responseMsg) {
-        return Optional.of(createMqttPublishMsg(ctx,
-                MqttTopics.GATEWAY_PROVISION_RESPONSE_TOPIC,
-                JsonConverter.toGatewayJson(deviceName, responseMsg)));
-    }
-
     public static JsonElement validateJsonPayload(UUID sessionId, ByteBuf payloadData) throws AdaptorException {
         String payload = validatePayload(sessionId, payloadData, false);
         try {

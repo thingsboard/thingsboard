@@ -37,6 +37,8 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.CredentialsDataProto.Builder;
+import org.thingsboard.server.gen.transport.TransportProtos.CredentialsType;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
@@ -46,7 +48,11 @@ import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRespo
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionResponseStatus;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateBasicMqttCredRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 
+import javax.xml.crypto.Data;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -554,7 +560,17 @@ public class JsonConverter {
     private static TransportProtos.ProvisionDeviceRequestMsg buildProvisionRequestMsg(JsonObject jo) {
         return TransportProtos.ProvisionDeviceRequestMsg.newBuilder()
                 .setDeviceName(getStrValue(jo, DataConstants.DEVICE_NAME, true))
-                .setX509CertPubKey(getStrValue(jo, DataConstants.CERT_PUB_KEY, false))
+                .setCredentialsType(TransportProtos.CredentialsType.valueOf(getStrValue(jo, DataConstants.CREDENTIALS_TYPE, false)))
+                .setCredentialsDataProto(TransportProtos.CredentialsDataProto.newBuilder()
+                        .setValidateDeviceTokenRequestMsg(ValidateDeviceTokenRequestMsg.newBuilder().setToken(getStrValue(jo, DataConstants.TOKEN, false)).build())
+                        .setValidateBasicMqttCredRequestMsg(ValidateBasicMqttCredRequestMsg.newBuilder()
+                                .setClientId(getStrValue(jo, DataConstants.CLIENT_ID, false))
+                                .setUserName(getStrValue(jo, DataConstants.USERNAME, false))
+                                .setPassword(getStrValue(jo, DataConstants.PASSWORD, false))
+                                .build())
+                        .setValidateDeviceX509CertRequestMsg(ValidateDeviceX509CertRequestMsg.newBuilder()
+                                .setHash(getStrValue(jo, DataConstants.PASSWORD, false)).build())
+                .build())
                 .setProvisionDeviceCredentialsMsg(buildProvisionDeviceCredentialsMsg(
                         getStrValue(jo, DataConstants.PROVISION_KEY, true),
                         getStrValue(jo, DataConstants.PROVISION_SECRET, true)))
@@ -567,6 +583,8 @@ public class JsonConverter {
                 .setProvisionDeviceSecret(provisionSecret)
                 .build();
     }
+
+
     private static String getStrValue(JsonObject jo, String field, boolean requiredField) {
         if (jo.has(field)) {
             return jo.get(field).getAsString();

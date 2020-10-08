@@ -183,7 +183,7 @@ public abstract class AbstractMqttProvisionProtoDeviceTest extends AbstractMqttI
 
 
     protected byte[] createTestProvisionMessage() {
-        return ProvisionDeviceRequestMsg.newBuilder().setX509CertPubKey("").setDeviceName("Test Provision device").setProvisionDeviceCredentialsMsg(ProvisionDeviceCredentialsMsg.newBuilder().setProvisionDeviceKey("testProvisionKey").setProvisionDeviceSecret("testProvisionSecret")).build().toByteArray();
+        return ProvisionDeviceRequestMsg.newBuilder().setDeviceName("Test Provision device").setProvisionDeviceCredentialsMsg(ProvisionDeviceCredentialsMsg.newBuilder().setProvisionDeviceKey("testProvisionKey").setProvisionDeviceSecret("testProvisionSecret")).build().toByteArray();
     }
 
 }

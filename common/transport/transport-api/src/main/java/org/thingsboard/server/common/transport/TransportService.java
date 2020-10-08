@@ -40,6 +40,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateBasicMqttCre
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 
+import java.util.concurrent.ScheduledExecutorService;
+
 /**
  * Created by ashvayka on 04.10.18.
  */
@@ -87,6 +89,8 @@ public interface TransportService {
     void process(SessionInfoProto sessionInfo, SubscriptionInfoProto msg, TransportServiceCallback<Void> callback);
 
     void process(SessionInfoProto sessionInfo, ClaimDeviceMsg msg, TransportServiceCallback<Void> callback);
+
+    ScheduledExecutorService getSchedulerExecutor();
 
     void registerAsyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener);
 
