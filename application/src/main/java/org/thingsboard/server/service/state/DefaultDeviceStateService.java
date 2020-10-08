@@ -393,7 +393,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
             if (stateData != null) {
                 DeviceState state = stateData.getState();
                 state.setActive(ts < state.getLastActivityTime() + state.getInactivityTimeout());
-                if (!state.isActive() && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() < state.getLastActivityTime()) && UUIDs.unixTimestamp(deviceId.getId()) + state.getInactivityTimeout() < ts) {
+                if (!state.isActive() && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() < state.getLastActivityTime()) && stateData.getDeviceCreationTime() + state.getInactivityTimeout() < ts) {
                     state.setLastInactivityAlarmTime(ts);
                     pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
                     save(deviceId, INACTIVITY_ALARM_TIME, ts);
@@ -480,6 +480,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
                     return DeviceStateData.builder()
                             .tenantId(device.getTenantId())
                             .deviceId(device.getId())
+                            .deviceCreationTime(device.getCreatedTime())
                             .metaData(md)
                             .state(deviceState).build();
                 } catch (Exception e) {
