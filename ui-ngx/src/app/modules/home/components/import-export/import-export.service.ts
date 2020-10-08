@@ -421,7 +421,7 @@ export class ImportExportService {
   }
 
   public exportJSZip(data: object, filename: string) {
-    const jsZip: JSZip = new JSZip();
+    const jsZip = new JSZip();
     for (const keyName in data) {
       if (data.hasOwnProperty(keyName)) {
         const valueData = data[keyName];

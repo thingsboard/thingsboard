@@ -178,7 +178,6 @@ $previewSize: 100px !default;
       label {
         padding: 4px;
         color: #00acc1;
-        text-transform: uppercase;
         background: rgba(220, 220, 220, .35);
         border-radius: 5px;
       }
@@ -261,6 +260,10 @@ $previewSize: 100px !default;
     position: absolute !important;
     top: 50%;
     transform: translate(0%, -50%) !important;
+  }
+
+  .MuiButton-root {
+    text-transform: none;
   }
 
 }

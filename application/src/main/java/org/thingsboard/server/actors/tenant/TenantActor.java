@@ -47,6 +47,7 @@ import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import java.util.List;
 import java.util.Optional;
@@ -116,6 +117,9 @@ public class TenantActor extends RuleChainManagerActor {
             if (msg.getMsgType().equals(MsgType.QUEUE_TO_RULE_ENGINE_MSG)) {
                 QueueToRuleEngineMsg queueMsg = (QueueToRuleEngineMsg) msg;
                 queueMsg.getTbMsg().getCallback().onSuccess();
+            } else if (msg.getMsgType().equals(MsgType.TRANSPORT_TO_DEVICE_ACTOR_MSG)){
+                TransportToDeviceActorMsgWrapper transportMsg = (TransportToDeviceActorMsgWrapper) msg;
+                transportMsg.getCallback().onSuccess();
             }
             return true;
         }

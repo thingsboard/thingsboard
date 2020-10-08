@@ -107,6 +107,7 @@ import { AlarmRuleKeyFiltersDialogComponent } from './profile/alarm/alarm-rule-k
 import { FilterTextComponent } from './filter/filter-text.component';
 import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
 import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
+import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component';
 import { DeviceWizardDialogComponent } from './wizard/device-wizard-dialog.component';
 import { DeviceCredentialsComponent } from './device/device-credentials.component';
 
@@ -199,6 +200,7 @@ import { DeviceCredentialsComponent } from './device/device-credentials.componen
       DeviceProfileDialogComponent,
       AddDeviceProfileDialogComponent,
       RuleChainAutocompleteComponent,
+      AlarmScheduleComponent,
       DeviceWizardDialogComponent,
       DeviceCredentialsComponent
     ],
@@ -281,7 +283,8 @@ import { DeviceCredentialsComponent } from './device/device-credentials.componen
     AddDeviceProfileDialogComponent,
     RuleChainAutocompleteComponent,
     DeviceWizardDialogComponent,
-    DeviceCredentialsComponent
+    DeviceCredentialsComponent,
+    AlarmScheduleComponent
   ],
   providers: [
     WidgetComponentService,

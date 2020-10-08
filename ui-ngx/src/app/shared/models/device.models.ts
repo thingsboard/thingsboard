@@ -36,6 +36,11 @@ export enum DeviceTransportType {
   LWM2M = 'LWM2M'
 }
 
+export enum MqttTransportPayloadType {
+  JSON = 'JSON',
+  PROTOBUF = 'PROTOBUF'
+}
+
 export interface DeviceConfigurationFormInfo {
   hasProfileConfiguration: boolean;
   hasDeviceConfiguration: boolean;
@@ -66,6 +71,14 @@ export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, st
     [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
   ]
 );
+
+export const mqttTransportPayloadTypeTranslationMap = new Map<MqttTransportPayloadType, string>(
+  [
+    [MqttTransportPayloadType.JSON, 'device-profile.mqtt-device-payload-type-json'],
+    [MqttTransportPayloadType.PROTOBUF, 'device-profile.mqtt-device-payload-type-proto']
+  ]
+);
+
 
 export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportType, DeviceConfigurationFormInfo>(
   [
@@ -162,7 +175,8 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
       case DeviceTransportType.MQTT:
         const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {
           deviceTelemetryTopic: 'v1/devices/me/telemetry',
-          deviceAttributesTopic: 'v1/devices/me/attributes'
+          deviceAttributesTopic: 'v1/devices/me/attributes',
+          transportPayloadType: MqttTransportPayloadType.JSON
         };
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
@@ -196,15 +210,66 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
   return transportConfiguration;
 }
 
+export enum AlarmConditionType {
+  SIMPLE = 'SIMPLE',
+  DURATION = 'DURATION',
+  REPEATING = 'REPEATING'
+}
+
+export const AlarmConditionTypeTranslationMap = new Map<AlarmConditionType, string>(
+  [
+    [AlarmConditionType.SIMPLE, 'device-profile.condition-type-simple'],
+    [AlarmConditionType.DURATION, 'device-profile.condition-type-duration'],
+    [AlarmConditionType.REPEATING, 'device-profile.condition-type-repeating']
+  ]
+);
+
+export interface AlarmConditionSpec{
+  type?: AlarmConditionType;
+  unit?: TimeUnit;
+  value?: number;
+  count?: number;
+}
+
 export interface AlarmCondition {
   condition: Array<KeyFilter>;
-  durationUnit?: TimeUnit;
-  durationValue?: number;
+  spec?: AlarmConditionSpec;
+}
+
+export enum AlarmScheduleType {
+  ANY_TIME = 'ANY_TIME',
+  SPECIFIC_TIME = 'SPECIFIC_TIME',
+  CUSTOM = 'CUSTOM'
+}
+
+export const AlarmScheduleTypeTranslationMap = new Map<AlarmScheduleType, string>(
+  [
+    [AlarmScheduleType.ANY_TIME, 'device-profile.schedule-any-time'],
+    [AlarmScheduleType.SPECIFIC_TIME, 'device-profile.schedule-specific-time'],
+    [AlarmScheduleType.CUSTOM, 'device-profile.schedule-custom']
+  ]
+);
+
+export interface AlarmSchedule{
+  type: AlarmScheduleType;
+  timezone?: string;
+  daysOfWeek?: number[];
+  startsOn?: number;
+  endsOn?: number;
+  items?: CustomTimeSchedulerItem[];
+}
+
+export interface CustomTimeSchedulerItem{
+  enabled: boolean;
+  dayOfWeek: number;
+  startsOn: number;
+  endsOn: number;
 }
 
 export interface AlarmRule {
   condition: AlarmCondition;
   alarmDetails?: string;
+  schedule?: AlarmSchedule;
 }
 
 export interface DeviceProfileAlarm {

@@ -32,7 +32,7 @@ module.exports = {
       SUPPORTED_LANGS: JSON.stringify(langs),
     }),
     new CompressionPlugin({
-      filename: "[path].gz[query]",
+      filename: "[path][base].gz[query]",
       algorithm: "gzip",
       test: /\.js$|\.css$|\.html$|\.svg?.+$|\.jpg$|\.ttf?.+$|\.woff?.+$|\.eot?.+$|\.json$/,
       threshold: 10240,

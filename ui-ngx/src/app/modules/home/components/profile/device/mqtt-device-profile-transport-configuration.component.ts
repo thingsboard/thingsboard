@@ -28,9 +28,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
+  MqttTransportPayloadType,
   DeviceProfileTransportConfiguration,
   DeviceTransportType,
-  MqttDeviceProfileTransportConfiguration
+  MqttDeviceProfileTransportConfiguration, mqttTransportPayloadTypeTranslationMap
 } from '@shared/models/device.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
@@ -45,6 +46,11 @@ import { isDefinedAndNotNull } from '@core/utils';
   }]
 })
 export class MqttDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit {
+
+  mqttTransportPayloadTypes = Object.keys(MqttTransportPayloadType);
+
+  mqttTransportPayloadTypeTranslations = mqttTransportPayloadTypeTranslationMap;
+
 
   mqttDeviceProfileTransportConfigurationFormGroup: FormGroup;
 
@@ -79,7 +85,8 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     this.mqttDeviceProfileTransportConfigurationFormGroup = this.fb.group({
       configuration: this.fb.group({
         deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
-        deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]]
+        deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]],
+        transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required]
       })
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {

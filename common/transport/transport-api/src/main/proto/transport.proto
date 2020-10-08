@@ -1,0 +1,101 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+package transportapi;
+
+option java_package = "org.thingsboard.server.gen.transport";
+option java_outer_classname = "TransportApiProtos";
+
+import "queue.proto";
+
+message ClaimDevice {
+  string secretKey = 1;
+  int64 durationMs = 2;
+}
+
+message AttributesRequest {
+  string clientKeys = 1;
+  string sharedKeys = 2;
+}
+
+message RpcRequest {
+  string method = 1;
+  string params = 2;
+}
+
+message DisconnectMsg {
+  string deviceName = 1;
+}
+
+message ConnectMsg {
+  string deviceName = 1;
+  string deviceType = 2;
+}
+
+message TelemetryMsg {
+  string deviceName = 1;
+  transport.PostTelemetryMsg msg = 3;
+}
+
+message AttributesMsg {
+  string deviceName = 1;
+  transport.PostAttributeMsg msg = 2;
+}
+
+message ClaimDeviceMsg {
+  string deviceName = 1;
+  ClaimDevice claimRequest = 2;
+}
+
+message GatewayTelemetryMsg {
+  repeated TelemetryMsg msg = 1;
+}
+
+message GatewayClaimMsg {
+  repeated ClaimDeviceMsg msg = 1;
+}
+
+message GatewayAttributesMsg {
+  repeated AttributesMsg msg = 1;
+}
+
+message GatewayRpcResponseMsg {
+  string deviceName = 1;
+  int32  id = 2;
+  string data = 3;
+}
+
+message GatewayAttributeResponseMsg {
+  string deviceName = 1;
+  transport.GetAttributeResponseMsg responseMsg = 2;
+}
+
+message GatewayAttributeUpdateNotificationMsg {
+  string deviceName = 1;
+  transport.AttributeUpdateNotificationMsg notificationMsg = 2;
+}
+
+message GatewayDeviceRpcRequestMsg {
+  string deviceName = 1;
+  transport.ToDeviceRpcRequestMsg rpcRequestMsg = 2;
+}
+
+message GatewayAttributesRequestMsg {
+  int32  id = 1;
+  string deviceName = 2;
+  bool client = 3;
+  repeated string keys = 4;
+}
