@@ -148,17 +148,14 @@ public class LwM2MTransportRequest {
                      * when:
                      * a.old value is 17 and new value is 24 due to lt condition
                      * b.old value is 75 and new value is 90 due to both gt and step conditions
-                     * WriteAttributesResponse [code=INTERNAL_SERVER_ERROR, errormessage=not implemented]
-                     * --> leshan-client-core/src/main/java/org/eclipse/leshan/client/resource/BaseObjectEnabler.java:
-                     *      writeAttributes(ServerIdentity identity, WriteAttributesRequest request) строка: 344
+                     *   String uriQueries = "pmin=10&pmax=60";
+                     *   AttributeSet attributes = AttributeSet.parse(uriQueries);
+                     *   WriteAttributesRequest request = new WriteAttributesRequest(target, attributes);
+                     *   Attribute gt = new Attribute(GREATER_THAN, Double.valueOf("45"));
+                     *   Attribute st = new Attribute(LESSER_THAN, Double.valueOf("10"));
+                     *   Attribute pmax = new Attribute(MAXIMUM_PERIOD, "60");
+                     *   Attribute [] attrs = {gt, st};
                      */
-//                    String uriQueries = "pmin=10&pmax=60";
-//                    AttributeSet attributes = AttributeSet.parse(uriQueries);
-//                    WriteAttributesRequest request = new WriteAttributesRequest(target, attributes);
-//                    Attribute gt = new Attribute(GREATER_THAN, Double.valueOf("45"));
-//                    Attribute st = new Attribute(LESSER_THAN, Double.valueOf("10"));
-//                    Attribute pmax = new Attribute(MAXIMUM_PERIOD, "60");
-//                    Attribute [] attrs = {gt, st};
                     Attribute pmin = new Attribute(MINIMUM_PERIOD, Integer.toUnsignedLong(Integer.valueOf("1")));
                     Attribute[] attrs = {pmin};
                     AttributeSet attrSet = new AttributeSet(attrs);
@@ -169,7 +166,6 @@ public class LwM2MTransportRequest {
                     } else if (resultIds.getObjectId() >= 0) {
                         request = new WriteAttributesRequest(resultIds.getObjectId(), attrSet);
                     }
-
                     break;
                 default:
             }

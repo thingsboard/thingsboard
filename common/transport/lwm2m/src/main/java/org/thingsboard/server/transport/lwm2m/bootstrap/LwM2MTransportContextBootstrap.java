@@ -92,5 +92,4 @@ public class LwM2MTransportContextBootstrap extends TransportContext {
     @Getter
     @Setter
     private Map<String /** clientEndPoint */, TransportProtos.ValidateDeviceCredentialsResponseMsg> sessions;
-
 }

@@ -57,17 +57,6 @@ public class LwM2MTransportHandler{
     // send a Confirmable message to the time when an acknowledgement is no longer expected.
     public static final long DEFAULT_TIMEOUT = 2 * 60 * 1000l; // 2min in ms
     public static final String EVENT_DEREGISTRATION = "DEREGISTRATION";
-    public static final String EVENT_UPDATED = "UPDATED";
-    public static final String EVENT_REGISTRATION = "REGISTRATION";
-
-    public static final String EVENT_SLEEPING = "SLEEPING";
-    public static final String EVENT_NOTIFICATION = "NOTIFICATION";
-    public static final String EVENT_COAP_LOG = "COAPLOG";
-    public static final String QUERY_PARAM_ENDPOINT = "ep";
-    public static final String FORMAT_PARAM = "format";
-    public static final String TIMEOUT_PARAM = "timeout";
-    public static final String REPLACE_PARAM = "replace";
-
     public static final String OBSERVE_ATTRIBUTE_TELEMETRY = "observeAttr";
     public static final String ATTRIBUTE = "attribute";
     public static final String TELEMETRY = "telemetry";

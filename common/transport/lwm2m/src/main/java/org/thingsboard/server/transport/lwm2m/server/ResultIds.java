@@ -17,10 +17,6 @@ package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.Builder;
 import lombok.Data;
-import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.request.DownlinkRequest;
-
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEFAULT_TIMEOUT;
 
 @Data
 public class ResultIds {

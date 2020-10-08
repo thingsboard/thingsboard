@@ -55,5 +55,4 @@ public enum LwM2MSecurityMode {
         }
         throw new IllegalArgumentException(String.format("Unsupported security subEndpoint : %d", subEndpoint));
     }
-
 }

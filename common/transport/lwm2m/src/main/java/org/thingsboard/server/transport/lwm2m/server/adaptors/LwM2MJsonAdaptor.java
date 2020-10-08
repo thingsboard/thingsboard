@@ -49,7 +49,6 @@ public class LwM2MJsonAdaptor implements LwM2MTransportAdaptor  {
         }
     }
 
-
     public JsonObject validateJson(String jsonStr) {
         JsonObject object = null;
         if (jsonStr != null && !jsonStr.isEmpty()) {

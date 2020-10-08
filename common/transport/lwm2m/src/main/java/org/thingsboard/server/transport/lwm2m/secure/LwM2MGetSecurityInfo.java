@@ -69,7 +69,7 @@ public class LwM2MGetSecurityInfo {
                     @Override
                     public void onError(Throwable e) {
                         log.trace("[{}] Failed to process credentials PSK: {}", endPoint, e);
-                        resultSecurityStore[0] = putSecurityInfo(endPoint, null,null, null);
+                        resultSecurityStore[0] = putSecurityInfo(endPoint, null, null, null);
                         latch.countDown();
                     }
                 });
@@ -97,8 +97,7 @@ public class LwM2MGetSecurityInfo {
                 if (keyValue.equals(TypeServer.BOOTSTRAP)) {
                     result.setBootstrapJson(object);
                     result.setEndPoint(endPoint);
-                }
-                else {
+                } else {
                     LwM2MSecurityMode lwM2MSecurityMode = LwM2MSecurityMode.fromSecurityMode(object.get("securityConfigClientMode").getAsString().toLowerCase());
                     switch (lwM2MSecurityMode) {
                         case NO_SEC:
@@ -131,10 +130,10 @@ public class LwM2MGetSecurityInfo {
     private void getClientSecurityInfoPSK(ReadResultSecurityStore result, String endPoint, JsonObject object) {
         /** PSK Deserialization */
         String identity = (object.has("identity") && object.get("identity").isJsonPrimitive()) ? object.get("identity").getAsString() : null;
-        if (identity != null  && !identity.isEmpty()) {
+        if (identity != null && !identity.isEmpty()) {
             try {
-                byte[] key =  (object.has("key") && object.get("key").isJsonPrimitive()) ? Hex.decodeHex(object.get("key").getAsString().toCharArray()) : null;
-                if (key!= null && key.length > 0) {
+                byte[] key = (object.has("key") && object.get("key").isJsonPrimitive()) ? Hex.decodeHex(object.get("key").getAsString().toCharArray()) : null;
+                if (key != null && key.length > 0) {
                     if (endPoint != null && !endPoint.isEmpty()) {
                         result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endPoint, identity, key));
                         result.setSecurityMode(PSK.code);
@@ -143,8 +142,7 @@ public class LwM2MGetSecurityInfo {
             } catch (IllegalArgumentException e) {
                 log.error("Missing PSK key: " + e.getMessage());
             }
-        }
-        else {
+        } else {
             log.error("Missing PSK identity");
         }
     }
@@ -153,7 +151,7 @@ public class LwM2MGetSecurityInfo {
         try {
             if (object.has("key") && object.get("key").isJsonPrimitive()) {
                 byte[] rpkkey = Hex.decodeHex(object.get("key").getAsString().toLowerCase().toCharArray());
-                PublicKey  key = SecurityUtil.publicKey.decode(rpkkey);
+                PublicKey key = SecurityUtil.publicKey.decode(rpkkey);
                 result.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(endpoint, key));
                 result.setSecurityMode(RPK.code);
             } else {
@@ -168,5 +166,4 @@ public class LwM2MGetSecurityInfo {
         result.setSecurityInfo(SecurityInfo.newX509CertInfo(endpoint));
         result.setSecurityMode(X509.code);
     }
-
 }

@@ -179,6 +179,7 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
         this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity();
         this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity();
+        this.deviceCredentialsFormGroup.get('credentialsBasic').disable();
         break;
     }
   }

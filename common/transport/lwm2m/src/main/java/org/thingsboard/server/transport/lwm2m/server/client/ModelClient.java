@@ -25,10 +25,8 @@ import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
-
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportService;
 import org.thingsboard.server.transport.lwm2m.server.ResultIds;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -92,7 +90,6 @@ public class ModelClient  implements Cloneable {
 
     private void initValue () {
         this.responses.forEach((key, resp) -> {
-//            int objectId  = Integer.valueOf(key.split("/")[1]);
             ResultIds pathIds = new ResultIds(key);
             if (pathIds.getObjectId() > -1) {
                 ObjectModel objectModel = ((Collection<ObjectModel>) lwServer.getModelProvider().getObjectModel(registration).getObjectModels()).stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0);

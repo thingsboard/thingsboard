@@ -16,13 +16,9 @@
 package org.thingsboard.server.transport.lwm2m.bootstrap;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
-import org.eclipse.leshan.core.model.ObjectLoader;
-import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.StaticModel;
 import org.eclipse.leshan.server.bootstrap.BootstrapSessionManager;
-import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServerBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,10 +33,6 @@ import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MSetSecurityS
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBootstrapSessionManager;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
-
-import java.io.File;
-import java.util.List;
-
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
 
@@ -101,9 +93,6 @@ public class LwM2MTransportBootstrapServerConfiguration {
         /**  Create credentials */
         new LwM2MSetSecurityStoreBootstrap(builder, contextBs, contextS, dtlsMode);
 
-        /**
-         *
-         */
         BootstrapSessionManager sessionManager = new LwM2mDefaultBootstrapSessionManager(lwM2MBootstrapSecurityStore);
         builder.setSessionManager(sessionManager);
 

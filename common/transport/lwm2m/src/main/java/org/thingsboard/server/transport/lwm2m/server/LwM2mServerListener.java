@@ -37,8 +37,7 @@ public class LwM2mServerListener {
         this.service = service;
     }
 
-        public final RegistrationListener registrationListener = new RegistrationListener() {
-//    public SynchronousRegistrationListener registrationListener = new SynchronousRegistrationListener() {
+    public final RegistrationListener registrationListener = new RegistrationListener() {
         /**
          * Register – запрос, представленный в виде POST /rd?…
          */
@@ -70,7 +69,6 @@ public class LwM2mServerListener {
     };
 
     public final PresenceListener presenceListener = new PresenceListener() {
-
         @Override
         public void onSleeping(Registration registration) {
             service.onSleepingDev(registration);
@@ -91,7 +89,6 @@ public class LwM2mServerListener {
 
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
-//            log.info("Received notification onResponse from [{}] containing value [{}]", observation.getPath(), response.getContent().toString());
             if (registration != null) {
                 service.onObservationResponse(registration, observation.getPath().toString(), response);
             }
@@ -99,7 +96,7 @@ public class LwM2mServerListener {
 
         @Override
         public void onError(Observation observation, Registration registration, Exception error) {
-            log.info(String.format("Unable to handle notification of [%s:%s]", observation.getRegistrationId(), observation.getPath()), error);
+            log.error(String.format("Unable to handle notification of [%s:%s]", observation.getRegistrationId(), observation.getPath()), error);
         }
 
         @Override

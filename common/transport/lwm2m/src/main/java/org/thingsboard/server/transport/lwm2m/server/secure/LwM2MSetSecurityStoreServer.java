@@ -29,10 +29,6 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.util.Pool;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -41,9 +37,7 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.*;
 import java.util.Arrays;
-
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.KEY_STORE_DEFAULT_RESOURCE_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getInKeyStore;
 
 @Slf4j
@@ -112,7 +106,6 @@ public class LwM2MSetSecurityStoreServer {
                 }
                 break;
             default:
-                // TODO support sentinel pool and make pool configurable
         }
 
         /** Set securityStore with new registrationStore (if not redis)*/

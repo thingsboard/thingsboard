@@ -23,10 +23,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service("LwM2MTransportServerInitializer")
@@ -47,7 +45,6 @@ public class LwM2MTransportServerInitializer {
     @PostConstruct
     public void init() {
         if (context.getEnableGenPskRpk()) new LWM2MGenerationPSkRPkECC();
-//        this.context.setSessions(new ConcurrentHashMap<>());
         if (this.context.isServerStartAll()) {
             this.lhServerCert.start();
             this.lhServerNoSecPskRpk.start();

@@ -63,7 +63,4 @@ public class LwM2MSessionMsgListener implements SessionMsgListener {
     public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
         log.info("6.6)  onToServerRpcResponse");
     }
-
-
-
 }

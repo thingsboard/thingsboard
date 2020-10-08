@@ -23,10 +23,6 @@ import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBootstrap;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.CertificateEncodingException;
@@ -34,9 +30,7 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.*;
 import java.util.Arrays;
-
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.KEY_STORE_DEFAULT_RESOURCE_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getInKeyStore;
 
 @Slf4j
@@ -49,8 +43,6 @@ public class LwM2MSetSecurityStoreBootstrap {
     private PrivateKey privateKey;
     private LwM2MTransportContextBootstrap contextBS;
     private LwM2MTransportContextServer contextS;
-
-
     private LeshanBootstrapServerBuilder builder;
     EditableSecurityStore securityStore;
 
@@ -167,12 +159,6 @@ public class LwM2MSetSecurityStoreBootstrap {
             log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
         }
         return keyStoreServer;
-    }
-
-    private void getParamsPSK() {
-        log.info("\nBootstrap uses PSK -> private key : \n security key : [{}] \n serverSecureURI : [{}]",
-                Hex.encodeHexString(this.privateKey.getEncoded()),
-                contextBS.getBootstrapHost() + ":" + Integer.toString(contextBS.getBootstrapPort()));
     }
 
     private void getParamsRPK() {

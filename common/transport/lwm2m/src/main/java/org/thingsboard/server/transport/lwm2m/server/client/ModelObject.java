@@ -20,7 +20,6 @@ import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import java.util.Map;
 
-
 @Data
 public class ModelObject {
     /**

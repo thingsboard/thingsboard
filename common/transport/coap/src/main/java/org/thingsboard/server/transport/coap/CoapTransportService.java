@@ -57,7 +57,6 @@ public class CoapTransportService {
         CoapEndpoint coapEndpoint = builder.build();
 
         server.addEndpoint(coapEndpoint);
-//        server.addEndpoint(new CoapEndpoint(sockAddr));
         server.start();
         log.info("CoAP transport started!");
     }

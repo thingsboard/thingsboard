@@ -128,7 +128,6 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     }
 
     public ModelClient getByModelClient(String endPoint, String identity) {
-//        List<String> integrationIds = this.sessions.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndPoint())).map(model -> model.getKey()).collect(Collectors.toList());
         Map.Entry<String, ModelClient> modelClients = (endPoint != null) ?
                 this.sessions.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndPoint())).findAny().orElse(null) :
                 this.sessions.entrySet().stream().filter(model -> identity.equals(model.getValue().getIdentity())).findAny().orElse(null);
@@ -147,7 +146,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     }
 
     public String getByRegistrationId(String credentialsId) {
-        List<String> registrationIds = (this.sessions.entrySet().stream().filter(model -> credentialsId.equals(model.getValue().getEndPoint())).map(model -> model.getKey()).collect(Collectors.toList()) != null) ?
+        List<String> registrationIds = (this.sessions.entrySet().stream().filter(model -> credentialsId.equals(model.getValue().getEndPoint())).map(model -> model.getKey()).collect(Collectors.toList()).size()>0) ?
                 this.sessions.entrySet().stream().filter(model -> credentialsId.equals(model.getValue().getEndPoint())).map(model -> model.getKey()).collect(Collectors.toList()) :
                 this.sessions.entrySet().stream().filter(model -> credentialsId.equals(model.getValue().getIdentity())).map(model -> model.getKey()).collect(Collectors.toList());
         return (registrationIds != null && registrationIds.size() > 0) ? registrationIds.get(0) : null;
@@ -157,15 +156,9 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         return this.sessions.get(registrationId).getRegistration();
     }
 
-    private SecurityInfo getByModelClientSecurityInfo(String endPoint, String identity) {
-        ModelClient modelClient = getByModelClient(endPoint, identity);
-        return (modelClient != null) ? modelClient.getInfo() : null;
-    }
-
     private SecurityInfo add(String identity) {
         ReadResultSecurityStore store = lwM2MGetSecurityInfo.getSecurityInfo(identity, TypeServer.CLIENT);
         if (store.getSecurityInfo() != null) {
-            //                add(store.getSecurityInfo());
             if (store.getSecurityMode() < DEFAULT_MODE.code) {
                 String endpoint = store.getSecurityInfo().getEndpoint();
                 sessions.put(endpoint, new ModelClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getMsg(), null, null));
@@ -183,16 +176,11 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         writeLock.lock();
         try {
             ModelClient modelClient = null;
-            if (this.sessions.get(registration.getEndpoint()) == null) {
-                SecurityInfo info = (registration.getIdentity().isPSK()) ? getByIdentity(registration.getIdentity().getPskIdentity()) :
-                        getByEndpoint(registration.getEndpoint());
-            }
             if (this.sessions.get(registration.getEndpoint()) != null &&
                     this.sessions.get(registration.getEndpoint()).clone() != null) {
                 modelClient = (ModelClient) this.sessions.get(registration.getEndpoint()).clone();
                 modelClient.setRegistrationParam(lwServer, registration);
                 modelClient.setAttributes(registration.getAdditionalRegistrationAttributes());
-//                modelClient.setTransportService(transportService);
                 this.sessions.put(registration.getId(), modelClient);
                 this.sessions.remove(registration.getEndpoint());
             }

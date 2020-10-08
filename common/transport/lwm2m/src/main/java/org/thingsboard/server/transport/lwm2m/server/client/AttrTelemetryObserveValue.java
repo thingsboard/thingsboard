@@ -16,44 +16,22 @@
 package org.thingsboard.server.transport.lwm2m.server.client;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import lombok.Data;
-
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 public class AttrTelemetryObserveValue {
-//    /**
-//     *  {path: {name: value}}
-//     */
-//    JsonObject postAttribute;
     /**
      * [ "/2/0/0", "/2/0/1"]
      */
     JsonArray postAttributeProfile;
-//    /**
-//     *  {path: {name: value}}
-//     */
-//    JsonObject postTelemetry;
+
     /**
      * [ "/2/0/0", "/2/0/1"]
      */
     JsonArray postTelemetryProfile;
-//    /**
-//     * [ "/2/0/0", "/2/0/1"]
-//     */
-//    Set<String> postObserve;
+
     /**
      * [ "/2/0/0", "/2/0/1"]
      */
     JsonArray postObserveProfile;
-//
-//    /**
-//     * Only All recourses: postAttribute&postTelemetry
-//     * [ "/2/0/0", "/2/0/1"]
-//     */
-//    Set<String> pathResAttrTelemetry;
 }
