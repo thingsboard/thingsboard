@@ -467,9 +467,20 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             ctx.addStringParameter("where_relation_type", entityFilter.getRelationType());
             whereFilter += " re.relation_type = :where_relation_type AND";
         }
+        String toOrFrom = (entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "to" : "from");
         whereFilter += " re." + (entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "to" : "from") + "_type = :where_entity_type";
         if (entityFilter.isFetchLastLevelOnly()) {
-            whereFilter += " and re.lvl = " + entityFilter.getMaxLevel();
+            String fromOrTo = (entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "from" : "to");
+            StringBuilder notExistsPart = new StringBuilder();
+            notExistsPart.append(" NOT EXISTS (SELECT 1 from relation nr where ")
+                    .append("nr.").append(fromOrTo).append("_id").append(" = re.").append(toOrFrom).append("_id")
+                    .append(" and ")
+                    .append("nr.").append(fromOrTo).append("_type").append(" = re.").append(toOrFrom).append("_type");
+            if (!StringUtils.isEmpty(entityFilter.getRelationType())) {
+                notExistsPart.append(" and nr.relation_type = :where_relation_type");
+            }
+            notExistsPart.append(")");
+            whereFilter += " and ( re.lvl = " + entityFilter.getMaxLevel() + " OR " + notExistsPart.toString() + ")";
         }
         from = String.format(from, lvlFilter, whereFilter);
         String query = "( " + selectFields + from + ")";
@@ -502,14 +513,13 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         StringBuilder whereFilter = new StringBuilder();
 
         boolean noConditions = true;
+        boolean single = entityFilter.getFilters() != null && entityFilter.getFilters().size() == 1;
         if (entityFilter.getFilters() != null && !entityFilter.getFilters().isEmpty()) {
-            boolean single = entityFilter.getFilters().size() == 1;
             int entityTypeFilterIdx = 0;
             for (EntityTypeFilter etf : entityFilter.getFilters()) {
                 String etfCondition = buildEtfCondition(ctx, etf, entityFilter.getDirection(), entityTypeFilterIdx++);
                 if (!etfCondition.isEmpty()) {
                     if (noConditions) {
-                        whereFilter.append(" WHERE ");
                         noConditions = false;
                     } else {
                         whereFilter.append(" OR ");
@@ -525,15 +535,33 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             }
         }
         if (noConditions) {
-            whereFilter.append(" WHERE re.")
+            whereFilter.append(" re.")
                     .append(entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "to" : "from")
                     .append("_type in (:where_entity_types").append(")");
             ctx.addStringListParameter("where_entity_types", Arrays.stream(RELATION_QUERY_ENTITY_TYPES).map(EntityType::name).collect(Collectors.toList()));
         }
-        if (entityFilter.isFetchLastLevelOnly()) {
-            whereFilter.append(" and re.lvl = ").append(entityFilter.getMaxLevel());
+
+        if (!noConditions && !single) {
+            whereFilter = new StringBuilder().append("(").append(whereFilter).append(")");
         }
-        from = String.format(from, lvlFilter, whereFilter);
+
+        if (entityFilter.isFetchLastLevelOnly()) {
+            String toOrFrom = (entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "to" : "from");
+            String fromOrTo = (entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "from" : "to");
+
+            StringBuilder notExistsPart = new StringBuilder();
+            notExistsPart.append(" NOT EXISTS (SELECT 1 from relation nr WHERE ");
+            notExistsPart.append(whereFilter.toString());
+            notExistsPart
+                    .append(" and ")
+                    .append("nr.").append(fromOrTo).append("_id").append(" = re.").append(toOrFrom).append("_id")
+                    .append(" and ")
+                    .append("nr.").append(fromOrTo).append("_type").append(" = re.").append(toOrFrom).append("_type");
+
+            notExistsPart.append(")");
+            whereFilter.append(" and ( re.lvl = ").append(entityFilter.getMaxLevel()).append(" OR ").append(notExistsPart.toString()).append(")");
+        }
+        from = String.format(from, lvlFilter, " WHERE " + whereFilter);
         return "( " + selectFields + from + ")";
     }
 
