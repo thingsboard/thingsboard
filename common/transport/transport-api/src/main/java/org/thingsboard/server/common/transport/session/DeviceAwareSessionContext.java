@@ -17,8 +17,12 @@ package org.thingsboard.server.common.transport.session;
 
 import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.msg.session.SessionContext;
+import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 
 import java.util.UUID;
@@ -34,17 +38,31 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     @Getter
     private volatile DeviceId deviceId;
     @Getter
-    private volatile DeviceInfoProto deviceInfo;
+    protected volatile TransportDeviceInfo deviceInfo;
+    @Getter
+    @Setter
+    protected volatile DeviceProfile deviceProfile;
+    @Getter
+    @Setter
+    private volatile TransportProtos.SessionInfoProto sessionInfo;
+
     private volatile boolean connected;
 
     public DeviceId getDeviceId() {
         return deviceId;
     }
 
-    public void setDeviceInfo(DeviceInfoProto deviceInfo) {
+    public void setDeviceInfo(TransportDeviceInfo deviceInfo) {
         this.deviceInfo = deviceInfo;
         this.connected = true;
-        this.deviceId = new DeviceId(new UUID(deviceInfo.getDeviceIdMSB(), deviceInfo.getDeviceIdLSB()));
+        this.deviceId = deviceInfo.getDeviceId();
+    }
+
+    @Override
+    public void onProfileUpdate(DeviceProfile deviceProfile) {
+        this.deviceProfile = deviceProfile;
+        this.deviceInfo.setDeviceType(deviceProfile.getName());
+        this.sessionInfo = TransportProtos.SessionInfoProto.newBuilder().mergeFrom(sessionInfo).setDeviceType(deviceProfile.getName()).build();
     }
 
     public boolean isConnected() {

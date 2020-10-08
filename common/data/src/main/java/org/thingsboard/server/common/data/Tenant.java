@@ -19,8 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.TenantId;
-
-import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 
 @EqualsAndHashCode(callSuper = true)
 public class Tenant extends ContactBased<TenantId> implements HasTenantId {
@@ -29,8 +28,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
     
     private String title;
     private String region;
-    private boolean isolatedTbCore;
-    private boolean isolatedTbRuleEngine;
+    private TenantProfileId tenantProfileId;
 
     public Tenant() {
         super();
@@ -44,6 +42,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
         super(tenant);
         this.title = tenant.getTitle();
         this.region = tenant.getRegion();
+        this.tenantProfileId = tenant.getTenantProfileId();
     }
 
     public String getTitle() {
@@ -74,20 +73,12 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
         this.region = region;
     }
 
-    public boolean isIsolatedTbCore() {
-        return isolatedTbCore;
+    public TenantProfileId getTenantProfileId() {
+        return tenantProfileId;
     }
 
-    public void setIsolatedTbCore(boolean isolatedTbCore) {
-        this.isolatedTbCore = isolatedTbCore;
-    }
-
-    public boolean isIsolatedTbRuleEngine() {
-        return isolatedTbRuleEngine;
-    }
-
-    public void setIsolatedTbRuleEngine(boolean isolatedTbRuleEngine) {
-        this.isolatedTbRuleEngine = isolatedTbRuleEngine;
+    public void setTenantProfileId(TenantProfileId tenantProfileId) {
+        this.tenantProfileId = tenantProfileId;
     }
 
     @Override
@@ -102,10 +93,8 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
         builder.append(title);
         builder.append(", region=");
         builder.append(region);
-        builder.append(", isolatedTbCore=");
-        builder.append(isolatedTbCore);
-        builder.append(", isolatedTbRuleEngine=");
-        builder.append(isolatedTbRuleEngine);
+        builder.append(", tenantProfileId=");
+        builder.append(tenantProfileId);
         builder.append(", additionalInfo=");
         builder.append(getAdditionalInfo());
         builder.append(", country=");

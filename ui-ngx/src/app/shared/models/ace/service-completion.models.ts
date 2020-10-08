@@ -1379,5 +1379,11 @@ export const serviceCompletions: TbEditorCompletions = {
       'See <a href="https://angular.io/api/platform-browser/DomSanitizer">DomSanitizer</a> for API reference.',
     meta: 'service',
     type: '<a href="https://angular.io/api/platform-browser/DomSanitizer">DomSanitizer</a>'
+  },
+  router: {
+    description: 'Router Service<br>' +
+      'See <a href="https://angular.io/api/router/Router">Router</a> for API reference.',
+    meta: 'service',
+    type: '<a href="https://angular.io/api/router/Router">Router</a>'
   }
 };

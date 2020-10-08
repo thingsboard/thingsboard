@@ -33,7 +33,7 @@ public class MqttNoSqlTestSuite {
 
     @ClassRule
     public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
-            Arrays.asList("sql/schema-entities-hsql.sql", "sql/system-data.sql"),
+            Arrays.asList("sql/schema-types-hsql.sql", "sql/schema-entities-hsql.sql", "sql/system-data.sql"),
             "sql/hsql/drop-all-tables.sql",
             "nosql-test.properties");
 

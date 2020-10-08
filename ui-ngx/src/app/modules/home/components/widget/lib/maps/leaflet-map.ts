@@ -86,8 +86,7 @@ export default abstract class LeafletMap {
 
     public initSettings(options: MapSettings) {
         this.options.tinyColor = tinycolor(this.options.color || defaultSettings.color);
-        const { disableScrollZooming,
-            useClusterMarkers,
+        const { useClusterMarkers,
             zoomOnClick,
             showCoverageOnHover,
             removeOutsideVisibleBounds,
@@ -95,9 +94,6 @@ export default abstract class LeafletMap {
             chunkedLoading,
             maxClusterRadius,
             maxZoom }: MapSettings = options;
-        if (disableScrollZooming) {
-            this.map.scrollWheelZoom.disable();
-        }
         if (useClusterMarkers) {
             const clusteringSettings: MarkerClusterGroupOptions = {
                 zoomToBoundsOnClick: zoomOnClick,
@@ -307,8 +303,11 @@ export default abstract class LeafletMap {
         } else {
           this.bounds = new L.LatLngBounds(null, null);
         }
+        if (this.options.disableScrollZooming) {
+          this.map.scrollWheelZoom.disable();
+        }
         if (this.options.draggableMarker) {
-            this.addMarkerControl();
+          this.addMarkerControl();
         }
         if (this.options.editablePolygon) {
           this.addPolygonControl();
@@ -623,10 +622,10 @@ export default abstract class LeafletMap {
 
     // Polyline
 
-    updatePolylines(polyData: FormattedData[][], updateBounds = true, data?: FormattedData) {
+    updatePolylines(polyData: FormattedData[][], updateBounds = true, activePolyline?: FormattedData) {
         const keys: string[] = [];
         polyData.forEach((dataSource: FormattedData[]) => {
-            data = data || dataSource[0];
+            const data = activePolyline || dataSource[0];
             if (dataSource.length && data.entityName === dataSource[0].entityName) {
                 if (this.polylines.get(data.entityName)) {
                     this.updatePolyline(data, dataSource, this.options, updateBounds);

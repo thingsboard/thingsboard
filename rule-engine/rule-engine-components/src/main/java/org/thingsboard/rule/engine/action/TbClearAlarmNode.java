@@ -55,7 +55,7 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
     }
 
     @Override
-    protected ListenableFuture<AlarmResult> processAlarm(TbContext ctx, TbMsg msg) {
+    protected ListenableFuture<TbAlarmResult> processAlarm(TbContext ctx, TbMsg msg) {
         String alarmType = TbNodeUtils.processPattern(this.config.getAlarmType(), msg.getMetaData());
         ListenableFuture<Alarm> alarmFuture;
         if (msg.getOriginator().getEntityType().equals(EntityType.ALARM)) {
@@ -67,11 +67,11 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
             if (a != null && !a.getStatus().isCleared()) {
                 return clearAlarm(ctx, msg, a);
             }
-            return Futures.immediateFuture(new AlarmResult(false, false, false, null));
+            return Futures.immediateFuture(new TbAlarmResult(false, false, false, null));
         }, ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<AlarmResult> clearAlarm(TbContext ctx, TbMsg msg, Alarm alarm) {
+    private ListenableFuture<TbAlarmResult> clearAlarm(TbContext ctx, TbMsg msg, Alarm alarm) {
         ctx.logJsEvalRequest();
         ListenableFuture<JsonNode> asyncDetails = buildAlarmDetails(ctx, msg, alarm.getDetails());
         return Futures.transformAsync(asyncDetails, details -> {
@@ -86,7 +86,7 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
                         alarm.setClearTs(savedAlarm.getClearTs());
                     }
                     alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
-                    return Futures.immediateFuture(new AlarmResult(false, false, true, alarm));
+                    return Futures.immediateFuture(new TbAlarmResult(false, false, true, alarm));
                 }, ctx.getDbCallbackExecutor());
             }, ctx.getDbCallbackExecutor());
         }, ctx.getDbCallbackExecutor());

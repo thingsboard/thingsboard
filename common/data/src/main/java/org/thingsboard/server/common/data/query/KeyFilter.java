@@ -21,6 +21,7 @@ import lombok.Data;
 public class KeyFilter {
 
     private EntityKey key;
+    private EntityKeyValueType valueType;
     private KeyFilterPredicate predicate;
 
 }

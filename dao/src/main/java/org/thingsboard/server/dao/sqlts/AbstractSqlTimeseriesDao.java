@@ -53,6 +53,9 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
     @Value("${sql.timescale.batch_threads:4}")
     protected int timescaleBatchThreads;
 
+    @Value("${sql.batch_sort:false}")
+    protected boolean batchSortEnabled;
+
     protected ListenableFuture<List<TsKvEntry>> processFindAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
         List<ListenableFuture<List<TsKvEntry>>> futures = queries
                 .stream()

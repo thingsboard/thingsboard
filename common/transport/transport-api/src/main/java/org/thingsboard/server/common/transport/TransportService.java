@@ -15,10 +15,14 @@
  */
 package org.thingsboard.server.common.transport;
 
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
@@ -30,7 +34,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.SubscribeToRPCMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateBasicMqttCredRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 
@@ -41,14 +45,21 @@ public interface TransportService {
 
     GetTenantRoutingInfoResponseMsg getRoutingInfo(GetTenantRoutingInfoRequestMsg msg);
 
-    void process(ValidateDeviceTokenRequestMsg msg,
-                 TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback);
+    void process(DeviceTransportType transportType, ValidateDeviceTokenRequestMsg msg,
+                 TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
 
-    void process(ValidateDeviceX509CertRequestMsg msg,
-                 TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback);
+    void process(DeviceTransportType transportType, ValidateBasicMqttCredRequestMsg msg,
+                 TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
+
+    void process(DeviceTransportType transportType, ValidateDeviceX509CertRequestMsg msg,
+                 TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
 
     void process(GetOrCreateDeviceFromGatewayRequestMsg msg,
-                 TransportServiceCallback<GetOrCreateDeviceFromGatewayResponseMsg> callback);
+                 TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse> callback);
+
+    void getDeviceProfile(DeviceProfileId deviceProfileId, TransportServiceCallback<DeviceProfile> callback);
+
+    void onProfileUpdate(DeviceProfile deviceProfile);
 
     boolean checkLimits(SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback);
 

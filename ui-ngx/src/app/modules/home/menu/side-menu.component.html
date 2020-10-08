@@ -16,7 +16,7 @@
 
 -->
 <ul fxFlex fxLayout="column" fxLayoutAlign="start stretch" class="tb-side-menu">
-  <li *ngFor="let section of menuSections$| async" [ngSwitch]="section.type === 'link'">
+  <li *ngFor="let section of menuSections$ | async; trackBy: trackByMenuSection" [ngSwitch]="section.type === 'link'">
     <tb-menu-link *ngSwitchCase="true" [section]="section"></tb-menu-link>
     <tb-menu-toggle *ngSwitchCase="false" [section]="section"></tb-menu-toggle>
   </li>

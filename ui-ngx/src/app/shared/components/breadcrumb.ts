@@ -16,8 +16,9 @@
 
 import { ActivatedRouteSnapshot, Params } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { HasUUID } from '@shared/models/id/has-uuid';
 
-export interface BreadCrumb {
+export interface BreadCrumb extends HasUUID{
   label: string;
   labelFunction?: () => string;
   ignoreTranslate: boolean;

@@ -36,9 +36,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { EntitiesDataSource } from '@home/models/datasource/entity-datasource';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { forkJoin, fromEvent, merge, Observable, Subscription } from 'rxjs';
+import { forkJoin, fromEvent, merge, Observable, of, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { ActivatedRoute } from '@angular/router';
@@ -59,6 +59,7 @@ import { DAY, historyInterval, HistoryWindowType, Timewindow } from '@shared/mod
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { isDefined, isUndefined } from '@core/utils';
+import { HasUUID } from '../../../../shared/models/id/has-uuid';
 
 @Component({
   selector: 'tb-entities-table',
@@ -401,16 +402,19 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
       true
     ).subscribe((result) => {
       if (result) {
-        const tasks: Observable<any>[] = [];
+        const tasks: Observable<HasUUID>[] = [];
         entities.forEach((entity) => {
           if (this.entitiesTableConfig.deleteEnabled(entity)) {
-            tasks.push(this.entitiesTableConfig.deleteEntity(entity.id));
+            tasks.push(this.entitiesTableConfig.deleteEntity(entity.id).pipe(
+              map(() => entity.id),
+              catchError(() => of(null)
+            )));
           }
         });
         forkJoin(tasks).subscribe(
-          () => {
+          (ids) => {
             this.updateData();
-            this.entitiesTableConfig.entitiesDeleted(entities.map((e) => e.id));
+            this.entitiesTableConfig.entitiesDeleted(ids.filter(id => id !== null));
           }
         );
       }

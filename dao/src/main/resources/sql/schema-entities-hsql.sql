@@ -14,7 +14,6 @@
 -- limitations under the License.
 --
 
-
 CREATE TABLE IF NOT EXISTS admin_settings (
     id uuid NOT NULL CONSTRAINT admin_settings_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
@@ -122,17 +121,72 @@ CREATE TABLE IF NOT EXISTS dashboard (
     title varchar(255)
 );
 
+CREATE TABLE IF NOT EXISTS rule_chain (
+    id uuid NOT NULL CONSTRAINT rule_chain_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    configuration varchar(10000000),
+    name varchar(255),
+    first_rule_node_id uuid,
+    root boolean,
+    debug_mode boolean,
+    search_text varchar(255),
+    tenant_id uuid
+);
+
+CREATE TABLE IF NOT EXISTS rule_node (
+    id uuid NOT NULL CONSTRAINT rule_node_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    rule_chain_id uuid,
+    additional_info varchar,
+    configuration varchar(10000000),
+    type varchar(255),
+    name varchar(255),
+    debug_mode boolean,
+    search_text varchar(255)
+);
+
+CREATE TABLE IF NOT EXISTS rule_node_state (
+    id uuid NOT NULL CONSTRAINT rule_node_state_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    rule_node_id uuid NOT NULL,
+    entity_type varchar(32) NOT NULL,
+    entity_id uuid NOT NULL,
+    state_data varchar(16384) NOT NULL,
+    CONSTRAINT rule_node_state_unq_key UNIQUE (rule_node_id, entity_id),
+    CONSTRAINT fk_rule_node_state_node_id FOREIGN KEY (rule_node_id) REFERENCES rule_node(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS device_profile (
+    id uuid NOT NULL CONSTRAINT device_profile_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    name varchar(255),
+    type varchar(255),
+    transport_type varchar(255),
+    profile_data jsonb,
+    description varchar,
+    search_text varchar(255),
+    is_default boolean,
+    tenant_id uuid,
+    default_rule_chain_id uuid,
+    CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id)
+);
+
 CREATE TABLE IF NOT EXISTS device (
     id uuid NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     additional_info varchar,
     customer_id uuid,
+    device_profile_id uuid NOT NULL,
+    device_data jsonb,
     type varchar(255),
     name varchar(255),
     label varchar(255),
     search_text varchar(255),
     tenant_id uuid,
-    CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name)
+    CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (
@@ -183,10 +237,24 @@ CREATE TABLE IF NOT EXISTS tb_user (
     tenant_id uuid
 );
 
+CREATE TABLE IF NOT EXISTS tenant_profile (
+    id uuid NOT NULL CONSTRAINT tenant_profile_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    name varchar(255),
+    profile_data jsonb,
+    description varchar,
+    search_text varchar(255),
+    is_default boolean,
+    isolated_tb_core boolean,
+    isolated_tb_rule_engine boolean,
+    CONSTRAINT tenant_profile_name_unq_key UNIQUE (name)
+);
+
 CREATE TABLE IF NOT EXISTS tenant (
     id uuid NOT NULL CONSTRAINT tenant_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     additional_info varchar,
+    tenant_profile_id uuid NOT NULL,
     address varchar,
     address2 varchar,
     city varchar(255),
@@ -198,8 +266,7 @@ CREATE TABLE IF NOT EXISTS tenant (
     state varchar(255),
     title varchar(255),
     zip varchar(255),
-    isolated_tb_core boolean,
-    isolated_tb_rule_engine boolean
+    CONSTRAINT fk_tenant_profile FOREIGN KEY (tenant_profile_id) REFERENCES tenant_profile(id)
 );
 
 CREATE TABLE IF NOT EXISTS user_credentials (
@@ -229,31 +296,6 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     search_text varchar(255),
     tenant_id uuid,
     title varchar(255)
-);
-
-CREATE TABLE IF NOT EXISTS rule_chain (
-    id uuid NOT NULL CONSTRAINT rule_chain_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    additional_info varchar,
-    configuration varchar(10000000),
-    name varchar(255),
-    first_rule_node_id uuid,
-    root boolean,
-    debug_mode boolean,
-    search_text varchar(255),
-    tenant_id uuid
-);
-
-CREATE TABLE IF NOT EXISTS rule_node (
-    id uuid NOT NULL CONSTRAINT rule_node_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    rule_chain_id uuid,
-    additional_info varchar,
-    configuration varchar(10000000),
-    type varchar(255),
-    name varchar(255),
-    debug_mode boolean,
-    search_text varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS entity_view (

@@ -21,14 +21,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
@@ -40,7 +46,7 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
+import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 
 import java.util.HashSet;
@@ -64,11 +70,13 @@ public class DefaultTbClusterService implements TbClusterService {
     private final TbQueueProducerProvider producerProvider;
     private final PartitionService partitionService;
     private final DataDecodingEncodingService encodingService;
+    private final TbDeviceProfileCache deviceProfileCache;
 
-    public DefaultTbClusterService(TbQueueProducerProvider producerProvider, PartitionService partitionService, DataDecodingEncodingService encodingService) {
+    public DefaultTbClusterService(TbQueueProducerProvider producerProvider, PartitionService partitionService, DataDecodingEncodingService encodingService, TbDeviceProfileCache deviceProfileCache) {
         this.producerProvider = producerProvider;
         this.partitionService = partitionService;
         this.encodingService = encodingService;
+        this.deviceProfileCache = deviceProfileCache;
     }
 
     @Override
@@ -124,6 +132,12 @@ public class DefaultTbClusterService implements TbClusterService {
                 log.warn("[{}][{}] Received invalid message: {}", tenantId, entityId, tbMsg);
                 return;
             }
+        } else {
+            if (entityId.getEntityType().equals(EntityType.DEVICE)) {
+                tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceId(entityId.getId())));
+            } else if (entityId.getEntityType().equals(EntityType.DEVICE_PROFILE)) {
+                tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceProfileId(entityId.getId())));
+            }
         }
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, entityId);
         log.trace("PUSHING msg: {} to:{}", tbMsg, tpi);
@@ -133,6 +147,16 @@ public class DefaultTbClusterService implements TbClusterService {
                 .setTbMsg(TbMsg.toByteString(tbMsg)).build();
         producerProvider.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), callback);
         toRuleEngineMsgs.incrementAndGet();
+    }
+
+    private TbMsg transformMsg(TbMsg tbMsg, DeviceProfile deviceProfile) {
+        if (deviceProfile != null) {
+            RuleChainId targetRuleChainId = deviceProfile.getDefaultRuleChainId();
+            if (targetRuleChainId != null && !targetRuleChainId.equals(tbMsg.getRuleChainId())) {
+                tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId);
+            }
+        }
+        return tbMsg;
     }
 
     @Override
@@ -161,6 +185,36 @@ public class DefaultTbClusterService implements TbClusterService {
     public void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state) {
         log.trace("[{}] Processing {} state change event: {}", tenantId, entityId.getEntityType(), state);
         broadcast(new ComponentLifecycleMsg(tenantId, entityId, state));
+    }
+
+    @Override
+    public void onDeviceProfileChange(DeviceProfile deviceProfile, TbQueueCallback callback) {
+        log.trace("[{}][{}] Processing device profile [{}] change event", deviceProfile.getTenantId(), deviceProfile.getId(), deviceProfile.getName());
+        TransportProtos.DeviceProfileUpdateMsg profileUpdateMsg = TransportProtos.DeviceProfileUpdateMsg.newBuilder()
+                .setData(ByteString.copyFrom(encodingService.encode(deviceProfile))).build();
+        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setDeviceProfileUpdateMsg(profileUpdateMsg).build();
+        broadcast(transportMsg);
+    }
+
+    @Override
+    public void onDeviceProfileDelete(DeviceProfile deviceProfile, TbQueueCallback callback) {
+        log.trace("[{}][{}] Processing device profile [{}] delete event", deviceProfile.getTenantId(), deviceProfile.getId(), deviceProfile.getName());
+        TransportProtos.DeviceProfileDeleteMsg profileDeleteMsg = TransportProtos.DeviceProfileDeleteMsg.newBuilder()
+                .setProfileIdMSB(deviceProfile.getId().getId().getMostSignificantBits())
+                .setProfileIdLSB(deviceProfile.getId().getId().getLeastSignificantBits())
+                .build();
+        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setDeviceProfileDeleteMsg(profileDeleteMsg).build();
+        broadcast(transportMsg);
+    }
+
+    private void broadcast(ToTransportMsg transportMsg) {
+        TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> toTransportNfProducer = producerProvider.getTransportNotificationsMsgProducer();
+        Set<String> tbTransportServices = partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT);
+        for (String transportServiceId : tbTransportServices) {
+            TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transportServiceId);
+            toTransportNfProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), transportMsg), null);
+            toTransportNfs.incrementAndGet();
+        }
     }
 
     private void broadcast(ComponentLifecycleMsg msg) {

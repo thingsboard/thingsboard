@@ -43,6 +43,8 @@ export class WidgetService {
   private systemWidgetsBundles: Array<WidgetsBundle>;
   private tenantWidgetsBundles: Array<WidgetsBundle>;
 
+  private loadWidgetsBundleCacheSubject: ReplaySubject<any>;
+
   constructor(
     private http: HttpClient,
     private utils: UtilsService,
@@ -238,34 +240,36 @@ export class WidgetService {
 
   private loadWidgetsBundleCache(config?: RequestConfig): Observable<any> {
     if (!this.allWidgetsBundles) {
-      const loadWidgetsBundleCacheSubject = new ReplaySubject();
-      this.http.get<Array<WidgetsBundle>>('/api/widgetsBundles',
-        defaultHttpOptionsFromConfig(config)).subscribe(
-        (allWidgetsBundles) => {
-          this.allWidgetsBundles = allWidgetsBundles;
-          this.systemWidgetsBundles = new Array<WidgetsBundle>();
-          this.tenantWidgetsBundles = new Array<WidgetsBundle>();
-          this.allWidgetsBundles = this.allWidgetsBundles.sort((wb1, wb2) => {
-            let res = wb1.title.localeCompare(wb2.title);
-            if (res === 0) {
-              res = wb2.createdTime - wb1.createdTime;
-            }
-            return res;
+      if (!this.loadWidgetsBundleCacheSubject) {
+        this.loadWidgetsBundleCacheSubject = new ReplaySubject();
+        this.http.get<Array<WidgetsBundle>>('/api/widgetsBundles',
+          defaultHttpOptionsFromConfig(config)).subscribe(
+          (allWidgetsBundles) => {
+            this.allWidgetsBundles = allWidgetsBundles;
+            this.systemWidgetsBundles = new Array<WidgetsBundle>();
+            this.tenantWidgetsBundles = new Array<WidgetsBundle>();
+            this.allWidgetsBundles = this.allWidgetsBundles.sort((wb1, wb2) => {
+              let res = wb1.title.localeCompare(wb2.title);
+              if (res === 0) {
+                res = wb2.createdTime - wb1.createdTime;
+              }
+              return res;
+            });
+            this.allWidgetsBundles.forEach((widgetsBundle) => {
+              if (widgetsBundle.tenantId.id === NULL_UUID) {
+                this.systemWidgetsBundles.push(widgetsBundle);
+              } else {
+                this.tenantWidgetsBundles.push(widgetsBundle);
+              }
+            });
+            this.loadWidgetsBundleCacheSubject.next();
+            this.loadWidgetsBundleCacheSubject.complete();
+          },
+          () => {
+            this.loadWidgetsBundleCacheSubject.error(null);
           });
-          this.allWidgetsBundles.forEach((widgetsBundle) => {
-            if (widgetsBundle.tenantId.id === NULL_UUID) {
-              this.systemWidgetsBundles.push(widgetsBundle);
-            } else {
-              this.tenantWidgetsBundles.push(widgetsBundle);
-            }
-          });
-          loadWidgetsBundleCacheSubject.next();
-          loadWidgetsBundleCacheSubject.complete();
-        },
-        () => {
-          loadWidgetsBundleCacheSubject.error(null);
-        });
-      return loadWidgetsBundleCacheSubject.asObservable();
+      }
+      return this.loadWidgetsBundleCacheSubject.asObservable();
     } else {
       return of(null);
     }
@@ -275,6 +279,7 @@ export class WidgetService {
     this.allWidgetsBundles = undefined;
     this.systemWidgetsBundles = undefined;
     this.tenantWidgetsBundles = undefined;
+    this.loadWidgetsBundleCacheSubject = undefined;
   }
 
 }

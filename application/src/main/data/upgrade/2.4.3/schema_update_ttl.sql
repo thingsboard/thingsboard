@@ -59,8 +59,8 @@ $$
 DECLARE
     tenant_cursor CURSOR FOR select tenant.id as tenant_id
                              from tenant;
-    tenant_id_record     varchar;
-    customer_id_record   varchar;
+    tenant_id_record     uuid;
+    customer_id_record   uuid;
     tenant_ttl           bigint;
     customer_ttl         bigint;
     deleted_for_entities bigint;

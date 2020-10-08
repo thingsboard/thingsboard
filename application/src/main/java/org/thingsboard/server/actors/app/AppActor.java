@@ -27,6 +27,7 @@ import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.tenant.TenantActor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
@@ -116,7 +117,9 @@ public class AppActor extends ContextAwareActor {
                 boolean isRuleEngine = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
                 boolean isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
                 for (Tenant tenant : tenantIterator) {
-                    if (isCore || (isRuleEngine && !tenant.isIsolatedTbRuleEngine())) {
+                    // TODO: Tenant Profile from cache
+                    TenantProfile tenantProfile = systemContext.getTenantProfileService().findTenantProfileById(TenantId.SYS_TENANT_ID, tenant.getTenantProfileId());
+                    if (isCore || (isRuleEngine && !tenantProfile.isIsolatedTbRuleEngine())) {
                         log.debug("[{}] Creating tenant actor", tenant.getId());
                         getOrCreateTenantActor(tenant.getId());
                         log.debug("[{}] Tenant actor created.", tenant.getId());

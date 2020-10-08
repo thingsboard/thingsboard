@@ -37,7 +37,7 @@ Where:
 
 > **NOTE**: **Windows** users should use docker managed volume instead of host's dir. Create docker volume (for ex. `mytb-data`) before executing `docker run` command:
 > ```
-> $ docker create volume mytb-data
+> $ docker volume create mytb-data
 > ```
 > After you can execute docker run command using `mytb-data` volume instead of `~/.mytb-data`.
 > In order to get access to necessary resources from external IP/Host on **Windows** machine, please execute the following commands:
