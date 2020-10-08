@@ -315,8 +315,7 @@ public class DefaultTransportApiService implements TransportApiService {
         return TransportProtos.DeviceCredentialsProto.newBuilder()
                 .setDeviceIdMSB(deviceCredentials.getDeviceId().getId().getMostSignificantBits())
                 .setDeviceIdLSB(deviceCredentials.getDeviceId().getId().getLeastSignificantBits())
-                .setCredentialsType(deviceCredentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN ?
-                        CredentialsType.ACCESS_TOKEN : CredentialsType.X509_CERTIFICATE)
+                .setCredentialsType(TransportProtos.CredentialsType.valueOf(deviceCredentials.getCredentialsType().name()))
                 .setCredentialsId(deviceCredentials.getCredentialsId())
                 .setCredentialsValue(deviceCredentials.getCredentialsValue() != null ? deviceCredentials.getCredentialsValue() : "")
                 .build();

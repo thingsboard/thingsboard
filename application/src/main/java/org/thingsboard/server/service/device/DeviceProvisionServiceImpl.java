@@ -263,7 +263,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
                 !StringUtils.isEmpty(provisionRequest.getCredentialsData().getUsername()) ||
                 !StringUtils.isEmpty(provisionRequest.getCredentialsData().getPassword()) ||
                 !StringUtils.isEmpty(provisionRequest.getCredentialsData().getClientId())) {
-            DeviceCredentials deviceCredentials = new DeviceCredentials();
+            DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getTenantId(), savedDevice.getId());
             deviceCredentials.setCredentialsType(provisionRequest.getCredentialsType());
             switch (provisionRequest.getCredentialsType()) {
                 case ACCESS_TOKEN:
@@ -281,6 +281,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
                     deviceCredentials.setCredentialsValue(provisionRequest.getCredentialsData().getHash());
                     break;
             }
+            deviceCredentials.setCredentialsType(provisionRequest.getCredentialsType());
             deviceCredentialsService.updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
         }
         return savedDevice;

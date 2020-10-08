@@ -76,7 +76,7 @@ enum KeyValueType {
 enum CredentialsType {
   ACCESS_TOKEN = 0;
   X509_CERTIFICATE = 1;
-  BASIC_MQTT = 2;
+  MQTT_BASIC = 2;
 }
 
 message KeyValueProto {

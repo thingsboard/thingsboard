@@ -567,7 +567,7 @@ public class JsonConverter {
                                 .setPassword(getStrValue(jo, DataConstants.PASSWORD, false))
                                 .build())
                         .setValidateDeviceX509CertRequestMsg(ValidateDeviceX509CertRequestMsg.newBuilder()
-                                .setHash(getStrValue(jo, DataConstants.PASSWORD, false)).build())
+                                .setHash(getStrValue(jo, DataConstants.HASH, false)).build())
                         .build())
                 .setProvisionDeviceCredentialsMsg(buildProvisionDeviceCredentialsMsg(
                         getStrValue(jo, DataConstants.PROVISION_KEY, true),
