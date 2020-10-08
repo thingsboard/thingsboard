@@ -156,7 +156,7 @@
                                       <mat-label translate>admin.oauth2.login-provider</mat-label>
                                       <mat-select formControlName="providerName">
                                         <mat-option *ngFor="let provider of templateProvider" [value]="provider">
-                                          {{ provider | uppercase }}
+                                          {{ provider }}
                                         </mat-option>
                                       </mat-select>
                                     </mat-form-field>
