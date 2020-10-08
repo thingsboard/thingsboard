@@ -88,10 +88,12 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
         publishMqttMsg(client, payload.getBytes(), MqttTopics.GATEWAY_CONNECT_TOPIC);
 
-        Thread.sleep(2000);
-
         String deviceName = "Device A";
-        Device device = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
+
+        Device device = doExecuteWithRetriesAndInterval(() -> doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class),
+            20,
+        100);
+
         assertNotNull(device);
     }
 
@@ -102,7 +104,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         String deviceId = savedDevice.getId().getId().toString();
 
         long start = System.currentTimeMillis();
-        long end = System.currentTimeMillis() + 2000;
+        long end = System.currentTimeMillis() + 5000;
 
         List<String> actualKeys = null;
         while (start <= end) {
@@ -139,12 +141,19 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
         publishMqttMsg(client, payload, topic);
 
-        Thread.sleep(2000);
+        Device firstDevice = doExecuteWithRetriesAndInterval(() -> doGet("/api/tenant/devices?deviceName=" + firstDeviceName, Device.class),
+                20,
+                100);
 
-        Device firstDevice = doGet("/api/tenant/devices?deviceName=" + firstDeviceName, Device.class);
         assertNotNull(firstDevice);
-        Device secondDevice = doGet("/api/tenant/devices?deviceName=" + secondDeviceName, Device.class);
+
+        Device secondDevice = doExecuteWithRetriesAndInterval(() -> doGet("/api/tenant/devices?deviceName=" + secondDeviceName, Device.class),
+                20,
+                100);
+
         assertNotNull(secondDevice);
+
+        Thread.sleep(2000);
 
         List<String> firstDeviceActualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + firstDevice.getId() + "/keys/timeseries", List.class);
         Set<String> firstDeviceActualKeySet = new HashSet<>(firstDeviceActualKeys);

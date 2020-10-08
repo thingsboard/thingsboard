@@ -84,10 +84,14 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
         postGatewayDeviceClientAttributes(client);
 
+        Device savedDevice = doExecuteWithRetriesAndInterval(() -> doGet("/api/tenant/devices?deviceName=" + "Gateway Device Request Attributes", Device.class),
+                20,
+                100);
+
+        assertNotNull(savedDevice);
+
         Thread.sleep(1000);
 
-        Device savedDevice = doGet("/api/tenant/devices?deviceName=" + "Gateway Device Request Attributes", Device.class);
-        assertNotNull(savedDevice);
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
 
         Thread.sleep(1000);
