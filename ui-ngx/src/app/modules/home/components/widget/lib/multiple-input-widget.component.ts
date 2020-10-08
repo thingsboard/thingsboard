@@ -111,7 +111,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   isVerticalAlignment: boolean;
   inputWidthSettings: string;
   changeAlignment: boolean;
-  smallWidthContainer: boolean;
+  saveButtonLabel: string;
+  resetButtonLabel: string;
 
   entityDetected = false;
   isAllParametersValid = true;
@@ -165,14 +166,14 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     this.settings.groupTitle = this.settings.groupTitle || '${entityName}';
 
     if (this.settings.saveButtonLabel && this.settings.saveButtonLabel.length) {
-      this.settings.saveButtonLabel = this.utils.customTranslation(this.settings.saveButtonLabel, this.settings.saveButtonLabel);
+      this.saveButtonLabel = this.utils.customTranslation(this.settings.saveButtonLabel, this.settings.saveButtonLabel);
     } else {
-      this.settings.saveButtonLabel = this.translate.instant('action.save');
+      this.saveButtonLabel = this.translate.instant('action.save');
     }
     if (this.settings.resetButtonLabel && this.settings.resetButtonLabel.length) {
-      this.settings.resetButtonLabel = this.utils.customTranslation(this.settings.resetButtonLabel, this.settings.resetButtonLabel);
+      this.resetButtonLabel = this.utils.customTranslation(this.settings.resetButtonLabel, this.settings.resetButtonLabel);
     } else {
-      this.settings.resetButtonLabel = this.translate.instant('action.undo');
+      this.resetButtonLabel = this.translate.instant('action.undo');
     }
 
     // For backward compatibility
@@ -346,17 +347,13 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public onDataUpdated() {
-    // this.ngZone.run(() => {
-      this.updateWidgetData(this.subscription.data);
-      this.ctx.detectChanges();
-    // });
+    this.updateWidgetData(this.subscription.data);
+    this.ctx.detectChanges();
   }
 
   private resize() {
-    // this.ngZone.run(() => {
-      this.updateWidgetDisplaying();
-      this.ctx.detectChanges();
-    // });
+    this.updateWidgetDisplaying();
+    this.ctx.detectChanges();
   }
 
   public getGroupTitle(datasource: Datasource): string {

@@ -116,12 +116,12 @@
       <button mat-button color="primary" type="button"
               (click)="discardAll()" style="max-height: 50px; margin-right:20px;"
               [disabled]="!multipleInputFormGroup.dirty">
-        {{ settings.resetButtonLabel }}
+        {{ resetButtonLabel }}
       </button>
       <button mat-button mat-raised-button color="primary" type="submit"
                  style="max-height: 50px; margin-right:20px;"
                  [disabled]="!multipleInputFormGroup.dirty || multipleInputFormGroup.invalid">
-        {{ settings.saveButtonLabel }}
+        {{ saveButtonLabel }}
       </button>
     </div>
   </div>
