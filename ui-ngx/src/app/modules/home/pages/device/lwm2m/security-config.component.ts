@@ -288,7 +288,6 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     switch (this.tabIndexPrevious) {
       case 0:
         this.upDateValueToJsonTab_0();
-        this.upDateValueToJsonTab_0();
         break;
       case 1:
         this.upDateValueToJsonTab_1();
