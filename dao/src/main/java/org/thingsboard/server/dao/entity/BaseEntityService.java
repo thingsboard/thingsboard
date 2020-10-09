@@ -39,7 +39,6 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -78,9 +77,6 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
     @Autowired
     private RuleChainService ruleChainService;
-
-    @Autowired
-    private EdgeService edgeService;
 
     @Override
     public void deleteEntityRelations(TenantId tenantId, EntityId entityId) {

@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -45,6 +46,9 @@ public abstract class AbstractEntityService {
 
     @Autowired
     protected EntityViewService entityViewService;
+
+    @Autowired(required = false)
+    protected EdgeService edgeService;
 
     @Value("${database.entities.type:sql}")
     private String databaseType;

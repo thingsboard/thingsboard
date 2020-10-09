@@ -372,6 +372,17 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(dashboardUpdateMsg.getTitle(), savedDashboard.getName());
 
         edgeImitator.expectMessageAmount(1);
+        savedDashboard.setTitle("Updated Edge Test Dashboard");
+        doPost("/api/dashboard", savedDashboard, Dashboard.class);
+        edgeImitator.waitForMessages();
+
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DashboardUpdateMsg);
+        dashboardUpdateMsg = (DashboardUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, dashboardUpdateMsg.getMsgType());
+        Assert.assertEquals(dashboardUpdateMsg.getTitle(), savedDashboard.getName());
+
+        edgeImitator.expectMessageAmount(1);
         doDelete("/api/edge/" + edge.getId().getId().toString()
                 + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
         edgeImitator.waitForMessages();
