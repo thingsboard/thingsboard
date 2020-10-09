@@ -8,7 +8,6 @@
   "clientAuthenticationMethod": "BASIC",
   "userNameAttributeName": "login",
   "basic": {
-    "lastNameAttributeKey": "name",
     "tenantNameStrategy": "DOMAIN"
   },
   "comment": "In order to log into ThingsBoard you need to have user's email. You may configure and use Custom OAuth2 Mapper to get email information. Please refer to <a href=\"https://docs.github.com/en/rest/reference/users#list-email-addresses-for-the-authenticated-user\">Github Documentation</a>",
