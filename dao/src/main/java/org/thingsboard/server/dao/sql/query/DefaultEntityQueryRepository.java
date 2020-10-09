@@ -472,10 +472,13 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         if (entityFilter.isFetchLastLevelOnly()) {
             String fromOrTo = (entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "from" : "to");
             StringBuilder notExistsPart = new StringBuilder();
-            notExistsPart.append(" NOT EXISTS (SELECT 1 from relation nr where ")
+            notExistsPart.append(" NOT EXISTS (SELECT 1 from relation nr ")
+                    .append(whereFilter.replaceAll("re\\.", "nr\\."))
+                    .append(" and ")
                     .append("nr.").append(fromOrTo).append("_id").append(" = re.").append(toOrFrom).append("_id")
                     .append(" and ")
                     .append("nr.").append(fromOrTo).append("_type").append(" = re.").append(toOrFrom).append("_type");
+
             if (!StringUtils.isEmpty(entityFilter.getRelationType())) {
                 notExistsPart.append(" and nr.relation_type = :where_relation_type");
             }
@@ -556,7 +559,9 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     .append(" and ")
                     .append("nr.").append(fromOrTo).append("_id").append(" = re.").append(toOrFrom).append("_id")
                     .append(" and ")
-                    .append("nr.").append(fromOrTo).append("_type").append(" = re.").append(toOrFrom).append("_type");
+                    .append("nr.").append(fromOrTo).append("_type").append(" = re.").append(toOrFrom).append("_type")
+                    .append(" and ")
+                    .append(whereFilter.toString().replaceAll("re\\.", "nr\\."));
 
             notExistsPart.append(")");
             whereFilter.append(" and ( re.lvl = ").append(entityFilter.getMaxLevel()).append(" OR ").append(notExistsPart.toString()).append(")");
