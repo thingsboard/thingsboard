@@ -39,7 +39,7 @@
 </mat-tab>
 <mat-tab *ngIf="entity"
          label="{{'device-profile.alarm-rules' | translate:
-            {count: entity.profileData.alarms.length ?
+            {count: entity.profileData.alarms && entity.profileData.alarms.length ?
                 entity.profileData.alarms.length : 0} }}" #alarmRules="matTab">
   <div class="mat-padding" [formGroup]="detailsForm">
     <div formGroupName="profileData">

@@ -29,7 +29,7 @@ import { AlarmConditionType, AlarmConditionTypeTranslationMap, AlarmRule } from 
 import { MatDialog } from '@angular/material/dialog';
 import { TimeUnit, timeUnitTranslationMap } from '@shared/models/time/time.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isUndefined } from '@core/utils';
 
 @Component({
   selector: 'tb-alarm-rule',
@@ -118,11 +118,11 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
 
   writeValue(value: AlarmRule): void {
     this.modelValue = value;
-    if (!isDefinedAndNotNull(this.modelValue?.condition?.spec)) {
-      this.modelValue = Object.assign({}, this.modelValue, {condition: {spec: {type: AlarmConditionType.SIMPLE}}});
+    if (this.modelValue !== null && isUndefined(this.modelValue?.condition?.spec)) {
+      this.modelValue = Object.assign(this.modelValue, {condition: {spec: {type: AlarmConditionType.SIMPLE}}});
     }
     this.alarmRuleFormGroup.reset(this.modelValue || undefined, {emitEvent: false});
-    this.updateValidators(this.modelValue.condition.spec.type);
+    this.updateValidators(this.modelValue?.condition?.spec?.type);
   }
 
   public validate(c: FormControl) {
