@@ -74,6 +74,8 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
             if (device != null) {
                 profileId = device.getDeviceProfileId();
                 devicesMap.put(deviceId, profileId);
+            } else {
+                return null;
             }
         }
         return get(tenantId, profileId);
