@@ -54,7 +54,8 @@
         "share-via": "Share via {{provider}}",
         "continue": "Continue",
         "discard-changes": "Discard Changes",
-        "download": "Download"
+        "download": "Download",
+        "next-with-label": "Next: {{label}}"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -756,7 +757,16 @@
         "search": "Search devices",
         "selected-devices": "{ count, plural, 1 {1 device} other {# devices} } selected",
         "device-configuration": "Device configuration",
-        "transport-configuration": "Transport configuration"
+        "transport-configuration": "Transport configuration",
+        "wizard": {
+            "device-wizard": "Device Wizard",
+            "device-details": "Device details",
+            "new-device-profile": "Create new device profile",
+            "existing-device-profile": "Select existing device profile",
+            "specific-configuration": "Specific configuration",
+            "customer-to-assign-device": "Customer to assign the device",
+            "add-credential": "Add credential"
+        }
     },
     "device-profile": {
         "device-profile": "Device profile",
@@ -774,6 +784,8 @@
         "set-default": "Make device profile default",
         "delete": "Delete device profile",
         "copyId": "Copy device profile Id",
+        "new-device-profile-name": "Device profile name",
+        "new-device-profile-name-required": "Device profile name is required.",
         "name": "Name",
         "name-required": "Name is required.",
         "type": "Profile type",
@@ -782,8 +794,11 @@
         "transport-type": "Transport type",
         "transport-type-required": "Transport type is required.",
         "transport-type-default": "Default",
+        "transport-type-default-hint": "Default transport type",
         "transport-type-mqtt": "MQTT",
+        "transport-type-mqtt-hint": "MQTT transport type",
         "transport-type-lwm2m": "LWM2M",
+        "transport-type-lwm2m-hint": "LWM2M transport type",
         "description": "Description",
         "default": "Default",
         "profile-configuration": "Profile configuration",
@@ -814,7 +829,8 @@
         "not-valid-multi-character": "Invalid use of a multi-level wildcard character",
         "single-level-wildcards-hint": "<code>[+]</code> is suitable for any topic filter level. Ex.: <b>v1/devices/+/telemetry</b> or <b>+/devices/+/attributes</b>.",
         "multi-level-wildcards-hint": "<code>[#]</code> can replace the topic filter itself and must be the last symbol of the topic. Ex.: <b>#</b> or <b>v1/devices/me/#</b>.",
-        "alarm-rules": "Alarm rules ({{count}})",
+        "alarm-rules": "Alarm rules",
+        "alarm-rules-with-count": "Alarm rules ({{count}})",
         "no-alarm-rules": "No alarm rules configured",
         "add-alarm-rule": "Add alarm rule",
         "edit-alarm-rule": "Edit alarm rule",
