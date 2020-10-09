@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div style="min-width: 1000px;">
+<div>
   <mat-toolbar color="primary">
     <h2 translate>device.add-device-text</h2>
     <span fxFlex></span>
@@ -29,7 +29,7 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
-    <mat-horizontal-stepper [linear]="true" #addDeviceWizardStepper (selectionChange)="changeStep($event)">
+    <mat-horizontal-stepper [linear]="true" [labelPosition]="labelPosition" #addDeviceWizardStepper (selectionChange)="changeStep($event)">
       <ng-template matStepperIcon="edit">
         <mat-icon>check</mat-icon>
       </ng-template>
@@ -48,17 +48,49 @@
               <mat-label translate>device.label</mat-label>
               <input matInput formControlName="label">
             </mat-form-field>
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" style="padding-bottom: 14px;">
               <mat-label translate>device-profile.transport-type</mat-label>
               <mat-select formControlName="transportType" required>
                 <mat-option *ngFor="let type of deviceTransportTypes" [value]="type">
                   {{deviceTransportTypeTranslations.get(type) | translate}}
                 </mat-option>
               </mat-select>
+              <mat-hint *ngIf="deviceWizardFormGroup.get('transportType').value">
+                {{deviceTransportTypeHints.get(deviceWizardFormGroup.get('transportType').value) | translate}}
+              </mat-hint>
               <mat-error *ngIf="deviceWizardFormGroup.get('transportType').hasError('required')">
                 {{ 'device-profile.transport-type-required' | translate }}
               </mat-error>
             </mat-form-field>
+            <div fxLayout="row" fxLayoutGap="16px">
+              <mat-radio-group fxLayout="column" formControlName="addProfileType" fxLayoutAlign="space-around">
+                <mat-radio-button [value]="0" color="primary">
+                  <span translate>device.wizard.existing-device-profile</span>
+                </mat-radio-button>
+                <mat-radio-button [value]="1" color="primary">
+                  <span translate>device.wizard.new-device-profile</span>
+                </mat-radio-button>
+              </mat-radio-group>
+              <div fxLayout="column">
+                <tb-device-profile-autocomplete
+                  [required]="!createProfile"
+                  [transportType]="deviceWizardFormGroup.get('transportType').value"
+                  formControlName="deviceProfileId"
+                  (deviceProfileChanged)="$event?.transportType ? deviceWizardFormGroup.get('transportType').patchValue($event?.transportType) : {}"
+                  [addNewProfile]="false"
+                  [selectDefaultProfile]="true"
+                  [editProfileEnabled]="false">
+                </tb-device-profile-autocomplete>
+                <mat-form-field fxFlex class="mat-block">
+                  <mat-label translate>device-profile.new-device-profile-name</mat-label>
+                  <input matInput formControlName="newDeviceProfileTitle"
+                         [required]="createProfile">
+                  <mat-error *ngIf="deviceWizardFormGroup.get('newDeviceProfileTitle').hasError('required')">
+                    {{ 'device-profile.new-device-profile-name-required' | translate }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </div>
             <mat-checkbox formControlName="gateway" style="padding-bottom: 16px;">
               {{ 'device.is-gateway' | translate }}
             </mat-checkbox>
@@ -69,39 +101,7 @@
           </fieldset>
         </form>
       </mat-step>
-      <mat-step [stepControl]="profileConfigFormGroup">
-        <form [formGroup]="profileConfigFormGroup" style="padding-bottom: 16px;">
-          <ng-template matStepLabel>{{ 'device.wizard.profile-configuration' | translate}}</ng-template>
-          <mat-radio-group fxLayout="column" fxFlex formControlName="addProfileType">
-            <mat-radio-button [value]="0" color="primary">
-              <section>
-                <span translate>device.wizard.existing-device-profile</span>
-                <tb-device-profile-autocomplete
-                  [required]="profileConfigFormGroup.get('addProfileType').value === 0"
-                  [transportType]="deviceWizardFormGroup.get('transportType').value"
-                  formControlName="deviceProfileId"
-                  [addNewProfile]="false"
-                  [editProfileEnabled]="false">
-                </tb-device-profile-autocomplete>
-              </section>
-            </mat-radio-button>
-            <mat-radio-button [value]="1" color="primary">
-              <section fxLayout="column">
-                <span translate>device.wizard.new-device-profile</span>
-                <mat-form-field fxFlex class="mat-block">
-                  <mat-label translate>device-profile.device-profile</mat-label>
-                  <input matInput formControlName="newDeviceProfileTitle"
-                         [required]="profileConfigFormGroup.get('addProfileType').value === 1">
-                  <mat-error *ngIf="profileConfigFormGroup.get('newDeviceProfileTitle').hasError('required')">
-                    {{ 'device-profile.device-profile-required' | translate }}
-                  </mat-error>
-                </mat-form-field>
-              </section>
-            </mat-radio-button>
-          </mat-radio-group>
-        </form>
-      </mat-step>
-      <mat-step [stepControl]="transportConfigFormGroup" *ngIf="createdProfile">
+      <mat-step [stepControl]="transportConfigFormGroup" *ngIf="createTransportConfiguration">
         <form [formGroup]="transportConfigFormGroup" style="padding-bottom: 16px;">
           <ng-template matStepLabel>{{ 'device-profile.transport-configuration' | translate }}</ng-template>
           <tb-device-profile-transport-configuration
@@ -110,9 +110,9 @@
           </tb-device-profile-transport-configuration>
         </form>
       </mat-step>
-      <mat-step [stepControl]="alarmRulesFormGroup" *ngIf="createdProfile">
+      <mat-step [stepControl]="alarmRulesFormGroup" [optional]="true" *ngIf="createProfile">
         <form [formGroup]="alarmRulesFormGroup" style="padding-bottom: 16px;">
-          <ng-template matStepLabel>{{'device-profile.alarm-rules' | translate:
+          <ng-template matStepLabel>{{'device-profile.alarm-rules-with-count' | translate:
             {count: alarmRulesFormGroup.get('alarms').value ?
                 alarmRulesFormGroup.get('alarms').value.length : 0} }}</ng-template>
           <tb-device-profile-alarms
@@ -120,36 +120,50 @@
           </tb-device-profile-alarms>
         </form>
       </mat-step>
-      <mat-step [stepControl]="specificConfigFormGroup">
-        <ng-template matStepLabel>{{ 'device.wizard.specific-configuration' | translate }}</ng-template>
-        <form [formGroup]="specificConfigFormGroup" style="padding-bottom: 16px;">
+      <mat-step [stepControl]="credentialsFormGroup" [optional]="true">
+        <ng-template matStepLabel>{{ 'device.credentials' | translate }}</ng-template>
+        <form [formGroup]="credentialsFormGroup" style="padding-bottom: 16px;">
+          <mat-checkbox style="padding-bottom: 16px;" formControlName="setCredential">{{ 'device.wizard.add-credential' | translate }}</mat-checkbox>
+          <tb-device-credentials
+            [fxShow]="credentialsFormGroup.get('setCredential').value"
+            formControlName="credential">
+          </tb-device-credentials>
+        </form>
+      </mat-step>
+      <mat-step [stepControl]="customerFormGroup" [optional]="true">
+        <ng-template matStepLabel>{{ 'customer.customer' | translate }}</ng-template>
+        <form [formGroup]="customerFormGroup" style="padding-bottom: 16px;">
           <tb-entity-autocomplete
             formControlName="customerId"
             labelText="device.wizard.customer-to-assign-device"
             [entityType]="entityType.CUSTOMER">
           </tb-entity-autocomplete>
-          <mat-checkbox formControlName="setCredential">{{ 'device.wizard.add-credential' | translate }}</mat-checkbox>
-          <tb-device-credentials
-            [fxShow]="specificConfigFormGroup.get('setCredential').value"
-            formControlName="credential">
-          </tb-device-credentials>
         </form>
       </mat-step>
     </mat-horizontal-stepper>
   </div>
-  <div mat-dialog-actions fxLayout="row wrap" fxLayoutAlign="space-between center">
-    <button mat-button *ngIf="selectedIndex > 0"
-            [disabled]="(isLoading$ | async)"
-            (click)="previousStep()">{{ 'action.back' | translate }}</button>
-    <span *ngIf="selectedIndex == 0"></span>
-    <div fxLayout="row wrap" fxLayoutGap="20px">
+  <div mat-dialog-actions fxLayout="column" fxLayoutAlign="start wrap" fxLayoutGap="8px" style="height: 100px;">
+    <div fxFlex fxLayout="row" fxLayoutAlign="end">
+      <button mat-raised-button
+              *ngIf="showNext"
+              [disabled]="(isLoading$ | async)"
+              (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(this.selectedIndex+1) | translate)} }}</button>
+    </div>
+    <div fxFlex fxLayout="row">
       <button mat-button
+              color="primary"
               [disabled]="(isLoading$ | async)"
               (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-      <button mat-raised-button
-              [disabled]="(isLoading$ | async) || selectedForm.invalid"
-              color="primary"
-              (click)="nextStep()">{{ nextStepButtonLabel$ | async | translate }}</button>
+      <span fxFlex></span>
+      <div fxLayout="row wrap" fxLayoutGap="8px">
+        <button mat-raised-button *ngIf="selectedIndex > 0"
+                [disabled]="(isLoading$ | async)"
+                (click)="previousStep()">{{ 'action.back' | translate }}</button>
+        <button mat-raised-button
+                [disabled]="(isLoading$ | async)"
+                color="primary"
+                (click)="add()">{{ 'action.add' | translate }}</button>
+      </div>
     </div>
   </div>
 </div>

@@ -296,19 +296,13 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           name: this.translate.instant('device.add-device-text'),
           icon: 'insert_drive_file',
           isEnabled: () => true,
-          onAction: ($event) => this.config.table.addEntity($event)
+          onAction: ($event) => this.deviceWizard($event)
         },
         {
           name: this.translate.instant('device.import'),
           icon: 'file_upload',
           isEnabled: () => true,
           onAction: ($event) => this.importDevices($event)
-        },
-        {
-          name: this.translate.instant('device.wizard.device-wizard'),
-          icon: 'library_add',
-          isEnabled: () => true,
-          onAction: ($event) => this.deviceWizard($event)
         },
       );
     }

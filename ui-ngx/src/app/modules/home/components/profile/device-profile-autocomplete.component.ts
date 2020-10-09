@@ -20,9 +20,9 @@ import {
   EventEmitter,
   forwardRef,
   Input,
-  NgZone,
+  NgZone, OnChanges,
   OnInit,
-  Output,
+  Output, SimpleChanges,
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -55,7 +55,7 @@ import { AddDeviceProfileDialogComponent, AddDeviceProfileDialogData } from './a
     multi: true
   }]
 })
-export class DeviceProfileAutocompleteComponent implements ControlValueAccessor, OnInit {
+export class DeviceProfileAutocompleteComponent implements ControlValueAccessor, OnInit, OnChanges {
 
   selectDeviceProfileFormGroup: FormGroup;
 
@@ -168,11 +168,22 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
       );
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (propName === 'transportType') {
+          this.writeValue(null);
+        }
+      }
+    }
+  }
+
   selectDefaultDeviceProfileIfNeeded(): void {
     if (this.selectDefaultProfile && !this.modelValue) {
       this.deviceProfileService.getDefaultDeviceProfileInfo().subscribe(
         (profile) => {
-          if (profile) {
+          if (profile && !this.transportType || (profile.transportType === this.transportType)) {
             this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(profile, {emitEvent: false});
             this.updateView(profile);
           }

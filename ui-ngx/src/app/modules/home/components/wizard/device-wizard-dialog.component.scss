@@ -13,25 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .mat-dialog-content {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
 
-    .mat-stepper-horizontal {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+@import "../../../../../scss/constants";
+
+:host-context(.tb-fullscreen-dialog .mat-dialog-container) {
+  @media #{$mat-lt-sm} {
+    .mat-dialog-content {
+      max-height: 75vh;
     }
   }
 }
 
 :host ::ng-deep {
   .mat-dialog-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
     .mat-stepper-horizontal {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+      @media #{$mat-lt-sm} {
+        .mat-step-label {
+          white-space: normal;
+          overflow: visible;
+          .mat-step-text-label {
+            overflow: visible;
+          }
+        }
+      }
       .mat-horizontal-content-container {
-        overflow: auto;
+        height: 450px;
+        max-height: 100%;
+        width: 100%;;
+        overflow-y: auto;
+        @media #{$mat-gt-sm} {
+          min-width: 800px;
+        }
+      }
+      .mat-horizontal-stepper-content[aria-expanded=true] {
+        height: 100%;
+        form {
+          height: 100%;
+        }
       }
     }
   }

@@ -26,7 +26,7 @@ import {
   createDeviceProfileTransportConfiguration,
   DeviceProfile,
   DeviceProfileType,
-  DeviceTransportType,
+  DeviceTransportType, deviceTransportTypeHintMap,
   deviceTransportTypeTranslationMap
 } from '@shared/models/device.models';
 import { MatHorizontalStepper } from '@angular/material/stepper';
@@ -35,11 +35,13 @@ import { BaseData, HasId } from '@shared/models/base-data';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { EntityId } from '@shared/models/id/entity-id';
-import { BehaviorSubject, Observable, of, Subscription } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
 import { DeviceService } from '@core/http/device.service';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
+import { MediaBreakpoints } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-device-wizard',
@@ -54,9 +56,10 @@ export class DeviceWizardDialogComponent extends
 
   selectedIndex = 0;
 
-  nextStepButtonLabel$ = new BehaviorSubject<string>('action.continue');
+  showNext = true;
 
-  createdProfile = false;
+  createProfile = false;
+  createTransportConfiguration = false;
 
   entityType = EntityType;
 
@@ -64,15 +67,19 @@ export class DeviceWizardDialogComponent extends
 
   deviceTransportTypeTranslations = deviceTransportTypeTranslationMap;
 
-  deviceWizardFormGroup: FormGroup;
+  deviceTransportTypeHints = deviceTransportTypeHintMap;
 
-  profileConfigFormGroup: FormGroup;
+  deviceWizardFormGroup: FormGroup;
 
   transportConfigFormGroup: FormGroup;
 
   alarmRulesFormGroup: FormGroup;
 
-  specificConfigFormGroup: FormGroup;
+  credentialsFormGroup: FormGroup;
+
+  customerFormGroup: FormGroup;
+
+  labelPosition = 'end';
 
   private subscriptions: Subscription[] = [];
 
@@ -83,6 +90,7 @@ export class DeviceWizardDialogComponent extends
               public dialogRef: MatDialogRef<DeviceWizardDialogComponent, boolean>,
               private deviceProfileService: DeviceProfileService,
               private deviceService: DeviceService,
+              private breakpointObserver: BreakpointObserver,
               private fb: FormBuilder) {
     super(store, router, dialogRef);
     this.deviceWizardFormGroup = this.fb.group({
@@ -90,33 +98,32 @@ export class DeviceWizardDialogComponent extends
         label: [''],
         gateway: [false],
         transportType: [DeviceTransportType.DEFAULT, Validators.required],
+        addProfileType: [0],
+        deviceProfileId: [null, Validators.required],
+        newDeviceProfileTitle: [{value: null, disabled: true}],
         description: ['']
       }
     );
 
-    this.profileConfigFormGroup = this.fb.group({
-        addProfileType: [0],
-        deviceProfileId: [null, Validators.required],
-        newDeviceProfileTitle: [{value: null, disabled: true}]
-      }
-    );
-
-    this.subscriptions.push(this.profileConfigFormGroup.get('addProfileType').valueChanges.subscribe(
+    this.subscriptions.push(this.deviceWizardFormGroup.get('addProfileType').valueChanges.subscribe(
       (addProfileType: number) => {
         if (addProfileType === 0) {
-          this.profileConfigFormGroup.get('deviceProfileId').setValidators([Validators.required]);
-          this.profileConfigFormGroup.get('deviceProfileId').enable();
-          this.profileConfigFormGroup.get('newDeviceProfileTitle').setValidators(null);
-          this.profileConfigFormGroup.get('newDeviceProfileTitle').disable();
-          this.profileConfigFormGroup.updateValueAndValidity();
-          this.createdProfile = false;
+          this.deviceWizardFormGroup.get('deviceProfileId').setValidators([Validators.required]);
+          this.deviceWizardFormGroup.get('deviceProfileId').enable();
+          this.deviceWizardFormGroup.get('newDeviceProfileTitle').setValidators(null);
+          this.deviceWizardFormGroup.get('newDeviceProfileTitle').disable();
+          this.deviceWizardFormGroup.updateValueAndValidity();
+          this.createProfile = false;
+          this.createTransportConfiguration = false;
         } else {
-          this.profileConfigFormGroup.get('deviceProfileId').setValidators(null);
-          this.profileConfigFormGroup.get('deviceProfileId').disable();
-          this.profileConfigFormGroup.get('newDeviceProfileTitle').setValidators([Validators.required]);
-          this.profileConfigFormGroup.get('newDeviceProfileTitle').enable();
-          this.profileConfigFormGroup.updateValueAndValidity();
-          this.createdProfile = true;
+          this.deviceWizardFormGroup.get('deviceProfileId').setValidators(null);
+          this.deviceWizardFormGroup.get('deviceProfileId').disable();
+          this.deviceWizardFormGroup.get('newDeviceProfileTitle').setValidators([Validators.required]);
+          this.deviceWizardFormGroup.get('newDeviceProfileTitle').enable();
+          this.deviceWizardFormGroup.updateValueAndValidity();
+          this.createProfile = true;
+          this.createTransportConfiguration = this.deviceWizardFormGroup.get('transportType').value &&
+            DeviceTransportType.DEFAULT !== this.deviceWizardFormGroup.get('transportType').value;
         }
       }
     ));
@@ -135,20 +142,37 @@ export class DeviceWizardDialogComponent extends
       }
     );
 
-    this.specificConfigFormGroup = this.fb.group({
-        customerId: [null],
+    this.credentialsFormGroup  = this.fb.group({
         setCredential: [false],
         credential: [{value: null, disabled: true}]
       }
     );
 
-    this.subscriptions.push(this.specificConfigFormGroup.get('setCredential').valueChanges.subscribe((value) => {
+    this.subscriptions.push(this.credentialsFormGroup.get('setCredential').valueChanges.subscribe((value) => {
       if (value) {
-        this.specificConfigFormGroup.get('credential').enable();
+        this.credentialsFormGroup.get('credential').enable();
       } else {
-        this.specificConfigFormGroup.get('credential').disable();
+        this.credentialsFormGroup.get('credential').disable();
       }
     }));
+
+    this.customerFormGroup = this.fb.group({
+        customerId: [null]
+      }
+    );
+
+    this.labelPosition = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']) ? 'end' : 'bottom';
+
+    this.subscriptions.push(this.breakpointObserver
+      .observe(MediaBreakpoints['gt-sm'])
+      .subscribe((state: BreakpointState) => {
+          if (state.matches) {
+            this.labelPosition = 'end';
+          } else {
+            this.labelPosition = 'bottom';
+          }
+        }
+      ));
   }
 
   ngOnDestroy() {
@@ -171,26 +195,28 @@ export class DeviceWizardDialogComponent extends
   }
 
   nextStep(): void {
-    if (this.selectedIndex < this.maxStepperIndex) {
-      this.addDeviceWizardStepper.next();
-    } else {
-      this.add();
-    }
+    this.addDeviceWizardStepper.next();
   }
 
-  get selectedForm(): FormGroup {
-    const index = !this.createdProfile && this.selectedIndex === this.maxStepperIndex ? 4 : this.selectedIndex;
+  getFormLabel(index: number): string {
+    if (index > 0) {
+      if (!this.createProfile) {
+        index += 2;
+      } else if (!this.createTransportConfiguration) {
+        index += 1;
+      }
+    }
     switch (index) {
       case 0:
-        return this.deviceWizardFormGroup;
+        return 'device.wizard.device-details';
       case 1:
-        return this.profileConfigFormGroup;
+        return 'device-profile.transport-configuration';
       case 2:
-        return this.transportConfigFormGroup;
+        return 'device-profile.alarm-rules';
       case 3:
-        return this.alarmRulesFormGroup;
+        return 'device.credentials';
       case 4:
-        return this.specificConfigFormGroup;
+        return 'customer.customer';
     }
   }
 
@@ -201,23 +227,27 @@ export class DeviceWizardDialogComponent extends
   private deviceProfileTransportTypeChanged(deviceTransportType: DeviceTransportType): void {
     this.transportConfigFormGroup.patchValue(
       {transportConfiguration: createDeviceProfileTransportConfiguration(deviceTransportType)});
+    this.createTransportConfiguration = this.createProfile && deviceTransportType &&
+      DeviceTransportType.DEFAULT !== deviceTransportType;
   }
 
-  private add(): void {
-    this.creatProfile().pipe(
-      mergeMap(profileId => this.createdDevice(profileId)),
-      mergeMap(device => this.saveCredential(device))
-    ).subscribe(
-      (created) => {
-        this.dialogRef.close(created);
-      }
-    );
+  add(): void {
+    if (this.allValid()) {
+      this.createDeviceProfile().pipe(
+        mergeMap(profileId => this.createDevice(profileId)),
+        mergeMap(device => this.saveCredentials(device))
+      ).subscribe(
+        (created) => {
+          this.dialogRef.close(created);
+        }
+      );
+    }
   }
 
-  private creatProfile(): Observable<EntityId> {
-    if (this.profileConfigFormGroup.get('addProfileType').value) {
+  private createDeviceProfile(): Observable<EntityId> {
+    if (this.deviceWizardFormGroup.get('addProfileType').value) {
       const deviceProfile: DeviceProfile = {
-        name: this.profileConfigFormGroup.get('newDeviceProfileTitle').value,
+        name: this.deviceWizardFormGroup.get('newDeviceProfileTitle').value,
         type: DeviceProfileType.DEFAULT,
         transportType: this.deviceWizardFormGroup.get('transportType').value,
         profileData: {
@@ -229,11 +259,10 @@ export class DeviceWizardDialogComponent extends
       return this.deviceProfileService.saveDeviceProfile(deviceProfile).pipe(
         map(profile => profile.id),
         tap((profileId) => {
-          this.profileConfigFormGroup.patchValue({
+          this.deviceWizardFormGroup.patchValue({
             deviceProfileId: profileId,
             addProfileType: 0
           });
-          this.addDeviceWizardStepper.selectedIndex = 2;
         })
       );
     } else {
@@ -241,7 +270,7 @@ export class DeviceWizardDialogComponent extends
     }
   }
 
-  private createdDevice(profileId: EntityId = this.profileConfigFormGroup.get('deviceProfileId').value): Observable<BaseData<HasId>> {
+  private createDevice(profileId: EntityId = this.deviceWizardFormGroup.get('deviceProfileId').value): Observable<BaseData<HasId>> {
     const device = {
       name: this.deviceWizardFormGroup.get('name').value,
       label: this.deviceWizardFormGroup.get('label').value,
@@ -252,21 +281,21 @@ export class DeviceWizardDialogComponent extends
       },
       customerId: null
     };
-    if (this.specificConfigFormGroup.get('customerId').value) {
+    if (this.customerFormGroup.get('customerId').value) {
       device.customerId = {
         entityType: EntityType.CUSTOMER,
-        id: this.specificConfigFormGroup.get('customerId').value
+        id: this.customerFormGroup.get('customerId').value
       };
     }
     return this.data.entitiesTableConfig.saveEntity(device);
   }
 
-  private saveCredential(device: BaseData<HasId>): Observable<boolean> {
-    if (this.specificConfigFormGroup.get('setCredential').value) {
+  private saveCredentials(device: BaseData<HasId>): Observable<boolean> {
+    if (this.credentialsFormGroup.get('setCredential').value) {
       return this.deviceService.getDeviceCredentials(device.id.id).pipe(
         mergeMap(
           (deviceCredentials) => {
-            const deviceCredentialsValue = {...deviceCredentials, ...this.specificConfigFormGroup.value.credential};
+            const deviceCredentialsValue = {...deviceCredentials, ...this.credentialsFormGroup.value.credential};
             return this.deviceService.saveDeviceCredentials(deviceCredentialsValue);
           }
         ),
@@ -275,12 +304,28 @@ export class DeviceWizardDialogComponent extends
     return of(true);
   }
 
+  allValid(): boolean {
+    if (this.addDeviceWizardStepper.steps.find((item, index) => {
+      if (item.stepControl.invalid) {
+        item.interacted = true;
+        this.addDeviceWizardStepper.selectedIndex = index;
+        return true;
+      } else {
+        return false;
+      }
+    } )) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
   changeStep($event: StepperSelectionEvent): void {
     this.selectedIndex = $event.selectedIndex;
     if (this.selectedIndex === this.maxStepperIndex) {
-      this.nextStepButtonLabel$.next('action.add');
+      this.showNext = false;
     } else {
-      this.nextStepButtonLabel$.next('action.continue');
+      this.showNext = true;
     }
   }
 }
