@@ -133,6 +133,11 @@ public class EdgeGrpcClient implements EdgeRpcClient {
             @Override
             public void onError(Throwable t) {
                 log.debug("[{}] The rpc session received an error!", edgeKey, t);
+                try {
+                    EdgeGrpcClient.this.disconnect(true);
+                } catch (InterruptedException e) {
+                    log.error("[{}] Got interruption during disconnect!", edgeKey, e);
+                }
                 onError.accept(new RuntimeException(t));
             }
 
