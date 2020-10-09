@@ -262,6 +262,10 @@ $previewSize: 100px !default;
     transform: translate(0%, -50%) !important;
   }
 
+  .MuiButton-root {
+    text-transform: none;
+  }
+
 }
 
 .rc-select {

@@ -52,7 +52,6 @@ public abstract class AbstractMqttClaimJsonDeviceTest extends AbstractMqttClaimD
     }
 
     @Test
-    @Ignore
     public void testGatewayClaimingDeviceWithoutSecretAndDuration() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device empty payload Json", true);
     }

@@ -181,6 +181,7 @@ public class ThingsboardInstallService {
                                 databaseTsUpgradeService.upgradeDatabase("3.1.1");
                             }
                             databaseEntitiesUpgradeService.upgradeDatabase("3.1.1");
+                            dataUpdateService.updateData("3.1.1");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;
