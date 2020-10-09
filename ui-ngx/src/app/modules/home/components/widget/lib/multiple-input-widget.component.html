@@ -39,7 +39,7 @@
                      (blur)="key.isFocused = false; inputChanged(source, key)">
               <mat-icon *ngIf="key.settings.icon" matPrefix>{{key.settings.icon}}</mat-icon>
               <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
-                {{ getErrorMessageText(key.settings.requiredErrorMessage, '') }}
+                {{ getErrorMessageText(key.settings, 'required') }}
               </mat-error>
             </mat-form-field>
           </div>
@@ -59,17 +59,13 @@
                      (blur)="key.isFocused = false; inputChanged(source, key)">
               <mat-icon *ngIf="key.settings.icon" matPrefix>{{key.settings.icon}}</mat-icon>
               <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
-                {{ getErrorMessageText(key.settings.requiredErrorMessage, '') }}
+                {{ getErrorMessageText(key.settings,'required') }}
               </mat-error>
               <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('min')">
-                {{ getErrorMessageText(key.settings.minValueErrorMessage,
-                        'widgets.input-widgets.min-value-error',
-                        {value: key.settings.minValue}) }}
+                {{ getErrorMessageText(key.settings,'min') }}
               </mat-error>
               <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('max')">
-                {{ getErrorMessageText(key.settings.maxValueErrorMessage,
-                        'widgets.input-widgets.max-value-error',
-                        {value: key.settings.maxValue}) }}
+                {{ getErrorMessageText(key.settings,'max') }}
               </mat-error>
             </mat-form-field>
           </div>
@@ -101,10 +97,10 @@
                      (blur)="key.isFocused = false;"
                      (dateChange)="inputChanged(source, key)">
               <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
-                {{ getErrorMessageText(key.settings.requiredErrorMessage, '') }}
+                {{ getErrorMessageText(key.settings, 'required') }}
               </mat-error>
               <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('matDatepickerParse')">
-                {{ getErrorMessageText(key.settings.invalidDateErrorMessage, 'widgets.input-widgets.invalid-date') }}
+                {{ getErrorMessageText(key.settings, 'invalidDate') }}
               </mat-error>
             </mat-form-field>
           </div>

@@ -361,7 +361,40 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     return this.utils.customTranslation(groupTitle, groupTitle);
   }
 
-  public getErrorMessageText(errorMessage, defaultMessage, messageValues?): string {
+  public getErrorMessageText(keySettings: MultipleInputWidgetDataKeySettings, errorType: string): string {
+    let errorMessage;
+    let defaultMessage;
+    let messageValues;
+    switch (errorType) {
+      case 'required':
+        errorMessage = keySettings.requiredErrorMessage;
+        defaultMessage = '';
+        break;
+      case 'min':
+        errorMessage = keySettings.minValueErrorMessage;
+        defaultMessage = 'widgets.input-widgets.min-value-error';
+        messageValues = {
+          value: keySettings.minValue
+        };
+        break;
+      case 'max':
+        errorMessage = keySettings.maxValueErrorMessage;
+        defaultMessage = 'widgets.input-widgets.max-value-error';
+        messageValues = {
+          value: keySettings.maxValue
+        };
+        break;
+      case 'invalidDate':
+        errorMessage = keySettings.invalidDateErrorMessage;
+        defaultMessage = 'widgets.input-widgets.invalid-date';
+        break;
+      default:
+        return '';
+    }
+    return this.getTranslatedErrorText(errorMessage, defaultMessage, messageValues);
+  }
+
+  public getTranslatedErrorText(errorMessage: string, defaultMessage: string, messageValues?: object): string {
     let messageText;
     if (errorMessage && errorMessage.length) {
       messageText = this.utils.customTranslation(errorMessage, errorMessage);
