@@ -46,6 +46,7 @@ import { RuleChainId } from '@shared/models/id/rule-chain-id';
 
 export interface AddDeviceProfileDialogData {
   deviceProfileName: string;
+  transportType: DeviceTransportType;
 }
 
 @Component({
@@ -99,7 +100,7 @@ export class AddDeviceProfileDialogComponent extends
     );
     this.transportConfigFormGroup = this.fb.group(
       {
-        transportType: [DeviceTransportType.DEFAULT, [Validators.required]],
+        transportType: [data.transportType ? data.transportType : DeviceTransportType.DEFAULT, [Validators.required]],
         transportConfiguration: [createDeviceProfileTransportConfiguration(DeviceTransportType.DEFAULT),
           [Validators.required]]
       }

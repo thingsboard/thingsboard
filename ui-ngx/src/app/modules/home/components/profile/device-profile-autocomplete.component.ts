@@ -19,9 +19,10 @@ import {
   ElementRef,
   EventEmitter,
   forwardRef,
-  Input, NgZone,
+  Input,
+  NgZone, OnChanges,
   OnInit,
-  Output,
+  Output, SimpleChanges,
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -38,14 +39,7 @@ import { TruncatePipe } from '@shared//pipe/truncate.pipe';
 import { ENTER } from '@angular/cdk/keycodes';
 import { MatDialog } from '@angular/material/dialog';
 import { DeviceProfileId } from '@shared/models/id/device-profile-id';
-import {
-  createDeviceProfileConfiguration,
-  createDeviceProfileTransportConfiguration,
-  DeviceProfile,
-  DeviceProfileInfo,
-  DeviceProfileType,
-  DeviceTransportType
-} from '@shared/models/device.models';
+import { DeviceProfile, DeviceProfileInfo, DeviceProfileType, DeviceTransportType } from '@shared/models/device.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfileDialogComponent, DeviceProfileDialogData } from './device-profile-dialog.component';
 import { MatAutocomplete } from '@angular/material/autocomplete';
@@ -61,7 +55,7 @@ import { AddDeviceProfileDialogComponent, AddDeviceProfileDialogData } from './a
     multi: true
   }]
 })
-export class DeviceProfileAutocompleteComponent implements ControlValueAccessor, OnInit {
+export class DeviceProfileAutocompleteComponent implements ControlValueAccessor, OnInit, OnChanges {
 
   selectDeviceProfileFormGroup: FormGroup;
 
@@ -75,6 +69,12 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
 
   @Input()
   editProfileEnabled = true;
+
+  @Input()
+  addNewProfile = true;
+
+  @Input()
+  transportType: DeviceTransportType = null;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -168,11 +168,22 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
       );
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (propName === 'transportType') {
+          this.writeValue(null);
+        }
+      }
+    }
+  }
+
   selectDefaultDeviceProfileIfNeeded(): void {
     if (this.selectDefaultProfile && !this.modelValue) {
       this.deviceProfileService.getDefaultDeviceProfileInfo().subscribe(
         (profile) => {
-          if (profile) {
+          if (profile && !this.transportType || (profile.transportType === this.transportType)) {
             this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(profile, {emitEvent: false});
             this.updateView(profile);
           }
@@ -183,6 +194,11 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.disabled) {
+      this.selectDeviceProfileFormGroup.disable();
+    } else {
+      this.selectDeviceProfileFormGroup.enable();
+    }
   }
 
   writeValue(value: DeviceProfileId | null): void {
@@ -244,7 +260,7 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
       property: 'name',
       direction: Direction.ASC
     });
-    return this.deviceProfileService.getDeviceProfileInfos(pageLink, {ignoreLoading: true}).pipe(
+    return this.deviceProfileService.getDeviceProfileInfos(pageLink, this.transportType, {ignoreLoading: true}).pipe(
       map(pageData => {
         let data = pageData.data;
         if (this.displayAllOnEmpty) {
@@ -280,9 +296,12 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
   createDeviceProfile($event: Event, profileName: string) {
     $event.preventDefault();
     const deviceProfile: DeviceProfile = {
-      name: profileName
+      name: profileName,
+      transportType: this.transportType
     } as DeviceProfile;
-    this.openDeviceProfileDialog(deviceProfile, true);
+    if (this.addNewProfile) {
+      this.openDeviceProfileDialog(deviceProfile, true);
+    }
   }
 
   editDeviceProfile($event: Event) {
@@ -312,7 +331,8 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
-          deviceProfileName: deviceProfile.name
+          deviceProfileName: deviceProfile.name,
+          transportType: deviceProfile.transportType
         }
       }).afterClosed();
     }

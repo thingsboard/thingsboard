@@ -114,7 +114,8 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        deviceProfileName: null
+        deviceProfileName: null,
+        transportType: null
       }
     }).afterClosed();
   }

@@ -260,7 +260,7 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         pageLink = new PageLink(17);
         PageData<DeviceProfileInfo> pageData;
         do {
-            pageData = deviceProfileService.findDeviceProfileInfos(tenantId, pageLink);
+            pageData = deviceProfileService.findDeviceProfileInfos(tenantId, pageLink, null);
             loadedDeviceProfileInfos.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -284,7 +284,7 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         }
 
         pageLink = new PageLink(17);
-        pageData = deviceProfileService.findDeviceProfileInfos(tenantId, pageLink);
+        pageData = deviceProfileService.findDeviceProfileInfos(tenantId, pageLink, null);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
     }

@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.dao.sql.device;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -62,12 +64,21 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
     }
 
     @Override
-    public PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.pageToPageData(
-                deviceProfileRepository.findDeviceProfileInfos(
-                        tenantId.getId(),
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        DaoUtil.toPageable(pageLink)));
+    public PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink, String transportType) {
+        if (StringUtils.isNotEmpty(transportType)) {
+            return DaoUtil.pageToPageData(
+                    deviceProfileRepository.findDeviceProfileInfos(
+                            tenantId.getId(),
+                            Objects.toString(pageLink.getTextSearch(), ""),
+                            DeviceTransportType.valueOf(transportType),
+                            DaoUtil.toPageable(pageLink)));
+        } else {
+            return DaoUtil.pageToPageData(
+                    deviceProfileRepository.findDeviceProfileInfos(
+                            tenantId.getId(),
+                            Objects.toString(pageLink.getTextSearch(), ""),
+                            DaoUtil.toPageable(pageLink)));
+        }
     }
 
     @Override

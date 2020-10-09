@@ -109,6 +109,8 @@ import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-di
 import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
 import { DeviceProfileProvisionConfigurationComponent } from "./profile/device-profile-provision-configuration.component";
 import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component';
+import { DeviceWizardDialogComponent } from './wizard/device-wizard-dialog.component';
+import { DeviceCredentialsComponent } from './device/device-credentials.component';
 
 @NgModule({
   declarations:
@@ -200,7 +202,9 @@ import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component
       AddDeviceProfileDialogComponent,
       RuleChainAutocompleteComponent,
       DeviceProfileProvisionConfigurationComponent,
-      AlarmScheduleComponent
+      AlarmScheduleComponent,
+      DeviceWizardDialogComponent,
+      DeviceCredentialsComponent
     ],
   imports: [
     CommonModule,
@@ -280,6 +284,8 @@ import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component
     DeviceProfileDialogComponent,
     AddDeviceProfileDialogComponent,
     RuleChainAutocompleteComponent,
+    DeviceWizardDialogComponent,
+    DeviceCredentialsComponent,
     DeviceProfileProvisionConfigurationComponent,
     AlarmScheduleComponent
   ],
