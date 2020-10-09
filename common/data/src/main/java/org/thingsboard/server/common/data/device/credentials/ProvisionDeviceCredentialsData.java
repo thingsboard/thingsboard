@@ -23,5 +23,5 @@ public class ProvisionDeviceCredentialsData {
     private final String clientId;
     private final String username;
     private final String password;
-    private final String hash;
+    private final String x509CertHash;
 }

@@ -13,16 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device;
+package org.thingsboard.server.dao.device.provision;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
-import org.thingsboard.server.dao.device.provision.ProvisionRequest;
-import org.thingsboard.server.dao.device.provision.ProvisionResponse;
-
-public interface DeviceProvisionService {
-
-    ListenableFuture<ProvisionResponse> provisionDevice(ProvisionRequest provisionRequest) throws ProvisionFailedException;
+public class ProvisionFailedException extends RuntimeException {
+    public ProvisionFailedException(String errorMsg) {
+        super(errorMsg);
+    }
 }

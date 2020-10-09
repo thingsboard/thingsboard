@@ -72,11 +72,6 @@ message GatewayAttributesMsg {
   repeated AttributesMsg msg = 1;
 }
 
-message GatewayProvisionResponseMsg {
-  string deviceName = 1;
-  transport.ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 2;
-}
-
 message GatewayRpcResponseMsg {
   string deviceName = 1;
   int32  id = 2;

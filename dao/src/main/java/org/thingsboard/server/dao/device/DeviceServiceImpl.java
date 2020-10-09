@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
+import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
@@ -57,6 +58,9 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
+import org.thingsboard.server.dao.device.provision.ProvisionRequest;
+import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
@@ -64,6 +68,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -464,6 +469,47 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         device.setTenantId(tenantId);
         device.setCustomerId(null);
         return doSaveDevice(device, null);
+    }
+
+    @Override
+    @Transactional
+    public Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
+        Device device = new Device();
+        device.setName(provisionRequest.getDeviceName());
+        device.setType(profile.getName());
+        device.setTenantId(profile.getTenantId());
+        Device savedDevice = saveDevice(device);
+        if (!StringUtils.isEmpty(provisionRequest.getCredentialsData().getToken()) ||
+                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getX509CertHash()) ||
+                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getUsername()) ||
+                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getPassword()) ||
+                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getClientId())) {
+            DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getTenantId(), savedDevice.getId());
+            deviceCredentials.setCredentialsType(provisionRequest.getCredentialsType());
+            switch (provisionRequest.getCredentialsType()) {
+                case ACCESS_TOKEN:
+                    deviceCredentials.setDeviceId(savedDevice.getId());
+                    deviceCredentials.setCredentialsId(provisionRequest.getCredentialsData().getToken());
+                    break;
+                case MQTT_BASIC:
+                    BasicMqttCredentials mqttCredentials = new BasicMqttCredentials();
+                    mqttCredentials.setClientId(provisionRequest.getCredentialsData().getClientId());
+                    mqttCredentials.setUserName(provisionRequest.getCredentialsData().getUsername());
+                    mqttCredentials.setPassword(provisionRequest.getCredentialsData().getPassword());
+                    deviceCredentials.setCredentialsValue(JacksonUtil.toString(mqttCredentials));
+                    break;
+                case X509_CERTIFICATE:
+                    deviceCredentials.setCredentialsValue(provisionRequest.getCredentialsData().getX509CertHash());
+                    break;
+            }
+            deviceCredentials.setCredentialsType(provisionRequest.getCredentialsType());
+            try {
+                deviceCredentialsService.updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
+            } catch (Exception e) {
+                throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+            }
+        }
+        return savedDevice;
     }
 
     private DataValidator<Device> deviceValidator =

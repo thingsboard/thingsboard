@@ -50,13 +50,11 @@ import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
-import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.CredentialsType;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
@@ -70,6 +68,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenR
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;
@@ -276,30 +275,29 @@ public class DefaultTransportApiService implements TransportApiService {
         }, dbCallbackExecutorService);
     }
 
-
     private ListenableFuture<TransportApiResponseMsg> handle(ProvisionDeviceRequestMsg requestMsg) {
         ListenableFuture<ProvisionResponse> provisionResponseFuture = null;
-        provisionResponseFuture = deviceProvisionService.provisionDevice(
-                new ProvisionRequest(
-                        requestMsg.getDeviceName(),
-                        requestMsg.getCredentialsType() != null ? DeviceCredentialsType.valueOf(requestMsg.getCredentialsType().name()) : null,
-                        new ProvisionDeviceCredentialsData(requestMsg.getCredentialsDataProto().getValidateDeviceTokenRequestMsg().getToken(),
-                                requestMsg.getCredentialsDataProto().getValidateBasicMqttCredRequestMsg().getClientId(),
-                                requestMsg.getCredentialsDataProto().getValidateBasicMqttCredRequestMsg().getUserName(),
-                                requestMsg.getCredentialsDataProto().getValidateBasicMqttCredRequestMsg().getPassword(),
-                                requestMsg.getCredentialsDataProto().getValidateDeviceX509CertRequestMsg().getHash()),
-                        new ProvisionDeviceProfileCredentials(
-                                requestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceKey(),
-                                requestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceSecret())));
-        return Futures.transform(provisionResponseFuture, provisionResponse -> {
-            if (provisionResponse.getResponseStatus() == ProvisionResponseStatus.NOT_FOUND) {
-                return getTransportApiResponseMsg(TransportProtos.DeviceCredentialsProto.getDefaultInstance(), TransportProtos.ProvisionResponseStatus.NOT_FOUND);
-            } else if (provisionResponse.getResponseStatus() == ProvisionResponseStatus.FAILURE) {
-                return getTransportApiResponseMsg(TransportProtos.DeviceCredentialsProto.getDefaultInstance(), TransportProtos.ProvisionResponseStatus.FAILURE);
-            } else {
-                return getTransportApiResponseMsg(getDeviceCredentials(provisionResponse.getDeviceCredentials()), TransportProtos.ProvisionResponseStatus.SUCCESS);
-            }
-        }, dbCallbackExecutorService);
+        try {
+            provisionResponseFuture = deviceProvisionService.provisionDevice(
+                    new ProvisionRequest(
+                            requestMsg.getDeviceName(),
+                            requestMsg.getCredentialsType() != null ? DeviceCredentialsType.valueOf(requestMsg.getCredentialsType().name()) : null,
+                            new ProvisionDeviceCredentialsData(requestMsg.getCredentialsDataProto().getValidateDeviceTokenRequestMsg().getToken(),
+                                    requestMsg.getCredentialsDataProto().getValidateBasicMqttCredRequestMsg().getClientId(),
+                                    requestMsg.getCredentialsDataProto().getValidateBasicMqttCredRequestMsg().getUserName(),
+                                    requestMsg.getCredentialsDataProto().getValidateBasicMqttCredRequestMsg().getPassword(),
+                                    requestMsg.getCredentialsDataProto().getValidateDeviceX509CertRequestMsg().getHash()),
+                            new ProvisionDeviceProfileCredentials(
+                                    requestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceKey(),
+                                    requestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceSecret())));
+        } catch (ProvisionFailedException e) {
+            return Futures.immediateFuture(getTransportApiResponseMsg(
+                    TransportProtos.DeviceCredentialsProto.getDefaultInstance(),
+                    TransportProtos.ProvisionResponseStatus.valueOf(e.getMessage())));
+        }
+        return Futures.transform(provisionResponseFuture, provisionResponse -> getTransportApiResponseMsg(
+                getDeviceCredentials(provisionResponse.getDeviceCredentials()), TransportProtos.ProvisionResponseStatus.SUCCESS),
+                dbCallbackExecutorService);
     }
 
     private TransportApiResponseMsg getTransportApiResponseMsg(TransportProtos.DeviceCredentialsProto deviceCredentials, TransportProtos.ProvisionResponseStatus status) {

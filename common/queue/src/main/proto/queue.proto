@@ -268,11 +268,6 @@ message ProvisionDeviceRequestMsg {
   CredentialsDataProto credentialsDataProto = 4;
 }
 
-message GatewayProvisionRequestMsg {
-  int32 requestId = 1;
-  ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 2;
-}
-
 message ProvisionDeviceCredentialsMsg {
   string provisionDeviceKey = 1;
   string provisionDeviceSecret = 2;
@@ -281,11 +276,6 @@ message ProvisionDeviceCredentialsMsg {
 message ProvisionDeviceResponseMsg {
   DeviceCredentialsProto deviceCredentials = 1;
   ProvisionResponseStatus provisionResponseStatus = 2;
-}
-
-message GatewayProvisionResponseMsg {
-  int32 requestId = 1;
-  ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 2;
 }
 
 enum ProvisionResponseStatus {
