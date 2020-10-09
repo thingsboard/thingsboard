@@ -65,6 +65,9 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
   selectDefaultProfile = false;
 
   @Input()
+  selectFirstProfile = false;
+
+  @Input()
   displayAllOnEmpty = false;
 
   @Input()
@@ -183,11 +186,33 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
     if (this.selectDefaultProfile && !this.modelValue) {
       this.deviceProfileService.getDefaultDeviceProfileInfo().subscribe(
         (profile) => {
-          if (profile && !this.transportType || (profile.transportType === this.transportType)) {
+          if (profile && (!this.transportType || (profile.transportType === this.transportType))) {
             this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(profile, {emitEvent: false});
             this.updateView(profile);
+          } else {
+            this.selectFirstDeviceProfileIfNeeded();
           }
         }
+      );
+    } else {
+      this.selectFirstDeviceProfileIfNeeded();
+    }
+  }
+
+  selectFirstDeviceProfileIfNeeded(): void {
+    if (this.selectFirstProfile && !this.modelValue) {
+      const pageLink = new PageLink(1, 0, null, {
+        property: 'createdTime',
+        direction: Direction.DESC
+      });
+      this.deviceProfileService.getDeviceProfileInfos(pageLink, this.transportType, {ignoreLoading: true}).subscribe(
+        (pageData => {
+          const data = pageData.data;
+          if (data.length) {
+            this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(data[0], {emitEvent: false});
+            this.updateView(data[0]);
+          }
+        })
       );
     }
   }
