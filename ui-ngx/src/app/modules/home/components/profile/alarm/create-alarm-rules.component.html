@@ -48,7 +48,7 @@
     </button>
   </div>
   <div *ngIf="!createAlarmRulesFormArray().controls.length">
-      <span translate fxLayoutAlign="center center"
+      <span translate fxLayoutAlign="center center" style="margin: 16px 0"
             class="tb-prompt">device-profile.no-create-alarm-rules</span>
   </div>
   <div fxLayout="row" *ngIf="!disabled">
@@ -57,7 +57,7 @@
             (click)="addCreateAlarmRule()"
             matTooltip="{{ 'device-profile.add-create-alarm-rule' | translate }}"
             matTooltipPosition="above">
-      <mat-icon>add_circle_outline</mat-icon>
+      <mat-icon class="button-icon">add_circle_outline</mat-icon>
       {{ 'device-profile.add-create-alarm-rule' | translate }}
     </button>
   </div>

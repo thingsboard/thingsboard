@@ -25,6 +25,9 @@
           {{deviceTransportTypeTranslations.get(type) | translate}}
         </mat-option>
       </mat-select>
+      <mat-hint *ngIf="detailsForm.get('transportType').value">
+        {{deviceTransportTypeHints.get(detailsForm.get('transportType').value) | translate}}
+      </mat-hint>
       <mat-error *ngIf="detailsForm.get('transportType').hasError('required')">
         {{ 'device-profile.transport-type-required' | translate }}
       </mat-error>
