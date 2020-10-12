@@ -16,25 +16,31 @@
 package org.thingsboard.rule.engine.profile;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.profile.state.PersistedDeviceState;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -45,29 +51,46 @@ import java.util.concurrent.TimeUnit;
         name = "device profile",
         customRelations = true,
         relationTypes = {"Alarm Created", "Alarm Updated", "Alarm Severity Updated", "Alarm Cleared", "Success", "Failure"},
-        configClazz = EmptyNodeConfiguration.class,
+        configClazz = TbDeviceProfileNodeConfiguration.class,
         nodeDescription = "Process device messages based on device profile settings",
         nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. Generates ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbNodeEmptyConfig"
+        configDirective = "tbDeviceProfileConfig"
 )
 public class TbDeviceProfileNode implements TbNode {
     private static final String PERIODIC_MSG_TYPE = "TbDeviceProfilePeriodicMsg";
 
+    private TbDeviceProfileNodeConfiguration config;
     private RuleEngineDeviceProfileCache cache;
     private final Map<DeviceId, DeviceState> deviceStates = new ConcurrentHashMap<>();
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        cache = ctx.getDeviceProfileCache();
+        this.config = TbNodeUtils.convert(configuration, TbDeviceProfileNodeConfiguration.class);
+        this.cache = ctx.getDeviceProfileCache();
         scheduleAlarmHarvesting(ctx);
-        //TODO: check that I am in root rule chain.
-        // If Yes - Init for all device profiles that do not have default rule chain id in device profile.
-        // If No - find device profiles with this rule chain id.
+        if (config.isFetchAlarmRulesStateOnStart()) {
+            PageLink pageLink = new PageLink(1024);
+            while (true) {
+                PageData<RuleNodeState> states = ctx.findRuleNodeStates(pageLink);
+                if (!states.getData().isEmpty()) {
+                    for (RuleNodeState rns : states.getData()) {
+                        if (rns.getEntityId().getEntityType().equals(EntityType.DEVICE) && ctx.isLocalEntity(rns.getEntityId())) {
+                            getOrCreateDeviceState(ctx, new DeviceId(rns.getEntityId().getId()), rns);
+                        }
+                    }
+                }
+                if (!states.hasNext()) {
+                    break;
+                } else {
+                    pageLink = pageLink.nextPageLink();
+                }
+            }
+        }
     }
 
     /**
-     * 2. Dynamic values evaluation;
+     * TODO: Dynamic values evaluation;
      */
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
@@ -83,7 +106,7 @@ public class TbDeviceProfileNode implements TbNode {
                 } else if (msg.getType().equals(DataConstants.ENTITY_DELETED)) {
                     deviceStates.remove(deviceId);
                 } else {
-                    DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId);
+                    DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId, null);
                     if (deviceState != null) {
                         deviceState.process(ctx, msg);
                     } else {
@@ -122,12 +145,12 @@ public class TbDeviceProfileNode implements TbNode {
         deviceStates.clear();
     }
 
-    protected DeviceState getOrCreateDeviceState(TbContext ctx, DeviceId deviceId) {
+    protected DeviceState getOrCreateDeviceState(TbContext ctx, DeviceId deviceId, RuleNodeState rns) {
         DeviceState deviceState = deviceStates.get(deviceId);
         if (deviceState == null) {
             DeviceProfile deviceProfile = cache.get(ctx.getTenantId(), deviceId);
             if (deviceProfile != null) {
-                deviceState = new DeviceState(deviceId, new DeviceProfileState(deviceProfile));
+                deviceState = new DeviceState(ctx, config, deviceId, new DeviceProfileState(deviceProfile), rns);
                 deviceStates.put(deviceId, deviceState);
             }
         }

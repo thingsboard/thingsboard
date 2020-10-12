@@ -67,6 +67,7 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
   title = '';
   minValue: number;
   maxValue: number;
+  newValue = 0;
 
   private startDeg = -1;
   private currentDeg = 0;
@@ -175,16 +176,15 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
 
       const offset = this.knob.offset();
       const center = {
-        y : offset.top + this.knob.height()/2,
-        x: offset.left + this.knob.width()/2
+        y: offset.top + this.knob.height() / 2,
+        x: offset.left + this.knob.width() / 2
       };
-      const rad2deg = 180/Math.PI;
+      const rad2deg = 180 / Math.PI;
       const t: Touch = ((e.originalEvent as any).touches) ? (e.originalEvent as any).touches[0] : e;
-
       const a = center.y - t.pageY;
       const b = center.x - t.pageX;
-      let deg = Math.atan2(a,b)*rad2deg;
-      if(deg < 0){
+      let deg = Math.atan2(a, b) * rad2deg;
+      if (deg < 0) {
         deg = 360 + deg;
       }
       if (deg > this.maxDeg) {
@@ -196,13 +196,17 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
       }
       this.currentDeg = deg;
       this.lastDeg = deg;
-      this.knobTopPointerContainer.css('transform','rotate('+(this.currentDeg)+'deg)');
+      this.knobTopPointerContainer.css('transform', 'rotate(' + (this.currentDeg) + 'deg)');
       this.turn(this.degreeToRatio(this.currentDeg));
       this.rotation = this.currentDeg;
       this.startDeg = -1;
+      this.rpcUpdateValue(this.newValue);
     });
 
+
+
     this.knob.on('mousedown touchstart', (e) => {
+      this.moving  = false;
       e.preventDefault();
       const offset = this.knob.offset();
       const center = {
@@ -211,7 +215,7 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
       };
       const rad2deg = 180/Math.PI;
 
-      this.knob.on('mousemove.rem touchmove.rem', (ev) => {
+      $(document).on('mousemove.rem touchmove.rem', (ev) => {
         this.moving = true;
         const t: Touch = ((ev.originalEvent as any).touches) ? (ev.originalEvent as any).touches[0] : ev;
 
@@ -262,6 +266,9 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
       });
 
       $(document).on('mouseup.rem  touchend.rem',() => {
+        if(this.newValue !== this.rpcValue && this.moving) {
+          this.rpcUpdateValue(this.newValue);
+        }
         this.knob.off('.rem');
         $(document).off('.rem');
         this.rotation = this.currentDeg;
@@ -308,12 +315,12 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
   }
 
   private turn(ratio: number) {
-    const value = Number((this.minValue + (this.maxValue - this.minValue)*ratio).toFixed(this.ctx.decimals));
-    if (this.canvasBar.value !== value) {
-      this.canvasBar.value = value;
+    this.newValue = Number((this.minValue + (this.maxValue - this.minValue)*ratio).toFixed(this.ctx.decimals));
+    if (this.canvasBar.value !== this.newValue) {
+      this.canvasBar.value = this.newValue;
     }
     this.updateColor(this.canvasBar.getValueColor());
-    this.onValue(value);
+    this.onValue(this.newValue);
   }
 
   private resize() {
@@ -379,7 +386,6 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
   private onValue(value: number) {
     this.value = this.formatValue(value);
     this.checkValueSize();
-    this.rpcUpdateValue(value);
     this.ctx.detectChanges();
   }
 

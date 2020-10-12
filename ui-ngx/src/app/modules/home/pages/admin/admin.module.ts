@@ -23,6 +23,7 @@ import { MailServerComponent } from '@modules/home/pages/admin/mail-server.compo
 import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
+import { OAuth2SettingsComponent } from '@modules/home/pages/admin/oauth2-settings.component';
 import { QueueComponent} from './queue.component';
 
 @NgModule({
@@ -31,6 +32,7 @@ import { QueueComponent} from './queue.component';
       GeneralSettingsComponent,
       MailServerComponent,
       SecuritySettingsComponent,
+      OAuth2SettingsComponent,
       QueueComponent,
     ],
   imports: [

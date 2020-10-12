@@ -338,7 +338,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.info("Schema updated.");
                 }
                 break;
-            case "3.1.2":
+            case "3.1.1":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
                     if (isOldSchema(conn, 3001000)) {
@@ -353,7 +353,20 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         } catch (Exception e) {
                         }
 
-                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.2", "schema_update_before.sql");
+                        try {
+                            conn.createStatement().execute("CREATE TABLE IF NOT EXISTS rule_node_state (" +
+                                    " id uuid NOT NULL CONSTRAINT rule_node_state_pkey PRIMARY KEY," +
+                                    " created_time bigint NOT NULL," +
+                                    " rule_node_id uuid NOT NULL," +
+                                    " entity_type varchar(32) NOT NULL," +
+                                    " entity_id uuid NOT NULL," +
+                                    " state_data varchar(16384) NOT NULL," +
+                                    " CONSTRAINT rule_node_state_unq_key UNIQUE (rule_node_id, entity_id)," +
+                                    " CONSTRAINT fk_rule_node_state_node_id FOREIGN KEY (rule_node_id) REFERENCES rule_node(id) ON DELETE CASCADE)");
+                        } catch (Exception e) {
+                        }
+
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.1", "schema_update_before.sql");
                         loadSql(schemaUpdateFile, conn);
 
                         log.info("Creating default tenant profiles...");
@@ -386,7 +399,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         log.info("Updating device profiles...");
                         conn.createStatement().execute("call update_device_profiles()");
 
-                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.2", "schema_update_after.sql");
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.1", "schema_update_after.sql");
                         loadSql(schemaUpdateFile, conn);
 
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3002000;");

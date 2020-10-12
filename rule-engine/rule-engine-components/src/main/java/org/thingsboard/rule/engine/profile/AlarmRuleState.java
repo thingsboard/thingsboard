@@ -16,65 +16,198 @@
 package org.thingsboard.rule.engine.profile;
 
 import lombok.Data;
+import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
+import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
+import org.thingsboard.server.common.data.device.profile.CustomTimeScheduleItem;
+import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.SpecificTimeSchedule;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
+import org.thingsboard.server.common.msg.tools.SchedulerUtils;
+
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Calendar;
 
 @Data
 public class AlarmRuleState {
 
     private final AlarmSeverity severity;
     private final AlarmRule alarmRule;
+    private final AlarmConditionSpec spec;
     private final long requiredDurationInMs;
-    private long lastEventTs;
-    private long duration;
+    private final long requiredRepeats;
+    private PersistedAlarmRuleState state;
+    private boolean updateFlag;
 
-    public AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule) {
+    public AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule, PersistedAlarmRuleState state) {
         this.severity = severity;
         this.alarmRule = alarmRule;
-        if (alarmRule.getCondition().getDurationValue() > 0) {
-            requiredDurationInMs = alarmRule.getCondition().getDurationUnit().toMillis(alarmRule.getCondition().getDurationValue());
+        if (state != null) {
+            this.state = state;
         } else {
-            requiredDurationInMs = 0;
+            this.state = new PersistedAlarmRuleState(0L, 0L, 0L);
+        }
+        this.spec = getSpec(alarmRule);
+        long requiredDurationInMs = 0;
+        long requiredRepeats = 0;
+        switch (spec.getType()) {
+            case DURATION:
+                DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
+                requiredDurationInMs = duration.getUnit().toMillis(duration.getValue());
+                break;
+            case REPEATING:
+                RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
+                requiredRepeats = repeating.getCount();
+                break;
+        }
+        this.requiredDurationInMs = requiredDurationInMs;
+        this.requiredRepeats = requiredRepeats;
+    }
+
+    public AlarmConditionSpec getSpec(AlarmRule alarmRule) {
+        AlarmConditionSpec spec = alarmRule.getCondition().getSpec();
+        if (spec == null) {
+            spec = new SimpleAlarmConditionSpec();
+        }
+        return spec;
+    }
+
+    public boolean checkUpdate() {
+        if (updateFlag) {
+            updateFlag = false;
+            return true;
+        } else {
+            return false;
         }
     }
 
     public boolean eval(DeviceDataSnapshot data) {
-        if (requiredDurationInMs > 0) {
-            boolean eval = eval(alarmRule.getCondition(), data);
-            if (eval) {
-                if (lastEventTs > 0) {
-                    if (data.getTs() > lastEventTs) {
-                        duration += data.getTs() - lastEventTs;
-                        lastEventTs = data.getTs();
-                    }
-                } else {
-                    lastEventTs = data.getTs();
-                    duration = 0;
-                }
-                return duration > requiredDurationInMs;
-            } else {
-                lastEventTs = 0;
-                duration = 0;
+        boolean active = isActive(data.getTs());
+        switch (spec.getType()) {
+            case SIMPLE:
+                return active && eval(alarmRule.getCondition(), data);
+            case DURATION:
+                return evalDuration(data, active);
+            case REPEATING:
+                return evalRepeating(data, active);
+            default:
+                return false;
+        }
+    }
+
+    private boolean isActive(long eventTs) {
+        if (eventTs == 0L) {
+            eventTs = System.currentTimeMillis();
+        }
+        if (alarmRule.getSchedule() == null) {
+            return true;
+        }
+        switch (alarmRule.getSchedule().getType()) {
+            case ANY_TIME:
+                return true;
+            case SPECIFIC_TIME:
+                return isActiveSpecific((SpecificTimeSchedule) alarmRule.getSchedule(), eventTs);
+            case CUSTOM:
+                return isActiveCustom((CustomTimeSchedule) alarmRule.getSchedule(), eventTs);
+            default:
+                throw new RuntimeException("Unsupported schedule type: " + alarmRule.getSchedule().getType());
+        }
+    }
+
+    private boolean isActiveSpecific(SpecificTimeSchedule schedule, long eventTs) {
+        ZoneId zoneId = SchedulerUtils.getZoneId(schedule.getTimezone());
+        ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(eventTs), zoneId);
+        if (schedule.getDaysOfWeek().size() != 7) {
+            int dayOfWeek = zdt.getDayOfWeek().getValue();
+            if (!schedule.getDaysOfWeek().contains(dayOfWeek)) {
                 return false;
             }
+        }
+        long startOfDay = zdt.toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli();
+        long msFromStartOfDay = eventTs - startOfDay;
+        return schedule.getStartsOn() <= msFromStartOfDay && schedule.getEndsOn() > msFromStartOfDay;
+    }
+
+    private boolean isActiveCustom(CustomTimeSchedule schedule, long eventTs) {
+        ZoneId zoneId = SchedulerUtils.getZoneId(schedule.getTimezone());
+        ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(eventTs), zoneId);
+        int dayOfWeek = zdt.toLocalDate().getDayOfWeek().getValue();
+        for (CustomTimeScheduleItem item : schedule.getItems()) {
+            if (item.getDayOfWeek() == dayOfWeek) {
+                if (item.isEnabled()) {
+                    long startOfDay = zdt.toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli();
+                    long msFromStartOfDay = eventTs - startOfDay;
+                    return item.getStartsOn() <= msFromStartOfDay && item.getEndsOn() > msFromStartOfDay;
+                } else {
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void clear() {
+        if (state.getEventCount() > 0 || state.getLastEventTs() > 0 || state.getDuration() > 0) {
+            state.setEventCount(0L);
+            state.setLastEventTs(0L);
+            state.setDuration(0L);
+            updateFlag = true;
+        }
+    }
+
+    private boolean evalRepeating(DeviceDataSnapshot data, boolean active) {
+        if (active && eval(alarmRule.getCondition(), data)) {
+            state.setEventCount(state.getEventCount() + 1);
+            updateFlag = true;
+            return state.getEventCount() >= requiredRepeats;
         } else {
-            return eval(alarmRule.getCondition(), data);
+            return false;
+        }
+    }
+
+    private boolean evalDuration(DeviceDataSnapshot data, boolean active) {
+        if (active && eval(alarmRule.getCondition(), data)) {
+            if (state.getLastEventTs() > 0) {
+                if (data.getTs() > state.getLastEventTs()) {
+                    state.setDuration(state.getDuration() + (data.getTs() - state.getLastEventTs()));
+                    state.setLastEventTs(data.getTs());
+                    updateFlag = true;
+                }
+            } else {
+                state.setLastEventTs(data.getTs());
+                state.setDuration(0L);
+                updateFlag = true;
+            }
+            return state.getDuration() > requiredDurationInMs;
+        } else {
+            return false;
         }
     }
 
     public boolean eval(long ts) {
-        if (requiredDurationInMs > 0 && lastEventTs > 0 && ts > lastEventTs) {
-            duration += ts - lastEventTs;
-            return duration > requiredDurationInMs;
-        } else {
-            return false;
+        switch (spec.getType()) {
+            case SIMPLE:
+            case REPEATING:
+                return false;
+            case DURATION:
+                if (requiredDurationInMs > 0 && state.getLastEventTs() > 0 && ts > state.getLastEventTs()) {
+                    long duration = state.getDuration() + (ts - state.getLastEventTs());
+                    return duration > requiredDurationInMs && isActive(ts);
+                }
+            default:
+                return false;
         }
     }
 
@@ -87,7 +220,6 @@ public class AlarmRuleState {
             }
             eval = eval && eval(value, keyFilter.getPredicate());
         }
-        //TODO: use condition duration;
         return eval;
     }
 
@@ -126,7 +258,6 @@ public class AlarmRuleState {
                 throw new RuntimeException("Operation not supported: " + predicate.getOperation());
         }
     }
-
 
     private boolean evalBoolPredicate(EntityKeyValue ekv, BooleanFilterPredicate predicate) {
         Boolean value;

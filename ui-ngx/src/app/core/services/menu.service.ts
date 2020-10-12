@@ -134,6 +134,13 @@ export class MenuService {
           },
           {
             id: guid(),
+            name: 'admin.oauth2.oauth2',
+            type: 'link',
+            path: '/settings/oauth2',
+            icon: 'security'
+          },
+          {
+            id: guid(),
             name: 'admin.queues',
             type: 'link',
             isMdiIcon: true,

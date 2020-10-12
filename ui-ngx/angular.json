@@ -137,7 +137,8 @@
               "react-is",
               "hoist-non-react-statics",
               "classnames",
-              "raf"
+              "raf",
+              "moment-timezone"
             ]
           },
           "configurations": {

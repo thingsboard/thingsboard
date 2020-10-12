@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
+import org.thingsboard.rule.engine.profile.state.PersistedAlarmState;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -27,6 +29,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.ArrayList;
@@ -47,40 +50,46 @@ class DeviceProfileAlarmState {
     private volatile TbMsgMetaData lastMsgMetaData;
     private volatile String lastMsgQueueName;
 
-    public DeviceProfileAlarmState(EntityId originator, DeviceProfileAlarm alarmDefinition) {
+    public DeviceProfileAlarmState(EntityId originator, DeviceProfileAlarm alarmDefinition, PersistedAlarmState alarmState) {
         this.originator = originator;
-        this.updateState(alarmDefinition);
+        this.updateState(alarmDefinition, alarmState);
     }
 
-    public void process(TbContext ctx, TbMsg msg, DeviceDataSnapshot data) throws ExecutionException, InterruptedException {
+    public boolean process(TbContext ctx, TbMsg msg, DeviceDataSnapshot data) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
         lastMsgMetaData = msg.getMetaData();
         lastMsgQueueName = msg.getQueueName();
-        createOrClearAlarms(ctx, data, AlarmRuleState::eval);
+        return createOrClearAlarms(ctx, data, AlarmRuleState::eval);
     }
 
-    public void process(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
+    public boolean process(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
-        createOrClearAlarms(ctx, ts, AlarmRuleState::eval);
+        return createOrClearAlarms(ctx, ts, AlarmRuleState::eval);
     }
 
-    public <T> void createOrClearAlarms(TbContext ctx, T data, BiFunction<AlarmRuleState, T, Boolean> evalFunction) {
+    public <T> boolean createOrClearAlarms(TbContext ctx, T data, BiFunction<AlarmRuleState, T, Boolean> evalFunction) {
+        boolean stateUpdate = false;
         AlarmSeverity resultSeverity = null;
         for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
-            if (evalFunction.apply(state, data)) {
+            boolean evalResult = evalFunction.apply(state, data);
+            stateUpdate |= state.checkUpdate();
+            if (evalResult) {
                 resultSeverity = state.getSeverity();
                 break;
             }
         }
         if (resultSeverity != null) {
             pushMsg(ctx, calculateAlarmResult(ctx, resultSeverity));
-        } else if (currentAlarm != null) {
-            if (evalFunction.apply(clearState, data)) {
+        } else if (currentAlarm != null && clearState != null) {
+            Boolean evalResult = evalFunction.apply(clearState, data);
+            if (evalResult) {
+                stateUpdate |= clearState.checkUpdate();
                 ctx.getAlarmService().clearAlarm(ctx.getTenantId(), currentAlarm.getId(), JacksonUtil.OBJECT_MAPPER.createObjectNode(), System.currentTimeMillis());
                 pushMsg(ctx, new TbAlarmResult(false, false, true, currentAlarm));
                 currentAlarm = null;
             }
         }
+        return stateUpdate;
     }
 
     public void initCurrentAlarm(TbContext ctx) throws InterruptedException, ExecutionException {
@@ -96,7 +105,7 @@ class DeviceProfileAlarmState {
     public void pushMsg(TbContext ctx, TbAlarmResult alarmResult) {
         JsonNode jsonNodes = JacksonUtil.valueToTree(alarmResult.getAlarm());
         String data = jsonNodes.toString();
-        TbMsgMetaData metaData = lastMsgMetaData.copy();
+        TbMsgMetaData metaData = lastMsgMetaData != null ? lastMsgMetaData.copy() : new TbMsgMetaData();
         String relationType;
         if (alarmResult.isCreated()) {
             relationType = "Alarm Created";
@@ -112,18 +121,29 @@ class DeviceProfileAlarmState {
             relationType = "Alarm Cleared";
             metaData.putValue(DataConstants.IS_CLEARED_ALARM, Boolean.TRUE.toString());
         }
-        TbMsg newMsg = ctx.newMsg(lastMsgQueueName, "ALARM", originator, metaData, data);
+        TbMsg newMsg = ctx.newMsg(lastMsgQueueName != null ? lastMsgQueueName : ServiceQueue.MAIN, "ALARM", originator, metaData, data);
         ctx.tellNext(newMsg, relationType);
     }
 
-    public void updateState(DeviceProfileAlarm alarm) {
+    public void updateState(DeviceProfileAlarm alarm, PersistedAlarmState alarmState) {
         this.alarmDefinition = alarm;
         this.createRulesSortedBySeverityDesc = new ArrayList<>();
         alarmDefinition.getCreateRules().forEach((severity, rule) -> {
-            createRulesSortedBySeverityDesc.add(new AlarmRuleState(severity, rule));
+            PersistedAlarmRuleState ruleState = null;
+            if (alarmState != null) {
+                ruleState = alarmState.getCreateRuleStates().get(severity);
+                if (ruleState == null) {
+                    ruleState = new PersistedAlarmRuleState();
+                    alarmState.getCreateRuleStates().put(severity, ruleState);
+                }
+            }
+            createRulesSortedBySeverityDesc.add(new AlarmRuleState(severity, rule, ruleState));
         });
         createRulesSortedBySeverityDesc.sort(Comparator.comparingInt(state -> state.getSeverity().ordinal()));
-        clearState = new AlarmRuleState(null, alarmDefinition.getClearRule());
+        PersistedAlarmRuleState ruleState = alarmState == null ? null : alarmState.getClearRuleState();
+        if (alarmDefinition.getClearRule() != null) {
+            clearState = new AlarmRuleState(null, alarmDefinition.getClearRule(), ruleState);
+        }
     }
 
     private TbAlarmResult calculateAlarmResult(TbContext ctx, AlarmSeverity severity) {
@@ -158,5 +178,15 @@ class DeviceProfileAlarmState {
         }
     }
 
-
+    public boolean processAlarmClear(TbContext ctx, Alarm alarmNf) {
+        boolean updated = false;
+        if (currentAlarm != null && currentAlarm.getId().equals(alarmNf.getId())) {
+            currentAlarm = null;
+            for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
+                state.clear();
+                updated |= state.checkUpdate();
+            }
+        }
+        return updated;
+    }
 }

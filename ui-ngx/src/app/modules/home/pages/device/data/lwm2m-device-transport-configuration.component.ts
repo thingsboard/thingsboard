@@ -89,7 +89,7 @@ export class Lwm2mDeviceTransportConfigurationComponent implements ControlValueA
     let configuration: DeviceTransportConfiguration = null;
     if (this.lwm2mDeviceTransportConfigurationFormGroup.valid) {
       configuration = this.lwm2mDeviceTransportConfigurationFormGroup.getRawValue().configuration;
-      configuration.type = DeviceTransportType.LWM2M;
+      // configuration.type = DeviceTransportType.LWM2M;
     }
     this.propagateChange(configuration);
   }

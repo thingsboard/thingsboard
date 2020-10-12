@@ -94,7 +94,7 @@
         "name": "Device Profile Node",
         "debugMode": false,
         "configuration": {
-          "version": 0
+          "persistAlarmRulesState": false
         }
       }
     ],

@@ -1,0 +1,255 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="alarmScheduleForm" fxLayout="column">
+  <mat-form-field class="mat-block" hideRequiredMarker floatLabel="always">
+    <mat-label> </mat-label>
+    <mat-select formControlName="type" required placeholder="{{ 'device-profile.schedule-type' | translate }}">
+      <mat-option *ngFor="let alarmScheduleType of alarmScheduleTypes" [value]="alarmScheduleType">
+        {{ alarmScheduleTypeTranslate.get(alarmScheduleType) | translate }}
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="alarmScheduleForm.get('type').hasError('required')">
+      {{ 'device-profile.schedule-type-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <div *ngIf="alarmScheduleForm.get('type').value !== alarmScheduleType.ANY_TIME">
+    <tb-timezone-select
+      [defaultTimezone]="defaultTimezone"
+      required
+      formControlName="timezone">
+    </tb-timezone-select>
+    <section *ngIf="alarmScheduleForm.get('type').value === alarmScheduleType.SPECIFIC_TIME">
+      <div class="tb-small" style="margin-bottom: 0.5em" translate>device-profile.schedule-days</div>
+      <div fxLayout="column" fxLayout.gt-md="row" fxLayoutGap="16px" style="padding-bottom: 16px;">
+        <div fxLayout="row" fxLayoutGap="16px">
+          <mat-checkbox [formControl]="weeklyRepeatControl(0)">
+            {{ 'device-profile.schedule-day.monday' | translate }}
+          </mat-checkbox>
+          <mat-checkbox [formControl]="weeklyRepeatControl(1)">
+            {{ 'device-profile.schedule-day.tuesday' | translate }}
+          </mat-checkbox>
+          <mat-checkbox [formControl]="weeklyRepeatControl(2)">
+            {{ 'device-profile.schedule-day.wednesday' | translate }}
+          </mat-checkbox>
+          <mat-checkbox [formControl]="weeklyRepeatControl(3)">
+            {{ 'device-profile.schedule-day.thursday' | translate }}
+          </mat-checkbox>
+        </div>
+        <div fxLayout="row" fxLayoutGap="16px">
+          <mat-checkbox [formControl]="weeklyRepeatControl(4)">
+            {{ 'device-profile.schedule-day.friday' | translate }}
+          </mat-checkbox>
+          <mat-checkbox [formControl]="weeklyRepeatControl(5)">
+            {{ 'device-profile.schedule-day.saturday' | translate }}
+          </mat-checkbox>
+          <mat-checkbox [formControl]="weeklyRepeatControl(6)">
+            {{ 'device-profile.schedule-day.sunday' | translate }}
+          </mat-checkbox>
+        </div>
+      </div>
+      <div class="tb-small" style="margin-bottom: 0.5em" translate>device-profile.schedule-time</div>
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+        <div fxLayout="row" fxLayoutGap="8px" fxFlex.gt-md>
+          <mat-form-field fxFlex.xs fxFlex.sm="150px" fxFlex.md="150px" fxFlex.gt-md>
+            <mat-label translate>device-profile.schedule-time-from</mat-label>
+            <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
+            <mat-datetimepicker #startTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
+            <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker">
+          </mat-form-field>
+          <mat-form-field fxFlex.xs fxFlex.sm="150px" fxFlex.md="150px" fxFlex.gt-md>
+            <mat-label translate>device-profile.schedule-time-to</mat-label>
+            <mat-datetimepicker-toggle [for]="endTimePicker" matPrefix></mat-datetimepicker-toggle>
+            <mat-datetimepicker #endTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
+            <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker">
+          </mat-form-field>
+        </div>
+        <div fxFlex fxLayoutAlign="center center" style="margin: auto">
+          <div style="text-align: center"
+               [innerHTML]="getSchedulerRangeText(alarmScheduleForm)">
+          </div>
+        </div>
+      </div>
+    </section>
+    <section *ngIf="alarmScheduleForm.get('type').value === alarmScheduleType.CUSTOM">
+      <div class="tb-small" style="margin-bottom: 0.5em" translate>device-profile.schedule-days</div>
+      <div fxLayout="column" formArrayName="items" fxLayoutGap="1em">
+        <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" formGroupName="0" fxLayoutAlign="start center" fxLayoutAlign.xs="center start">
+          <mat-checkbox formControlName="enabled" fxFlex="17" (change)="changeCustomScheduler($event, 0)">
+            {{ 'device-profile.schedule-day.monday' | translate }}
+          </mat-checkbox>
+          <div fxLayout="row" fxLayoutGap="8px" fxFlex>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-from</mat-label>
+              <mat-datetimepicker-toggle [for]="startTimePicker1" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #startTimePicker1 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker1">
+            </mat-form-field>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-to</mat-label>
+              <mat-datetimepicker-toggle [for]="endTimePicker1" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #endTimePicker1 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker1">
+            </mat-form-field>
+          </div>
+          <div fxFlex fxLayoutAlign="center center"
+               style="text-align: center"
+               [innerHTML]="getSchedulerRangeText(itemsSchedulerForm.at(0))">
+          </div>
+        </div>
+        <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" formGroupName="1" fxLayoutAlign="start center" fxLayoutAlign.xs="center start">
+          <mat-checkbox formControlName="enabled" fxFlex="17" (change)="changeCustomScheduler($event, 1)">
+            {{ 'device-profile.schedule-day.tuesday' | translate }}
+          </mat-checkbox>
+          <div fxLayout="row" fxLayoutGap="8px" fxFlex>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-from</mat-label>
+              <mat-datetimepicker-toggle [for]="startTimePicker2" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #startTimePicker2 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker2">
+            </mat-form-field>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-to</mat-label>
+              <mat-datetimepicker-toggle [for]="endTimePicker2" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #endTimePicker2 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker2">
+            </mat-form-field>
+          </div>
+          <div fxFlex fxLayoutAlign="center center"
+               style="text-align: center"
+               [innerHTML]="getSchedulerRangeText(itemsSchedulerForm.at(1))">
+          </div>
+        </div>
+        <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" formGroupName="2" fxLayoutAlign="start center" fxLayoutAlign.xs="center start">
+          <mat-checkbox formControlName="enabled" fxFlex="17" (change)="changeCustomScheduler($event, 2)">
+            {{ 'device-profile.schedule-day.wednesday' | translate }}
+          </mat-checkbox>
+          <div fxLayout="row" fxLayoutGap="8px" fxFlex>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-from</mat-label>
+              <mat-datetimepicker-toggle [for]="startTimePicker3" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #startTimePicker3 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker3">
+            </mat-form-field>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-to</mat-label>
+              <mat-datetimepicker-toggle [for]="endTimePicker3" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #endTimePicker3 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker3">
+            </mat-form-field>
+          </div>
+          <div fxFlex fxLayoutAlign="center center"
+               style="text-align: center"
+               [innerHTML]="getSchedulerRangeText(itemsSchedulerForm.at(2))">
+          </div>
+        </div>
+        <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" formGroupName="3" fxLayoutAlign="start center" fxLayoutAlign.xs="center start">
+          <mat-checkbox formControlName="enabled" fxFlex="17" (change)="changeCustomScheduler($event, 3)">
+            {{ 'device-profile.schedule-day.thursday' | translate }}
+          </mat-checkbox>
+          <div fxLayout="row" fxLayoutGap="8px" fxFlex>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-from</mat-label>
+              <mat-datetimepicker-toggle [for]="startTimePicker4" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #startTimePicker4 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker4">
+            </mat-form-field>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-to</mat-label>
+              <mat-datetimepicker-toggle [for]="endTimePicker4" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #endTimePicker4 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker4">
+            </mat-form-field>
+          </div>
+          <div fxFlex fxLayoutAlign="center center"
+               style="text-align: center"
+               [innerHTML]="getSchedulerRangeText(itemsSchedulerForm.at(3))">
+          </div>
+        </div>
+        <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" formGroupName="4" fxLayoutAlign="start center" fxLayoutAlign.xs="center start">
+          <mat-checkbox formControlName="enabled" fxFlex="17" (change)="changeCustomScheduler($event, 4)">
+            {{ 'device-profile.schedule-day.friday' | translate }}
+          </mat-checkbox>
+          <div fxLayout="row" fxLayoutGap="8px" fxFlex>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-from</mat-label>
+              <mat-datetimepicker-toggle [for]="startTimePicker5" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #startTimePicker5 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker5">
+            </mat-form-field>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-to</mat-label>
+              <mat-datetimepicker-toggle [for]="endTimePicker5" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #endTimePicker5 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker5">
+            </mat-form-field>
+          </div>
+          <div fxFlex fxLayoutAlign="center center"
+               style="text-align: center"
+               [innerHTML]="getSchedulerRangeText(itemsSchedulerForm.at(4))">
+          </div>
+        </div>
+        <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" formGroupName="5" fxLayoutAlign="start center" fxLayoutAlign.xs="center start">
+          <mat-checkbox formControlName="enabled" fxFlex="17" (change)="changeCustomScheduler($event, 5)">
+            {{ 'device-profile.schedule-day.saturday' | translate }}
+          </mat-checkbox>
+          <div fxLayout="row" fxLayoutGap="8px" fxFlex>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-from</mat-label>
+              <mat-datetimepicker-toggle [for]="startTimePicker6" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #startTimePicker6 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker6">
+            </mat-form-field>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-to</mat-label>
+              <mat-datetimepicker-toggle [for]="endTimePicker6" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #endTimePicker6 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker6">
+            </mat-form-field>
+          </div>
+          <div fxFlex fxLayoutAlign="center center"
+               style="text-align: center"
+               [innerHTML]="getSchedulerRangeText(itemsSchedulerForm.at(5))">
+          </div>
+        </div>
+        <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" formGroupName="6" fxLayoutAlign="start center" fxLayoutAlign.xs="center start">
+          <mat-checkbox formControlName="enabled" fxFlex="17" (change)="changeCustomScheduler($event, 6)">
+            {{ 'device-profile.schedule-day.sunday' | translate }}
+          </mat-checkbox>
+          <div fxLayout="row" fxLayoutGap="8px" fxFlex>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-from</mat-label>
+              <mat-datetimepicker-toggle [for]="startTimePicker7" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #startTimePicker7 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker7">
+            </mat-form-field>
+            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+              <mat-label translate>device-profile.schedule-time-to</mat-label>
+              <mat-datetimepicker-toggle [for]="endTimePicker7" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #endTimePicker7 type="time" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker7">
+            </mat-form-field>
+          </div>
+          <div fxFlex fxLayoutAlign="center center"
+               style="text-align: center"
+               [innerHTML]="getSchedulerRangeText(itemsSchedulerForm.at(6))">
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</section>

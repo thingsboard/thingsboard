@@ -49,12 +49,11 @@
           {{ 'device-profile.name-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-entity-autocomplete
+      <tb-rule-chain-autocomplete
         labelText="device-profile.default-rule-chain"
-        [entityType]="entityType.RULE_CHAIN"
         formControlName="defaultRuleChainId">
-      </tb-entity-autocomplete>
-      <mat-form-field class="mat-block">
+      </tb-rule-chain-autocomplete>
+      <mat-form-field fxHide class="mat-block">
         <mat-label translate>device-profile.type</mat-label>
         <mat-select formControlName="type" required>
           <mat-option *ngFor="let type of deviceProfileTypes" [value]="type">
@@ -65,21 +64,6 @@
           {{ 'device-profile.type-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field class="mat-block">
-        <mat-label translate>device-profile.transport-type</mat-label>
-        <mat-select formControlName="transportType" required>
-          <mat-option *ngFor="let type of deviceTransportTypes" [value]="type">
-            {{deviceTransportTypeTranslations.get(type) | translate}}
-          </mat-option>
-        </mat-select>
-        <mat-error *ngIf="entityForm.get('transportType').hasError('required')">
-          {{ 'device-profile.transport-type-required' | translate }}
-        </mat-error>
-      </mat-form-field>
-      <tb-device-profile-data
-        formControlName="profileData"
-        required>
-      </tb-device-profile-data>
       <mat-form-field class="mat-block">
         <mat-label translate>device-profile.description</mat-label>
         <textarea matInput formControlName="description" rows="2"></textarea>

@@ -16,6 +16,7 @@
 
 import { BaseData, HasId } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
+import {QueueId} from "@shared/models/id/queue-id";
 
 export enum ServiceType {
   TB_CORE = 'TB_CORE',
@@ -40,7 +41,7 @@ export enum QueueProcessingStrategyTypes {
   RETRY_TIMED_OUT = 'RETRY_TIMED_OUT'
 }
 
-export interface QueueInfo extends BaseData<HasId> {
+export interface QueueInfo extends BaseData<QueueId> {
   packProcessingTimeout: number;
   partitions: number;
   pollInterval: number;
