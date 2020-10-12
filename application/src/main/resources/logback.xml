@@ -36,7 +36,7 @@
 <!--    <logger name="org.thingsboard.server.service.telemetry" level="TRACE"/>-->
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
 
-    <logger name="org.thingsboard.server.service.edge" level="TRACE" />
+    <logger name="org.thingsboard.server.service.edge" level="INFO" />
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
