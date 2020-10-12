@@ -73,14 +73,11 @@ public class DeviceProcessor extends BaseProcessor {
                         saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, ActionType.ENTITY_EXISTS_REQUEST, device.getId(), null);
                     }
                 } else {
-                    Device deviceById = deviceService.findDeviceById(edge.getTenantId(), edgeDeviceId);
-                    if (deviceById != null) {
-                        // this ID already used by other device - create new device and update ID on the edge
-                        device = createDevice(tenantId, edge, deviceUpdateMsg);
-                        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, ActionType.ENTITY_EXISTS_REQUEST, device.getId(), null);
-                    } else {
-                        device = createDevice(tenantId, edge, deviceUpdateMsg);
-                    }
+                    device = createDevice(tenantId, edge, deviceUpdateMsg);
+                    saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, ActionType.ENTITY_EXISTS_REQUEST, device.getId(), null);
+
+                    // TODO: voba - properly handle device credentials from edge to cloud
+                    // saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, ActionType.CREDENTIALS_REQUEST, device.getId(), null);
                 }
                 // TODO: voba - assign device only in case device is not assigned yet. Missing functionality to check this relation prior assignment
                 deviceService.assignDeviceToEdge(edge.getTenantId(), device.getId(), edge.getId());
@@ -142,22 +139,19 @@ public class DeviceProcessor extends BaseProcessor {
         Device device;
         try {
             deviceCreationLock.lock();
-            DeviceId deviceId = new DeviceId(new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB()));
             device = new Device();
             device.setTenantId(edge.getTenantId());
             device.setCustomerId(edge.getCustomerId());
-            device.setId(deviceId);
             device.setName(deviceUpdateMsg.getName());
             device.setType(deviceUpdateMsg.getType());
             device.setLabel(deviceUpdateMsg.getLabel());
             device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo()));
             device = deviceService.saveDevice(device);
-            createDeviceCredentials(device);
+            // TODO: voba - is this still required?
+//            createDeviceCredentials(device);
             createRelationFromEdge(tenantId, edge.getId(), device.getId());
             deviceStateService.onDeviceAdded(device);
             pushDeviceCreatedEventToRuleEngine(tenantId, edge, device);
-
-            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, ActionType.CREDENTIALS_REQUEST, deviceId, null);
         } finally {
             deviceCreationLock.unlock();
         }

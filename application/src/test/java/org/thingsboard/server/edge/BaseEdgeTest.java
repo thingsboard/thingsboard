@@ -161,6 +161,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         testTimeseries();
         testAttributes();
         testSendMessagesToCloud();
+        // TODO: voba - test conflict messages in case device with current name already exist or ID is already used
     }
 
     private void testReceivedInitialData() throws Exception {
@@ -808,7 +809,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     private void sendDevice() throws Exception {
         UUID uuid = Uuids.timeBased();
 
-        UplinkMsg.Builder builder =  UplinkMsg.newBuilder();
+        UplinkMsg.Builder builder = UplinkMsg.newBuilder();
         DeviceUpdateMsg.Builder deviceUpdateMsgBuilder = DeviceUpdateMsg.newBuilder();
         deviceUpdateMsgBuilder.setIdMSB(uuid.getMostSignificantBits());
         deviceUpdateMsgBuilder.setIdLSB(uuid.getLeastSignificantBits());
@@ -816,11 +817,17 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         deviceUpdateMsgBuilder.setType("test");
         deviceUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
         builder.addDeviceUpdateMsg(deviceUpdateMsgBuilder.build());
-        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.expectResponsesAmount(2);
         edgeImitator.sendUplinkMsg(builder.build());
         edgeImitator.waitForResponses();
 
-        Device device = doGet("/api/device/" + uuid.toString(), Device.class);
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceUpdateMsg);
+        DeviceUpdateMsg deviceUpdateMsg = (DeviceUpdateMsg) latestMessage;
+
+        UUID savedDeviceId = new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB());
+
+        Device device = doGet("/api/device/" + savedDeviceId, Device.class);
         Assert.assertNotNull(device);
         Assert.assertEquals("Edge Device 2", device.getName());
     }

@@ -171,7 +171,7 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
     Long countByDeviceProfileId(UUID deviceProfileId);
 
     @Query("SELECT d FROM DeviceEntity d, RelationEntity re WHERE d.tenantId = :tenantId " +
-            "AND d.id = re.toId AND re.toType = 'ASSET' AND re.relationTypeGroup = 'EDGE' " +
+            "AND d.id = re.toId AND re.toType = 'DEVICE' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
             "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
     Page<DeviceEntity> findByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,

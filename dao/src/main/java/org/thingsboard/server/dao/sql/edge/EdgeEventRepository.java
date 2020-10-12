@@ -36,6 +36,19 @@ public interface EdgeEventRepository extends PagingAndSortingRepository<EdgeEven
     Page<EdgeEventEntity> findEdgeEventsByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,
                                                             @Param("edgeId") UUID edgeId,
                                                             @Param("startTime") Long startTime,
-                                                            @Param("startTime") Long endTime,
+                                                            @Param("endTime") Long endTime,
                                                             Pageable pageable);
+
+    @Query("SELECT e FROM EdgeEventEntity e WHERE " +
+            "e.tenantId = :tenantId " +
+            "AND e.edgeId = :edgeId " +
+            "AND (:startTime IS NULL OR e.createdTime >= :startTime) " +
+            "AND (:endTime IS NULL OR e.createdTime <= :endTime) " +
+            "AND e.edgeEventAction <> 'TIMESERIES_UPDATED'"
+    )
+    Page<EdgeEventEntity> findEdgeEventsByTenantIdAndEdgeIdWithoutTimeseriesUpdated(@Param("tenantId") UUID tenantId,
+                                                                                    @Param("edgeId") UUID edgeId,
+                                                                                    @Param("startTime") Long startTime,
+                                                                                    @Param("endTime") Long endTime,
+                                                                                    Pageable pageable);
 }

@@ -258,12 +258,14 @@ public final class EdgeGrpcSession implements Closeable {
 
     void processHandleMessages() throws ExecutionException, InterruptedException {
         if (isConnected()) {
-            Integer queueStartTs = getQueueStartTs().get();
+            Long queueStartTs = getQueueStartTs().get();
             TimePageLink pageLink = new TimePageLink(
                     ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(),
-                    queueStartTs,
+                    0,
                     null,
-                    new SortOrder("createdTime", SortOrder.Direction.ASC));
+                    new SortOrder("createdTime", SortOrder.Direction.ASC),
+                    queueStartTs,
+                    null);
             PageData<EdgeEvent> pageData;
             UUID ifOffset = null;
             boolean success = true;
@@ -398,15 +400,15 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
 
-    private ListenableFuture<Integer> getQueueStartTs() {
+    private ListenableFuture<Long> getQueueStartTs() {
         ListenableFuture<Optional<AttributeKvEntry>> future =
                 ctx.getAttributesService().find(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, QUEUE_START_TS_ATTR_KEY);
         return Futures.transform(future, attributeKvEntryOpt -> {
             if (attributeKvEntryOpt != null && attributeKvEntryOpt.isPresent()) {
                 AttributeKvEntry attributeKvEntry = attributeKvEntryOpt.get();
-                return attributeKvEntry.getLongValue().isPresent() ? attributeKvEntry.getLongValue().get().intValue() : 0;
+                return attributeKvEntry.getLongValue().isPresent() ? attributeKvEntry.getLongValue().get() : 0L;
             } else {
-                return 0;
+                return 0L;
             }
         }, ctx.getDbCallbackExecutor());
     }

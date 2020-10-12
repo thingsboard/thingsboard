@@ -122,7 +122,7 @@ public interface EntityViewRepository extends PagingAndSortingRepository<EntityV
     List<String> findTenantEntityViewTypes(@Param("tenantId") UUID tenantId);
 
     @Query("SELECT ev FROM EntityViewEntity ev, RelationEntity re WHERE ev.tenantId = :tenantId " +
-            "AND ev.id = re.toId AND re.toType = 'ASSET' AND re.relationTypeGroup = 'EDGE' " +
+            "AND ev.id = re.toId AND re.toType = 'ENTITY_VIEW' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
             "AND LOWER(ev.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
     Page<EntityViewEntity> findByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,

@@ -57,9 +57,6 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     @Autowired
     private AssetRepository assetRepository;
 
-    @Autowired
-    private RelationDao relationDao;
-
     @Override
     protected Class<AssetEntity> getEntityClass() {
         return AssetEntity.class;
@@ -190,7 +187,7 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     }
 
     @Override
-    public PageData<Asset> findAssetsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink) {
+    public PageData<Asset> findAssetsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink) {
         log.debug("Try to find assets by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
         return DaoUtil.toPageData(assetRepository
                 .findByTenantIdAndEdgeId(

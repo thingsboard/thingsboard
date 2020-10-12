@@ -91,6 +91,7 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
         } else {
             this.ts = System.currentTimeMillis();
         }
+        this.setCreatedTime(edgeEvent.getCreatedTime());
         if (edgeEvent.getTenantId() != null) {
             this.tenantId = edgeEvent.getTenantId().getId();
         }

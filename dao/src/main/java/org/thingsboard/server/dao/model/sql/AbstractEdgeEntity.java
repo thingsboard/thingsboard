@@ -21,7 +21,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -34,6 +33,7 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CLOUD_ENDPOINT_KEY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
@@ -53,14 +53,14 @@ import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPER
 @MappedSuperclass
 public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T> implements SearchTextEntity<T> {
 
-    @Column(name = EDGE_TENANT_ID_PROPERTY)
-    private String tenantId;
+    @Column(name = EDGE_TENANT_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID tenantId;
 
-    @Column(name = EDGE_CUSTOMER_ID_PROPERTY)
-    private String customerId;
+    @Column(name = EDGE_CUSTOMER_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID customerId;
 
-    @Column(name = EDGE_ROOT_RULE_CHAIN_ID_PROPERTY)
-    private String rootRuleChainId;
+    @Column(name = EDGE_ROOT_RULE_CHAIN_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID rootRuleChainId;
 
     @Column(name = EDGE_TYPE_PROPERTY)
     private String type;
@@ -103,13 +103,13 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
             this.setUuid(edge.getId().getId());
         }
         if (edge.getTenantId() != null) {
-            this.tenantId = UUIDConverter.fromTimeUUID(edge.getTenantId().getId());
+            this.tenantId = edge.getTenantId().getId();
         }
         if (edge.getCustomerId() != null) {
-            this.customerId = UUIDConverter.fromTimeUUID(edge.getCustomerId().getId());
+            this.customerId = edge.getCustomerId().getId();
         }
         if (edge.getRootRuleChainId() != null) {
-            this.rootRuleChainId = UUIDConverter.fromTimeUUID(edge.getRootRuleChainId().getId());
+            this.rootRuleChainId = edge.getRootRuleChainId().getId();
         }
         this.type = edge.getType();
         this.name = edge.getName();
@@ -157,13 +157,13 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
         Edge edge = new Edge(new EdgeId(getUuid()));
         edge.setCreatedTime(Uuids.unixTimestamp(getUuid()));
         if (tenantId != null) {
-            edge.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
+            edge.setTenantId(new TenantId(tenantId));
         }
         if (customerId != null) {
-            edge.setCustomerId(new CustomerId(UUIDConverter.fromString(customerId)));
+            edge.setCustomerId(new CustomerId(customerId));
         }
         if (rootRuleChainId != null) {
-            edge.setRootRuleChainId(new RuleChainId(UUIDConverter.fromString(rootRuleChainId)));
+            edge.setRootRuleChainId(new RuleChainId(rootRuleChainId));
         }
         edge.setType(type);
         edge.setName(name);
