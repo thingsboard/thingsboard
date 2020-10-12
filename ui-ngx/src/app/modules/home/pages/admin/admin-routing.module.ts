@@ -22,6 +22,7 @@ import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { Authority } from '@shared/models/authority.enum';
 import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
+import { OAuth2SettingsComponent } from '@home/pages/admin/oauth2-settings.component';
 
 const routes: Routes = [
   {
@@ -74,6 +75,19 @@ const routes: Routes = [
           title: 'admin.security-settings',
           breadcrumb: {
             label: 'admin.security-settings',
+            icon: 'security'
+          }
+        }
+      },
+      {
+        path: 'oauth2',
+        component: OAuth2SettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN],
+          title: 'admin.oauth2.oauth2',
+          breadcrumb: {
+            label: 'admin.oauth2.oauth2',
             icon: 'security'
           }
         }

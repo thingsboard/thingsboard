@@ -108,7 +108,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '120px',
+        height: '160px',
         icon: 'settings',
         pages: [
           {
@@ -130,6 +130,13 @@ export class MenuService {
             name: 'admin.security-settings',
             type: 'link',
             path: '/settings/security-settings',
+            icon: 'security'
+          },
+          {
+            id: guid(),
+            name: 'admin.oauth2.oauth2',
+            type: 'link',
+            path: '/settings/oauth2',
             icon: 'security'
           }
         ]

@@ -387,3 +387,19 @@ export function sortObjectKeys<T>(obj: T): T {
     return acc;
   }, {} as T);
 }
+
+export function deepTrim<T>(obj: T): T {
+  if (isNumber(obj) || isUndefined(obj) || isString(obj) || obj === null) {
+    return obj;
+  }
+  return Object.keys(obj).reduce((acc, curr) => {
+    if (isString(obj[curr])) {
+      acc[curr] = obj[curr].trim();
+    } else if (isObject(obj[curr])) {
+      acc[curr] = deepTrim(obj[curr]);
+    } else {
+      acc[curr] = obj[curr];
+    }
+    return acc;
+  }, (Array.isArray(obj) ? [] : {}) as T);
+}

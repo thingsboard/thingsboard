@@ -90,7 +90,6 @@ import { TenantProfileDialogComponent } from './profile/tenant-profile-dialog.co
 import { TenantProfileDataComponent } from './profile/tenant-profile-data.component';
 import { DefaultDeviceProfileConfigurationComponent } from './profile/device/default-device-profile-configuration.component';
 import { DeviceProfileConfigurationComponent } from './profile/device/device-profile-configuration.component';
-import { DeviceProfileDataComponent } from './profile/device-profile-data.component';
 import { DeviceProfileComponent } from './profile/device-profile.component';
 import { DefaultDeviceProfileTransportConfigurationComponent } from './profile/device/default-device-profile-transport-configuration.component';
 import { DeviceProfileTransportConfigurationComponent } from './profile/device/device-profile-transport-configuration.component';
@@ -196,7 +195,6 @@ import { DeviceCredentialsComponent } from './device/device-credentials.componen
       AlarmRuleConditionComponent,
       DeviceProfileAlarmComponent,
       DeviceProfileAlarmsComponent,
-      DeviceProfileDataComponent,
       DeviceProfileComponent,
       DeviceProfileDialogComponent,
       AddDeviceProfileDialogComponent,
@@ -279,7 +277,6 @@ import { DeviceCredentialsComponent } from './device/device-credentials.componen
     AlarmRuleConditionComponent,
     DeviceProfileAlarmComponent,
     DeviceProfileAlarmsComponent,
-    DeviceProfileDataComponent,
     DeviceProfileComponent,
     DeviceProfileDialogComponent,
     AddDeviceProfileDialogComponent,

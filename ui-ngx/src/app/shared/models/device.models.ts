@@ -33,7 +33,7 @@ export enum DeviceProfileType {
 export enum DeviceTransportType {
   DEFAULT = 'DEFAULT',
   MQTT = 'MQTT',
-  LWM2M = 'LWM2M'
+  // LWM2M = 'LWM2M'
 }
 
 export enum MqttTransportPayloadType {
@@ -74,7 +74,7 @@ export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, st
   [
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt'],
-    [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
+    // [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
   ]
 );
 
@@ -91,7 +91,7 @@ export const deviceTransportTypeHintMap = new Map<DeviceTransportType, string>(
   [
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default-hint'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt-hint'],
-    [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint']
+    // [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint']
   ]
 );
 
@@ -116,16 +116,16 @@ export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportTy
       DeviceTransportType.MQTT,
       {
         hasProfileConfiguration: true,
-        hasDeviceConfiguration: true,
+        hasDeviceConfiguration: false,
       }
     ],
-    [
+    /*[
       DeviceTransportType.LWM2M,
       {
         hasProfileConfiguration: true,
-        hasDeviceConfiguration: true,
+        hasDeviceConfiguration: false,
       }
-    ]
+    ]*/
   ]
 );
 
@@ -209,10 +209,10 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         };
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
-      case DeviceTransportType.LWM2M:
+      /*case DeviceTransportType.LWM2M:
         const lwm2mTransportConfiguration: Lwm2mDeviceProfileTransportConfiguration = {};
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
-        break;
+        break;*/
     }
   }
   return transportConfiguration;
@@ -230,10 +230,10 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
         const mqttTransportConfiguration: MqttDeviceTransportConfiguration = {};
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
-      case DeviceTransportType.LWM2M:
+      /* case DeviceTransportType.LWM2M:
         const lwm2mTransportConfiguration: Lwm2mDeviceTransportConfiguration = {};
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
-        break;
+        break;*/
     }
   }
   return transportConfiguration;

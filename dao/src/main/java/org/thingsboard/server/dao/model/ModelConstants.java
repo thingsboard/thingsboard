@@ -392,6 +392,53 @@ public class ModelConstants {
     public static final String RULE_NODE_STATE_DATA_PROPERTY = "state_data";
 
     /**
+     * OAuth2 client registration constants.
+     */
+    public static final String OAUTH2_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String OAUTH2_CLIENT_REGISTRATION_INFO_COLUMN_FAMILY_NAME = "oauth2_client_registration_info";
+    public static final String OAUTH2_CLIENT_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_client_registration";
+    public static final String OAUTH2_CLIENT_REGISTRATION_TO_DOMAIN_COLUMN_FAMILY_NAME = "oauth2_client_registration_to_domain";
+    public static final String OAUTH2_CLIENT_REGISTRATION_TEMPLATE_COLUMN_FAMILY_NAME = "oauth2_client_registration_template";
+    public static final String OAUTH2_ENABLED_PROPERTY = "enabled";
+    public static final String OAUTH2_TEMPLATE_PROVIDER_ID_PROPERTY = "provider_id";
+    public static final String OAUTH2_CLIENT_REGISTRATION_INFO_ID_PROPERTY = "client_registration_info_id";
+    public static final String OAUTH2_DOMAIN_NAME_PROPERTY = "domain_name";
+    public static final String OAUTH2_DOMAIN_SCHEME_PROPERTY = "domain_scheme";
+    public static final String OAUTH2_CLIENT_ID_PROPERTY = "client_id";
+    public static final String OAUTH2_CLIENT_SECRET_PROPERTY = "client_secret";
+    public static final String OAUTH2_AUTHORIZATION_URI_PROPERTY = "authorization_uri";
+    public static final String OAUTH2_TOKEN_URI_PROPERTY = "token_uri";
+    public static final String OAUTH2_REDIRECT_URI_TEMPLATE_PROPERTY = "redirect_uri_template";
+    public static final String OAUTH2_SCOPE_PROPERTY = "scope";
+    public static final String OAUTH2_USER_INFO_URI_PROPERTY = "user_info_uri";
+    public static final String OAUTH2_USER_NAME_ATTRIBUTE_NAME_PROPERTY = "user_name_attribute_name";
+    public static final String OAUTH2_JWK_SET_URI_PROPERTY = "jwk_set_uri";
+    public static final String OAUTH2_CLIENT_AUTHENTICATION_METHOD_PROPERTY = "client_authentication_method";
+    public static final String OAUTH2_LOGIN_BUTTON_LABEL_PROPERTY = "login_button_label";
+    public static final String OAUTH2_LOGIN_BUTTON_ICON_PROPERTY = "login_button_icon";
+    public static final String OAUTH2_ALLOW_USER_CREATION_PROPERTY = "allow_user_creation";
+    public static final String OAUTH2_ACTIVATE_USER_PROPERTY = "activate_user";
+    public static final String OAUTH2_MAPPER_TYPE_PROPERTY = "type";
+    public static final String OAUTH2_EMAIL_ATTRIBUTE_KEY_PROPERTY = "basic_email_attribute_key";
+    public static final String OAUTH2_FIRST_NAME_ATTRIBUTE_KEY_PROPERTY = "basic_first_name_attribute_key";
+    public static final String OAUTH2_LAST_NAME_ATTRIBUTE_KEY_PROPERTY = "basic_last_name_attribute_key";
+    public static final String OAUTH2_TENANT_NAME_STRATEGY_PROPERTY = "basic_tenant_name_strategy";
+    public static final String OAUTH2_TENANT_NAME_PATTERN_PROPERTY = "basic_tenant_name_pattern";
+    public static final String OAUTH2_CUSTOMER_NAME_PATTERN_PROPERTY = "basic_customer_name_pattern";
+    public static final String OAUTH2_DEFAULT_DASHBOARD_NAME_PROPERTY = "basic_default_dashboard_name";
+    public static final String OAUTH2_ALWAYS_FULL_SCREEN_PROPERTY = "basic_always_full_screen";
+    public static final String OAUTH2_MAPPER_URL_PROPERTY = "custom_url";
+    public static final String OAUTH2_MAPPER_USERNAME_PROPERTY = "custom_username";
+    public static final String OAUTH2_MAPPER_PASSWORD_PROPERTY = "custom_password";
+    public static final String OAUTH2_MAPPER_SEND_TOKEN_PROPERTY = "custom_send_token";
+    public static final String OAUTH2_TEMPLATE_COMMENT_PROPERTY = "comment";
+    public static final String OAUTH2_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String OAUTH2_TEMPLATE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String OAUTH2_TEMPLATE_LOGIN_BUTTON_ICON_PROPERTY = OAUTH2_LOGIN_BUTTON_ICON_PROPERTY;
+    public static final String OAUTH2_TEMPLATE_LOGIN_BUTTON_LABEL_PROPERTY = OAUTH2_LOGIN_BUTTON_LABEL_PROPERTY;
+    public static final String OAUTH2_TEMPLATE_HELP_LINK_PROPERTY = "help_link";
+
+    /**
      * Cassandra attributes and timeseries constants.
      */
     public static final String ATTRIBUTES_KV_CF = "attributes_kv_cf";

@@ -26,7 +26,7 @@ import {
   createDeviceProfileTransportConfiguration,
   DeviceProfile,
   DeviceProfileType,
-  DeviceTransportType, deviceTransportTypeHintMap,
+  DeviceTransportType, deviceTransportTypeConfigurationInfoMap, deviceTransportTypeHintMap,
   deviceTransportTypeTranslationMap
 } from '@shared/models/device.models';
 import { MatHorizontalStepper } from '@angular/material/stepper';
@@ -123,7 +123,7 @@ export class DeviceWizardDialogComponent extends
           this.deviceWizardFormGroup.updateValueAndValidity();
           this.createProfile = true;
           this.createTransportConfiguration = this.deviceWizardFormGroup.get('transportType').value &&
-            DeviceTransportType.DEFAULT !== this.deviceWizardFormGroup.get('transportType').value;
+            deviceTransportTypeConfigurationInfoMap.get(this.deviceWizardFormGroup.get('transportType').value).hasProfileConfiguration;
         }
       }
     ));
@@ -228,7 +228,7 @@ export class DeviceWizardDialogComponent extends
     this.transportConfigFormGroup.patchValue(
       {transportConfiguration: createDeviceProfileTransportConfiguration(deviceTransportType)});
     this.createTransportConfiguration = this.createProfile && deviceTransportType &&
-      DeviceTransportType.DEFAULT !== deviceTransportType;
+      deviceTransportTypeConfigurationInfoMap.get(deviceTransportType).hasProfileConfiguration;
   }
 
   add(): void {
