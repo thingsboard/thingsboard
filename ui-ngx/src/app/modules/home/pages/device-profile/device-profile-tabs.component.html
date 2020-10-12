@@ -50,6 +50,15 @@
     </div>
   </div>
 </mat-tab>
+<mat-tab *ngIf="entity"
+         label="{{ 'device-profile.device-provisioning' | translate }}" #deviceProvisioning="matTab">
+  <div class="mat-padding" [formGroup]="detailsForm">
+    <div formGroupName="profileData">
+      <tb-device-profile-provision-configuration formControlName="provisionConfiguration">
+      </tb-device-profile-provision-configuration>
+    </div>
+  </div>
+</mat-tab>
 <mat-tab *ngIf="false"
          label="{{'device-profile.profile-configuration' | translate }}" #deviceProfile="matTab">
   <div class="mat-padding" [formGroup]="detailsForm">

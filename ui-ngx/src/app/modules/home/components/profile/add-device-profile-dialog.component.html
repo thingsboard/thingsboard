@@ -96,6 +96,14 @@
           </tb-device-profile-alarms>
         </form>
       </mat-step>
+      <mat-step [stepControl]="provisionConfigFormGroup" [optional]="true">
+        <form [formGroup]="provisionConfigFormGroup" style="padding-bottom: 16px;">
+          <ng-template matStepLabel>{{ 'device-profile.device-provisioning' | translate }}</ng-template>
+          <tb-device-profile-provision-configuration
+            formControlName="provisionConfiguration">
+          </tb-device-profile-provision-configuration>
+        </form>
+      </mat-step>
     </mat-horizontal-stepper>
   </div>
   <div mat-dialog-actions fxLayout="column" fxLayoutAlign="start wrap" fxLayoutGap="8px" style="height: 100px;">

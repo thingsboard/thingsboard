@@ -41,10 +41,12 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private boolean isDefault;
     private DeviceProfileType type;
     private DeviceTransportType transportType;
+    private DeviceProfileProvisionType provisionType;
     private RuleChainId defaultRuleChainId;
     private transient DeviceProfileData profileData;
     @JsonIgnore
     private byte[] profileDataBytes;
+    private String provisionDeviceKey;
 
     public DeviceProfile() {
         super();
@@ -62,6 +64,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         this.isDefault = deviceProfile.isDefault();
         this.defaultRuleChainId = deviceProfile.getDefaultRuleChainId();
         this.setProfileData(deviceProfile.getProfileData());
+        this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
     }
 
     @Override
