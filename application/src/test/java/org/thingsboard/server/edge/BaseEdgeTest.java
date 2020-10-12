@@ -92,9 +92,6 @@ import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-;
-
-
 @Slf4j
 abstract public class BaseEdgeTest extends AbstractControllerTest {
 

@@ -25,12 +25,12 @@ import org.thingsboard.server.queue.memory.InMemoryStorage;
 import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.edge.sql.*Test"})
+@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.edge.sql.*IGNORED_Test"})
 public class EdgeSqlTestSuite {
 
     @ClassRule
     public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
-            Arrays.asList("sql/schema-ts-hsql.sql", "sql/schema-entities-hsql.sql", "sql/schema-entities-idx.sql", "sql/system-data.sql"),
+            Arrays.asList("sql/schema-types-hsql.sql", "sql/schema-ts-hsql.sql", "sql/schema-entities-hsql.sql", "sql/system-data.sql"),
             "sql/hsql/drop-all-tables.sql",
             "sql-test.properties");
 
