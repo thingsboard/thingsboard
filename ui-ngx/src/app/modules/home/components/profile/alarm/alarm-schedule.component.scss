@@ -13,20 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../../scss/constants';
-
-:host {
-  .tb-device-profile-alarms {
-    overflow-y: auto;
-    &.mat-padding {
-      padding: 8px;
-      @media #{$mat-gt-sm} {
-        padding: 16px;
-      }
-    }
-  }
-
-  .tb-prompt{
-    margin: 30px 0;
+::ng-deep {
+  .nowrap {
+    white-space: nowrap;
   }
 }

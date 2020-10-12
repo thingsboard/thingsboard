@@ -77,7 +77,11 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
         name: [entity ? entity.name : '', [Validators.required]],
         type: [entity ? entity.type : null, [Validators.required]],
         transportType: [entity ? entity.transportType : null, [Validators.required]],
-        profileData: [entity && !this.isAdd ? entity.profileData : {}, []],
+        profileData: this.fb.group({
+          configuration: [entity && !this.isAdd ? entity.profileData?.configuration : {}, Validators.required],
+          transportConfiguration: [entity && !this.isAdd ? entity.profileData?.transportConfiguration : {}, Validators.required],
+          alarms: [entity && !this.isAdd ? entity.profileData?.alarms : []]
+        }),
         defaultRuleChainId: [entity && entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null, []],
         description: [entity ? entity.description : '', []],
       }
@@ -138,7 +142,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     if (formValue.defaultRuleChainId) {
       formValue.defaultRuleChainId = new RuleChainId(formValue.defaultRuleChainId);
     }
-    return formValue;
+    return super.prepareFormValue(formValue);
   }
 
   onDeviceProfileIdCopied(event) {

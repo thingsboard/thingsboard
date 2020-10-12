@@ -33,7 +33,7 @@ export enum DeviceProfileType {
 export enum DeviceTransportType {
   DEFAULT = 'DEFAULT',
   MQTT = 'MQTT',
-//  LWM2M = 'LWM2M'
+  // LWM2M = 'LWM2M'
 }
 
 export enum MqttTransportPayloadType {
@@ -68,7 +68,7 @@ export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, st
   [
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt'],
- //   [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
+    // [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
   ]
 );
 
@@ -76,7 +76,7 @@ export const deviceTransportTypeHintMap = new Map<DeviceTransportType, string>(
   [
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default-hint'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt-hint'],
- //   [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint']
+    // [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint']
   ]
 );
 
