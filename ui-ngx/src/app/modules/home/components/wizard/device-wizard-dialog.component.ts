@@ -266,11 +266,11 @@ export class DeviceWizardDialogComponent extends
         })
       );
     } else {
-      return of(null);
+      return of(this.deviceWizardFormGroup.get('deviceProfileId').value);
     }
   }
 
-  private createDevice(profileId: EntityId = this.deviceWizardFormGroup.get('deviceProfileId').value): Observable<BaseData<HasId>> {
+  private createDevice(profileId): Observable<BaseData<HasId>> {
     const device = {
       name: this.deviceWizardFormGroup.get('name').value,
       label: this.deviceWizardFormGroup.get('label').value,
