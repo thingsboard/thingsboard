@@ -165,9 +165,7 @@ class AlarmRuleState {
                 return false;
             }
         }
-        long startOfDay = zdt.toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli();
-        long msFromStartOfDay = eventTs - startOfDay;
-        return schedule.getStartsOn() <= msFromStartOfDay && schedule.getEndsOn() > msFromStartOfDay;
+        return isActive(eventTs, zoneId, zdt, schedule.getStartsOn(), schedule.getEndsOn());
     }
 
     private boolean isActiveCustom(CustomTimeSchedule schedule, long eventTs) {
@@ -177,15 +175,23 @@ class AlarmRuleState {
         for (CustomTimeScheduleItem item : schedule.getItems()) {
             if (item.getDayOfWeek() == dayOfWeek) {
                 if (item.isEnabled()) {
-                    long startOfDay = zdt.toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli();
-                    long msFromStartOfDay = eventTs - startOfDay;
-                    return item.getStartsOn() <= msFromStartOfDay && item.getEndsOn() > msFromStartOfDay;
+                    return isActive(eventTs, zoneId, zdt, item.getStartsOn(), item.getEndsOn());
                 } else {
                     return false;
                 }
             }
         }
         return false;
+    }
+
+    private boolean isActive(long eventTs, ZoneId zoneId, ZonedDateTime zdt, long startsOn, long endsOn) {
+        long startOfDay = zdt.toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli();
+        long msFromStartOfDay = eventTs - startOfDay;
+        if (startsOn <= endsOn) {
+            return startsOn <= msFromStartOfDay && endsOn > msFromStartOfDay;
+        } else {
+            return startsOn < msFromStartOfDay || (0 < msFromStartOfDay && msFromStartOfDay < endsOn);
+        }
     }
 
     public void clear() {
