@@ -42,7 +42,7 @@ export class AttributeService {
 
   public deleteEntityAttributes(entityId: EntityId, attributeScope: AttributeScope, attributes: Array<AttributeData>,
                                 config?: RequestConfig): Observable<any> {
-    const keys = attributes.map(attribute => attribute.key).join(',');
+    const keys = attributes.map(attribute => encodeURI(attribute.key)).join(',');
     return this.http.delete(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/${attributeScope}` +
       `?keys=${keys}`,
       defaultHttpOptionsFromConfig(config));
@@ -50,7 +50,7 @@ export class AttributeService {
 
   public deleteEntityTimeseries(entityId: EntityId, timeseries: Array<AttributeData>, deleteAllDataForKeys = false,
                                 config?: RequestConfig): Observable<any> {
-    const keys = timeseries.map(attribute => attribute.key).join(',');
+    const keys = timeseries.map(attribute => encodeURI(attribute.key)).join(',');
     return this.http.delete(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/delete` +
       `?keys=${keys}&deleteAllDataForKeys=${deleteAllDataForKeys}`,
       defaultHttpOptionsFromConfig(config));

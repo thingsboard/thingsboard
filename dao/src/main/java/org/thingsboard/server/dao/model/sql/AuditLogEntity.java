@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -40,6 +39,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_ACTION_DATA_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_ACTION_FAILURE_DETAILS_PROPERTY;
@@ -61,23 +61,23 @@ import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_USER_NAM
 public class AuditLogEntity extends BaseSqlEntity<AuditLog> implements BaseEntity<AuditLog> {
 
     @Column(name = AUDIT_LOG_TENANT_ID_PROPERTY)
-    private String tenantId;
+    private UUID tenantId;
 
     @Column(name = AUDIT_LOG_CUSTOMER_ID_PROPERTY)
-    private String customerId;
+    private UUID customerId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = AUDIT_LOG_ENTITY_TYPE_PROPERTY)
     private EntityType entityType;
 
     @Column(name = AUDIT_LOG_ENTITY_ID_PROPERTY)
-    private String entityId;
+    private UUID entityId;
 
     @Column(name = AUDIT_LOG_ENTITY_NAME_PROPERTY)
     private String entityName;
 
     @Column(name = AUDIT_LOG_USER_ID_PROPERTY)
-    private String userId;
+    private UUID userId;
 
     @Column(name = AUDIT_LOG_USER_NAME_PROPERTY)
     private String userName;
@@ -105,18 +105,19 @@ public class AuditLogEntity extends BaseSqlEntity<AuditLog> implements BaseEntit
         if (auditLog.getId() != null) {
             this.setUuid(auditLog.getId().getId());
         }
+        this.setCreatedTime(auditLog.getCreatedTime());
         if (auditLog.getTenantId() != null) {
-            this.tenantId = toString(auditLog.getTenantId().getId());
+            this.tenantId = auditLog.getTenantId().getId();
         }
         if (auditLog.getCustomerId() != null) {
-            this.customerId = toString(auditLog.getCustomerId().getId());
+            this.customerId = auditLog.getCustomerId().getId();
         }
         if (auditLog.getEntityId() != null) {
-            this.entityId = toString(auditLog.getEntityId().getId());
+            this.entityId = auditLog.getEntityId().getId();
             this.entityType = auditLog.getEntityId().getEntityType();
         }
         if (auditLog.getUserId() != null) {
-            this.userId = toString(auditLog.getUserId().getId());
+            this.userId = auditLog.getUserId().getId();
         }
         this.entityName = auditLog.getEntityName();
         this.userName = auditLog.getUserName();
@@ -129,18 +130,18 @@ public class AuditLogEntity extends BaseSqlEntity<AuditLog> implements BaseEntit
     @Override
     public AuditLog toData() {
         AuditLog auditLog = new AuditLog(new AuditLogId(this.getUuid()));
-        auditLog.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
+        auditLog.setCreatedTime(createdTime);
         if (tenantId != null) {
-            auditLog.setTenantId(new TenantId(toUUID(tenantId)));
+            auditLog.setTenantId(new TenantId(tenantId));
         }
         if (customerId != null) {
-            auditLog.setCustomerId(new CustomerId(toUUID(customerId)));
+            auditLog.setCustomerId(new CustomerId(customerId));
         }
         if (entityId != null) {
-            auditLog.setEntityId(EntityIdFactory.getByTypeAndId(entityType.name(), toUUID(entityId).toString()));
+            auditLog.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType.name(), entityId));
         }
         if (userId != null) {
-            auditLog.setUserId(new UserId(toUUID(userId)));
+            auditLog.setUserId(new UserId(userId));
         }
         auditLog.setEntityName(this.entityName);
         auditLog.setUserName(this.userName);

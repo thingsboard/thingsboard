@@ -15,6 +15,12 @@
     limitations under the License.
 
 -->
+<div class="tb-details-buttons" *ngIf="!isAdd && ruleNode.component.type === ruleNodeType.RULE_CHAIN">
+  <button mat-raised-button color="primary"
+          (click)="openRuleChain($event)">
+    {{'rulechain.open-rulechain' | translate }}
+  </button>
+</div>
 <div class="mat-padding" fxLayout="column">
   <form [formGroup]="ruleNodeFormGroup">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit || isReadOnly">
@@ -23,7 +29,8 @@
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>rulenode.name</mat-label>
             <input matInput formControlName="name" required>
-            <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('required')">
+            <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('required')
+                           || ruleNodeFormGroup.get('name').hasError('pattern')">
               {{ 'rulenode.name-required' | translate }}
             </mat-error>
           </mat-form-field>

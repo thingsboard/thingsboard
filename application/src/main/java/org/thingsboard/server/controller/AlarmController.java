@@ -87,10 +87,10 @@ public class AlarmController extends BaseController {
         try {
             alarm.setTenantId(getCurrentUser().getTenantId());
 
-           checkEntity(alarm.getId(), alarm, Resource.ALARM);
+            checkEntity(alarm.getId(), alarm, Resource.ALARM);
 
             Alarm savedAlarm = checkNotNull(alarmService.createOrUpdateAlarm(alarm));
-            logEntityAction(savedAlarm.getId(), savedAlarm,
+            logEntityAction(savedAlarm.getOriginator(), savedAlarm,
                     getCurrentUser().getCustomerId(),
                     alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
@@ -132,7 +132,7 @@ public class AlarmController extends BaseController {
             long ackTs = System.currentTimeMillis();
             alarmService.ackAlarm(getCurrentUser().getTenantId(), alarmId, ackTs).get();
             alarm.setAckTs(ackTs);
-            logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_ACK, null);
+            logEntityAction(alarm.getOriginator(), alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_ACK, null);
 
             sendNotificationMsgToEdgeService(getTenantId(), alarmId, ActionType.ALARM_ACK);
         } catch (Exception e) {
@@ -151,7 +151,7 @@ public class AlarmController extends BaseController {
             long clearTs = System.currentTimeMillis();
             alarmService.clearAlarm(getCurrentUser().getTenantId(), alarmId, null, clearTs).get();
             alarm.setClearTs(clearTs);
-            logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_CLEAR, null);
+            logEntityAction(alarm.getOriginator(), alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_CLEAR, null);
 
             sendNotificationMsgToEdgeService(getTenantId(), alarmId, ActionType.ALARM_CLEAR);
         } catch (Exception e) {

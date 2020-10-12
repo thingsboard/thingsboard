@@ -27,7 +27,7 @@
           [ngStyle]="dashboardStyle">
   <section *ngIf="layoutCtx.widgets.isEmpty()" fxLayoutAlign="center center"
            [ngStyle]="{'color': layoutCtx.gridSettings.color}"
-           style="text-transform: uppercase; display: flex; z-index: 1; pointer-events: none;"
+           style="display: flex; z-index: 1; pointer-events: none;"
            class="mat-headline tb-absolute-fill">
     <span *ngIf="!isEdit">
       {{'dashboard.no-widgets' | translate}}

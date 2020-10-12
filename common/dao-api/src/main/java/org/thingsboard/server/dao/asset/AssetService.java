@@ -81,5 +81,5 @@ public interface AssetService {
 
     Asset unassignAssetFromEdge(TenantId tenantId, AssetId assetId, EdgeId edgeId);
 
-    ListenableFuture<PageData<Asset>> findAssetsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
+    PageData<Asset> findAssetsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
 }

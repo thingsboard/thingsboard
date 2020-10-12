@@ -29,18 +29,30 @@ import {
 } from '@shared/models/widget.models';
 import { TimeService } from '../services/time.service';
 import { DeviceService } from '../http/device.service';
-import { AlarmService } from '../http/alarm.service';
 import { UtilsService } from '@core/services/utils.service';
 import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { AlarmInfo, AlarmSearchStatus } from '@shared/models/alarm.models';
 import { HttpErrorResponse } from '@angular/common/http';
-import { DatasourceService } from '@core/api/datasource.service';
 import { RafService } from '@core/services/raf.service';
 import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@app/shared/models/entity.models';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
 import * as moment_ from 'moment';
+import {
+  AlarmData,
+  AlarmDataPageLink,
+  EntityData,
+  EntityDataPageLink,
+  EntityFilter,
+  Filter,
+  FilterInfo,
+  Filters,
+  KeyFilter
+} from '@shared/models/query/query.models';
+import { EntityDataService } from '@core/api/entity-data.service';
+import { PageData } from '@shared/models/page/page-data';
+import { TranslateService } from '@ngx-translate/core';
+import { AlarmDataService } from '@core/api/alarm-data.service';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -76,9 +88,8 @@ export interface WidgetActionsApi {
 export interface AliasInfo {
   alias?: string;
   stateEntity?: boolean;
+  entityFilter?: EntityFilter;
   currentEntity?: EntityInfo;
-  selectedId?: string;
-  resolvedEntities?: Array<EntityInfo>;
   entityParamName?: string;
   resolveMultiple?: boolean;
 }
@@ -91,14 +102,21 @@ export interface StateEntityInfo {
 export interface IAliasController {
   entityAliasesChanged: Observable<Array<string>>;
   entityAliasResolved: Observable<string>;
+  filtersChanged: Observable<Array<string>>;
   getAliasInfo(aliasId: string): Observable<AliasInfo>;
   getEntityAliasId(aliasName: string): string;
   getInstantAliasInfo(aliasId: string): AliasInfo;
-  resolveDatasources(datasources: Array<Datasource>): Observable<Array<Datasource>>;
+  resolveSingleEntityInfo(aliasId: string): Observable<EntityInfo>;
+  resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean): Observable<Array<Datasource>>;
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource>;
   getEntityAliases(): EntityAliases;
+  getFilters(): Filters;
+  getFilterInfo(filterId: string): FilterInfo;
+  getKeyFilters(filterId: string): Array<KeyFilter>;
   updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo);
+  updateUserFilter(filter: Filter);
   updateEntityAliases(entityAliases: EntityAliases);
+  updateFilters(filters: Filters);
   updateAliases(aliasIds?: Array<string>);
   dashboardStateChanged();
 }
@@ -168,17 +186,27 @@ export class WidgetSubscriptionContext {
 
   timeService: TimeService;
   deviceService: DeviceService;
-  alarmService: AlarmService;
-  datasourceService: DatasourceService;
+  translate: TranslateService;
+  entityDataService: EntityDataService;
+  alarmDataService: AlarmDataService;
   utils: UtilsService;
   raf: RafService;
   widgetUtils: IWidgetUtils;
   getServerTimeDiff: () => Observable<number>;
 }
 
+export type SubscriptionMessageSeverity = 'info' | 'warn' | 'error' | 'success';
+
+export interface SubscriptionMessage {
+  severity: SubscriptionMessageSeverity,
+  message: string;
+}
+
 export interface WidgetSubscriptionCallbacks {
   onDataUpdated?: (subscription: IWidgetSubscription, detectChanges: boolean) => void;
   onDataUpdateError?: (subscription: IWidgetSubscription, e: any) => void;
+  onSubscriptionMessage?: (subscription: IWidgetSubscription, message: SubscriptionMessage) => void;
+  onInitialPageDataChanged?: (subscription: IWidgetSubscription, nextPageData: PageData<EntityData>) => void;
   dataLoading?: (subscription: IWidgetSubscription) => void;
   legendDataUpdated?: (subscription: IWidgetSubscription, detectChanges: boolean) => void;
   timeWindowUpdated?: (subscription: IWidgetSubscription, timeWindowConfig: Timewindow) => void;
@@ -192,11 +220,10 @@ export interface WidgetSubscriptionOptions {
   type?: widgetType;
   stateData?: boolean;
   alarmSource?: Datasource;
-  alarmSearchStatus?: AlarmSearchStatus;
-  alarmsPollingInterval?: number;
-  alarmsMaxCountLoad?: number;
-  alarmsFetchSize?: number;
   datasources?: Array<Datasource>;
+  hasDataPageLink?: boolean;
+  singleEntity?: boolean;
+  warnOnPageDataOverflow?: boolean;
   targetDeviceAliasIds?: Array<string>;
   targetDeviceIds?: Array<string>;
   useDashboardTimewindow?: boolean;
@@ -215,6 +242,7 @@ export interface SubscriptionEntityInfo {
   entityId: EntityId;
   entityName: string;
   entityLabel: string;
+  entityDescription: string;
 }
 
 export interface IWidgetSubscription {
@@ -230,6 +258,9 @@ export interface IWidgetSubscription {
   useDashboardTimewindow: boolean;
 
   legendData: LegendData;
+
+  datasourcePages?: PageData<Datasource>[];
+  dataPages?: PageData<Array<DatasourceData>>[];
   datasources?: Array<Datasource>;
   data?: Array<DatasourceData>;
   hiddenData?: Array<{data: DataSet}>;
@@ -237,10 +268,8 @@ export interface IWidgetSubscription {
   timeWindow?: WidgetTimewindow;
   comparisonTimeWindow?: WidgetTimewindow;
 
-  alarms?: Array<AlarmInfo>;
+  alarms?: PageData<AlarmData>;
   alarmSource?: Datasource;
-  alarmSearchStatus?: AlarmSearchStatus;
-  alarmsPollingInterval?: number;
 
   targetDeviceAliasIds?: Array<string>;
   targetDeviceIds?: Array<string>;
@@ -253,6 +282,8 @@ export interface IWidgetSubscription {
   getFirstEntityInfo(): SubscriptionEntityInfo;
 
   onAliasesChanged(aliasIds: Array<string>): boolean;
+
+  onFiltersChanged(filterIds: Array<string>): boolean;
 
   onDashboardTimewindowChanged(dashboardTimewindow: Timewindow): void;
 
@@ -267,6 +298,16 @@ export interface IWidgetSubscription {
   clearRpcError(): void;
 
   subscribe(): void;
+
+  subscribeAllForPaginatedData(pageLink: EntityDataPageLink,
+                               keyFilters: KeyFilter[]): void;
+
+  subscribeForPaginatedData(datasourceIndex: number,
+                            pageLink: EntityDataPageLink,
+                            keyFilters: KeyFilter[]): Observable<any>;
+
+  subscribeForAlarms(pageLink: AlarmDataPageLink,
+                     keyFilters: KeyFilter[]): void;
 
   isDataResolved(): boolean;
 

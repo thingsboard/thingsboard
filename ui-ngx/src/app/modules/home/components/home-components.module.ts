@@ -65,6 +65,49 @@ import { EventContentDialogComponent } from '@home/components/event/event-conten
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { SelectTargetLayoutDialogComponent } from '@home/components/dashboard/select-target-layout-dialog.component';
 import { SelectTargetStateDialogComponent } from '@home/components/dashboard/select-target-state-dialog.component';
+import { AliasesEntityAutocompleteComponent } from '@home/components/alias/aliases-entity-autocomplete.component';
+import { BooleanFilterPredicateComponent } from '@home/components/filter/boolean-filter-predicate.component';
+import { StringFilterPredicateComponent } from '@home/components/filter/string-filter-predicate.component';
+import { NumericFilterPredicateComponent } from '@home/components/filter/numeric-filter-predicate.component';
+import { ComplexFilterPredicateComponent } from '@home/components/filter/complex-filter-predicate.component';
+import { FilterPredicateComponent } from '@home/components/filter/filter-predicate.component';
+import { FilterPredicateListComponent } from '@home/components/filter/filter-predicate-list.component';
+import { KeyFilterListComponent } from '@home/components/filter/key-filter-list.component';
+import { ComplexFilterPredicateDialogComponent } from '@home/components/filter/complex-filter-predicate-dialog.component';
+import { KeyFilterDialogComponent } from '@home/components/filter/key-filter-dialog.component';
+import { FiltersDialogComponent } from '@home/components/filter/filters-dialog.component';
+import { FilterDialogComponent } from '@home/components/filter/filter-dialog.component';
+import { FilterSelectComponent } from './filter/filter-select.component';
+import { FiltersEditComponent } from '@home/components/filter/filters-edit.component';
+import { FiltersEditPanelComponent } from '@home/components/filter/filters-edit-panel.component';
+import { UserFilterDialogComponent } from '@home/components/filter/user-filter-dialog.component';
+import { FilterUserInfoComponent } from './filter/filter-user-info.component';
+import { FilterUserInfoDialogComponent } from './filter/filter-user-info-dialog.component';
+import { FilterPredicateValueComponent } from './filter/filter-predicate-value.component';
+import { TenantProfileAutocompleteComponent } from './profile/tenant-profile-autocomplete.component';
+import { TenantProfileComponent } from './profile/tenant-profile.component';
+import { TenantProfileDialogComponent } from './profile/tenant-profile-dialog.component';
+import { TenantProfileDataComponent } from './profile/tenant-profile-data.component';
+import { DefaultDeviceProfileConfigurationComponent } from './profile/device/default-device-profile-configuration.component';
+import { DeviceProfileConfigurationComponent } from './profile/device/device-profile-configuration.component';
+import { DeviceProfileDataComponent } from './profile/device-profile-data.component';
+import { DeviceProfileComponent } from './profile/device-profile.component';
+import { DefaultDeviceProfileTransportConfigurationComponent } from './profile/device/default-device-profile-transport-configuration.component';
+import { DeviceProfileTransportConfigurationComponent } from './profile/device/device-profile-transport-configuration.component';
+import { DeviceProfileDialogComponent } from './profile/device-profile-dialog.component';
+import { DeviceProfileAutocompleteComponent } from './profile/device-profile-autocomplete.component';
+import { MqttDeviceProfileTransportConfigurationComponent } from './profile/device/mqtt-device-profile-transport-configuration.component';
+import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/device/lwm2m-device-profile-transport-configuration.component';
+import { DeviceProfileAlarmsComponent } from './profile/alarm/device-profile-alarms.component';
+import { DeviceProfileAlarmComponent } from './profile/alarm/device-profile-alarm.component';
+import { CreateAlarmRulesComponent } from './profile/alarm/create-alarm-rules.component';
+import { AlarmRuleComponent } from './profile/alarm/alarm-rule.component';
+import { AlarmRuleConditionComponent } from './profile/alarm/alarm-rule-condition.component';
+import { AlarmRuleKeyFiltersDialogComponent } from './profile/alarm/alarm-rule-key-filters-dialog.component';
+import { FilterTextComponent } from './filter/filter-text.component';
+import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
+import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
+import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component';
 
 @NgModule({
   declarations:
@@ -88,6 +131,7 @@ import { SelectTargetStateDialogComponent } from '@home/components/dashboard/sel
       EditAttributeValuePanelComponent,
       AliasesEntitySelectPanelComponent,
       AliasesEntitySelectComponent,
+      AliasesEntityAutocompleteComponent,
       EntityAliasesDialogComponent,
       EntityAliasDialogComponent,
       DashboardComponent,
@@ -112,7 +156,49 @@ import { SelectTargetStateDialogComponent } from '@home/components/dashboard/sel
       SelectTargetLayoutDialogComponent,
       SelectTargetStateDialogComponent,
       AddWidgetToDashboardDialogComponent,
-      TableColumnsAssignmentComponent
+      TableColumnsAssignmentComponent,
+      BooleanFilterPredicateComponent,
+      StringFilterPredicateComponent,
+      NumericFilterPredicateComponent,
+      ComplexFilterPredicateComponent,
+      ComplexFilterPredicateDialogComponent,
+      FilterPredicateComponent,
+      FilterPredicateListComponent,
+      KeyFilterListComponent,
+      KeyFilterDialogComponent,
+      FilterDialogComponent,
+      FiltersDialogComponent,
+      FilterSelectComponent,
+      FilterTextComponent,
+      FiltersEditComponent,
+      FiltersEditPanelComponent,
+      UserFilterDialogComponent,
+      FilterUserInfoComponent,
+      FilterUserInfoDialogComponent,
+      FilterPredicateValueComponent,
+      TenantProfileAutocompleteComponent,
+      TenantProfileDataComponent,
+      TenantProfileComponent,
+      TenantProfileDialogComponent,
+      DeviceProfileAutocompleteComponent,
+      DefaultDeviceProfileConfigurationComponent,
+      DeviceProfileConfigurationComponent,
+      DefaultDeviceProfileTransportConfigurationComponent,
+      MqttDeviceProfileTransportConfigurationComponent,
+      Lwm2mDeviceProfileTransportConfigurationComponent,
+      DeviceProfileTransportConfigurationComponent,
+      CreateAlarmRulesComponent,
+      AlarmRuleComponent,
+      AlarmRuleKeyFiltersDialogComponent,
+      AlarmRuleConditionComponent,
+      DeviceProfileAlarmComponent,
+      DeviceProfileAlarmsComponent,
+      DeviceProfileDataComponent,
+      DeviceProfileComponent,
+      DeviceProfileDialogComponent,
+      AddDeviceProfileDialogComponent,
+      RuleChainAutocompleteComponent,
+      AlarmScheduleComponent
     ],
   imports: [
     CommonModule,
@@ -131,6 +217,7 @@ import { SelectTargetStateDialogComponent } from '@home/components/dashboard/sel
     AlarmTableComponent,
     AttributeTableComponent,
     AliasesEntitySelectComponent,
+    AliasesEntityAutocompleteComponent,
     EntityAliasesDialogComponent,
     EntityAliasDialogComponent,
     DashboardComponent,
@@ -153,7 +240,45 @@ import { SelectTargetStateDialogComponent } from '@home/components/dashboard/sel
     ImportDialogCsvComponent,
     TableColumnsAssignmentComponent,
     SelectTargetLayoutDialogComponent,
-    SelectTargetStateDialogComponent
+    SelectTargetStateDialogComponent,
+    BooleanFilterPredicateComponent,
+    StringFilterPredicateComponent,
+    NumericFilterPredicateComponent,
+    ComplexFilterPredicateComponent,
+    ComplexFilterPredicateDialogComponent,
+    FilterPredicateComponent,
+    FilterPredicateListComponent,
+    KeyFilterListComponent,
+    KeyFilterDialogComponent,
+    FilterDialogComponent,
+    FiltersDialogComponent,
+    FilterSelectComponent,
+    FilterTextComponent,
+    FiltersEditComponent,
+    UserFilterDialogComponent,
+    TenantProfileAutocompleteComponent,
+    TenantProfileDataComponent,
+    TenantProfileComponent,
+    TenantProfileDialogComponent,
+    DeviceProfileAutocompleteComponent,
+    DefaultDeviceProfileConfigurationComponent,
+    DeviceProfileConfigurationComponent,
+    DefaultDeviceProfileTransportConfigurationComponent,
+    MqttDeviceProfileTransportConfigurationComponent,
+    Lwm2mDeviceProfileTransportConfigurationComponent,
+    DeviceProfileTransportConfigurationComponent,
+    CreateAlarmRulesComponent,
+    AlarmRuleComponent,
+    AlarmRuleKeyFiltersDialogComponent,
+    AlarmRuleConditionComponent,
+    DeviceProfileAlarmComponent,
+    DeviceProfileAlarmsComponent,
+    DeviceProfileDataComponent,
+    DeviceProfileComponent,
+    DeviceProfileDialogComponent,
+    AddDeviceProfileDialogComponent,
+    RuleChainAutocompleteComponent,
+    AlarmScheduleComponent
   ],
   providers: [
     WidgetComponentService,

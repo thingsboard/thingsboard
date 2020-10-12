@@ -61,8 +61,8 @@
       </div>
     </mat-toolbar>
     <div fxFlex class="table-container">
-      <table mat-table [dataSource]="alarmsDatasource"
-                 matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+      <table mat-table [dataSource]="alarmsDatasource" [trackBy]="trackByRowIndex"
+                 matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLinkSortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
           <mat-header-cell *matHeaderCellDef style="width: 30px;">
             <mat-checkbox (change)="$event ? alarmsDatasource.masterToggle() : null"
@@ -78,7 +78,9 @@
           </mat-cell>
         </ng-container>
         <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; trackBy: trackByColumnDef;">
-          <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header> {{ column.title }} </mat-header-cell>
+          <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header [disabled]="isSorting(column)">
+            {{ column.title }}
+          </mat-header-cell>
           <mat-cell *matCellDef="let alarm;"
                     [innerHTML]="cellContent(alarm, column)"
                     [ngStyle]="cellStyle(alarm, column)">
@@ -121,13 +123,17 @@
         <mat-header-row [ngClass]="{'mat-row-select': enableSelection}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
         <mat-row [ngClass]="{'mat-row-select': enableSelection,
                              'mat-selected': alarmsDatasource.isSelected(alarm),
-                             'tb-current-entity': alarmsDatasource.isCurrentAlarm(alarm)}"
+                             'tb-current-entity': alarmsDatasource.isCurrentAlarm(alarm),
+                             'invisible': alarmsDatasource.dataLoading}"
                  *matRowDef="let alarm; columns: displayedColumns;"
                  (click)="onRowClick($event, alarm)"></mat-row>
       </table>
-      <span [fxShow]="alarmsDatasource.isEmpty() | async"
+      <span [fxShow]="(alarmsDatasource.isEmpty() | async) && !alarmsDatasource.dataLoading"
             fxLayoutAlign="center center"
             class="no-data-found" translate>alarm.no-alarms-prompt</span>
+      <span [fxShow]="alarmsDatasource.dataLoading"
+            fxLayoutAlign="center center"
+            class="no-data-found">{{ 'common.loading' | translate }}</span>
     </div>
     <mat-divider *ngIf="displayPagination"></mat-divider>
     <mat-paginator *ngIf="displayPagination"

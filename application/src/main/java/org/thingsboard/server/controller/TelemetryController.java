@@ -197,19 +197,21 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/values/timeseries", method = RequestMethod.GET, params = {"keys", "startTs", "endTs"})
     @ResponseBody
     public DeferredResult<ResponseEntity> getTimeseries(
-            @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
+            @PathVariable("entityType") String entityType,
+            @PathVariable("entityId") String entityIdStr,
             @RequestParam(name = "keys") String keys,
             @RequestParam(name = "startTs") Long startTs,
             @RequestParam(name = "endTs") Long endTs,
             @RequestParam(name = "interval", defaultValue = "0") Long interval,
             @RequestParam(name = "limit", defaultValue = "100") Integer limit,
             @RequestParam(name = "agg", defaultValue = "NONE") String aggStr,
+            @RequestParam(name= "orderBy", defaultValue = "DESC") String orderBy,
             @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
                 (result, tenantId, entityId) -> {
                     // If interval is 0, convert this to a NONE aggregation, which is probably what the user really wanted
                     Aggregation agg = interval == 0L ? Aggregation.valueOf(Aggregation.NONE.name()) : Aggregation.valueOf(aggStr);
-                    List<ReadTsKvQuery> queries = toKeysList(keys).stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, interval, limit, agg))
+                    List<ReadTsKvQuery> queries = toKeysList(keys).stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, interval, limit, agg, orderBy))
                             .collect(Collectors.toList());
 
                     Futures.addCallback(tsService.findAll(tenantId, entityId, queries), getTsKvListCallback(result, useStrictDataTypes), MoreExecutors.directExecutor());
@@ -355,10 +357,9 @@ public class TelemetryController extends BaseController {
                 DataConstants.SHARED_SCOPE.equals(scope) ||
                 DataConstants.CLIENT_SCOPE.equals(scope)) {
             return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.WRITE_ATTRIBUTES, entityIdSrc, (result, tenantId, entityId) -> {
-                ListenableFuture<List<Void>> future = attributesService.removeAll(user.getTenantId(), entityId, scope, keys);
-                Futures.addCallback(future, new FutureCallback<List<Void>>() {
+                tsSubService.deleteAndNotify(tenantId, entityId, scope, keys, new FutureCallback<Void>() {
                     @Override
-                    public void onSuccess(@Nullable List<Void> tmp) {
+                    public void onSuccess(@Nullable Void tmp) {
                         logAttributesDeleted(user, entityId, scope, keys, null);
                         if (entityIdSrc.getEntityType().equals(EntityType.DEVICE)) {
                             DeviceId deviceId = new DeviceId(entityId.getId());
@@ -375,7 +376,7 @@ public class TelemetryController extends BaseController {
                         logAttributesDeleted(user, entityId, scope, keys, t);
                         result.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
                     }
-                }, executor);
+                });
             });
         } else {
             return getImmediateDeferredResult("Invalid attribute scope: " + scope, HttpStatus.BAD_REQUEST);

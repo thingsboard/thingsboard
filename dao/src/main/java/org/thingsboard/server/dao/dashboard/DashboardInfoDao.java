@@ -15,14 +15,11 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.Dao;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -57,6 +54,6 @@ public interface DashboardInfoDao extends Dao<DashboardInfo> {
      * @param pageLink the page link
      * @return the list of dashboard objects
      */
-    ListenableFuture<PageData<DashboardInfo>> findDashboardsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink);
+    PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink);
 
 }

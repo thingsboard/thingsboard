@@ -16,7 +16,15 @@
 
 
 import { WidgetContext } from '@home/models/widget-component.models';
-import { deepClone, isDefined, isEqual, isNumber, isUndefined } from '@app/core/utils';
+import {
+  createLabelFromDatasource,
+  deepClone,
+  insertVariable,
+  isDefined,
+  isEqual,
+  isNumber,
+  isUndefined
+} from '@app/core/utils';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import {
   DataKey,
@@ -87,6 +95,9 @@ export class TbFlot {
 
   private thresholdsSourcesSubscription: IWidgetSubscription;
   private predefinedThresholds: TbFlotThresholdMarking[];
+
+  private labelPatternsSourcesSubscription: IWidgetSubscription;
+  private labelPatternsSourcesData: DatasourceData[];
 
   private plotInited = false;
   private plot: JQueryPlot;
@@ -369,6 +380,23 @@ export class TbFlot {
     const yaxesMap: {[units: string]: TbFlotAxisOptions} = {};
     const predefinedThresholds: TbFlotThresholdMarking[] = [];
     const thresholdsDatasources: Datasource[] = [];
+    if (this.settings.customLegendEnabled && this.settings.dataKeysListForLabels?.length) {
+      this.labelPatternsSourcesData = [];
+      const labelPatternsDatasources: Datasource[] = [];
+      this.settings.dataKeysListForLabels.forEach((item) => {
+        item.settings = {};
+      });
+      subscription.datasources.forEach((item) => {
+        let datasource: Datasource = {
+          type: item.type,
+          entityType: item.entityType,
+          entityId: item.entityId,
+          dataKeys: this.settings.dataKeysListForLabels
+        };
+        labelPatternsDatasources.push(datasource);
+      });
+      this.subscribeForLabelPatternsSources(labelPatternsDatasources);
+    }
 
     let tooltipValueFormatFunction: TooltipValueFormatFunction = null;
     if (this.settings.tooltipValueFormatter && this.settings.tooltipValueFormatter.length) {
@@ -506,6 +534,9 @@ export class TbFlot {
           }
         }
       }
+      if (this.labelPatternsSourcesData?.length) {
+        this.substituteLabelPatterns(series, i);
+      }
     }
 
     this.subscribeForThresholdsAttributes(thresholdsDatasources);
@@ -568,6 +599,10 @@ export class TbFlot {
               if (this.yaxes[yaxisIndex].keysInfo[i].hidden !== series.dataKey.hidden) {
                 this.yaxes[yaxisIndex].keysInfo[i].hidden = series.dataKey.hidden;
                 axisVisibilityChanged = true;
+              }
+
+              if (this.labelPatternsSourcesData?.length) {
+                this.substituteLabelPatterns(series, i);
               }
             }
             if (axisVisibilityChanged) {
@@ -847,6 +882,60 @@ export class TbFlot {
     if (!similarMarkings.length) {
       existingThresholds.push(marking);
     }
+  }
+
+  private subscribeForLabelPatternsSources(datasources: Datasource[]) {
+    const labelPatternsSourcesSubscriptionOptions: WidgetSubscriptionOptions = {
+      datasources,
+      useDashboardTimewindow: false,
+      type: widgetType.latest,
+      callbacks: {
+        onDataUpdated: (subscription) => {
+          this.labelPatternsParamsDataUpdated(subscription.data)
+        }
+      }
+    };
+    this.ctx.subscriptionApi.createSubscription(labelPatternsSourcesSubscriptionOptions, true).subscribe(
+      (subscription) => {
+        this.labelPatternsSourcesSubscription = subscription;
+      }
+    );
+  }
+
+  private labelPatternsParamsDataUpdated(data: DatasourceData[]) {
+    this.labelPatternsSourcesData = data;
+    for (let i = 0; i < this.subscription.data.length; i++) {
+      const series = this.subscription.data[i] as TbFlotSeries;
+      this.substituteLabelPatterns(series, i);
+    }
+    this.updateData();
+    this.ctx.detectChanges();
+  }
+
+  private substituteLabelPatterns(series: TbFlotSeries, seriesIndex: number) {
+    let seriesLabelPatternsSourcesData = this.labelPatternsSourcesData.filter((item) => {
+      return item.datasource.entityId === series.datasource.entityId;
+    });
+    let label = createLabelFromDatasource(series.datasource, series.dataKey.pattern);
+    for (let i = 0; i < seriesLabelPatternsSourcesData.length; i++) {
+      let keyData = seriesLabelPatternsSourcesData[i];
+      if (keyData && keyData.data && keyData.data[0]) {
+        let attrValue = keyData.data[0][1];
+        let attrName = keyData.dataKey.name;
+        if (isDefined(attrValue) && (attrValue !== null)) {
+          label = insertVariable(label, attrName, attrValue);
+        }
+      }
+    }
+    if (isDefined(this.subscription.legendData)) {
+      let targetLegendKeyIndex = this.subscription.legendData.keys.findIndex((key) => {
+        return key.dataIndex === seriesIndex;
+      });
+      if (targetLegendKeyIndex !== -1) {
+        this.subscription.legendData.keys[targetLegendKeyIndex].dataKey.label = label;
+      }
+    }
+    series.dataKey.label = label;
   }
 
   private seriesInfoDiv(label: string, color: string, value: any,

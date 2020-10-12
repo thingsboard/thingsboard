@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<tb-entity-subtype-select
-  [showLabel]="true"
-  [entityType]="entityType.DEVICE"
-  [ngModel]="entitiesTableConfig.componentsData.deviceType"
-  (ngModelChange)="deviceTypeChanged($event)">
-</tb-entity-subtype-select>
+<tb-device-profile-autocomplete
+  [ngModel]="entitiesTableConfig.componentsData.deviceProfileId"
+  (ngModelChange)="deviceProfileChanged($event)"
+  [displayAllOnEmpty]="true"
+  [editProfileEnabled]="false">
+</tb-device-profile-autocomplete>

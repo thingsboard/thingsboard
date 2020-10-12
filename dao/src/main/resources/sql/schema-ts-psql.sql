@@ -27,33 +27,12 @@ CREATE TABLE IF NOT EXISTS ts_kv
     CONSTRAINT ts_kv_pkey PRIMARY KEY (entity_id, key, ts)
 ) PARTITION BY RANGE (ts);
 
-CREATE TABLE IF NOT EXISTS ts_kv_latest
-(
-    entity_id uuid   NOT NULL,
-    key       int    NOT NULL,
-    ts        bigint NOT NULL,
-    bool_v    boolean,
-    str_v     varchar(10000000),
-    long_v    bigint,
-    dbl_v     double precision,
-    json_v    json,
-    CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
-);
-
 CREATE TABLE IF NOT EXISTS ts_kv_dictionary
 (
     key    varchar(255) NOT NULL,
     key_id serial UNIQUE,
     CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
 );
-
-CREATE TABLE IF NOT EXISTS tb_schema_settings
-(
-    schema_version bigint NOT NULL,
-    CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version)
-);
-
-INSERT INTO tb_schema_settings (schema_version) VALUES (2005001) ON CONFLICT (schema_version) DO UPDATE SET schema_version = 2005001;
 
 CREATE OR REPLACE PROCEDURE drop_partitions_by_max_ttl(IN partition_type varchar, IN system_ttl bigint, INOUT deleted bigint)
     LANGUAGE plpgsql AS
@@ -105,6 +84,7 @@ BEGIN
                                AND tablename like 'ts_kv_' || '%'
                                AND tablename != 'ts_kv_latest'
                                AND tablename != 'ts_kv_dictionary'
+                               AND tablename != 'ts_kv_indefinite'
                 LOOP
                     IF partition != partition_by_max_ttl_date THEN
                         IF partition_year IS NOT NULL THEN
@@ -171,45 +151,45 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION delete_device_records_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
+CREATE OR REPLACE FUNCTION delete_device_records_from_ts_kv(tenant_id uuid, customer_id uuid, ttl bigint,
                                                             OUT deleted bigint) AS
 $$
 BEGIN
     EXECUTE format(
-            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT to_uuid(device.id) as entity_id FROM device WHERE tenant_id = %L and customer_id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
+            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT device.id as entity_id FROM device WHERE tenant_id = %L and customer_id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
             tenant_id, customer_id, ttl) into deleted;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION delete_asset_records_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
+CREATE OR REPLACE FUNCTION delete_asset_records_from_ts_kv(tenant_id uuid, customer_id uuid, ttl bigint,
                                                            OUT deleted bigint) AS
 $$
 BEGIN
     EXECUTE format(
-            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT to_uuid(asset.id) as entity_id FROM asset WHERE tenant_id = %L and customer_id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
+            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT asset.id as entity_id FROM asset WHERE tenant_id = %L and customer_id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
             tenant_id, customer_id, ttl) into deleted;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION delete_customer_records_from_ts_kv(tenant_id varchar, customer_id varchar, ttl bigint,
+CREATE OR REPLACE FUNCTION delete_customer_records_from_ts_kv(tenant_id uuid, customer_id uuid, ttl bigint,
                                                               OUT deleted bigint) AS
 $$
 BEGIN
     EXECUTE format(
-            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT to_uuid(customer.id) as entity_id FROM customer WHERE tenant_id = %L and id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
+            'WITH deleted AS (DELETE FROM ts_kv WHERE entity_id IN (SELECT customer.id as entity_id FROM customer WHERE tenant_id = %L and id = %L) AND ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted',
             tenant_id, customer_id, ttl) into deleted;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE PROCEDURE cleanup_timeseries_by_ttl(IN null_uuid varchar(31),
+CREATE OR REPLACE PROCEDURE cleanup_timeseries_by_ttl(IN null_uuid uuid,
                                                       IN system_ttl bigint, INOUT deleted bigint)
     LANGUAGE plpgsql AS
 $$
 DECLARE
     tenant_cursor CURSOR FOR select tenant.id as tenant_id
                              from tenant;
-    tenant_id_record     varchar;
-    customer_id_record   varchar;
+    tenant_id_record     uuid;
+    customer_id_record   uuid;
     tenant_ttl           bigint;
     customer_ttl         bigint;
     deleted_for_entities bigint;

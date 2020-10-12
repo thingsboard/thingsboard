@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.nosql;
 
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +23,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.stats.DefaultCounter;
+import org.thingsboard.server.common.stats.StatsCounter;
+import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.util.AbstractBufferedRateExecutor;
 import org.thingsboard.server.dao.util.AsyncTaskContext;
@@ -57,48 +59,58 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
             @Value("${cassandra.query.tenant_rate_limits.enabled}") boolean tenantRateLimitsEnabled,
             @Value("${cassandra.query.tenant_rate_limits.configuration}") String tenantRateLimitsConfiguration,
             @Value("${cassandra.query.tenant_rate_limits.print_tenant_names}") boolean printTenantNames,
-            @Value("${cassandra.query.print_queries_freq:0}") int printQueriesFreq) {
-        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, tenantRateLimitsEnabled, tenantRateLimitsConfiguration, printQueriesFreq);
+            @Value("${cassandra.query.print_queries_freq:0}") int printQueriesFreq,
+            @Autowired StatsFactory statsFactory) {
+        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, tenantRateLimitsEnabled, tenantRateLimitsConfiguration, printQueriesFreq, statsFactory);
         this.printTenantNames = printTenantNames;
     }
 
     @Scheduled(fixedDelayString = "${cassandra.query.rate_limit_print_interval_ms}")
     public void printStats() {
         int queueSize = getQueueSize();
-        int totalAddedValue = totalAdded.getAndSet(0);
-        int totalLaunchedValue = totalLaunched.getAndSet(0);
-        int totalReleasedValue = totalReleased.getAndSet(0);
-        int totalFailedValue = totalFailed.getAndSet(0);
-        int totalExpiredValue = totalExpired.getAndSet(0);
-        int totalRejectedValue = totalRejected.getAndSet(0);
-        int totalRateLimitedValue = totalRateLimited.getAndSet(0);
-        int rateLimitedTenantsValue = rateLimitedTenants.size();
-        int concurrencyLevelValue = concurrencyLevel.get();
-        if (queueSize > 0 || totalAddedValue > 0 || totalLaunchedValue > 0 || totalReleasedValue > 0 ||
-                totalFailedValue > 0 || totalExpiredValue > 0 || totalRejectedValue > 0 || totalRateLimitedValue > 0 || rateLimitedTenantsValue > 0
-                || concurrencyLevelValue > 0) {
-            log.info("Permits queueSize [{}] totalAdded [{}] totalLaunched [{}] totalReleased [{}] totalFailed [{}] totalExpired [{}] totalRejected [{}] " +
-                            "totalRateLimited [{}] totalRateLimitedTenants [{}] currBuffer [{}] ",
-                    queueSize, totalAddedValue, totalLaunchedValue, totalReleasedValue,
-                    totalFailedValue, totalExpiredValue, totalRejectedValue, totalRateLimitedValue, rateLimitedTenantsValue, concurrencyLevelValue);
+        int rateLimitedTenantsCount = (int) stats.getRateLimitedTenants().values().stream()
+                .filter(defaultCounter -> defaultCounter.get() > 0)
+                .count();
+
+        if (queueSize > 0
+                || rateLimitedTenantsCount > 0
+                || concurrencyLevel.get() > 0
+                || stats.getStatsCounters().stream().anyMatch(counter -> counter.get() > 0)
+        ) {
+            StringBuilder statsBuilder = new StringBuilder();
+
+            statsBuilder.append("queueSize").append(" = [").append(queueSize).append("] ");
+            stats.getStatsCounters().forEach(counter -> {
+                statsBuilder.append(counter.getName()).append(" = [").append(counter.get()).append("] ");
+            });
+            statsBuilder.append("totalRateLimitedTenants").append(" = [").append(rateLimitedTenantsCount).append("] ");
+            statsBuilder.append(CONCURRENCY_LEVEL).append(" = [").append(concurrencyLevel.get()).append("] ");
+
+            stats.getStatsCounters().forEach(StatsCounter::clear);
+            log.info("Permits {}", statsBuilder);
         }
 
-        rateLimitedTenants.forEach(((tenantId, counter) -> {
-            if (printTenantNames) {
-                String name = tenantNamesCache.computeIfAbsent(tenantId, tId -> {
-                    try {
-                        return entityService.fetchEntityNameAsync(TenantId.SYS_TENANT_ID, tenantId).get();
-                    } catch (Exception e) {
-                        log.error("[{}] Failed to get tenant name", tenantId, e);
-                        return "N/A";
+        stats.getRateLimitedTenants().entrySet().stream()
+                .filter(entry -> entry.getValue().get() > 0)
+                .forEach(entry -> {
+                    TenantId tenantId = entry.getKey();
+                    DefaultCounter counter = entry.getValue();
+                    int rateLimitedRequests = counter.get();
+                    counter.clear();
+                    if (printTenantNames) {
+                        String name = tenantNamesCache.computeIfAbsent(tenantId, tId -> {
+                            try {
+                                return entityService.fetchEntityNameAsync(TenantId.SYS_TENANT_ID, tenantId).get();
+                            } catch (Exception e) {
+                                log.error("[{}] Failed to get tenant name", tenantId, e);
+                                return "N/A";
+                            }
+                        });
+                        log.info("[{}][{}] Rate limited requests: {}", tenantId, name, rateLimitedRequests);
+                    } else {
+                        log.info("[{}] Rate limited requests: {}", tenantId, rateLimitedRequests);
                     }
                 });
-                log.info("[{}][{}] Rate limited requests: {}", tenantId, name, counter);
-            } else {
-                log.info("[{}] Rate limited requests: {}", tenantId, counter);
-            }
-        }));
-        rateLimitedTenants.clear();
     }
 
     @PreDestroy

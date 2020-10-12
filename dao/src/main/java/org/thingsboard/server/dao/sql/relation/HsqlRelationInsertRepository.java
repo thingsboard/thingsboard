@@ -20,19 +20,35 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.util.HsqlDao;
-import org.thingsboard.server.dao.util.SqlDao;
+
+import javax.persistence.Query;
 
 @HsqlDao
-@SqlDao
 @Repository
 @Transactional
 public class HsqlRelationInsertRepository extends AbstractRelationInsertRepository implements RelationInsertRepository {
 
     private static final String INSERT_ON_CONFLICT_DO_UPDATE = "MERGE INTO relation USING (VALUES :fromId, :fromType, :toId, :toType, :relationTypeGroup, :relationType, :additionalInfo) R " +
             "(from_id, from_type, to_id, to_type, relation_type_group, relation_type, additional_info) " +
-            "ON (relation.from_id = R.from_id AND relation.from_type = R.from_type AND relation.relation_type_group = R.relation_type_group AND relation.relation_type = R.relation_type AND relation.to_id = R.to_id AND relation.to_type = R.to_type) " +
+            "ON (relation.from_id = UUID(R.from_id) AND relation.from_type = R.from_type AND relation.relation_type_group = R.relation_type_group AND relation.relation_type = R.relation_type AND relation.to_id = UUID(R.to_id) AND relation.to_type = R.to_type) " +
             "WHEN MATCHED THEN UPDATE SET relation.additional_info = R.additional_info " +
-            "WHEN NOT MATCHED THEN INSERT (from_id, from_type, to_id, to_type, relation_type_group, relation_type, additional_info) VALUES (R.from_id, R.from_type, R.to_id, R.to_type, R.relation_type_group, R.relation_type, R.additional_info)";
+            "WHEN NOT MATCHED THEN INSERT (from_id, from_type, to_id, to_type, relation_type_group, relation_type, additional_info) VALUES (UUID(R.from_id), R.from_type, UUID(R.to_id), R.to_type, R.relation_type_group, R.relation_type, R.additional_info)";
+
+    protected Query getQuery(RelationEntity entity, String query) {
+        Query nativeQuery = entityManager.createNativeQuery(query, RelationEntity.class);
+        if (entity.getAdditionalInfo() == null) {
+            nativeQuery.setParameter("additionalInfo", null);
+        } else {
+            nativeQuery.setParameter("additionalInfo", entity.getAdditionalInfo().toString());
+        }
+        return nativeQuery
+                .setParameter("fromId", entity.getFromId().toString())
+                .setParameter("fromType", entity.getFromType())
+                .setParameter("toId", entity.getToId().toString())
+                .setParameter("toType", entity.getToType())
+                .setParameter("relationTypeGroup", entity.getRelationTypeGroup())
+                .setParameter("relationType", entity.getRelationType());
+    }
 
     @Override
     public RelationEntity saveOrUpdate(RelationEntity entity) {

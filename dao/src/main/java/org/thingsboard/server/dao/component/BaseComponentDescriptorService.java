@@ -37,7 +37,6 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
 
-import java.util.List;
 import java.util.Optional;
 
 /**

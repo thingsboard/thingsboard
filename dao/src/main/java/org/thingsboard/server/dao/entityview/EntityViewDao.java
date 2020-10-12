@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
@@ -107,8 +106,8 @@ public interface EntityViewDao extends Dao<EntityView> {
      * @return the list of entity view objects
      */
     PageData<EntityView> findEntityViewsByTenantIdAndCustomerId(UUID tenantId,
-                                                            UUID customerId,
-                                                            PageLink pageLink);
+                                                                UUID customerId,
+                                                                PageLink pageLink);
 
     /**
      * Find entity view infos by tenantId, customerId and page link.
@@ -130,9 +129,9 @@ public interface EntityViewDao extends Dao<EntityView> {
      * @return the list of entity view objects
      */
     PageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndType(UUID tenantId,
-                                                                   UUID customerId,
-                                                                   String type,
-                                                                   PageLink pageLink);
+                                                                       UUID customerId,
+                                                                       String type,
+                                                                       PageLink pageLink);
 
     /**
      * Find entity view infos by tenantId, customerId, type and page link.
@@ -162,8 +161,8 @@ public interface EntityViewDao extends Dao<EntityView> {
      * @param pageLink the page link
      * @return the list of entity view objects
      */
-    ListenableFuture<PageData<EntityView>> findEntityViewsByTenantIdAndEdgeId(UUID tenantId,
-                                                                          UUID edgeId,
-                                                                          TimePageLink pageLink);
+    PageData<EntityView> findEntityViewsByTenantIdAndEdgeId(UUID tenantId,
+                                                            UUID edgeId,
+                                                            PageLink pageLink);
 
 }

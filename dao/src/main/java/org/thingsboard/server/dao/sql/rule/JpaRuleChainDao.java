@@ -38,7 +38,6 @@ import org.thingsboard.server.dao.model.sql.RuleChainEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,7 +47,6 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-@SqlDao
 public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, RuleChain> implements RuleChainDao {
 
     @Autowired
@@ -72,7 +70,7 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
         log.debug("Try to find rule chains by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         return DaoUtil.toPageData(ruleChainRepository
                 .findByTenantId(
-                        UUIDConverter.fromTimeUUID(tenantId),
+                        tenantId,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
@@ -82,30 +80,22 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
         log.debug("Try to find rule chains by tenantId [{}], type [{}] and pageLink [{}]", tenantId, type, pageLink);
         return DaoUtil.toPageData(ruleChainRepository
                 .findByTenantIdAndType(
-                        UUIDConverter.fromTimeUUID(tenantId),
+                        tenantId,
                         type,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public ListenableFuture<PageData<RuleChain>> findRuleChainsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink) {
+    public PageData<RuleChain> findRuleChainsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink) {
         log.debug("Try to find rule chains by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
-        ListenableFuture<PageData<EntityRelation>> relations =
-                relationDao.findRelations(new TenantId(tenantId), new EdgeId(edgeId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, EntityType.RULE_CHAIN, pageLink);
-        return Futures.transformAsync(relations, relationsData -> {
-            if (relationsData != null && relationsData.getData() != null && !relationsData.getData().isEmpty()) {
-                List<ListenableFuture<RuleChain>> ruleChainFutures = new ArrayList<>(relationsData.getData().size());
-                for (EntityRelation relation : relationsData.getData()) {
-                    ruleChainFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
-                }
-                return Futures.transform(Futures.successfulAsList(ruleChainFutures),
-                        ruleChains -> new PageData<>(ruleChains, relationsData.getTotalPages(), relationsData.getTotalElements(),
-                                relationsData.hasNext()), MoreExecutors.directExecutor());
-            } else {
-                return Futures.immediateFuture(new PageData<>());
-            }
-        }, MoreExecutors.directExecutor());
+
+        return DaoUtil.toPageData(ruleChainRepository
+                .findByTenantIdAndEdgeId(
+                        tenantId,
+                        edgeId,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink)));
     }
 
     @Override

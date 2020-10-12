@@ -34,7 +34,7 @@ public class MqttNoSqlTestSuite {
 
     @ClassRule
     public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
-            Arrays.asList("sql/schema-entities-hsql.sql", "sql/system-data.sql"),
+            Arrays.asList("sql/schema-types-hsql.sql", "sql/schema-entities-hsql.sql", "sql/system-data.sql"),
             "sql/hsql/drop-all-tables.sql",
             "nosql-test.properties");
 
@@ -42,7 +42,9 @@ public class MqttNoSqlTestSuite {
     public static CustomCassandraCQLUnit cassandraUnit =
             new CustomCassandraCQLUnit(
                     Arrays.asList(
-                            new ClassPathCQLDataSet("cassandra/schema-ts.cql", false, false)),
+                            new ClassPathCQLDataSet("cassandra/schema-ts.cql", false, false),
+                            new ClassPathCQLDataSet("cassandra/schema-ts-latest.cql", false, false)
+                    ),
                     "cassandra-test.yaml", 30000l);
 
     @BeforeClass

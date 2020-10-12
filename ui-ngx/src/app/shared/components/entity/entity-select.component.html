@@ -27,7 +27,9 @@
   </tb-entity-type-select>
   <tb-entity-autocomplete
     fxFlex
-    *ngIf="modelValue.entityType && modelValue.entityType !== AliasEntityType.CURRENT_TENANT"
+    *ngIf="modelValue.entityType && modelValue.entityType !== AliasEntityType.CURRENT_TENANT
+                                 && modelValue.entityType !== AliasEntityType.CURRENT_USER
+                                 && modelValue.entityType !== AliasEntityType.CURRENT_USER_OWNER"
     [required]="required"
     [entityType]="modelValue.entityType"
     formControlName="entityId">

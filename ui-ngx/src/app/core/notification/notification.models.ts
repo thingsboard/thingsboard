@@ -20,7 +20,7 @@ export interface NotificationState {
   hideNotification: HideNotification;
 }
 
-export declare type NotificationType = 'info' | 'success' | 'error';
+export declare type NotificationType = 'info' | 'warn' | 'success' | 'error';
 export declare type NotificationHorizontalPosition = 'start' | 'center' | 'end' | 'left' | 'right';
 export declare type NotificationVerticalPosition = 'top' | 'bottom';
 

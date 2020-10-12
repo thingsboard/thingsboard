@@ -25,6 +25,7 @@ import {
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { forkJoin, Observable, ReplaySubject, throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 
 declare const SystemJS;
 
@@ -34,12 +35,14 @@ declare const SystemJS;
 export class ResourcesService {
 
   private loadedResources: { [url: string]: ReplaySubject<any> } = {};
-  private loadedModules: { [url: string]: ReplaySubject<ComponentFactory<any>[]> } = {};
+  private loadedModules: { [url: string]: ReplaySubject<Type<any>[]> } = {};
+  private loadedFactories: { [url: string]: ReplaySubject<ComponentFactory<any>[]> } = {};
 
   private anchor = this.document.getElementsByTagName('head')[0] || this.document.getElementsByTagName('body')[0];
 
   constructor(@Inject(DOCUMENT) private readonly document: any,
               private compiler: Compiler,
+              private http: HttpClient,
               private injector: Injector) {}
 
   public loadResource(url: string): Observable<any> {
@@ -60,12 +63,12 @@ export class ResourcesService {
     return this.loadResourceByType(fileType, url);
   }
 
-  public loadModule(url: string, modulesMap: {[key: string]: any}): Observable<ComponentFactory<any>[]> {
-    if (this.loadedModules[url]) {
-      return this.loadedModules[url].asObservable();
+  public loadFactories(url: string, modulesMap: {[key: string]: any}): Observable<ComponentFactory<any>[]> {
+    if (this.loadedFactories[url]) {
+      return this.loadedFactories[url].asObservable();
     }
     const subject = new ReplaySubject<ComponentFactory<any>[]>();
-    this.loadedModules[url] = subject;
+    this.loadedFactories[url] = subject;
     if (modulesMap) {
       for (const moduleId of Object.keys(modulesMap)) {
         SystemJS.set(moduleId, modulesMap[moduleId]);
@@ -86,19 +89,76 @@ export class ResourcesService {
                 c.ngModuleFactory.create(this.injector);
                 componentFactories.push(...c.componentFactories);
               }
-              this.loadedModules[url].next(componentFactories);
-              this.loadedModules[url].complete();
+              this.loadedFactories[url].next(componentFactories);
+              this.loadedFactories[url].complete();
             } catch (e) {
-              this.loadedModules[url].error(new Error(`Unable to init module from url: ${url}`));
-              delete this.loadedModules[url];
+              this.loadedFactories[url].error(new Error(`Unable to init module from url: ${url}`));
+              delete this.loadedFactories[url];
             }
           },
           (e) => {
-              this.loadedModules[url].error(new Error(`Unable to compile module from url: ${url}`));
-              delete this.loadedModules[url];
+              this.loadedFactories[url].error(new Error(`Unable to compile module from url: ${url}`));
+              delete this.loadedFactories[url];
           });
         } else {
-          this.loadedModules[url].error(new Error(`Module '${url}' doesn't have default export!`));
+          this.loadedFactories[url].error(new Error(`Module '${url}' doesn't have default export!`));
+          delete this.loadedFactories[url];
+        }
+      },
+      (e) => {
+        this.loadedFactories[url].error(new Error(`Unable to load module from url: ${url}`));
+        delete this.loadedFactories[url];
+      }
+    );
+    return subject.asObservable();
+  }
+
+  public loadModules(url: string, modulesMap: {[key: string]: any}): Observable<Type<any>[]> {
+    if (this.loadedModules[url]) {
+      return this.loadedModules[url].asObservable();
+    }
+    const subject = new ReplaySubject<Type<any>[]>();
+    this.loadedModules[url] = subject;
+    if (modulesMap) {
+      for (const moduleId of Object.keys(modulesMap)) {
+        SystemJS.set(moduleId, modulesMap[moduleId]);
+      }
+    }
+    SystemJS.import(url).then(
+      (module) => {
+        try {
+          let modules;
+          try {
+            modules = this.extractNgModules(module);
+          } catch (e) {
+          }
+          if (modules && modules.length) {
+            const tasks: Promise<ModuleWithComponentFactories<any>>[] = [];
+            for (const m of modules) {
+              tasks.push(this.compiler.compileModuleAndAllComponentsAsync(m));
+            }
+            forkJoin(tasks).subscribe((compiled) => {
+                try {
+                  for (const c of compiled) {
+                    c.ngModuleFactory.create(this.injector);
+                  }
+                  this.loadedModules[url].next(modules);
+                  this.loadedModules[url].complete();
+                } catch (e) {
+                  this.loadedModules[url].error(new Error(`Unable to init module from url: ${url}`));
+                  delete this.loadedModules[url];
+                }
+              },
+              (e) => {
+                this.loadedModules[url].error(new Error(`Unable to compile module from url: ${url}`));
+                delete this.loadedModules[url];
+              });
+          } else {
+            this.loadedModules[url].error(new Error(`Module '${url}' doesn't have default export or not NgModule!`));
+            delete this.loadedModules[url];
+          }
+        } catch (e) {
+          this.loadedModules[url].error(new Error(`Unable to load module from url: ${url}`));
           delete this.loadedModules[url];
         }
       },

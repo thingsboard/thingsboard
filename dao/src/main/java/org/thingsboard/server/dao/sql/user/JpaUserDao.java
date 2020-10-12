@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
@@ -28,20 +27,16 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.user.UserDao;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
  * @author Valerii Sosliuk
  */
 @Component
-@SqlDao
-@Slf4j
 public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> implements UserDao {
 
     @Autowired
@@ -53,7 +48,7 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
     }
 
     @Override
-    protected CrudRepository<UserEntity, String> getCrudRepository() {
+    protected CrudRepository<UserEntity, UUID> getCrudRepository() {
         return userRepository;
     }
 
@@ -63,12 +58,22 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
     }
 
     @Override
+    public PageData<User> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(
+                userRepository
+                        .findByTenantId(
+                                tenantId,
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
     public PageData<User> findTenantAdmins(UUID tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(
                 userRepository
                         .findUsersByAuthority(
-                                fromTimeUUID(tenantId),
-                                NULL_UUID_STR,
+                                tenantId,
+                                NULL_UUID,
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 Authority.TENANT_ADMIN,
                                 DaoUtil.toPageable(pageLink)));
@@ -79,8 +84,8 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
         return DaoUtil.toPageData(
                 userRepository
                         .findUsersByAuthority(
-                                fromTimeUUID(tenantId),
-                                fromTimeUUID(customerId),
+                                tenantId,
+                                customerId,
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 Authority.CUSTOMER_USER,
                                 DaoUtil.toPageable(pageLink)));

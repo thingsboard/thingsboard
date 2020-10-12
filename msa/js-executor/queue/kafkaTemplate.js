@@ -27,20 +27,10 @@ let kafkaAdmin;
 let consumer;
 let producer;
 
-const topics = [];
 const configEntries = [];
 
 function KafkaProducer() {
     this.send = async (responseTopic, scriptId, rawResponse, headers) => {
-
-        if (!topics.includes(responseTopic)) {
-            let createResponseTopicResult = await createTopic(responseTopic);
-            topics.push(responseTopic);
-            if (createResponseTopicResult) {
-                logger.info('Created new topic: %s', requestTopic);
-            }
-        }
-
         return producer.send(
             {
                 topic: responseTopic,
@@ -61,25 +51,51 @@ function KafkaProducer() {
 
         const kafkaBootstrapServers = config.get('kafka.bootstrap.servers');
         const requestTopic = config.get('request_topic');
+        const useConfluent = config.get('kafka.use_confluent_cloud');
 
         logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);
         logger.info('Kafka Requests Topic: %s', requestTopic);
 
-        kafkaClient = new Kafka({
+        let kafkaConfig = {
             brokers: kafkaBootstrapServers.split(','),
-            logLevel: logLevel.INFO,
-            logCreator: KafkaJsWinstonLogCreator
-        });
+                logLevel: logLevel.INFO,
+                logCreator: KafkaJsWinstonLogCreator
+        };
+
+        if (useConfluent) {
+            kafkaConfig['sasl'] = {
+                mechanism: config.get('kafka.confluent.sasl.mechanism'),
+                username: config.get('kafka.confluent.username'),
+                password: config.get('kafka.confluent.password')
+            };
+            kafkaConfig['ssl'] = true;
+        }
+
+        kafkaClient = new Kafka(kafkaConfig);
 
         parseTopicProperties();
 
         kafkaAdmin = kafkaClient.admin();
         await kafkaAdmin.connect();
 
-        let createRequestTopicResult = await createTopic(requestTopic);
+        let partitions = 1;
 
-        if (createRequestTopicResult) {
-            logger.info('Created new topic: %s', requestTopic);
+        for (let i = 0; i < configEntries.length; i++) {
+            let param = configEntries[i];
+            if (param.name === 'partitions') {
+                partitions = param.value;
+                configEntries.splice(i, 1);
+                break;
+            }
+        }
+
+        let topics = await kafkaAdmin.listTopics();
+
+        if (!topics.includes(requestTopic)) {
+            let createRequestTopicResult = await createTopic(requestTopic, partitions);
+            if (createRequestTopicResult) {
+                logger.info('Created new topic: %s', requestTopic);
+            }
         }
 
         consumer = kafkaClient.consumer({groupId: 'js-executor-group'});
@@ -109,10 +125,11 @@ function KafkaProducer() {
     }
 })();
 
-function createTopic(topic) {
+function createTopic(topic, partitions) {
     return kafkaAdmin.createTopics({
         topics: [{
             topic: topic,
+            numPartitions: partitions,
             replicationFactor: replicationFactor,
             configEntries: configEntries
         }]

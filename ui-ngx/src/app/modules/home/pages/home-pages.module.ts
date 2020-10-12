@@ -29,6 +29,10 @@ import { EntityViewModule } from '@modules/home/pages/entity-view/entity-view.mo
 import { RuleChainModule } from '@modules/home/pages/rulechain/rulechain.module';
 import { WidgetLibraryModule } from '@modules/home/pages/widget/widget-library.module';
 import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module';
+import { TenantProfileModule } from './tenant-profile/tenant-profile.module';
+import { MODULES_MAP } from '@shared/public-api';
+import { modulesMap } from '../../common/modules-map';
+import { DeviceProfileModule } from './device-profile/device-profile.module';
 import { EdgeModule } from "@home/pages/edge/edge.module";
 
 @NgModule({
@@ -36,7 +40,9 @@ import { EdgeModule } from "@home/pages/edge/edge.module";
     AdminModule,
     HomeLinksModule,
     ProfileModule,
+    TenantProfileModule,
     TenantModule,
+    DeviceProfileModule,
     DeviceModule,
     AssetModule,
     EdgeModule,
@@ -47,6 +53,12 @@ import { EdgeModule } from "@home/pages/edge/edge.module";
     DashboardModule,
     AuditLogModule,
     UserModule
+  ],
+  providers: [
+    {
+      provide: MODULES_MAP,
+      useValue: modulesMap
+    }
   ]
 })
 export class HomePagesModule { }

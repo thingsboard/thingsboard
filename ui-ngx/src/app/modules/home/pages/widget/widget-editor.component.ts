@@ -275,7 +275,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       entries.forEach((entry) => {
         const editor = this.aceEditors.find(aceEditor => aceEditor.container === entry.target);
         this.onAceEditorResize(editor);
-      })
+      });
     });
     this.htmlEditor = this.createAceEditor(this.htmlInputElmRef, 'html');
     this.htmlEditor.on('input', () => {

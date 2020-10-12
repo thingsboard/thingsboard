@@ -19,8 +19,10 @@
   }
   .mat-column-sampleData {
     flex: 0 0 120px;
+    min-width: 120px;
   }
   .mat-column-type {
     flex: 0 0 120px;
+    min-width: 120px;
   }
 }

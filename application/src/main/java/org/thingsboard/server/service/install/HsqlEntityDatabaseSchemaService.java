@@ -18,11 +18,9 @@ package org.thingsboard.server.service.install;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.util.HsqlDao;
-import org.thingsboard.server.dao.util.SqlDao;
 
 @Service
 @HsqlDao
-@SqlDao
 @Profile("install")
 public class HsqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaService
         implements EntityDatabaseSchemaService {

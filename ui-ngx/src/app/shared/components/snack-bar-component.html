@@ -16,11 +16,14 @@
 
 -->
 <div fxLayout="row" fxLayoutAlign="start center" class="tb-toast"
+     [@showHideAnimation]="{value: animationState, params: animationParams}"
+     (@showHideAnimation.done)="onHideFinished($event)"
      [ngClass]="{
           'error-toast': notification.type === 'error',
+          'warn-toast': notification.type === 'warn',
           'success-toast': notification.type === 'success',
           'info-toast': notification.type === 'info'
      }">
   <div class="toast-text" [innerHTML]="notification.message"></div>
-  <button #actionButton mat-button (click)="action()">{{ 'action.close' | translate }}</button>
+  <button #actionButton type="button" mat-button (click)="action()">{{ 'action.close' | translate }}</button>
 </div>

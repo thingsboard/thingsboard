@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
@@ -91,6 +90,16 @@ public interface DeviceDao extends Dao<Device> {
     PageData<DeviceInfo> findDeviceInfosByTenantIdAndType(UUID tenantId, String type, PageLink pageLink);
 
     /**
+     * Find device infos by tenantId, deviceProfileId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param deviceProfileId the deviceProfileId
+     * @param pageLink the page link
+     * @return the list of device info objects
+     */
+    PageData<DeviceInfo> findDeviceInfosByTenantIdAndDeviceProfileId(UUID tenantId, UUID deviceProfileId, PageLink pageLink);
+
+    /**
      * Find devices by tenantId and devices Ids.
      *
      * @param tenantId the tenantId
@@ -141,6 +150,16 @@ public interface DeviceDao extends Dao<Device> {
      */
     PageData<DeviceInfo> findDeviceInfosByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink);
 
+    /**
+     * Find device infos by tenantId, customerId, deviceProfileId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param deviceProfileId the deviceProfileId
+     * @param pageLink the page link
+     * @return the list of device info objects
+     */
+    PageData<DeviceInfo> findDeviceInfosByTenantIdAndCustomerIdAndDeviceProfileId(UUID tenantId, UUID customerId, UUID deviceProfileId, PageLink pageLink);
 
     /**
      * Find devices by tenantId, customerId and devices Ids.
@@ -169,6 +188,35 @@ public interface DeviceDao extends Dao<Device> {
     ListenableFuture<List<EntitySubtype>> findTenantDeviceTypesAsync(UUID tenantId);
 
     /**
+     * Find devices by tenantId and device id.
+     * @param tenantId the tenant Id
+     * @param id the device Id
+     * @return the device object
+     */
+    Device findDeviceByTenantIdAndId(TenantId tenantId, UUID id);
+
+    /**
+     * Find devices by tenantId and device id.
+     * @param tenantId tenantId the tenantId
+     * @param id the deviceId
+     * @return the device object
+     */
+    ListenableFuture<Device> findDeviceByTenantIdAndIdAsync(TenantId tenantId, UUID id);
+
+    Long countDevicesByDeviceProfileId(TenantId tenantId, UUID deviceProfileId);
+
+    /**
+     * Find devices by tenantId, profileId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param profileId the profileId
+     * @param pageLink the page link
+     * @return the list of device objects
+     */
+    PageData<Device> findDevicesByTenantIdAndProfileId(UUID tenantId, UUID profileId, PageLink pageLink);
+
+
+    /**
      * Find devices by tenantId, edgeId and page link.
      *
      * @param tenantId the tenantId
@@ -176,5 +224,5 @@ public interface DeviceDao extends Dao<Device> {
      * @param pageLink the page link
      * @return the list of device objects
      */
-    ListenableFuture<PageData<Device>> findDevicesByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink);
+    PageData<Device> findDevicesByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink);
 }

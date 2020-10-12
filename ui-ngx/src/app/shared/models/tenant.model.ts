@@ -16,11 +16,29 @@
 
 import { ContactBased } from '@shared/models/contact-based.model';
 import { TenantId } from './id/tenant-id';
+import { TenantProfileId } from '@shared/models/id/tenant-profile-id';
+import { BaseData } from '@shared/models/base-data';
+
+export interface TenantProfileData {
+  [key: string]: string;
+}
+
+export interface TenantProfile extends BaseData<TenantProfileId> {
+  name: string;
+  description?: string;
+  default?: boolean;
+  isolatedTbCore?: boolean;
+  isolatedTbRuleEngine?: boolean;
+  profileData?: TenantProfileData;
+}
 
 export interface Tenant extends ContactBased<TenantId> {
   title: string;
   region: string;
-  isolatedTbCore: boolean;
-  isolatedTbRuleEngine: boolean;
+  tenantProfileId: TenantProfileId;
   additionalInfo?: any;
+}
+
+export interface TenantInfo extends Tenant {
+  tenantProfileName: string;
 }

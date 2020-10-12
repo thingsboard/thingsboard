@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public final class InMemoryStorage {
@@ -33,6 +32,14 @@ public final class InMemoryStorage {
 
     private InMemoryStorage() {
         storage = new ConcurrentHashMap<>();
+    }
+
+    public void printStats() {
+        storage.forEach((topic, queue) -> {
+            if (queue.size() > 0) {
+                log.debug("[{}] Queue Size [{}]", topic, queue.size());
+            }
+        });
     }
 
     public static InMemoryStorage getInstance() {

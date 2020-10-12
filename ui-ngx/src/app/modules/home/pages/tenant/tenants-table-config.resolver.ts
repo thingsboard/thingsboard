@@ -18,7 +18,7 @@ import { Injectable } from '@angular/core';
 
 import { Resolve, Router } from '@angular/router';
 
-import { Tenant } from '@shared/models/tenant.model';
+import { TenantInfo } from '@shared/models/tenant.model';
 import {
   DateEntityTableColumn,
   EntityTableColumn,
@@ -31,11 +31,12 @@ import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared
 import { TenantComponent } from '@modules/home/pages/tenant/tenant.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { TenantTabsComponent } from '@home/pages/tenant/tenant-tabs.component';
+import { mergeMap } from 'rxjs/operators';
 
 @Injectable()
-export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<Tenant>> {
+export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<TenantInfo>> {
 
-  private readonly config: EntityTableConfig<Tenant> = new EntityTableConfig<Tenant>();
+  private readonly config: EntityTableConfig<TenantInfo> = new EntityTableConfig<TenantInfo>();
 
   constructor(private tenantService: TenantService,
               private translate: TranslateService,
@@ -49,11 +50,12 @@ export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<Ten
     this.config.entityResources = entityTypeResources.get(EntityType.TENANT);
 
     this.config.columns.push(
-      new DateEntityTableColumn<Tenant>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<Tenant>('title', 'tenant.title', '25%'),
-      new EntityTableColumn<Tenant>('email', 'contact.email', '25%'),
-      new EntityTableColumn<Tenant>('country', 'contact.country', '25%'),
-      new EntityTableColumn<Tenant>('city', 'contact.city', '25%')
+      new DateEntityTableColumn<TenantInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
+      new EntityTableColumn<TenantInfo>('title', 'tenant.title', '20%'),
+      new EntityTableColumn<TenantInfo>('tenantProfileName', 'tenant-profile.tenant-profile', '20%'),
+      new EntityTableColumn<TenantInfo>('email', 'contact.email', '20%'),
+      new EntityTableColumn<TenantInfo>('country', 'contact.country', '20%'),
+      new EntityTableColumn<TenantInfo>('city', 'contact.city', '20%')
     );
 
     this.config.cellActionDescriptors.push(
@@ -70,27 +72,29 @@ export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<Ten
     this.config.deleteEntitiesTitle = count => this.translate.instant('tenant.delete-tenants-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('tenant.delete-tenants-text');
 
-    this.config.entitiesFetchFunction = pageLink => this.tenantService.getTenants(pageLink);
-    this.config.loadEntity = id => this.tenantService.getTenant(id.id);
-    this.config.saveEntity = tenant => this.tenantService.saveTenant(tenant);
+    this.config.entitiesFetchFunction = pageLink => this.tenantService.getTenantInfos(pageLink);
+    this.config.loadEntity = id => this.tenantService.getTenantInfo(id.id);
+    this.config.saveEntity = tenant => this.tenantService.saveTenant(tenant).pipe(
+      mergeMap((savedTenant) => this.tenantService.getTenantInfo(savedTenant.id.id))
+    );
     this.config.deleteEntity = id => this.tenantService.deleteTenant(id.id);
     this.config.onEntityAction = action => this.onTenantAction(action);
   }
 
-  resolve(): EntityTableConfig<Tenant> {
+  resolve(): EntityTableConfig<TenantInfo> {
     this.config.tableTitle = this.translate.instant('tenant.tenants');
 
     return this.config;
   }
 
-  manageTenantAdmins($event: Event, tenant: Tenant) {
+  manageTenantAdmins($event: Event, tenant: TenantInfo) {
     if ($event) {
       $event.stopPropagation();
     }
     this.router.navigateByUrl(`tenants/${tenant.id.id}/users`);
   }
 
-  onTenantAction(action: EntityAction<Tenant>): boolean {
+  onTenantAction(action: EntityAction<TenantInfo>): boolean {
     switch (action.action) {
       case 'manageTenantAdmins':
         this.manageTenantAdmins(action.event, action.entity);

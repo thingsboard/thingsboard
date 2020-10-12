@@ -15,27 +15,26 @@
 ///
 
 import {
-  AfterViewInit,
-  ChangeDetectorRef,
-  Component,
+  AfterViewInit, ChangeDetectorRef,
+  Component, ComponentFactoryResolver, ComponentRef,
   Directive,
-  ElementRef,
+  ElementRef, HostBinding,
   Inject,
   Input,
   NgZone,
-  OnDestroy,
+  OnDestroy, Optional,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
 import { MAT_SNACK_BAR_DATA, MatSnackBar, MatSnackBarConfig, MatSnackBarRef } from '@angular/material/snack-bar';
 import { NotificationMessage } from '@app/core/notification/notification.models';
-import { onParentScrollOrWindowResize } from '@app/core/utils';
 import { Subscription } from 'rxjs';
 import { NotificationService } from '@app/core/services/notification.service';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { MatButton } from '@angular/material/button';
 import Timeout = NodeJS.Timeout;
+import { PortalInjector } from '@angular/cdk/portal';
 
 @Directive({
   selector: '[tb-toast]'
@@ -48,17 +47,20 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
   private notificationSubscription: Subscription = null;
   private hideNotificationSubscription: Subscription = null;
 
-  private snackBarRef: MatSnackBarRef<TbSnackBarComponent> = null;
+  private snackBarRef: MatSnackBarRef<any> = null;
+  private toastComponentRef: ComponentRef<TbSnackBarComponent>;
   private currentMessage: NotificationMessage = null;
 
   private dismissTimeout: Timeout = null;
 
-  constructor(public elementRef: ElementRef,
-              public viewContainerRef: ViewContainerRef,
+  constructor(private elementRef: ElementRef,
+              private viewContainerRef: ViewContainerRef,
               private notificationService: NotificationService,
-              public snackBar: MatSnackBar,
+              private componentFactoryResolver: ComponentFactoryResolver,
+              private snackBar: MatSnackBar,
               private ngZone: NgZone,
-              private breakpointObserver: BreakpointObserver) {
+              private breakpointObserver: BreakpointObserver,
+              private cd: ChangeDetectorRef) {
   }
 
   ngAfterViewInit(): void {
@@ -66,45 +68,12 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
       (notificationMessage) => {
         if (this.shouldDisplayMessage(notificationMessage)) {
           this.currentMessage = notificationMessage;
-          const data = {
-            parent: this.elementRef,
-            notification: notificationMessage
-          };
           const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
-          const config: MatSnackBarConfig = {
-            horizontalPosition: notificationMessage.horizontalPosition || 'left',
-            verticalPosition: !isGtSm ? 'bottom' : (notificationMessage.verticalPosition || 'top'),
-            viewContainerRef: this.viewContainerRef,
-            duration: notificationMessage.duration,
-            panelClass: notificationMessage.panelClass,
-            data
-          };
-          this.ngZone.run(() => {
-            if (this.snackBarRef) {
-              this.snackBarRef.dismiss();
-            }
-            this.snackBarRef = this.snackBar.openFromComponent(TbSnackBarComponent, config);
-            if (notificationMessage.duration && notificationMessage.duration > 0 && notificationMessage.forceDismiss) {
-              if (this.dismissTimeout !== null) {
-                clearTimeout(this.dismissTimeout);
-                this.dismissTimeout = null;
-              }
-              this.dismissTimeout = setTimeout(() => {
-                if (this.snackBarRef) {
-                  this.snackBarRef.instance.actionButton._elementRef.nativeElement.click();
-                }
-                this.dismissTimeout = null;
-              }, notificationMessage.duration);
-            }
-            this.snackBarRef.afterDismissed().subscribe(() => {
-              if (this.dismissTimeout !== null) {
-                clearTimeout(this.dismissTimeout);
-                this.dismissTimeout = null;
-              }
-              this.snackBarRef = null;
-              this.currentMessage = null;
-            });
-          });
+          if (isGtSm && this.toastTarget !== 'root') {
+            this.showToastPanel(notificationMessage);
+          } else {
+            this.showSnackBar(notificationMessage, isGtSm);
+          }
         }
       }
     );
@@ -118,11 +87,128 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
               if (this.snackBarRef) {
                 this.snackBarRef.dismiss();
               }
+              if (this.toastComponentRef) {
+                this.toastComponentRef.instance.actionButton._elementRef.nativeElement.click();
+              }
             });
           }
         }
       }
     );
+  }
+
+  private showToastPanel(notificationMessage: NotificationMessage) {
+    this.ngZone.run(() => {
+      if (this.snackBarRef) {
+        this.snackBarRef.dismiss();
+      }
+      if (this.toastComponentRef) {
+        this.viewContainerRef.detach(0);
+        this.toastComponentRef.destroy();
+      }
+      let panelClass = ['tb-toast-panel', 'toast-panel'];
+      if (notificationMessage.panelClass) {
+        if (typeof notificationMessage.panelClass === 'string') {
+          panelClass.push(notificationMessage.panelClass);
+        } else if (notificationMessage.panelClass.length) {
+          panelClass = panelClass.concat(notificationMessage.panelClass);
+        }
+      }
+      const horizontalPosition = notificationMessage.horizontalPosition || 'left';
+      const verticalPosition = notificationMessage.verticalPosition || 'top';
+      if (horizontalPosition === 'start' || horizontalPosition === 'left') {
+        panelClass.push('left');
+      } else if (horizontalPosition === 'end' || horizontalPosition === 'right') {
+        panelClass.push('right');
+      } else {
+        panelClass.push('h-center');
+      }
+      if (verticalPosition === 'top') {
+        panelClass.push('top');
+      } else {
+        panelClass.push('bottom');
+      }
+
+      const componentFactory = this.componentFactoryResolver.resolveComponentFactory(TbSnackBarComponent);
+      const data: ToastPanelData = {
+        notification: notificationMessage,
+        panelClass,
+        destroyToastComponent: () => {
+          this.viewContainerRef.detach(0);
+          this.toastComponentRef.destroy();
+        }
+      };
+      const injectionTokens = new WeakMap<any, any>([
+        [MAT_SNACK_BAR_DATA, data]
+      ]);
+      const injector = new PortalInjector(this.viewContainerRef.injector, injectionTokens);
+      this.toastComponentRef = this.viewContainerRef.createComponent(componentFactory, 0, injector);
+      this.cd.detectChanges();
+
+      if (notificationMessage.duration && notificationMessage.duration > 0) {
+        if (this.dismissTimeout !== null) {
+          clearTimeout(this.dismissTimeout);
+          this.dismissTimeout = null;
+        }
+        this.dismissTimeout = setTimeout(() => {
+          if (this.toastComponentRef) {
+            this.toastComponentRef.instance.actionButton._elementRef.nativeElement.click();
+          }
+          this.dismissTimeout = null;
+        }, notificationMessage.duration + 500);
+      }
+      this.toastComponentRef.onDestroy(() => {
+        if (this.dismissTimeout !== null) {
+          clearTimeout(this.dismissTimeout);
+          this.dismissTimeout = null;
+        }
+        this.toastComponentRef = null;
+        this.currentMessage = null;
+      });
+    });
+  }
+
+  private showSnackBar(notificationMessage: NotificationMessage, isGtSm: boolean) {
+    this.ngZone.run(() => {
+      if (this.snackBarRef) {
+        this.snackBarRef.dismiss();
+      }
+      const data: ToastPanelData = {
+        notification: notificationMessage,
+        parent: this.elementRef,
+        panelClass: [],
+        destroyToastComponent: () => {}
+      };
+      const config: MatSnackBarConfig = {
+        horizontalPosition: notificationMessage.horizontalPosition || 'left',
+        verticalPosition: !isGtSm ? 'bottom' : (notificationMessage.verticalPosition || 'top'),
+        viewContainerRef: this.viewContainerRef,
+        duration: notificationMessage.duration,
+        panelClass: notificationMessage.panelClass,
+        data
+      };
+      this.snackBarRef = this.snackBar.openFromComponent(TbSnackBarComponent, config);
+      if (notificationMessage.duration && notificationMessage.duration > 0 && notificationMessage.forceDismiss) {
+        if (this.dismissTimeout !== null) {
+          clearTimeout(this.dismissTimeout);
+          this.dismissTimeout = null;
+        }
+        this.dismissTimeout = setTimeout(() => {
+          if (this.snackBarRef) {
+            this.snackBarRef.instance.actionButton._elementRef.nativeElement.click();
+          }
+          this.dismissTimeout = null;
+        }, notificationMessage.duration);
+      }
+      this.snackBarRef.afterDismissed().subscribe(() => {
+        if (this.dismissTimeout !== null) {
+          clearTimeout(this.dismissTimeout);
+          this.dismissTimeout = null;
+        }
+        this.snackBarRef = null;
+        this.currentMessage = null;
+      });
+    });
   }
 
   private shouldDisplayMessage(notificationMessage: NotificationMessage): boolean {
@@ -139,6 +225,10 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.toastComponentRef) {
+      this.viewContainerRef.detach(0);
+      this.toastComponentRef.destroy();
+    }
     if (this.notificationSubscription) {
       this.notificationSubscription.unsubscribe();
     }
@@ -148,38 +238,90 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
   }
 }
 
+interface ToastPanelData {
+  notification: NotificationMessage;
+  parent?: ElementRef;
+  panelClass: string[];
+  destroyToastComponent: () => void;
+}
+
+import {
+  AnimationTriggerMetadata,
+  AnimationEvent,
+  trigger,
+  state,
+  transition,
+  style,
+  animate,
+} from '@angular/animations';
+import { onParentScrollOrWindowResize } from '@core/utils';
+
+export const toastAnimations: {
+  readonly showHideToast: AnimationTriggerMetadata;
+} = {
+  showHideToast: trigger('showHideAnimation', [
+    state('in', style({ transform: 'scale(1)', opacity: 1 })),
+    transition('void => opened', [style({ transform: 'scale(0)', opacity: 0 }), animate('{{ open }}ms')]),
+    transition(
+      'opened => closing',
+      animate('{{ close }}ms', style({ transform: 'scale(0)', opacity: 0 })),
+    ),
+  ]),
+};
+
+export type ToastAnimationState = 'default' | 'opened' | 'closing';
+
 @Component({
   selector: 'tb-snack-bar-component',
   templateUrl: 'snack-bar-component.html',
-  styleUrls: ['snack-bar-component.scss']
+  styleUrls: ['snack-bar-component.scss'],
+  animations: [toastAnimations.showHideToast]
 })
 export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('actionButton', {static: true}) actionButton: MatButton;
 
+  @HostBinding('class')
+  get panelClass(): string[] {
+    return this.data.panelClass;
+  }
+
   private parentEl: HTMLElement;
-  public snackBarContainerEl: HTMLElement;
+  private snackBarContainerEl: HTMLElement;
   private parentScrollSubscription: Subscription = null;
+
   public notification: NotificationMessage;
-  constructor(@Inject(MAT_SNACK_BAR_DATA) public data: any, private elementRef: ElementRef,
-              public cd: ChangeDetectorRef,
-              public snackBarRef: MatSnackBarRef<TbSnackBarComponent>) {
+
+  animationState: ToastAnimationState;
+
+  animationParams = {
+    open: 100,
+    close: 100
+  };
+
+  constructor(@Inject(MAT_SNACK_BAR_DATA)
+              private data: ToastPanelData,
+              private elementRef: ElementRef,
+              @Optional()
+              private snackBarRef: MatSnackBarRef<TbSnackBarComponent>) {
+    this.animationState = !!this.snackBarRef ? 'default' : 'opened';
     this.notification = data.notification;
   }
 
   ngAfterViewInit() {
-    this.parentEl = this.data.parent.nativeElement;
-    this.snackBarContainerEl = this.elementRef.nativeElement.parentNode;
-    this.snackBarContainerEl.style.position = 'absolute';
-    this.updateContainerRect();
-    this.updatePosition(this.snackBarRef.containerInstance.snackBarConfig);
-    const snackBarComponent = this;
-    this.parentScrollSubscription = onParentScrollOrWindowResize(this.parentEl).subscribe(() => {
-      snackBarComponent.updateContainerRect();
-    });
+    if (this.snackBarRef) {
+      this.parentEl = this.data.parent.nativeElement;
+      this.snackBarContainerEl = this.elementRef.nativeElement.parentNode;
+      this.snackBarContainerEl.style.position = 'absolute';
+      this.updateContainerRect();
+      this.updatePosition(this.snackBarRef.containerInstance.snackBarConfig);
+      this.parentScrollSubscription = onParentScrollOrWindowResize(this.parentEl).subscribe(() => {
+        this.updateContainerRect();
+      });
+    }
   }
 
-  updatePosition(config: MatSnackBarConfig) {
+  private updatePosition(config: MatSnackBarConfig) {
     const isRtl = config.direction === 'rtl';
     const isLeft = (config.horizontalPosition === 'left' ||
       (config.horizontalPosition === 'start' && !isRtl) ||
@@ -199,13 +341,7 @@ export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
-    if (this.parentScrollSubscription) {
-      this.parentScrollSubscription.unsubscribe();
-    }
-  }
-
-  updateContainerRect() {
+  private updateContainerRect() {
     const viewportOffset = this.parentEl.getBoundingClientRect();
     this.snackBarContainerEl.style.top = viewportOffset.top + 'px';
     this.snackBarContainerEl.style.left = viewportOffset.left + 'px';
@@ -213,7 +349,26 @@ export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
     this.snackBarContainerEl.style.height = viewportOffset.height + 'px';
   }
 
+  ngOnDestroy() {
+    if (this.parentScrollSubscription) {
+      this.parentScrollSubscription.unsubscribe();
+    }
+  }
+
   action(): void {
-    this.snackBarRef.dismissWithAction();
+    if (this.snackBarRef) {
+      this.snackBarRef.dismissWithAction();
+    } else {
+      this.animationState = 'closing';
+    }
+  }
+
+  onHideFinished(event: AnimationEvent) {
+    const { toState } = event;
+    const isFadeOut = (toState as ToastAnimationState) === 'closing';
+    const itFinished = this.animationState === 'closing';
+    if (isFadeOut && itFinished) {
+      this.data.destroyToastComponent();
+    }
   }
 }

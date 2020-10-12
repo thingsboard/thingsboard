@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface UserDao extends Dao<User> {
@@ -41,6 +40,15 @@ public interface UserDao extends Dao<User> {
      * @return the user entity
      */
     User findByEmail(TenantId tenantId, String email);
+
+    /**
+     * Find users by tenantId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param pageLink the page link
+     * @return the list of user entities
+     */
+    PageData<User> findByTenantId(UUID tenantId, PageLink pageLink);
 
     /**
      * Find tenant admin users by tenantId and page link.

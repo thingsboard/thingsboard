@@ -25,6 +25,18 @@
     }
   }
 
+  .tb-widget-no-data {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, .75);
+
+    span {
+      color: #000;
+      text-align: center;
+    }
+  }
+
   .tb-widget-loading {
     z-index: 3;
     background: rgba(255, 255, 255, .15);

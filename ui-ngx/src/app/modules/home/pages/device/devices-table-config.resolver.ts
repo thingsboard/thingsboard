@@ -93,6 +93,8 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.DEVICE);
     this.config.entityResources = entityTypeResources.get(EntityType.DEVICE);
 
+    this.config.addDialogStyle = {width: '600px'};
+
     this.config.deleteEntityTitle = device => this.translate.instant('device.delete-device-title', { deviceName: device.name });
     this.config.deleteEntityContent = () => this.translate.instant('device.delete-device-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('device.delete-devices-title', {count});
@@ -118,7 +120,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     const routeParams = route.params;
     this.config.componentsData = {
       deviceScope: route.data.devicesType,
-      deviceType: ''
+      deviceProfileId: null
     };
     this.customerId = routeParams.customerId;
     this.edgeId = routeParams.edgeId;
@@ -162,7 +164,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     const columns: Array<EntityTableColumn<DeviceInfo>> = [
       new DateEntityTableColumn<DeviceInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<DeviceInfo>('name', 'device.name', '25%'),
-      new EntityTableColumn<DeviceInfo>('type', 'device.device-type', '25%'),
+      new EntityTableColumn<DeviceInfo>('deviceProfileName', 'device-profile.device-profile', '25%'),
       new EntityTableColumn<DeviceInfo>('label', 'device.label', '25%')
     ];
     if (deviceScope === 'tenant') {
@@ -186,14 +188,18 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
   configureEntityFunctions(deviceScope: string): void {
     if (deviceScope === 'tenant') {
       this.config.entitiesFetchFunction = pageLink =>
-        this.deviceService.getTenantDeviceInfos(pageLink, this.config.componentsData.deviceType);
+        this.deviceService.getTenantDeviceInfosByDeviceProfileId(pageLink,
+          this.config.componentsData.deviceProfileId !== null ?
+            this.config.componentsData.deviceProfileId.id : '');
       this.config.deleteEntity = id => this.deviceService.deleteDevice(id.id);
     } else if (deviceScope === 'edge') {
       this.config.entitiesFetchFunction = pageLink =>
         this.deviceService.getEdgeDevices(this.edgeId, pageLink, this.config.componentsData.edgeType);
     } else {
       this.config.entitiesFetchFunction = pageLink =>
-        this.deviceService.getCustomerDeviceInfos(this.customerId, pageLink, this.config.componentsData.deviceType);
+        this.deviceService.getCustomerDeviceInfosByDeviceProfileId(this.customerId, pageLink,
+          this.config.componentsData.deviceProfileId !== null ?
+          this.config.componentsData.deviceProfileId.id : '');
       this.config.deleteEntity = id => this.deviceService.unassignDeviceFromCustomer(id.id);
     }
   }

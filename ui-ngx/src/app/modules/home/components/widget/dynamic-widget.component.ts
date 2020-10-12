@@ -15,7 +15,7 @@
 ///
 
 import { PageComponent } from '@shared/components/page.component';
-import { Inject, Injector, OnDestroy, OnInit } from '@angular/core';
+import { Inject, Injector, OnDestroy, OnInit, Directive } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { IDynamicWidgetComponent, WidgetContext } from '@home/models/widget-component.models';
@@ -40,7 +40,10 @@ import { DialogService } from '@core/services/dialog.service';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
+import { DomSanitizer } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 
+@Directive()
 export class DynamicWidgetComponent extends PageComponent implements IDynamicWidgetComponent, OnInit, OnDestroy {
 
   executingRpcRequest: boolean;
@@ -74,6 +77,8 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
     this.ctx.date = $injector.get(DatePipe);
     this.ctx.translate = $injector.get(TranslateService);
     this.ctx.http = $injector.get(HttpClient);
+    this.ctx.sanitizer = $injector.get(DomSanitizer);
+    this.ctx.router = $injector.get(Router);
 
     this.ctx.$scope = this;
     if (this.ctx.defaultSubscription) {

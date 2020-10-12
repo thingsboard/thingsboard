@@ -14,7 +14,13 @@
 /// limitations under the License.
 ///
 
-import { defaultSettings, hereProviders, MapProviders, providerSets, UnitedMapSettings } from './map-models';
+import {
+  defaultSettings,
+  FormattedData,
+  hereProviders,
+  MapProviders,
+  UnitedMapSettings
+} from './map-models';
 import LeafletMap from './leaflet-map';
 import {
   commonMapSettingsSchema,
@@ -27,7 +33,7 @@ import {
 import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
 import { addCondition, addGroupInfo, addToSchema, initSchema, mergeSchemes } from '@core/schema-utils';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import { getDefCenterPosition, parseArray, parseData, parseFunction, parseWithTranslation } from './maps-utils';
+import { getDefCenterPosition, parseFunction, parseWithTranslation } from './maps-utils';
 import { Datasource, DatasourceData, JsonSettingsSchema, WidgetActionDescriptor } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
@@ -35,6 +41,10 @@ import { AttributeService } from '@core/http/attribute.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import _ from 'lodash';
+import { EntityDataPageLink } from '@shared/models/query/query.models';
+import { isDefined } from '@core/utils';
+import { forkJoin, Observable, of } from 'rxjs';
+import { providerSets } from '@home/components/widget/lib/maps/providers';
 
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {
@@ -55,10 +65,7 @@ export class MapWidgetController implements MapWidgetInterface {
         if (!$element) {
             $element = ctx.$container[0];
         }
-        this.settings = this.initSettings(ctx.settings);
-        if (isEdit) {
-            this.settings.draggableMarker = true;
-        }
+        this.settings = this.initSettings(ctx.settings, isEdit);
         this.settings.tooltipAction = this.getDescriptors('tooltipAction');
         this.settings.markerClick = this.getDescriptors('markerClick');
         this.settings.polygonClick = this.getDescriptors('polygonClick');
@@ -69,10 +76,17 @@ export class MapWidgetController implements MapWidgetInterface {
         }
         parseWithTranslation.setTranslate(this.translate);
         this.map = new MapClass(this.ctx, $element, this.settings);
+        (this.ctx as any).mapInstance = this.map;
         this.map.saveMarkerLocation = this.setMarkerLocation;
-        if (this.settings.draggableMarker) {
-            this.map.setDataSources(parseData(this.data));
-        }
+        this.map.savePolygonLocation = this.savePolygonLocation;
+        this.pageLink = {
+          page: 0,
+          pageSize: this.settings.mapPageSize,
+          textSearch: null,
+          dynamic: true
+        };
+        this.map.setLoading(true);
+        this.ctx.defaultSubscription.subscribeAllForPaginatedData(this.pageLink, null);
     }
 
     map: LeafletMap;
@@ -80,6 +94,7 @@ export class MapWidgetController implements MapWidgetInterface {
     schema: JsonSettingsSchema;
     data: DatasourceData[];
     settings: UnitedMapSettings;
+    pageLink: EntityDataPageLink;
 
     public static dataKeySettingsSchema(): object {
         return {};
@@ -87,8 +102,9 @@ export class MapWidgetController implements MapWidgetInterface {
 
     public static getProvidersSchema(mapProvider: MapProviders, ignoreImageMap = false) {
         const providerSchema = _.cloneDeep(mapProviderSchema);
-        if (mapProvider)
-            providerSchema.schema.properties.provider.default = mapProvider;
+        if (mapProvider) {
+          providerSchema.schema.properties.provider.default = mapProvider;
+        }
         if (ignoreImageMap) {
             providerSchema.form[0].items = providerSchema.form[0]?.items.filter(item => item.value !== 'image-map');
         }
@@ -114,7 +130,7 @@ export class MapWidgetController implements MapWidgetInterface {
         } else {
             const clusteringSchema = mergeSchemes([markerClusteringSettingsSchema,
                 addCondition(markerClusteringSettingsSchemaLeaflet,
-                    `model.useClusterMarkers === true && model.provider !== "image-map"`)])
+                    `model.useClusterMarkers === true && model.provider !== "image-map"`)]);
             addToSchema(schema, clusteringSchema);
             addGroupInfo(schema, 'Markers Clustering Settings');
         }
@@ -139,10 +155,11 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     translate = (key: string, defaultTranslation?: string): string => {
-        if (key)
-            return (this.ctx.$injector.get(UtilsService).customTranslation(key, defaultTranslation || key)
-                || this.ctx.$injector.get(TranslateService).instant(key));
-        else return '';
+      if (key) {
+        return (this.ctx.$injector.get(UtilsService).customTranslation(key, defaultTranslation || key)
+          || this.ctx.$injector.get(TranslateService).instant(key));
+      }
+      return '';
     }
 
     getDescriptors(name: string): { [name: string]: ($event: Event, datasource: Datasource) => void } {
@@ -169,7 +186,7 @@ export class MapWidgetController implements MapWidgetInterface {
         }, entityName, null, entityLabel);
     }
 
-    setMarkerLocation = (e) => {
+    setMarkerLocation = (e: FormattedData, lat?: number, lng?: number) => {
         const attributeService = this.ctx.$injector.get(AttributeService);
 
         const entityId: EntityId = {
@@ -178,44 +195,112 @@ export class MapWidgetController implements MapWidgetInterface {
         };
         const attributes = [];
         const timeseries = [];
-        const latLngProperties = [this.settings.latKeyName, this.settings.lngKeyName, this.settings.xPosKeyName, this.settings.yPosKeyName];
+
+        const latProperties = [this.settings.latKeyName, this.settings.xPosKeyName];
+        const lngProperties = [this.settings.lngKeyName, this.settings.yPosKeyName];
         e.$datasource.dataKeys.forEach(key => {
-            if (latLngProperties.includes(key.name)) {
-                const value = {
+            let value;
+            if (latProperties.includes(key.name)) {
+                value = {
                     key: key.name,
-                    value: e[key.name]
+                    value: isDefined(lat) ? lat : e[key.name]
                 };
-                if (key.type === DataKeyType.attribute) {
-                    attributes.push(value)
-                }
-                if (key.type === DataKeyType.timeseries) {
-                    timeseries.push(value)
-                }
+            } else if (lngProperties.includes(key.name)) {
+              value = {
+                key: key.name,
+                value: isDefined(lng) ? lng : e[key.name]
+              };
+            }
+            if (value) {
+              if (key.type === DataKeyType.attribute) {
+                attributes.push(value);
+              }
+              if (key.type === DataKeyType.timeseries) {
+                timeseries.push(value);
+              }
             }
         });
+        const observables: Observable<any>[] = [];
         if (timeseries.length) {
-            attributeService.saveEntityTimeseries(
-                entityId,
-                LatestTelemetry.LATEST_TELEMETRY,
-                timeseries
-            ).subscribe(() => { });
+            observables.push(attributeService.saveEntityTimeseries(
+              entityId,
+              LatestTelemetry.LATEST_TELEMETRY,
+              timeseries
+            ));
         }
         if (attributes.length) {
-            attributeService.saveEntityAttributes(
-                entityId,
-                AttributeScope.SERVER_SCOPE,
-                attributes
-            ).subscribe(() => { });
+            observables.push(attributeService.saveEntityAttributes(
+              entityId,
+              AttributeScope.SERVER_SCOPE,
+              attributes
+            ));
+        }
+        if (observables.length) {
+          return forkJoin(observables);
+        } else {
+          return of(null);
         }
     }
 
-    initSettings(settings: UnitedMapSettings): UnitedMapSettings {
+  savePolygonLocation = (e: FormattedData, coordinates?: Array<any>) => {
+    const attributeService = this.ctx.$injector.get(AttributeService);
+
+    const entityId: EntityId = {
+      entityType: e.$datasource.entityType,
+      id: e.$datasource.entityId
+    };
+    const attributes = [];
+    const timeseries = [];
+
+    const coordinatesProperties =  this.settings.polygonKeyName;
+    e.$datasource.dataKeys.forEach(key => {
+      let value;
+      if (coordinatesProperties === key.name) {
+        value = {
+          key: key.name,
+          value: isDefined(coordinates) ? coordinates : e[key.name]
+        };
+      }
+      if (value) {
+        if (key.type === DataKeyType.attribute) {
+          attributes.push(value);
+        }
+        if (key.type === DataKeyType.timeseries) {
+          timeseries.push(value);
+        }
+      }
+    });
+    const observables: Observable<any>[] = [];
+    if (timeseries.length) {
+      observables.push(attributeService.saveEntityTimeseries(
+        entityId,
+        LatestTelemetry.LATEST_TELEMETRY,
+        timeseries
+      ));
+    }
+    if (attributes.length) {
+      observables.push(attributeService.saveEntityAttributes(
+        entityId,
+        AttributeScope.SERVER_SCOPE,
+        attributes
+      ));
+    }
+    if (observables.length) {
+      return forkJoin(observables);
+    } else {
+      return of(null);
+    }
+  }
+
+    initSettings(settings: UnitedMapSettings, isEditMap?: boolean): UnitedMapSettings {
         const functionParams = ['data', 'dsData', 'dsIndex'];
         this.provider = settings.provider || this.mapProvider;
         if (this.provider === MapProviders.here && !settings.mapProviderHere) {
-            if (settings.mapProvider && hereProviders.includes(settings.mapProvider))
-                settings.mapProviderHere = settings.mapProvider
-            else settings.mapProviderHere = hereProviders[0];
+          if (settings.mapProvider && hereProviders.includes(settings.mapProvider)) {
+            settings.mapProviderHere = settings.mapProvider;
+          } else {
+            settings.mapProviderHere = hereProviders[0];
+          }
         }
         const customOptions = {
             provider: this.provider,
@@ -236,17 +321,19 @@ export class MapWidgetController implements MapWidgetInterface {
                 url: settings.markerImage,
                 size: settings.markerImageSize || 34
             } : null
+        };
+        if (isEditMap && !settings.hasOwnProperty('draggableMarker')) {
+            settings.draggableMarker = true;
         }
-        return { ...defaultSettings, ...settings, ...customOptions, }
+        if (isEditMap && !settings.hasOwnProperty('editablePolygon')) {
+            settings.editablePolygon = true;
+        }
+        return { ...defaultSettings, ...settings, ...customOptions, };
     }
 
     update() {
-        if (this.drawRoutes)
-            this.map.updatePolylines(parseArray(this.data));
-        if (this.settings.showPolygon) {
-            this.map.updatePolygons(parseData(this.data));
-        }
-        this.map.updateMarkers(parseData(this.data));
+        this.map.updateData(this.drawRoutes, this.settings.showPolygon);
+        this.map.setLoading(false);
     }
 
     resize() {

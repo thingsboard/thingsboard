@@ -34,6 +34,11 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.EntityCountQuery;
+import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityDataPageLink;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -41,9 +46,12 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
+
+import static org.thingsboard.server.dao.service.Validator.validateId;
 
 /**
  * Created by ashvayka on 04.05.17.
@@ -51,6 +59,9 @@ import org.thingsboard.server.dao.user.UserService;
 @Service
 @Slf4j
 public class BaseEntityService extends AbstractEntityService implements EntityService {
+
+    public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+    public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
 
     @Autowired
     private AssetService assetService;
@@ -80,6 +91,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private RuleChainService ruleChainService;
 
     @Autowired
+    private EntityQueryDao entityQueryDao;
+
+    @Autowired
     private EdgeService edgeService;
 
     @Override
@@ -87,6 +101,25 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         super.deleteEntityRelations(tenantId, entityId);
     }
 
+    @Override
+    public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
+        log.trace("Executing countEntitiesByQuery, tenantId [{}], customerId [{}], query [{}]", tenantId, customerId, query);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validateEntityCountQuery(query);
+        return this.entityQueryDao.countEntitiesByQuery(tenantId, customerId, query);
+    }
+
+    @Override
+    public PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
+        log.trace("Executing findEntityDataByQuery, tenantId [{}], customerId [{}], query [{}]", tenantId, customerId, query);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validateEntityDataQuery(query);
+        return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, query);
+    }
+
+    //TODO: 3.1 Remove this from project.
     @Override
     public ListenableFuture<String> fetchEntityNameAsync(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityNameAsync [{}]", entityId);
@@ -128,6 +161,31 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         }
         entityName = Futures.transform(hasName, (Function<HasName, String>) hasName1 -> hasName1 != null ? hasName1.getName() : null, MoreExecutors.directExecutor());
         return entityName;
+    }
+
+    private static void validateEntityCountQuery(EntityCountQuery query) {
+        if (query == null) {
+            throw new IncorrectParameterException("Query must be specified.");
+        } else if (query.getEntityFilter() == null) {
+            throw new IncorrectParameterException("Query entity filter must be specified.");
+        } else if (query.getEntityFilter().getType() == null) {
+            throw new IncorrectParameterException("Query entity filter type must be specified.");
+        }
+    }
+
+    private static void validateEntityDataQuery(EntityDataQuery query) {
+        validateEntityCountQuery(query);
+        validateEntityDataPageLink(query.getPageLink());
+    }
+
+    private static void validateEntityDataPageLink(EntityDataPageLink pageLink) {
+        if (pageLink == null) {
+            throw new IncorrectParameterException("Entity Data Page link must be specified.");
+        } else if (pageLink.getPageSize() < 1) {
+            throw new IncorrectParameterException("Incorrect entity data page link page size '"+pageLink.getPageSize()+"'. Page size must be greater than zero.");
+        } else if (pageLink.getPage() < 0) {
+            throw new IncorrectParameterException("Incorrect entity data page link page '"+pageLink.getPage()+"'. Page must be positive integer.");
+        }
     }
 
 }

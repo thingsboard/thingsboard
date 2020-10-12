@@ -579,6 +579,23 @@ export const widgetContextCompletions: TbEditorCompletions = {
                 }
               ]
             },
+            pushAndOpenState: {
+              description: 'Navigate to new dashboard state and adding intermediate states.',
+              meta: 'function',
+              args: [
+                {
+                  name: 'id',
+                  description: 'An array state object of the target dashboard state.',
+                  type: 'Array <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/api/widget-api.models.ts#L140">StateObject</a>',
+                },
+                {
+                  name: 'openRightLayout',
+                  description: 'An optional boolean argument to force open right dashboard layout if present in mobile view mode.',
+                  type: 'boolean',
+                  optional: true
+                }
+              ]
+            },
             updateState: {
               description: 'Updates current dashboard state.',
               meta: 'function',

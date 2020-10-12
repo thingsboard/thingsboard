@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -36,7 +35,6 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -59,6 +57,7 @@ public class InstallScripts {
     public static final String JSON_DIR = "json";
     public static final String SYSTEM_DIR = "system";
     public static final String TENANT_DIR = "tenant";
+    public static final String DEVICE_PROFILE_DIR = "device_profile";
     public static final String DEMO_DIR = "demo";
     public static final String RULE_CHAINS_DIR = "rule_chains";
     public static final String WIDGET_BUNDLES_DIR = "widget_bundles";
@@ -83,6 +82,10 @@ public class InstallScripts {
 
     public Path getTenantRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, RULE_CHAINS_DIR);
+    }
+
+    public Path getDeviceProfileDefaultRuleChainTemplateFilePath() {
+        return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DEVICE_PROFILE_DIR, "rule_chain_template.json");
     }
 
     public String getDataDir() {
@@ -110,10 +113,43 @@ public class InstallScripts {
         Path tenantChainsDir = getTenantRuleChainsDir();
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(tenantChainsDir, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
             dirStream.forEach(
-                    path -> loadRuleChainFromFile(tenantId, path)
+                    path -> {
+                        try {
+                            createRuleChainFromFile(tenantId, path, null);
+                        } catch (Exception e) {
+                            log.error("Unable to load rule chain from json: [{}]", path.toString());
+                            throw new RuntimeException("Unable to load rule chain from json", e);
+                        }
+                    }
             );
+            // TODO: voba
+//            dirStream.forEach(
+//                    path -> loadRuleChainFromFile(tenantId, path)
+//            );
         }
     }
+
+    public RuleChain createDefaultRuleChain(TenantId tenantId, String ruleChainName) throws IOException {
+        return createRuleChainFromFile(tenantId, getDeviceProfileDefaultRuleChainTemplateFilePath(), ruleChainName);
+    }
+
+    public RuleChain createRuleChainFromFile(TenantId tenantId, Path templateFilePath, String newRuleChainName) throws IOException {
+        JsonNode ruleChainJson = objectMapper.readTree(templateFilePath.toFile());
+        RuleChain ruleChain = objectMapper.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
+        RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
+
+        ruleChain.setTenantId(tenantId);
+        if (!StringUtils.isEmpty(newRuleChainName)) {
+            ruleChain.setName(newRuleChainName);
+        }
+        ruleChain = ruleChainService.saveRuleChain(ruleChain);
+
+        ruleChainMetaData.setRuleChainId(ruleChain.getId());
+        ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), ruleChainMetaData);
+
+        return ruleChain;
+    }
+
 
     public void loadSystemWidgets() throws Exception {
         Path widgetBundlesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);

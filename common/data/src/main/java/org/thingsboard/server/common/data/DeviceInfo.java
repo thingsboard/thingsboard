@@ -23,6 +23,7 @@ public class DeviceInfo extends Device {
 
     private String customerTitle;
     private boolean customerIsPublic;
+    private String deviceProfileName;
 
     public DeviceInfo() {
         super();
@@ -32,9 +33,10 @@ public class DeviceInfo extends Device {
         super(deviceId);
     }
 
-    public DeviceInfo(Device device, String customerTitle, boolean customerIsPublic) {
+    public DeviceInfo(Device device, String customerTitle, boolean customerIsPublic, String deviceProfileName) {
         super(device);
         this.customerTitle = customerTitle;
         this.customerIsPublic = customerIsPublic;
+        this.deviceProfileName = deviceProfileName;
     }
 }

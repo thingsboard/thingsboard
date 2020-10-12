@@ -58,7 +58,7 @@ import { GridsterModule } from 'angular-gridster2';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { ShareModule as ShareButtonsModule } from '@ngx-share/core';
+import { ShareModule as ShareButtonsModule } from 'ngx-sharebuttons';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { NgxHmCarouselModule } from 'ngx-hm-carousel';
@@ -134,6 +134,7 @@ import { HistorySelectorComponent } from './components/time/history-selector/his
 import { EntityGatewaySelectComponent } from '@shared/components/entity/entity-gateway-select.component';
 import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list.component';
 import { ContactComponent } from '@shared/components/contact.component';
+import { TimezoneSelectComponent } from '@shared/components/time/timezone-select.component';
 
 @NgModule({
   providers: [
@@ -172,6 +173,7 @@ import { ContactComponent } from '@shared/components/contact.component';
     DashboardSelectPanelComponent,
     DatetimePeriodComponent,
     DatetimeComponent,
+    TimezoneSelectComponent,
     ValueInputComponent,
     DashboardAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
@@ -292,6 +294,7 @@ import { ContactComponent } from '@shared/components/contact.component';
     DashboardSelectComponent,
     DatetimePeriodComponent,
     DatetimeComponent,
+    TimezoneSelectComponent,
     DashboardAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,

@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 @Slf4j
 public abstract class AbstractEntityService {
@@ -35,12 +34,12 @@ public abstract class AbstractEntityService {
     @Autowired
     protected RelationService relationService;
 
-    protected void createRelation(TenantId tenantId, EntityRelation relation) throws ExecutionException, InterruptedException {
+    protected void createRelation(TenantId tenantId, EntityRelation relation) {
         log.debug("Creating relation: {}", relation);
         relationService.saveRelation(tenantId, relation);
     }
 
-    protected void deleteRelation(TenantId tenantId, EntityRelation relation) throws ExecutionException, InterruptedException {
+    protected void deleteRelation(TenantId tenantId, EntityRelation relation) {
         log.debug("Deleting relation: {}", relation);
         relationService.deleteRelation(tenantId, relation);
     }

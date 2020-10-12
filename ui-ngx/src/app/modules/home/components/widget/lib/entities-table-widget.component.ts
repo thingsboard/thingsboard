@@ -32,26 +32,23 @@ import {
   DataKey,
   Datasource,
   DatasourceData,
-  DatasourceType,
   WidgetActionDescriptor,
   WidgetConfig
 } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, isDefined, isNumber, createLabelFromDatasource, hashCode } from '@core/utils';
+import { createLabelFromDatasource, deepClone, hashCode, isDefined, isNumber } from '@core/utils';
 import cssjs from '@core/css/css';
-import { PageLink } from '@shared/models/page/page-link';
-import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Observable } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
-import { catchError, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
+import { MatSort, SortDirection } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   CellContentInfo,
@@ -60,6 +57,9 @@ import {
   DisplayColumn,
   EntityColumn,
   EntityData,
+  entityDataSortOrderFromString,
+  findColumnByEntityKey,
+  findEntityKeyByColumnDef,
   fromEntityColumnDef,
   getCellContentInfo,
   getCellStyleInfo,
@@ -67,7 +67,6 @@ import {
   getEntityValue,
   TableWidgetDataKeySettings,
   TableWidgetSettings,
-  toEntityColumnDef,
   widthStyle
 } from '@home/components/widget/lib/table-widget.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
@@ -77,6 +76,17 @@ import {
   DisplayColumnsPanelComponent,
   DisplayColumnsPanelData
 } from '@home/components/widget/lib/display-columns-panel.component';
+import {
+  dataKeyToEntityKey,
+  Direction,
+  EntityDataPageLink,
+  entityDataPageLinkSortDirection,
+  EntityKeyType,
+  KeyFilter
+} from '@shared/models/query/query.models';
+import { sortItems } from '@shared/models/page/page-link';
+import { entityFields } from '@shared/models/entity.models';
+import { DatePipe } from '@angular/common';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -103,7 +113,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
   public displayPagination = true;
   public pageSizeOptions;
-  public pageLink: PageLink;
+  public pageLink: EntityDataPageLink;
   public sortOrderProperty: string;
   public textSearchMode = false;
   public columns: Array<EntityColumn> = [];
@@ -114,6 +124,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private settings: EntitiesTableWidgetSettings;
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
+
+  private entitiesTitlePattern: string;
 
   private defaultPageSize = 10;
   private defaultSortOrder = 'entityName';
@@ -146,12 +158,16 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private utils: UtilsService,
+              private datePipe: DatePipe,
               private translate: TranslateService,
               private domSanitizer: DomSanitizer) {
     super(store);
-
-    const sortOrder: SortOrder = sortOrderFromString(this.defaultSortOrder);
-    this.pageLink = new PageLink(this.defaultPageSize, 0, null, sortOrder);
+    this.pageLink = {
+      page: 0,
+      pageSize: this.defaultPageSize,
+      textSearch: null,
+      dynamic: true
+    };
   }
 
   ngOnInit(): void {
@@ -181,7 +197,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (this.displayPagination) {
       this.sort.sortChange.subscribe(() => this.paginator.pageIndex = 0);
     }
-    (this.displayPagination ? merge(this.sort.sortChange, this.paginator.page) : this.sort.sortChange)
+    ((this.displayPagination ? merge(this.sort.sortChange, this.paginator.page) : this.sort.sortChange) as Observable<any>)
       .pipe(
         tap(() => this.updateData())
       )
@@ -190,10 +206,12 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   }
 
   public onDataUpdated() {
-    this.ngZone.run(() => {
-      this.entityDatasource.updateEntitiesData(this.subscription.data);
-      this.ctx.detectChanges();
-    });
+    this.updateTitle(true);
+    this.entityDatasource.dataUpdated();
+  }
+
+  public pageLinkSortDirection(): SortDirection {
+    return entityDataPageLinkSortDirection(this.pageLink);
   }
 
   private initializeConfig() {
@@ -201,16 +219,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
     this.actionCellDescriptors = this.ctx.actionsApi.getActionDescriptors('actionCellButton');
 
-    let entitiesTitle: string;
-
     if (this.settings.entitiesTitle && this.settings.entitiesTitle.length) {
-      entitiesTitle = this.utils.customTranslation(this.settings.entitiesTitle, this.settings.entitiesTitle);
+      this.entitiesTitlePattern = this.utils.customTranslation(this.settings.entitiesTitle, this.settings.entitiesTitle);
     } else {
-      entitiesTitle = this.translate.instant('entity.entities');
+      this.entitiesTitlePattern = this.translate.instant('entity.entities');
     }
 
-    const datasource = this.subscription.datasources[0];
-    this.ctx.widgetTitle = createLabelFromDatasource(datasource, entitiesTitle);
+    this.updateTitle(false);
 
     this.searchAction.show = isDefined(this.settings.enableSearch) ? this.settings.enableSearch : true;
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
@@ -221,7 +236,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       this.defaultPageSize = pageSize;
     }
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
-    this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : Number.POSITIVE_INFINITY;
+    this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : 1024;
 
     const cssString = constructTableCssString(this.widgetConfig);
     const cssParser = new cssjs();
@@ -230,6 +245,16 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     cssParser.cssPreviewNamespace = namespace;
     cssParser.createStyleElement(namespace, cssString);
     $(this.elementRef.nativeElement).addClass(namespace);
+  }
+
+  private updateTitle(updateWidgetParams = false) {
+    const newTitle = createLabelFromDatasource(this.subscription.datasources[0], this.entitiesTitlePattern);
+    if (this.ctx.widgetTitle !== newTitle) {
+      this.ctx.widgetTitle = newTitle;
+      if (updateWidgetParams) {
+        this.ctx.updateWidgetParams();
+      }
+    }
   }
 
   private updateDatasources() {
@@ -256,7 +281,11 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           name: 'entityName',
           label: 'entityName',
           def: 'entityName',
-          title: entityNameColumnTitle
+          title: entityNameColumnTitle,
+          entityKey: {
+            key: 'name',
+            type: EntityKeyType.ENTITY_FIELD
+          }
         } as EntityColumn
       );
       this.contentsInfo.entityName = {
@@ -273,7 +302,11 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           name: 'entityLabel',
           label: 'entityLabel',
           def: 'entityLabel',
-          title: entityLabelColumnTitle
+          title: entityLabelColumnTitle,
+          entityKey: {
+            key: 'label',
+            type: EntityKeyType.ENTITY_FIELD
+          }
         } as EntityColumn
       );
       this.contentsInfo.entityLabel = {
@@ -291,6 +324,10 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           label: 'entityType',
           def: 'entityType',
           title: this.translate.instant('entity.entity-type'),
+          entityKey: {
+            key: 'entityType',
+            type: EntityKeyType.ENTITY_FIELD
+          }
         } as EntityColumn
       );
       this.contentsInfo.entityType = {
@@ -306,9 +343,10 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
     const datasource = this.subscription.options.datasources ? this.subscription.options.datasources[0] : null;
 
-    if (datasource) {
+    if (datasource && datasource.dataKeys) {
       datasource.dataKeys.forEach((entityDataKey) => {
         const dataKey: EntityColumn = deepClone(entityDataKey) as EntityColumn;
+        dataKey.entityKey = dataKeyToEntityKey(entityDataKey);
         if (dataKey.type === DataKeyType.function) {
           dataKey.name = dataKey.label;
         }
@@ -317,6 +355,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         dataKey.title = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.def = 'def' + this.columns.length;
         const keySettings: TableWidgetDataKeySettings = dataKey.settings;
+        if (dataKey.type === DataKeyType.entityField &&
+          !isDefined(keySettings.columnWidth) || keySettings.columnWidth === '0px') {
+          const entityField = entityFields[dataKey.name];
+          if (entityField && entityField.time) {
+            keySettings.columnWidth = '120px';
+          }
+        }
 
         this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings);
         this.contentsInfo[dataKey.def] = getCellContentInfo(keySettings, 'value, entity, ctx');
@@ -331,21 +376,26 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (this.settings.defaultSortOrder && this.settings.defaultSortOrder.length) {
       this.defaultSortOrder = this.settings.defaultSortOrder;
     }
-    this.pageLink.sortOrder = sortOrderFromString(this.defaultSortOrder);
-    this.sortOrderProperty = toEntityColumnDef(this.pageLink.sortOrder.property, this.columns);
+
+    this.pageLink.sortOrder = entityDataSortOrderFromString(this.defaultSortOrder, this.columns);
+    let sortColumn: EntityColumn;
+    if (this.pageLink.sortOrder) {
+      sortColumn = findColumnByEntityKey(this.pageLink.sortOrder.key, this.columns);
+    }
+    this.sortOrderProperty = sortColumn ? sortColumn.def : null;
 
     if (this.actionCellDescriptors.length) {
       this.displayedColumns.push('actions');
     }
     this.entityDatasource = new EntityDatasource(
-      this.translate, dataKeys, this.subscription.datasources);
+      this.translate, dataKeys, this.subscription);
   }
 
   private editColumnsToDisplay($event: Event) {
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const target = $event.target || $event.currentTarget;
     const config = new OverlayConfig();
     config.backdropClass = 'cdk-overlay-transparent-backdrop';
     config.hasBackdrop = true;
@@ -416,14 +466,27 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     } else {
       this.pageLink.page = 0;
     }
-    this.pageLink.sortOrder.property = fromEntityColumnDef(this.sort.active, this.columns);
-    this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
-    this.entityDatasource.loadEntities(this.pageLink);
+    const key = findEntityKeyByColumnDef(this.sort.active, this.columns);
+    if (key) {
+      this.pageLink.sortOrder = {
+        key,
+        direction: Direction[this.sort.direction.toUpperCase()]
+      };
+    } else {
+      this.pageLink.sortOrder = null;
+    }
+    const sortOrderLabel = fromEntityColumnDef(this.sort.active, this.columns);
+    const keyFilters: KeyFilter[] = null; // TODO:
+    this.entityDatasource.loadEntities(this.pageLink, sortOrderLabel, keyFilters);
     this.ctx.detectChanges();
   }
 
   public trackByColumnDef(index, column: EntityColumn) {
     return column.def;
+  }
+
+  public trackByRowIndex(index: number) {
+    return index;
   }
 
   public headerStyle(key: EntityColumn): any {
@@ -443,7 +506,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           style = {};
         }
       } else {
-        style = this.defaultStyle(key, value);
+        style = {};
       }
     }
     if (!style.width) {
@@ -457,7 +520,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (entity && key) {
       const contentInfo = this.contentsInfo[key.def];
       const value = getEntityValue(entity, key);
-      let content = '';
+      let content: string;
       if (contentInfo.useCellContentFunction && contentInfo.cellContentFunction) {
         try {
           content = contentInfo.cellContentFunction(value, entity, this.ctx);
@@ -465,11 +528,37 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
             content = '' + value;
         }
       } else {
-        const decimals = (contentInfo.decimals || contentInfo.decimals === 0) ? contentInfo.decimals : this.ctx.widgetConfig.decimals;
-        const units = contentInfo.units || this.ctx.widgetConfig.units;
-        content = this.ctx.utils.formatValue(value, decimals, units, true);
+        content = this.defaultContent(key, contentInfo, value);
       }
-      return isDefined(content) ? this.domSanitizer.bypassSecurityTrustHtml(content) : '';
+
+      if (!isDefined(content)) {
+        return '';
+
+      } else {
+        switch (typeof content) {
+          case 'string':
+            return this.domSanitizer.bypassSecurityTrustHtml(content);
+          default:
+            return content;
+        }
+      }
+
+    } else {
+      return '';
+    }
+  }
+
+  private defaultContent(key: EntityColumn, contentInfo: CellContentInfo, value: any): any {
+    if (isDefined(value)) {
+      const entityField = entityFields[key.name];
+      if (entityField) {
+        if (entityField.time) {
+          return this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss');
+        }
+      }
+      const decimals = (contentInfo.decimals || contentInfo.decimals === 0) ? contentInfo.decimals : this.ctx.widgetConfig.decimals;
+      const units = contentInfo.units || this.ctx.widgetConfig.units;
+      return this.ctx.utils.formatValue(value, decimals, units, true);
     } else {
       return '';
     }
@@ -509,56 +598,25 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
     this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, null, entityLabel);
   }
-
-  private defaultStyle(key: EntityColumn, value: any): any {
-    return {};
-  }
-
 }
-
-
 
 class EntityDatasource implements DataSource<EntityData> {
 
   private entitiesSubject = new BehaviorSubject<EntityData[]>([]);
   private pageDataSubject = new BehaviorSubject<PageData<EntityData>>(emptyPageData<EntityData>());
 
-  private allEntities: Array<EntityData> = [];
-  private allEntitiesSubject = new BehaviorSubject<EntityData[]>([]);
-  private allEntities$: Observable<Array<EntityData>> = this.allEntitiesSubject.asObservable();
-
   private currentEntity: EntityData = null;
+
+  public dataLoading = true;
+
+  private appliedPageLink: EntityDataPageLink;
+  private appliedSortOrderLabel: string;
 
   constructor(
        private translate: TranslateService,
        private dataKeys: Array<DataKey>,
-       datasources: Array<Datasource>
+       private subscription: IWidgetSubscription
     ) {
-
-    for (const datasource of datasources) {
-      if (datasource.type === DatasourceType.entity && !datasource.entityId) {
-        continue;
-      }
-      const entity: EntityData = {
-        id: {} as EntityId,
-        entityName: datasource.entityName,
-        entityLabel: datasource.entityLabel ? datasource.entityLabel : datasource.entityName
-      };
-      if (datasource.entityId) {
-        entity.id.id = datasource.entityId;
-      }
-      if (datasource.entityType) {
-        entity.id.entityType = datasource.entityType;
-        entity.entityType = this.translate.instant(entityTypeTranslations.get(datasource.entityType).type);
-      } else {
-        entity.entityType = '';
-      }
-      this.dataKeys.forEach((dataKey) => {
-        entity[dataKey.label] = '';
-      });
-      this.allEntities.push(entity);
-    }
-    this.allEntitiesSubject.next(this.allEntities);
   }
 
   connect(collectionViewer: CollectionViewer): Observable<EntityData[] | ReadonlyArray<EntityData>> {
@@ -570,33 +628,67 @@ class EntityDatasource implements DataSource<EntityData> {
     this.pageDataSubject.complete();
   }
 
-  loadEntities(pageLink: PageLink) {
-    this.fetchEntities(pageLink).pipe(
-      catchError(() => of(emptyPageData<EntityData>())),
-    ).subscribe(
-      (pageData) => {
-        this.entitiesSubject.next(pageData.data);
-        this.pageDataSubject.next(pageData);
-      }
-    );
+  loadEntities(pageLink: EntityDataPageLink, sortOrderLabel: string, keyFilters: KeyFilter[]) {
+    this.dataLoading = true;
+    // this.clear();
+    this.appliedPageLink = pageLink;
+    this.appliedSortOrderLabel = sortOrderLabel;
+    this.subscription.subscribeForPaginatedData(0, pageLink, keyFilters);
   }
 
-  updateEntitiesData(data: DatasourceData[]) {
-    for (let i = 0; i < this.allEntities.length; i++) {
-      const entity = this.allEntities[i];
-      for (let a = 0; a < this.dataKeys.length; a++) {
-        const dataKey = this.dataKeys[a];
-        const index = i * this.dataKeys.length + a;
-        const keyData = data[index].data;
-        if (keyData && keyData.length && keyData[0].length > 1) {
-          const value = keyData[0][1];
-          entity[dataKey.label] = value;
-        } else {
-          entity[dataKey.label] = '';
-        }
-      }
+  private clear() {
+    this.entitiesSubject.next([]);
+    this.pageDataSubject.next(emptyPageData<EntityData>());
+  }
+
+  dataUpdated() {
+    const datasourcesPageData = this.subscription.datasourcePages[0];
+    const dataPageData = this.subscription.dataPages[0];
+    let entities = new Array<EntityData>();
+    datasourcesPageData.data.forEach((datasource, index) => {
+      entities.push(this.datasourceToEntityData(datasource, dataPageData.data[index]));
+    });
+    if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
+      const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
+      entities = entities.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc));
     }
-    this.allEntitiesSubject.next(this.allEntities);
+    const entitiesPageData: PageData<EntityData> = {
+      data: entities,
+      totalPages: datasourcesPageData.totalPages,
+      totalElements: datasourcesPageData.totalElements,
+      hasNext: datasourcesPageData.hasNext
+    };
+    this.entitiesSubject.next(entities);
+    this.pageDataSubject.next(entitiesPageData);
+    this.dataLoading = false;
+  }
+
+  private datasourceToEntityData(datasource: Datasource, data: DatasourceData[]): EntityData {
+    const entity: EntityData = {
+      id: {} as EntityId,
+      entityName: datasource.entityName,
+      entityLabel: datasource.entityLabel ? datasource.entityLabel : datasource.entityName
+    };
+    if (datasource.entityId) {
+      entity.id.id = datasource.entityId;
+    }
+    if (datasource.entityType) {
+      entity.id.entityType = datasource.entityType;
+      entity.entityType = this.translate.instant(entityTypeTranslations.get(datasource.entityType).type);
+    } else {
+      entity.entityType = '';
+    }
+    this.dataKeys.forEach((dataKey, index) => {
+      const keyData = data[index].data;
+      if (keyData && keyData.length && keyData[0].length > 1) {
+        if (data[index].dataKey.type !== DataKeyType.entityField || !entity.hasOwnProperty(dataKey.label)) {
+          entity[dataKey.label] = keyData[0][1];
+        }
+      } else {
+        entity[dataKey.label] = '';
+      }
+    });
+    return entity;
   }
 
   isEmpty(): Observable<boolean> {
@@ -623,11 +715,5 @@ class EntityDatasource implements DataSource<EntityData> {
   public isCurrentEntity(entity: EntityData): boolean {
     return (this.currentEntity && entity && this.currentEntity.id && entity.id) &&
       (this.currentEntity.id.id === entity.id.id);
-  }
-
-  private fetchEntities(pageLink: PageLink): Observable<PageData<EntityData>> {
-    return this.allEntities$.pipe(
-      map((data) => pageLink.filterData(data))
-    );
   }
 }

@@ -22,7 +22,6 @@ import org.dbunit.ext.hsqldb.HsqldbDataTypeFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -32,7 +31,6 @@ import java.sql.SQLException;
  * Created by Valerii Sosliuk on 5/6/2017.
  */
 @Configuration
-@SqlDao
 public class JpaDbunitTestConfig {
 
     @Autowired

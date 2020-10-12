@@ -15,16 +15,8 @@
  */
 package org.thingsboard.server.common.data.page;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import lombok.Getter;
-import lombok.ToString;
-
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.UUID;
 
 @Data
 public class TimePageLink extends PageLink {

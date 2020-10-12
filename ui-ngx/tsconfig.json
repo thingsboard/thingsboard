@@ -5,7 +5,7 @@
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
     "declaration": false,
-    "module": "esnext",
+    "module": "es2020",
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -20,7 +20,8 @@
       "src/typings/jquery.flot.typings.d.ts",
       "src/typings/jquery.jstree.typings.d.ts",
       "src/typings/split.js.typings.d.ts",
-      "src/typings/add-marker.d.ts"
+      "src/typings/add-marker.d.ts",
+      "src/typings/leaflet-editable.d.ts"
     ],
     "paths": {
       "@app/*": ["src/app/*"],

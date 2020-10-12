@@ -69,6 +69,12 @@ export class RuleChainService {
     return this.http.get<RuleChain>(`/api/ruleChain/${ruleChainId}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public createDefaultRuleChain(ruleChainName: string, config?: RequestConfig): Observable<RuleChain> {
+    return this.http.post<RuleChain>('/api/ruleChain/device/default', {
+      name: ruleChainName
+    }, defaultHttpOptionsFromConfig(config));
+  }
+
   public saveRuleChain(ruleChain: RuleChain, config?: RequestConfig): Observable<RuleChain> {
     return this.http.post<RuleChain>('/api/ruleChain', ruleChain, defaultHttpOptionsFromConfig(config));
   }
@@ -240,7 +246,7 @@ export class RuleChainService {
         });
       }
       if (moduleResource) {
-        tasks.push(this.resourcesService.loadModule(moduleResource, ruleNodeConfigResourcesModulesMap).pipe(
+        tasks.push(this.resourcesService.loadFactories(moduleResource, ruleNodeConfigResourcesModulesMap).pipe(
           map((res) => {
             if (nodeDefinition.configDirective && nodeDefinition.configDirective.length) {
               const selector = snakeCase(nodeDefinition.configDirective, '-');

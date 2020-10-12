@@ -44,8 +44,6 @@ import org.thingsboard.server.dao.service.TimePaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
-import java.util.concurrent.ExecutionException;
-
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
@@ -117,7 +115,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (dashboard.addAssignedCustomer(customer)) {
             try {
                 createRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD));
-            } catch (ExecutionException | InterruptedException e) {
+            } catch (Exception e) {
                 log.warn("[{}] Failed to create dashboard relation. Customer Id: [{}]", dashboardId, customerId);
                 throw new RuntimeException(e);
             }
@@ -137,7 +135,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (dashboard.removeAssignedCustomer(customer)) {
             try {
                 deleteRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD));
-            } catch (ExecutionException | InterruptedException e) {
+            } catch (Exception e) {
                 log.warn("[{}] Failed to delete dashboard relation. Customer Id: [{}]", dashboardId, customerId);
                 throw new RuntimeException(e);
             }
@@ -222,7 +220,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
         try {
             createRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("[{}] Failed to create dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }
@@ -238,7 +236,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
         try {
             deleteRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("[{}] Failed to delete dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }
@@ -257,7 +255,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
-    public ListenableFuture<PageData<DashboardInfo>> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
+    public PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
         log.trace("Executing findDashboardsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
@@ -348,7 +346,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         @Override
         protected PageData<DashboardInfo> findEntities(TenantId tenantId, Edge edge, TimePageLink pageLink) {
             try {
-                return dashboardInfoDao.findDashboardsByTenantIdAndEdgeId(edge.getTenantId().getId(), edge.getId().getId(), pageLink).get();
+                return dashboardInfoDao.findDashboardsByTenantIdAndEdgeId(edge.getTenantId().getId(), edge.getId().getId(), pageLink);
             } catch (Exception e) {
                 log.error("[{}] Can't find dashboards by tenant id and edge id. Edge Id {}", edge.getId(), e);
                 throw new RuntimeException("[{}] Can't find dashboards by tenant id and edge id. Edge Id '" + edge.getId() + "'", e);
@@ -359,7 +357,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
             unassignDashboardFromEdge(edge.getTenantId(), new DashboardId(entity.getUuidId()), this.edge.getId());
         }
-
     }
 
 }

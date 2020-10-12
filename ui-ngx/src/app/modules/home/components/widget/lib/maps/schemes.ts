@@ -198,10 +198,6 @@ export const openstreetMapSettingsSchema =
                     label: 'OpenStreetMap.Mapnik (Default)'
                 },
                 {
-                    value: 'OpenStreetMap.BlackAndWhite',
-                    label: 'OpenStreetMap.BlackAndWhite'
-                },
-                {
                     value: 'OpenStreetMap.HOT',
                     label: 'OpenStreetMap.HOT'
                 },
@@ -245,6 +241,11 @@ export const commonMapSettingsSchema =
                 title: 'Use default map center position',
                 type: 'boolean',
                 default: false
+            },
+            mapPageSize: {
+                title: 'Limit of entities to load',
+                type: 'number',
+                default: 16384
             },
             defaultCenterPosition: {
                 title: 'Default map center position (0,0)',
@@ -408,6 +409,7 @@ export const commonMapSettingsSchema =
             key: 'fitMapBounds',
             condition: 'model.provider !== "image-map"'
         },
+        'mapPageSize',
         'draggableMarker',
         {
             key: 'disableScrollZooming',
@@ -522,6 +524,11 @@ export const mapPolygonSchema =
                 type: 'string',
                 default: 'coordinates'
             },
+            editablePolygon: {
+              title: 'Enable polygon edit',
+              type: 'boolean',
+              default: false
+            },
             polygonColor: {
                 title: 'Polygon color',
                 type: 'string'
@@ -579,6 +586,7 @@ export const mapPolygonSchema =
     form: [
         'showPolygon',
         'polygonKeyName',
+        'editablePolygon',
         {
             key: 'polygonColor',
             type: 'color'
@@ -1060,31 +1068,31 @@ export const tripAnimationSchema = {
         key: 'labelFunction',
         type: 'javascript'
     }, 'showTooltip', {
-            key: 'tooltipColor',
-            type: 'color'
-        }, {
-            key: 'tooltipFontColor',
-            type: 'color'
-        }, 'tooltipOpacity', {
-            key: 'tooltipPattern',
-            type: 'textarea'
-        }, 'useTooltipFunction', {
-            key: 'tooltipFunction',
-            type: 'javascript'
-        }, 'autocloseTooltip', {
-            key: 'markerImage',
-            type: 'image'
-        }, 'markerImageSize', 'rotationAngle', 'useMarkerImageFunction',
-        {
-            key: 'markerImageFunction',
-            type: 'javascript'
-        }, {
-            key: 'markerImages',
-            items: [
-                {
-                    key: 'markerImages[]',
-                    type: 'image'
-                }
-            ]
-        }]
-}
+        key: 'tooltipColor',
+        type: 'color'
+    }, {
+        key: 'tooltipFontColor',
+        type: 'color'
+    }, 'tooltipOpacity', {
+        key: 'tooltipPattern',
+        type: 'textarea'
+    }, 'useTooltipFunction', {
+        key: 'tooltipFunction',
+        type: 'javascript'
+    }, 'autocloseTooltip', {
+        key: 'markerImage',
+        type: 'image'
+    }, 'markerImageSize', 'rotationAngle', 'useMarkerImageFunction',
+    {
+        key: 'markerImageFunction',
+        type: 'javascript'
+    }, {
+        key: 'markerImages',
+        items: [
+            {
+                key: 'markerImages[]',
+                type: 'image'
+            }
+        ]
+    }]
+};

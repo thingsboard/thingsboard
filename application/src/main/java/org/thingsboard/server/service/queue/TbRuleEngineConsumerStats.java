@@ -15,23 +15,23 @@
  */
 package org.thingsboard.server.service.queue;
 
-import lombok.Data;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
+import org.thingsboard.server.common.stats.StatsCounter;
+import org.thingsboard.server.common.stats.StatsType;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
-@Data
 public class TbRuleEngineConsumerStats {
 
     public static final String TOTAL_MSGS = "totalMsgs";
@@ -43,61 +43,84 @@ public class TbRuleEngineConsumerStats {
     public static final String SUCCESSFUL_ITERATIONS = "successfulIterations";
     public static final String FAILED_ITERATIONS = "failedIterations";
 
-    private final AtomicInteger totalMsgCounter = new AtomicInteger(0);
-    private final AtomicInteger successMsgCounter = new AtomicInteger(0);
-    private final AtomicInteger tmpTimeoutMsgCounter = new AtomicInteger(0);
-    private final AtomicInteger tmpFailedMsgCounter = new AtomicInteger(0);
+    private final StatsFactory statsFactory;
 
-    private final AtomicInteger timeoutMsgCounter = new AtomicInteger(0);
-    private final AtomicInteger failedMsgCounter = new AtomicInteger(0);
+    private final StatsCounter totalMsgCounter;
+    private final StatsCounter successMsgCounter;
+    private final StatsCounter tmpTimeoutMsgCounter;
+    private final StatsCounter tmpFailedMsgCounter;
 
-    private final AtomicInteger successIterationsCounter = new AtomicInteger(0);
-    private final AtomicInteger failedIterationsCounter = new AtomicInteger(0);
+    private final StatsCounter timeoutMsgCounter;
+    private final StatsCounter failedMsgCounter;
 
-    private final Map<String, AtomicInteger> counters = new HashMap<>();
+    private final StatsCounter successIterationsCounter;
+    private final StatsCounter failedIterationsCounter;
+
+    private final List<StatsCounter> counters = new ArrayList<>();
     private final ConcurrentMap<UUID, TbTenantRuleEngineStats> tenantStats = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, Timer> tenantMsgProcessTimers = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, RuleEngineException> tenantExceptions = new ConcurrentHashMap<>();
 
     private final String queueName;
 
-    public TbRuleEngineConsumerStats(String queueName) {
+    public TbRuleEngineConsumerStats(String queueName, StatsFactory statsFactory) {
         this.queueName = queueName;
-        counters.put(TOTAL_MSGS, totalMsgCounter);
-        counters.put(SUCCESSFUL_MSGS, successMsgCounter);
-        counters.put(TIMEOUT_MSGS, timeoutMsgCounter);
-        counters.put(FAILED_MSGS, failedMsgCounter);
+        this.statsFactory = statsFactory;
 
-        counters.put(TMP_TIMEOUT, tmpTimeoutMsgCounter);
-        counters.put(TMP_FAILED, tmpFailedMsgCounter);
-        counters.put(SUCCESSFUL_ITERATIONS, successIterationsCounter);
-        counters.put(FAILED_ITERATIONS, failedIterationsCounter);
+        String statsKey = StatsType.RULE_ENGINE.getName() + "." + queueName;
+        this.totalMsgCounter = statsFactory.createStatsCounter(statsKey, TOTAL_MSGS);
+        this.successMsgCounter = statsFactory.createStatsCounter(statsKey, SUCCESSFUL_MSGS);
+        this.timeoutMsgCounter = statsFactory.createStatsCounter(statsKey, TIMEOUT_MSGS);
+        this.failedMsgCounter = statsFactory.createStatsCounter(statsKey, FAILED_MSGS);
+        this.tmpTimeoutMsgCounter = statsFactory.createStatsCounter(statsKey, TMP_TIMEOUT);
+        this.tmpFailedMsgCounter = statsFactory.createStatsCounter(statsKey, TMP_FAILED);
+        this.successIterationsCounter = statsFactory.createStatsCounter(statsKey, SUCCESSFUL_ITERATIONS);
+        this.failedIterationsCounter = statsFactory.createStatsCounter(statsKey, FAILED_ITERATIONS);
+
+        counters.add(totalMsgCounter);
+        counters.add(successMsgCounter);
+        counters.add(timeoutMsgCounter);
+        counters.add(failedMsgCounter);
+
+        counters.add(tmpTimeoutMsgCounter);
+        counters.add(tmpFailedMsgCounter);
+        counters.add(successIterationsCounter);
+        counters.add(failedIterationsCounter);
+    }
+
+    public Timer getTimer(TenantId tenantId, String status){
+        return tenantMsgProcessTimers.computeIfAbsent(tenantId,
+                id -> statsFactory.createTimer(StatsType.RULE_ENGINE.getName() + "." + queueName,
+                        "tenantId", tenantId.getId().toString(),
+                        "status", status
+                ));
     }
 
     public void log(TbRuleEngineProcessingResult msg, boolean finalIterationForPack) {
         int success = msg.getSuccessMap().size();
         int pending = msg.getPendingMap().size();
         int failed = msg.getFailedMap().size();
-        totalMsgCounter.addAndGet(success + pending + failed);
-        successMsgCounter.addAndGet(success);
+        totalMsgCounter.add(success + pending + failed);
+        successMsgCounter.add(success);
         msg.getSuccessMap().values().forEach(m -> getTenantStats(m).logSuccess());
         if (finalIterationForPack) {
             if (pending > 0 || failed > 0) {
-                timeoutMsgCounter.addAndGet(pending);
-                failedMsgCounter.addAndGet(failed);
+                timeoutMsgCounter.add(pending);
+                failedMsgCounter.add(failed);
                 if (pending > 0) {
                     msg.getPendingMap().values().forEach(m -> getTenantStats(m).logTimeout());
                 }
                 if (failed > 0) {
                     msg.getFailedMap().values().forEach(m -> getTenantStats(m).logFailed());
                 }
-                failedIterationsCounter.incrementAndGet();
+                failedIterationsCounter.increment();
             } else {
-                successIterationsCounter.incrementAndGet();
+                successIterationsCounter.increment();
             }
         } else {
-            failedIterationsCounter.incrementAndGet();
-            tmpTimeoutMsgCounter.addAndGet(pending);
-            tmpFailedMsgCounter.addAndGet(failed);
+            failedIterationsCounter.increment();
+            tmpTimeoutMsgCounter.add(pending);
+            tmpFailedMsgCounter.add(failed);
             if (pending > 0) {
                 msg.getPendingMap().values().forEach(m -> getTenantStats(m).logTmpTimeout());
             }
@@ -113,19 +136,31 @@ public class TbRuleEngineConsumerStats {
         return tenantStats.computeIfAbsent(new UUID(reMsg.getTenantIdMSB(), reMsg.getTenantIdLSB()), TbTenantRuleEngineStats::new);
     }
 
+    public ConcurrentMap<UUID, TbTenantRuleEngineStats> getTenantStats() {
+        return tenantStats;
+    }
+
+    public String getQueueName() {
+        return queueName;
+    }
+
+    public ConcurrentMap<TenantId, RuleEngineException> getTenantExceptions() {
+        return tenantExceptions;
+    }
+
     public void printStats() {
         int total = totalMsgCounter.get();
         if (total > 0) {
             StringBuilder stats = new StringBuilder();
-            counters.forEach((label, value) -> {
-                stats.append(label).append(" = [").append(value.get()).append("] ");
+            counters.forEach(counter -> {
+                stats.append(counter.getName()).append(" = [").append(counter.get()).append("] ");
             });
             log.info("[{}] Stats: {}", queueName, stats);
         }
     }
 
     public void reset() {
-        counters.values().forEach(counter -> counter.set(0));
+        counters.forEach(StatsCounter::clear);
         tenantStats.clear();
         tenantExceptions.clear();
     }

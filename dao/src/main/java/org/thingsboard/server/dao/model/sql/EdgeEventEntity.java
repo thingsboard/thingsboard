@@ -57,13 +57,13 @@ import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEntity<EdgeEvent> {
 
     @Column(name = EDGE_EVENT_TENANT_ID_PROPERTY)
-    private String tenantId;
+    private UUID tenantId;
 
     @Column(name = EDGE_EVENT_EDGE_ID_PROPERTY)
-    private String edgeId;
+    private UUID edgeId;
 
     @Column(name = EDGE_EVENT_ENTITY_ID_PROPERTY)
-    private String entityId;
+    private UUID entityId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = EDGE_EVENT_TYPE_PROPERTY)
@@ -87,13 +87,13 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
             this.ts = System.currentTimeMillis();
         }
         if (edgeEvent.getTenantId() != null) {
-            this.tenantId = toString(edgeEvent.getTenantId().getId());
+            this.tenantId = edgeEvent.getTenantId().getId();
         }
         if (edgeEvent.getEdgeId() != null) {
-            this.edgeId = toString(edgeEvent.getEdgeId().getId());
+            this.edgeId = edgeEvent.getEdgeId().getId();
         }
         if (edgeEvent.getEntityId() != null) {
-            this.entityId = toString(edgeEvent.getEntityId());
+            this.entityId = edgeEvent.getEntityId();
         }
         this.edgeEventType = edgeEvent.getEdgeEventType();
         this.edgeEventAction = edgeEvent.getEdgeEventAction();
@@ -103,11 +103,11 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
     @Override
     public EdgeEvent toData() {
         EdgeEvent edgeEvent = new EdgeEvent(new EdgeEventId(this.getUuid()));
-        edgeEvent.setCreatedTime(Uuids.unixTimestamp(this.getUuid()));
-        edgeEvent.setTenantId(new TenantId(toUUID(tenantId)));
-        edgeEvent.setEdgeId(new EdgeId(toUUID(edgeId)));
+        edgeEvent.setCreatedTime(createdTime);
+        edgeEvent.setTenantId(new TenantId(tenantId));
+        edgeEvent.setEdgeId(new EdgeId(edgeId));
         if (entityId != null) {
-            edgeEvent.setEntityId(toUUID(entityId));
+            edgeEvent.setEntityId(entityId);
         }
         edgeEvent.setEdgeEventType(edgeEventType);
         edgeEvent.setEdgeEventAction(edgeEventAction);

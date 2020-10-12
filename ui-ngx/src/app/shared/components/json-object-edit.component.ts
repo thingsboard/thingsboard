@@ -91,6 +91,8 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
 
   errorShowed = false;
 
+  ignoreChange = false;
+
   private propagateChange = null;
 
   constructor(public elementRef: ElementRef,
@@ -118,8 +120,10 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     this.jsonEditor.session.setUseWrapMode(false);
     this.jsonEditor.setValue(this.contentValue ? this.contentValue : '', -1);
     this.jsonEditor.on('change', () => {
-      this.cleanupJsonErrors();
-      this.updateView();
+      if (!this.ignoreChange) {
+        this.cleanupJsonErrors();
+        this.updateView();
+      }
     });
     this.editorResize$ = new ResizeObserver(() => {
       this.onAceEditorResize();
@@ -194,19 +198,19 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
   }
 
   beautifyJSON() {
-    const res = JSON.stringify(this.modelValue, null, 2);
-    if (this.jsonEditor) {
+    if (this.jsonEditor && this.objectValid) {
+      const res = JSON.stringify(this.modelValue, null, 2);
       this.jsonEditor.setValue(res ? res : '', -1);
+      this.updateView();
     }
-    this.updateView();
   }
 
   minifyJSON() {
-    const res = JSON.stringify(this.modelValue);
-    if (this.jsonEditor) {
+    if (this.jsonEditor && this.objectValid) {
+      const res = JSON.stringify(this.modelValue);
       this.jsonEditor.setValue(res ? res : '', -1);
+      this.updateView();
     }
-    this.updateView();
   }
 
   writeValue(value: any): void {
@@ -225,7 +229,9 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
       //
     }
     if (this.jsonEditor) {
+      this.ignoreChange = true;
       this.jsonEditor.setValue(this.contentValue ? this.contentValue : '', -1);
+      this.ignoreChange = false;
     }
   }
 
@@ -254,6 +260,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
         this.objectValid = !this.required;
         this.validationError = this.required ? 'Json object is required.' : '';
       }
+      this.modelValue = data;
       this.propagateChange(data);
     }
   }

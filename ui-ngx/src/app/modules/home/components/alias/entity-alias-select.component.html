@@ -15,8 +15,9 @@
     limitations under the License.
 
 -->
-<mat-form-field floatLabel="always" hideRequiredMarker [formGroup]="selectEntityAliasFormGroup" class="mat-block">
-  <mat-label></mat-label>
+<mat-form-field [floatLabel]="showLabel ? 'auto' : 'always'"
+                [hideRequiredMarker]="!showLabel" [formGroup]="selectEntityAliasFormGroup" class="mat-block">
+  <mat-label *ngIf="!showLabel"></mat-label>
   <input matInput type="text" placeholder="{{ 'entity.entity-alias' | translate }}"
          #entityAliasInput
          formControlName="entityAlias"

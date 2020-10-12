@@ -331,7 +331,6 @@ pre.tb-highlight {
   font-weight: 400;
   line-height: 18px;
   color: rgba(0, 0, 0, .38);
-  text-transform: uppercase;
 }
 
 .tb-fullscreen {
@@ -482,10 +481,6 @@ mat-label {
     pointer-events: all;
   }
 
-  button:not(.mat-menu-item):not(.mat-sort-header-button) {
-    text-transform: uppercase;
-  }
-
   button.mat-menu-item {
     font-size: 15px;
   }
@@ -563,7 +558,7 @@ mat-label {
     }
   }
 
-  mat-toolbar.mat-table-toolbar:not(.mat-primary), .mat-cell {
+  mat-toolbar.mat-table-toolbar:not(.mat-primary), .mat-cell, .mat-expansion-panel-header {
     button.mat-icon-button {
       mat-icon {
         color: rgba(0, 0, 0, .54);
@@ -749,6 +744,9 @@ mat-label {
     box-sizing: content-box;
     &.tb-mat-16 {
       @include tb-mat-icon-size(16);
+    }
+    &.tb-mat-18 {
+      @include tb-mat-icon-size(18);
     }
     &.tb-mat-20 {
       @include tb-mat-icon-size(20);
@@ -962,17 +960,12 @@ mat-label {
     position: relative;
     display: flex;
     height: calc(100% - 60px);
-    text-transform: uppercase;
     text-align: center;
   }
 
 
   mat-tab-group.tb-headless {
     margin-top: -50px;
-  }
-
-  .mat-tab-label {
-    text-transform: uppercase;
   }
 
   .tb-primary-background {
@@ -1055,5 +1048,9 @@ mat-label {
     padding-bottom: 6px;
     line-height: 1.5;
     white-space: pre-line;
+  }
+
+  .tb-toast-panel {
+    pointer-events: none !important;
   }
 }

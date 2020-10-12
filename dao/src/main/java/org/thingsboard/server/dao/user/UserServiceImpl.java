@@ -47,7 +47,6 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -118,7 +117,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     public User saveUser(User user) {
         log.trace("Executing saveUser [{}]", user);
         userValidator.validate(user, User::getTenantId);
-        if (user.getId() == null && !userLoginCaseSensitive) {
+        if (!userLoginCaseSensitive) {
             user.setEmail(user.getEmail().toLowerCase());
         }
         User savedUser = userDao.save(user.getTenantId(), user);
@@ -222,6 +221,14 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         userCredentialsDao.removeById(tenantId, userCredentials.getUuidId());
         deleteEntityRelations(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
+    }
+
+    @Override
+    public PageData<User> findUsersByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findUsersByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validatePageLink(pageLink);
+        return userDao.findByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override

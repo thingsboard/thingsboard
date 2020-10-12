@@ -28,6 +28,7 @@ import {
   AliasesEntitySelectPanelData
 } from './aliases-entity-select-panel.component';
 import { deepClone } from '@core/utils';
+import { AliasFilterType } from '@shared/models/alias.models';
 
 @Component({
   selector: 'tb-aliases-entity-select',
@@ -129,7 +130,7 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
       overlayRef,
       {
         aliasController: this.aliasController,
-        entityAliasesInfo: this.entityAliasesInfo
+        entityAliasesInfo: deepClone(this.entityAliasesInfo)
       }
     );
     overlayRef.attach(new ComponentPortal(AliasesEntitySelectPanelComponent, this.viewContainerRef, injector));
@@ -178,9 +179,8 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
     for (const aliasId of Object.keys(allEntityAliases)) {
       const aliasInfo = this.aliasController.getInstantAliasInfo(aliasId);
       if (aliasInfo && !aliasInfo.resolveMultiple && aliasInfo.currentEntity
-        && aliasInfo.resolvedEntities.length > 1) {
+        && aliasInfo.entityFilter && aliasInfo.entityFilter.type !== AliasFilterType.singleEntity) {
         this.entityAliasesInfo[aliasId] = deepClone(aliasInfo);
-        this.entityAliasesInfo[aliasId].selectedId = aliasInfo.currentEntity.id;
         this.hasSelectableAliasEntities = true;
       }
     }
