@@ -101,6 +101,8 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
         publishMqttMsg(client, payload, topic);
 
+        Thread.sleep(3000);
+
         String deviceId = savedDevice.getId().getId().toString();
 
         long start = System.currentTimeMillis();
