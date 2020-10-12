@@ -28,7 +28,7 @@ const routes: Routes = [
   {
     path: 'settings',
     data: {
-      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+      auth: [Authority.SYS_ADMIN],
       breadcrumb: {
         label: 'admin.system-settings',
         icon: 'settings'

@@ -100,7 +100,7 @@
         "proxy-user": "Proxy user",
         "proxy-password": "Proxy password",
         "send-test-mail": "Send test mail",
-        "security-settings": "Security Settings",
+        "security-settings": "Security settings",
         "password-policy": "Password policy",
         "minimum-password-length": "Minimum password length",
         "minimum-password-length-required": "Minimum password length is required",
