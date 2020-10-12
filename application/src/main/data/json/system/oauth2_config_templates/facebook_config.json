@@ -17,7 +17,7 @@
     }
   },
   "comment": null,
-  "loginButtonIcon": "mdi:facebook",
+  "loginButtonIcon": "facebook-logo",
   "loginButtonLabel": "Facebook",
   "helpLink": "https://developers.facebook.com/docs/facebook-login/web#logindialog"
 }

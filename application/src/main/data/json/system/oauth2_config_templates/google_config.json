@@ -18,7 +18,7 @@
     }
   },
   "comment": null,
-  "loginButtonIcon": "mdi:google",
+  "loginButtonIcon": "google-logo",
   "loginButtonLabel": "Google",
   "helpLink": "https://developers.google.com/adwords/api/docs/guides/authentication"
 }
