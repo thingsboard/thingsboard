@@ -316,6 +316,10 @@
                                               {{ 'admin.oauth2.scope-required' | translate }}
                                             </mat-error>
                                           </mat-form-field>
+                                          <tb-error style="display: block; margin-top: -24px;"
+                                                    [error]="registration.get('scope').hasError('required')
+                                                      ? ('admin.oauth2.scope-required' | translate) : ''">
+                                          </tb-error>
 
                                         </mat-tab>
                                         <mat-tab label="{{ 'admin.oauth2.mapper' | translate }}">

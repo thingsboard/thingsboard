@@ -15,7 +15,7 @@
 ///
 
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import {
   ClientAuthenticationMethod,
   ClientRegistration,
@@ -266,7 +266,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       authorizationUri: [clientRegistration?.authorizationUri ? clientRegistration.authorizationUri : '',
         [Validators.required,
           Validators.pattern(this.URL_REGEXP)]],
-      scope: this.fb.array(clientRegistration?.scope ? clientRegistration.scope : [], Validators.required),
+      scope: this.fb.array(clientRegistration?.scope ? clientRegistration.scope : [], this.validateScope),
       jwkSetUri: [clientRegistration?.jwkSetUri ? clientRegistration.jwkSetUri : '', Validators.pattern(this.URL_REGEXP)],
       userInfoUri: [clientRegistration?.userInfoUri ? clientRegistration.userInfoUri : '',
         [Validators.required,
@@ -305,6 +305,16 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     }));
 
     return clientRegistrationFormGroup;
+  }
+
+  private validateScope (control: AbstractControl): ValidationErrors | null {
+    const scope: string[] = control.value;
+    if (!scope || !scope.length) {
+      return {
+        required: true
+      };
+    }
+    return null;
   }
 
   private setProviderDefaultValue(provider: string, clientRegistration: FormGroup) {
