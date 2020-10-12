@@ -1,0 +1,17 @@
+{
+  "providerId": "Github",
+  "accessTokenUri": "https://github.com/login/oauth/access_token",
+  "authorizationUri": "https://github.com/login/oauth/authorize",
+  "scope": ["read:user","user:email"],
+  "jwkSetUri": null,
+  "userInfoUri": "https://api.github.com/user",
+  "clientAuthenticationMethod": "BASIC",
+  "userNameAttributeName": "login",
+  "basic": {
+    "tenantNameStrategy": "DOMAIN"
+  },
+  "comment": "In order to log into ThingsBoard you need to have user's email. You may configure and use Custom OAuth2 Mapper to get email information. Please refer to <a href=\"https://docs.github.com/en/rest/reference/users#list-email-addresses-for-the-authenticated-user\">Github Documentation</a>",
+  "loginButtonIcon": "mdi:github",
+  "loginButtonLabel": "Github",
+  "helpLink": "https://docs.github.com/en/developers/apps/creating-an-oauth-app"
+}
