@@ -95,7 +95,13 @@ public class OAuth2ConfigTemplateServiceImpl extends AbstractEntityService imple
                     if (StringUtils.isEmpty(clientRegistrationTemplate.getProviderId())) {
                         throw new DataValidationException("Provider ID should be specified!");
                     }
-                    if (clientRegistrationTemplate.getBasic() == null) {
+                    if (clientRegistrationTemplate.getMapperConfig() == null) {
+                        throw new DataValidationException("Mapper config should be specified!");
+                    }
+                    if (clientRegistrationTemplate.getMapperConfig().getType() == null) {
+                        throw new DataValidationException("Mapper type should be specified!");
+                    }
+                    if (clientRegistrationTemplate.getMapperConfig().getBasic() == null) {
                         throw new DataValidationException("Basic mapper config should be specified!");
                     }
                 }

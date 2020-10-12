@@ -8,11 +8,14 @@
   "userInfoUri": "https://openidconnect.googleapis.com/v1/userinfo",
   "clientAuthenticationMethod": "BASIC",
   "userNameAttributeName": "email",
-  "basic": {
-    "emailAttributeKey": "email",
-    "firstNameAttributeKey": "given_name",
-    "lastNameAttributeKey": "family_name",
-    "tenantNameStrategy": "DOMAIN"
+  "mapperConfig": {
+    "type": "BASIC",
+    "basic": {
+      "emailAttributeKey": "email",
+      "firstNameAttributeKey": "given_name",
+      "lastNameAttributeKey": "family_name",
+      "tenantNameStrategy": "DOMAIN"
+    }
   },
   "comment": null,
   "loginButtonIcon": "mdi:google",

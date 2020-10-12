@@ -34,8 +34,7 @@ import java.util.List;
 public class OAuth2ClientRegistrationTemplate extends SearchTextBasedWithAdditionalInfo<OAuth2ClientRegistrationTemplateId> implements HasName {
 
     private String providerId;
-    private MapperType mapperType;
-    private OAuth2BasicMapperConfig basic;
+    private OAuth2MapperConfig mapperConfig;
     private String authorizationUri;
     private String accessTokenUri;
     private List<String> scope;
@@ -51,8 +50,7 @@ public class OAuth2ClientRegistrationTemplate extends SearchTextBasedWithAdditio
     public OAuth2ClientRegistrationTemplate(OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
         super(clientRegistrationTemplate);
         this.providerId = clientRegistrationTemplate.providerId;
-        this.mapperType = clientRegistrationTemplate.mapperType;
-        this.basic = clientRegistrationTemplate.basic;
+        this.mapperConfig = clientRegistrationTemplate.mapperConfig;
         this.authorizationUri = clientRegistrationTemplate.authorizationUri;
         this.accessTokenUri = clientRegistrationTemplate.accessTokenUri;
         this.scope = clientRegistrationTemplate.scope;
