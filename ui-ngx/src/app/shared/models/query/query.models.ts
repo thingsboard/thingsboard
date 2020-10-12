@@ -476,21 +476,23 @@ export function keyFilterInfosToKeyFilters(keyFilterInfos: Array<KeyFilterInfo>)
 export function keyFiltersToKeyFilterInfos(keyFilters: Array<KeyFilter>): Array<KeyFilterInfo> {
   const keyFilterInfos: Array<KeyFilterInfo> = [];
   const keyFilterInfoMap: {[infoKey: string]: KeyFilterInfo} = {};
-  for (const keyFilter of keyFilters) {
-    const key = keyFilter.key;
-    const infoKey = key.key + key.type + keyFilter.valueType;
-    let keyFilterInfo = keyFilterInfoMap[infoKey];
-    if (!keyFilterInfo) {
-      keyFilterInfo = {
-        key,
-        valueType: keyFilter.valueType,
-        predicates: []
-      };
-      keyFilterInfoMap[infoKey] = keyFilterInfo;
-      keyFilterInfos.push(keyFilterInfo);
-    }
-    if (keyFilter.predicate) {
-      keyFilterInfo.predicates.push(keyFilterPredicateToKeyFilterPredicateInfo(keyFilter.predicate));
+  if (keyFilters) {
+    for (const keyFilter of keyFilters) {
+      const key = keyFilter.key;
+      const infoKey = key.key + key.type + keyFilter.valueType;
+      let keyFilterInfo = keyFilterInfoMap[infoKey];
+      if (!keyFilterInfo) {
+        keyFilterInfo = {
+          key,
+          valueType: keyFilter.valueType,
+          predicates: []
+        };
+        keyFilterInfoMap[infoKey] = keyFilterInfo;
+        keyFilterInfos.push(keyFilterInfo);
+      }
+      if (keyFilter.predicate) {
+        keyFilterInfo.predicates.push(keyFilterPredicateToKeyFilterPredicateInfo(keyFilter.predicate));
+      }
     }
   }
   return keyFilterInfos;

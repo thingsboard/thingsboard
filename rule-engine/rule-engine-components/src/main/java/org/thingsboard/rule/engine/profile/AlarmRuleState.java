@@ -29,6 +29,9 @@ import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpe
 import org.thingsboard.server.common.data.device.profile.SpecificTimeSchedule;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
@@ -38,22 +41,25 @@ import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Calendar;
+import java.util.Set;
+import java.util.function.Function;
 
 @Data
-public class AlarmRuleState {
+class AlarmRuleState {
 
     private final AlarmSeverity severity;
     private final AlarmRule alarmRule;
     private final AlarmConditionSpec spec;
     private final long requiredDurationInMs;
     private final long requiredRepeats;
+    private final Set<EntityKey> entityKeys;
     private PersistedAlarmRuleState state;
     private boolean updateFlag;
 
-    public AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule, PersistedAlarmRuleState state) {
+    AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule, Set<EntityKey> entityKeys, PersistedAlarmRuleState state) {
         this.severity = severity;
         this.alarmRule = alarmRule;
+        this.entityKeys = entityKeys;
         if (state != null) {
             this.state = state;
         } else {
@@ -76,6 +82,30 @@ public class AlarmRuleState {
         this.requiredRepeats = requiredRepeats;
     }
 
+    public boolean validateTsUpdate(Set<EntityKey> changedKeys) {
+        for (EntityKey key : changedKeys) {
+            if (entityKeys.contains(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean validateAttrUpdate(Set<EntityKey> changedKeys) {
+        //If the attribute was updated, but no new telemetry arrived - we ignore this until new telemetry is there.
+        for (EntityKey key : entityKeys) {
+            if (key.getType().equals(EntityKeyType.TIME_SERIES)) {
+                return false;
+            }
+        }
+        for (EntityKey key : changedKeys) {
+            if (entityKeys.contains(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public AlarmConditionSpec getSpec(AlarmRule alarmRule) {
         AlarmConditionSpec spec = alarmRule.getCondition().getSpec();
         if (spec == null) {
@@ -93,7 +123,7 @@ public class AlarmRuleState {
         }
     }
 
-    public boolean eval(DeviceDataSnapshot data) {
+    public boolean eval(DataSnapshot data) {
         boolean active = isActive(data.getTs());
         switch (spec.getType()) {
             case SIMPLE:
@@ -135,9 +165,7 @@ public class AlarmRuleState {
                 return false;
             }
         }
-        long startOfDay = zdt.toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli();
-        long msFromStartOfDay = eventTs - startOfDay;
-        return schedule.getStartsOn() <= msFromStartOfDay && schedule.getEndsOn() > msFromStartOfDay;
+        return isActive(eventTs, zoneId, zdt, schedule.getStartsOn(), schedule.getEndsOn());
     }
 
     private boolean isActiveCustom(CustomTimeSchedule schedule, long eventTs) {
@@ -147,15 +175,23 @@ public class AlarmRuleState {
         for (CustomTimeScheduleItem item : schedule.getItems()) {
             if (item.getDayOfWeek() == dayOfWeek) {
                 if (item.isEnabled()) {
-                    long startOfDay = zdt.toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli();
-                    long msFromStartOfDay = eventTs - startOfDay;
-                    return item.getStartsOn() <= msFromStartOfDay && item.getEndsOn() > msFromStartOfDay;
+                    return isActive(eventTs, zoneId, zdt, item.getStartsOn(), item.getEndsOn());
                 } else {
                     return false;
                 }
             }
         }
         return false;
+    }
+
+    private boolean isActive(long eventTs, ZoneId zoneId, ZonedDateTime zdt, long startsOn, long endsOn) {
+        long startOfDay = zdt.toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli();
+        long msFromStartOfDay = eventTs - startOfDay;
+        if (startsOn <= endsOn) {
+            return startsOn <= msFromStartOfDay && endsOn > msFromStartOfDay;
+        } else {
+            return startsOn < msFromStartOfDay || (0 < msFromStartOfDay && msFromStartOfDay < endsOn);
+        }
     }
 
     public void clear() {
@@ -167,7 +203,7 @@ public class AlarmRuleState {
         }
     }
 
-    private boolean evalRepeating(DeviceDataSnapshot data, boolean active) {
+    private boolean evalRepeating(DataSnapshot data, boolean active) {
         if (active && eval(alarmRule.getCondition(), data)) {
             state.setEventCount(state.getEventCount() + 1);
             updateFlag = true;
@@ -177,7 +213,7 @@ public class AlarmRuleState {
         }
     }
 
-    private boolean evalDuration(DeviceDataSnapshot data, boolean active) {
+    private boolean evalDuration(DataSnapshot data, boolean active) {
         if (active && eval(alarmRule.getCondition(), data)) {
             if (state.getLastEventTs() > 0) {
                 if (data.getTs() > state.getLastEventTs()) {
@@ -211,45 +247,45 @@ public class AlarmRuleState {
         }
     }
 
-    private boolean eval(AlarmCondition condition, DeviceDataSnapshot data) {
+    private boolean eval(AlarmCondition condition, DataSnapshot data) {
         boolean eval = true;
         for (KeyFilter keyFilter : condition.getCondition()) {
             EntityKeyValue value = data.getValue(keyFilter.getKey());
             if (value == null) {
                 return false;
             }
-            eval = eval && eval(value, keyFilter.getPredicate());
+            eval = eval && eval(data, value, keyFilter.getPredicate());
         }
         return eval;
     }
 
-    private boolean eval(EntityKeyValue value, KeyFilterPredicate predicate) {
+    private boolean eval(DataSnapshot data, EntityKeyValue value, KeyFilterPredicate predicate) {
         switch (predicate.getType()) {
             case STRING:
-                return evalStrPredicate(value, (StringFilterPredicate) predicate);
+                return evalStrPredicate(data, value, (StringFilterPredicate) predicate);
             case NUMERIC:
-                return evalNumPredicate(value, (NumericFilterPredicate) predicate);
-            case COMPLEX:
-                return evalComplexPredicate(value, (ComplexFilterPredicate) predicate);
+                return evalNumPredicate(data, value, (NumericFilterPredicate) predicate);
             case BOOLEAN:
-                return evalBoolPredicate(value, (BooleanFilterPredicate) predicate);
+                return evalBoolPredicate(data, value, (BooleanFilterPredicate) predicate);
+            case COMPLEX:
+                return evalComplexPredicate(data, value, (ComplexFilterPredicate) predicate);
             default:
                 return false;
         }
     }
 
-    private boolean evalComplexPredicate(EntityKeyValue ekv, ComplexFilterPredicate predicate) {
+    private boolean evalComplexPredicate(DataSnapshot data, EntityKeyValue ekv, ComplexFilterPredicate predicate) {
         switch (predicate.getOperation()) {
             case OR:
                 for (KeyFilterPredicate kfp : predicate.getPredicates()) {
-                    if (eval(ekv, kfp)) {
+                    if (eval(data, ekv, kfp)) {
                         return true;
                     }
                 }
                 return false;
             case AND:
                 for (KeyFilterPredicate kfp : predicate.getPredicates()) {
-                    if (!eval(ekv, kfp)) {
+                    if (!eval(data, ekv, kfp)) {
                         return false;
                     }
                 }
@@ -259,109 +295,55 @@ public class AlarmRuleState {
         }
     }
 
-    private boolean evalBoolPredicate(EntityKeyValue ekv, BooleanFilterPredicate predicate) {
-        Boolean value;
-        switch (ekv.getDataType()) {
-            case LONG:
-                value = ekv.getLngValue() > 0;
-                break;
-            case DOUBLE:
-                value = ekv.getDblValue() > 0;
-                break;
-            case BOOLEAN:
-                value = ekv.getBoolValue();
-                break;
-            case STRING:
-                try {
-                    value = Boolean.parseBoolean(ekv.getStrValue());
-                    break;
-                } catch (RuntimeException e) {
-                    return false;
-                }
-            case JSON:
-                try {
-                    value = Boolean.parseBoolean(ekv.getJsonValue());
-                    break;
-                } catch (RuntimeException e) {
-                    return false;
-                }
-            default:
-                return false;
-        }
-        if (value == null) {
+    private boolean evalBoolPredicate(DataSnapshot data, EntityKeyValue ekv, BooleanFilterPredicate predicate) {
+        Boolean val = getBoolValue(ekv);
+        if (val == null) {
             return false;
         }
+        Boolean predicateValue = getPredicateValue(data, predicate.getValue(), AlarmRuleState::getBoolValue);
         switch (predicate.getOperation()) {
             case EQUAL:
-                return value.equals(predicate.getValue().getDefaultValue());
+                return val.equals(predicateValue);
             case NOT_EQUAL:
-                return !value.equals(predicate.getValue().getDefaultValue());
+                return !val.equals(predicateValue);
             default:
                 throw new RuntimeException("Operation not supported: " + predicate.getOperation());
         }
     }
 
-    private boolean evalNumPredicate(EntityKeyValue ekv, NumericFilterPredicate predicate) {
-        Double value;
-        switch (ekv.getDataType()) {
-            case LONG:
-                value = ekv.getLngValue().doubleValue();
-                break;
-            case DOUBLE:
-                value = ekv.getDblValue();
-                break;
-            case BOOLEAN:
-                value = ekv.getBoolValue() ? 1.0 : 0.0;
-                break;
-            case STRING:
-                try {
-                    value = Double.parseDouble(ekv.getStrValue());
-                    break;
-                } catch (RuntimeException e) {
-                    return false;
-                }
-            case JSON:
-                try {
-                    value = Double.parseDouble(ekv.getJsonValue());
-                    break;
-                } catch (RuntimeException e) {
-                    return false;
-                }
-            default:
-                return false;
-        }
-        if (value == null) {
+    private boolean evalNumPredicate(DataSnapshot data, EntityKeyValue ekv, NumericFilterPredicate predicate) {
+        Double val = getDblValue(ekv);
+        if (val == null) {
             return false;
         }
-
-        Double predicateValue = predicate.getValue().getDefaultValue();
+        Double predicateValue = getPredicateValue(data, predicate.getValue(), AlarmRuleState::getDblValue);
         switch (predicate.getOperation()) {
             case NOT_EQUAL:
-                return !value.equals(predicateValue);
+                return !val.equals(predicateValue);
             case EQUAL:
-                return value.equals(predicateValue);
+                return val.equals(predicateValue);
             case GREATER:
-                return value > predicateValue;
+                return val > predicateValue;
             case GREATER_OR_EQUAL:
-                return value >= predicateValue;
+                return val >= predicateValue;
             case LESS:
-                return value < predicateValue;
+                return val < predicateValue;
             case LESS_OR_EQUAL:
-                return value <= predicateValue;
+                return val <= predicateValue;
             default:
                 throw new RuntimeException("Operation not supported: " + predicate.getOperation());
         }
     }
 
-    private boolean evalStrPredicate(EntityKeyValue ekv, StringFilterPredicate predicate) {
-        String val;
-        String predicateValue;
+    private boolean evalStrPredicate(DataSnapshot data, EntityKeyValue ekv, StringFilterPredicate predicate) {
+        String val = getStrValue(ekv);
+        if (val == null) {
+            return false;
+        }
+        String predicateValue = getPredicateValue(data, predicate.getValue(), AlarmRuleState::getStrValue);
         if (predicate.isIgnoreCase()) {
-            val = ekv.getStrValue().toLowerCase();
-            predicateValue = predicate.getValue().getDefaultValue().toLowerCase();
-        } else {
-            val = ekv.getStrValue();
-            predicateValue = predicate.getValue().getDefaultValue();
+            val = val.toLowerCase();
+            predicateValue = predicateValue.toLowerCase();
         }
         switch (predicate.getOperation()) {
             case CONTAINS:
@@ -380,4 +362,100 @@ public class AlarmRuleState {
                 throw new RuntimeException("Operation not supported: " + predicate.getOperation());
         }
     }
+
+    private <T> T getPredicateValue(DataSnapshot data, FilterPredicateValue<T> value, Function<EntityKeyValue, T> transformFunction) {
+        EntityKeyValue ekv = getDynamicPredicateValue(data, value);
+        if (ekv != null) {
+            T result = transformFunction.apply(ekv);
+            if (result != null) {
+                return result;
+            }
+        }
+        return value.getDefaultValue();
+    }
+
+    private <T> EntityKeyValue getDynamicPredicateValue(DataSnapshot data, FilterPredicateValue<T> value) {
+        EntityKeyValue ekv = null;
+        if (value.getDynamicValue() != null) {
+            ekv = data.getValue(new EntityKey(EntityKeyType.ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+            if (ekv == null) {
+                ekv = data.getValue(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+                if (ekv == null) {
+                    ekv = data.getValue(new EntityKey(EntityKeyType.SHARED_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+                    if (ekv == null) {
+                        ekv = data.getValue(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+                    }
+                }
+            }
+        }
+        return ekv;
+    }
+
+    private static String getStrValue(EntityKeyValue ekv) {
+        switch (ekv.getDataType()) {
+            case LONG:
+                return ekv.getLngValue() != null ? ekv.getLngValue().toString() : null;
+            case DOUBLE:
+                return ekv.getDblValue() != null ? ekv.getDblValue().toString() : null;
+            case BOOLEAN:
+                return ekv.getBoolValue() != null ? ekv.getBoolValue().toString() : null;
+            case STRING:
+                return ekv.getStrValue();
+            case JSON:
+                return ekv.getJsonValue();
+            default:
+                return null;
+        }
+    }
+
+    private static Double getDblValue(EntityKeyValue ekv) {
+        switch (ekv.getDataType()) {
+            case LONG:
+                return ekv.getLngValue() != null ? ekv.getLngValue().doubleValue() : null;
+            case DOUBLE:
+                return ekv.getDblValue() != null ? ekv.getDblValue() : null;
+            case BOOLEAN:
+                return ekv.getBoolValue() != null ? (ekv.getBoolValue() ? 1.0 : 0.0) : null;
+            case STRING:
+                try {
+                    return Double.parseDouble(ekv.getStrValue());
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            case JSON:
+                try {
+                    return Double.parseDouble(ekv.getJsonValue());
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            default:
+                return null;
+        }
+    }
+
+    private static Boolean getBoolValue(EntityKeyValue ekv) {
+        switch (ekv.getDataType()) {
+            case LONG:
+                return ekv.getLngValue() != null ? ekv.getLngValue() > 0 : null;
+            case DOUBLE:
+                return ekv.getDblValue() != null ? ekv.getDblValue() > 0 : null;
+            case BOOLEAN:
+                return ekv.getBoolValue();
+            case STRING:
+                try {
+                    return Boolean.parseBoolean(ekv.getStrValue());
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            case JSON:
+                try {
+                    return Boolean.parseBoolean(ekv.getJsonValue());
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            default:
+                return null;
+        }
+    }
+
 }

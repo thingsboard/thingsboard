@@ -13,10 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
-
-public class EntityKeyState {
-
-
-
+:host {
+  display: flex;
+  a.mat-button {
+    &:hover, &:focus {
+      border-bottom: none;
+    }
+  }
+  .tb-alarm-rule-schedule {
+    line-height: 1.8em;
+    padding: 4px;
+    cursor: pointer;
+    &.disabled {
+      opacity: 0.7;
+    }
+    .nowrap {
+      white-space: nowrap;
+    }
+  }
 }

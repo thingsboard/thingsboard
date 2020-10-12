@@ -13,30 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  display: flex;
-  a.mat-button {
-    &:hover, &:focus {
-      border-bottom: none;
-    }
-  }
-  .tb-alarm-rule-condition {
-    cursor: pointer;
-    .tb-alarm-rule-condition-spec {
-      margin-top: 1em;
-      line-height: 1.8em;
-      padding: 4px;
-      &.disabled {
-        opacity: 0.7;
-      }
-    }
-  }
-}
+package org.thingsboard.rule.engine.profile;
 
-:host ::ng-deep {
-  .tb-alarm-rule-condition {
-    .tb-filter-text {
-      max-height: 200px;
+import lombok.Getter;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
+
+import java.util.Set;
+
+class SnapshotUpdate {
+
+    @Getter
+    private final EntityKeyType type;
+    @Getter
+    private final Set<EntityKey> keys;
+
+    SnapshotUpdate(EntityKeyType type, Set<EntityKey> keys) {
+        this.type = type;
+        this.keys = keys;
     }
-  }
+
+    boolean hasUpdate(){
+        return !keys.isEmpty();
+    }
 }

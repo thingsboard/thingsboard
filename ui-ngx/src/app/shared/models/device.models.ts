@@ -25,6 +25,8 @@ import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { EntityInfoData } from '@shared/models/entity.models';
 import { KeyFilter } from '@shared/models/query/query.models';
 import { TimeUnit } from '@shared/models/time/time.models';
+import * as _moment from 'moment-timezone';
+import { AbstractControl, FormGroup } from '@angular/forms';
 
 export enum DeviceProfileType {
   DEFAULT = 'DEFAULT'
@@ -407,4 +409,63 @@ export enum ClaimResponse {
 export interface ClaimResult {
   device: Device;
   response: ClaimResponse;
+}
+
+export const dayOfWeekTranslations = new Array<string>(
+  'device-profile.schedule-day.monday',
+  'device-profile.schedule-day.tuesday',
+  'device-profile.schedule-day.wednesday',
+  'device-profile.schedule-day.thursday',
+  'device-profile.schedule-day.friday',
+  'device-profile.schedule-day.saturday',
+  'device-profile.schedule-day.sunday'
+);
+
+export function getDayString(day: number): string {
+  switch (day) {
+    case 0:
+      return 'device-profile.schedule-day.monday';
+    case 1:
+      return this.translate.instant('device-profile.schedule-day.tuesday');
+    case 2:
+      return this.translate.instant('device-profile.schedule-day.wednesday');
+    case 3:
+      return this.translate.instant('device-profile.schedule-day.thursday');
+    case 4:
+      return this.translate.instant('device-profile.schedule-day.friday');
+    case 5:
+      return this.translate.instant('device-profile.schedule-day.saturday');
+    case 6:
+      return this.translate.instant('device-profile.schedule-day.sunday');
+  }
+}
+
+export function timeOfDayToUTCTimestamp(date: Date | number): number {
+  if (typeof date === 'number' || date === null) {
+    return 0;
+  }
+  return _moment.utc([1970, 0, 1, date.getHours(), date.getMinutes(), date.getSeconds(), 0]).valueOf();
+}
+
+export function utcTimestampToTimeOfDay(time = 0): Date {
+  return new Date(time + new Date().getTimezoneOffset() * 60 * 1000);
+}
+
+function timeOfDayToMoment(date: Date | number): _moment.Moment {
+  if (typeof date === 'number' || date === null) {
+    return _moment([1970, 0, 1, 0, 0, 0, 0]);
+  }
+  return _moment([1970, 0, 1, date.getHours(), date.getMinutes(), 0, 0]);
+}
+
+export function getAlarmScheduleRangeText(startsOn: Date | number, endsOn: Date | number): string {
+  const start = timeOfDayToMoment(startsOn);
+  const end = timeOfDayToMoment(endsOn);
+  if (start < end) {
+    return `<span><span class="nowrap">${start.format('hh:mm A')}</span> – <span class="nowrap">${end.format('hh:mm A')}</span></span>`;
+  } else if (start.valueOf() === 0 && end.valueOf() === 0 || start.isSame(_moment([1970, 0])) && end.isSame(_moment([1970, 0]))) {
+    return '<span><span class="nowrap">12:00 AM</span> – <span class="nowrap">12:00 PM</span></span>';
+  }
+  return `<span><span class="nowrap">12:00 AM</span> – <span class="nowrap">${end.format('hh:mm A')}</span>` +
+    ` and <span class="nowrap">${start.format('hh:mm A')}</span> – <span class="nowrap">12:00 PM</span></span>`;
 }

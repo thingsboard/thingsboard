@@ -28,7 +28,12 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { AlarmSchedule, AlarmScheduleType, AlarmScheduleTypeTranslationMap } from '@shared/models/device.models';
+import {
+  AlarmSchedule,
+  AlarmScheduleType,
+  AlarmScheduleTypeTranslationMap,
+  dayOfWeekTranslations, getAlarmScheduleRangeText, timeOfDayToUTCTimestamp, utcTimestampToTimeOfDay
+} from '@shared/models/device.models';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import * as _moment from 'moment-timezone';
 import { MatCheckboxChange } from '@angular/material/checkbox';
@@ -59,11 +64,18 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
   alarmScheduleType = AlarmScheduleType;
   alarmScheduleTypeTranslate = AlarmScheduleTypeTranslationMap;
 
+  dayOfWeekTranslationsArray = dayOfWeekTranslations;
+
+  allDays = Array(7).fill(0).map((x, i) => i);
+
+  firstRowDays = Array(4).fill(0).map((x, i) => i);
+  secondRowDays = Array(3).fill(0).map((x, i) => i + 4);
+
   private modelValue: AlarmSchedule;
 
   private defaultItems = Array.from({length: 7}, (value, i) => ({
     enabled: true,
-    dayOfWeek: i
+    dayOfWeek: i + 1
   }));
 
   private propagateChange = (v: any) => { };
@@ -75,10 +87,10 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
     this.alarmScheduleForm = this.fb.group({
       type: [AlarmScheduleType.ANY_TIME, Validators.required],
       timezone: [null, Validators.required],
-      daysOfWeek: this.fb.array(new Array(7).fill(false)),
+      daysOfWeek: this.fb.array(new Array(7).fill(false), this.validateDayOfWeeks),
       startsOn: [0, Validators.required],
       endsOn: [0, Validators.required],
-      items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)))
+      items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)), this.validateItems)
     });
     this.alarmScheduleForm.get('type').valueChanges.subscribe((type) => {
       this.alarmScheduleForm.reset({type, items: this.defaultItems, timezone: this.defaultTimezone}, {emitEvent: false});
@@ -88,6 +100,26 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
     this.alarmScheduleForm.valueChanges.subscribe(() => {
       this.updateModel();
     });
+  }
+
+  validateDayOfWeeks(control: AbstractControl): ValidationErrors | null {
+    const dayOfWeeks: boolean[] = control.value;
+    if (!dayOfWeeks || !dayOfWeeks.length || !dayOfWeeks.find(v => v === true)) {
+      return {
+        dayOfWeeks: true
+      };
+    }
+    return null;
+  }
+
+  validateItems(control: AbstractControl): ValidationErrors | null {
+    const items: any[] = control.value;
+    if (!items || !items.length || !items.find(v => v.enabled === true)) {
+      return {
+        dayOfWeeks: true
+      };
+    }
+    return null;
   }
 
   registerOnChange(fn: any): void {
@@ -123,8 +155,8 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
           type: this.modelValue.type,
           timezone: this.modelValue.timezone,
           daysOfWeek,
-          startsOn: this.timestampToTime(this.modelValue.startsOn),
-          endsOn: this.timestampToTime(this.modelValue.endsOn)
+          startsOn: utcTimestampToTimeOfDay(this.modelValue.startsOn),
+          endsOn: utcTimestampToTimeOfDay(this.modelValue.endsOn)
         }, {emitEvent: false});
         break;
       case AlarmScheduleType.CUSTOM:
@@ -136,8 +168,8 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
               this.disabledSelectedTime(item.enabled, index);
               alarmDays.push({
                 enabled: item.enabled,
-                startsOn: this.timestampToTime(item.startsOn),
-                endsOn: this.timestampToTime(item.endsOn)
+                startsOn: utcTimestampToTimeOfDay(item.startsOn),
+                endsOn: utcTimestampToTimeOfDay(item.endsOn)
               });
             });
           this.alarmScheduleForm.patchValue({
@@ -202,15 +234,15 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
           .filter(day => !!day);
       }
       if (isDefined(value.startsOn) && value.startsOn !== 0) {
-        value.startsOn = this.timeToTimestampUTC(value.startsOn);
+        value.startsOn = timeOfDayToUTCTimestamp(value.startsOn);
       }
       if (isDefined(value.endsOn) && value.endsOn !== 0) {
-        value.endsOn = this.timeToTimestampUTC(value.endsOn);
+        value.endsOn = timeOfDayToUTCTimestamp(value.endsOn);
       }
       if (isDefined(value.items)){
         value.items = this.alarmScheduleForm.getRawValue().items;
         value.items = value.items.map((item) => {
-          return { ...item, startsOn: this.timeToTimestampUTC(item.startsOn), endsOn: this.timeToTimestampUTC(item.endsOn)};
+          return { ...item, startsOn: timeOfDayToUTCTimestamp(item.startsOn), endsOn: timeOfDayToUTCTimestamp(item.endsOn)};
         });
       }
       this.modelValue = value;
@@ -218,21 +250,11 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
     }
   }
 
-  private timeToTimestampUTC(date: Date | number): number {
-    if (typeof date === 'number' || date === null) {
-      return 0;
-    }
-    return _moment.utc([1970, 0, 1, date.getHours(), date.getMinutes(), date.getSeconds(), 0]).valueOf();
-  }
-
-  private timestampToTime(time = 0): Date {
-    return new Date(time + new Date().getTimezoneOffset() * 60 * 1000);
-  }
 
   private defaultItemsScheduler(index): FormGroup {
     return this.fb.group({
       enabled: [true],
-      dayOfWeek: [index],
+      dayOfWeek: [index + 1],
       startsOn: [0, Validators.required],
       endsOn: [0, Validators.required]
     });
@@ -253,23 +275,8 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
     }
   }
 
-  private timeToMoment(date: Date | number): _moment.Moment {
-    if (typeof date === 'number' || date === null) {
-      return _moment([1970, 0, 1, 0, 0, 0, 0]);
-    }
-    return _moment([1970, 0, 1, date.getHours(), date.getMinutes(), 0, 0]);
-  }
-
   getSchedulerRangeText(control: FormGroup | AbstractControl): string {
-    const start = this.timeToMoment(control.get('startsOn').value);
-    const end = this.timeToMoment(control.get('endsOn').value);
-    if (start < end) {
-      return `<span><span class="nowrap">${start.format('hh:mm A')}</span> – <span class="nowrap">${end.format('hh:mm A')}</span></span>`;
-    } else if (start.valueOf() === 0 && end.valueOf() === 0 || start.isSame(_moment([1970, 0])) && end.isSame(_moment([1970, 0]))) {
-      return '<span><span class="nowrap">12:00 AM</span> – <span class="nowrap">12:00 PM</span></span>';
-    }
-    return `<span><span class="nowrap">12:00 AM</span> – <span class="nowrap">${end.format('hh:mm A')}</span>` +
-      ` and <span class="nowrap">${start.format('hh:mm A')}</span> – <span class="nowrap">12:00 PM</span></span>`;
+    return getAlarmScheduleRangeText(control.get('startsOn').value, control.get('endsOn').value);
   }
 
   get itemsSchedulerForm(): FormArray {

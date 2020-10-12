@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class DeviceDataSnapshot {
+class DataSnapshot {
 
     private volatile boolean ready;
     @Getter
@@ -33,7 +33,7 @@ public class DeviceDataSnapshot {
     private final Set<EntityKey> keys;
     private final Map<EntityKey, EntityKeyValue> values = new ConcurrentHashMap<>();
 
-    public DeviceDataSnapshot(Set<EntityKey> entityKeysToFetch) {
+    DataSnapshot(Set<EntityKey> entityKeysToFetch) {
         this.keys = entityKeysToFetch;
     }
 
@@ -56,28 +56,38 @@ public class DeviceDataSnapshot {
         }
     }
 
-    void putValue(EntityKey key, EntityKeyValue value) {
+    boolean putValue(EntityKey key, long newTs, EntityKeyValue value) {
+        boolean updateOfTs = ts != newTs;
+        boolean result = false;
         switch (key.getType()) {
             case ATTRIBUTE:
-                putIfKeyExists(key, value);
-                putIfKeyExists(getAttrKey(key, EntityKeyType.CLIENT_ATTRIBUTE), value);
-                putIfKeyExists(getAttrKey(key, EntityKeyType.SHARED_ATTRIBUTE), value);
-                putIfKeyExists(getAttrKey(key, EntityKeyType.SERVER_ATTRIBUTE), value);
+                result |= putIfKeyExists(key, value, updateOfTs);
+                result |= putIfKeyExists(getAttrKey(key, EntityKeyType.CLIENT_ATTRIBUTE), value, updateOfTs);
+                result |= putIfKeyExists(getAttrKey(key, EntityKeyType.SHARED_ATTRIBUTE), value, updateOfTs);
+                result |= putIfKeyExists(getAttrKey(key, EntityKeyType.SERVER_ATTRIBUTE), value, updateOfTs);
                 break;
             case CLIENT_ATTRIBUTE:
             case SHARED_ATTRIBUTE:
             case SERVER_ATTRIBUTE:
-                putIfKeyExists(key, value);
-                putIfKeyExists(getAttrKey(key, EntityKeyType.ATTRIBUTE), value);
+                result |= putIfKeyExists(key, value, updateOfTs);
+                result |= putIfKeyExists(getAttrKey(key, EntityKeyType.ATTRIBUTE), value, updateOfTs);
                 break;
             default:
-                putIfKeyExists(key, value);
+                result |= putIfKeyExists(key, value, updateOfTs);
         }
+        return result;
     }
 
-    private void putIfKeyExists(EntityKey key, EntityKeyValue value) {
+    private boolean putIfKeyExists(EntityKey key, EntityKeyValue value, boolean updateOfTs) {
         if (keys.contains(key)) {
-            values.put(key, value);
+            EntityKeyValue oldValue = values.put(key, value);
+            if (updateOfTs) {
+                return true;
+            } else {
+                return oldValue == null || !oldValue.equals(value);
+            }
+        } else {
+            return false;
         }
     }
 
