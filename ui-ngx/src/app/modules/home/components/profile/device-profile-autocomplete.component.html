@@ -48,7 +48,7 @@
     </mat-option>
     <mat-option *ngIf="!(filteredDeviceProfiles | async)?.length" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+        <div *ngIf="!textIsNotEmpty(searchText) || !addNewProfile; else searchNotEmpty">
           <span translate>device-profile.no-device-profiles-found</span>
         </div>
         <ng-template #searchNotEmpty>
@@ -56,10 +56,10 @@
               {{ translate.get('device-profile.no-device-profiles-matching',
             {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
           </span>
+          <span>
+            <a translate (click)="createDeviceProfile($event, searchText)">device-profile.create-new-device-profile</a>
+          </span>
         </ng-template>
-        <span>
-          <a translate (click)="createDeviceProfile($event, searchText)">device-profile.create-new-device-profile</a>
-        </span>
       </div>
     </mat-option>
   </mat-autocomplete>

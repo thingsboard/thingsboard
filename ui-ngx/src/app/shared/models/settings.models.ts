@@ -14,6 +14,9 @@
 /// limitations under the License.
 ///
 
+import { EntityId } from '@shared/models/id/entity-id';
+import { TenantId } from '@shared/models/id/tenant-id';
+
 export const smtpPortPattern: RegExp = /^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/;
 
 export interface AdminSettings<T> {
@@ -59,4 +62,100 @@ export interface SecuritySettings {
 export interface UpdateMessage {
   message: string;
   updateAvailable: boolean;
+}
+
+export interface OAuth2Settings {
+  enabled: boolean;
+  domainsParams: DomainsParam[];
+}
+
+export interface DomainsParam {
+  clientRegistrations: ClientRegistration[];
+  domainInfos: DomainInfo[];
+}
+
+export interface DomainInfo {
+  name: string;
+  scheme: DomainSchema;
+}
+
+export enum DomainSchema{
+  HTTP = 'HTTP',
+  HTTPS = 'HTTPS',
+  MIXED = 'MIXED'
+}
+
+export const domainSchemaTranslations = new Map<DomainSchema, string>(
+  [
+    [DomainSchema.HTTP, 'admin.oauth2.domain-schema-http'],
+    [DomainSchema.HTTPS, 'admin.oauth2.domain-schema-https'],
+    [DomainSchema.MIXED, 'admin.oauth2.domain-schema-mixed']
+  ]
+);
+
+export enum MapperConfigType{
+  BASIC = 'BASIC',
+  CUSTOM = 'CUSTOM'
+}
+
+export enum TenantNameStrategy{
+  DOMAIN = 'DOMAIN',
+  EMAIL = 'EMAIL',
+  CUSTOM = 'CUSTOM'
+}
+
+export interface ClientProviderTemplated extends ClientRegistration{
+  comment: string;
+  createdTime: number;
+  helpLink: string;
+  name: string;
+  providerId: string;
+  tenantId: TenantId;
+}
+
+export interface ClientRegistration {
+  loginButtonLabel: string;
+  loginButtonIcon: string;
+  clientId: string;
+  clientSecret: string;
+  accessTokenUri: string;
+  authorizationUri: string;
+  scope: string[];
+  jwkSetUri?: string;
+  userInfoUri: string;
+  clientAuthenticationMethod: ClientAuthenticationMethod;
+  userNameAttributeName: string;
+  mapperConfig: MapperConfig;
+  id?: EntityId;
+  additionalInfo: string;
+}
+
+export enum ClientAuthenticationMethod {
+  BASIC = 'BASIC',
+  POST = 'POST'
+}
+
+export interface MapperConfig {
+  allowUserCreation: boolean;
+  activateUser: boolean;
+  type: MapperConfigType;
+  basic?: MapperConfigBasic;
+  custom?: MapperConfigCustom;
+}
+
+export interface MapperConfigBasic {
+  emailAttributeKey: string;
+  firstNameAttributeKey?: string;
+  lastNameAttributeKey?: string;
+  tenantNameStrategy: TenantNameStrategy;
+  tenantNamePattern?: string;
+  customerNamePattern?: string;
+  defaultDashboardName?: string;
+  alwaysFullScreen?: boolean;
+}
+
+export interface MapperConfigCustom {
+  url: string;
+  username?: string;
+  password?: string;
 }

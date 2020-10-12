@@ -13,23 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.id;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.UUID;
-
-public class OAuth2IntegrationId extends UUIDBased {
-
-    private static final long serialVersionUID = 1L;
-
-    @JsonCreator
-    public OAuth2IntegrationId(@JsonProperty("id") UUID id) {
-        super(id);
-    }
-
-    public static OAuth2IntegrationId fromString(String oauth2IntegrationId) {
-        return new OAuth2IntegrationId(UUID.fromString(oauth2IntegrationId));
-    }
+::ng-deep {
+  .nowrap {
+    white-space: nowrap;
+  }
 }

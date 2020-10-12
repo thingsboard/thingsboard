@@ -15,9 +15,11 @@
  */
 package org.thingsboard.rule.engine.profile;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.thingsboard.server.common.data.kv.DataType;
 
+@EqualsAndHashCode
 class EntityKeyValue {
 
     @Getter

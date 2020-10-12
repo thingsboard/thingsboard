@@ -13,10 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.common.data.oauth2;
 
-public class EntityKeyState {
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-
-
+@Builder(toBuilder = true)
+@EqualsAndHashCode
+@Data
+@ToString
+public class OAuth2MapperConfig {
+    private boolean allowUserCreation;
+    private boolean activateUser;
+    private MapperType type;
+    private OAuth2BasicMapperConfig basic;
+    private OAuth2CustomMapperConfig custom;
 }

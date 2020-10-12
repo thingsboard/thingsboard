@@ -86,9 +86,10 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
         publishMqttMsg(client, connectMsgProto.toByteArray(), MqttTopics.GATEWAY_CONNECT_TOPIC);
 
-        Thread.sleep(2000);
+        Device device = doExecuteWithRetriesAndInterval(() -> doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class),
+                20,
+                100);
 
-        Device device = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
         assertNotNull(device);
     }
 

@@ -37,7 +37,7 @@ public interface DeviceProfileService {
 
     PageData<DeviceProfile> findDeviceProfiles(TenantId tenantId, PageLink pageLink);
 
-    PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink);
+    PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink, String transportType);
 
     DeviceProfile findOrCreateDeviceProfile(TenantId tenantId, String profileName);
 

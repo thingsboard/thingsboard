@@ -44,6 +44,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -219,4 +220,33 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
         return builder.build();
     }
 
+    protected <T> T doExecuteWithRetriesAndInterval(SupplierWithThrowable<T> supplier, int retries, int intervalMs) throws Exception {
+        int count = 0;
+        T result = null;
+        Throwable lastException = null;
+        while (count < retries) {
+            try {
+                result = supplier.get();
+                if (result != null) {
+                    return result;
+                }
+            } catch (Throwable e) {
+                lastException = e;
+            }
+            count++;
+            if (count < retries) {
+                Thread.sleep(intervalMs);
+            }
+        }
+        if (lastException != null) {
+            throw new RuntimeException(lastException);
+        } else {
+            return result;
+        }
+    }
+
+    @FunctionalInterface
+    public interface SupplierWithThrowable<T> {
+        T get() throws Throwable;
+    }
 }

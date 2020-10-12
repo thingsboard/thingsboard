@@ -37,25 +37,21 @@ public abstract class AbstractMqttClaimProtoDeviceTest extends AbstractMqttClaim
     public void afterTest() throws Exception { super.afterTest(); }
 
     @Test
-    @Ignore
     public void testClaimingDevice() throws Exception {
         processTestClaimingDevice(false);
     }
 
     @Test
-    @Ignore
     public void testClaimingDeviceWithoutSecretAndDuration() throws Exception {
         processTestClaimingDevice(true);
     }
 
     @Test
-    @Ignore
     public void testGatewayClaimingDevice() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device Proto", false);
     }
 
     @Test
-    @Ignore
     public void testGatewayClaimingDeviceWithoutSecretAndDuration() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device empty payload Proto", true);
     }

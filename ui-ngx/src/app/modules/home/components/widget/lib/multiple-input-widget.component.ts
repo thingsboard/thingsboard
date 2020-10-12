@@ -24,7 +24,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DataKey, Datasource, DatasourceData, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { isDefined, isEqual, isUndefined, createLabelFromDatasource } from '@core/utils';
+import { isDefined, isEqual, isUndefined, createLabelFromDatasource, isDefinedAndNotNull } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import * as _moment from 'moment';
 import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
@@ -47,6 +47,8 @@ interface MultipleInputWidgetSettings {
   widgetTitle: string;
   showActionButtons: boolean;
   updateAllValues: boolean;
+  saveButtonLabel: string;
+  resetButtonLabel: string;
   showResultMessage: boolean;
   showGroupTitle: boolean;
   groupTitle: string;
@@ -62,8 +64,13 @@ interface MultipleInputWidgetDataKeySettings {
   isEditable: MultipleInputWidgetDataKeyEditableType;
   disabledOnDataKey: string;
   dataKeyHidden: boolean;
-  step: number;
-  requiredErrorMessage: string;
+  step?: number;
+  minValue?: number;
+  maxValue?: number;
+  requiredErrorMessage?: string;
+  invalidDateErrorMessage?: string;
+  minValueErrorMessage?: string;
+  maxValueErrorMessage?: string;
   icon: string;
   inputTypeNumber?: boolean;
   readOnly?: boolean;
@@ -104,7 +111,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   isVerticalAlignment: boolean;
   inputWidthSettings: string;
   changeAlignment: boolean;
-  smallWidthContainer: boolean;
+  saveButtonLabel: string;
+  resetButtonLabel: string;
 
   entityDetected = false;
   isAllParametersValid = true;
@@ -157,6 +165,17 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
 
     this.settings.groupTitle = this.settings.groupTitle || '${entityName}';
 
+    if (this.settings.saveButtonLabel && this.settings.saveButtonLabel.length) {
+      this.saveButtonLabel = this.utils.customTranslation(this.settings.saveButtonLabel, this.settings.saveButtonLabel);
+    } else {
+      this.saveButtonLabel = this.translate.instant('action.save');
+    }
+    if (this.settings.resetButtonLabel && this.settings.resetButtonLabel.length) {
+      this.resetButtonLabel = this.utils.customTranslation(this.settings.resetButtonLabel, this.settings.resetButtonLabel);
+    } else {
+      this.resetButtonLabel = this.translate.instant('action.undo');
+    }
+
     // For backward compatibility
     if (isUndefined(this.settings.showActionButtons)) {
       this.settings.showActionButtons = true;
@@ -195,7 +214,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
             if (dataKey.units) {
               dataKey.label += ' (' + dataKey.units + ')';
             }
-            dataKey.formId = (++keyIndex)+'';
+            dataKey.formId = (++keyIndex) + '';
             dataKey.isFocused = false;
 
             // For backward compatibility
@@ -245,6 +264,14 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
         if (key.settings.dataKeyValueType === 'integer') {
           validators.push(Validators.pattern(/^-?[0-9]+$/));
         }
+        if (key.settings.dataKeyValueType === 'integer' || key.settings.dataKeyValueType === 'double') {
+          if (isDefinedAndNotNull(key.settings.minValue) && isFinite(key.settings.minValue)) {
+            validators.push(Validators.min(key.settings.minValue));
+          }
+          if (isDefinedAndNotNull(key.settings.maxValue) && isFinite(key.settings.maxValue)) {
+            validators.push(Validators.max(key.settings.maxValue));
+          }
+        }
         const formControl = this.fb.control(
           { value: key.value,
                       disabled: key.settings.isEditable === 'disabled' || key.settings.disabledOnCondition},
@@ -265,7 +292,11 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
           switch (key.settings.dataKeyValueType) {
             case 'dateTime':
             case 'date':
-              value = _moment(keyData[0][1]).toDate();
+              if (isDefinedAndNotNull(keyData[0][1]) && keyData[0][1] !== '') {
+                value = _moment(keyData[0][1]).toDate();
+              } else {
+                value = null;
+              }
               break;
             case 'time':
               value = _moment().startOf('day').add(keyData[0][1], 'ms').toDate();
@@ -313,25 +344,69 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
 
   private updateWidgetDisplaying() {
     this.changeAlignment = (this.ctx.$container && this.ctx.$container[0].offsetWidth < 620);
-    this.smallWidthContainer = (this.ctx.$container && this.ctx.$container[0].offsetWidth < 420);
   }
 
   public onDataUpdated() {
-    this.ngZone.run(() => {
-      this.updateWidgetData(this.subscription.data);
-      this.ctx.detectChanges();
-    });
+    this.updateWidgetData(this.subscription.data);
+    this.ctx.detectChanges();
   }
 
   private resize() {
-    this.ngZone.run(() => {
-      this.updateWidgetDisplaying();
-      this.ctx.detectChanges();
-    });
+    this.updateWidgetDisplaying();
+    this.ctx.detectChanges();
   }
 
   public getGroupTitle(datasource: Datasource): string {
-    return createLabelFromDatasource(datasource, this.settings.groupTitle);
+    const groupTitle = createLabelFromDatasource(datasource, this.settings.groupTitle);
+    return this.utils.customTranslation(groupTitle, groupTitle);
+  }
+
+  public getErrorMessageText(keySettings: MultipleInputWidgetDataKeySettings, errorType: string): string {
+    let errorMessage;
+    let defaultMessage;
+    let messageValues;
+    switch (errorType) {
+      case 'required':
+        errorMessage = keySettings.requiredErrorMessage;
+        defaultMessage = '';
+        break;
+      case 'min':
+        errorMessage = keySettings.minValueErrorMessage;
+        defaultMessage = 'widgets.input-widgets.min-value-error';
+        messageValues = {
+          value: keySettings.minValue
+        };
+        break;
+      case 'max':
+        errorMessage = keySettings.maxValueErrorMessage;
+        defaultMessage = 'widgets.input-widgets.max-value-error';
+        messageValues = {
+          value: keySettings.maxValue
+        };
+        break;
+      case 'invalidDate':
+        errorMessage = keySettings.invalidDateErrorMessage;
+        defaultMessage = 'widgets.input-widgets.invalid-date';
+        break;
+      default:
+        return '';
+    }
+    return this.getTranslatedErrorText(errorMessage, defaultMessage, messageValues);
+  }
+
+  public getTranslatedErrorText(errorMessage: string, defaultMessage: string, messageValues?: object): string {
+    let messageText;
+    if (errorMessage && errorMessage.length) {
+      messageText = this.utils.customTranslation(errorMessage, errorMessage);
+    } else if (defaultMessage && defaultMessage.length) {
+      if (!messageValues) {
+        messageValues = {};
+      }
+      messageText = this.translate.instant(defaultMessage, messageValues);
+    } else {
+      messageText = '';
+    }
+    return messageText;
   }
 
   public visibleKeys(source: MultipleInputWidgetSource): MultipleInputWidgetDataKey[] {
@@ -455,8 +530,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     if (tasks.length) {
       forkJoin(tasks).subscribe(
         () => {
-          this.multipleInputFormGroup.reset(undefined, {emitEvent: false});
           this.multipleInputFormGroup.markAsPristine();
+          this.ctx.detectChanges();
           if (this.settings.showResultMessage) {
             this.ctx.showSuccessToast(this.translate.instant('widgets.input-widgets.update-successful'),
               1000, 'bottom', 'left', this.toastTargetId);
@@ -469,8 +544,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
           }
         });
     } else {
-      this.multipleInputFormGroup.reset(undefined, {emitEvent: false});
       this.multipleInputFormGroup.markAsPristine();
+      this.ctx.detectChanges();
     }
   }
 
