@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpe
 import org.thingsboard.server.common.data.device.profile.SpecificTimeSchedule;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
@@ -38,22 +40,24 @@ import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Calendar;
+import java.util.Set;
 
 @Data
-public class AlarmRuleState {
+class AlarmRuleState {
 
     private final AlarmSeverity severity;
     private final AlarmRule alarmRule;
     private final AlarmConditionSpec spec;
     private final long requiredDurationInMs;
     private final long requiredRepeats;
+    private final Set<EntityKey> entityKeys;
     private PersistedAlarmRuleState state;
     private boolean updateFlag;
 
-    public AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule, PersistedAlarmRuleState state) {
+    AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule, Set<EntityKey> entityKeys, PersistedAlarmRuleState state) {
         this.severity = severity;
         this.alarmRule = alarmRule;
+        this.entityKeys = entityKeys;
         if (state != null) {
             this.state = state;
         } else {
@@ -76,6 +80,30 @@ public class AlarmRuleState {
         this.requiredRepeats = requiredRepeats;
     }
 
+    public boolean validateTsUpdate(Set<EntityKey> changedKeys) {
+        for (EntityKey key : changedKeys) {
+            if (entityKeys.contains(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean validateAttrUpdate(Set<EntityKey> changedKeys) {
+        //If the attribute was updated, but no new telemetry arrived - we ignore this until new telemetry is there.
+        for (EntityKey key : entityKeys) {
+            if (key.getType().equals(EntityKeyType.TIME_SERIES)) {
+                return false;
+            }
+        }
+        for (EntityKey key : changedKeys) {
+            if (entityKeys.contains(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public AlarmConditionSpec getSpec(AlarmRule alarmRule) {
         AlarmConditionSpec spec = alarmRule.getCondition().getSpec();
         if (spec == null) {
@@ -93,7 +121,7 @@ public class AlarmRuleState {
         }
     }
 
-    public boolean eval(DeviceDataSnapshot data) {
+    public boolean eval(DataSnapshot data) {
         boolean active = isActive(data.getTs());
         switch (spec.getType()) {
             case SIMPLE:
@@ -167,7 +195,7 @@ public class AlarmRuleState {
         }
     }
 
-    private boolean evalRepeating(DeviceDataSnapshot data, boolean active) {
+    private boolean evalRepeating(DataSnapshot data, boolean active) {
         if (active && eval(alarmRule.getCondition(), data)) {
             state.setEventCount(state.getEventCount() + 1);
             updateFlag = true;
@@ -177,7 +205,7 @@ public class AlarmRuleState {
         }
     }
 
-    private boolean evalDuration(DeviceDataSnapshot data, boolean active) {
+    private boolean evalDuration(DataSnapshot data, boolean active) {
         if (active && eval(alarmRule.getCondition(), data)) {
             if (state.getLastEventTs() > 0) {
                 if (data.getTs() > state.getLastEventTs()) {
@@ -211,7 +239,7 @@ public class AlarmRuleState {
         }
     }
 
-    private boolean eval(AlarmCondition condition, DeviceDataSnapshot data) {
+    private boolean eval(AlarmCondition condition, DataSnapshot data) {
         boolean eval = true;
         for (KeyFilter keyFilter : condition.getCondition()) {
             EntityKeyValue value = data.getValue(keyFilter.getKey());
@@ -380,4 +408,5 @@ public class AlarmRuleState {
                 throw new RuntimeException("Operation not supported: " + predicate.getOperation());
         }
     }
+
 }

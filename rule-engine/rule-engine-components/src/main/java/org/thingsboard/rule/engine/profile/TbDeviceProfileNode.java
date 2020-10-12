@@ -23,7 +23,6 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.profile.state.PersistedDeviceState;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -36,11 +35,10 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -68,11 +66,14 @@ public class TbDeviceProfileNode implements TbNode {
         this.cache = ctx.getDeviceProfileCache();
         scheduleAlarmHarvesting(ctx);
         if (config.isFetchAlarmRulesStateOnStart()) {
+            log.info("[{}] Fetching alarm rule state", ctx.getSelfId());
+            int fetchCount = 0;
             PageLink pageLink = new PageLink(1024);
             while (true) {
                 PageData<RuleNodeState> states = ctx.findRuleNodeStates(pageLink);
                 if (!states.getData().isEmpty()) {
                     for (RuleNodeState rns : states.getData()) {
+                        fetchCount++;
                         if (rns.getEntityId().getEntityType().equals(EntityType.DEVICE) && ctx.isLocalEntity(rns.getEntityId())) {
                             getOrCreateDeviceState(ctx, new DeviceId(rns.getEntityId().getId()), rns);
                         }
@@ -84,6 +85,7 @@ public class TbDeviceProfileNode implements TbNode {
                     pageLink = pageLink.nextPageLink();
                 }
             }
+            log.info("[{}] Fetched alarm rule state for {} entities", ctx.getSelfId(), fetchCount);
         }
     }
 
@@ -112,11 +114,14 @@ public class TbDeviceProfileNode implements TbNode {
                     }
                 }
             } else if (EntityType.DEVICE_PROFILE.equals(originatorType)) {
+                log.info("[{}] Received device profile update notification: {}", ctx.getSelfId(), msg.getData());
                 if (msg.getType().equals("ENTITY_UPDATED")) {
                     DeviceProfile deviceProfile = JacksonUtil.fromString(msg.getData(), DeviceProfile.class);
-                    for (DeviceState state : deviceStates.values()) {
-                        if (deviceProfile.getId().equals(state.getProfileId())) {
-                            state.updateProfile(ctx, deviceProfile);
+                    if (deviceProfile != null) {
+                        for (DeviceState state : deviceStates.values()) {
+                            if (deviceProfile.getId().equals(state.getProfileId())) {
+                                state.updateProfile(ctx, deviceProfile);
+                            }
                         }
                     }
                 }
@@ -139,6 +144,12 @@ public class TbDeviceProfileNode implements TbNode {
     }
 
     @Override
+    public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
+        // Cleanup the cache for all entities that are no longer assigned to current server partitions
+        deviceStates.entrySet().removeIf(entry -> !ctx.isLocalEntity(entry.getKey()));
+    }
+
+    @Override
     public void destroy() {
         deviceStates.clear();
     }
@@ -148,7 +159,7 @@ public class TbDeviceProfileNode implements TbNode {
         if (deviceState == null) {
             DeviceProfile deviceProfile = cache.get(ctx.getTenantId(), deviceId);
             if (deviceProfile != null) {
-                deviceState = new DeviceState(ctx, config, deviceId, new DeviceProfileState(deviceProfile), rns);
+                deviceState = new DeviceState(ctx, config, deviceId, new ProfileState(deviceProfile), rns);
                 deviceStates.put(deviceId, deviceState);
             }
         }

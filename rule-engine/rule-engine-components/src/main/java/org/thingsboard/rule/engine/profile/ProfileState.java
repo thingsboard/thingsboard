@@ -18,19 +18,25 @@ package org.thingsboard.rule.engine.profile;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.KeyFilter;
 
+import javax.print.attribute.standard.Severity;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 
-class DeviceProfileState {
+class ProfileState {
 
     private DeviceProfile deviceProfile;
     @Getter(AccessLevel.PACKAGE)
@@ -38,26 +44,64 @@ class DeviceProfileState {
     @Getter(AccessLevel.PACKAGE)
     private final Set<EntityKey> entityKeys = ConcurrentHashMap.newKeySet();
 
-    DeviceProfileState(DeviceProfile deviceProfile) {
+    private final Map<String, Map<AlarmSeverity, Set<EntityKey>>> alarmCreateKeys = new HashMap<>();
+    private final Map<String, Set<EntityKey>> alarmClearKeys = new HashMap<>();
+
+    ProfileState(DeviceProfile deviceProfile) {
         updateDeviceProfile(deviceProfile);
     }
 
     void updateDeviceProfile(DeviceProfile deviceProfile) {
         this.deviceProfile = deviceProfile;
         alarmSettings.clear();
+        alarmCreateKeys.clear();
+        alarmClearKeys.clear();
         if (deviceProfile.getProfileData().getAlarms() != null) {
             alarmSettings.addAll(deviceProfile.getProfileData().getAlarms());
             for (DeviceProfileAlarm alarm : deviceProfile.getProfileData().getAlarms()) {
-                for (AlarmRule alarmRule : alarm.getCreateRules().values()) {
+                Map<AlarmSeverity, Set<EntityKey>> createAlarmKeys = alarmCreateKeys.computeIfAbsent(alarm.getId(), id -> new HashMap<>());
+                alarm.getCreateRules().forEach(((severity, alarmRule) -> {
+                    Set<EntityKey> ruleKeys = createAlarmKeys.computeIfAbsent(severity, id -> new HashSet<>());
                     for (KeyFilter keyFilter : alarmRule.getCondition().getCondition()) {
                         entityKeys.add(keyFilter.getKey());
+                        ruleKeys.add(keyFilter.getKey());
+                    }
+                }));
+                if (alarm.getClearRule() != null) {
+                    Set<EntityKey> clearAlarmKeys = alarmClearKeys.computeIfAbsent(alarm.getId(), id -> new HashSet<>());
+                    for (KeyFilter keyFilter : alarm.getClearRule().getCondition().getCondition()) {
+                        entityKeys.add(keyFilter.getKey());
+                        clearAlarmKeys.add(keyFilter.getKey());
                     }
                 }
             }
         }
     }
 
-    public DeviceProfileId getProfileId() {
+    DeviceProfileId getProfileId() {
         return deviceProfile.getId();
+    }
+
+    Set<EntityKey> getCreateAlarmKeys(String id, AlarmSeverity severity) {
+        Map<AlarmSeverity, Set<EntityKey>> sKeys = alarmCreateKeys.get(id);
+        if (sKeys == null) {
+            return Collections.emptySet();
+        } else {
+            Set<EntityKey> keys = sKeys.get(severity);
+            if (keys == null) {
+                return Collections.emptySet();
+            } else {
+                return keys;
+            }
+        }
+    }
+
+    Set<EntityKey> getClearAlarmKeys(String id) {
+        Set<EntityKey> keys = alarmClearKeys.get(id);
+        if (keys == null) {
+            return Collections.emptySet();
+        } else {
+            return keys;
+        }
     }
 }
