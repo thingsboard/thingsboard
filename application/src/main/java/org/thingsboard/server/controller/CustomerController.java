@@ -108,6 +108,10 @@ public class CustomerController extends BaseController {
                     savedCustomer.getId(),
                     customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
+            if (customer.getId() != null) {
+                sendNotificationMsgToEdgeService(savedCustomer.getTenantId(), savedCustomer.getId(),ActionType.UPDATED);
+            }
+
             return savedCustomer;
         } catch (Exception e) {
 
@@ -132,6 +136,7 @@ public class CustomerController extends BaseController {
                     customer.getId(),
                     ActionType.DELETED, null, strCustomerId);
 
+            sendNotificationMsgToEdgeService(getTenantId(), customerId, ActionType.DELETED);
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.CUSTOMER),

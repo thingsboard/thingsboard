@@ -33,28 +33,44 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
+import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
-import org.thingsboard.server.service.edge.rpc.constructor.AlarmUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.AssetUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.DashboardUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.DeviceUpdateMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.AdminSettingsMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.AlarmMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.AssetMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.CustomerMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.DashboardMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.DeviceMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.EntityDataMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.EntityViewUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.RelationUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.RuleChainUpdateMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.UserUpdateMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.EntityViewMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.RelationMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.RuleChainMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.UserMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.WidgetTypeMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.WidgetsBundleMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.init.SyncEdgeService;
+import org.thingsboard.server.service.edge.rpc.processor.AlarmProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.DeviceProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.RelationProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.TelemetryProcessor;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
 @Component
+@TbCoreComponent
 @Data
 public class EdgeContextComponent {
 
     @Lazy
     @Autowired
     private EdgeService edgeService;
+
+    @Autowired
+    private PartitionService partitionService;
 
     @Lazy
     @Autowired
@@ -110,6 +126,14 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
+    private WidgetsBundleService widgetsBundleService;
+
+    @Lazy
+    @Autowired
+    private WidgetTypeService widgetTypeService;
+
+    @Lazy
+    @Autowired
     private DeviceStateService deviceStateService;
 
     @Lazy
@@ -122,39 +146,71 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
-    private RuleChainUpdateMsgConstructor ruleChainUpdateMsgConstructor;
+    private RuleChainMsgConstructor ruleChainMsgConstructor;
 
     @Lazy
     @Autowired
-    private AlarmUpdateMsgConstructor alarmUpdateMsgConstructor;
+    private AlarmMsgConstructor alarmMsgConstructor;
 
     @Lazy
     @Autowired
-    private DeviceUpdateMsgConstructor deviceUpdateMsgConstructor;
+    private DeviceMsgConstructor deviceMsgConstructor;
 
     @Lazy
     @Autowired
-    private AssetUpdateMsgConstructor assetUpdateMsgConstructor;
+    private AssetMsgConstructor assetMsgConstructor;
 
     @Lazy
     @Autowired
-    private EntityViewUpdateMsgConstructor entityViewUpdateMsgConstructor;
+    private EntityViewMsgConstructor entityViewMsgConstructor;
 
     @Lazy
     @Autowired
-    private DashboardUpdateMsgConstructor dashboardUpdateMsgConstructor;
+    private DashboardMsgConstructor dashboardMsgConstructor;
 
     @Lazy
     @Autowired
-    private UserUpdateMsgConstructor userUpdateMsgConstructor;
+    private CustomerMsgConstructor customerMsgConstructor;
 
     @Lazy
     @Autowired
-    private RelationUpdateMsgConstructor relationUpdateMsgConstructor;
+    private UserMsgConstructor userMsgConstructor;
+
+    @Lazy
+    @Autowired
+    private RelationMsgConstructor relationMsgConstructor;
+
+    @Lazy
+    @Autowired
+    private WidgetsBundleMsgConstructor widgetsBundleMsgConstructor;
+
+    @Lazy
+    @Autowired
+    private WidgetTypeMsgConstructor widgetTypeMsgConstructor;
+
+    @Lazy
+    @Autowired
+    private AdminSettingsMsgConstructor adminSettingsMsgConstructor;
 
     @Lazy
     @Autowired
     private EntityDataMsgConstructor entityDataMsgConstructor;
+
+    @Lazy
+    @Autowired
+    private AlarmProcessor alarmProcessor;
+
+    @Lazy
+    @Autowired
+    private DeviceProcessor deviceProcessor;
+
+    @Lazy
+    @Autowired
+    private RelationProcessor relationProcessor;
+
+    @Lazy
+    @Autowired
+    private TelemetryProcessor telemetryProcessor;
 
     @Lazy
     @Autowired

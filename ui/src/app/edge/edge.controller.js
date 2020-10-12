@@ -129,6 +129,11 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
     vm.assignToCustomer = assignToCustomer;
     vm.makePublic = makePublic;
     vm.unassignFromCustomer = unassignFromCustomer;
+    vm.openEdgeAssets = openEdgeAssets;
+    vm.openEdgeDevices = openEdgeDevices;
+    vm.openEdgeEntityViews = openEdgeEntityViews;
+    vm.openEdgeDashboards = openEdgeDashboards;
+    vm.openEdgeRuleChains = openEdgeRuleChains;
 
     initController();
 
@@ -547,7 +552,7 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
             $event.stopPropagation();
         }
         var pageSize = 10;
-        ruleChainService.getRuleChains({limit: pageSize, textSearch: ''}).then(
+        ruleChainService.getEdgesRuleChains({limit: pageSize, textSearch: ''}).then(
             function success(_ruleChains) {
                 var ruleChains = {
                     pageSize: pageSize,

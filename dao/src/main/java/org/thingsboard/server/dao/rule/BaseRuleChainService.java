@@ -48,12 +48,10 @@ import org.thingsboard.server.common.data.rule.RuleChainImportResult;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
-import org.thingsboard.server.dao.service.TimePaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
@@ -88,9 +86,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Autowired
     private TenantDao tenantDao;
-
-    @Autowired
-    private EdgeService edgeService;
 
     @Override
     public RuleChain saveRuleChain(RuleChain ruleChain) {
@@ -552,7 +547,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (edge == null) {
             throw new DataValidationException("Can't assign ruleChain to non-existent edge!");
         }
-        if (!edge.getTenantId().getId().equals(ruleChain.getTenantId().getId())) {
+        if (!edge.getTenantId().equals(ruleChain.getTenantId())) {
             throw new DataValidationException("Can't assign ruleChain to edge from different tenant!");
         }
         try {
@@ -584,18 +579,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    public void unassignEdgeRuleChains(TenantId tenantId, EdgeId edgeId) {
-        log.trace("Executing unassignEdgeRuleChains, edgeId [{}]", edgeId);
-        Validator.validateId(edgeId, "Incorrect edgeId " + edgeId);
-        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
-        if (edge == null) {
-            throw new DataValidationException("Can't unassign ruleChains from non-existent edge!");
-        }
-        new EdgeRuleChainsUnassigner(edge).removeEntities(tenantId, edge);
-    }
-
-    @Override
-    public PageData<RuleChain> findRuleChainsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
+    public PageData<RuleChain> findRuleChainsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
         log.trace("Executing findRuleChainsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         Validator.validateId(edgeId, "Incorrect edgeId " + edgeId);
@@ -742,29 +726,4 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     checkRuleNodesAndDelete(tenantId, entity.getId());
                 }
             };
-
-    private class EdgeRuleChainsUnassigner extends TimePaginatedRemover<Edge, RuleChain> {
-
-        private Edge edge;
-
-        EdgeRuleChainsUnassigner(Edge edge) {
-            this.edge = edge;
-        }
-
-        @Override
-        protected PageData<RuleChain> findEntities(TenantId tenantId, Edge edge, TimePageLink pageLink) {
-            try {
-                return ruleChainDao.findRuleChainsByTenantIdAndEdgeId(edge.getTenantId().getId(), edge.getId().getId(), pageLink);
-            } catch (Exception e) {
-                log.error("[{}] Can't find rule chains by tenant id and edge id. Edge Id {}", edge.getId(), e);
-                throw new RuntimeException("[{}] Can't find rule chains by tenant id and edge id. Edge Id '" + edge.getId() + "'", e);
-            }
-        }
-
-        @Override
-        protected void removeEntity(TenantId tenantId, RuleChain entity) {
-            unassignRuleChainFromEdge(edge.getTenantId(), new RuleChainId(entity.getUuidId()), this.edge.getId(), true);
-        }
-
-    }
 }

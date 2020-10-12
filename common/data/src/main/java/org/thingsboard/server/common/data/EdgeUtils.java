@@ -15,59 +15,41 @@
  */
 package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.common.data.id.EdgeId;
-
-import java.util.Set;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 
 public final class EdgeUtils {
 
     private EdgeUtils() {
     }
 
-    public static boolean isAssignedToEdge(Set<ShortEdgeInfo> assignedEdges, EdgeId edgeId) {
-        return assignedEdges != null && assignedEdges.contains(new ShortEdgeInfo(edgeId, null, null));
-    }
-
-    public static ShortEdgeInfo getAssignedEdgeInfo(Set<ShortEdgeInfo> assignedEdges, EdgeId edgeId) {
-        if (assignedEdges != null) {
-            for (ShortEdgeInfo edgeInfo : assignedEdges) {
-                if (edgeInfo.getEdgeId().equals(edgeId)) {
-                    return edgeInfo;
-                }
-            }
-        }
-        return null;
-    }
-
-    public static boolean addAssignedEdge(Set<ShortEdgeInfo> assignedEdges, ShortEdgeInfo edgeInfo) {
-        if (assignedEdges != null && assignedEdges.contains(edgeInfo)) {
-            return false;
-        } else {
-            if (assignedEdges != null) {
-                assignedEdges.add(edgeInfo);
-                return true;
-            } else {
-                return false;
-            }
-        }
-    }
-
-    public static boolean updateAssignedEdge(Set<ShortEdgeInfo> assignedEdges, ShortEdgeInfo edgeInfo) {
-        if (assignedEdges != null && assignedEdges.contains(edgeInfo)) {
-            assignedEdges.remove(edgeInfo);
-            assignedEdges.add(edgeInfo);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public static boolean removeAssignedEdge(Set<ShortEdgeInfo> assignedEdges, ShortEdgeInfo edgeInfo) {
-        if (assignedEdges != null && assignedEdges.contains(edgeInfo)) {
-            assignedEdges.remove(edgeInfo);
-            return true;
-        } else {
-            return false;
+    public static EdgeEventType getEdgeEventTypeByEntityType(EntityType entityType) {
+        switch (entityType) {
+            case EDGE:
+                return EdgeEventType.EDGE;
+            case DEVICE:
+                return EdgeEventType.DEVICE;
+            case ASSET:
+                return EdgeEventType.ASSET;
+            case ENTITY_VIEW:
+                return EdgeEventType.ENTITY_VIEW;
+            case DASHBOARD:
+                return EdgeEventType.DASHBOARD;
+            case USER:
+                return EdgeEventType.USER;
+            case RULE_CHAIN:
+                return EdgeEventType.RULE_CHAIN;
+            case ALARM:
+                return EdgeEventType.ALARM;
+            case TENANT:
+                return EdgeEventType.TENANT;
+            case CUSTOMER:
+                return EdgeEventType.CUSTOMER;
+            case WIDGETS_BUNDLE:
+                return EdgeEventType.WIDGETS_BUNDLE;
+            case WIDGET_TYPE:
+                return EdgeEventType.WIDGET_TYPE;
+            default:
+                return null;
         }
     }
 }

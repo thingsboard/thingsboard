@@ -41,11 +41,13 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ACTION_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_EDGE_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ENTITY_BODY_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_BODY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ENTITY_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_UID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EPOCH_DIFF;
+import static org.thingsboard.server.dao.model.ModelConstants.EVENT_UID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 
 @Data
@@ -73,8 +75,11 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
     private String edgeEventAction;
 
     @Type(type = "json")
-    @Column(name = EDGE_EVENT_ENTITY_BODY_PROPERTY)
+    @Column(name = EDGE_EVENT_BODY_PROPERTY)
     private JsonNode entityBody;
+
+    @Column(name = EDGE_EVENT_UID_PROPERTY)
+    private String edgeEventUid;
 
     @Column(name = TS_COLUMN)
     private long ts;
@@ -95,9 +100,10 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
         if (edgeEvent.getEntityId() != null) {
             this.entityId = edgeEvent.getEntityId();
         }
-        this.edgeEventType = edgeEvent.getEdgeEventType();
-        this.edgeEventAction = edgeEvent.getEdgeEventAction();
-        this.entityBody = edgeEvent.getEntityBody();
+        this.edgeEventType = edgeEvent.getType();
+        this.edgeEventAction = edgeEvent.getAction();
+        this.entityBody = edgeEvent.getBody();
+        this.edgeEventUid = edgeEvent.getUid();
     }
 
     @Override
@@ -109,9 +115,10 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
         if (entityId != null) {
             edgeEvent.setEntityId(entityId);
         }
-        edgeEvent.setEdgeEventType(edgeEventType);
-        edgeEvent.setEdgeEventAction(edgeEventAction);
-        edgeEvent.setEntityBody(entityBody);
+        edgeEvent.setType(edgeEventType);
+        edgeEvent.setAction(edgeEventAction);
+        edgeEvent.setBody(entityBody);
+        edgeEvent.setUid(edgeEventUid);
         return edgeEvent;
     }
 

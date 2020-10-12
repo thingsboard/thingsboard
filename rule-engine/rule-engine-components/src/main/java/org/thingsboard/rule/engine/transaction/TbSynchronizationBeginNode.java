@@ -23,7 +23,6 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 @Slf4j
@@ -36,8 +35,7 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "Subsequent messages will not be processed until the previous message processing is completed or timeout event occurs.\n" +
                 "Size of the queue per originator and timeout values are configurable on a system level",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbNodeEmptyConfig",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE})
+        configDirective = "tbNodeEmptyConfig")
 @Deprecated
 public class TbSynchronizationBeginNode implements TbNode {
 

@@ -58,7 +58,5 @@ public interface DashboardService {
 
     Dashboard unassignDashboardFromEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId);
 
-    void unassignEdgeDashboards(TenantId tenantId, EdgeId edgeId);
-
     PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
 }

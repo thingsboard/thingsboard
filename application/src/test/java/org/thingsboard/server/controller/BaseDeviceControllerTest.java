@@ -24,10 +24,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -463,7 +463,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
         pageLink = new PageLink(4, 0, title1);
-        pageData = doGetTypedWithPageLink("/api/tenant/devices?", 
+        pageData = doGetTypedWithPageLink("/api/tenant/devices?",
                 new TypeReference<PageData<Device>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -473,7 +473,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
         pageLink = new PageLink(4, 0, title2);
-        pageData = doGetTypedWithPageLink("/api/tenant/devices?", 
+        pageData = doGetTypedWithPageLink("/api/tenant/devices?",
                 new TypeReference<PageData<Device>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -669,7 +669,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
         pageLink = new PageLink(4, 0, title1);
-        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/devices?", 
+        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/devices?",
                 new TypeReference<PageData<Device>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -679,7 +679,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
         pageLink = new PageLink(4, 0, title2);
-        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/devices?", 
+        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/devices?",
                 new TypeReference<PageData<Device>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -826,5 +826,32 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         loginSysAdmin();
         doDelete("/api/tenant/" + savedDifferentTenant.getId().getId().toString())
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testAssignDeviceToEdge() throws Exception {
+        Edge edge = constructEdge("My edge", "default");
+        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
+
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        doPost("/api/edge/" + savedEdge.getId().getId().toString()
+                + "/device/" + savedDevice.getId().getId().toString(), Device.class);
+
+        PageData<Device> pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/devices?",
+                    new TypeReference<PageData<Device>>() {}, new PageLink(100));
+
+        Assert.assertEquals(1, pageData.getData().size());
+
+        doDelete("/api/edge/" + savedEdge.getId().getId().toString()
+                + "/device/" + savedDevice.getId().getId().toString(), Device.class);
+
+        pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/devices?",
+                new TypeReference<PageData<Device>>() {}, new PageLink(100));
+
+        Assert.assertEquals(0, pageData.getData().size());
     }
 }

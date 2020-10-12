@@ -29,4 +29,13 @@ public interface TbRuleEngineDeviceRpcService extends RuleEngineRpcService {
      */
     void processRpcResponseFromDevice(FromDeviceRpcResponse response);
 
+
+    /**
+     * Sends Rpc response from the Device to TB Core.
+     *
+     * @param originServiceId Service ID of the origin component
+     * @param response the RPC response
+     */
+    void sendRpcResponseToTbCore(String originServiceId, FromDeviceRpcResponse response);
+
 }

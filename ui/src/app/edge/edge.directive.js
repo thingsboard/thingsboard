@@ -20,7 +20,7 @@ import edgeFieldsetTemplate from './edge-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EdgeDirective($compile, $templateCache, $translate, $mdDialog, $document, utils, toast, types, customerService) {
+export default function EdgeDirective($compile, $templateCache, $translate, $mdDialog, $document, utils, toast, types, customerService, edgeService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(edgeFieldsetTemplate);
         element.html(template);
@@ -35,6 +35,7 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
                 if (!scope.edge.id) {
                     scope.edge.routingKey = utils.guid('');
                     scope.edge.secret = generateSecret(20);
+                    scope.edge.cloudEndpoint = utils.baseUrl();
                 }
                 if (scope.edge.customerId && scope.edge.customerId.id !== types.id.nullUid) {
                     scope.isAssignedToCustomer = true;
@@ -68,6 +69,17 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
             toast.showSuccess($translate.instant('edge.id-copied-message'), 750, angular.element(element).parent().parent(), 'bottom left');
         };
 
+        scope.onEdgeSync = function (edgeId) {
+            edgeService.syncEdge(edgeId).then(
+                function success() {
+                    toast.showSuccess($translate.instant('edge.sync-message'), 750, angular.element(element).parent().parent(), 'bottom left');
+                },
+                function fail(error) {
+                    toast.showError(error);
+                }
+            );
+        }
+
         $compile(element.contents())(scope);
 
         scope.onEdgeInfoCopied = function(type) {
@@ -96,6 +108,11 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
             onAssignToCustomer: '&',
             onMakePublic: '&',
             onUnassignFromCustomer: '&',
+            onManageEdgeAssets: '&',
+            onManageEdgeDevices: '&',
+            onManageEdgeEntityViews: '&',
+            onManageEdgeDashboards: '&',
+            onManageEdgeRuleChains: '&',
             onDeleteEdge: '&'
         }
     };

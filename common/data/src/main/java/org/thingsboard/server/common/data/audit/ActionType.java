@@ -45,7 +45,9 @@ public enum ActionType {
     ASSIGNED_FROM_TENANT(false),
     ASSIGNED_TO_TENANT(false),
     ASSIGNED_TO_EDGE(false), // log edge name
-    UNASSIGNED_FROM_EDGE(false); // log edge name
+    UNASSIGNED_FROM_EDGE(false), // log edge name
+    CREDENTIALS_REQUEST(false),  // request credentials from edge
+    ENTITY_EXISTS_REQUEST(false);  // request to recreate entity on edge
 
     private final boolean isRead;
 

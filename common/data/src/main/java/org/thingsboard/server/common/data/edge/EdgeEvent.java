@@ -20,7 +20,6 @@ import lombok.Data;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.EdgeEventId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.UUID;
@@ -30,10 +29,11 @@ public class EdgeEvent extends BaseData<EdgeEventId> {
 
     private TenantId tenantId;
     private EdgeId edgeId;
-    private String edgeEventAction;
+    private String action;
     private UUID entityId;
-    private EdgeEventType edgeEventType;
-    private transient JsonNode entityBody;
+    private String uid;
+    private EdgeEventType type;
+    private transient JsonNode body;
 
     public EdgeEvent() {
         super();

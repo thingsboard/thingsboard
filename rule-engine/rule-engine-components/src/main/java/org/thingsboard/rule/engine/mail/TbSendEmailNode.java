@@ -27,7 +27,6 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.mail.internet.MimeMessage;
@@ -47,8 +46,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 "with <code>to Email</code> Node using <code>Successful</code> chain.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeSendEmailConfig",
-        icon = "send",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        icon = "send"
 )
 public class TbSendEmailNode implements TbNode {
 

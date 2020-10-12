@@ -729,6 +729,7 @@
                             <exclude>src/browserslist</exclude>
                             <exclude>**/*.raw</exclude>
                             <exclude>**/apache/cassandra/io/**</exclude>
+                            <exclude>.run/**</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>

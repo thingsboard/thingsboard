@@ -18,16 +18,18 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.EdgeEntityType;
 import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 
 @Component
 @Slf4j
-public class EntityViewUpdateMsgConstructor {
+public class EntityViewMsgConstructor {
 
-    public EntityViewUpdateMsg constructEntityViewUpdatedMsg(UpdateMsgType msgType, EntityView entityView) {
+    public EntityViewUpdateMsg constructEntityViewUpdatedMsg(UpdateMsgType msgType, EntityView entityView, CustomerId customerId) {
         EdgeEntityType entityType;
         switch (entityView.getEntityId().getEntityType()) {
             case DEVICE:
@@ -45,9 +47,16 @@ public class EntityViewUpdateMsgConstructor {
                 .setIdLSB(entityView.getId().getId().getLeastSignificantBits())
                 .setName(entityView.getName())
                 .setType(entityView.getType())
-                .setIdMSB(entityView.getEntityId().getId().getMostSignificantBits())
-                .setIdLSB(entityView.getEntityId().getId().getLeastSignificantBits())
+                .setEntityIdMSB(entityView.getEntityId().getId().getMostSignificantBits())
+                .setEntityIdLSB(entityView.getEntityId().getId().getLeastSignificantBits())
                 .setEntityType(entityType);
+        if (customerId != null) {
+            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
+            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+        }
+        if (entityView.getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(JacksonUtil.toString(entityView.getAdditionalInfo()));
+        }
         return builder.build();
     }
 

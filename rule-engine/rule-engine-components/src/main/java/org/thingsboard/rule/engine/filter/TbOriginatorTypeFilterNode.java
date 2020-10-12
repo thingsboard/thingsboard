@@ -16,11 +16,14 @@
 package org.thingsboard.rule.engine.filter;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 @Slf4j
@@ -32,9 +35,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "Filter incoming messages by message Originator Type",
         nodeDetails = "If Originator Type of incoming message is expected - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbFilterNodeOriginatorTypeConfig",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
-)
+        configDirective = "tbFilterNodeOriginatorTypeConfig")
 public class TbOriginatorTypeFilterNode implements TbNode {
 
     TbOriginatorTypeFilterNodeConfiguration config;

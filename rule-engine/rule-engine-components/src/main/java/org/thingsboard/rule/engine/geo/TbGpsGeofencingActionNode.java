@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.Collections;
@@ -52,8 +51,7 @@ import java.util.concurrent.TimeoutException;
         nodeDescription = "Produces incoming messages using GPS based geofencing",
         nodeDetails = "Extracts latitude and longitude parameters from incoming message and returns different events based on configuration parameters",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeGpsGeofencingConfig",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        configDirective = "tbActionNodeGpsGeofencingConfig"
 )
 public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofencingActionNodeConfiguration> {
 

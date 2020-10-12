@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.service.install.update;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -25,16 +23,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -50,7 +44,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.service.install.InstallScripts;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -58,7 +51,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.thingsboard.server.service.install.DatabaseHelper.objectMapper;
 
 @Service
 @Profile("install")
@@ -87,6 +79,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 1.4.0 to 2.0.0 ...");
                 tenantsDefaultRuleChainUpdater.updateEntities(null);
                 break;
+            case "2.5.5":
+                log.info("Updating data from version 2.5.5 to 2.6.0 ...");
+                tenantsDefaultEdgeRuleChainUpdater.updateEntities(null);
+                break;
             case "3.0.1":
                 log.info("Updating data from version 3.0.1 to 3.1.0 ...");
                 tenantsEntityViewsUpdater.updateEntities(null);
@@ -114,6 +110,27 @@ public class DefaultDataUpdateService implements DataUpdateService {
                         RuleChain ruleChain = ruleChainService.getRootTenantRuleChain(tenant.getId());
                         if (ruleChain == null) {
                             installScripts.createDefaultRuleChains(tenant.getId());
+                        }
+                    } catch (Exception e) {
+                        log.error("Unable to update Tenant", e);
+                    }
+                }
+            };
+
+    private PaginatedUpdater<String, Tenant> tenantsDefaultEdgeRuleChainUpdater =
+            new PaginatedUpdater<String, Tenant>() {
+
+                @Override
+                protected PageData<Tenant> findEntities(String region, PageLink pageLink) {
+                    return tenantService.findTenants(pageLink);
+                }
+
+                @Override
+                protected void updateEntity(Tenant tenant) {
+                    try {
+                        RuleChain defaultEdgeRuleChain = ruleChainService.getDefaultRootEdgeRuleChain(tenant.getId());
+                        if (defaultEdgeRuleChain == null) {
+                            installScripts.createDefaultEdgeRuleChains(tenant.getId());
                         }
                     } catch (Exception e) {
                         log.error("Unable to update Tenant", e);

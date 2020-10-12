@@ -32,10 +32,13 @@ import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.MsgType;
@@ -48,6 +51,7 @@ import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import java.util.List;
@@ -211,7 +215,18 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
-        if (isRuleEngineForCurrentTenant) {
+        if (msg.getEntityId().getEntityType() == EntityType.EDGE) {
+            EdgeId edgeId = new EdgeId(msg.getEntityId().getId());
+            EdgeRpcService edgeRpcService = systemContext.getEdgeRpcService();
+            if (msg.getEvent() == ComponentLifecycleEvent.DELETED) {
+                edgeRpcService.deleteEdge(edgeId);
+            } else {
+                Edge edge = systemContext.getEdgeService().findEdgeById(tenantId, edgeId);
+                if (msg.getEvent() == ComponentLifecycleEvent.UPDATED) {
+                    edgeRpcService.updateEdge(edge);
+                }
+            }
+        } else if (isRuleEngineForCurrentTenant) {
             TbActorRef target = getEntityActorRef(msg.getEntityId());
             if (target != null) {
                 if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {

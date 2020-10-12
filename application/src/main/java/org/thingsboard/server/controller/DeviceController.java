@@ -44,7 +44,6 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -126,8 +125,9 @@ public class DeviceController extends BaseController {
             tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(savedDevice.getTenantId(),
                     savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
 
-            sendNotificationMsgToEdgeService(savedDevice.getTenantId(), null, savedDevice.getId(),
-                    EdgeEventType.DEVICE, device.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+            if (device.getId() != null) {
+                sendNotificationMsgToEdgeService(savedDevice.getTenantId(), savedDevice.getId(), ActionType.UPDATED);
+            }
 
             logEntityAction(savedDevice.getId(), savedDevice,
                     savedDevice.getCustomerId(),
@@ -160,7 +160,7 @@ public class DeviceController extends BaseController {
                     device.getCustomerId(),
                     ActionType.DELETED, null, strDeviceId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), null, deviceId, EdgeEventType.DEVICE, ActionType.DELETED);
+            sendNotificationMsgToEdgeService(getTenantId(), deviceId, ActionType.DELETED);
 
             deviceStateService.onDeviceDeleted(device);
         } catch (Exception e) {
@@ -192,6 +192,9 @@ public class DeviceController extends BaseController {
                     savedDevice.getCustomerId(),
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strDeviceId, strCustomerId, customer.getName());
 
+            sendNotificationMsgToEdgeService(savedDevice.getTenantId(), savedDevice.getId(),
+                    customerId, ActionType.ASSIGNED_TO_CUSTOMER);
+
             return savedDevice;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), null,
@@ -219,6 +222,9 @@ public class DeviceController extends BaseController {
             logEntityAction(deviceId, device,
                     device.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDeviceId, customer.getId().toString(), customer.getName());
+
+            sendNotificationMsgToEdgeService(savedDevice.getTenantId(), savedDevice.getId(),
+                    customer.getId(), ActionType.UNASSIGNED_FROM_CUSTOMER);
 
             return savedDevice;
         } catch (Exception e) {
@@ -285,7 +291,7 @@ public class DeviceController extends BaseController {
 
             tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId()), null);
 
-            sendNotificationMsgToEdgeService(getTenantId(), null, device.getId(), EdgeEventType.DEVICE, ActionType.CREDENTIALS_UPDATED);
+            sendNotificationMsgToEdgeService(getTenantId(), device.getId(), ActionType.CREDENTIALS_UPDATED);
 
             logEntityAction(device.getId(), device,
                     device.getCustomerId(),
@@ -646,7 +652,7 @@ public class DeviceController extends BaseController {
                     savedDevice.getCustomerId(),
                     ActionType.ASSIGNED_TO_EDGE, null, strDeviceId, strEdgeId, edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedDevice.getId(), EdgeEventType.DEVICE, ActionType.ASSIGNED_TO_EDGE);
+            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedDevice.getId(), ActionType.ASSIGNED_TO_EDGE);
 
             return savedDevice;
         } catch (Exception e) {
@@ -677,7 +683,7 @@ public class DeviceController extends BaseController {
                     device.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_EDGE, null, strDeviceId, edge.getId().toString(), edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedDevice.getId(), EdgeEventType.DEVICE, ActionType.UNASSIGNED_FROM_EDGE);
+            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedDevice.getId(), ActionType.UNASSIGNED_FROM_EDGE);
 
             return savedDevice;
         } catch (Exception e) {

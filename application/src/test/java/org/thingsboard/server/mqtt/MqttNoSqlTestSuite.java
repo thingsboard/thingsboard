@@ -28,8 +28,7 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({
-        // TODO: voba - fix before final test on cassandra
-        "org.thingsboard.server.mqtt.*.nosql.*VOBA_FIX_BEFORE_FINAL_TESTTest"})
+        "org.thingsboard.server.mqtt.*.nosql.*Test"})
 public class MqttNoSqlTestSuite {
 
     @ClassRule

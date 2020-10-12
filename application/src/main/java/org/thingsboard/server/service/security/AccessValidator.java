@@ -112,7 +112,7 @@ public class AccessValidator {
     @Autowired
     protected EntityViewService entityViewService;
 
-    @Autowired
+    @Autowired(required = false)
     protected EdgeService edgeService;
 
     @Autowired

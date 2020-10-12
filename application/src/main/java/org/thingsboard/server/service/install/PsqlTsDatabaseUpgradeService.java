@@ -94,7 +94,7 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                         log.info("PostgreSQL version is valid!");
                         if (isOldSchema(conn, 2004003)) {
                             log.info("Load upgrade functions ...");
-                            loadSql(conn, LOAD_FUNCTIONS_SQL);
+                            loadSql(conn, "2.4.3", LOAD_FUNCTIONS_SQL);
                             log.info("Updating timeseries schema ...");
                             executeQuery(conn, CALL_CREATE_PARTITION_TS_KV_TABLE);
                             if (!partitionType.equals("INDEFINITE")) {
@@ -179,9 +179,9 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                         }
 
                         log.info("Load TTL functions ...");
-                        loadSql(conn, LOAD_TTL_FUNCTIONS_SQL);
+                        loadSql(conn, "2.4.3", LOAD_TTL_FUNCTIONS_SQL);
                         log.info("Load Drop Partitions functions ...");
-                        loadSql(conn, LOAD_DROP_PARTITIONS_FUNCTIONS_SQL);
+                        loadSql(conn, "2.4.3", LOAD_DROP_PARTITIONS_FUNCTIONS_SQL);
 
                         executeQuery(conn, "UPDATE tb_schema_settings SET schema_version = 2005000");
 
@@ -195,12 +195,18 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                     executeQuery(conn, "UPDATE tb_schema_settings SET schema_version = 2005001");
                 }
                 break;
+            case "2.5.5":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Load TTL functions ...");
+                    loadSql(conn, "2.6.0", LOAD_TTL_FUNCTIONS_SQL);
+                }
+                break;
             case "3.1.1":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Load TTL functions ...");
-                    loadSql(conn, LOAD_TTL_FUNCTIONS_SQL);
+                    loadSql(conn, "2.4.3", LOAD_TTL_FUNCTIONS_SQL);
                     log.info("Load Drop Partitions functions ...");
-                    loadSql(conn, LOAD_DROP_PARTITIONS_FUNCTIONS_SQL);
+                    loadSql(conn, "2.4.3", LOAD_DROP_PARTITIONS_FUNCTIONS_SQL);
                 }
                 break;
             default:
@@ -238,8 +244,8 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
     }
 
     @Override
-    protected void loadSql(Connection conn, String fileName) {
-        Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.3", fileName);
+    protected void loadSql(Connection conn, String version, String fileName) {
+        Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", version, fileName);
         try {
             loadFunctions(schemaUpdateFile, conn);
             log.info("Functions successfully loaded!");

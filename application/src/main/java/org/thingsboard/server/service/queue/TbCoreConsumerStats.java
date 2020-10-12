@@ -35,9 +35,9 @@ public class TbCoreConsumerStats {
     public static final String SUBSCRIPTION_INFO = "subInfo";
     public static final String DEVICE_CLAIMS = "claimDevice";
     public static final String DEVICE_STATES = "deviceState";
-    public static final String EDGE_EVENTS = "edgeEvents";
     public static final String SUBSCRIPTION_MSGS = "subMsgs";
     public static final String TO_CORE_NOTIFICATIONS = "coreNfs";
+    public static final String EDGE_NOTIFICATIONS = "edgeNfs";
 
     private final StatsCounter totalCounter;
     private final StatsCounter sessionEventCounter;
@@ -49,9 +49,9 @@ public class TbCoreConsumerStats {
     private final StatsCounter claimDeviceCounter;
 
     private final StatsCounter deviceStateCounter;
-    private final StatsCounter edgeNotificationCounter;
     private final StatsCounter subscriptionMsgCounter;
     private final StatsCounter toCoreNotificationsCounter;
+    private final StatsCounter edgeNotificationsCounter;
 
     private final List<StatsCounter> counters = new ArrayList<>();
 
@@ -67,10 +67,9 @@ public class TbCoreConsumerStats {
         this.subscriptionInfoCounter = statsFactory.createStatsCounter(statsKey, SUBSCRIPTION_INFO);
         this.claimDeviceCounter = statsFactory.createStatsCounter(statsKey, DEVICE_CLAIMS);
         this.deviceStateCounter = statsFactory.createStatsCounter(statsKey, DEVICE_STATES);
-        this.edgeNotificationCounter = statsFactory.createStatsCounter(statsKey, EDGE_EVENTS);
         this.subscriptionMsgCounter = statsFactory.createStatsCounter(statsKey, SUBSCRIPTION_MSGS);
         this.toCoreNotificationsCounter = statsFactory.createStatsCounter(statsKey, TO_CORE_NOTIFICATIONS);
-
+        this.edgeNotificationsCounter = statsFactory.createStatsCounter(statsKey, EDGE_NOTIFICATIONS);
 
         counters.add(totalCounter);
         counters.add(sessionEventCounter);
@@ -82,9 +81,9 @@ public class TbCoreConsumerStats {
         counters.add(claimDeviceCounter);
 
         counters.add(deviceStateCounter);
-        counters.add(edgeNotificationCounter);
         counters.add(subscriptionMsgCounter);
         counters.add(toCoreNotificationsCounter);
+        counters.add(edgeNotificationsCounter);
     }
 
     public void log(TransportProtos.TransportToDeviceActorMsg msg) {
@@ -119,7 +118,7 @@ public class TbCoreConsumerStats {
 
     public void log(TransportProtos.EdgeNotificationMsgProto msg) {
         totalCounter.increment();
-        edgeNotificationCounter.increment();
+        edgeNotificationsCounter.increment();
     }
 
     public void log(TransportProtos.SubscriptionMgrMsgProto msg) {

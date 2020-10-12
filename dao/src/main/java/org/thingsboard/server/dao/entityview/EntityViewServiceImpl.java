@@ -35,12 +35,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.EntitySubtype;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.EntityViewInfo;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -55,7 +49,6 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -99,9 +92,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
 
     @Autowired
     private CustomerDao customerDao;
-
-    @Autowired
-    private EdgeService edgeService;
 
     @Autowired
     private CacheManager cacheManager;
@@ -354,6 +344,18 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         if (!edge.getTenantId().getId().equals(entityView.getTenantId().getId())) {
             throw new DataValidationException("Can't assign entityView to edge from different tenant!");
         }
+
+        try {
+            Boolean relationExists = relationService.checkRelation(tenantId, edgeId, entityView.getEntityId(),
+                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE).get();
+            if (!relationExists) {
+                throw new DataValidationException("Can't assign entity view to edge because related device/asset doesn't assigned to edge!");
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("Exception during relation check", e);
+            throw new RuntimeException("Exception during relation check", e);
+        }
+
         try {
             createRelation(tenantId, new EntityRelation(edgeId, entityViewId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
         } catch (Exception e) {
@@ -380,7 +382,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     }
 
     @Override
-    public PageData<EntityView> findEntityViewsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
+    public PageData<EntityView> findEntityViewsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
         log.trace("Executing findEntityViewsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(edgeId, INCORRECT_EDGE_ID + edgeId);

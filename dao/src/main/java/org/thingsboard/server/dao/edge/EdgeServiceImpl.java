@@ -20,17 +20,26 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpHost;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
@@ -38,15 +47,17 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -55,12 +66,18 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.user.UserService;
 
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -77,9 +94,12 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 public class EdgeServiceImpl extends AbstractEntityService implements EdgeService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-    public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
+
+    private RestTemplate restTemplate;
+
+    private static final String EDGE_LICENSE_SERVER_ENDPOINT = "https://license.thingsboard.io";
 
     @Autowired
     private EdgeDao edgeDao;
@@ -91,16 +111,26 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     private CustomerDao customerDao;
 
     @Autowired
-    private CacheManager cacheManager;
+    private UserService userService;
 
     @Autowired
-    private DashboardService dashboardService;
+    private CacheManager cacheManager;
 
     @Autowired
     private RuleChainService ruleChainService;
 
     @Autowired
     private RelationService relationService;
+
+    @Value("${edges.rpc.enabled:false}")
+    private boolean edgesRpcEnabled;
+
+    @PostConstruct
+    public void init() {
+        if (edgesRpcEnabled) {
+            initRestTemplate();
+        }
+    }
 
     @Override
     public Edge findEdgeById(TenantId tenantId, EdgeId edgeId) {
@@ -160,10 +190,6 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
 
         Edge edge = edgeDao.findById(tenantId, edgeId.getId());
-
-        dashboardService.unassignEdgeDashboards(tenantId, edgeId);
-        // TODO: validate that rule chains are removed by deleteEntityRelations(tenantId, edgeId); call
-        ruleChainService.unassignEdgeRuleChains(tenantId, edgeId);
 
         List<Object> list = new ArrayList<>();
         list.add(edge.getTenantId());
@@ -355,6 +381,12 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                     if (StringUtils.isEmpty(edge.getRoutingKey())) {
                         throw new DataValidationException("Edge routing key should be specified!");
                     }
+                    if (StringUtils.isEmpty(edge.getEdgeLicenseKey())) {
+                        throw new DataValidationException("Edge license key should be specified!");
+                    }
+                    if (StringUtils.isEmpty(edge.getCloudEndpoint())) {
+                        throw new DataValidationException("Cloud endpoint should be specified!");
+                    }
                     if (edge.getTenantId() == null) {
                         throw new DataValidationException("Edge should be assigned to tenant!");
                     } else {
@@ -403,5 +435,108 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
             unassignEdgeFromCustomer(tenantId, new EdgeId(entity.getUuidId()));
         }
     };
+
+    @Override
+    public ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId) {
+        if (EntityType.TENANT.equals(entityId.getEntityType())) {
+            PageData<Edge> edgesByTenantId = findEdgesByTenantId(tenantId, new PageLink(Integer.MAX_VALUE));
+            return Futures.immediateFuture(edgesByTenantId.getData().stream().map(IdBased::getId).collect(Collectors.toList()));
+        } else {
+            switch (entityId.getEntityType()) {
+                case DEVICE:
+                case ASSET:
+                case ENTITY_VIEW:
+                    ListenableFuture<List<EntityRelation>> originatorEdgeRelationsFuture =
+                            relationService.findByToAndTypeAsync(tenantId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
+                    return Futures.transform(originatorEdgeRelationsFuture, originatorEdgeRelations -> {
+                        if (originatorEdgeRelations != null && originatorEdgeRelations.size() > 0 &&
+                                originatorEdgeRelations.get(0).getFrom() != null) {
+                            return Collections.singletonList(new EdgeId(originatorEdgeRelations.get(0).getFrom().getId()));
+                        } else {
+                            return Collections.emptyList();
+                        }
+                    }, MoreExecutors.directExecutor());
+                case DASHBOARD:
+                    return convertToEdgeIds(findEdgesByTenantIdAndDashboardId(tenantId, new DashboardId(entityId.getId())));
+                case RULE_CHAIN:
+                    return convertToEdgeIds(findEdgesByTenantIdAndRuleChainId(tenantId, new RuleChainId(entityId.getId())));
+                case USER:
+                    User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
+                    if (userById == null) {
+                        return Futures.immediateFuture(Collections.emptyList());
+                    }
+                    PageData<Edge> edges;
+                    if (userById.getCustomerId() == null || userById.getCustomerId().isNullUid()) {
+                        edges = findEdgesByTenantId(tenantId, new PageLink(Integer.MAX_VALUE));
+                    } else {
+                        edges = findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), new PageLink(Integer.MAX_VALUE));
+                    }
+                    return convertToEdgeIds(Futures.immediateFuture(edges.getData()));
+                default:
+                    return Futures.immediateFuture(Collections.emptyList());
+            }
+        }
+    }
+
+    private ListenableFuture<List<EdgeId>> convertToEdgeIds(ListenableFuture<List<Edge>> future) {
+        return Futures.transform(future, edges -> {
+            if (edges != null && !edges.isEmpty()) {
+                return edges.stream().map(IdBased::getId).collect(Collectors.toList());
+            } else {
+                return Collections.emptyList();
+            }
+        }, MoreExecutors.directExecutor());
+    }
+
+    @Override
+    public Object checkInstance(Object request) {
+        return this.restTemplate.postForEntity(EDGE_LICENSE_SERVER_ENDPOINT + "/api/license/checkInstance", request, Object.class, new Object[0]);
+    }
+
+    @Override
+    public Object activateInstance(String edgeLicenseSecret, String releaseDate) {
+        Map<String, String> params = new HashMap();
+        params.put("licenseSecret", edgeLicenseSecret);
+        params.put("releaseDate", releaseDate);
+        return this.restTemplate.postForEntity(EDGE_LICENSE_SERVER_ENDPOINT + "/api/license/activateInstance?licenseSecret={licenseSecret}&releaseDate={releaseDate}", (Object) null, Object.class, params);
+    }
+
+    private void initRestTemplate() {
+        boolean jdkHttpClientEnabled = org.apache.commons.lang3.StringUtils.isNotEmpty(System.getProperty("tb.proxy.jdk")) && System.getProperty("tb.proxy.jdk").equalsIgnoreCase("true");
+        boolean systemProxyEnabled = org.apache.commons.lang3.StringUtils.isNotEmpty(System.getProperty("tb.proxy.system")) && System.getProperty("tb.proxy.system").equalsIgnoreCase("true");
+        boolean proxyEnabled = org.apache.commons.lang3.StringUtils.isNotEmpty(System.getProperty("tb.proxy.host")) && org.apache.commons.lang3.StringUtils.isNotEmpty(System.getProperty("tb.proxy.port"));
+        if (jdkHttpClientEnabled) {
+            log.warn("Going to use plain JDK Http Client!");
+            SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+            if (proxyEnabled) {
+                log.warn("Going to use Proxy Server: [{}:{}]", System.getProperty("tb.proxy.host"), System.getProperty("tb.proxy.port"));
+                factory.setProxy(new Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved(System.getProperty("tb.proxy.host"), Integer.parseInt(System.getProperty("tb.proxy.port")))));
+            }
+
+            this.restTemplate = new RestTemplate(new SimpleClientHttpRequestFactory());
+        } else {
+            CloseableHttpClient httpClient;
+            HttpComponentsClientHttpRequestFactory requestFactory;
+            if (systemProxyEnabled) {
+                log.warn("Going to use System Proxy Server!");
+                httpClient = HttpClients.createSystem();
+                requestFactory = new HttpComponentsClientHttpRequestFactory();
+                requestFactory.setHttpClient(httpClient);
+                this.restTemplate = new RestTemplate(requestFactory);
+            } else if (proxyEnabled) {
+                log.warn("Going to use Proxy Server: [{}:{}]", System.getProperty("tb.proxy.host"), System.getProperty("tb.proxy.port"));
+                httpClient = HttpClients.custom().setSSLHostnameVerifier(new DefaultHostnameVerifier()).setProxy(new HttpHost(System.getProperty("tb.proxy.host"), Integer.parseInt(System.getProperty("tb.proxy.port")), "https")).build();
+                requestFactory = new HttpComponentsClientHttpRequestFactory();
+                requestFactory.setHttpClient(httpClient);
+                this.restTemplate = new RestTemplate(requestFactory);
+            } else {
+                httpClient = HttpClients.custom().setSSLHostnameVerifier(new DefaultHostnameVerifier()).build();
+                requestFactory = new HttpComponentsClientHttpRequestFactory();
+                requestFactory.setHttpClient(httpClient);
+                this.restTemplate = new RestTemplate(requestFactory);
+            }
+        }
+
+    }
 
 }

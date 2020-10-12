@@ -16,14 +16,14 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.ScriptEngine;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
-
-import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
@@ -38,9 +38,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
                 "<code>{ msg: <i style=\"color: #666;\">new payload</i>,<br/>&nbsp&nbsp&nbspmetadata: <i style=\"color: #666;\">new metadata</i>,<br/>&nbsp&nbsp&nbspmsgType: <i style=\"color: #666;\">new msgType</i> }</code><br/>" +
                 "All fields in resulting object are optional and will be taken from original message if not specified.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbTransformationNodeScriptConfig",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
-)
+        configDirective = "tbTransformationNodeScriptConfig")
 public class TbTransformMsgNode extends TbAbstractTransformNode {
 
     private TbTransformMsgNodeConfiguration config;

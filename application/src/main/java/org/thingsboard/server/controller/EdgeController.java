@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,6 +33,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -41,10 +41,13 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.EdgeGrpcSession;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -54,6 +57,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api")
 public class EdgeController extends BaseController {
 
@@ -102,6 +106,9 @@ public class EdgeController extends BaseController {
                 edgeService.assignDefaultRuleChainsToEdge(tenantId, savedEdge.getId());
             }
 
+            tbClusterService.onEntityStateChange(savedEdge.getTenantId(), savedEdge.getId(),
+                    created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+
             logEntityAction(savedEdge.getId(), savedEdge, null, created ? ActionType.ADDED : ActionType.UPDATED, null);
             return savedEdge;
         } catch (Exception e) {
@@ -120,6 +127,9 @@ public class EdgeController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             Edge edge = checkEdgeId(edgeId, Operation.DELETE);
             edgeService.deleteEdge(getTenantId(), edgeId);
+
+            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+                    ComponentLifecycleEvent.DELETED);
 
             logEntityAction(edgeId, edge,
                     null,
@@ -169,9 +179,15 @@ public class EdgeController extends BaseController {
 
             Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(getCurrentUser().getTenantId(), edgeId, customerId));
 
+            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+                    ComponentLifecycleEvent.UPDATED);
+
             logEntityAction(edgeId, savedEdge,
                     savedEdge.getCustomerId(),
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strEdgeId, strCustomerId, customer.getName());
+
+            sendNotificationMsgToEdgeService(savedEdge.getTenantId(), savedEdge.getId(),
+                    customerId, ActionType.ASSIGNED_TO_CUSTOMER);
 
             return savedEdge;
         } catch (Exception e) {
@@ -197,9 +213,15 @@ public class EdgeController extends BaseController {
 
             Edge savedEdge = checkNotNull(edgeService.unassignEdgeFromCustomer(getCurrentUser().getTenantId(), edgeId));
 
+            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+                    ComponentLifecycleEvent.UPDATED);
+
             logEntityAction(edgeId, edge,
                     edge.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strEdgeId, customer.getId().toString(), customer.getName());
+
+            sendNotificationMsgToEdgeService(savedEdge.getTenantId(), savedEdge.getId(),
+                    customer.getId(), ActionType.UNASSIGNED_FROM_CUSTOMER);
 
             return savedEdge;
         } catch (Exception e) {
@@ -310,6 +332,8 @@ public class EdgeController extends BaseController {
 
             Edge updatedEdge = edgeNotificationService.setEdgeRootRuleChain(getTenantId(), edge, ruleChainId);
 
+            tbClusterService.onEntityStateChange(updatedEdge.getTenantId(), updatedEdge.getId(), ComponentLifecycleEvent.UPDATED);
+
             logEntityAction(updatedEdge.getId(), updatedEdge, null, ActionType.UPDATED, null);
 
             return updatedEdge;
@@ -413,4 +437,41 @@ public class EdgeController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/sync", method = RequestMethod.POST)
+    public void syncEdge(@RequestBody EdgeId edgeId) throws ThingsboardException {
+        try {
+            edgeId = checkNotNull(edgeId);
+            if (isEdgesSupportEnabled()) {
+                EdgeGrpcSession session = edgeGrpcService.getEdgeGrpcSessionById(edgeId);
+                Edge edge = session.getEdge();
+                syncEdgeService.sync(edge);
+            } else {
+                throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
+            }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @RequestMapping(value = "/license/checkInstance", method = RequestMethod.POST)
+    @ResponseBody
+    public Object checkInstance(@RequestBody Object request) throws ThingsboardException {
+        try {
+            return edgeService.checkInstance(request);
+        } catch (Exception e) {
+            throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
+        }
+    }
+
+    @RequestMapping(value = "/license/activateInstance", params = {"licenseSecret", "releaseDate"}, method = RequestMethod.POST)
+    @ResponseBody
+    public Object activateInstance(@RequestParam String licenseSecret,
+                                   @RequestParam String releaseDate) throws ThingsboardException {
+        try {
+            return edgeService.activateInstance(licenseSecret, releaseDate);
+        } catch (Exception e) {
+            throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
+        }
+    }
 }

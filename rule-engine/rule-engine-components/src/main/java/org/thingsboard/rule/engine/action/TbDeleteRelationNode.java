@@ -27,7 +27,6 @@ import org.thingsboard.rule.engine.util.EntityContainer;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.ArrayList;
@@ -44,8 +43,7 @@ import java.util.List;
         nodeDetails = "If the relation(s) successfully deleted -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeDeleteRelationConfig",
-        icon = "remove_circle",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        icon = "remove_circle"
 )
 public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteRelationNodeConfiguration> {
 

@@ -122,10 +122,6 @@ public class InstallScripts {
                         }
                     }
             );
-            // TODO: voba
-//            dirStream.forEach(
-//                    path -> loadRuleChainFromFile(tenantId, path)
-//            );
         }
     }
 
@@ -150,6 +146,11 @@ public class InstallScripts {
         return ruleChain;
     }
 
+
+    public void createDefaultEdgeRuleChains(TenantId tenantId) {
+        Path tenantChainsDir = getTenantRuleChainsDir();
+        loadRuleChainFromFile(tenantId, tenantChainsDir.resolve("edge_root_rule_chain.json"));
+    }
 
     public void loadSystemWidgets() throws Exception {
         Path widgetBundlesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);

@@ -29,7 +29,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
@@ -63,8 +67,8 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 " otherwise, the message will be routed via <b>success</b> chain.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCustomTableConfig",
-        icon = "file_upload"
-)
+        icon = "file_upload",
+        ruleChainTypes = RuleChainType.CORE)
 public class TbSaveToCustomCassandraTableNode implements TbNode {
 
     private static final String TABLE_PREFIX = "cs_tb_";

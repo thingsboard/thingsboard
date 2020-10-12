@@ -94,7 +94,8 @@ public class AlarmController extends BaseController {
                     getCurrentUser().getCustomerId(),
                     alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
-            sendNotificationMsgToEdgeService(getTenantId(), savedAlarm.getId(), alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+            sendNotificationMsgToEdgeService(getTenantId(), savedAlarm.getId(),
+                    alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
 
             return savedAlarm;
         } catch (Exception e) {

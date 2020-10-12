@@ -38,7 +38,7 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class RuleChainUpdateMsgConstructor {
+public class RuleChainMsgConstructor {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -68,6 +68,8 @@ public class RuleChainUpdateMsgConstructor {
                     .addAllRuleChainConnections(constructRuleChainConnections(ruleChainMetaData.getRuleChainConnections()));
             if (ruleChainMetaData.getFirstNodeIndex() != null) {
                 builder.setFirstNodeIndex(ruleChainMetaData.getFirstNodeIndex());
+            } else {
+                builder.setFirstNodeIndex(-1);
             }
             builder.setMsgType(msgType);
             return builder.build();

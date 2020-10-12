@@ -18,14 +18,17 @@ package org.thingsboard.server.controller;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,6 +36,12 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.edge.imitator.EdgeImitator;
+import org.thingsboard.server.gen.edge.AssetUpdateMsg;
+import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
+import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.UserCredentialsUpdateMsg;
+import org.thingsboard.server.gen.edge.UserUpdateMsg;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -90,6 +99,8 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(savedEdge.getCustomerId());
         Assert.assertEquals(NULL_UUID, savedEdge.getCustomerId().getId());
         Assert.assertEquals(edge.getName(), savedEdge.getName());
+        Assert.assertTrue(StringUtils.isNoneBlank(savedEdge.getEdgeLicenseKey()));
+        Assert.assertTrue(StringUtils.isNoneBlank(savedEdge.getCloudEndpoint()));
 
         savedEdge.setName("My new edge");
         doPost("/api/edge", savedEdge, Edge.class);
@@ -638,17 +649,57 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(0, pageData.getData().size());
     }
 
-    private Edge constructEdge(String name, String type) {
-        return constructEdge(tenantId, name, type);
+    @Test
+    public void testSyncEdge() throws Exception {
+        Edge edge = doPost("/api/edge", constructEdge("Test Edge", "test"), Edge.class);
+
+        Device device = new Device();
+        device.setName("Edge Device 1");
+        device.setType("test");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        doPost("/api/edge/" + edge.getId().getId().toString()
+                + "/device/" + savedDevice.getId().getId().toString(), Device.class);
+
+        Asset asset = new Asset();
+        asset.setName("Edge Asset 1");
+        asset.setType("test");
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+        doPost("/api/edge/" + edge.getId().getId().toString()
+                + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+
+        EdgeImitator edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
+        edgeImitator.ignoreType(UserCredentialsUpdateMsg.class);
+        edgeImitator.expectMessageAmount(7);
+        edgeImitator.connect();
+        edgeImitator.waitForMessages();
+
+        Assert.assertEquals(7, edgeImitator.getDownlinkMsgs().size());
+        Assert.assertTrue(edgeImitator.findMessageByType(RuleChainUpdateMsg.class).isPresent());
+        Assert.assertTrue(edgeImitator.findMessageByType(DeviceUpdateMsg.class).isPresent());
+        Assert.assertTrue(edgeImitator.findMessageByType(AssetUpdateMsg.class).isPresent());
+        Assert.assertTrue(edgeImitator.findMessageByType(UserUpdateMsg.class).isPresent());
+
+        edgeImitator.getDownlinkMsgs().clear();
+
+        edgeImitator.expectMessageAmount(4);
+        doPost("/api/edge/sync", edge.getId());
+        edgeImitator.waitForMessages();
+
+        Assert.assertEquals(4, edgeImitator.getDownlinkMsgs().size());
+        Assert.assertTrue(edgeImitator.findMessageByType(RuleChainUpdateMsg.class).isPresent());
+        Assert.assertTrue(edgeImitator.findMessageByType(DeviceUpdateMsg.class).isPresent());
+        Assert.assertTrue(edgeImitator.findMessageByType(AssetUpdateMsg.class).isPresent());
+        Assert.assertTrue(edgeImitator.findMessageByType(UserUpdateMsg.class).isPresent());
+
+        edgeImitator.allowIgnoredTypes();
+        edgeImitator.disconnect();
+
+        doDelete("/api/device/" + savedDevice.getId().getId().toString())
+                .andExpect(status().isOk());
+        doDelete("/api/asset/" + savedAsset.getId().getId().toString())
+                .andExpect(status().isOk());
+        doDelete("/api/edge/" + edge.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
-    private Edge constructEdge(TenantId tenantId, String name, String type) {
-        Edge edge = new Edge();
-        edge.setTenantId(tenantId);
-        edge.setName(name);
-        edge.setType(type);
-        edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
-        edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
-        return edge;
-    }
 }

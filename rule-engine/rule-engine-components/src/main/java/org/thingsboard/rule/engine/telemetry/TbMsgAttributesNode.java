@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.telemetry;
 
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -26,7 +26,6 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
@@ -43,12 +42,13 @@ import java.util.Set;
         nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeAttributesConfig",
-        icon = "file_upload",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        icon = "file_upload"
 )
 public class TbMsgAttributesNode implements TbNode {
 
     private TbMsgAttributesNodeConfiguration config;
+
+    private static final String SCOPE = "scope";
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -66,6 +66,7 @@ public class TbMsgAttributesNode implements TbNode {
         }
         String src = msg.getData();
         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(src));
+        msg.getMetaData().putValue(SCOPE, config.getScope());
         String notifyDeviceStr = msg.getMetaData().getValue("notifyDevice");
         ctx.getTelemetryService().saveAndNotify(
                 ctx.getTenantId(),

@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -46,9 +47,9 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertEquals(saved.getTenantId(), edgeEvent.getTenantId());
         Assert.assertEquals(saved.getEdgeId(), edgeEvent.getEdgeId());
         Assert.assertEquals(saved.getEntityId(), edgeEvent.getEntityId());
-        Assert.assertEquals(saved.getEdgeEventType(), edgeEvent.getEdgeEventType());
-        Assert.assertEquals(saved.getEdgeEventAction(), edgeEvent.getEdgeEventAction());
-        Assert.assertEquals(saved.getEntityBody(), edgeEvent.getEntityBody());
+        Assert.assertEquals(saved.getType(), edgeEvent.getType());
+        Assert.assertEquals(saved.getAction(), edgeEvent.getAction());
+        Assert.assertEquals(saved.getBody(), edgeEvent.getBody());
     }
 
     protected EdgeEvent generateEdgeEvent(TenantId tenantId, EdgeId edgeId, EntityId entityId, String edgeEventAction) throws IOException {
@@ -59,9 +60,9 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
         edgeEvent.setTenantId(tenantId);
         edgeEvent.setEdgeId(edgeId);
         edgeEvent.setEntityId(entityId.getId());
-        edgeEvent.setEdgeEventType(EdgeEventType.DEVICE);
-        edgeEvent.setEdgeEventAction(edgeEventAction);
-        edgeEvent.setEntityBody(readFromResource("TestJsonData.json"));
+        edgeEvent.setType(EdgeEventType.DEVICE);
+        edgeEvent.setAction(edgeEventAction);
+        edgeEvent.setBody(readFromResource("TestJsonData.json"));
         return edgeEvent;
     }
 
@@ -84,7 +85,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
         saveEdgeEventWithProvidedTime(timeAfterEndTime, edgeId, deviceId, tenantId);
 
         TimePageLink pageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime", SortOrder.Direction.DESC), startTime, endTime);
-        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink);
+        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, true);
 
         Assert.assertNotNull(edgeEvents.getData());
         Assert.assertTrue(edgeEvents.getData().size() == 2);
@@ -93,12 +94,32 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertTrue(edgeEvents.hasNext());
         Assert.assertNotNull(pageLink.nextPageLink());
 
-        edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink.nextPageLink());
+        edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink.nextPageLink(), true);
 
         Assert.assertNotNull(edgeEvents.getData());
         Assert.assertTrue(edgeEvents.getData().size() == 1);
         Assert.assertTrue(edgeEvents.getData().get(0).getUuidId().equals(savedEdgeEvent.getUuidId()));
         Assert.assertFalse(edgeEvents.hasNext());
+    }
+
+    @Test
+    public void findEdgeEventsWithTsUpdateAndWithout() throws Exception {
+        EdgeId edgeId = new EdgeId(Uuids.timeBased());
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
+        TenantId tenantId = new TenantId(Uuids.timeBased());
+        TimePageLink pageLink = new TimePageLink(1);
+
+        EdgeEvent edgeEventWithTsUpdate = generateEdgeEvent(tenantId, edgeId, deviceId, ActionType.TIMESERIES_UPDATED.name());
+        edgeEventService.saveAsync(edgeEventWithTsUpdate).get();
+
+        PageData<EdgeEvent> allEdgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, true);
+        PageData<EdgeEvent> edgeEventsWithoutTsUpdate = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, false);
+
+        Assert.assertNotNull(allEdgeEvents.getData());
+        Assert.assertNotNull(edgeEventsWithoutTsUpdate.getData());
+        Assert.assertEquals(1, allEdgeEvents.getData().size());
+        Assert.assertEquals(allEdgeEvents.getData().get(0).getUuidId(), edgeEventWithTsUpdate.getUuidId());
+        Assert.assertTrue(edgeEventsWithoutTsUpdate.getData().isEmpty());
     }
 
     private EdgeEvent saveEdgeEventWithProvidedTime(long time, EdgeId edgeId, EntityId entityId, TenantId tenantId) throws Exception {

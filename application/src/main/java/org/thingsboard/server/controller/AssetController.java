@@ -97,16 +97,17 @@ public class AssetController extends BaseController {
         try {
             asset.setTenantId(getCurrentUser().getTenantId());
 
-           checkEntity(asset.getId(), asset, Resource.ASSET);
+            checkEntity(asset.getId(), asset, Resource.ASSET);
 
             Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
-
-            sendNotificationMsgToEdgeService(savedAsset.getTenantId(), null,
-                    savedAsset.getId(), EdgeEventType.ASSET, asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
 
             logEntityAction(savedAsset.getId(), savedAsset,
                     savedAsset.getCustomerId(),
                     asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+
+            if (asset.getId() != null) {
+                sendNotificationMsgToEdgeService(savedAsset.getTenantId(), savedAsset.getId(), ActionType.UPDATED);
+            }
 
             return savedAsset;
         } catch (Exception e) {
@@ -130,7 +131,7 @@ public class AssetController extends BaseController {
                     asset.getCustomerId(),
                     ActionType.DELETED, null, strAssetId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), null, assetId, EdgeEventType.ASSET, ActionType.DELETED);
+            sendNotificationMsgToEdgeService(getTenantId(), assetId, ActionType.DELETED);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ASSET),
                     null,
@@ -159,6 +160,9 @@ public class AssetController extends BaseController {
             logEntityAction(assetId, savedAsset,
                     savedAsset.getCustomerId(),
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strAssetId, strCustomerId, customer.getName());
+
+            sendNotificationMsgToEdgeService(savedAsset.getTenantId(), savedAsset.getId(),
+                    customerId, ActionType.ASSIGNED_TO_CUSTOMER);
 
             return savedAsset;
         } catch (Exception e) {
@@ -190,6 +194,9 @@ public class AssetController extends BaseController {
             logEntityAction(assetId, asset,
                     asset.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strAssetId, customer.getId().toString(), customer.getName());
+
+            sendNotificationMsgToEdgeService(savedAsset.getTenantId(), savedAsset.getId(),
+                    customer.getId(), ActionType.UNASSIGNED_FROM_CUSTOMER);
 
             return savedAsset;
         } catch (Exception e) {
@@ -425,7 +432,7 @@ public class AssetController extends BaseController {
                     savedAsset.getCustomerId(),
                     ActionType.ASSIGNED_TO_EDGE, null, strAssetId, strEdgeId, edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedAsset.getId(), EdgeEventType.ASSET, ActionType.ASSIGNED_TO_EDGE);
+            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedAsset.getId(), ActionType.ASSIGNED_TO_EDGE);
 
             return  savedAsset;
         } catch (Exception e) {
@@ -458,8 +465,7 @@ public class AssetController extends BaseController {
                     asset.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_EDGE, null, strAssetId, edge.getId().toString(), edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedAsset.getId(),
-                    EdgeEventType.ASSET, ActionType.UNASSIGNED_FROM_EDGE);
+            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedAsset.getId(), ActionType.UNASSIGNED_FROM_EDGE);
 
             return savedAsset;
         } catch (Exception e) {

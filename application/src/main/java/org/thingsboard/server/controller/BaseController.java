@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
@@ -94,7 +95,6 @@ import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -114,6 +114,8 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
+import org.thingsboard.server.service.edge.rpc.EdgeGrpcService;
+import org.thingsboard.server.service.edge.rpc.init.SyncEdgeService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -206,9 +208,6 @@ public abstract class BaseController {
     protected EntityViewService entityViewService;
 
     @Autowired
-    protected EdgeService edgeService;
-
-    @Autowired
     protected TelemetrySubscriptionService tsSubService;
 
     @Autowired
@@ -226,16 +225,25 @@ public abstract class BaseController {
     @Autowired
     protected TbDeviceProfileCache deviceProfileCache;
 
-    @Autowired
+    @Autowired(required = false)
+    protected EdgeService edgeService;
+
+    @Autowired(required = false)
     protected EdgeNotificationService edgeNotificationService;
 
-    @Autowired
-    protected EdgeEventService edgeEventService;
+    @Autowired(required = false)
+    protected SyncEdgeService syncEdgeService;
+
+    @Autowired(required = false)
+    protected EdgeGrpcService edgeGrpcService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
     private boolean logControllerErrorStackTrace;
 
+    @Value("${edges.rpc.enabled}")
+    @Getter
+    private boolean edgesSupportEnabled;
 
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {
@@ -774,8 +782,7 @@ public abstract class BaseController {
                     String strTenantName = extractParameter(String.class, 1, additionalInfo);
                     metaData.putValue("assignedToTenantId", strTenantId);
                     metaData.putValue("assignedToTenantName", strTenantName);
-                }
-                if (actionType == ActionType.ASSIGNED_TO_EDGE) {
+                } else if (actionType == ActionType.ASSIGNED_TO_EDGE) {
                     String strEdgeId = extractParameter(String.class, 1, additionalInfo);
                     metaData.putValue("assignedEdgeId", strEdgeId);
                 } else if (actionType == ActionType.UNASSIGNED_FROM_EDGE) {
@@ -852,31 +859,66 @@ public abstract class BaseController {
         }
         return null;
     }
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityRelation relation, ActionType edgeEventAction) {
+
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, CustomerId customerId, ActionType action) {
+        if (!edgesSupportEnabled) {
+            return;
+        }
         try {
-            sendNotificationMsgToEdgeService(tenantId, null, null, json.writeValueAsString(relation), EdgeEventType.RELATION, edgeEventAction);
+            sendNotificationMsgToEdgeService(tenantId, edgeId, null, json.writeValueAsString(customerId), EdgeEventType.EDGE, action);
+        } catch (Exception e) {
+            log.warn("Failed to push assign/unassign to/from customer to core: {}", customerId, e);
+        }
+    }
+
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, CustomerId customerId, ActionType action) {
+        if (!edgesSupportEnabled) {
+            return;
+        }
+        EdgeEventType type = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());
+        try {
+            if (type != null) {
+                sendNotificationMsgToEdgeService(tenantId, null, entityId, json.writeValueAsString(customerId), type, action);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to push assign/unassign to/from customer to core: {}", customerId, e);
+        }
+    }
+
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityRelation relation, ActionType action) {
+        if (!edgesSupportEnabled) {
+            return;
+        }
+        try {
+            if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
+                    !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
+                sendNotificationMsgToEdgeService(tenantId, null, null, json.writeValueAsString(relation), EdgeEventType.RELATION, action);
+            }
         } catch (Exception e) {
             log.warn("Failed to push relation to core: {}", relation, e);
         }
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, ActionType edgeEventAction) {
-        EdgeEventType edgeEventType = edgeEventService.getEdgeEventTypeByEntityType(entityId.getEntityType());
-        if (edgeEventType != null) {
-            sendNotificationMsgToEdgeService(tenantId, null, entityId, null, edgeEventType, edgeEventAction);
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, ActionType action) {
+        sendNotificationMsgToEdgeService(tenantId, null, entityId, action);
+    }
+
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, ActionType action) {
+        if (!edgesSupportEnabled) {
+            return;
+        }
+        EdgeEventType type = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());
+        if (type != null) {
+            sendNotificationMsgToEdgeService(tenantId, edgeId, entityId, null, type, action);
         }
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventType edgeEventType, ActionType edgeEventAction) {
-        sendNotificationMsgToEdgeService(tenantId, edgeId, entityId, null, edgeEventType, edgeEventAction);
-    }
-
-    private void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, String entityBody, EdgeEventType edgeEventType, ActionType edgeEventAction) {
+    private void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, ActionType action) {
         TransportProtos.EdgeNotificationMsgProto.Builder builder = TransportProtos.EdgeNotificationMsgProto.newBuilder();
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
-        builder.setEdgeEventType(edgeEventType.name());
-        builder.setEdgeEventAction(edgeEventAction.name());
+        builder.setType(type.name());
+        builder.setAction(action.name());
         if (entityId != null) {
             builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
             builder.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
@@ -886,8 +928,8 @@ public abstract class BaseController {
             builder.setEdgeIdMSB(edgeId.getId().getMostSignificantBits());
             builder.setEdgeIdLSB(edgeId.getId().getLeastSignificantBits());
         }
-        if (entityBody != null) {
-            builder.setEntityBody(entityBody);
+        if (body != null) {
+            builder.setBody(body);
         }
         TransportProtos.EdgeNotificationMsgProto msg = builder.build();
         tbClusterService.pushMsgToCore(tenantId, entityId != null ? entityId : tenantId,

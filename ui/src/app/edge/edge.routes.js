@@ -21,6 +21,8 @@ import devicesTemplate from "../device/devices.tpl.html";
 import assetsTemplate from "../asset/assets.tpl.html";
 import dashboardsTemplate from "../dashboard/dashboards.tpl.html";
 import dashboardTemplate from "../dashboard/dashboard.tpl.html";
+import ruleChainsTemplate from "../rulechain/rulechains.tpl.html";
+import ruleChainTemplate from "../rulechain/rulechain.tpl.html";
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -49,8 +51,7 @@ export default function EdgeRoutes($stateProvider, types) {
             ncyBreadcrumb: {
                 label: '{"icon": "transform", "label": "edge.edges"}'
             }
-        })
-        .state('home.edges.entityViews', {
+        }).state('home.edges.entityViews', {
             url: '/:edgeId/entityViews',
             params: {'topIndex': 0},
             module: 'private',
@@ -72,8 +73,7 @@ export default function EdgeRoutes($stateProvider, types) {
             ncyBreadcrumb: {
                 label: '{"icon": "view_quilt", "label": "edge.entity-views"}'
             }
-        })
-        .state('home.edges.devices', {
+        }).state('home.edges.devices', {
             url: '/:edgeId/devices',
             params: {'topIndex': 0},
             module: 'private',
@@ -95,8 +95,7 @@ export default function EdgeRoutes($stateProvider, types) {
             ncyBreadcrumb: {
                 label: '{"icon": "devices_other", "label": "edge.devices"}'
             }
-        })
-        .state('home.edges.assets', {
+        }).state('home.edges.assets', {
             url: '/:edgeId/assets',
             params: {'topIndex': 0},
             module: 'private',
@@ -118,29 +117,27 @@ export default function EdgeRoutes($stateProvider, types) {
             ncyBreadcrumb: {
                 label: '{"icon": "domain", "label": "edge.assets"}'
             }
-        })
-        .state('home.edges.dashboards', {
-        url: '/:edgeId/dashboards',
-        params: {'topIndex': 0},
-        module: 'private',
-        auth: ['TENANT_ADMIN'],
-        views: {
-            "content@home": {
-                templateUrl: dashboardsTemplate,
-                controllerAs: 'vm',
-                controller: 'DashboardsController'
+        }).state('home.edges.dashboards', {
+            url: '/:edgeId/dashboards',
+            params: {'topIndex': 0},
+            module: 'private',
+            auth: ['TENANT_ADMIN'],
+            views: {
+                "content@home": {
+                    templateUrl: dashboardsTemplate,
+                    controllerAs: 'vm',
+                    controller: 'DashboardsController'
+                }
+            },
+            data: {
+                dashboardsType: 'edge',
+                searchEnabled: true,
+                pageTitle: 'edge.dashboards'
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "dashboard", "label": "edge.dashboards"}'
             }
-        },
-        data: {
-            dashboardsType: 'edge',
-            searchEnabled: true,
-            pageTitle: 'edge.dashboards'
-        },
-        ncyBreadcrumb: {
-            label: '{"icon": "dashboard", "label": "edge.dashboards"}'
-        }
-    })
-        .state('home.edges.dashboards.dashboard', {
+        }).state('home.edges.dashboards.dashboard', {
             url: '/:dashboardId?state',
             reloadOnSearch: false,
             module: 'private',
@@ -160,6 +157,85 @@ export default function EdgeRoutes($stateProvider, types) {
             },
             ncyBreadcrumb: {
                 label: '{"icon": "dashboard", "label": "{{ vm.dashboard.title }}", "translate": "false"}'
+            }
+        }).state('home.customers.edges', {
+            url: '/:customerId/edges',
+            params: {'topIndex': 0},
+            module: 'private',
+            auth: ['TENANT_ADMIN'],
+            views: {
+                "content@home": {
+                    templateUrl: edgesTemplate,
+                    controllerAs: 'vm',
+                    controller: 'EdgeController'
+                }
+            },
+            data: {
+                edgesType: 'customer',
+                searchEnabled: true,
+                searchByEntitySubtype: true,
+                searchEntityType: types.entityType.edge,
+                pageTitle: 'customer.edges'
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "router", "label": "{{ vm.customerEdgesTitle }}", "translate": "false"}'
+            }
+        }).state('home.edges.ruleChains', {
+            url: '/:edgeId/ruleChains',
+            params: {'topIndex': 0},
+            module: 'private',
+            auth: ['TENANT_ADMIN'],
+            views: {
+                "content@home": {
+                    templateUrl: ruleChainsTemplate,
+                    controllerAs: 'vm',
+                    controller: 'RuleChainsController'
+                }
+            },
+            data: {
+                searchEnabled: true,
+                pageTitle: 'edge.rulechains',
+                ruleChainsType: 'edge'
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "settings_ethernet", "label": "rulechain.edge-rulechains"}'
+            }
+        }).state('home.edges.ruleChains.ruleChain', {
+            url: '/:ruleChainId',
+            reloadOnSearch: false,
+            module: 'private',
+            auth: ['SYS_ADMIN', 'TENANT_ADMIN'],
+            views: {
+                "content@home": {
+                    templateUrl: ruleChainTemplate,
+                    controller: 'RuleChainController',
+                    controllerAs: 'vm'
+                }
+            },
+            resolve: {
+                ruleChain:
+                /*@ngInject*/
+                    function($stateParams, ruleChainService) {
+                        return ruleChainService.getRuleChain($stateParams.ruleChainId);
+                    },
+                ruleChainMetaData:
+                /*@ngInject*/
+                    function($stateParams, ruleChainService) {
+                        return ruleChainService.getRuleChainMetaData($stateParams.ruleChainId);
+                    },
+                ruleNodeComponents:
+                /*@ngInject*/
+                    function($stateParams, ruleChainService) {
+                        return ruleChainService.getRuleNodeComponents(types.ruleChainType.edge);
+                    }
+            },
+            data: {
+                import: false,
+                searchEnabled: false,
+                pageTitle: 'edge.rulechain'
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "settings_ethernet", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
             }
         });
 }

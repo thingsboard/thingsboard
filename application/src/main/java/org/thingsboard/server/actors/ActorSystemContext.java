@@ -32,7 +32,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.DataConstants;
@@ -45,6 +44,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
+import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
@@ -68,7 +68,7 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
@@ -198,10 +198,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private EdgeService edgeService;
-
-    @Autowired
-    @Getter
     private TelemetrySubscriptionService tsSubService;
 
     @Autowired
@@ -274,9 +270,16 @@ public class ActorSystemContext {
     private TbCoreDeviceRpcService tbCoreDeviceRpcService;
 
     @Lazy
-    @Autowired
-    @Getter
-    private EdgeEventService edgeEventService;
+    @Autowired(required = false)
+    @Getter private EdgeService edgeService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter private EdgeEventService edgeEventService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter private EdgeRpcService edgeRpcService;
 
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter

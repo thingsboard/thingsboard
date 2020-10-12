@@ -35,7 +35,17 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CLOUD_ENDPOINT_KEY_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LABEL_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LICENSE_KEY_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROOT_RULE_CHAIN_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROUTING_KEY_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_SECRET_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -70,6 +80,12 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
     @Column(name = EDGE_SECRET_PROPERTY)
     private String secret;
 
+    @Column(name = EDGE_LICENSE_KEY_PROPERTY)
+    private String edgeLicenseKey;
+
+    @Column(name = EDGE_CLOUD_ENDPOINT_KEY_PROPERTY)
+    private String cloudEndpoint;
+
     @Type(type = "json")
     @Column(name = ModelConstants.EDGE_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
@@ -100,6 +116,8 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
         this.label = edge.getLabel();
         this.routingKey = edge.getRoutingKey();
         this.secret = edge.getSecret();
+        this.edgeLicenseKey = edge.getEdgeLicenseKey();
+        this.cloudEndpoint = edge.getCloudEndpoint();
         this.configuration = edge.getConfiguration();
         this.additionalInfo = edge.getAdditionalInfo();
     }
@@ -115,6 +133,8 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
         this.searchText = edgeEntity.getSearchText();
         this.routingKey = edgeEntity.getRoutingKey();
         this.secret = edgeEntity.getSecret();
+        this.edgeLicenseKey = edgeEntity.getEdgeLicenseKey();
+        this.cloudEndpoint = edgeEntity.getCloudEndpoint();
         this.configuration = edgeEntity.getConfiguration();
         this.additionalInfo = edgeEntity.getAdditionalInfo();
     }
@@ -150,6 +170,8 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
         edge.setLabel(label);
         edge.setRoutingKey(routingKey);
         edge.setSecret(secret);
+        edge.setEdgeLicenseKey(edgeLicenseKey);
+        edge.setCloudEndpoint(cloudEndpoint);
         edge.setConfiguration(configuration);
         edge.setAdditionalInfo(additionalInfo);
         return edge;

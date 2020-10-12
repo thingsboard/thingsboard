@@ -49,6 +49,8 @@ public class CassandraTsDatabaseUpgradeService extends AbstractCassandraDatabase
                 log.info("Schema updated.");
                 break;
             case "2.5.0":
+            case "2.5.4":
+            case "2.5.5":
             case "3.1.1":
                 break;
             default:

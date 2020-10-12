@@ -30,7 +30,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -51,9 +50,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
-import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -91,12 +88,6 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
 
     @Autowired
     private CustomerDao customerDao;
-
-    @Autowired
-    private EntityViewService entityViewService;
-
-    @Autowired
-    private EdgeService edgeService;
 
     @Autowired
     private CacheManager cacheManager;
@@ -352,6 +343,9 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         if (edge == null) {
             throw new DataValidationException("Can't unassign asset from non-existent edge!");
         }
+
+        checkAssignedEntityViewsToEdge(tenantId, assetId, edgeId);
+
         try {
             deleteRelation(tenantId, new EntityRelation(edgeId, assetId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
         } catch (Exception e) {

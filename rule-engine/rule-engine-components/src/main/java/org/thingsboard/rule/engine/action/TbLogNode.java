@@ -17,14 +17,17 @@ package org.thingsboard.rule.engine.action;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.ScriptEngine;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -37,10 +40,8 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
                 "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeLogConfig",
-        icon = "menu",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
+        icon = "menu"
 )
-
 public class TbLogNode implements TbNode {
 
     private TbLogNodeConfiguration config;

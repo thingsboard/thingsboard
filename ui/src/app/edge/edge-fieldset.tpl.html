@@ -21,6 +21,21 @@
 <md-button ng-click="onUnassignFromCustomer({event: $event, isPublic: isPublic})"
            ng-show="!isEdit && (edgeScope === 'customer' || edgeScope === 'tenant') && isAssignedToCustomer"
            class="md-raised md-primary">{{ isPublic ? 'edge.make-private' : 'edge.unassign-from-customer' | translate }}</md-button>
+<md-button ng-click="onManageEdgeAssets({event: $event})"
+           ng-show="!isEdit && edgeScope === 'tenant'"
+           class="md-raised md-primary">{{ 'edge.manage-edge-assets' | translate }}</md-button>
+<md-button ng-click="onManageEdgeDevices({event: $event})"
+           ng-show="!isEdit && edgeScope === 'tenant'"
+           class="md-raised md-primary">{{ 'edge.manage-edge-devices' | translate }}</md-button>
+<md-button ng-click="onManageEdgeEntityViews({event: $event})"
+           ng-show="!isEdit && edgeScope === 'tenant'"
+           class="md-raised md-primary">{{ 'edge.manage-edge-entity-views' | translate }}</md-button>
+<md-button ng-click="onManageEdgeDashboards({event: $event})"
+           ng-show="!isEdit && edgeScope === 'tenant'"
+           class="md-raised md-primary">{{ 'edge.manage-edge-dashboards' | translate }}</md-button>
+<md-button ng-click="onManageEdgeRuleChains({event: $event})"
+           ng-show="!isEdit && edgeScope === 'tenant'"
+           class="md-raised md-primary">{{ 'edge.manage-edge-rulechains' | translate }}</md-button>
 <md-button ng-click="onDeleteEdge({event: $event})"
            ng-show="!isEdit && edgeScope === 'tenant'"
            class="md-raised md-primary">{{ 'edge.delete' | translate }}</md-button>
@@ -32,6 +47,12 @@
                class="md-raised">
         <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
         <span translate>edge.copy-id</span>
+    </md-button>
+    <md-button ng-click="onEdgeSync(edge.id)"
+               ng-show="!isEdit"
+               class="md-raised">
+        <md-icon md-svg-icon="mdi:sync"></md-icon>
+        <span translate>edge.sync</span>
     </md-button>
 </div>
 
@@ -67,6 +88,20 @@
         <md-input-container class="md-block">
             <label translate>edge.description</label>
             <textarea ng-model="edge.additionalInfo.description" rows="2"></textarea>
+        </md-input-container>
+        <md-input-container class="md-block">
+            <label translate>edge.edge-license-key</label>
+            <input required name="edgeLicenseKey" ng-model="edge.edgeLicenseKey">
+            <div ng-messages="theForm.edgeLicenseKey.$error">
+                <div translate ng-message="required">edge.edge-license-key-required</div>
+            </div>
+        </md-input-container>
+        <md-input-container class="md-block">
+            <label translate>edge.cloud-endpoint</label>
+            <input required name="cloudEndpoint" ng-model="edge.cloudEndpoint">
+            <div ng-messages="theForm.cloudEndpoint.$error">
+                <div translate ng-message="required">edge.cloud-endpoint-required</div>
+            </div>
         </md-input-container>
     </fieldset>
     <div layout="row">

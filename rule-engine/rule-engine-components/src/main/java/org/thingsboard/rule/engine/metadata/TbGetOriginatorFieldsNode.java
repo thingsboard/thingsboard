@@ -28,11 +28,9 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesFieldsAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 /**
  * Created by ashvayka on 19.01.18.
@@ -44,9 +42,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         nodeDescription = "Add Message Originator fields values into Message Metadata",
         nodeDetails = "Will fetch fields values specified in mapping. If specified field is not part of originator fields it will be ignored.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbEnrichmentNodeOriginatorFieldsConfig",
-        ruleChainTypes = {RuleChainType.CORE, RuleChainType.EDGE}
-)
+        configDirective = "tbEnrichmentNodeOriginatorFieldsConfig")
 public class TbGetOriginatorFieldsNode implements TbNode {
 
     private TbGetOriginatorFieldsConfiguration config;

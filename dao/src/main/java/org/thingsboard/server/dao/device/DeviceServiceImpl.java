@@ -61,9 +61,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
-import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -112,12 +110,6 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
     @Autowired
     private DeviceProfileService deviceProfileService;
-
-    @Autowired
-    private EntityViewService entityViewService;
-
-    @Autowired
-    private EdgeService edgeService;
 
     @Autowired
     private CacheManager cacheManager;
@@ -502,6 +494,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         if (edge == null) {
             throw new DataValidationException("Can't unassign device from non-existent edge!");
         }
+
+        checkAssignedEntityViewsToEdge(tenantId, deviceId, edgeId);
+
         try {
             deleteRelation(tenantId, new EntityRelation(edgeId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
         } catch (Exception e) {
@@ -512,7 +507,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
+    public PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
