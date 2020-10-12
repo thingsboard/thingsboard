@@ -74,6 +74,12 @@
         &:hover {
           border-bottom: 0;
         }
+
+        .icon{
+          height: 20px;
+          width: 20px;
+          vertical-align: sub;
+        }
       }
 
       .centered ::ng-deep .mat-button-wrapper {

@@ -275,7 +275,7 @@
                                             <mat-form-field fxFlex class="mat-block" floatLabel="always">
                                               <mat-label translate>admin.oauth2.login-button-label</mat-label>
                                               <input matInput formControlName="loginButtonLabel"
-                                                     placeholder="{{ 'admin.oauth2.login-button-label-1' | translate }}"
+                                                     placeholder="{{ 'admin.oauth2.login-button-label-placeholder' | translate }}"
                                                      required>
                                               <mat-error *ngIf="registration.get('loginButtonLabel').hasError('required')">
                                                 {{ 'admin.oauth2.login-button-label-required' | translate }}

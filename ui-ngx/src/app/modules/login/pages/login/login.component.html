@@ -31,7 +31,7 @@
             <div class="oauth-container tb-default" fxLayout="column" fxLayoutGap="16px" *ngIf="oauth2Clients?.length">
               <ng-container *ngFor="let oauth2Client of oauth2Clients">
                 <a mat-raised-button class="login-with-button" href="{{ oauth2Client.url }}">
-                  <mat-icon svgIcon="{{ oauth2Client.icon }}"></mat-icon>
+                  <mat-icon class="icon" svgIcon="{{ oauth2Client.icon }}"></mat-icon>
                   {{ 'login.login-with' | translate: {name: oauth2Client.name} }}
                 </a>
               </ng-container>
