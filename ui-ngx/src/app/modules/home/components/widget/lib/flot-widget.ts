@@ -20,7 +20,8 @@ import {
   createLabelFromDatasource,
   deepClone,
   insertVariable,
-  isDefined, isDefinedAndNotNull,
+  isDefined,
+  isDefinedAndNotNull,
   isEqual,
   isNumber,
   isUndefined
