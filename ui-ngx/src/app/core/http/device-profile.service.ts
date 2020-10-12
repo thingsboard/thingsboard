@@ -20,7 +20,8 @@ import { PageLink } from '@shared/models/page/page-link';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
-import { DeviceProfile, DeviceProfileInfo } from '@shared/models/device.models';
+import { DeviceProfile, DeviceProfileInfo, DeviceTransportType } from '@shared/models/device.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -59,8 +60,13 @@ export class DeviceProfileService {
     return this.http.get<DeviceProfileInfo>(`/api/deviceProfileInfo/${deviceProfileId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getDeviceProfileInfos(pageLink: PageLink, config?: RequestConfig): Observable<PageData<DeviceProfileInfo>> {
-    return this.http.get<PageData<DeviceProfileInfo>>(`/api/deviceProfileInfos${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+  public getDeviceProfileInfos(pageLink: PageLink, transportType?: DeviceTransportType,
+                               config?: RequestConfig): Observable<PageData<DeviceProfileInfo>> {
+    let url = `/api/deviceProfileInfos${pageLink.toQuery()}`;
+    if (isDefinedAndNotNull(transportType)) {
+      url += `&transportType=${transportType}`;
+    }
+    return this.http.get<PageData<DeviceProfileInfo>>(url, defaultHttpOptionsFromConfig(config));
   }
 
 }

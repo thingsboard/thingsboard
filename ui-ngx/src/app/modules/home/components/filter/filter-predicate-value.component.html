@@ -76,7 +76,6 @@
           type="button"
           matTooltip="{{ (dynamicMode ? 'filter.switch-to-default-value' : 'filter.switch-to-dynamic-value') | translate }}"
           matTooltipPosition="above"
-          *ngIf="allow"
           (click)="dynamicMode = !dynamicMode">
     <mat-icon class="tb-mat-20" [svgIcon]="dynamicMode ? 'mdi:numeric' : 'mdi:variable'"></mat-icon>
   </button>

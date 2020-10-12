@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.id;
+package org.thingsboard.server.common.data.oauth2;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-import java.util.UUID;
-
-public class OAuth2IntegrationId extends UUIDBased {
-
-    private static final long serialVersionUID = 1L;
-
-    @JsonCreator
-    public OAuth2IntegrationId(@JsonProperty("id") UUID id) {
-        super(id);
-    }
-
-    public static OAuth2IntegrationId fromString(String oauth2IntegrationId) {
-        return new OAuth2IntegrationId(UUID.fromString(oauth2IntegrationId));
-    }
+@Builder(toBuilder = true)
+@EqualsAndHashCode
+@Data
+@ToString
+public class OAuth2MapperConfig {
+    private boolean allowUserCreation;
+    private boolean activateUser;
+    private MapperType type;
+    private OAuth2BasicMapperConfig basic;
+    private OAuth2CustomMapperConfig custom;
 }

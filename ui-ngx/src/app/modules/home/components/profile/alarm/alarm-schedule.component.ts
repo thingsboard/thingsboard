@@ -16,6 +16,7 @@
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
   FormArray,
   FormBuilder,
@@ -35,6 +36,7 @@ import { MatCheckboxChange } from '@angular/material/checkbox';
 @Component({
   selector: 'tb-alarm-schedule',
   templateUrl: './alarm-schedule.component.html',
+  styleUrls: ['./alarm-schedule.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => AlarmScheduleComponent),
@@ -79,7 +81,7 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
       items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)))
     });
     this.alarmScheduleForm.get('type').valueChanges.subscribe((type) => {
-      this.alarmScheduleForm.reset({type, items: this.defaultItems}, {emitEvent: false});
+      this.alarmScheduleForm.reset({type, items: this.defaultItems, timezone: this.defaultTimezone}, {emitEvent: false});
       this.updateValidators(type, true);
       this.alarmScheduleForm.updateValueAndValidity();
     });
@@ -131,13 +133,7 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
           this.modelValue.items
             .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
             .forEach((item, index) => {
-              if (item.enabled) {
-                this.itemsSchedulerForm.at(index).get('startsOn').enable({emitEvent: false});
-                this.itemsSchedulerForm.at(index).get('endsOn').enable({emitEvent: false});
-              } else {
-                this.itemsSchedulerForm.at(index).get('startsOn').disable({emitEvent: false});
-                this.itemsSchedulerForm.at(index).get('endsOn').disable({emitEvent: false});
-              }
+              this.disabledSelectedTime(item.enabled, index);
               alarmDays.push({
                 enabled: item.enabled,
                 startsOn: this.timestampToTime(item.startsOn),
@@ -206,15 +202,15 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
           .filter(day => !!day);
       }
       if (isDefined(value.startsOn) && value.startsOn !== 0) {
-        value.startsOn = this.timeToTimestamp(value.startsOn);
+        value.startsOn = this.timeToTimestampUTC(value.startsOn);
       }
       if (isDefined(value.endsOn) && value.endsOn !== 0) {
-        value.endsOn = this.timeToTimestamp(value.endsOn);
+        value.endsOn = this.timeToTimestampUTC(value.endsOn);
       }
       if (isDefined(value.items)){
         value.items = this.alarmScheduleForm.getRawValue().items;
         value.items = value.items.map((item) => {
-          return { ...item, startsOn: this.timeToTimestamp(item.startsOn), endsOn: this.timeToTimestamp(item.endsOn)};
+          return { ...item, startsOn: this.timeToTimestampUTC(item.startsOn), endsOn: this.timeToTimestampUTC(item.endsOn)};
         });
       }
       this.modelValue = value;
@@ -222,7 +218,7 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
     }
   }
 
-  private timeToTimestamp(date: Date | number): number {
+  private timeToTimestampUTC(date: Date | number): number {
     if (typeof date === 'number' || date === null) {
       return 0;
     }
@@ -244,16 +240,39 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
 
   changeCustomScheduler($event: MatCheckboxChange, index: number) {
     const value = $event.checked;
-    if (value) {
+    this.disabledSelectedTime(value, index, true);
+  }
+
+  private disabledSelectedTime(enable: boolean, index: number, emitEvent = false) {
+    if (enable) {
       this.itemsSchedulerForm.at(index).get('startsOn').enable({emitEvent: false});
-      this.itemsSchedulerForm.at(index).get('endsOn').enable();
+      this.itemsSchedulerForm.at(index).get('endsOn').enable({emitEvent});
     } else {
       this.itemsSchedulerForm.at(index).get('startsOn').disable({emitEvent: false});
-      this.itemsSchedulerForm.at(index).get('endsOn').disable();
+      this.itemsSchedulerForm.at(index).get('endsOn').disable({emitEvent});
     }
   }
 
-  private get itemsSchedulerForm(): FormArray {
+  private timeToMoment(date: Date | number): _moment.Moment {
+    if (typeof date === 'number' || date === null) {
+      return _moment([1970, 0, 1, 0, 0, 0, 0]);
+    }
+    return _moment([1970, 0, 1, date.getHours(), date.getMinutes(), 0, 0]);
+  }
+
+  getSchedulerRangeText(control: FormGroup | AbstractControl): string {
+    const start = this.timeToMoment(control.get('startsOn').value);
+    const end = this.timeToMoment(control.get('endsOn').value);
+    if (start < end) {
+      return `<span><span class="nowrap">${start.format('hh:mm A')}</span> – <span class="nowrap">${end.format('hh:mm A')}</span></span>`;
+    } else if (start.valueOf() === 0 && end.valueOf() === 0 || start.isSame(_moment([1970, 0])) && end.isSame(_moment([1970, 0]))) {
+      return '<span><span class="nowrap">12:00 AM</span> – <span class="nowrap">12:00 PM</span></span>';
+    }
+    return `<span><span class="nowrap">12:00 AM</span> – <span class="nowrap">${end.format('hh:mm A')}</span>` +
+      ` and <span class="nowrap">${start.format('hh:mm A')}</span> – <span class="nowrap">12:00 PM</span></span>`;
+  }
+
+  get itemsSchedulerForm(): FormArray {
     return this.alarmScheduleForm.get('items') as FormArray;
   }
 }

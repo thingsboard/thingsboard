@@ -29,7 +29,7 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
-    <mat-horizontal-stepper [linear]="true" #addDeviceProfileStepper (selectionChange)="selectedIndex = $event.selectedIndex">
+    <mat-horizontal-stepper [linear]="true" #addDeviceProfileStepper (selectionChange)="changeStep($event)">
       <mat-step [stepControl]="deviceProfileDetailsFormGroup">
         <form [formGroup]="deviceProfileDetailsFormGroup" style="padding-bottom: 16px;">
           <ng-template matStepLabel>{{ 'device-profile.device-profile-details' | translate }}</ng-template>
@@ -45,7 +45,7 @@
               labelText="device-profile.default-rule-chain"
               formControlName="defaultRuleChainId">
             </tb-rule-chain-autocomplete>
-            <mat-form-field class="mat-block">
+            <mat-form-field fxHide class="mat-block">
               <mat-label translate>device-profile.type</mat-label>
               <mat-select formControlName="type" required>
                 <mat-option *ngFor="let type of deviceProfileTypes" [value]="type">
@@ -63,7 +63,7 @@
           </fieldset>
         </form>
       </mat-step>
-      <mat-step [stepControl]="transportConfigFormGroup">
+      <mat-step [stepControl]="transportConfigFormGroup" [optional]="true">
         <form [formGroup]="transportConfigFormGroup" style="padding-bottom: 16px;">
           <ng-template matStepLabel>{{ 'device-profile.transport-configuration' | translate }}</ng-template>
           <mat-form-field class="mat-block">
@@ -73,6 +73,9 @@
                 {{deviceTransportTypeTranslations.get(type) | translate}}
               </mat-option>
             </mat-select>
+            <mat-hint *ngIf="transportConfigFormGroup.get('transportType').value">
+              {{deviceTransportTypeHints.get(transportConfigFormGroup.get('transportType').value) | translate}}
+            </mat-hint>
             <mat-error *ngIf="transportConfigFormGroup.get('transportType').hasError('required')">
               {{ 'device-profile.transport-type-required' | translate }}
             </mat-error>
@@ -83,9 +86,9 @@
           </tb-device-profile-transport-configuration>
         </form>
       </mat-step>
-      <mat-step [stepControl]="alarmRulesFormGroup">
+      <mat-step [stepControl]="alarmRulesFormGroup" [optional]="true">
         <form [formGroup]="alarmRulesFormGroup" style="padding-bottom: 16px;">
-          <ng-template matStepLabel>{{'device-profile.alarm-rules' | translate:
+          <ng-template matStepLabel>{{'device-profile.alarm-rules-with-count' | translate:
             {count: alarmRulesFormGroup.get('alarms').value ?
                 alarmRulesFormGroup.get('alarms').value.length : 0} }}</ng-template>
           <tb-device-profile-alarms
@@ -95,19 +98,28 @@
       </mat-step>
     </mat-horizontal-stepper>
   </div>
-  <div mat-dialog-actions fxLayout="row wrap" fxLayoutAlign="space-between center">
-    <button mat-button *ngIf="selectedIndex > 0"
-            [disabled]="(isLoading$ | async)"
-            (click)="previousStep()">{{ 'action.back' | translate }}</button>
-    <span *ngIf="selectedIndex <= 0"></span>
-    <div fxLayout="row wrap" fxLayoutGap="20px">
+  <div mat-dialog-actions fxLayout="column" fxLayoutAlign="start wrap" fxLayoutGap="8px" style="height: 100px;">
+    <div fxFlex fxLayout="row" fxLayoutAlign="end">
+      <button mat-raised-button
+              *ngIf="showNext"
+              [disabled]="(isLoading$ | async)"
+              (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(this.selectedIndex+1) | translate)} }}</button>
+    </div>
+    <div fxFlex fxLayout="row">
       <button mat-button
+              color="primary"
               [disabled]="(isLoading$ | async)"
               (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-      <button mat-raised-button
-              [disabled]="(isLoading$ | async) || selectedForm().invalid"
-              color="primary"
-              (click)="nextStep()">{{ (selectedIndex === 2 ? 'action.add' : 'action.continue') | translate }}</button>
+      <span fxFlex></span>
+      <div fxLayout="row wrap" fxLayoutGap="8px">
+        <button mat-raised-button *ngIf="selectedIndex > 0"
+                [disabled]="(isLoading$ | async)"
+                (click)="previousStep()">{{ 'action.back' | translate }}</button>
+        <button mat-raised-button
+                [disabled]="(isLoading$ | async)"
+                color="primary"
+                (click)="add()">{{ 'action.add' | translate }}</button>
+      </div>
     </div>
   </div>
 </div>

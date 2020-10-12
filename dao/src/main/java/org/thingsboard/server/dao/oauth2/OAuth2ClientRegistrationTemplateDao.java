@@ -15,25 +15,11 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
+import org.thingsboard.server.dao.Dao;
 
-@Data
-public class OAuth2Client {
+import java.util.List;
 
-    private String loginButtonLabel;
-    private String loginButtonIcon;
-    private String clientName;
-    private String clientId;
-    private String clientSecret;
-    private String accessTokenUri;
-    private String authorizationUri;
-    private String scope;
-    private String redirectUriTemplate;
-    private String jwkSetUri;
-    private String authorizationGrantType;
-    private String clientAuthenticationMethod;
-    private String userInfoUri;
-    private String userNameAttributeName;
-    private OAuth2ClientMapperConfig mapperConfig;
-
+public interface OAuth2ClientRegistrationTemplateDao extends Dao<OAuth2ClientRegistrationTemplate> {
+    List<OAuth2ClientRegistrationTemplate> findAll();
 }

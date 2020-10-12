@@ -59,6 +59,8 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.DEVICE_PROFILE);
     this.config.entityResources = entityTypeResources.get(EntityType.DEVICE_PROFILE);
 
+    this.config.hideDetailsTabsOnEdit = false;
+
     this.config.addDialogStyle = {width: '1000px'};
 
     this.config.columns.push(
@@ -114,7 +116,8 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        deviceProfileName: null
+        deviceProfileName: null,
+        transportType: null
       }
     }).afterClosed();
   }

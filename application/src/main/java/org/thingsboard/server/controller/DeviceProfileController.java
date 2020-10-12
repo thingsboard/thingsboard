@@ -192,10 +192,11 @@ public class DeviceProfileController extends BaseController {
                                                              @RequestParam int page,
                                                              @RequestParam(required = false) String textSearch,
                                                              @RequestParam(required = false) String sortProperty,
-                                                             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+                                                             @RequestParam(required = false) String sortOrder,
+                                                             @RequestParam(required = false) String transportType) throws ThingsboardException {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            return checkNotNull(deviceProfileService.findDeviceProfileInfos(getTenantId(), pageLink));
+            return checkNotNull(deviceProfileService.findDeviceProfileInfos(getTenantId(), pageLink, transportType));
         } catch (Exception e) {
             throw handleException(e);
         }

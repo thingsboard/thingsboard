@@ -90,7 +90,6 @@ import { TenantProfileDialogComponent } from './profile/tenant-profile-dialog.co
 import { TenantProfileDataComponent } from './profile/tenant-profile-data.component';
 import { DefaultDeviceProfileConfigurationComponent } from './profile/device/default-device-profile-configuration.component';
 import { DeviceProfileConfigurationComponent } from './profile/device/device-profile-configuration.component';
-import { DeviceProfileDataComponent } from './profile/device-profile-data.component';
 import { DeviceProfileComponent } from './profile/device-profile.component';
 import { DefaultDeviceProfileTransportConfigurationComponent } from './profile/device/default-device-profile-transport-configuration.component';
 import { DeviceProfileTransportConfigurationComponent } from './profile/device/device-profile-transport-configuration.component';
@@ -108,6 +107,8 @@ import { FilterTextComponent } from './filter/filter-text.component';
 import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
 import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
 import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component';
+import { DeviceWizardDialogComponent } from './wizard/device-wizard-dialog.component';
+import { DeviceCredentialsComponent } from './device/device-credentials.component';
 
 @NgModule({
   declarations:
@@ -193,12 +194,13 @@ import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component
       AlarmRuleConditionComponent,
       DeviceProfileAlarmComponent,
       DeviceProfileAlarmsComponent,
-      DeviceProfileDataComponent,
       DeviceProfileComponent,
       DeviceProfileDialogComponent,
       AddDeviceProfileDialogComponent,
       RuleChainAutocompleteComponent,
-      AlarmScheduleComponent
+      AlarmScheduleComponent,
+      DeviceWizardDialogComponent,
+      DeviceCredentialsComponent
     ],
   imports: [
     CommonModule,
@@ -273,11 +275,12 @@ import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component
     AlarmRuleConditionComponent,
     DeviceProfileAlarmComponent,
     DeviceProfileAlarmsComponent,
-    DeviceProfileDataComponent,
     DeviceProfileComponent,
     DeviceProfileDialogComponent,
     AddDeviceProfileDialogComponent,
     RuleChainAutocompleteComponent,
+    DeviceWizardDialogComponent,
+    DeviceCredentialsComponent,
     AlarmScheduleComponent
   ],
   providers: [
