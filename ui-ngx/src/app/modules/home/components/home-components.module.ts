@@ -105,6 +105,7 @@ import { AlarmRuleConditionComponent } from './profile/alarm/alarm-rule-conditio
 import { FilterTextComponent } from './filter/filter-text.component';
 import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
 import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
+import { DeviceProfileProvisionConfigurationComponent } from "./profile/device-profile-provision-configuration.component";
 import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component';
 import { DeviceWizardDialogComponent } from './wizard/device-wizard-dialog.component';
 import { DeviceCredentialsComponent } from './device/device-credentials.component';
@@ -202,6 +203,7 @@ import { AlarmRuleConditionDialogComponent } from '@home/components/profile/alar
       AddDeviceProfileDialogComponent,
       RuleChainAutocompleteComponent,
       AlarmScheduleInfoComponent,
+      DeviceProfileProvisionConfigurationComponent,
       AlarmScheduleComponent,
       DeviceWizardDialogComponent,
       DeviceCredentialsComponent,
@@ -290,7 +292,9 @@ import { AlarmRuleConditionDialogComponent } from '@home/components/profile/alar
     AlarmScheduleInfoComponent,
     AlarmScheduleComponent,
     AlarmScheduleDialogComponent,
-    EditAlarmDetailsDialogComponent
+    EditAlarmDetailsDialogComponent,
+    DeviceProfileProvisionConfigurationComponent,
+    AlarmScheduleComponent
   ],
   providers: [
     WidgetComponentService,

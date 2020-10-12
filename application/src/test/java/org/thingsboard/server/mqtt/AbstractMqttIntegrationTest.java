@@ -26,13 +26,18 @@ import org.junit.Assert;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -64,7 +69,18 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
     protected Device savedGateway;
     protected String gatewayAccessToken;
 
-    protected void processBeforeTest(String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic) throws Exception {
+    protected void processBeforeTest (String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic) throws Exception {
+        this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, DeviceProfileProvisionType.DISABLED, null, null);
+    }
+
+    protected void processBeforeTest(String deviceName,
+                                     String gatewayName,
+                                     TransportPayloadType payloadType,
+                                     String telemetryTopic,
+                                     String attributesTopic,
+                                     DeviceProfileProvisionType provisionType,
+                                     String provisionKey, String provisionSecret
+                                     ) throws Exception {
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
@@ -93,7 +109,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
         gateway.setAdditionalInfo(additionalInfo);
 
         if (payloadType != null) {
-            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType, telemetryTopic, attributesTopic);
+            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType, telemetryTopic, attributesTopic, provisionType, provisionKey, provisionSecret);
             DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", mqttDeviceProfile, DeviceProfile.class);
             device.setType(savedDeviceProfile.getName());
             device.setDeviceProfileId(savedDeviceProfile.getId());
@@ -183,11 +199,17 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
         return keyValueProtoBuilder.build();
     }
 
-    protected DeviceProfile createMqttDeviceProfile(TransportPayloadType transportPayloadType, String telemetryTopic, String attributesTopic) {
+    protected DeviceProfile createMqttDeviceProfile(TransportPayloadType transportPayloadType,
+                                                    String telemetryTopic, String attributesTopic,
+                                                    DeviceProfileProvisionType provisionType,
+                                                    String provisionKey, String provisionSecret
+    ) {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName(transportPayloadType.name());
         deviceProfile.setType(DeviceProfileType.DEFAULT);
         deviceProfile.setTransportType(DeviceTransportType.MQTT);
+        deviceProfile.setProvisionType(provisionType);
+        deviceProfile.setProvisionDeviceKey(provisionKey);
         deviceProfile.setDescription(transportPayloadType.name() + " Test");
         DeviceProfileData deviceProfileData = new DeviceProfileData();
         DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
@@ -200,6 +222,19 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
             transportConfiguration.setDeviceAttributesTopic(attributesTopic);
         }
         deviceProfileData.setTransportConfiguration(transportConfiguration);
+        DeviceProfileProvisionConfiguration provisionConfiguration;
+        switch (provisionType) {
+            case ALLOW_CREATE_NEW_DEVICES:
+                provisionConfiguration = new AllowCreateNewDevicesDeviceProfileProvisionConfiguration(provisionSecret);
+                break;
+            case CHECK_PRE_PROVISIONED_DEVICES:
+                provisionConfiguration = new CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration(provisionSecret);
+                break;
+            case DISABLED:
+            default:
+                provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(provisionSecret);
+        }
+        deviceProfileData.setProvisionConfiguration(provisionConfiguration);
         deviceProfileData.setConfiguration(configuration);
         deviceProfile.setProfileData(deviceProfileData);
         deviceProfile.setDefault(false);

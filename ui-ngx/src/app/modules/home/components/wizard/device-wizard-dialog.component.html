@@ -121,6 +121,14 @@
           </tb-device-profile-alarms>
         </form>
       </mat-step>
+      <mat-step [stepControl]="provisionConfigFormGroup" [optional]="true" *ngIf="createProfile">
+        <form [formGroup]="provisionConfigFormGroup" style="padding-bottom: 16px;">
+          <ng-template matStepLabel>{{ 'device-profile.device-provisioning' | translate }}</ng-template>
+          <tb-device-profile-provision-configuration
+            formControlName="provisionConfiguration">
+          </tb-device-profile-provision-configuration>
+        </form>
+      </mat-step>
       <mat-step [stepControl]="credentialsFormGroup" [optional]="true">
         <ng-template matStepLabel>{{ 'device.credentials' | translate }}</ng-template>
         <form [formGroup]="credentialsFormGroup" style="padding-bottom: 16px;">

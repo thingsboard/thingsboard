@@ -130,6 +130,9 @@ public class ProtoConverter {
         }
     }
 
+    public static TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(byte[] bytes) throws InvalidProtocolBufferException {
+        return TransportProtos.ProvisionDeviceRequestMsg.parseFrom(bytes);
+    }
 
     private static List<TransportProtos.KeyValueProto> validateKeyValueProtos(List<TransportProtos.KeyValueProto> kvList) {
         kvList.forEach(keyValueProto -> {

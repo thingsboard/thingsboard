@@ -700,6 +700,12 @@ public abstract class BaseController {
             case ASSIGNED_TO_TENANT:
                 msgType = DataConstants.ENTITY_ASSIGNED_TO_TENANT;
                 break;
+            case PROVISION_SUCCESS:
+                msgType = DataConstants.PROVISION_SUCCESS;
+                break;
+            case PROVISION_FAILURE:
+                msgType = DataConstants.PROVISION_FAILURE;
+                break;
         }
         if (!StringUtils.isEmpty(msgType)) {
             try {
