@@ -65,6 +65,7 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 
 
@@ -109,7 +110,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     }
 
     @Override
-    public ListenableFuture<ProvisionResponse> provisionDevice(ProvisionRequest provisionRequest) {
+    public ProvisionResponse provisionDevice(ProvisionRequest provisionRequest) {
         String provisionRequestKey = provisionRequest.getCredentials().getProvisionDeviceKey();
         String provisionRequestSecret = provisionRequest.getCredentials().getProvisionDeviceSecret();
 
@@ -152,35 +153,24 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         throw new ProvisionFailedException(ProvisionResponseStatus.NOT_FOUND.name());
     }
 
-    private ListenableFuture<ProvisionResponse> processProvision(Device device, ProvisionRequest provisionRequest) {
-        ListenableFuture<Optional<AttributeKvEntry>> provisionStateFuture = attributesService.find(device.getTenantId(), device.getId(),
-                DataConstants.SERVER_SCOPE, DEVICE_PROVISION_STATE);
-        ListenableFuture<Boolean> provisionedFuture = Futures.transformAsync(provisionStateFuture, optionalAtr -> {
-            if (optionalAtr != null && optionalAtr.isPresent()) {
-                String state = optionalAtr.get().getValueAsString();
-                if (state.equals(PROVISIONED_STATE)) {
-                    return Futures.immediateFuture(true);
-                } else {
-                    log.error("[{}][{}] Unknown provision state: {}!", device.getName(), DEVICE_PROVISION_STATE, state);
-                    throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
-                }
-            }
-            return Futures.transform(saveProvisionStateAttribute(device), input -> false, MoreExecutors.directExecutor());
-        }, MoreExecutors.directExecutor());
-        if (provisionedFuture.isCancelled()) {
-            throw new RuntimeException("Unknown provision state!");
-        }
-        return Futures.transform(provisionedFuture, provisioned -> {
-            if (provisioned) {
+    private ProvisionResponse processProvision(Device device, ProvisionRequest provisionRequest) {
+        try {
+            Optional<AttributeKvEntry> provisionState = attributesService.find(device.getTenantId(), device.getId(),
+                    DataConstants.SERVER_SCOPE, DEVICE_PROVISION_STATE).get();
+            if (provisionState != null && provisionState.isPresent() && !provisionState.get().getValueAsString().equals(PROVISIONED_STATE)) {
                 notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
                 throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+            } else {
+                saveProvisionStateAttribute(device).get();
+                notify(device, provisionRequest, DataConstants.PROVISION_SUCCESS, true);
             }
-            notify(device, provisionRequest, DataConstants.PROVISION_SUCCESS, true);
-            return new ProvisionResponse(deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId()), ProvisionResponseStatus.SUCCESS);
-        }, MoreExecutors.directExecutor());
+        } catch (InterruptedException | ExecutionException e) {
+            throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+        }
+        return new ProvisionResponse(deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId()), ProvisionResponseStatus.SUCCESS);
     }
 
-    private ListenableFuture<ProvisionResponse> createDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
+    private ProvisionResponse createDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
         deviceCreationLock.lock();
         try {
             return processCreateDevice(provisionRequest, profile);
@@ -194,22 +184,24 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         logAction(device.getTenantId(), device.getCustomerId(), device, success, provisionRequest);
     }
 
-    private ListenableFuture<ProvisionResponse> processCreateDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
+    private ProvisionResponse processCreateDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
         Device device = deviceService.findDeviceByTenantIdAndName(profile.getTenantId(), provisionRequest.getDeviceName());
-        if (device == null) {
-            Device savedDevice = deviceService.saveDevice(provisionRequest, profile);
+        try {
+            if (device == null) {
+                Device savedDevice = deviceService.saveDevice(provisionRequest, profile);
 
-            deviceStateService.onDeviceAdded(savedDevice);
-            pushDeviceCreatedEventToRuleEngine(savedDevice);
-            notify(savedDevice, provisionRequest, DataConstants.PROVISION_SUCCESS, true);
+                deviceStateService.onDeviceAdded(savedDevice);
+                saveProvisionStateAttribute(savedDevice).get();
+                pushDeviceCreatedEventToRuleEngine(savedDevice);
+                notify(savedDevice, provisionRequest, DataConstants.PROVISION_SUCCESS, true);
 
-            return Futures.transform(saveProvisionStateAttribute(savedDevice), input ->
-                    new ProvisionResponse(
-                            getDeviceCredentials(savedDevice),
-                            ProvisionResponseStatus.SUCCESS), MoreExecutors.directExecutor());
-        } else {
-            log.warn("[{}] The device is already provisioned!", device.getName());
-            notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
+                return new ProvisionResponse(getDeviceCredentials(savedDevice), ProvisionResponseStatus.SUCCESS);
+            } else {
+                log.warn("[{}] The device is already provisioned!", device.getName());
+                notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
+                throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+            }
+        } catch (InterruptedException | ExecutionException e) {
             throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
         }
     }

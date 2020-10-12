@@ -278,7 +278,7 @@ public class DefaultTransportApiService implements TransportApiService {
     private ListenableFuture<TransportApiResponseMsg> handle(ProvisionDeviceRequestMsg requestMsg) {
         ListenableFuture<ProvisionResponse> provisionResponseFuture = null;
         try {
-            provisionResponseFuture = deviceProvisionService.provisionDevice(
+            provisionResponseFuture = Futures.immediateFuture(deviceProvisionService.provisionDevice(
                     new ProvisionRequest(
                             requestMsg.getDeviceName(),
                             requestMsg.getCredentialsType() != null ? DeviceCredentialsType.valueOf(requestMsg.getCredentialsType().name()) : null,
@@ -289,7 +289,7 @@ public class DefaultTransportApiService implements TransportApiService {
                                     requestMsg.getCredentialsDataProto().getValidateDeviceX509CertRequestMsg().getHash()),
                             new ProvisionDeviceProfileCredentials(
                                     requestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceKey(),
-                                    requestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceSecret())));
+                                    requestMsg.getProvisionDeviceCredentialsMsg().getProvisionDeviceSecret()))));
         } catch (ProvisionFailedException e) {
             return Futures.immediateFuture(getTransportApiResponseMsg(
                     TransportProtos.DeviceCredentialsProto.getDefaultInstance(),

@@ -24,5 +24,5 @@ import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 
 public interface DeviceProvisionService {
 
-    ListenableFuture<ProvisionResponse> provisionDevice(ProvisionRequest provisionRequest) throws ProvisionFailedException;
+    ProvisionResponse provisionDevice(ProvisionRequest provisionRequest) throws ProvisionFailedException;
 }
