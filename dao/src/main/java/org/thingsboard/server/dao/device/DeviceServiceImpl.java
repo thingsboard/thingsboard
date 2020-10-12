@@ -472,6 +472,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Override
+    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#profile.tenantId, #provisionRequest.deviceName}")
     @Transactional
     public Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
         Device device = new Device();
@@ -485,10 +486,13 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 !StringUtils.isEmpty(provisionRequest.getCredentialsData().getPassword()) ||
                 !StringUtils.isEmpty(provisionRequest.getCredentialsData().getClientId())) {
             DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getTenantId(), savedDevice.getId());
+            if (deviceCredentials == null) {
+                deviceCredentials = new DeviceCredentials();
+            }
+            deviceCredentials.setDeviceId(savedDevice.getId());
             deviceCredentials.setCredentialsType(provisionRequest.getCredentialsType());
             switch (provisionRequest.getCredentialsType()) {
                 case ACCESS_TOKEN:
-                    deviceCredentials.setDeviceId(savedDevice.getId());
                     deviceCredentials.setCredentialsId(provisionRequest.getCredentialsData().getToken());
                     break;
                 case MQTT_BASIC:
@@ -502,7 +506,6 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     deviceCredentials.setCredentialsValue(provisionRequest.getCredentialsData().getX509CertHash());
                     break;
             }
-            deviceCredentials.setCredentialsType(provisionRequest.getCredentialsType());
             try {
                 deviceCredentialsService.updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
             } catch (Exception e) {
