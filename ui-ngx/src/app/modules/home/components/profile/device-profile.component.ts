@@ -28,10 +28,12 @@ import {
   DeviceProfile,
   DeviceProfileData,
   DeviceProfileType,
+  deviceProfileTypeConfigurationInfoMap,
   deviceProfileTypeTranslationMap,
   DeviceProvisionConfiguration,
   DeviceProvisionType,
   DeviceTransportType,
+  deviceTransportTypeConfigurationInfoMap,
   deviceTransportTypeTranslationMap
 } from '@shared/models/device.models';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -57,6 +59,10 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
 
   deviceTransportTypeTranslations = deviceTransportTypeTranslationMap;
 
+  displayProfileConfiguration: boolean;
+
+  displayTransportConfiguration: boolean;
+
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               @Optional() @Inject('entity') protected entityValue: DeviceProfile,
@@ -74,6 +80,10 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
   }
 
   buildForm(entity: DeviceProfile): FormGroup {
+    this.displayProfileConfiguration = entity && entity.type &&
+      deviceProfileTypeConfigurationInfoMap.get(entity.type).hasProfileConfiguration;
+    this.displayTransportConfiguration = entity && entity.transportType &&
+      deviceTransportTypeConfigurationInfoMap.get(entity.transportType).hasProfileConfiguration;
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = {
       type: entity?.provisionType ? entity?.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,
@@ -116,6 +126,8 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
 
   private deviceProfileTypeChanged(form: FormGroup) {
     const deviceProfileType: DeviceProfileType = form.get('type').value;
+    this.displayProfileConfiguration = deviceProfileType &&
+      deviceProfileTypeConfigurationInfoMap.get(deviceProfileType).hasProfileConfiguration;
     let profileData: DeviceProfileData = form.getRawValue().profileData;
     if (!profileData) {
       profileData = {
@@ -129,6 +141,8 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
 
   private deviceProfileTransportTypeChanged(form: FormGroup) {
     const deviceTransportType: DeviceTransportType = form.get('transportType').value;
+    this.displayTransportConfiguration = deviceTransportType &&
+      deviceTransportTypeConfigurationInfoMap.get(deviceTransportType).hasProfileConfiguration;
     let profileData: DeviceProfileData = form.getRawValue().profileData;
     if (!profileData) {
       profileData = {
@@ -141,6 +155,10 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
   }
 
   updateForm(entity: DeviceProfile) {
+    this.displayProfileConfiguration = entity.type &&
+      deviceProfileTypeConfigurationInfoMap.get(entity.type).hasProfileConfiguration;
+    this.displayTransportConfiguration = entity.transportType &&
+      deviceTransportTypeConfigurationInfoMap.get(entity.transportType).hasProfileConfiguration;
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = {
       type: entity?.provisionType ? entity?.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,

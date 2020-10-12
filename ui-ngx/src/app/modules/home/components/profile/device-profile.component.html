@@ -68,6 +68,65 @@
         <mat-label translate>device-profile.description</mat-label>
         <textarea matInput formControlName="description" rows="2"></textarea>
       </mat-form-field>
+      <mat-form-field *ngIf="standalone" class="mat-block">
+        <mat-label translate>device-profile.transport-type</mat-label>
+        <mat-select formControlName="transportType" required>
+          <mat-option *ngFor="let type of deviceTransportTypes" [value]="type">
+            {{deviceTransportTypeTranslations.get(type) | translate}}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="entityForm.get('transportType').hasError('required')">
+          {{ 'device-profile.transport-type-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <div formGroupName="profileData" *ngIf="standalone" style="padding-bottom: 16px;">
+        <mat-accordion multi="true">
+          <mat-expansion-panel *ngIf="displayProfileConfiguration" [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div translate>device-profile.profile-configuration</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <tb-device-profile-configuration
+              formControlName="configuration"
+              required>
+            </tb-device-profile-configuration>
+          </mat-expansion-panel>
+          <mat-expansion-panel *ngIf="displayTransportConfiguration" [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div translate>device-profile.transport-configuration</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <tb-device-profile-transport-configuration
+              formControlName="transportConfiguration"
+              required>
+            </tb-device-profile-transport-configuration>
+          </mat-expansion-panel>
+          <mat-expansion-panel [expanded]="false">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div>{{'device-profile.alarm-rules-with-count' | translate:
+                  {count: entityForm.get('profileData.alarms').value ?
+                      entityForm.get('profileData.alarms').value.length : 0} }}</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <tb-device-profile-alarms
+              formControlName="alarms">
+            </tb-device-profile-alarms>
+          </mat-expansion-panel>
+          <mat-expansion-panel [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div translate>device-profile.device-provisioning</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <tb-device-profile-provision-configuration
+              formControlName="provisionConfiguration">
+            </tb-device-profile-provision-configuration>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </div>
     </fieldset>
   </form>
 </div>
