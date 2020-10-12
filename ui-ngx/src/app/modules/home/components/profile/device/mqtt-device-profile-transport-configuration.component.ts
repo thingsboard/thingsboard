@@ -28,12 +28,13 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
-  MqttTransportPayloadType,
   DeviceProfileTransportConfiguration,
   DeviceTransportType,
-  MqttDeviceProfileTransportConfiguration, mqttTransportPayloadTypeTranslationMap
+  MqttDeviceProfileTransportConfiguration,
+  MqttTransportPayloadType,
+  mqttTransportPayloadTypeTranslationMap
 } from '@shared/models/device.models';
-import { isDefinedAndNotNull } from '@core/utils';
+import {isDefinedAndNotNull} from '@core/utils';
 
 @Component({
   selector: 'tb-mqtt-device-profile-transport-configuration',
@@ -86,7 +87,9 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       configuration: this.fb.group({
         deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]],
-        transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required]
+        transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required],
+        // deviceTelemetryProtoSchema: [null, Validators.required],
+        // deviceAttributesProtoSchema: [null, Validators.required]
       })
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
@@ -103,6 +106,11 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     }
   }
 
+  protoPayloadType(): boolean {
+    let configuration = this.mqttDeviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
+    return configuration.transportPayloadType === MqttTransportPayloadType.PROTOBUF;
+  }
+
   writeValue(value: MqttDeviceProfileTransportConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
       this.mqttDeviceProfileTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
@@ -114,6 +122,14 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     if (this.mqttDeviceProfileTransportConfigurationFormGroup.valid) {
       configuration = this.mqttDeviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
       configuration.type = DeviceTransportType.MQTT;
+      let configurationFormGroup = this.mqttDeviceProfileTransportConfigurationFormGroup.controls.configuration as FormGroup;
+      if (configuration.transportPayloadType ===  MqttTransportPayloadType.PROTOBUF) {
+        configurationFormGroup.addControl('deviceTelemetryProtoSchema', this.fb.control(null, Validators.required));
+        configurationFormGroup.addControl('deviceAttributesProtoSchema', this.fb.control(null, Validators.required));
+      } else {
+        configurationFormGroup.removeControl('deviceTelemetryProtoSchema');
+        configurationFormGroup.removeControl('deviceAttributesProtoSchema');
+      }
     }
     this.propagateChange(configuration);
   }

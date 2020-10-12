@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
+import com.google.protobuf.Descriptors;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttProtoDeviceProfileTransportConfiguration;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.util.MqttTopicFilter;
@@ -49,6 +51,8 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private volatile MqttTopicFilter telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
     private volatile MqttTopicFilter attributesTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
     private volatile TransportPayloadType payloadType = TransportPayloadType.JSON;
+    private volatile Descriptors.Descriptor attributesDynamicMessageDescriptor;
+    private volatile Descriptors.Descriptor telemetryDynamicMessageDescriptor;
 
     public DeviceSessionCtx(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap, MqttTransportContext context) {
         super(sessionId, mqttQoSMap);
@@ -63,7 +67,9 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
         return msgIdSeq.incrementAndGet();
     }
 
-    public boolean isDeviceTelemetryTopic(String topicName) { return telemetryTopicFilter.filter(topicName); }
+    public boolean isDeviceTelemetryTopic(String topicName) {
+        return telemetryTopicFilter.filter(topicName);
+    }
 
     public boolean isDeviceAttributesTopic(String topicName) {
         return attributesTopicFilter.filter(topicName);
@@ -75,6 +81,14 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     public boolean isJsonPayloadType() {
         return payloadType.equals(TransportPayloadType.JSON);
+    }
+
+    public Descriptors.Descriptor getTelemetryDynamicMsgDescriptor() {
+        return telemetryDynamicMessageDescriptor;
+    }
+
+    public Descriptors.Descriptor getAttributesDynamicMessageDescriptor() {
+        return attributesDynamicMessageDescriptor;
     }
 
     @Override
@@ -98,10 +112,14 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
             payloadType = mqttConfig.getTransportPayloadType();
             telemetryTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceTelemetryTopic());
             attributesTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceAttributesTopic());
+            if (payloadType.equals(TransportPayloadType.PROTOBUF) && mqttConfig instanceof MqttProtoDeviceProfileTransportConfiguration) {
+                MqttProtoDeviceProfileTransportConfiguration protoMqttConfig = (MqttProtoDeviceProfileTransportConfiguration) mqttConfig;
+                telemetryDynamicMessageDescriptor = protoMqttConfig.getDynamicMessageDescriptor(protoMqttConfig.getDeviceTelemetryProtoSchema(), "telemetrySchema");
+                attributesDynamicMessageDescriptor = protoMqttConfig.getDynamicMessageDescriptor(protoMqttConfig.getDeviceAttributesProtoSchema(), "attributesSchema");
+            }
         } else {
             telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
             attributesTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
         }
     }
-
 }

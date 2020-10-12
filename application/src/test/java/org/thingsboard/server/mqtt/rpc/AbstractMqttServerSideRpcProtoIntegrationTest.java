@@ -46,21 +46,25 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
     }
 
     @Test
+    @Ignore
     public void testServerMqttOneWayRpc() throws Exception {
         processOneWayRpcTest();
     }
 
     @Test
+    @Ignore
     public void testServerMqttTwoWayRpc() throws Exception {
         processTwoWayRpcTest();
     }
 
     @Test
+    @Ignore
     public void testGatewayServerMqttOneWayRpc() throws Exception {
         processOneWayRpcTestGateway("Gateway Device OneWay RPC Proto");
     }
 
     @Test
+    @Ignore
     public void testGatewayServerMqttTwoWayRpc() throws Exception {
         processTwoWayRpcTestGateway("Gateway Device TwoWay RPC Proto");
     }

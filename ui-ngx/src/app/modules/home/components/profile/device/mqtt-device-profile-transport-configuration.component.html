@@ -20,17 +20,6 @@
     <fieldset class="fields-group">
       <legend class="group-title" translate>device-profile.mqtt-device-topic-filters</legend>
       <div fxLayoutGap="8px" fxLayout="column">
-        <mat-form-field class="mat-block">
-          <mat-label translate>device-profile.mqtt-device-payload-type</mat-label>
-          <mat-select formControlName="transportPayloadType" required>
-            <mat-option *ngFor="let type of mqttTransportPayloadTypes" [value]="type">
-              {{mqttTransportPayloadTypeTranslations.get(type) | translate}}
-            </mat-option>
-          </mat-select>
-          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.transportPayloadType').hasError('required')">
-            {{ 'device-profile.mqtt-payload-type-required' | translate }}
-          </mat-error>
-        </mat-form-field>
         <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
           <mat-form-field fxFlex>
             <mat-label translate>device-profile.telemetry-topic-filter</mat-label>
@@ -66,6 +55,41 @@
         <div class="tb-hint" innerHTML="{{ 'device-profile.support-level-wildcards' | translate }}"></div>
         <div class="tb-hint" innerHTML="{{ 'device-profile.single-level-wildcards-hint' | translate }}"></div>
         <div class="tb-hint" innerHTML="{{ 'device-profile.multi-level-wildcards-hint' | translate }}"></div>
+      </div>
+    </fieldset>
+    <fieldset class="fields-group">
+      <legend class="group-title" translate>device-profile.mqtt-device-payload-type</legend>
+      <div fxLayoutGap="8px" fxLayout="column">
+        <mat-form-field class="mat-block">
+          <mat-select formControlName="transportPayloadType" required>
+            <mat-option *ngFor="let type of mqttTransportPayloadTypes" [value]="type">
+              {{mqttTransportPayloadTypeTranslations.get(type) | translate}}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.transportPayloadType').hasError('required')">
+            {{ 'device-profile.mqtt-payload-type-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <div *ngIf="protoPayloadType()" fxLayout="column">
+          <mat-form-field fxFlex>
+            <mat-label translate>device-profile.telemetry-proto-schema</mat-label>
+            <textarea matInput required
+                   formControlName="deviceTelemetryProtoSchema"
+                   rows="5"></textarea>
+            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceTelemetryProtoSchema').hasError('required')">
+              {{ 'device-profile.telemetry-proto-schema-required' | translate}}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field fxFlex>
+            <mat-label translate>device-profile.attributes-proto-schema</mat-label>
+            <textarea matInput required
+                      formControlName="deviceAttributesProtoSchema"
+                      rows="5"></textarea>
+            <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.deviceAttributesProtoSchema').hasError('required')">
+              {{ 'device-profile.attributes-proto-schema-required' | translate}}
+            </mat-error>
+          </mat-form-field>
+        </div>
       </div>
     </fieldset>
   </section>

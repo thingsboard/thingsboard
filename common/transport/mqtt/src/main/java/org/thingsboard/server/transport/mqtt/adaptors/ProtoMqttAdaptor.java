@@ -15,7 +15,11 @@
  */
 package org.thingsboard.server.transport.mqtt.adaptors;
 
+import com.google.gson.JsonParser;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.JsonFormat;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
@@ -29,9 +33,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
 import java.util.Optional;
@@ -44,19 +50,27 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        DeviceSessionCtx deviceSessionCtx = (DeviceSessionCtx) ctx;
         byte[] bytes = toBytes(inbound.payload());
         try {
-            return ProtoConverter.convertToTelemetryProto(bytes);
-        } catch (InvalidProtocolBufferException | IllegalArgumentException e) {
+            Descriptors.Descriptor telemetryDynamicMsgDescriptor = deviceSessionCtx.getTelemetryDynamicMsgDescriptor();
+            DynamicMessage dynamicMessage = DynamicMessage.parseFrom(telemetryDynamicMsgDescriptor, bytes);
+            String stringMsg = JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
+            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(stringMsg));
+        } catch (Exception e) {
             throw new AdaptorException(e);
         }
     }
 
     @Override
     public TransportProtos.PostAttributeMsg convertToPostAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        DeviceSessionCtx deviceSessionCtx = (DeviceSessionCtx) ctx;
         byte[] bytes = toBytes(inbound.payload());
         try {
-            return ProtoConverter.validatePostAttributeMsg(bytes);
+            Descriptors.Descriptor attributesDynamicMessage = deviceSessionCtx.getAttributesDynamicMessageDescriptor();
+            DynamicMessage dynamicMessage = DynamicMessage.parseFrom(attributesDynamicMessage, bytes);
+            String stringMsg = JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
+            return JsonConverter.convertToAttributesProto(new JsonParser().parse(stringMsg));
         } catch (InvalidProtocolBufferException | IllegalArgumentException e) {
             throw new AdaptorException(e);
         }

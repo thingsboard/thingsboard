@@ -106,6 +106,8 @@
         <commons-collections.version>3.2.2</commons-collections.version>
         <java-websocket.version>1.5.0</java-websocket.version>
         <micrometer.version>1.5.2</micrometer.version>
+        <protobuf-dynamic.version>1.0.1</protobuf-dynamic.version>
+        <wire-schema.version>3.4.0</wire-schema.version>
     </properties>
 
     <modules>
@@ -1368,6 +1370,16 @@
                 <groupId>io.micrometer</groupId>
                 <artifactId>micrometer-registry-prometheus</artifactId>
                 <version>${micrometer.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.os72</groupId>
+                <artifactId>protobuf-dynamic</artifactId>
+                <version>${protobuf-dynamic.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.wire</groupId>
+                <artifactId>wire-schema</artifactId>
+                <version>${wire-schema.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

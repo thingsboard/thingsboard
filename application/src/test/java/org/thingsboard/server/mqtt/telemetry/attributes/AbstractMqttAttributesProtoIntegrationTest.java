@@ -18,6 +18,7 @@ package org.thingsboard.server.mqtt.telemetry.attributes;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
@@ -46,6 +47,7 @@ public abstract class AbstractMqttAttributesProtoIntegrationTest extends Abstrac
     }
 
     @Test
+    @Ignore
     public void testPushMqttAttributes() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         TransportProtos.PostAttributeMsg msg = getPostAttributeMsg(expectedKeys);
@@ -53,6 +55,7 @@ public abstract class AbstractMqttAttributesProtoIntegrationTest extends Abstrac
     }
 
     @Test
+    @Ignore
     public void testPushMqttAttributesGateway() throws Exception {
         TransportApiProtos.GatewayAttributesMsg.Builder gatewayAttributesMsgProtoBuilder = TransportApiProtos.GatewayAttributesMsg.newBuilder();
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");

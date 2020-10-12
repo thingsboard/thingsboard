@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.TransportPayloadType;
@@ -48,6 +49,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
     }
 
     @Test
+    @Ignore
     public void testPushMqttTelemetry() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         TransportProtos.TsKvListProto tsKvListProto = getTsKvListProto(expectedKeys, 0);
@@ -55,6 +57,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
     }
 
     @Test
+    @Ignore
     public void testPushMqttTelemetryWithTs() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         TransportProtos.TsKvListProto tsKvListProto = getTsKvListProto(expectedKeys, 10000);
@@ -62,6 +65,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
     }
 
     @Test
+    @Ignore
     public void testPushMqttTelemetryGateway() throws Exception {
         TransportApiProtos.GatewayTelemetryMsg.Builder gatewayTelemetryMsgProtoBuilder = TransportApiProtos.GatewayTelemetryMsg.newBuilder();
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
@@ -75,6 +79,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
     }
 
     @Test
+    @Ignore
     public void testGatewayConnect() throws Exception {
         String deviceName = "Device A";
         TransportApiProtos.ConnectMsg connectMsgProto = getConnectProto(deviceName);

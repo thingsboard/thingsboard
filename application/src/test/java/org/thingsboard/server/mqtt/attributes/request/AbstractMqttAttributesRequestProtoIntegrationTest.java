@@ -23,6 +23,7 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.TransportPayloadType;
@@ -55,12 +56,14 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
     }
 
     @Test
+    @Ignore
     public void testRequestAttributesValuesFromTheServer() throws Exception {
         processTestRequestAttributesValuesFromTheServer();
     }
 
 
     @Test
+    @Ignore
     public void testRequestAttributesValuesFromTheServerGateway() throws Exception {
         processTestGatewayRequestAttributesValuesFromTheServer();
     }

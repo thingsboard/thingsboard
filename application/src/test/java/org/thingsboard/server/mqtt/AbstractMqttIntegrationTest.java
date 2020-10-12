@@ -34,6 +34,8 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttJsonDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttProtoDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
@@ -190,8 +192,12 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
         deviceProfile.setDescription(transportPayloadType.name() + " Test");
         DeviceProfileData deviceProfileData = new DeviceProfileData();
         DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
-        MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
-        transportConfiguration.setTransportPayloadType(transportPayloadType);
+        MqttDeviceProfileTransportConfiguration transportConfiguration;
+        if (TransportPayloadType.JSON.equals(transportPayloadType)) {
+            transportConfiguration = new MqttJsonDeviceProfileTransportConfiguration();
+        } else {
+            transportConfiguration = new MqttProtoDeviceProfileTransportConfiguration();
+        }
         if (!StringUtils.isEmpty(telemetryTopic)) {
             transportConfiguration.setDeviceTelemetryTopic(telemetryTopic);
         }
