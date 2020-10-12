@@ -28,6 +28,19 @@
           <span style="height: 4px;" *ngIf="!(isLoading$ | async)"></span>
           <div tb-toast fxLayout="column" class="layout-padding">
             <span style="height: 50px;"></span>
+            <div class="oauth-container tb-default" fxLayout="column" fxLayoutGap="16px" *ngIf="oauth2Clients?.length">
+              <ng-container *ngFor="let oauth2Client of oauth2Clients">
+                <a mat-raised-button class="login-with-button" href="{{ oauth2Client.url }}">
+                  <mat-icon svgIcon="{{ oauth2Client.icon }}"></mat-icon>
+                  {{ 'login.login-with' | translate: {name: oauth2Client.name} }}
+                </a>
+              </ng-container>
+              <div class="container-divider">
+                <div class="line"><mat-divider></mat-divider></div>
+                <div class="text mat-typography">{{ "login.or" | translate | uppercase }}</div>
+                <div class="line"><mat-divider></mat-divider></div>
+              </div>
+            </div>
             <mat-form-field>
               <mat-label translate>login.username</mat-label>
               <input id="username-input" matInput type="email" autofocus formControlName="username" email required/>
@@ -41,26 +54,13 @@
               <input id="password-input" matInput type="password" formControlName="password"/>
               <mat-icon matPrefix>lock</mat-icon>
             </mat-form-field>
-            <div fxLayoutAlign="end center">
+            <div fxLayoutAlign="end center" class="forgot-password">
               <button class="tb-reset-password" mat-button type="button" routerLink="/login/resetPasswordRequest">{{ 'login.forgot-password' | translate }}
               </button>
             </div>
             <div fxLayout="column" class="tb-action-button">
               <button mat-raised-button color="accent" [disabled]="(isLoading$ | async)"
                       type="submit">{{ 'login.login' | translate }}</button>
-            </div>
-            <div class="oauth-container" fxLayout="column" fxLayoutGap="16px" *ngIf="oauth2Clients?.length">
-              <div class="container-divider">
-                <div class="line"><mat-divider></mat-divider></div>
-                <div class="text mat-typography">{{ "login.or" | translate | uppercase }}</div>
-                <div class="line"><mat-divider></mat-divider></div>
-              </div>
-              <ng-container *ngFor="let oauth2Client of oauth2Clients">
-                <a mat-raised-button color="warn" class="centered" href="{{ oauth2Client.url }}">
-                  <mat-icon svgIcon="{{ oauth2Client.icon }}"></mat-icon>
-                  {{ 'login.login-with' | translate: {name: oauth2Client.name} }}
-                </a>
-              </ng-container>
             </div>
           </div>
         </fieldset>

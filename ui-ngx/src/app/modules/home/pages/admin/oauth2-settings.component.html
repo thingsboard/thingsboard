@@ -33,7 +33,7 @@
           <mat-checkbox formControlName="enabled">
             {{ 'admin.oauth2.enable' | translate }}
           </mat-checkbox>
-          <section *ngIf="oauth2SettingsForm.get('enabled').value && !(isLoading$ | async)" style="margin-top: 1em;">
+          <section *ngIf="oauth2SettingsForm.get('enabled').value" style="margin-top: 1em;">
             <ng-container formArrayName="domainsParams">
               <div class="container">
                 <mat-accordion multi>
@@ -59,7 +59,7 @@
                           <section *ngFor="let domainInfo of clientDomainInfos(domain).controls; let n = index; trackBy: trackByParams"
                             class="domains-list">
                             <div [formGroupName]="n" fxLayout="row" fxLayoutGap="8px">
-                              <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
+                              <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
                                 <div fxLayout="column" fxFlex.sm="60" fxFlex.gt-sm="50">
                                   <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
                                     <mat-form-field fxFlex="30" fxFlex.xs class="mat-block">
@@ -160,7 +160,7 @@
                                         </mat-option>
                                       </mat-select>
                                     </mat-form-field>
-                                    <div [tb-help]="getHelpLink(registration)" *ngIf="getProviderName(registration) !== 'Custom'"></div>
+                                    <div [tb-help]="getHelpLink(registration)" *ngIf="!isCustomProvider(registration)"></div>
                                   </section>
 
                                   <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
@@ -182,9 +182,9 @@
                                   </div>
 
                                   <mat-expansion-panel class="mat-elevation-z0 custom-settings"
-                                                       [disabled]="getProviderName(registration) === 'Custom'"
-                                                       [expanded]="getProviderName(registration) === 'Custom'">
-                                    <mat-expansion-panel-header [fxHide]="getProviderName(registration) === 'Custom'">
+                                                       [disabled]="isCustomProvider(registration)"
+                                                       [expanded]="isCustomProvider(registration)">
+                                    <mat-expansion-panel-header [fxHide]="isCustomProvider(registration)">
                                       <mat-panel-description fxLayoutAlign="end center">
                                         {{ 'admin.oauth2.custom-setting' | translate }}
                                       </mat-panel-description>
@@ -199,7 +199,7 @@
                                               <button mat-icon-button matSuffix
                                                       type="button"
                                                       (click)="toggleEditMode(registration, 'accessTokenUri')"
-                                                      *ngIf="getProviderName(registration) !== 'Custom'">
+                                                      *ngIf="!isCustomProvider(registration)">
                                                 <mat-icon class="material-icons">create</mat-icon>
                                               </button>
                                               <mat-error *ngIf="registration.get('accessTokenUri').hasError('required')">
@@ -216,7 +216,7 @@
                                               <button mat-icon-button matSuffix
                                                       type="button"
                                                       (click)="toggleEditMode(registration, 'authorizationUri')"
-                                                      *ngIf="getProviderName(registration) !== 'Custom'">
+                                                      *ngIf="!isCustomProvider(registration)">
                                                 <mat-icon class="material-icons">create</mat-icon>
                                               </button>
                                               <mat-error *ngIf="registration.get('authorizationUri').hasError('required')">
@@ -235,7 +235,7 @@
                                               <button mat-icon-button matSuffix
                                                       type="button" aria-label="Clear"
                                                       (click)="toggleEditMode(registration, 'jwkSetUri')"
-                                                      *ngIf="getProviderName(registration) !== 'Custom'">
+                                                      *ngIf="!isCustomProvider(registration)">
                                                 <mat-icon class="material-icons">create</mat-icon>
                                               </button>
                                               <mat-error *ngIf="registration.get('jwkSetUri').hasError('pattern')">
@@ -249,7 +249,7 @@
                                               <button mat-icon-button matSuffix
                                                       type="button"
                                                       (click)="toggleEditMode(registration, 'userInfoUri')"
-                                                      *ngIf="getProviderName(registration) !== 'Custom'">
+                                                      *ngIf="!isCustomProvider(registration)">
                                                 <mat-icon class="material-icons">create</mat-icon>
                                               </button>
                                               <mat-error *ngIf="registration.get('userInfoUri').hasError('required')">
@@ -271,7 +271,7 @@
                                             </mat-select>
                                           </mat-form-field>
 
-                                          <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" *ngIf="getProviderName(registration) === 'Custom'">
+                                          <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" *ngIf="isCustomProvider(registration)">
                                             <mat-form-field fxFlex class="mat-block" floatLabel="always">
                                               <mat-label translate>admin.oauth2.login-button-label</mat-label>
                                               <input matInput formControlName="loginButtonLabel"
@@ -332,16 +332,17 @@
                                             <mat-form-field fxFlex class="mat-block">
                                               <mat-label translate>admin.oauth2.type</mat-label>
                                               <mat-select formControlName="type">
-                                                <mat-option *ngFor="let converterTypeExternalUser of converterTypesExternalUser"
-                                                  [value]="converterTypeExternalUser">
-                                                  {{ converterTypeExternalUser }}
+                                                <mat-option *ngFor="let mapperConfigType of mapperConfigTypes"
+                                                  [value]="mapperConfigType">
+                                                  {{ mapperConfigType }}
                                                 </mat-option>
                                               </mat-select>
                                             </mat-form-field>
 
                                             <section formGroupName="basic"
-                                                     *ngIf="registration.get('mapperConfig.type').value === 'BASIC'">
-                                              <mat-form-field class="mat-block">
+                                                     *ngIf="registration.get('mapperConfig.type').value !== mapperConfigType.CUSTOM">
+                                              <mat-form-field class="mat-block"
+                                                              *ngIf="registration.get('mapperConfig.type').value !== mapperConfigType.GITHUB">
                                                 <mat-label translate>admin.oauth2.email-attribute-key</mat-label>
                                                 <input matInput formControlName="emailAttributeKey" required>
                                                 <mat-error
@@ -403,7 +404,7 @@
                                             </section>
 
                                             <section formGroupName="custom"
-                                                     *ngIf="registration.get('mapperConfig.type').value === 'CUSTOM'">
+                                                     *ngIf="registration.get('mapperConfig.type').value === mapperConfigType.CUSTOM">
                                               <mat-form-field class="mat-block">
                                                 <mat-label translate>admin.oauth2.url</mat-label>
                                                 <input matInput formControlName="url" required>
