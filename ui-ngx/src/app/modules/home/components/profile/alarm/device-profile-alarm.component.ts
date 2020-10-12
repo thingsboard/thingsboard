@@ -57,6 +57,7 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
 
   separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
 
+  @Input()
   expanded = false;
 
   private modelValue: DeviceProfileAlarm;

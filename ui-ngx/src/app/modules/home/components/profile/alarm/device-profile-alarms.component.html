@@ -21,6 +21,7 @@
                  let $index = index; last as isLast;"
          fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
       <tb-device-profile-alarm [formControl]="alarmControl"
+                               [expanded]="$index === 0"
                                (removeAlarm)="removeAlarm($index)">
       </tb-device-profile-alarm>
     </div>
@@ -29,7 +30,7 @@
       <span translate fxLayoutAlign="center center"
             class="tb-prompt">device-profile.no-alarm-rules</span>
   </div>
-  <div *ngIf="!disabled" fxFlex fxLayout="row" fxLayoutAlign="end center"
+  <div *ngIf="!disabled" fxFlex fxLayout="row" fxLayoutAlign="start center"
        style="padding-top: 16px;">
     <button mat-raised-button color="primary"
             type="button"

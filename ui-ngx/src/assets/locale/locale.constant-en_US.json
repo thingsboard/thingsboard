@@ -55,7 +55,9 @@
         "continue": "Continue",
         "discard-changes": "Discard Changes",
         "download": "Download",
-        "next-with-label": "Next: {{label}}"
+        "next-with-label": "Next: {{label}}",
+        "read-more": "Read more",
+        "hide": "Hide"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -932,15 +934,18 @@
         "condition-type": "Condition type",
         "condition-type-simple": "Simple",
         "condition-type-duration": "Duration",
+        "condition-during": "During <b>{{during}}</b>",
         "condition-type-repeating": "Repeating",
         "condition-type-required": "Condition type is required.",
         "condition-repeating-value": "Count of events",
         "condition-repeating-value-range": "Count of events should be in a range from 1 to 2147483647.",
         "condition-repeating-value-pattern": "Count of events should be integers.",
         "condition-repeating-value-required": "Count of events is required.",
+        "condition-repeat-times": "Repeats <b>{ count, plural, 1 {1 time} other {# times} }</b>",
         "schedule-type": "Scheduler type",
         "schedule-type-required": "Scheduler type is required.",
         "schedule": "Schedule",
+        "edit-schedule": "Edit alarm schedule",
         "schedule-any-time": "Active all the time",
         "schedule-specific-time": "Active at a specific time",
         "schedule-custom": "Custom",
@@ -956,7 +961,8 @@
         "schedule-days": "Days",
         "schedule-time": "Time",
         "schedule-time-from": "From",
-        "schedule-time-to": "To"
+        "schedule-time-to": "To",
+        "schedule-days-of-week-required": "At least one day of week should be selected."
     },
     "dialog": {
         "close": "Close dialog"

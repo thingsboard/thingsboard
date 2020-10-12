@@ -15,25 +15,19 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" fxFlex [formGroup]="alarmRuleConditionFormGroup">
+<div fxLayout="column" fxFlex>
   <div fxLayout="row" fxLayoutAlign="start center" style="min-height: 40px;">
-    <label class="tb-title" translate>device-profile.condition</label>
+    <label class="tb-title" translate>device-profile.schedule</label>
     <span fxFlex></span>
     <a mat-button color="primary"
        type="button"
-       (click)="openFilterDialog($event)"
+       (click)="openScheduleDialog($event)"
        matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
        matTooltipPosition="above">
-      {{ (disabled ? 'action.view' : (conditionSet() ? 'action.edit' : 'action.add')) | translate }}
+      {{ (disabled ? 'action.view' : 'action.edit' ) | translate }}
     </a>
   </div>
-  <div class="tb-alarm-rule-condition" fxFlex fxLayout="column" fxLayoutAlign="center" (click)="openFilterDialog($event)">
-    <tb-filter-text formControlName="condition"
-                    required
-                    addFilterPrompt="{{'device-profile.enter-alarm-rule-condition-prompt' | translate}}">
-    </tb-filter-text>
-    <span class="tb-alarm-rule-condition-spec" [ngClass]="{disabled: this.disabled}" [innerHTML]="specText">
-    </span>
-  </div>
-
+  <sapn class="tb-alarm-rule-schedule" [ngClass]="{disabled: this.disabled}" (click)="openScheduleDialog($event)"
+       [innerHTML]="scheduleText">
+  </sapn>
 </div>

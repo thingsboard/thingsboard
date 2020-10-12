@@ -18,20 +18,21 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
-  FormControl,
+  FormControl, FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  Validator
+  Validator, Validators
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { KeyFilter } from '@shared/models/query/query.models';
-import { deepClone } from '@core/utils';
-import {
-  AlarmRuleKeyFiltersDialogComponent,
-  AlarmRuleKeyFiltersDialogData
-} from './alarm-rule-key-filters-dialog.component';
+import { deepClone, isUndefined } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
+import { AlarmCondition, AlarmConditionSpec, AlarmConditionType } from '@shared/models/device.models';
+import {
+  AlarmRuleConditionDialogComponent,
+  AlarmRuleConditionDialogData
+} from '@home/components/profile/alarm/alarm-rule-condition-dialog.component';
+import { TimeUnit } from '@shared/models/time/time.models';
 
 @Component({
   selector: 'tb-alarm-rule-condition',
@@ -55,9 +56,11 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
   @Input()
   disabled: boolean;
 
-  alarmRuleConditionControl: FormControl;
+  alarmRuleConditionFormGroup: FormGroup;
 
-  private modelValue: Array<KeyFilter>;
+  specText = '';
+
+  private modelValue: AlarmCondition;
 
   private propagateChange = (v: any) => { };
 
@@ -75,25 +78,31 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
   }
 
   ngOnInit() {
-    this.alarmRuleConditionControl = this.fb.control(null);
+    this.alarmRuleConditionFormGroup = this.fb.group({
+      condition: [null, Validators.required],
+      spec: [null, Validators.required]
+    });
   }
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.alarmRuleConditionControl.disable({emitEvent: false});
+      this.alarmRuleConditionFormGroup.disable({emitEvent: false});
     } else {
-      this.alarmRuleConditionControl.enable({emitEvent: false});
+      this.alarmRuleConditionFormGroup.enable({emitEvent: false});
     }
   }
 
-  writeValue(value: Array<KeyFilter>): void {
+  writeValue(value: AlarmCondition): void {
     this.modelValue = value;
+    if (this.modelValue !== null && isUndefined(this.modelValue?.spec)) {
+      this.modelValue = Object.assign(this.modelValue, {spec: {type: AlarmConditionType.SIMPLE}});
+    }
     this.updateConditionInfo();
   }
 
   public conditionSet() {
-    return this.modelValue && this.modelValue.length;
+    return this.modelValue && this.modelValue.condition.length;
   }
 
   public validate(c: FormControl) {
@@ -108,13 +117,13 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
     if ($event) {
       $event.stopPropagation();
     }
-    this.dialog.open<AlarmRuleKeyFiltersDialogComponent, AlarmRuleKeyFiltersDialogData,
-      Array<KeyFilter>>(AlarmRuleKeyFiltersDialogComponent, {
+    this.dialog.open<AlarmRuleConditionDialogComponent, AlarmRuleConditionDialogData,
+      AlarmCondition>(AlarmRuleConditionDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         readonly: this.disabled,
-        keyFilters: this.disabled ? this.modelValue : deepClone(this.modelValue)
+        condition: this.disabled ? this.modelValue : deepClone(this.modelValue)
       }
     }).afterClosed().subscribe((result) => {
       if (result) {
@@ -125,7 +134,45 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
   }
 
   private updateConditionInfo() {
-    this.alarmRuleConditionControl.patchValue(this.modelValue);
+    this.alarmRuleConditionFormGroup.patchValue(
+      {
+        condition: this.modelValue?.condition,
+        spec: this.modelValue?.spec
+      }
+    );
+    this.updateSpecText();
+  }
+
+  private updateSpecText() {
+    this.specText = '';
+    if (this.modelValue && this.modelValue.spec) {
+      const spec = this.modelValue.spec;
+      switch (spec.type) {
+        case AlarmConditionType.SIMPLE:
+          break;
+        case AlarmConditionType.DURATION:
+          let duringText = '';
+          switch (spec.unit) {
+            case TimeUnit.SECONDS:
+              duringText = this.translate.instant('timewindow.seconds', {seconds: spec.value});
+              break;
+            case TimeUnit.MINUTES:
+              duringText = this.translate.instant('timewindow.minutes', {minutes: spec.value});
+              break;
+            case TimeUnit.HOURS:
+              duringText = this.translate.instant('timewindow.hours', {hours: spec.value});
+              break;
+            case TimeUnit.DAYS:
+              duringText = this.translate.instant('timewindow.days', {days: spec.value});
+              break;
+          }
+          this.specText = this.translate.instant('device-profile.condition-during', {during: duringText});
+          break;
+        case AlarmConditionType.REPEATING:
+          this.specText = this.translate.instant('device-profile.condition-repeat-times', {count: spec.count});
+          break;
+      }
+    }
   }
 
   private updateModel() {
