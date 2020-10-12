@@ -33,4 +33,7 @@ public interface RuleNodeStateRepository extends PagingAndSortingRepository<Rule
 
     @Query("SELECT e FROM RuleNodeStateEntity e WHERE e.ruleNodeId = :ruleNodeId and e.entityId = :entityId")
     RuleNodeStateEntity findByRuleNodeIdAndEntityId(@Param("ruleNodeId") UUID ruleNodeId, @Param("entityId") UUID entityId);
+
+    void removeByRuleNodeId(@Param("ruleNodeId") UUID ruleNodeId);
+
 }
