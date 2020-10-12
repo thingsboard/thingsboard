@@ -59,6 +59,7 @@ public abstract class SearchTextBasedWithAdditionalInfo<I extends UUIDBased> ext
     }
 
     public void setAdditionalInfo(JsonNode addInfo) {
+        // TODO why set additionalInfoBytes to [110,117,108,108] if JsonNode is null
         setJson(addInfo, json -> this.additionalInfo = json, bytes -> this.additionalInfoBytes = bytes);
     }
 

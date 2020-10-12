@@ -23,6 +23,8 @@ public interface SystemDataLoaderService {
 
     void createAdminSettings() throws Exception;
 
+    void createOAuth2Templates() throws Exception;
+
     void loadSystemWidgets() throws Exception;
 
     void updateSystemWidgets() throws Exception;
