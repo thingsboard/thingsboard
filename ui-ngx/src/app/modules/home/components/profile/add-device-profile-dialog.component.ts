@@ -44,6 +44,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { MatHorizontalStepper } from '@angular/material/stepper';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
+import { deepTrim } from '@core/utils';
 
 export interface AddDeviceProfileDialogData {
   deviceProfileName: string;
@@ -171,7 +172,7 @@ export class AddDeviceProfileDialogComponent extends
       if (this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value) {
         deviceProfile.defaultRuleChainId = new RuleChainId(this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value);
       }
-      this.deviceProfileService.saveDeviceProfile(deviceProfile).subscribe(
+      this.deviceProfileService.saveDeviceProfile(deepTrim(deviceProfile)).subscribe(
         (savedDeviceProfile) => {
           this.dialogRef.close(savedDeviceProfile);
         }

@@ -142,7 +142,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     if (formValue.defaultRuleChainId) {
       formValue.defaultRuleChainId = new RuleChainId(formValue.defaultRuleChainId);
     }
-    return formValue;
+    return super.prepareFormValue(formValue);
   }
 
   onDeviceProfileIdCopied(event) {

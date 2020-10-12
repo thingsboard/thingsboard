@@ -76,7 +76,7 @@ export const deviceTransportTypeHintMap = new Map<DeviceTransportType, string>(
   [
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default-hint'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt-hint'],
-    [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint']
+    // [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint']
   ]
 );
 
