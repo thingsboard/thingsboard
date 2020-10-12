@@ -25,7 +25,7 @@ import org.thingsboard.server.queue.memory.InMemoryStorage;
 import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.edge.sql.*IGNORED_Test"})
+@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.edge.sql.*Test"})
 public class EdgeSqlTestSuite {
 
     @ClassRule
