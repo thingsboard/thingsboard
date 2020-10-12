@@ -22,8 +22,16 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
+import org.thingsboard.server.common.data.query.DynamicValue;
+import org.thingsboard.server.common.data.query.DynamicValueSourceType;
 import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
+import org.thingsboard.server.common.data.query.KeyFilterPredicate;
+import org.thingsboard.server.common.data.query.SimpleKeyFilterPredicate;
+import org.thingsboard.server.common.data.query.StringFilterPredicate;
 
 import javax.print.attribute.standard.Severity;
 import java.util.Collections;
@@ -65,6 +73,7 @@ class ProfileState {
                     for (KeyFilter keyFilter : alarmRule.getCondition().getCondition()) {
                         entityKeys.add(keyFilter.getKey());
                         ruleKeys.add(keyFilter.getKey());
+                        addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, ruleKeys);
                     }
                 }));
                 if (alarm.getClearRule() != null) {
@@ -72,9 +81,30 @@ class ProfileState {
                     for (KeyFilter keyFilter : alarm.getClearRule().getCondition().getCondition()) {
                         entityKeys.add(keyFilter.getKey());
                         clearAlarmKeys.add(keyFilter.getKey());
+                        addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, clearAlarmKeys);
                     }
                 }
             }
+        }
+    }
+
+    private void addDynamicValuesRecursively(KeyFilterPredicate predicate, Set<EntityKey> entityKeys, Set<EntityKey> ruleKeys) {
+        switch (predicate.getType()) {
+            case STRING:
+            case NUMERIC:
+            case BOOLEAN:
+                DynamicValue value = ((SimpleKeyFilterPredicate) predicate).getValue().getDynamicValue();
+                if (value != null && value.getSourceType() == DynamicValueSourceType.CURRENT_DEVICE) {
+                    EntityKey entityKey = new EntityKey(EntityKeyType.ATTRIBUTE, value.getSourceAttribute());
+                    entityKeys.add(entityKey);
+                    ruleKeys.add(entityKey);
+                }
+                break;
+            case COMPLEX:
+                for (KeyFilterPredicate child : ((ComplexFilterPredicate) predicate).getPredicates()) {
+                    addDynamicValuesRecursively(child, entityKeys, ruleKeys);
+                }
+                break;
         }
     }
 

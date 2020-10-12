@@ -164,6 +164,8 @@ public class RuleChainController extends BaseController {
 
             RuleChain savedRuleChain = installScripts.createDefaultRuleChain(getCurrentUser().getTenantId(), request.getName());
 
+            tbClusterService.onEntityStateChange(savedRuleChain.getTenantId(), savedRuleChain.getId(), ComponentLifecycleEvent.CREATED);
+
             logEntityAction(savedRuleChain.getId(), savedRuleChain, null, ActionType.ADDED, null);
 
             return savedRuleChain;

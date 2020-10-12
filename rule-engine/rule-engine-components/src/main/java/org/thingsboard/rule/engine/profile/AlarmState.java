@@ -98,6 +98,10 @@ class AlarmState {
             Boolean evalResult = evalFunction.apply(clearState, data);
             if (evalResult) {
                 stateUpdate |= clearState.checkUpdate();
+                for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
+                    state.clear();
+                    stateUpdate |= state.checkUpdate();
+                }
                 ctx.getAlarmService().clearAlarm(ctx.getTenantId(), currentAlarm.getId(), JacksonUtil.OBJECT_MAPPER.createObjectNode(), System.currentTimeMillis());
                 pushMsg(ctx, new TbAlarmResult(false, false, true, currentAlarm));
                 currentAlarm = null;
@@ -175,6 +179,8 @@ class AlarmState {
 
     private TbAlarmResult calculateAlarmResult(TbContext ctx, AlarmSeverity severity) {
         if (currentAlarm != null) {
+            // TODO: In some extremely rare cases, we might miss the event of alarm clear (If one use in-mem queue and restarted the server) or (if one manipulated the rule chain).
+            // Maybe we should fetch alarm every time?
             currentAlarm.setEndTs(System.currentTimeMillis());
             AlarmSeverity oldSeverity = currentAlarm.getSeverity();
             if (!oldSeverity.equals(severity)) {
