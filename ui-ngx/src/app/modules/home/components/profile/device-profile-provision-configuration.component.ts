@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from "@angular/core";
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -25,13 +25,13 @@ import {
   ValidationErrors,
   Validator,
   Validators
-} from "@angular/forms";
-import { coerceBooleanProperty } from "@angular/cdk/coercion";
+} from '@angular/forms';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   DeviceProvisionConfiguration,
   DeviceProvisionType,
   deviceProvisionTypeTranslationMap
-} from "@shared/models/device.models";
+} from '@shared/models/device.models';
 import { generateSecret, isDefinedAndNotNull } from '@core/utils';
 
 @Component({
@@ -126,7 +126,11 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
     if (this.disabled){
       this.provisionConfigurationFormGroup.disable();
     } else {
-      this.provisionConfigurationFormGroup.enable({emitEvent: false});
+      if (this.provisionConfigurationFormGroup.get('type').value !== DeviceProvisionType.DISABLED) {
+        this.provisionConfigurationFormGroup.enable({emitEvent: false});
+      } else {
+        this.provisionConfigurationFormGroup.get('type').enable({emitEvent: false});
+      }
     }
   }
 
