@@ -158,7 +158,7 @@
           "last-name-attribute-key": "Last name attribute key",
           "login-button-icon": "Login button icon",
           "login-button-label": "Provider label",
-          "login-button-label-1": "Login with $(Provider label)",
+          "login-button-label-placeholder": "Login with $(Provider label)",
           "login-button-label-required": "Label is required.",
           "login-provider": "Login provider",
           "mapper": "Mapper",

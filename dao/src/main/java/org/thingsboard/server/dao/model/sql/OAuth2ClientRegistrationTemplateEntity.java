@@ -109,17 +109,20 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
         this.loginButtonLabel = clientRegistrationTemplate.getLoginButtonLabel();
         this.helpLink = clientRegistrationTemplate.getHelpLink();
         this.additionalInfo = clientRegistrationTemplate.getAdditionalInfo();
-        this.type = clientRegistrationTemplate.getMapperType();
-        OAuth2BasicMapperConfig basicConfig = clientRegistrationTemplate.getBasic();
-        if (basicConfig != null) {
-            this.emailAttributeKey = basicConfig.getEmailAttributeKey();
-            this.firstNameAttributeKey = basicConfig.getFirstNameAttributeKey();
-            this.lastNameAttributeKey = basicConfig.getLastNameAttributeKey();
-            this.tenantNameStrategy = basicConfig.getTenantNameStrategy();
-            this.tenantNamePattern = basicConfig.getTenantNamePattern();
-            this.customerNamePattern = basicConfig.getCustomerNamePattern();
-            this.defaultDashboardName = basicConfig.getDefaultDashboardName();
-            this.alwaysFullScreen = basicConfig.isAlwaysFullScreen();
+        OAuth2MapperConfig mapperConfig = clientRegistrationTemplate.getMapperConfig();
+        if (mapperConfig != null){
+            this.type = mapperConfig.getType();
+            OAuth2BasicMapperConfig basicConfig = mapperConfig.getBasic();
+            if (basicConfig != null) {
+                this.emailAttributeKey = basicConfig.getEmailAttributeKey();
+                this.firstNameAttributeKey = basicConfig.getFirstNameAttributeKey();
+                this.lastNameAttributeKey = basicConfig.getLastNameAttributeKey();
+                this.tenantNameStrategy = basicConfig.getTenantNameStrategy();
+                this.tenantNamePattern = basicConfig.getTenantNamePattern();
+                this.customerNamePattern = basicConfig.getCustomerNamePattern();
+                this.defaultDashboardName = basicConfig.getDefaultDashboardName();
+                this.alwaysFullScreen = basicConfig.isAlwaysFullScreen();
+            }
         }
     }
 
@@ -130,18 +133,21 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
         clientRegistrationTemplate.setCreatedTime(createdTime);
         clientRegistrationTemplate.setAdditionalInfo(additionalInfo);
 
-        clientRegistrationTemplate.setMapperType(type);
         clientRegistrationTemplate.setProviderId(providerId);
-        clientRegistrationTemplate.setBasic(
-                OAuth2BasicMapperConfig.builder()
-                        .emailAttributeKey(emailAttributeKey)
-                        .firstNameAttributeKey(firstNameAttributeKey)
-                        .lastNameAttributeKey(lastNameAttributeKey)
-                        .tenantNameStrategy(tenantNameStrategy)
-                        .tenantNamePattern(tenantNamePattern)
-                        .customerNamePattern(customerNamePattern)
-                        .defaultDashboardName(defaultDashboardName)
-                        .alwaysFullScreen(alwaysFullScreen)
+        clientRegistrationTemplate.setMapperConfig(
+                OAuth2MapperConfig.builder()
+                        .type(type)
+                        .basic(OAuth2BasicMapperConfig.builder()
+                                .emailAttributeKey(emailAttributeKey)
+                                .firstNameAttributeKey(firstNameAttributeKey)
+                                .lastNameAttributeKey(lastNameAttributeKey)
+                                .tenantNameStrategy(tenantNameStrategy)
+                                .tenantNamePattern(tenantNamePattern)
+                                .customerNamePattern(customerNamePattern)
+                                .defaultDashboardName(defaultDashboardName)
+                                .alwaysFullScreen(alwaysFullScreen)
+                                .build()
+                        )
                         .build()
         );
         clientRegistrationTemplate.setAuthorizationUri(authorizationUri);
