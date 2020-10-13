@@ -20,12 +20,10 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 
 
-@Slf4j
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
