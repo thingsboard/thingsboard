@@ -67,7 +67,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         Descriptors.Descriptor attributesDynamicMessage = getDescriptor(deviceSessionCtx.getAttributesDynamicMessageDescriptor());
         try {
             return JsonConverter.convertToAttributesProto(new JsonParser().parse(dynamicMsgToJson(bytes, attributesDynamicMessage)));
-        } catch (InvalidProtocolBufferException | IllegalArgumentException e) {
+        } catch (Exception e) {
             throw new AdaptorException(e);
         }
     }

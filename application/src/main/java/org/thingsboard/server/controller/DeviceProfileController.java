@@ -101,8 +101,7 @@ public class DeviceProfileController extends BaseController {
 
             if (transportConfiguration instanceof MqttProtoDeviceProfileTransportConfiguration) {
                 MqttProtoDeviceProfileTransportConfiguration protoTransportConfiguration = (MqttProtoDeviceProfileTransportConfiguration) transportConfiguration;
-                if (protoTransportConfiguration.getTransportPayloadType().equals(TransportPayloadType.PROTOBUF))
-                    checkProtoSchemas(protoTransportConfiguration);
+                checkProtoSchemas(protoTransportConfiguration);
             }
 
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
