@@ -21,4 +21,7 @@ import org.thingsboard.server.dao.model.sql.OAuth2ClientRegistrationTemplateEnti
 import java.util.UUID;
 
 public interface OAuth2ClientRegistrationTemplateRepository extends CrudRepository<OAuth2ClientRegistrationTemplateEntity, UUID> {
+
+    OAuth2ClientRegistrationTemplateEntity findByProviderId(String providerId);
+
 }

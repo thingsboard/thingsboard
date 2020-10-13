@@ -89,13 +89,16 @@ CREATE TABLE IF NOT EXISTS device_profile (
     name varchar(255),
     type varchar(255),
     transport_type varchar(255),
+    provision_type varchar(255),
     profile_data jsonb,
     description varchar,
     search_text varchar(255),
     is_default boolean,
     tenant_id uuid,
     default_rule_chain_id uuid,
+    provision_device_key varchar,
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
     CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id)
 );
 

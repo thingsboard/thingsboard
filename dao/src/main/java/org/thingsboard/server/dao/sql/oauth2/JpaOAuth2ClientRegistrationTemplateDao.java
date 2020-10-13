@@ -26,6 +26,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -41,6 +42,12 @@ public class JpaOAuth2ClientRegistrationTemplateDao extends JpaAbstractDao<OAuth
     @Override
     protected CrudRepository<OAuth2ClientRegistrationTemplateEntity, UUID> getCrudRepository() {
         return repository;
+    }
+
+    @Override
+    public Optional<OAuth2ClientRegistrationTemplate> findByProviderId(String providerId) {
+        OAuth2ClientRegistrationTemplate oAuth2ClientRegistrationTemplate = DaoUtil.getData(repository.findByProviderId(providerId));
+        return Optional.ofNullable(oAuth2ClientRegistrationTemplate);
     }
 
     @Override

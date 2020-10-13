@@ -25,7 +25,7 @@ import {
   createDeviceProfileConfiguration,
   createDeviceProfileTransportConfiguration,
   DeviceProfile,
-  DeviceProfileType,
+  DeviceProfileType, DeviceProvisionConfiguration, DeviceProvisionType,
   DeviceTransportType, deviceTransportTypeConfigurationInfoMap, deviceTransportTypeHintMap,
   deviceTransportTypeTranslationMap
 } from '@shared/models/device.models';
@@ -74,6 +74,8 @@ export class DeviceWizardDialogComponent extends
   transportConfigFormGroup: FormGroup;
 
   alarmRulesFormGroup: FormGroup;
+
+  provisionConfigFormGroup: FormGroup;
 
   credentialsFormGroup: FormGroup;
 
@@ -142,6 +144,14 @@ export class DeviceWizardDialogComponent extends
       }
     );
 
+    this.provisionConfigFormGroup = this.fb.group(
+      {
+        provisionConfiguration: [{
+          type: DeviceProvisionType.DISABLED
+        } as DeviceProvisionConfiguration, [Validators.required]]
+      }
+    );
+
     this.credentialsFormGroup  = this.fb.group({
         setCredential: [false],
         credential: [{value: null, disabled: true}]
@@ -201,7 +211,7 @@ export class DeviceWizardDialogComponent extends
   getFormLabel(index: number): string {
     if (index > 0) {
       if (!this.createProfile) {
-        index += 2;
+        index += 3;
       } else if (!this.createTransportConfiguration) {
         index += 1;
       }
@@ -214,8 +224,10 @@ export class DeviceWizardDialogComponent extends
       case 2:
         return 'device-profile.alarm-rules';
       case 3:
-        return 'device.credentials';
+        return 'device-profile.device-provisioning';
       case 4:
+        return 'device.credentials';
+      case 5:
         return 'customer.customer';
     }
   }
@@ -246,14 +258,20 @@ export class DeviceWizardDialogComponent extends
 
   private createDeviceProfile(): Observable<EntityId> {
     if (this.deviceWizardFormGroup.get('addProfileType').value) {
+      const deviceProvisionConfiguration: DeviceProvisionConfiguration = this.provisionConfigFormGroup.get('provisionConfiguration').value;
+      const provisionDeviceKey = deviceProvisionConfiguration.provisionDeviceKey;
+      delete deviceProvisionConfiguration.provisionDeviceKey;
       const deviceProfile: DeviceProfile = {
         name: this.deviceWizardFormGroup.get('newDeviceProfileTitle').value,
         type: DeviceProfileType.DEFAULT,
         transportType: this.deviceWizardFormGroup.get('transportType').value,
+        provisionType: deviceProvisionConfiguration.type,
+        provisionDeviceKey,
         profileData: {
           configuration: createDeviceProfileConfiguration(DeviceProfileType.DEFAULT),
           transportConfiguration: this.transportConfigFormGroup.get('transportConfiguration').value,
-          alarms: this.alarmRulesFormGroup.get('alarms').value
+          alarms: this.alarmRulesFormGroup.get('alarms').value,
+          provisionConfiguration: deviceProvisionConfiguration
         }
       };
       return this.deviceProfileService.saveDeviceProfile(deviceProfile).pipe(
@@ -266,11 +284,11 @@ export class DeviceWizardDialogComponent extends
         })
       );
     } else {
-      return of(null);
+      return of(this.deviceWizardFormGroup.get('deviceProfileId').value);
     }
   }
 
-  private createDevice(profileId: EntityId = this.deviceWizardFormGroup.get('deviceProfileId').value): Observable<BaseData<HasId>> {
+  private createDevice(profileId): Observable<BaseData<HasId>> {
     const device = {
       name: this.deviceWizardFormGroup.get('name').value,
       label: this.deviceWizardFormGroup.get('label').value,

@@ -68,6 +68,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;

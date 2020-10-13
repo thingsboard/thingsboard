@@ -214,5 +214,4 @@ public interface DeviceDao extends Dao<Device> {
      * @return the list of device objects
      */
     PageData<Device> findDevicesByTenantIdAndProfileId(UUID tenantId, UUID profileId, PageLink pageLink);
-
 }

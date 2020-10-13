@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.mqtt.session;
 import com.google.protobuf.Descriptors;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -48,11 +49,19 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     private final AtomicInteger msgIdSeq = new AtomicInteger(0);
 
+    @Getter
+    @Setter
+    private boolean provisionOnly = false;
+
     private volatile MqttTopicFilter telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
     private volatile MqttTopicFilter attributesTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
     private volatile TransportPayloadType payloadType = TransportPayloadType.JSON;
     private volatile Descriptors.Descriptor attributesDynamicMessageDescriptor;
     private volatile Descriptors.Descriptor telemetryDynamicMessageDescriptor;
+
+    @Getter
+    @Setter
+    private TransportPayloadType provisionPayloadType = payloadType;
 
     public DeviceSessionCtx(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap, MqttTransportContext context) {
         super(sessionId, mqttQoSMap);

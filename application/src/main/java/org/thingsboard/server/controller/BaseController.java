@@ -94,6 +94,7 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
+import org.thingsboard.server.service.profile.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
@@ -204,6 +205,9 @@ public abstract class BaseController {
 
     @Autowired
     protected TbQueueProducerProvider producerProvider;
+
+    @Autowired
+    protected TbTenantProfileCache tenantProfileCache;
 
     @Autowired
     protected TbDeviceProfileCache deviceProfileCache;
@@ -699,6 +703,12 @@ public abstract class BaseController {
                 break;
             case ASSIGNED_TO_TENANT:
                 msgType = DataConstants.ENTITY_ASSIGNED_TO_TENANT;
+                break;
+            case PROVISION_SUCCESS:
+                msgType = DataConstants.PROVISION_SUCCESS;
+                break;
+            case PROVISION_FAILURE:
+                msgType = DataConstants.PROVISION_FAILURE;
                 break;
         }
         if (!StringUtils.isEmpty(msgType)) {

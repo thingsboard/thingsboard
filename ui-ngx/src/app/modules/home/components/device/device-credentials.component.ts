@@ -174,8 +174,8 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
 
   updateValidators(): void {
     this.hidePassword = true;
-    const crendetialsType = this.deviceCredentialsFormGroup.get('credentialsType').value as DeviceCredentialsType;
-    switch (crendetialsType) {
+    const credentialsType = this.deviceCredentialsFormGroup.get('credentialsType').value as DeviceCredentialsType;
+    switch (credentialsType) {
       case DeviceCredentialsType.ACCESS_TOKEN:
         this.deviceCredentialsFormGroup.get('credentialsId').setValidators([Validators.required, Validators.pattern(/^.{1,20}$/)]);
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
@@ -215,9 +215,6 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     const value = this.deviceCredentialsFormGroup.get('credentialsBasic.password').value;
     if (value !== '') {
       this.deviceCredentialsFormGroup.get('credentialsBasic.userName').setValidators([Validators.required]);
-      if (this.deviceCredentialsFormGroup.get('credentialsBasic.userName').untouched) {
-        this.deviceCredentialsFormGroup.get('credentialsBasic.userName').markAsTouched({onlySelf: true});
-      }
     } else {
       this.deviceCredentialsFormGroup.get('credentialsBasic.userName').setValidators([]);
     }
