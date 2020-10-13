@@ -360,6 +360,9 @@ actors:
 cache:
   # caffeine or redis
   type: "${CACHE_TYPE:caffeine}"
+  attributes:
+    maxSize: "${CACHE_ATTRIBUTES_MAX_SIZE:100000}"
+    expireAfterAccessInMinutes: "${CACHE_ATTRIBUTES_EXPIRE_AFTER_ACCESS_IN_MINUTES:10}"
 
 caffeine:
   specs:

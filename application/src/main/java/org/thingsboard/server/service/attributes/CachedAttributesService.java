@@ -1,5 +1,8 @@
 package org.thingsboard.server.service.attributes;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.*;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -22,8 +25,10 @@ import org.thingsboard.server.service.cache.TenantCacheService;
 import org.thingsboard.server.service.queue.TbClusterService;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +37,8 @@ import java.util.stream.Collectors;
 public class CachedAttributesService implements AttributesService {
     private static final List<EntityType> LOCAL_ENTITIES = Arrays.asList(EntityType.DEVICE, EntityType.ASSET);
     private static final List<EntityType> GLOBAL_ENTITIES = Arrays.asList(EntityType.CUSTOMER, EntityType.TENANT);
+
+    private final Map<TenantId, LoadingCache<AttributesKey, Optional<AttributeKvEntry>>> cache = new ConcurrentHashMap<>();
 
     @Autowired
     @Qualifier("daoAttributesService")
@@ -46,21 +53,57 @@ public class CachedAttributesService implements AttributesService {
     @Autowired
     private PartitionService partitionService;
 
+    @Autowired
+    private AttributesCacheConfiguration cacheConfiguration;
+
     private final ExecutorService cacheUpdateExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("AttributesCacheThread"));
+
+    private LoadingCache<AttributesKey, Optional<AttributeKvEntry>> getTenantCache(TenantId tenantId) {
+        return cache.computeIfAbsent(tenantId,
+                id -> CacheBuilder.newBuilder()
+                        .maximumSize(cacheConfiguration.getMaxSize())
+                        .expireAfterAccess(cacheConfiguration.getExpireAfterAccessInMinutes(), TimeUnit.MINUTES)
+                        .build(new CacheLoader<AttributesKey, Optional<AttributeKvEntry>>() {
+                            @Override
+                            public Optional<AttributeKvEntry> load(AttributesKey key) throws Exception {
+                                return daoAttributesService.find(tenantId, key.getEntityId(), key.getScope(), key.getKey()).get();
+                            }
+
+                            @Override
+                            public Map<AttributesKey, Optional<AttributeKvEntry>> loadAll(Iterable<? extends AttributesKey> keys) throws Exception {
+                                EntityId entityId = null;
+                                String scope = null;
+                                List<String> attributeKeys = new ArrayList<>();
+                                for (AttributesKey key : keys) {
+                                    entityId = key.getEntityId();
+                                    scope = key.getScope();
+                                    attributeKeys.add(key.getKey());
+                                }
+                                String finalScope = scope;
+                                EntityId finalEntityId = entityId;
+                                return daoAttributesService.find(tenantId, entityId, scope, attributeKeys).get().stream()
+                                        .collect(Collectors.toMap(
+                                                attributeKvEntry -> new AttributesKey(finalScope, finalEntityId, attributeKvEntry.getKey()),
+                                                Optional::of)
+                                        );
+                            }
+                        })
+        );
+    }
 
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, String attributeKey) {
         validate(entityId, scope);
         Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
 
-        if (LOCAL_ENTITIES.contains(entityId.getEntityType())){
+        if (LOCAL_ENTITIES.contains(entityId.getEntityType())) {
             TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, "Main", tenantId, entityId);
             if (!tpi.isMyPartition()) {
                 return daoAttributesService.find(tenantId, entityId, scope, attributeKey);
             } else {
                 return findAndPopulateCache(tenantId, entityId, scope, attributeKey);
             }
-        } else if (GLOBAL_ENTITIES.contains(entityId.getEntityType())){
+        } else if (GLOBAL_ENTITIES.contains(entityId.getEntityType())) {
             return findAndPopulateCache(tenantId, entityId, scope, attributeKey);
             // TODO add clear cache on changes from other nodes
         } else {
@@ -75,14 +118,14 @@ public class CachedAttributesService implements AttributesService {
         validate(entityId, scope);
         attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
 
-        if (LOCAL_ENTITIES.contains(entityId.getEntityType())){
+        if (LOCAL_ENTITIES.contains(entityId.getEntityType())) {
             TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, "Main", tenantId, entityId);
             if (!tpi.isMyPartition()) {
                 return daoAttributesService.find(tenantId, entityId, scope, attributeKeys);
             } else {
                 return findAndPopulateCache(tenantId, entityId, scope, attributeKeys);
             }
-        } else if (GLOBAL_ENTITIES.contains(entityId.getEntityType())){
+        } else if (GLOBAL_ENTITIES.contains(entityId.getEntityType())) {
             return findAndPopulateCache(tenantId, entityId, scope, attributeKeys);
             // TODO add clear cache on changes from other nodes
         } else {
@@ -110,7 +153,7 @@ public class CachedAttributesService implements AttributesService {
         attributeKeys.forEach(attributeKey -> {
             AttributesKey cacheKey = new AttributesKey(scope, entityId, attributeKey);
             Optional<AttributeKvEntry> attributeKvEntryOpt = cacheService.find(tenantId, cacheKey);
-            if (attributeKvEntryOpt.isPresent()){
+            if (attributeKvEntryOpt.isPresent()) {
                 foundInCacheAttributes.add(attributeKvEntryOpt.get());
             } else {
                 notFoundInCacheAttributeKeys.add(attributeKey);
@@ -157,7 +200,7 @@ public class CachedAttributesService implements AttributesService {
                     // TODO push notification about cache change to every node
                 }
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error("[{}][{}] Failed to update cache.", tenantId, entityId, e);
         }
         return daoAttributesService.save(tenantId, entityId, scope, attributes);
