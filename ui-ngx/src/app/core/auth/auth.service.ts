@@ -201,10 +201,11 @@ export class AuthService {
   public loadOAuth2Clients(): Observable<Array<OAuth2ClientInfo>> {
     return this.http.post<Array<OAuth2ClientInfo>>(`/api/noauth/oauth2Clients`,
       null, defaultHttpOptions()).pipe(
-        tap((OAuth2Clients) => {
-          this.oauth2Clients = OAuth2Clients;
-        })
-      );
+      catchError(err => of([])),
+      tap((OAuth2Clients) => {
+        this.oauth2Clients = OAuth2Clients;
+      })
+    );
   }
 
   private forceDefaultPlace(authState?: AuthState, path?: string, params?: any): boolean {
