@@ -106,7 +106,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
             try {
                 tsService.saveAndNotify(tenantId, getQueueStatsId(tenantId, queueName), Collections.singletonList(tsKv), CALLBACK);
             } catch (DataValidationException e2) {
-                if (!e2.getMessage().equalsIgnoreCase("Asset is referencing to non-existent tenant!")) {
+                if (!e2.getMessage().equalsIgnoreCase("Queue stats is referencing to non-existent tenant!")) {
                     throw e2;
                 }
             }
