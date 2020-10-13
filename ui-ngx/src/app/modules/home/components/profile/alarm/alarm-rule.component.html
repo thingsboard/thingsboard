@@ -16,36 +16,23 @@
 
 -->
 <div fxLayout="column" [formGroup]="alarmRuleFormGroup">
-  <tb-alarm-rule-condition fxFlex class="row"
-                           formControlName="condition">
+  <tb-alarm-rule-condition formControlName="condition">
   </tb-alarm-rule-condition>
-  <mat-divider class="row"></mat-divider>
-  <tb-alarm-schedule-info fxFlex class="row"
-                          formControlName="schedule">
+  <tb-alarm-schedule-info formControlName="schedule">
   </tb-alarm-schedule-info>
-  <mat-divider class="row"></mat-divider>
-  <div fxLayout="column" fxFlex class="tb-alarm-rule-details row">
-    <div fxLayout="row" fxLayoutAlign="start center" style="min-height: 40px;">
-      <label class="tb-title" translate>device-profile.alarm-rule-details</label>
-      <span fxFlex></span>
-      <a mat-button color="primary"
-         *ngIf="!disabled"
-         type="button"
-         (click)="openEditDetailsDialog($event)"
-         matTooltip="{{ 'action.edit' | translate }}"
-         matTooltipPosition="above">
-        {{ 'action.edit' | translate }}
-      </a>
-    </div>
-    <div fxLayout="row" fxLayoutAlign="start start">
-      <div class="tb-alarm-rule-details-content" [ngClass]="{disabled: this.disabled, collapsed: !this.expandAlarmDetails}"
-           (click)="!disabled ? openEditDetailsDialog($event) : {}"
-           fxFlex [innerHTML]="alarmRuleFormGroup.get('alarmDetails').value"></div>
-      <a mat-button color="primary"
-         type="button"
-         (click)="expandAlarmDetails = !expandAlarmDetails">
-        {{ (expandAlarmDetails ? 'action.hide' : 'action.read-more') | translate }}
-      </a>
-    </div>
+  <div *ngIf="!disabled || alarmRuleFormGroup.get('alarmDetails').value" fxLayout="row" fxLayoutAlign="start center">
+    <span class="tb-alarm-rule-details title" (click)="openEditDetailsDialog($event)">
+      {{ alarmRuleFormGroup.get('alarmDetails').value ? ('device-profile.alarm-rule-details' | translate) + ': '  : ('device-profile.add-alarm-rule-details' | translate) }}
+    </span>
+    <span *ngIf="alarmRuleFormGroup.get('alarmDetails').value" class="tb-alarm-rule-details"
+          (click)="openEditDetailsDialog($event)"
+          [innerHTML]="alarmRuleFormGroup.get('alarmDetails').value"></span>
+    <button mat-icon-button color="primary"
+       type="button"
+       (click)="openEditDetailsDialog($event)"
+       matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
+       matTooltipPosition="above">
+      <mat-icon>{{ disabled ? 'visibility' : (alarmRuleFormGroup.get('alarmDetails').value ? 'edit' : 'add') }}</mat-icon>
+    </button>
   </div>
 </div>

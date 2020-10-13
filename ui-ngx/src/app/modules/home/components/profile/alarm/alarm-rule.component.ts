@@ -118,7 +118,8 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
           disableClose: true,
           panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
           data: {
-            alarmDetails: this.alarmRuleFormGroup.get('alarmDetails').value
+            alarmDetails: this.alarmRuleFormGroup.get('alarmDetails').value,
+            readonly: this.disabled
           }
         }).afterClosed().subscribe((alarmDetails) => {
           if (isDefinedAndNotNull(alarmDetails)) {

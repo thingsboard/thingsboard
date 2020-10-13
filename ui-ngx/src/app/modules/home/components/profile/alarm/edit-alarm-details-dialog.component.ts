@@ -27,6 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 export interface EditAlarmDetailsDialogData {
   alarmDetails: string;
+  readonly: boolean;
 }
 
 @Component({
@@ -57,6 +58,9 @@ export class EditAlarmDetailsDialogComponent extends DialogComponent<EditAlarmDe
     this.editDetailsFormGroup = this.fb.group({
       alarmDetails: [this.alarmDetails]
     });
+    if (this.data.readonly) {
+      this.editDetailsFormGroup.disable();
+    }
   }
 
   ngOnInit(): void {

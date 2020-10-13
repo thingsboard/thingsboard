@@ -28,7 +28,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 24px 24px 8px !important;
+    padding: 0 !important;
 
     .mat-stepper-horizontal {
       display: flex;
@@ -45,7 +45,7 @@
         }
       }
       .mat-horizontal-content-container {
-        height: 350px;
+        height: 530px;
         max-height: 100%;
         width: 100%;;
         overflow-y: auto;
