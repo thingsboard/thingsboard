@@ -70,6 +70,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.profile.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
@@ -92,7 +93,7 @@ public class DefaultTransportApiService implements TransportApiService {
     //TODO: Constructor dependencies;
     private final DeviceProfileService deviceProfileService;
     private final TenantService tenantService;
-    private final TenantProfileService tenantProfileService;
+    private final TbTenantProfileCache tenantProfileCache;
     private final DeviceService deviceService;
     private final RelationService relationService;
     private final DeviceCredentialsService deviceCredentialsService;
@@ -106,14 +107,14 @@ public class DefaultTransportApiService implements TransportApiService {
     private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentHashMap<>();
 
     public DefaultTransportApiService(DeviceProfileService deviceProfileService, TenantService tenantService,
-                                      TenantProfileService tenantProfileService, DeviceService deviceService,
+                                      TbTenantProfileCache tenantProfileCache, DeviceService deviceService,
                                       RelationService relationService, DeviceCredentialsService deviceCredentialsService,
                                       DeviceStateService deviceStateService, DbCallbackExecutorService dbCallbackExecutorService,
                                       TbClusterService tbClusterService, DataDecodingEncodingService dataDecodingEncodingService,
                                       DeviceProvisionService deviceProvisionService) {
         this.deviceProfileService = deviceProfileService;
         this.tenantService = tenantService;
-        this.tenantProfileService = tenantProfileService;
+        this.tenantProfileCache = tenantProfileCache;
         this.deviceService = deviceService;
         this.relationService = relationService;
         this.deviceCredentialsService = deviceCredentialsService;
@@ -321,10 +322,8 @@ public class DefaultTransportApiService implements TransportApiService {
 
     private ListenableFuture<TransportApiResponseMsg> handle(GetTenantRoutingInfoRequestMsg requestMsg) {
         TenantId tenantId = new TenantId(new UUID(requestMsg.getTenantIdMSB(), requestMsg.getTenantIdLSB()));
-        // TODO: Tenant Profile from cache
-        ListenableFuture<TenantProfile> tenantProfileFuture =
-                Futures.transform(tenantService.findTenantByIdAsync(TenantId.SYS_TENANT_ID, tenantId), tenant ->
-                        tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, tenant.getTenantProfileId()), dbCallbackExecutorService);
+
+        ListenableFuture<TenantProfile> tenantProfileFuture = Futures.immediateFuture(tenantProfileCache.get(tenantId));
         return Futures.transform(tenantProfileFuture, tenantProfile -> TransportApiResponseMsg.newBuilder()
                 .setGetTenantRoutingInfoResponseMsg(GetTenantRoutingInfoResponseMsg.newBuilder().setIsolatedTbCore(tenantProfile.isIsolatedTbCore())
                         .setIsolatedTbRuleEngine(tenantProfile.isIsolatedTbRuleEngine()).build()).build(), dbCallbackExecutorService);
