@@ -52,11 +52,9 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         DeviceSessionCtx deviceSessionCtx = (DeviceSessionCtx) ctx;
         byte[] bytes = toBytes(inbound.payload());
+        Descriptors.Descriptor telemetryDynamicMsgDescriptor = getDescriptor(deviceSessionCtx.getTelemetryDynamicMsgDescriptor());
         try {
-            Descriptors.Descriptor telemetryDynamicMsgDescriptor = deviceSessionCtx.getTelemetryDynamicMsgDescriptor();
-            DynamicMessage dynamicMessage = DynamicMessage.parseFrom(telemetryDynamicMsgDescriptor, bytes);
-            String stringMsg = JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
-            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(stringMsg));
+            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(dynamicMsgToJson(bytes, telemetryDynamicMsgDescriptor)));
         } catch (Exception e) {
             throw new AdaptorException(e);
         }
@@ -66,11 +64,9 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     public TransportProtos.PostAttributeMsg convertToPostAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         DeviceSessionCtx deviceSessionCtx = (DeviceSessionCtx) ctx;
         byte[] bytes = toBytes(inbound.payload());
+        Descriptors.Descriptor attributesDynamicMessage = getDescriptor(deviceSessionCtx.getAttributesDynamicMessageDescriptor());
         try {
-            Descriptors.Descriptor attributesDynamicMessage = deviceSessionCtx.getAttributesDynamicMessageDescriptor();
-            DynamicMessage dynamicMessage = DynamicMessage.parseFrom(attributesDynamicMessage, bytes);
-            String stringMsg = JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
-            return JsonConverter.convertToAttributesProto(new JsonParser().parse(stringMsg));
+            return JsonConverter.convertToAttributesProto(new JsonParser().parse(dynamicMsgToJson(bytes, attributesDynamicMessage)));
         } catch (InvalidProtocolBufferException | IllegalArgumentException e) {
             throw new AdaptorException(e);
         }
@@ -202,6 +198,18 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
 
     private int getRequestId(String topicName, String topic) {
         return Integer.parseInt(topicName.substring(topic.length()));
+    }
+
+    private Descriptors.Descriptor getDescriptor(Descriptors.Descriptor descriptor) throws AdaptorException {
+        if (descriptor == null) {
+            throw new AdaptorException("Failed to get dynamic message descriptor!");
+        }
+        return descriptor;
+    }
+
+    private String dynamicMsgToJson(byte[] bytes, Descriptors.Descriptor descriptor) throws InvalidProtocolBufferException {
+        DynamicMessage dynamicMessage = DynamicMessage.parseFrom(descriptor, bytes);
+        return JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
     }
 
 }

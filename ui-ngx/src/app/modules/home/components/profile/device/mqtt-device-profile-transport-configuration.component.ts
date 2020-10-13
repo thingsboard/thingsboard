@@ -88,8 +88,6 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
         deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required],
-        // deviceTelemetryProtoSchema: [null, Validators.required],
-        // deviceAttributesProtoSchema: [null, Validators.required]
       })
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {

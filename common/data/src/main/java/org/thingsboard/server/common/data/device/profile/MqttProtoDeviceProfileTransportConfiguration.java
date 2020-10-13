@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.github.os72.protobuf.dynamic.DynamicSchema;
@@ -40,7 +39,6 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -55,12 +53,6 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
 
     private String deviceTelemetryProtoSchema;
     private String deviceAttributesProtoSchema;
-
-    @JsonIgnore
-    private Descriptors.Descriptor telemetryMsgDescriptor;
-
-    @JsonIgnore
-    private Descriptors.Descriptor attributesMsgDescriptor;
 
     @Override
     public DeviceTransportType getType() {

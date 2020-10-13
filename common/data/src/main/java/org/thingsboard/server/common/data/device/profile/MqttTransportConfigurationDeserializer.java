@@ -18,10 +18,10 @@ package org.thingsboard.server.common.data.device.profile;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.TransportPayloadType;
 
 import java.io.IOException;
 
@@ -36,7 +36,8 @@ public class MqttTransportConfigurationDeserializer extends StdDeserializer<Mqtt
     public MqttDeviceProfileTransportConfiguration deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
         try {
             JsonNode jsonNode = jsonParser.readValueAsTree();
-            if (jsonNode.has("deviceTelemetryProtoSchema") || jsonNode.has("deviceAttributesProtoSchema")) {
+
+            if (jsonNode.hasNonNull("transportPayloadType") && jsonNode.get("transportPayloadType").asText().equals(TransportPayloadType.PROTOBUF.name())) {
                 return jsonParser.getCodec().treeToValue(jsonNode, MqttProtoDeviceProfileTransportConfiguration.class);
             } else {
                 return jsonParser.getCodec().treeToValue(jsonNode, MqttJsonDeviceProfileTransportConfiguration.class);
