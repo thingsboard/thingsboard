@@ -23,8 +23,6 @@ import lombok.Data;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 
-
-@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -34,6 +32,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
         @JsonSubTypes.Type(value = MqttJsonDeviceProfileTransportConfiguration.class, name = "JSON"),
         @JsonSubTypes.Type(value = MqttProtoDeviceProfileTransportConfiguration.class, name = "PROTOBUF")})
 @JsonDeserialize(using = MqttTransportConfigurationDeserializer.class)
+@Data
 public abstract class MqttDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
 
     public abstract TransportPayloadType getTransportPayloadType();
