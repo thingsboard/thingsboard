@@ -38,10 +38,10 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 @JsonDeserialize(using = MqttTransportConfigurationDeserializer.class)
 public abstract class MqttDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
 
+    public abstract TransportPayloadType getTransportPayloadType();
+
     protected String deviceTelemetryTopic = MqttTopics.DEVICE_TELEMETRY_TOPIC;
     protected String deviceAttributesTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
-
-    public abstract TransportPayloadType getTransportPayloadType();
 
     @Override
     public DeviceTransportType getType() {

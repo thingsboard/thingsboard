@@ -22,6 +22,7 @@ import com.github.os72.protobuf.dynamic.EnumDefinition;
 import com.github.os72.protobuf.dynamic.MessageDefinition;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
+import com.squareup.wire.schema.Field;
 import com.squareup.wire.schema.Location;
 import com.squareup.wire.schema.internal.parser.EnumConstantElement;
 import com.squareup.wire.schema.internal.parser.EnumElement;
@@ -33,8 +34,6 @@ import com.squareup.wire.schema.internal.parser.TypeElement;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 
@@ -73,7 +72,7 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
             throw new IllegalArgumentException("Failed to parse: " + schemaName + " due to: " + e.getMessage());
         }
         List<TypeElement> types = protoFileElement.getTypes();
-        if (!CollectionUtils.isEmpty(types)) {
+        if (!types.isEmpty()) {
             if (types.stream().noneMatch(typeElement -> typeElement instanceof MessageElement)) {
                 throw new IllegalArgumentException("Invalid " + schemaName + " provided! At least one Message definition should exists!");
             }
@@ -86,7 +85,7 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
         ProtoFileElement protoFileElement = getTransportProtoSchema(protoSchema);
         DynamicSchema.Builder schemaBuilder = DynamicSchema.newBuilder();
         schemaBuilder.setName(schemaName);
-        schemaBuilder.setPackage(!StringUtils.isEmpty(protoFileElement.getPackageName()) ?
+        schemaBuilder.setPackage(!isEmptyStr(protoFileElement.getPackageName()) ?
                 protoFileElement.getPackageName() : schemaName.toLowerCase());
 
         List<TypeElement> types = protoFileElement.getTypes();
@@ -101,11 +100,11 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
                 .map(typeElement -> (MessageElement) typeElement)
                 .collect(Collectors.toList());
 
-        if (!CollectionUtils.isEmpty(enumTypes)) {
+        if (!enumTypes.isEmpty()) {
             enumTypes.forEach(enumElement -> {
                 List<EnumConstantElement> enumElementTypeConstants = enumElement.getConstants();
                 EnumDefinition.Builder enumDefinitionBuilder = EnumDefinition.newBuilder(enumElement.getName());
-                if (!CollectionUtils.isEmpty(enumElementTypeConstants)) {
+                if (!enumElementTypeConstants.isEmpty()) {
                     enumElementTypeConstants.forEach(constantElement -> enumDefinitionBuilder.addValue(constantElement.getName(), constantElement.getTag()));
                 }
                 EnumDefinition enumDefinition = enumDefinitionBuilder.build();
@@ -113,12 +112,21 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
             });
         }
 
-        if (!CollectionUtils.isEmpty(messageTypes)) {
+        if (!messageTypes.isEmpty()) {
             messageTypes.forEach(messageElement -> {
                 List<FieldElement> messageElementFields = messageElement.getFields();
                 MessageDefinition.Builder messageDefinitionBuilder = MessageDefinition.newBuilder(messageElement.getName());
-                if (!CollectionUtils.isEmpty(messageElementFields)) {
-                    messageElementFields.forEach(fieldElement -> messageDefinitionBuilder.addField(fieldElement.getType(), fieldElement.getName(), fieldElement.getTag(), fieldElement.getDefaultValue()));
+                if (!messageElementFields.isEmpty()) {
+                    messageElementFields.forEach(fieldElement -> {
+                        Field.Label label = fieldElement.getLabel();
+                        String labelStr = label != null ? label.name() : null;
+                        messageDefinitionBuilder.addField(
+                                labelStr,
+                                fieldElement.getType(),
+                                fieldElement.getName(),
+                                fieldElement.getTag(),
+                                fieldElement.getDefaultValue());
+                    });
                 }
                 MessageDefinition messageDefinition = messageDefinitionBuilder.build();
                 schemaBuilder.addMessageDefinition(messageDefinition);
@@ -129,16 +137,21 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
                 DynamicMessage.Builder builder = dynamicSchema.newMessageBuilder(lastMsg.getName());
                 return builder.getDescriptorForType();
             } catch (Descriptors.DescriptorValidationException e) {
-                throw new RuntimeException(e);
+                log.error("Failed to create dynamic schema due to: ", e);
+                return null;
             }
         } else {
-             throw new RuntimeException("Failed to get Message Descriptor! Message types is empty for " + schemaName + " schema!");
+            log.error("Failed to get Message Descriptor! Message types is empty for {} schema!", schemaName);
+            return null;
         }
     }
 
-
     private ProtoFileElement getTransportProtoSchema(String protoSchema) {
         return new ProtoParser(LOCATION, protoSchema.toCharArray()).readProtoFile();
+    }
+
+    private boolean isEmptyStr(String str) {
+        return str == null || "".equals(str);
     }
 
 }

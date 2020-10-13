@@ -38,7 +38,6 @@ import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
-import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
 import java.util.Optional;
@@ -122,7 +121,6 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     @Override
     public TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(MqttDeviceAwareSessionContext ctx, MqttPublishMessage mqttMsg) throws AdaptorException {
         byte[] bytes = toBytes(mqttMsg.payload());
-        String topicName = mqttMsg.variableHeader().topicName();
         try {
             return ProtoConverter.convertToProvisionRequestMsg(bytes);
         } catch (InvalidProtocolBufferException ex) {

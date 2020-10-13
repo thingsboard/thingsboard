@@ -99,12 +99,10 @@ public class DeviceProfileController extends BaseController {
 
             DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
 
-            if (transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
-                if (transportConfiguration instanceof MqttProtoDeviceProfileTransportConfiguration) {
-                    MqttProtoDeviceProfileTransportConfiguration protoTransportConfiguration = (MqttProtoDeviceProfileTransportConfiguration) transportConfiguration;
-                    if (protoTransportConfiguration.getTransportPayloadType().equals(TransportPayloadType.PROTOBUF))
+            if (transportConfiguration instanceof MqttProtoDeviceProfileTransportConfiguration) {
+                MqttProtoDeviceProfileTransportConfiguration protoTransportConfiguration = (MqttProtoDeviceProfileTransportConfiguration) transportConfiguration;
+                if (protoTransportConfiguration.getTransportPayloadType().equals(TransportPayloadType.PROTOBUF))
                     checkProtoSchemas(protoTransportConfiguration);
-                }
             }
 
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
