@@ -52,6 +52,7 @@ import { OAuth2Service } from '@core/http/oauth2.service';
 export class OAuth2SettingsComponent extends PageComponent implements OnInit, HasConfirmForm, OnDestroy {
 
   private URL_REGEXP = /^[A-Za-z][A-Za-z\d.+-]*:\/*(?:\w+(?::\w+)?@)?[^\s/]+(?::\d+)?(?:\/[\w#!:.,?+=&%@\-/]*)?$/;
+  private DOMAIN_AND_PORT_REGEXP = /^(?:\w+(?::\w+)?@)?[^\s/]+(?::\d+)?$/;
   private subscriptions: Subscription[] = [];
   private templates = new Map<string, OAuth2ClientRegistrationTemplate>();
   private defaultProvider = {
@@ -233,7 +234,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     const domain = this.fb.group({
       name: [domainInfo ? domainInfo.name : this.window.location.hostname, [
         Validators.required,
-        Validators.pattern('((?![:/]).)*$')]],
+        Validators.pattern(this.DOMAIN_AND_PORT_REGEXP)]],
       scheme: [domainInfo?.scheme ? domainInfo.scheme : DomainSchema.HTTPS, Validators.required]
     }, {validators: this.uniqueDomainValidator});
     return domain;

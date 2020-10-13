@@ -94,8 +94,6 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
         name: [entity ? entity.name : '', [Validators.required]],
         type: [entity ? entity.type : null, [Validators.required]],
         transportType: [entity ? entity.transportType : null, [Validators.required]],
-        provisionType: [deviceProvisionConfiguration.type, [Validators.required]],
-        provisionDeviceKey: [deviceProvisionConfiguration.provisionDeviceKey],
         profileData: this.fb.group({
           configuration: [entity && !this.isAdd ? entity.profileData?.configuration : {}, Validators.required],
           transportConfiguration: [entity && !this.isAdd ? entity.profileData?.transportConfiguration : {}, Validators.required],
