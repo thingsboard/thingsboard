@@ -32,7 +32,7 @@ import {
   DeviceProvisionType,
   deviceProvisionTypeTranslationMap
 } from "@shared/models/device.models";
-import { isDefinedAndNotNull } from "@core/utils";
+import { generateSecret, isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-device-profile-provision-configuration',
@@ -85,10 +85,18 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
     this.provisionConfigurationFormGroup.get('type').valueChanges.subscribe((type) => {
       if (type === DeviceProvisionType.DISABLED) {
         this.provisionConfigurationFormGroup.get('provisionDeviceSecret').disable({emitEvent: false});
-        this.provisionConfigurationFormGroup.get('provisionDeviceSecret').patchValue(null,{emitEvent: false});
+        this.provisionConfigurationFormGroup.get('provisionDeviceSecret').patchValue(null, {emitEvent: false});
         this.provisionConfigurationFormGroup.get('provisionDeviceKey').disable({emitEvent: false});
         this.provisionConfigurationFormGroup.get('provisionDeviceKey').patchValue(null);
       } else {
+        const provisionDeviceSecret: string = this.provisionConfigurationFormGroup.get('provisionDeviceSecret').value;
+        if (!provisionDeviceSecret || !provisionDeviceSecret.length) {
+          this.provisionConfigurationFormGroup.get('provisionDeviceSecret').patchValue(generateSecret(20), {emitEvent: false});
+        }
+        const provisionDeviceKey: string = this.provisionConfigurationFormGroup.get('provisionDeviceKey').value;
+        if (!provisionDeviceKey || !provisionDeviceKey.length) {
+          this.provisionConfigurationFormGroup.get('provisionDeviceKey').patchValue(generateSecret(20), {emitEvent: false});
+        }
         this.provisionConfigurationFormGroup.get('provisionDeviceSecret').enable({emitEvent: false});
         this.provisionConfigurationFormGroup.get('provisionDeviceKey').enable({emitEvent: false});
       }
