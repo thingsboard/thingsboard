@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Assert;
@@ -29,7 +30,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class BaseOAuth2ServiceTest extends AbstractServiceTest {
-    private static final OAuth2ClientsParams EMPTY_PARAMS = new OAuth2ClientsParams(false, new HashSet<>());
+    private static final OAuth2ClientsParams EMPTY_PARAMS = new OAuth2ClientsParams(false, new ArrayList<>());
 
     @Autowired
     protected OAuth2Service oAuth2Service;
@@ -48,14 +49,14 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
 
     @Test(expected = DataValidationException.class)
     public void testSaveHttpAndMixedDomainsTogether() {
-        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Lists.newArrayList(
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
                                 DomainInfo.builder().name("first-domain").scheme(SchemeType.MIXED).build(),
                                 DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto()
@@ -67,14 +68,14 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
 
     @Test(expected = DataValidationException.class)
     public void testSaveHttpsAndMixedDomainsTogether() {
-        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Lists.newArrayList(
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTPS).build(),
                                 DomainInfo.builder().name("first-domain").scheme(SchemeType.MIXED).build(),
                                 DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto()
@@ -131,20 +132,20 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(foundClientsParams);
         Assert.assertEquals(clientsParams, foundClientsParams);
 
-        OAuth2ClientsParams newClientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+        OAuth2ClientsParams newClientsParams = new OAuth2ClientsParams(true, Lists.newArrayList(
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("another-domain").scheme(SchemeType.HTTPS).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto()
                         ))
                         .build(),
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("test-domain").scheme(SchemeType.MIXED).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto()
                         ))
                         .build()
@@ -157,22 +158,22 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
 
     @Test
     public void testGetOAuth2Clients() {
-        Set<ClientRegistrationDto> firstGroup = Sets.newHashSet(
+        List<ClientRegistrationDto> firstGroup = Lists.newArrayList(
                 validClientRegistrationDto(),
                 validClientRegistrationDto(),
                 validClientRegistrationDto(),
                 validClientRegistrationDto()
         );
-        Set<ClientRegistrationDto> secondGroup = Sets.newHashSet(
+        List<ClientRegistrationDto> secondGroup = Lists.newArrayList(
                 validClientRegistrationDto(),
                 validClientRegistrationDto()
         );
-        Set<ClientRegistrationDto> thirdGroup = Sets.newHashSet(
+        List<ClientRegistrationDto> thirdGroup = Lists.newArrayList(
                 validClientRegistrationDto()
         );
-        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Lists.newArrayList(
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
                                 DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
@@ -180,14 +181,14 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                         .clientRegistrations(firstGroup)
                         .build(),
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTP).build(),
                                 DomainInfo.builder().name("fourth-domain").scheme(SchemeType.MIXED).build()
                         ))
                         .clientRegistrations(secondGroup)
                         .build(),
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTPS).build(),
                                 DomainInfo.builder().name("fifth-domain").scheme(SchemeType.HTTP).build()
                         ))
@@ -285,15 +286,15 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
 
     @Test
     public void testGetOAuth2ClientsForHttpAndHttps() {
-        Set<ClientRegistrationDto> firstGroup = Sets.newHashSet(
+        List<ClientRegistrationDto> firstGroup = Lists.newArrayList(
                 validClientRegistrationDto(),
                 validClientRegistrationDto(),
                 validClientRegistrationDto(),
                 validClientRegistrationDto()
         );
-        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Lists.newArrayList(
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
                                 DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTPS).build()
@@ -335,25 +336,25 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
 
     @Test
     public void testGetDisabledOAuth2Clients() {
-        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Lists.newArrayList(
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
                                 DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto()
                         ))
                         .build(),
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTP).build(),
                                 DomainInfo.builder().name("fourth-domain").scheme(SchemeType.MIXED).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto()
                         ))
@@ -374,35 +375,35 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAllClientRegistrationInfos() {
-        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Lists.newArrayList(
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
                                 DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto()
                         ))
                         .build(),
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTP).build(),
                                 DomainInfo.builder().name("fourth-domain").scheme(SchemeType.MIXED).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto()
                         ))
                         .build(),
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTPS).build(),
                                 DomainInfo.builder().name("fifth-domain").scheme(SchemeType.HTTP).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto()
                         ))
                         .build()
@@ -423,35 +424,35 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindClientRegistrationById() {
-        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Sets.newHashSet(
+        OAuth2ClientsParams clientsParams = new OAuth2ClientsParams(true, Lists.newArrayList(
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
                                 DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto()
                         ))
                         .build(),
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTP).build(),
                                 DomainInfo.builder().name("fourth-domain").scheme(SchemeType.MIXED).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto()
                         ))
                         .build(),
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTPS).build(),
                                 DomainInfo.builder().name("fifth-domain").scheme(SchemeType.HTTP).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto()
                         ))
                         .build()
@@ -466,14 +467,14 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
     }
 
     private OAuth2ClientsParams createDefaultClientsParams() {
-        return new OAuth2ClientsParams(true, Sets.newHashSet(
+        return new OAuth2ClientsParams(true, Lists.newArrayList(
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
                                 DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto(),
@@ -481,11 +482,11 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                         ))
                         .build(),
                 OAuth2ClientsDomainParams.builder()
-                        .domainInfos(Sets.newHashSet(
+                        .domainInfos(Lists.newArrayList(
                                 DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
                                 DomainInfo.builder().name("fourth-domain").scheme(SchemeType.MIXED).build()
                         ))
-                        .clientRegistrations(Sets.newHashSet(
+                        .clientRegistrations(Lists.newArrayList(
                                 validClientRegistrationDto(),
                                 validClientRegistrationDto()
                         ))

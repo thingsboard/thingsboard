@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Injectable, NgModule } from '@angular/core';
+import { Resolve, RouterModule, Routes } from '@angular/router';
 
 import { MailServerComponent } from '@modules/home/pages/admin/mail-server.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
@@ -23,6 +23,25 @@ import { Authority } from '@shared/models/authority.enum';
 import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
 import { OAuth2SettingsComponent } from '@home/pages/admin/oauth2-settings.component';
+import { User } from '@shared/models/user.model';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { UserService } from '@core/http/user.service';
+import { Observable } from 'rxjs';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { OAuth2Service } from '@core/http/oauth2.service';
+import { UserProfileResolver } from '@home/pages/profile/profile-routing.module';
+
+@Injectable()
+export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
+
+  constructor(private oauth2Service: OAuth2Service) {
+  }
+
+  resolve(): Observable<string> {
+    return this.oauth2Service.getLoginProcessingUrl();
+  }
+}
 
 const routes: Routes = [
   {
@@ -90,6 +109,9 @@ const routes: Routes = [
             label: 'admin.oauth2.oauth2',
             icon: 'security'
           }
+        },
+        resolve: {
+          loginProcessingUrl: OAuth2LoginProcessingUrlResolver
         }
       }
     ]
@@ -98,6 +120,9 @@ const routes: Routes = [
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
+  providers: [
+    OAuth2LoginProcessingUrlResolver
+  ]
 })
 export class AdminRoutingModule { }

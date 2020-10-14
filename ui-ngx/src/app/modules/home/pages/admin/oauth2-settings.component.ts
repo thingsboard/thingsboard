@@ -43,6 +43,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { OAuth2Service } from '@core/http/oauth2.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'tb-oauth2-settings',
@@ -87,7 +88,10 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
   templateProvider = ['Custom'];
 
+  private loginProcessingUrl: string = this.route.snapshot.data.loginProcessingUrl;
+
   constructor(protected store: Store<AppState>,
+              private route: ActivatedRoute,
               private oauth2Service: OAuth2Service,
               private fb: FormBuilder,
               private dialogService: DialogService,
@@ -130,7 +134,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     return this.oauth2SettingsForm.get('domainsParams') as FormArray;
   }
 
-  private formBasicGroup(mapperConfigBasic?: MapperConfigBasic): FormGroup {
+  private formBasicGroup(type: MapperConfigType, mapperConfigBasic?: MapperConfigBasic): FormGroup {
     let tenantNamePattern;
     if (mapperConfigBasic?.tenantNamePattern) {
       tenantNamePattern = mapperConfigBasic.tenantNamePattern;
@@ -138,15 +142,19 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       tenantNamePattern = {value: null, disabled: true};
     }
     const basicGroup = this.fb.group({
-      emailAttributeKey: [mapperConfigBasic?.emailAttributeKey ? mapperConfigBasic.emailAttributeKey : 'email', Validators.required],
       firstNameAttributeKey: [mapperConfigBasic?.firstNameAttributeKey ? mapperConfigBasic.firstNameAttributeKey : ''],
       lastNameAttributeKey: [mapperConfigBasic?.lastNameAttributeKey ? mapperConfigBasic.lastNameAttributeKey : ''],
       tenantNameStrategy: [mapperConfigBasic?.tenantNameStrategy ? mapperConfigBasic.tenantNameStrategy : TenantNameStrategy.DOMAIN],
       tenantNamePattern: [tenantNamePattern, Validators.required],
       customerNamePattern: [mapperConfigBasic?.customerNamePattern ? mapperConfigBasic.customerNamePattern : null],
       defaultDashboardName: [mapperConfigBasic?.defaultDashboardName ? mapperConfigBasic.defaultDashboardName : null],
-      alwaysFullScreen: [mapperConfigBasic?.alwaysFullScreen ? mapperConfigBasic.alwaysFullScreen : false]
+      alwaysFullScreen: [isDefinedAndNotNull(mapperConfigBasic?.alwaysFullScreen) ? mapperConfigBasic.alwaysFullScreen : false]
     });
+
+    if (MapperConfigType.GITHUB !== type) {
+      basicGroup.addControl('emailAttributeKey',
+        this.fb.control( mapperConfigBasic?.emailAttributeKey ? mapperConfigBasic.emailAttributeKey : 'email', Validators.required));
+    }
 
     this.subscriptions.push(basicGroup.get('tenantNameStrategy').valueChanges.subscribe((domain) => {
       if (domain === 'CUSTOM') {
@@ -279,9 +287,12 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
         clientRegistration?.userNameAttributeName ? clientRegistration.userNameAttributeName : 'email', Validators.required],
       mapperConfig: this.fb.group({
           allowUserCreation: [
-            clientRegistration?.mapperConfig?.allowUserCreation ? clientRegistration.mapperConfig.allowUserCreation : true
+            isDefinedAndNotNull(clientRegistration?.mapperConfig?.allowUserCreation) ?
+              clientRegistration.mapperConfig.allowUserCreation : true
           ],
-          activateUser: [clientRegistration?.mapperConfig?.activateUser ? clientRegistration.mapperConfig.activateUser : false],
+          activateUser: [
+            isDefinedAndNotNull(clientRegistration?.mapperConfig?.activateUser) ? clientRegistration.mapperConfig.activateUser : false
+          ],
           type: [
             clientRegistration?.mapperConfig?.type ? clientRegistration.mapperConfig.type : MapperConfigType.BASIC, Validators.required
           ]
@@ -308,7 +319,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     return clientRegistrationFormGroup;
   }
 
-  private validateScope (control: AbstractControl): ValidationErrors | null {
+  private validateScope(control: AbstractControl): ValidationErrors | null {
     const scope: string[] = control.value;
     if (!scope || !scope.length) {
       return {
@@ -347,7 +358,11 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       mapperConfig.addControl('custom', this.formCustomGroup(predefinedValue?.custom));
     } else {
       mapperConfig.removeControl('custom');
-      mapperConfig.addControl('basic', this.formBasicGroup(predefinedValue?.basic));
+      if (mapperConfig.get('basic')) {
+        mapperConfig.setControl('basic', this.formBasicGroup(type, predefinedValue?.basic));
+      } else {
+        mapperConfig.addControl('basic', this.formBasicGroup(type, predefinedValue?.basic));
+      }
     }
   }
 
@@ -490,7 +505,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       } else {
         protocol = domainInfo.scheme === DomainSchema.MIXED ? DomainSchema.HTTPS.toLowerCase() : domainInfo.scheme.toLowerCase();
       }
-      return `${protocol}://${domainInfo.name}/login/oauth2/code/`;
+      return `${protocol}://${domainInfo.name}${this.loginProcessingUrl}`;
     }
     return '';
   }
