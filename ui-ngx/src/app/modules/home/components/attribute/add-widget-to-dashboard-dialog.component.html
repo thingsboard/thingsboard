@@ -55,21 +55,22 @@
       </mat-radio-group>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions fxLayout="row">
     <mat-checkbox formControlName="openDashboard"
-                  style="margin-bottom: 0; padding-right: 20px;">
+                  style="margin-bottom: 0;">
       {{ 'dashboard.open-dashboard' | translate }}
     </mat-checkbox>
-    <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || addWidgetFormGroup.invalid || !addWidgetFormGroup.dirty">
-      {{ 'action.add' | translate }}
-    </button>
+    <span fxFlex></span>
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>
       {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || addWidgetFormGroup.invalid || !addWidgetFormGroup.dirty">
+      {{ 'action.add' | translate }}
     </button>
   </div>
 </form>

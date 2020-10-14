@@ -908,6 +908,7 @@
         "create-alarm-pattern": "Create <b>{{alarmType}}</b> alarm",
         "create-alarm-rules": "Create alarm rules",
         "no-create-alarm-rules": "No create conditions configured",
+        "add-create-alarm-rule-prompt": "Please add create alarm rule",
         "clear-alarm-rule": "Clear alarm rule",
         "no-clear-alarm-rule": "No clear condition configured",
         "add-create-alarm-rule": "Add create condition",

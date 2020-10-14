@@ -34,7 +34,6 @@
     </button>
     <button mat-button
             type="submit"
-            style="margin-right: 20px;"
             [disabled]="(isLoading$ | async) || colorPickerFormGroup.invalid || !colorPickerFormGroup.dirty">
       {{ 'action.select' | translate }}
     </button>

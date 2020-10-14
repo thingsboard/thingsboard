@@ -26,7 +26,7 @@ import { EntityInfoData } from '@shared/models/entity.models';
 import { KeyFilter } from '@shared/models/query/query.models';
 import { TimeUnit } from '@shared/models/time/time.models';
 import * as _moment from 'moment-timezone';
-import { AbstractControl, FormGroup } from '@angular/forms';
+import { AbstractControl, FormGroup, ValidationErrors } from '@angular/forms';
 
 export enum DeviceProfileType {
   DEFAULT = 'DEFAULT'
@@ -87,7 +87,7 @@ export const deviceProvisionTypeTranslationMap = new Map<DeviceProvisionType, st
     [DeviceProvisionType.ALLOW_CREATE_NEW_DEVICES, 'device-profile.provision-strategy-created-new'],
     [DeviceProvisionType.CHECK_PRE_PROVISIONED_DEVICES, 'device-profile.provision-strategy-check-pre-provisioned']
   ]
-)
+);
 
 export const deviceTransportTypeHintMap = new Map<DeviceTransportType, string>(
   [
@@ -303,6 +303,18 @@ export interface AlarmRule {
   schedule?: AlarmSchedule;
 }
 
+export function alarmRuleValidator(control: AbstractControl): ValidationErrors | null {
+  const alarmRule: AlarmRule = control.value;
+  return alarmRuleValid(alarmRule) ? null : {alarmRule: true};
+}
+
+function alarmRuleValid(alarmRule: AlarmRule): boolean {
+  if (!alarmRule || !alarmRule.condition || !alarmRule.condition.condition || !alarmRule.condition.condition.length) {
+    return false;
+  }
+  return true;
+}
+
 export interface DeviceProfileAlarm {
   id: string;
   alarmType: string;
@@ -311,6 +323,34 @@ export interface DeviceProfileAlarm {
   propagate?: boolean;
   propagateRelationTypes?: Array<string>;
 }
+
+export function deviceProfileAlarmValidator(control: AbstractControl): ValidationErrors | null {
+  const deviceProfileAlarm: DeviceProfileAlarm = control.value;
+  if (deviceProfileAlarm && deviceProfileAlarm.id && deviceProfileAlarm.alarmType &&
+    deviceProfileAlarm.createRules) {
+    const severities = Object.keys(deviceProfileAlarm.createRules);
+    if (severities.length) {
+      let alarmRulesValid = true;
+      for (const severity of severities) {
+        const alarmRule = deviceProfileAlarm.createRules[severity];
+        if (!alarmRuleValid(alarmRule)) {
+          alarmRulesValid = false;
+          break;
+        }
+      }
+      if (alarmRulesValid) {
+        if (deviceProfileAlarm.clearRule && !alarmRuleValid(deviceProfileAlarm.clearRule)) {
+          alarmRulesValid = false;
+        }
+      }
+      if (alarmRulesValid) {
+        return null;
+      }
+    }
+  }
+  return {deviceProfileAlarm: true};
+}
+
 
 export interface DeviceProfileData {
   configuration: DeviceProfileConfiguration;
