@@ -39,6 +39,7 @@ import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -57,16 +58,20 @@ import java.util.concurrent.TimeUnit;
 )
 public class TbDeviceProfileNode implements TbNode {
     private static final String PERIODIC_MSG_TYPE = "TbDeviceProfilePeriodicMsg";
+    private static final String PROFILE_UPDATE_MSG_TYPE = "TbDeviceProfileUpdateMsg";
 
     private TbDeviceProfileNodeConfiguration config;
     private RuleEngineDeviceProfileCache cache;
+    private TbContext ctx;
     private final Map<DeviceId, DeviceState> deviceStates = new ConcurrentHashMap<>();
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbDeviceProfileNodeConfiguration.class);
         this.cache = ctx.getDeviceProfileCache();
+        this.ctx = ctx;
         scheduleAlarmHarvesting(ctx);
+        ctx.addProfileListener(this::onProfileUpdate);
         if (config.isFetchAlarmRulesStateOnStart()) {
             log.info("[{}] Fetching alarm rule state", ctx.getSelfId());
             int fetchCount = 0;
@@ -95,15 +100,14 @@ public class TbDeviceProfileNode implements TbNode {
         }
     }
 
-    /**
-     * TODO: Dynamic values evaluation;
-     */
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
         EntityType originatorType = msg.getOriginator().getEntityType();
         if (msg.getType().equals(PERIODIC_MSG_TYPE)) {
             scheduleAlarmHarvesting(ctx);
             harvestAlarms(ctx, System.currentTimeMillis());
+        } else if (msg.getType().equals(PROFILE_UPDATE_MSG_TYPE)) {
+            updateProfile(ctx, new DeviceProfileId(UUID.fromString(msg.getData())));
         } else {
             if (EntityType.DEVICE.equals(originatorType)) {
                 DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
@@ -119,32 +123,8 @@ public class TbDeviceProfileNode implements TbNode {
                         ctx.tellFailure(msg, new IllegalStateException("Device profile for device [" + deviceId + "] not found!"));
                     }
                 }
-            } else if (EntityType.DEVICE_PROFILE.equals(originatorType)) {
-                log.info("[{}] Received device profile update notification: {}", ctx.getSelfId(), msg.getData());
-                if (msg.getType().equals("ENTITY_UPDATED")) {
-                    DeviceProfile deviceProfile = JacksonUtil.fromString(msg.getData(), DeviceProfile.class);
-                    if (deviceProfile != null) {
-                        for (DeviceState state : deviceStates.values()) {
-                            if (deviceProfile.getId().equals(state.getProfileId())) {
-                                state.updateProfile(ctx, deviceProfile);
-                            }
-                        }
-                    }
-                }
-                ctx.tellSuccess(msg);
             } else {
                 ctx.tellSuccess(msg);
-            }
-        }
-    }
-
-    public void invalidateDeviceProfileCache(DeviceId deviceId, String deviceJson) {
-        DeviceState deviceState = deviceStates.get(deviceId);
-        if (deviceState != null) {
-            DeviceProfileId currentProfileId = deviceState.getProfileId();
-            Device device = JacksonUtil.fromString(deviceJson, Device.class);
-            if (!currentProfileId.equals(device.getDeviceProfileId())) {
-                deviceStates.remove(deviceId);
             }
         }
     }
@@ -157,6 +137,7 @@ public class TbDeviceProfileNode implements TbNode {
 
     @Override
     public void destroy() {
+        ctx.removeProfileListener();
         deviceStates.clear();
     }
 
@@ -180,6 +161,35 @@ public class TbDeviceProfileNode implements TbNode {
     protected void harvestAlarms(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
         for (DeviceState state : deviceStates.values()) {
             state.harvestAlarms(ctx, ts);
+        }
+    }
+
+    protected void updateProfile(TbContext ctx, DeviceProfileId deviceProfileId) throws ExecutionException, InterruptedException {
+        DeviceProfile deviceProfile = cache.get(ctx.getTenantId(), deviceProfileId);
+        if (deviceProfile != null) {
+            log.info("[{}] Received device profile update notification: {}", ctx.getSelfId(), deviceProfile);
+            for (DeviceState state : deviceStates.values()) {
+                if (deviceProfile.getId().equals(state.getProfileId())) {
+                    state.updateProfile(ctx, deviceProfile);
+                }
+            }
+        } else {
+            log.info("[{}] Received stale profile update notification: [{}]", ctx.getSelfId(), deviceProfileId);
+        }
+    }
+
+    protected void onProfileUpdate(DeviceProfile profile) {
+        ctx.tellSelf(TbMsg.newMsg(PROFILE_UPDATE_MSG_TYPE, ctx.getTenantId(), TbMsgMetaData.EMPTY, profile.getId().getId().toString()), 0L);
+    }
+
+    protected void invalidateDeviceProfileCache(DeviceId deviceId, String deviceJson) {
+        DeviceState deviceState = deviceStates.get(deviceId);
+        if (deviceState != null) {
+            DeviceProfileId currentProfileId = deviceState.getProfileId();
+            Device device = JacksonUtil.fromString(deviceJson, Device.class);
+            if (!currentProfileId.equals(device.getDeviceProfileId())) {
+                deviceStates.remove(deviceId);
+            }
         }
     }
 
