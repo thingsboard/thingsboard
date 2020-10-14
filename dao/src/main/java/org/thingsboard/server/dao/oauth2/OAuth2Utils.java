@@ -41,7 +41,7 @@ public class OAuth2Utils {
                     .add(new DomainInfo(domainScheme, domainName));
             infoById.put(extendedClientRegistrationInfo.getId(), extendedClientRegistrationInfo);
         }
-        Map<List<DomainInfo>, OAuth2ClientsDomainParams> domainParamsMap = new HashMap<>();
+        Map<List<DomainInfo>, OAuth2ClientsDomainParams> domainParamsMap = new LinkedHashMap<>();
         domainsByInfoId.forEach((clientRegistrationInfoId, domainInfos) -> {
             domainParamsMap.computeIfAbsent(domainInfos,
                     key -> new OAuth2ClientsDomainParams(key, new ArrayList<>())
