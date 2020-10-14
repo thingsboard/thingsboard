@@ -352,7 +352,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         }
         dataKeys.push(dataKey);
 
-        dataKey.title = this.utils.customTranslation(dataKey.label, dataKey.label);
+        dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
+        dataKey.title = dataKey.label;
         dataKey.def = 'def' + this.columns.length;
         const keySettings: TableWidgetDataKeySettings = dataKey.settings;
         if (dataKey.type === DataKeyType.entityField &&
@@ -374,7 +375,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
 
     if (this.settings.defaultSortOrder && this.settings.defaultSortOrder.length) {
-      this.defaultSortOrder = this.settings.defaultSortOrder;
+      this.defaultSortOrder = this.utils.customTranslation(this.settings.defaultSortOrder, this.settings.defaultSortOrder);
     }
 
     this.pageLink.sortOrder = entityDataSortOrderFromString(this.defaultSortOrder, this.columns);
