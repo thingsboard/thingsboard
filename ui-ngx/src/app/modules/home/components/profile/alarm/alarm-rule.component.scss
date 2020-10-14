@@ -14,31 +14,19 @@
  * limitations under the License.
  */
 :host {
+  min-width: 0;
   .row {
     margin-top: 1em;
   }
   .tb-alarm-rule-details {
-    a.mat-button {
-      &:hover, &:focus {
-        border-bottom: none;
-      }
-    }
-    .tb-alarm-rule-details-content {
-      min-height: 33px;
-      overflow: hidden;
-      white-space: pre;
-      line-height: 1.8em;
-      padding: 4px;
-      cursor: pointer;
-      &.collapsed {
-        max-height: 33px;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-      &.disabled {
-        opacity: 0.7;
-        cursor: auto;
-      }
+    padding: 4px;
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    &.title {
+      opacity: 0.7;
+      overflow: visible;
     }
   }
 }

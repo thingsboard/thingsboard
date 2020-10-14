@@ -15,19 +15,16 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" fxFlex>
-  <div fxLayout="row" fxLayoutAlign="start center" style="min-height: 40px;">
-    <label class="tb-title" translate>device-profile.schedule</label>
-    <span fxFlex></span>
-    <a mat-button color="primary"
-       type="button"
-       (click)="openScheduleDialog($event)"
-       matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
-       matTooltipPosition="above">
-      {{ (disabled ? 'action.view' : 'action.edit' ) | translate }}
-    </a>
-  </div>
-  <sapn class="tb-alarm-rule-schedule" [ngClass]="{disabled: this.disabled}" (click)="openScheduleDialog($event)"
+<div fxLayout="row" fxLayoutAlign="start center" style="min-width: 0;">
+  <span class="tb-alarm-rule-schedule title" (click)="openScheduleDialog($event)">{{('device-profile.schedule' | translate) + ': '}}</span>
+  <span class="tb-alarm-rule-schedule" (click)="openScheduleDialog($event)"
        [innerHTML]="scheduleText">
-  </sapn>
+  </span>
+  <button mat-icon-button color="primary"
+     type="button"
+     (click)="openScheduleDialog($event)"
+     matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
+     matTooltipPosition="above">
+    <mat-icon>{{ disabled ? 'visibility' : 'edit' }}</mat-icon>
+  </button>
 </div>
