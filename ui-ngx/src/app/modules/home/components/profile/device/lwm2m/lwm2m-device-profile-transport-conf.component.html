@@ -15,12 +15,17 @@
     limitations under the License.
 
 -->
-<form [formGroup]="lwm2mDeviceProfileTransportConfigurationFormGroup" style="padding-bottom: 16px;">
+<form [formGroup]="lwm2mDeviceProfileTransportConfFormGroup" style="padding-bottom: 16px;">
   <div mat-dialog-content>
     <mat-tab-group dynamicHeight #tabGroup (selectedTabChange)="tabChanged($event)">
       <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
         <div class="mat-padding">
-
+          <tb-lwm2m-object-list
+            (changeAdd)="changeListAdd($event)"
+            (changeRemove)="changeListRemove($event)"
+            [required]="required"
+            formControlName="objectIds">
+          </tb-lwm2m-object-list>
         </div>
       </mat-tab>
       <mat-tab label="{{ 'device-profile.lwm2m.bootstrap-tab' | translate }}">
@@ -38,7 +43,7 @@
                   <mat-form-field fxFlex>
                     <mat-label>{{ 'device-profile.lwm2m.short-id' | translate }}</mat-label>
                     <input matInput type="number" formControlName="shortId" required>
-                    <mat-error *ngIf="lwm2mDeviceProfileTransportConfigurationFormGroup.get('shortId').hasError('required')" translate>
+                    <mat-error *ngIf="lwm2mDeviceProfileTransportConfFormGroup.get('shortId').hasError('required')" translate>
                       {{ 'device-profile.lwm2m.short-id' | translate }}
                       <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
                     </mat-error>
@@ -46,7 +51,7 @@
                   <mat-form-field fxFlex>
                     <mat-label>{{ 'device-profile.lwm2m.lifetime' | translate }}</mat-label>
                     <input matInput type="number" formControlName="lifetime" required>
-                    <mat-error *ngIf="lwm2mDeviceProfileTransportConfigurationFormGroup.get('lifetime').hasError('required')" translate>
+                    <mat-error *ngIf="lwm2mDeviceProfileTransportConfFormGroup.get('lifetime').hasError('required')" translate>
                       {{ 'device-profile.lwm2m.lifetime' | translate }}
                       <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
                     </mat-error>
@@ -56,7 +61,7 @@
                   <mat-form-field fxFlex>
                     <mat-label>{{ 'device-profile.lwm2m.default-min-period' | translate }}</mat-label>
                     <input matInput type="number" formControlName="defaultMinPeriod" required>
-                    <mat-error *ngIf="lwm2mDeviceProfileTransportConfigurationFormGroup.get('defaultMinPeriod').hasError('required')" translate>
+                    <mat-error *ngIf="lwm2mDeviceProfileTransportConfFormGroup.get('defaultMinPeriod').hasError('required')" translate>
                       {{ 'device-profile.lwm2m.default-min-period' | translate }}
                       <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
                     </mat-error>
@@ -64,7 +69,7 @@
                   <mat-form-field fxFlex>
                     <mat-label>{{ 'device-profile.lwm2m.binding' | translate }}</mat-label>
                     <input matInput type="text" formControlName="binding" required>
-                    <mat-error *ngIf="lwm2mDeviceProfileTransportConfigurationFormGroup.get('binding').hasError('required')" translate>
+                    <mat-error *ngIf="lwm2mDeviceProfileTransportConfFormGroup.get('binding').hasError('required')" translate>
                       {{ 'device-profile.lwm2m.binding' | translate }}
                       <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
                     </mat-error>

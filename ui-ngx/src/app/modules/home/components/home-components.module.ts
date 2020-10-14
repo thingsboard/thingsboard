@@ -108,6 +108,7 @@ import { FilterTextComponent } from './filter/filter-text.component';
 import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
 import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
 import { Lwm2mDeviceProfileTransportConfComponent } from './profile/device/lwm2m/lwm2m-device-profile-transport-conf.component';
+import { Lwm2mObjectListComponent } from './profile/device/lwm2m/lwm2m-object-list.component';
 
 @NgModule({
   declarations:
@@ -198,7 +199,8 @@ import { Lwm2mDeviceProfileTransportConfComponent } from './profile/device/lwm2m
       DeviceProfileDialogComponent,
       AddDeviceProfileDialogComponent,
       RuleChainAutocompleteComponent,
-      Lwm2mDeviceProfileTransportConfComponent
+      Lwm2mDeviceProfileTransportConfComponent,
+      Lwm2mObjectListComponent
     ],
   imports: [
     CommonModule,
@@ -279,7 +281,8 @@ import { Lwm2mDeviceProfileTransportConfComponent } from './profile/device/lwm2m
     AddDeviceProfileDialogComponent,
     RuleChainAutocompleteComponent,
     Lwm2mDeviceProfileTransportConfigurationComponent,
-    Lwm2mDeviceProfileTransportConfComponent
+    Lwm2mDeviceProfileTransportConfComponent,
+    Lwm2mObjectListComponent
   ],
   providers: [
     WidgetComponentService,

@@ -28,7 +28,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 
 @Slf4j
 @Component("LwM2MJsonAdaptor")
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MJsonAdaptor implements LwM2MTransportAdaptor  {
 
     @Override

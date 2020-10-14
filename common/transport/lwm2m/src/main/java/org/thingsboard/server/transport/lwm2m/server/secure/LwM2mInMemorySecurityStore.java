@@ -42,7 +42,7 @@ import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
 
 @Slf4j
 @Component("LwM2mInMemorySecurityStore")
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     // lock for the two maps
     protected final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();

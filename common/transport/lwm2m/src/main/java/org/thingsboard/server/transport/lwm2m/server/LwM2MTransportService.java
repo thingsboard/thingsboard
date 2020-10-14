@@ -57,10 +57,9 @@ import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.*;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
 
-
-@Service("LwM2MTransportService")
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 @Slf4j
+@Service("LwM2MTransportService")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportService {
 
     private final UUID sessionId = UUID.randomUUID();

@@ -28,8 +28,8 @@ import java.security.cert.X509Certificate;
 import java.util.Map;
 
 @Slf4j
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 @Component("LwM2MTransportContextBootstrap")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportContextBootstrap extends TransportContext {
 
     @Getter

@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.bootstrap;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.StaticModel;
 import org.eclipse.leshan.server.bootstrap.BootstrapSessionManager;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
@@ -33,14 +34,19 @@ import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MSetSecurityS
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBootstrapSessionManager;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mGetModels;
+
+import java.util.List;
+
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
 
 @Slf4j
 @ComponentScan("org.thingsboard.server.transport.lwm2m.server")
 @ComponentScan("org.thingsboard.server.transport.lwm2m.bootstrap")
+@ComponentScan("org.thingsboard.server.transport.lwm2m.utils")
 @Configuration("LwM2MTransportBootstrapServerConfiguration")
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true'  && '${transport.lwm2m.bootstrap.enable}'=='true')")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true')")
 public class LwM2MTransportBootstrapServerConfiguration {
 
     @Autowired
@@ -54,6 +60,9 @@ public class LwM2MTransportBootstrapServerConfiguration {
 
     @Autowired
     private LwM2MInMemoryBootstrapConfigStore lwM2MInMemoryBootstrapConfigStore;
+
+    @Autowired
+    LwM2mGetModels lwM2mGetModels;
 
     @Primary
     @Bean(name = "leshanBootstrapCert")
@@ -83,7 +92,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
         builder.setSecurityStore(lwM2MBootstrapSecurityStore);
 
         /** Define model provider (Create Models )*/
-        builder.setModel(new StaticModel(getModels(contextS)));
+        builder.setModel(new StaticModel(lwM2mGetModels.getNewModels()));
 
         /** Create and Set DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();

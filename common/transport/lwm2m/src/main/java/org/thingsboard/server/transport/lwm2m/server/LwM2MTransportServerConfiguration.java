@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
 import org.eclipse.leshan.core.node.codec.LwM2mNodeDecoder;
@@ -33,15 +34,20 @@ import org.springframework.context.annotation.Primary;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSetSecurityStoreServer;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mGetModels;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
+
+import java.util.List;
+
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
 
 
 @Slf4j
 @ComponentScan("org.thingsboard.server.transport.lwm2m.server")
+@ComponentScan("org.thingsboard.server.transport.lwm2m.utils")
 @Configuration("LwM2MTransportServerConfiguration")
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportServerConfiguration {
 
     @Autowired
@@ -49,6 +55,9 @@ public class LwM2MTransportServerConfiguration {
 
     @Autowired
     private LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
+
+    @Autowired
+    LwM2mGetModels lwM2mGetModels;
 
     @Primary
     @Bean(name = "leshanServerCert")
@@ -77,7 +86,7 @@ public class LwM2MTransportServerConfiguration {
         builder.setCoapConfig(getCoapConfig ());
 
         /** Define model provider (Create Models )*/
-        LwM2mModelProvider modelProvider = new VersionedModelProvider(getModels(context));
+        LwM2mModelProvider modelProvider = new VersionedModelProvider(lwM2mGetModels.getNewModels());
         builder.setObjectModelProvider(modelProvider);
 
         /** Create DTLS Config */

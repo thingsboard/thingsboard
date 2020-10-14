@@ -105,6 +105,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.lwm2m.DeviceLwm2mService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -213,6 +214,9 @@ public abstract class BaseController {
 
     @Autowired
     protected TbDeviceProfileCache deviceProfileCache;
+
+    @Autowired
+    protected DeviceLwm2mService deviceLwm2mService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter

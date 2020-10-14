@@ -20,7 +20,7 @@ export const DEFAULT_END_POINT = 'default_client_lwm2m_end_point_no_sec';
 export const BOOTSTRAP_SERVERS = 'servers';
 export const BOOTSTRAP_SERVER = 'bootstrapServer';
 export const LWM2M_SERVER = 'lwm2mServer';
-export const OBSERVE_ATTR = 'observeAttr';
+export const LWM2M_MODEL = 'lwm2m_model';
 export const OBSERVE = 'observe';
 export const ATTR = 'attribute';
 export const TELEMETRY = 'telemetry';
@@ -249,7 +249,7 @@ export interface Instance {
 export interface ObjectLwM2M {
   id: number,
   name: string,
-  instance: Instance []
+  instance?: Instance []
 }
 
 export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
