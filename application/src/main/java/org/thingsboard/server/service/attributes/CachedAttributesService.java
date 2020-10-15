@@ -51,8 +51,7 @@ import java.util.stream.Collectors;
 public class CachedAttributesService implements AttributesService {
     private static final List<EntityType> LOCAL_ENTITIES = Arrays.asList(EntityType.DEVICE, EntityType.ASSET);
     private static final List<EntityType> GLOBAL_ENTITIES = Arrays.asList(EntityType.CUSTOMER, EntityType.TENANT);
-
-    private final Map<TenantId, Cache<AttributesKey, Optional<AttributeKvEntry>>> tenantsCache = new ConcurrentHashMap<>();
+    public static final String MAIN_QUEUE_NAME = "Main";
 
     @Autowired
     @Qualifier("daoAttributesService")
@@ -65,21 +64,8 @@ public class CachedAttributesService implements AttributesService {
     private PartitionService partitionService;
 
     @Autowired
-    private AttributesCacheConfiguration cacheConfiguration;
+    private TbAttributesCache attributesCache;
 
-    private Cache<AttributesKey, Optional<AttributeKvEntry>> getTenantCache(TenantId tenantId) {
-        return tenantsCache.computeIfAbsent(tenantId,
-                id -> CacheBuilder.newBuilder()
-                        .maximumSize(cacheConfiguration.getMaxSize())
-                        .expireAfterAccess(cacheConfiguration.getExpireAfterAccessInMinutes(), TimeUnit.MINUTES)
-                        .build()
-        );
-    }
-
-    public void evict(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
-        List<AttributesKey> keys = attributeKeys.stream().map(key -> new AttributesKey(scope, entityId, key)).collect(Collectors.toList());
-        getTenantCache(tenantId).invalidateAll(keys);
-    }
 
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, String attributeKey) {
@@ -87,7 +73,7 @@ public class CachedAttributesService implements AttributesService {
         Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
 
         if (LOCAL_ENTITIES.contains(entityId.getEntityType())) {
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, "Main", tenantId, entityId);
+            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, entityId);
             if (!tpi.isMyPartition()) {
                 return daoAttributesService.find(tenantId, entityId, scope, attributeKey);
             } else {
@@ -95,12 +81,9 @@ public class CachedAttributesService implements AttributesService {
             }
         } else if (GLOBAL_ENTITIES.contains(entityId.getEntityType())) {
             return findAndPopulateCache(tenantId, entityId, scope, attributeKey);
-            // TODO add clear cache on changes from other nodes
         } else {
             return daoAttributesService.find(tenantId, entityId, scope, attributeKey);
         }
-
-        // todo think about isolated tenants
     }
 
     @Override
@@ -109,7 +92,7 @@ public class CachedAttributesService implements AttributesService {
         attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
 
         if (LOCAL_ENTITIES.contains(entityId.getEntityType())) {
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, "Main", tenantId, entityId);
+            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, entityId);
             if (!tpi.isMyPartition()) {
                 return daoAttributesService.find(tenantId, entityId, scope, attributeKeys);
             } else {
@@ -123,31 +106,25 @@ public class CachedAttributesService implements AttributesService {
     }
 
     private ListenableFuture<Optional<AttributeKvEntry>> findAndPopulateCache(TenantId tenantId, EntityId entityId, String scope, String attributeKey) {
-        Cache<AttributesKey, Optional<AttributeKvEntry>> cache = getTenantCache(tenantId);
-        AttributesKey cacheKey = new AttributesKey(scope, entityId, attributeKey);
-        Optional<AttributeKvEntry> cachedAttribute = cache.getIfPresent(cacheKey);
-        if (cachedAttribute != null) {
+        Optional<AttributeKvEntry> cachedAttribute = attributesCache.find(tenantId, entityId, scope, attributeKey);
+        if (Objects.nonNull(cachedAttribute)) {
             return Futures.immediateFuture(cachedAttribute);
         } else {
             ListenableFuture<Optional<AttributeKvEntry>> result = daoAttributesService.find(tenantId, entityId, scope, attributeKey);
             return Futures.transform(result, foundAttrKvEntry -> {
-                cache.put(cacheKey, foundAttrKvEntry);
+                attributesCache.put(tenantId, entityId, scope, attributeKey, foundAttrKvEntry.orElse(null));
                 return foundAttrKvEntry;
             }, MoreExecutors.directExecutor());
         }
     }
 
     private ListenableFuture<List<AttributeKvEntry>> findAndPopulateCache(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
-        Cache<AttributesKey, Optional<AttributeKvEntry>> cache = getTenantCache(tenantId);
         Collection<String> notFoundInCacheAttributeKeys = new HashSet<>();
         List<AttributeKvEntry> foundInCacheAttributes = new ArrayList<>();
         attributeKeys.forEach(attributeKey -> {
-            AttributesKey cacheKey = new AttributesKey(scope, entityId, attributeKey);
-            Optional<AttributeKvEntry> attributeKvEntryOpt = cache.getIfPresent(cacheKey);
-            if (attributeKvEntryOpt != null) {
-                if (attributeKvEntryOpt.isPresent()) {
-                    foundInCacheAttributes.add(attributeKvEntryOpt.get());
-                }
+            Optional<AttributeKvEntry> cachedAttribute = attributesCache.find(tenantId, entityId, scope, attributeKey);
+            if (Objects.nonNull(cachedAttribute)) {
+                cachedAttribute.ifPresent(foundInCacheAttributes::add);
             } else {
                 notFoundInCacheAttributeKeys.add(attributeKey);
             }
@@ -158,11 +135,11 @@ public class CachedAttributesService implements AttributesService {
             ListenableFuture<List<AttributeKvEntry>> result = daoAttributesService.find(tenantId, entityId, scope, notFoundInCacheAttributeKeys);
             return Futures.transform(result, foundInDbAttributes -> {
                 for (AttributeKvEntry foundInDbAttribute : foundInDbAttributes) {
-                    cache.put(new AttributesKey(scope, entityId, foundInDbAttribute.getKey()), Optional.of(foundInDbAttribute));
+                    attributesCache.put(tenantId, entityId, scope, foundInDbAttribute.getKey(), foundInDbAttribute);
                     notFoundInCacheAttributeKeys.remove(foundInDbAttribute.getKey());
                 }
                 for (String key : notFoundInCacheAttributeKeys){
-                    cache.put(new AttributesKey(scope, entityId, key), Optional.empty());
+                    attributesCache.put(tenantId, entityId, scope, key, null);
                 }
                 List<AttributeKvEntry> mergedAttributes = new ArrayList<>(foundInCacheAttributes);
                 mergedAttributes.addAll(foundInDbAttributes);
@@ -183,7 +160,7 @@ public class CachedAttributesService implements AttributesService {
         attributes.forEach(attribute -> validate(attribute));
 
         try {
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, "Main", tenantId, entityId);
+            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, entityId);
             if (LOCAL_ENTITIES.contains(entityId.getEntityType()) && tpi.isMyPartition()) {
                 updateCache(tenantId, entityId, scope, attributes);
             } else if (GLOBAL_ENTITIES.contains(entityId.getEntityType())) {
@@ -205,10 +182,8 @@ public class CachedAttributesService implements AttributesService {
 
     private void updateCache(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         attributes.forEach(attributeKvEntry -> {
-            AttributesKey attributesKey = new AttributesKey(scope, entityId, attributeKvEntry.getKey());
-            Cache<AttributesKey, Optional<AttributeKvEntry>> cache = getTenantCache(tenantId);
-            if (cache.getIfPresent(attributesKey) != null) {
-                cache.put(attributesKey, Optional.of(attributeKvEntry));
+            if (Objects.nonNull(attributesCache.find(tenantId, entityId, scope, attributeKvEntry.getKey()))) {
+                attributesCache.put(tenantId, entityId, scope, attributeKvEntry.getKey(), attributeKvEntry);
             }
         });
     }
@@ -217,15 +192,15 @@ public class CachedAttributesService implements AttributesService {
     public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
         validate(entityId, scope);
         try {
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, "Main", tenantId, entityId);
-            Cache<AttributesKey, Optional<AttributeKvEntry>> cache = getTenantCache(tenantId);
+            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, entityId);
             if (LOCAL_ENTITIES.contains(entityId.getEntityType())) {
-                cache.invalidateAll(attributeKeys.stream().map(attributeKey -> new AttributesKey(scope, entityId, attributeKey)).collect(Collectors.toList()));
+                attributesCache.evict(tenantId, entityId, scope, attributeKeys);
             } else if (GLOBAL_ENTITIES.contains(entityId.getEntityType())) {
                 if (tpi.getTenantId().isPresent()) {
-                    cache.invalidateAll(attributeKeys.stream().map(attributeKey -> new AttributesKey(scope, entityId, attributeKey)).collect(Collectors.toList()));
+                    attributesCache.evict(tenantId, entityId, scope, attributeKeys);
                 } else {
-                    // TODO push notification about cache change to every node
+                    // TODO maybe first check if it's already in cache
+                    clusterService.onAttributesCacheUpdated(tenantId, entityId, scope, attributeKeys);
                 }
             }
         } catch (Exception e) {

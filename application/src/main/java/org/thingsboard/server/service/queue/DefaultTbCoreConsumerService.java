@@ -55,6 +55,7 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.attributes.CachedAttributesService;
+import org.thingsboard.server.service.attributes.TbAttributesCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
@@ -96,20 +97,20 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final SubscriptionManagerService subscriptionManagerService;
     private final TbCoreDeviceRpcService tbCoreDeviceRpcService;
     private final TbCoreConsumerStats stats;
-    private final CachedAttributesService cachedAttributesService;
+    private final TbAttributesCache attributesCache;
 
     public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
                                         DeviceStateService stateService, TbLocalSubscriptionService localSubscriptionService,
                                         SubscriptionManagerService subscriptionManagerService, DataDecodingEncodingService encodingService,
                                         TbCoreDeviceRpcService tbCoreDeviceRpcService, StatsFactory statsFactory, TbDeviceProfileCache deviceProfileCache,
-                                        CachedAttributesService cachedAttributesService) {
+                                        TbAttributesCache attributesCache) {
         super(actorContext, encodingService, deviceProfileCache, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.stateService = stateService;
         this.localSubscriptionService = localSubscriptionService;
         this.subscriptionManagerService = subscriptionManagerService;
         this.tbCoreDeviceRpcService = tbCoreDeviceRpcService;
-        this.cachedAttributesService = cachedAttributesService;
+        this.attributesCache = attributesCache;
         this.stats = new TbCoreConsumerStats(statsFactory);
     }
 
@@ -249,7 +250,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             if (actorMsg instanceof AttributesCacheUpdatedMsg) {
                 AttributesCacheUpdatedMsg attributesCacheUpdatedMsg = (AttributesCacheUpdatedMsg) actorMsg;
                 log.trace("[{}] Clearing attributes cache for {}", id, attributesCacheUpdatedMsg);
-                cachedAttributesService.evict(attributesCacheUpdatedMsg.getTenantId(), attributesCacheUpdatedMsg.getEntityId(),
+                attributesCache.evict(attributesCacheUpdatedMsg.getTenantId(), attributesCacheUpdatedMsg.getEntityId(),
                         attributesCacheUpdatedMsg.getScope(), attributesCacheUpdatedMsg.getAttributeKeys());
             }
         }

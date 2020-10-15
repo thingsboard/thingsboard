@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cache;
+package org.thingsboard.server.service.attributes;
 
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface TenantCacheService<K, V> {
-    Optional<V> find(TenantId tenantId, K key);
-    List<V> find(TenantId tenantId, List<K> keys);
-    void insert(TenantId tenantId, K key, V value);
-    void update(TenantId tenantId, K key, V value);
-    void remove(TenantId tenantId, List<K> keys);
+public interface TbAttributesCache {
+    Optional<AttributeKvEntry> find(TenantId tenantId, EntityId entityId, String scope, String key);
+    void put(TenantId tenantId, EntityId entityId, String scope, String key, AttributeKvEntry entry);
+    void evict(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys);
 }
