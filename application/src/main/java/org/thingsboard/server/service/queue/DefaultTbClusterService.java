@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.cache.AttributesCacheUpdatedMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -49,9 +50,7 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -188,6 +187,12 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
+    public void onAttributesCacheUpdated(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
+        log.trace("[{}][{}] Processing attributes cache change: [{}][{}]", tenantId, entityId, scope, attributeKeys);
+        broadcast(new AttributesCacheUpdatedMsg(tenantId, entityId, scope, attributeKeys));
+    }
+
+    @Override
     public void onDeviceProfileChange(DeviceProfile deviceProfile, TbQueueCallback callback) {
         log.trace("[{}][{}] Processing device profile [{}] change event", deviceProfile.getTenantId(), deviceProfile.getId(), deviceProfile.getName());
         TransportProtos.DeviceProfileUpdateMsg profileUpdateMsg = TransportProtos.DeviceProfileUpdateMsg.newBuilder()
@@ -238,6 +243,17 @@ public class DefaultTbClusterService implements TbClusterService {
             ToRuleEngineNotificationMsg toRuleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setComponentLifecycleMsg(ByteString.copyFrom(msgBytes)).build();
             toRuleEngineProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toRuleEngineMsg), null);
             toRuleEngineNfs.incrementAndGet();
+        }
+    }
+    private void broadcast(AttributesCacheUpdatedMsg msg) {
+        byte[] msgBytes = encodingService.encode(msg);
+        TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
+        Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
+        for (String serviceId : tbCoreServices) {
+            TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
+            ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setAttributesCacheUpdatedMsg(ByteString.copyFrom(msgBytes)).build();
+            toCoreNfProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toCoreMsg), null);
+            toCoreNfs.incrementAndGet();
         }
     }
 

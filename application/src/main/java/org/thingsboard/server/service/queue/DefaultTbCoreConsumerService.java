@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.queue;
 
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,10 +24,12 @@ import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.cache.AttributesCacheUpdatedMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -51,6 +54,7 @@ import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.service.attributes.CachedAttributesService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
@@ -92,17 +96,20 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final SubscriptionManagerService subscriptionManagerService;
     private final TbCoreDeviceRpcService tbCoreDeviceRpcService;
     private final TbCoreConsumerStats stats;
+    private final CachedAttributesService cachedAttributesService;
 
     public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
                                         DeviceStateService stateService, TbLocalSubscriptionService localSubscriptionService,
                                         SubscriptionManagerService subscriptionManagerService, DataDecodingEncodingService encodingService,
-                                        TbCoreDeviceRpcService tbCoreDeviceRpcService, StatsFactory statsFactory, TbDeviceProfileCache deviceProfileCache) {
+                                        TbCoreDeviceRpcService tbCoreDeviceRpcService, StatsFactory statsFactory, TbDeviceProfileCache deviceProfileCache,
+                                        CachedAttributesService cachedAttributesService) {
         super(actorContext, encodingService, deviceProfileCache, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.stateService = stateService;
         this.localSubscriptionService = localSubscriptionService;
         this.subscriptionManagerService = subscriptionManagerService;
         this.tbCoreDeviceRpcService = tbCoreDeviceRpcService;
+        this.cachedAttributesService = cachedAttributesService;
         this.stats = new TbCoreConsumerStats(statsFactory);
     }
 
@@ -217,6 +224,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (toCoreNotification.getComponentLifecycleMsg() != null && !toCoreNotification.getComponentLifecycleMsg().isEmpty()) {
             handleComponentLifecycleMsg(id, toCoreNotification.getComponentLifecycleMsg());
             callback.onSuccess();
+        } else if (toCoreNotification.getAttributesCacheUpdatedMsg() != null && !toCoreNotification.getAttributesCacheUpdatedMsg().isEmpty()) {
+            handleAttributesCacheUpdatedMsg(id, toCoreNotification.getAttributesCacheUpdatedMsg());
+            callback.onSuccess();
         }
         if (statsEnabled) {
             stats.log(toCoreNotification);
@@ -229,6 +239,20 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 , proto.getResponse(), error);
         tbCoreDeviceRpcService.processRpcResponseFromRuleEngine(response);
         callback.onSuccess();
+    }
+
+
+    private void handleAttributesCacheUpdatedMsg(UUID id, ByteString nfMsg) {
+        Optional<TbActorMsg> actorMsgOpt = encodingService.decode(nfMsg.toByteArray());
+        if (actorMsgOpt.isPresent()) {
+            TbActorMsg actorMsg = actorMsgOpt.get();
+            if (actorMsg instanceof AttributesCacheUpdatedMsg) {
+                AttributesCacheUpdatedMsg attributesCacheUpdatedMsg = (AttributesCacheUpdatedMsg) actorMsg;
+                log.trace("[{}] Clearing attributes cache for {}", id, attributesCacheUpdatedMsg);
+                cachedAttributesService.evict(attributesCacheUpdatedMsg.getTenantId(), attributesCacheUpdatedMsg.getEntityId(),
+                        attributesCacheUpdatedMsg.getScope(), attributesCacheUpdatedMsg.getAttributeKeys());
+            }
+        }
     }
 
     @Scheduled(fixedDelayString = "${queue.core.stats.print-interval-ms}")

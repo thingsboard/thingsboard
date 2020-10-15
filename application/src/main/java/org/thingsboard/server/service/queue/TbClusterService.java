@@ -17,7 +17,6 @@ package org.thingsboard.server.service.queue;
 
 import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -29,6 +28,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface TbClusterService {
@@ -50,6 +50,8 @@ public interface TbClusterService {
     void pushNotificationToTransport(String targetServiceId, ToTransportMsg response, TbQueueCallback callback);
 
     void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
+
+    void onAttributesCacheUpdated(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys);
 
     void onDeviceProfileChange(DeviceProfile deviceProfile, TbQueueCallback callback);
 
