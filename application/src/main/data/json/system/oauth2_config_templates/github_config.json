@@ -10,6 +10,7 @@
   "mapperConfig": {
     "type": "GITHUB",
     "basic": {
+      "firstNameAttributeKey": "name",
       "tenantNameStrategy": "DOMAIN"
     }
   },

@@ -16,6 +16,8 @@
 package org.thingsboard.server.common.data.oauth2;
 
 import lombok.*;
+
+import java.util.List;
 import java.util.Set;
 
 @EqualsAndHashCode
@@ -26,5 +28,5 @@ import java.util.Set;
 @AllArgsConstructor
 public class OAuth2ClientsParams {
     private boolean enabled;
-    private Set<OAuth2ClientsDomainParams> domainsParams;
+    private List<OAuth2ClientsDomainParams> domainsParams;
 }

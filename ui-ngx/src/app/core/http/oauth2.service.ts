@@ -41,4 +41,8 @@ export class OAuth2Service {
     return this.http.post<OAuth2ClientsParams>('/api/oauth2/config', OAuth2Setting,
       defaultHttpOptionsFromConfig(config));
   }
+
+  public getLoginProcessingUrl(config?: RequestConfig): Observable<string> {
+    return this.http.get<string>(`/api/oauth2/loginProcessingUrl`, defaultHttpOptionsFromConfig(config));
+  }
 }

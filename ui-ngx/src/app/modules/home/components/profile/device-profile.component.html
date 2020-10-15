@@ -41,7 +41,7 @@
 </div>
 <div class="mat-padding" fxLayout="column">
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-width: 0;">
       <mat-form-field class="mat-block">
         <mat-label translate>device-profile.name</mat-label>
         <input matInput formControlName="name" required/>
