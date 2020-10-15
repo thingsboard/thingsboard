@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form (ngSubmit)="save()" style="min-width: 1000px;">
+<form (ngSubmit)="save()" style="width: 1000px;">
   <mat-toolbar color="primary">
     <h2>{{ (isAdd ? 'device-profile.add' : 'device-profile.edit' ) | translate }}</h2>
     <span fxFlex></span>
@@ -37,17 +37,17 @@
     </tb-device-profile>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
-    <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || deviceProfileComponent.entityForm?.invalid || !deviceProfileComponent.entityForm?.dirty">
-      {{ (isAdd  ? 'action.add' : 'action.save') | translate }}
-    </button>
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial
             [disabled]="(isLoading$ | async)"
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || deviceProfileComponent.entityForm?.invalid || !deviceProfileComponent.entityForm?.dirty">
+      {{ (isAdd  ? 'action.add' : 'action.save') | translate }}
     </button>
   </div>
 </form>

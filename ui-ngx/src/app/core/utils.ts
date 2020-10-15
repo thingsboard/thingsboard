@@ -387,3 +387,31 @@ export function sortObjectKeys<T>(obj: T): T {
     return acc;
   }, {} as T);
 }
+
+export function deepTrim<T>(obj: T): T {
+  if (isNumber(obj) || isUndefined(obj) || isString(obj) || obj === null) {
+    return obj;
+  }
+  return Object.keys(obj).reduce((acc, curr) => {
+    if (isString(obj[curr])) {
+      acc[curr] = obj[curr].trim();
+    } else if (isObject(obj[curr])) {
+      acc[curr] = deepTrim(obj[curr]);
+    } else {
+      acc[curr] = obj[curr];
+    }
+    return acc;
+  }, (Array.isArray(obj) ? [] : {}) as T);
+}
+
+export function generateSecret(length?: number): string {
+  if (isUndefined(length) || length == null) {
+    length = 1;
+  }
+  const l = length > 10 ? 10 : length;
+  const str = Math.random().toString(36).substr(2, l);
+  if (str.length >= length) {
+    return str;
+  }
+  return str.concat(generateSecret(length - str.length));
+}

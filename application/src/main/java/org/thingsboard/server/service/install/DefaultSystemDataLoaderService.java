@@ -194,6 +194,11 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     @Override
+    public void createOAuth2Templates() throws Exception {
+        installScripts.createOAuth2Templates();
+    }
+
+    @Override
     public void loadDemoData() throws Exception {
         Tenant demoTenant = new Tenant();
         demoTenant.setRegion("Global");

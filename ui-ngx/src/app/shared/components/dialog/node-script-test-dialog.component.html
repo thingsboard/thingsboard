@@ -109,18 +109,17 @@
       {{ 'rulenode.test' | translate }}
     </button>
     <span fxFlex></span>
-    <button mat-button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || nodeScriptTestFormGroup.get('script').invalid || !nodeScriptTestFormGroup.get('script').dirty">
-      {{ 'action.save' | translate }}
-    </button>
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             cdkFocusInitial
             [disabled]="(isLoading$ | async)"
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || nodeScriptTestFormGroup.get('script').invalid || !nodeScriptTestFormGroup.get('script').dirty">
+      {{ 'action.save' | translate }}
     </button>
   </div>
 </form>

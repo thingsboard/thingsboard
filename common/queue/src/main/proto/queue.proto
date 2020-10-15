@@ -73,6 +73,12 @@ enum KeyValueType {
   JSON_V = 4;
 }
 
+enum CredentialsType {
+  ACCESS_TOKEN = 0;
+  X509_CERTIFICATE = 1;
+  MQTT_BASIC = 2;
+}
+
 message KeyValueProto {
   string key = 1;
   KeyValueType type = 2;
@@ -241,6 +247,43 @@ message ClaimDeviceMsg {
   int64 durationMs = 4;
 }
 
+message DeviceCredentialsProto {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+  CredentialsType credentialsType = 3;
+  string credentialsId = 4;
+  string credentialsValue = 5;
+}
+
+message CredentialsDataProto {
+  ValidateDeviceTokenRequestMsg validateDeviceTokenRequestMsg = 1;
+  ValidateDeviceX509CertRequestMsg validateDeviceX509CertRequestMsg = 2;
+  ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 3;
+}
+
+message ProvisionDeviceRequestMsg {
+  string deviceName = 1;
+  CredentialsType credentialsType = 2;
+  ProvisionDeviceCredentialsMsg provisionDeviceCredentialsMsg = 3;
+  CredentialsDataProto credentialsDataProto = 4;
+}
+
+message ProvisionDeviceCredentialsMsg {
+  string provisionDeviceKey = 1;
+  string provisionDeviceSecret = 2;
+}
+
+message ProvisionDeviceResponseMsg {
+  DeviceCredentialsProto deviceCredentials = 1;
+  ProvisionResponseStatus provisionResponseStatus = 2;
+}
+
+enum ProvisionResponseStatus {
+  UNKNOWN = 0;
+  SUCCESS = 1;
+  NOT_FOUND = 2;
+  FAILURE = 3;
+}
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
 message SubscriptionInfoProto {
   int64 lastActivityTime = 1;
@@ -266,6 +309,7 @@ message TransportToDeviceActorMsg {
   ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 6;
   SubscriptionInfoProto subscriptionInfo = 7;
   ClaimDeviceMsg claimDevice = 8;
+  ProvisionDeviceRequestMsg provisionDevice = 9;
 }
 
 message TransportToRuleEngineMsg {
@@ -441,6 +485,7 @@ message TransportApiRequestMsg {
   GetTenantRoutingInfoRequestMsg getTenantRoutingInfoRequestMsg = 4;
   GetDeviceProfileRequestMsg getDeviceProfileRequestMsg = 5;
   ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 6;
+  ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 7;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -449,6 +494,7 @@ message TransportApiResponseMsg {
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
   GetTenantRoutingInfoResponseMsg getTenantRoutingInfoResponseMsg = 4;
   GetDeviceProfileResponseMsg getDeviceProfileResponseMsg = 5;
+  ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 6;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */
@@ -492,4 +538,5 @@ message ToTransportMsg {
   ToServerRpcResponseMsg toServerResponse = 7;
   DeviceProfileUpdateMsg deviceProfileUpdateMsg = 8;
   DeviceProfileDeleteMsg deviceProfileDeleteMsg = 9;
+  ProvisionDeviceResponseMsg provisionResponse = 10;
 }

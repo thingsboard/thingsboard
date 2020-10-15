@@ -79,6 +79,7 @@
                   (deviceProfileChanged)="$event?.transportType ? deviceWizardFormGroup.get('transportType').patchValue($event?.transportType) : {}"
                   [addNewProfile]="false"
                   [selectDefaultProfile]="true"
+                  [selectFirstProfile]="true"
                   [editProfileEnabled]="false">
                 </tb-device-profile-autocomplete>
                 <mat-form-field fxFlex class="mat-block">
@@ -120,6 +121,14 @@
           </tb-device-profile-alarms>
         </form>
       </mat-step>
+      <mat-step [stepControl]="provisionConfigFormGroup" [optional]="true" *ngIf="createProfile">
+        <form [formGroup]="provisionConfigFormGroup" style="padding-bottom: 16px;">
+          <ng-template matStepLabel>{{ 'device-profile.device-provisioning' | translate }}</ng-template>
+          <tb-device-profile-provision-configuration
+            formControlName="provisionConfiguration">
+          </tb-device-profile-provision-configuration>
+        </form>
+      </mat-step>
       <mat-step [stepControl]="credentialsFormGroup" [optional]="true">
         <ng-template matStepLabel>{{ 'device.credentials' | translate }}</ng-template>
         <form [formGroup]="credentialsFormGroup" style="padding-bottom: 16px;">
@@ -142,28 +151,25 @@
       </mat-step>
     </mat-horizontal-stepper>
   </div>
-  <div mat-dialog-actions fxLayout="column" fxLayoutAlign="start wrap" fxLayoutGap="8px" style="height: 100px;">
-    <div fxFlex fxLayout="row" fxLayoutAlign="end">
-      <button mat-raised-button
-              *ngIf="showNext"
-              [disabled]="(isLoading$ | async)"
-              (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(this.selectedIndex+1) | translate)} }}</button>
-    </div>
-    <div fxFlex fxLayout="row">
-      <button mat-button
-              color="primary"
-              [disabled]="(isLoading$ | async)"
-              (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-      <span fxFlex></span>
-      <div fxLayout="row wrap" fxLayoutGap="8px">
-        <button mat-raised-button *ngIf="selectedIndex > 0"
-                [disabled]="(isLoading$ | async)"
-                (click)="previousStep()">{{ 'action.back' | translate }}</button>
-        <button mat-raised-button
-                [disabled]="(isLoading$ | async)"
-                color="primary"
-                (click)="add()">{{ 'action.add' | translate }}</button>
-      </div>
-    </div>
+  <div mat-dialog-actions fxLayout="row">
+    <button mat-stroked-button *ngIf="selectedIndex > 0"
+            [disabled]="(isLoading$ | async)"
+            (click)="previousStep()">{{ 'action.back' | translate }}</button>
+    <span fxFlex></span>
+    <button mat-stroked-button
+            color="primary"
+            *ngIf="showNext"
+            [disabled]="(isLoading$ | async)"
+            (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(this.selectedIndex+1) | translate)} }}</button>
+  </div>
+  <mat-divider></mat-divider>
+  <div mat-dialog-actions fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="end">
+    <button mat-button
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    <button mat-raised-button
+            [disabled]="(isLoading$ | async)"
+            color="primary"
+            (click)="add()">{{ 'action.add' | translate }}</button>
   </div>
 </div>

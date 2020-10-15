@@ -16,92 +16,23 @@
 
 -->
 <div fxLayout="column" [formGroup]="alarmRuleFormGroup">
-  <mat-tab-group>
-    <mat-tab label="{{ 'device-profile.condition' | translate }}" formGroupName="condition">
-      <tb-alarm-rule-condition fxFlex class="row"
-                               formControlName="condition">
-      </tb-alarm-rule-condition>
-      <section class="row">
-        <div formGroupName="spec">
-          <mat-form-field class="mat-block" hideRequiredMarker>
-            <mat-label translate>device-profile.condition-type</mat-label>
-            <mat-select formControlName="type" required>
-              <mat-option *ngFor="let alarmConditionType of alarmConditionTypes" [value]="alarmConditionType">
-                {{ alarmConditionTypeTranslation.get(alarmConditionType) | translate }}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="alarmRuleFormGroup.get('condition.spec.type').hasError('required')">
-              {{ 'device-profile.condition-type-required' | translate }}
-            </mat-error>
-          </mat-form-field>
-          <div fxLayout="row" fxLayoutGap="8px" *ngIf="alarmRuleFormGroup.get('condition.spec.type').value == AlarmConditionType.DURATION">
-            <mat-form-field class="mat-block" hideRequiredMarker fxFlex floatLabel="always">
-              <mat-label></mat-label>
-              <input type="number" required
-                     step="1" min="1" max="2147483647" matInput
-                     placeholder="{{ 'device-profile.condition-duration-value' | translate }}"
-                     formControlName="value">
-              <mat-error *ngIf="alarmRuleFormGroup.get('condition.spec.value').hasError('required')">
-                {{ 'device-profile.condition-duration-value-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="alarmRuleFormGroup.get('condition.spec.value').hasError('min')">
-                {{ 'device-profile.condition-duration-value-range' | translate }}
-              </mat-error>
-              <mat-error *ngIf="alarmRuleFormGroup.get('condition.spec.value').hasError('max')">
-                {{ 'device-profile.condition-duration-value-range' | translate }}
-              </mat-error>
-              <mat-error *ngIf="alarmRuleFormGroup.get('condition.spec.value').hasError('pattern')">
-                {{ 'device-profile.condition-duration-value-pattern' | translate }}
-              </mat-error>
-            </mat-form-field>
-            <mat-form-field class="mat-block" hideRequiredMarker fxFlex floatLabel="always">
-              <mat-label></mat-label>
-              <mat-select formControlName="unit"
-                          required
-                          placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
-                <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
-                  {{ timeUnitTranslations.get(timeUnit) | translate }}
-                </mat-option>
-              </mat-select>
-              <mat-error *ngIf="alarmRuleFormGroup.get('condition.spec.unit').hasError('required')">
-                {{ 'device-profile.condition-duration-time-unit-required' | translate }}
-              </mat-error>
-            </mat-form-field>
-          </div>
-          <div fxLayout="row" fxLayoutGap="8px" *ngIf="alarmRuleFormGroup.get('condition.spec.type').value == AlarmConditionType.REPEATING">
-            <mat-form-field class="mat-block" hideRequiredMarker fxFlex floatLabel="always">
-              <mat-label></mat-label>
-              <input type="number" required
-                     step="1" min="1" max="2147483647" matInput
-                     placeholder="{{ 'device-profile.condition-repeating-value' | translate }}"
-                     formControlName="count">
-              <mat-error *ngIf="alarmRuleFormGroup.get('condition.spec.count').hasError('required')">
-                {{ 'device-profile.condition-repeating-value-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="alarmRuleFormGroup.get('condition.spec.count').hasError('min')">
-                {{ 'device-profile.condition-repeating-value-range' | translate }}
-              </mat-error>
-              <mat-error *ngIf="alarmRuleFormGroup.get('condition.spec.count').hasError('max')">
-                {{ 'device-profile.condition-repeating-value-range' | translate }}
-              </mat-error>
-              <mat-error *ngIf="alarmRuleFormGroup.get('condition.spec.count').hasError('pattern')">
-                {{ 'device-profile.condition-repeating-value-pattern' | translate }}
-              </mat-error>
-            </mat-form-field>
-          </div>
-        </div>
-      </section>
-    </mat-tab>
-    <mat-tab label="{{ 'device-profile.schedule' | translate }}">
-      <tb-alarm-schedule fxFlex class="row"
-                         formControlName="schedule">
-      </tb-alarm-schedule>
-    </mat-tab>
-    <mat-tab label="{{ 'device-profile.alarm-rule-details' | translate }}">
-      <mat-form-field class="mat-block row">
-        <mat-label translate>device-profile.alarm-details</mat-label>
-        <textarea matInput formControlName="alarmDetails" rows="5"></textarea>
-      </mat-form-field>
-    </mat-tab>
-  </mat-tab-group>
+  <tb-alarm-rule-condition formControlName="condition">
+  </tb-alarm-rule-condition>
+  <tb-alarm-schedule-info formControlName="schedule">
+  </tb-alarm-schedule-info>
+  <div *ngIf="!disabled || alarmRuleFormGroup.get('alarmDetails').value" fxLayout="row" fxLayoutAlign="start center">
+    <span class="tb-alarm-rule-details title" (click)="openEditDetailsDialog($event)">
+      {{ alarmRuleFormGroup.get('alarmDetails').value ? ('device-profile.alarm-rule-details' | translate) + ': '  : ('device-profile.add-alarm-rule-details' | translate) }}
+    </span>
+    <span *ngIf="alarmRuleFormGroup.get('alarmDetails').value" class="tb-alarm-rule-details"
+          (click)="openEditDetailsDialog($event)"
+          [innerHTML]="alarmRuleFormGroup.get('alarmDetails').value"></span>
+    <button mat-icon-button color="primary"
+       type="button"
+       (click)="openEditDetailsDialog($event)"
+       matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
+       matTooltipPosition="above">
+      <mat-icon>{{ disabled ? 'visibility' : (alarmRuleFormGroup.get('alarmDetails').value ? 'edit' : 'add') }}</mat-icon>
+    </button>
+  </div>
 </div>

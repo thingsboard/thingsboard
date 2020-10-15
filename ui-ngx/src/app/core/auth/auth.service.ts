@@ -18,10 +18,10 @@ import { Injectable, NgZone } from '@angular/core';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { HttpClient } from '@angular/common/http';
 
-import { forkJoin, Observable, of, throwError, ReplaySubject } from 'rxjs';
+import { forkJoin, Observable, of, ReplaySubject, throwError } from 'rxjs';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 
-import { LoginRequest, LoginResponse, OAuth2Client, PublicLoginRequest } from '@shared/models/login.models';
+import { LoginRequest, LoginResponse, PublicLoginRequest } from '@shared/models/login.models';
 import { ActivatedRoute, Router, UrlTree } from '@angular/router';
 import { defaultHttpOptions } from '../http/http-utils';
 import { UserService } from '../http/user.service';
@@ -44,6 +44,7 @@ import { AdminService } from '@core/http/admin.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
+import { OAuth2ClientInfo } from '@shared/models/oauth2.models';
 
 @Injectable({
     providedIn: 'root'
@@ -67,7 +68,7 @@ export class AuthService {
   }
 
   redirectUrl: string;
-  oauth2Clients: Array<OAuth2Client> = null;
+  oauth2Clients: Array<OAuth2ClientInfo> = null;
 
   private refreshTokenSubject: ReplaySubject<LoginResponse> = null;
   private jwtHelper = new JwtHelperService();
@@ -197,13 +198,14 @@ export class AuthService {
     });
   }
 
-  public loadOAuth2Clients(): Observable<Array<OAuth2Client>> {
-    return this.http.post<Array<OAuth2Client>>(`/api/noauth/oauth2Clients`,
+  public loadOAuth2Clients(): Observable<Array<OAuth2ClientInfo>> {
+    return this.http.post<Array<OAuth2ClientInfo>>(`/api/noauth/oauth2Clients`,
       null, defaultHttpOptions()).pipe(
-        tap((OAuth2Clients) => {
-          this.oauth2Clients = OAuth2Clients;
-        })
-      );
+      catchError(err => of([])),
+      tap((OAuth2Clients) => {
+        this.oauth2Clients = OAuth2Clients;
+      })
+    );
   }
 
   private forceDefaultPlace(authState?: AuthState, path?: string, params?: any): boolean {

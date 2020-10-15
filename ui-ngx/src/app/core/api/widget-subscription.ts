@@ -1241,6 +1241,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     return datasource.dataKeys.map((dataKey, keyIndex) => {
       dataKey.hidden = !!dataKey.settings.hideDataByDefault;
       dataKey.inLegend = !dataKey.settings.removeFromLegend;
+      dataKey.label = this.ctx.utils.customTranslation(dataKey.label, dataKey.label);
       if (this.comparisonEnabled && dataKey.isAdditional && dataKey.settings.comparisonSettings.comparisonValuesLabel) {
          dataKey.label = createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
       } else {

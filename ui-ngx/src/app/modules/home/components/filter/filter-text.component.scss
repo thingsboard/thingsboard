@@ -21,6 +21,11 @@
     }
     &.required {
       color: #f44336;
+      padding: 0 4px;
+    }
+    &.nowrap {
+      white-space: nowrap;
+      overflow: hidden;
     }
   }
 }

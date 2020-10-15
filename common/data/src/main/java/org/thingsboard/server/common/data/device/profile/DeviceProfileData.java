@@ -24,6 +24,7 @@ public class DeviceProfileData {
 
     private DeviceProfileConfiguration configuration;
     private DeviceProfileTransportConfiguration transportConfiguration;
+    private DeviceProfileProvisionConfiguration provisionConfiguration;
     private List<DeviceProfileAlarm> alarms;
 
 }

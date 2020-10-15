@@ -16,6 +16,7 @@
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
   FormArray,
   FormBuilder,
@@ -27,7 +28,12 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { AlarmSchedule, AlarmScheduleType, AlarmScheduleTypeTranslationMap } from '@shared/models/device.models';
+import {
+  AlarmSchedule,
+  AlarmScheduleType,
+  AlarmScheduleTypeTranslationMap,
+  dayOfWeekTranslations, getAlarmScheduleRangeText, timeOfDayToUTCTimestamp, utcTimestampToTimeOfDay
+} from '@shared/models/device.models';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import * as _moment from 'moment-timezone';
 import { MatCheckboxChange } from '@angular/material/checkbox';
@@ -35,6 +41,7 @@ import { MatCheckboxChange } from '@angular/material/checkbox';
 @Component({
   selector: 'tb-alarm-schedule',
   templateUrl: './alarm-schedule.component.html',
+  styleUrls: ['./alarm-schedule.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => AlarmScheduleComponent),
@@ -57,11 +64,18 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
   alarmScheduleType = AlarmScheduleType;
   alarmScheduleTypeTranslate = AlarmScheduleTypeTranslationMap;
 
+  dayOfWeekTranslationsArray = dayOfWeekTranslations;
+
+  allDays = Array(7).fill(0).map((x, i) => i);
+
+  firstRowDays = Array(4).fill(0).map((x, i) => i);
+  secondRowDays = Array(3).fill(0).map((x, i) => i + 4);
+
   private modelValue: AlarmSchedule;
 
   private defaultItems = Array.from({length: 7}, (value, i) => ({
     enabled: true,
-    dayOfWeek: i
+    dayOfWeek: i + 1
   }));
 
   private propagateChange = (v: any) => { };
@@ -73,19 +87,39 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
     this.alarmScheduleForm = this.fb.group({
       type: [AlarmScheduleType.ANY_TIME, Validators.required],
       timezone: [null, Validators.required],
-      daysOfWeek: this.fb.array(new Array(7).fill(false)),
+      daysOfWeek: this.fb.array(new Array(7).fill(false), this.validateDayOfWeeks),
       startsOn: [0, Validators.required],
       endsOn: [0, Validators.required],
-      items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)))
+      items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)), this.validateItems)
     });
     this.alarmScheduleForm.get('type').valueChanges.subscribe((type) => {
-      this.alarmScheduleForm.reset({type, items: this.defaultItems}, {emitEvent: false});
+      this.alarmScheduleForm.reset({type, items: this.defaultItems, timezone: this.defaultTimezone}, {emitEvent: false});
       this.updateValidators(type, true);
       this.alarmScheduleForm.updateValueAndValidity();
     });
     this.alarmScheduleForm.valueChanges.subscribe(() => {
       this.updateModel();
     });
+  }
+
+  validateDayOfWeeks(control: AbstractControl): ValidationErrors | null {
+    const dayOfWeeks: boolean[] = control.value;
+    if (!dayOfWeeks || !dayOfWeeks.length || !dayOfWeeks.find(v => v === true)) {
+      return {
+        dayOfWeeks: true
+      };
+    }
+    return null;
+  }
+
+  validateItems(control: AbstractControl): ValidationErrors | null {
+    const items: any[] = control.value;
+    if (!items || !items.length || !items.find(v => v.enabled === true)) {
+      return {
+        dayOfWeeks: true
+      };
+    }
+    return null;
   }
 
   registerOnChange(fn: any): void {
@@ -121,8 +155,8 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
           type: this.modelValue.type,
           timezone: this.modelValue.timezone,
           daysOfWeek,
-          startsOn: this.timestampToTime(this.modelValue.startsOn),
-          endsOn: this.timestampToTime(this.modelValue.endsOn)
+          startsOn: utcTimestampToTimeOfDay(this.modelValue.startsOn),
+          endsOn: utcTimestampToTimeOfDay(this.modelValue.endsOn)
         }, {emitEvent: false});
         break;
       case AlarmScheduleType.CUSTOM:
@@ -131,17 +165,11 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
           this.modelValue.items
             .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
             .forEach((item, index) => {
-              if (item.enabled) {
-                this.itemsSchedulerForm.at(index).get('startsOn').enable({emitEvent: false});
-                this.itemsSchedulerForm.at(index).get('endsOn').enable({emitEvent: false});
-              } else {
-                this.itemsSchedulerForm.at(index).get('startsOn').disable({emitEvent: false});
-                this.itemsSchedulerForm.at(index).get('endsOn').disable({emitEvent: false});
-              }
+              this.disabledSelectedTime(item.enabled, index);
               alarmDays.push({
                 enabled: item.enabled,
-                startsOn: this.timestampToTime(item.startsOn),
-                endsOn: this.timestampToTime(item.endsOn)
+                startsOn: utcTimestampToTimeOfDay(item.startsOn),
+                endsOn: utcTimestampToTimeOfDay(item.endsOn)
               });
             });
           this.alarmScheduleForm.patchValue({
@@ -206,15 +234,15 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
           .filter(day => !!day);
       }
       if (isDefined(value.startsOn) && value.startsOn !== 0) {
-        value.startsOn = this.timeToTimestamp(value.startsOn);
+        value.startsOn = timeOfDayToUTCTimestamp(value.startsOn);
       }
       if (isDefined(value.endsOn) && value.endsOn !== 0) {
-        value.endsOn = this.timeToTimestamp(value.endsOn);
+        value.endsOn = timeOfDayToUTCTimestamp(value.endsOn);
       }
       if (isDefined(value.items)){
         value.items = this.alarmScheduleForm.getRawValue().items;
         value.items = value.items.map((item) => {
-          return { ...item, startsOn: this.timeToTimestamp(item.startsOn), endsOn: this.timeToTimestamp(item.endsOn)};
+          return { ...item, startsOn: timeOfDayToUTCTimestamp(item.startsOn), endsOn: timeOfDayToUTCTimestamp(item.endsOn)};
         });
       }
       this.modelValue = value;
@@ -222,21 +250,11 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
     }
   }
 
-  private timeToTimestamp(date: Date | number): number {
-    if (typeof date === 'number' || date === null) {
-      return 0;
-    }
-    return _moment.utc([1970, 0, 1, date.getHours(), date.getMinutes(), date.getSeconds(), 0]).valueOf();
-  }
-
-  private timestampToTime(time = 0): Date {
-    return new Date(time + new Date().getTimezoneOffset() * 60 * 1000);
-  }
 
   private defaultItemsScheduler(index): FormGroup {
     return this.fb.group({
       enabled: [true],
-      dayOfWeek: [index],
+      dayOfWeek: [index + 1],
       startsOn: [0, Validators.required],
       endsOn: [0, Validators.required]
     });
@@ -244,16 +262,24 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
 
   changeCustomScheduler($event: MatCheckboxChange, index: number) {
     const value = $event.checked;
-    if (value) {
+    this.disabledSelectedTime(value, index, true);
+  }
+
+  private disabledSelectedTime(enable: boolean, index: number, emitEvent = false) {
+    if (enable) {
       this.itemsSchedulerForm.at(index).get('startsOn').enable({emitEvent: false});
-      this.itemsSchedulerForm.at(index).get('endsOn').enable();
+      this.itemsSchedulerForm.at(index).get('endsOn').enable({emitEvent});
     } else {
       this.itemsSchedulerForm.at(index).get('startsOn').disable({emitEvent: false});
-      this.itemsSchedulerForm.at(index).get('endsOn').disable();
+      this.itemsSchedulerForm.at(index).get('endsOn').disable({emitEvent});
     }
   }
 
-  private get itemsSchedulerForm(): FormArray {
+  getSchedulerRangeText(control: FormGroup | AbstractControl): string {
+    return getAlarmScheduleRangeText(control.get('startsOn').value, control.get('endsOn').value);
+  }
+
+  get itemsSchedulerForm(): FormArray {
     return this.alarmScheduleForm.get('items') as FormArray;
   }
 }

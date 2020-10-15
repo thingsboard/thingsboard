@@ -19,7 +19,7 @@
   <div *ngFor="let createAlarmRuleControl of createAlarmRulesFormArray().controls; let $index = index;
                last as isLast;" fxLayout="row" fxLayoutAlign="start center"
                fxLayoutGap="8px" style="padding-bottom: 8px;" [formGroup]="createAlarmRuleControl">
-    <div class="create-alarm-rule" fxFlex fxLayout="column" fxLayoutGap="8px" fxLayoutAlign="start">
+    <div class="create-alarm-rule" fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start">
       <mat-form-field class="severity mat-block" floatLabel="always" hideRequiredMarker>
         <mat-label translate>alarm.severity</mat-label>
         <mat-select formControlName="severity"
@@ -34,7 +34,7 @@
           {{ 'device-profile.alarm-severity-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-divider></mat-divider>
+      <mat-divider vertical></mat-divider>
       <tb-alarm-rule formControlName="alarmRule" required fxFlex>
       </tb-alarm-rule>
     </div>
@@ -47,9 +47,9 @@
       <mat-icon>remove_circle_outline</mat-icon>
     </button>
   </div>
-  <div *ngIf="!createAlarmRulesFormArray().controls.length">
-      <span translate fxLayoutAlign="center center"
-            class="tb-prompt">device-profile.no-create-alarm-rules</span>
+  <div *ngIf="!createAlarmRulesFormArray().controls.length && !disabled">
+      <span translate fxLayoutAlign="center center" style="margin: 16px 0"
+            class="tb-prompt required">device-profile.add-create-alarm-rule-prompt</span>
   </div>
   <div fxLayout="row" *ngIf="!disabled">
     <button mat-stroked-button color="primary"
@@ -57,7 +57,7 @@
             (click)="addCreateAlarmRule()"
             matTooltip="{{ 'device-profile.add-create-alarm-rule' | translate }}"
             matTooltipPosition="above">
-      <mat-icon>add_circle_outline</mat-icon>
+      <mat-icon class="button-icon">add_circle_outline</mat-icon>
       {{ 'device-profile.add-create-alarm-rule' | translate }}
     </button>
   </div>
