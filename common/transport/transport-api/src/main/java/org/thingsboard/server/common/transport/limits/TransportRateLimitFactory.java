@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.util;
+package org.thingsboard.server.common.transport.limits;
 
-import java.util.Optional;
+public interface TransportRateLimitFactory {
 
-public interface DataDecodingEncodingService {
+    TransportRateLimit create(TransportRateLimitType type, Object config);
 
-    <T> Optional<T> decode(byte[] byteArray);
-
-    <T> byte[] encode(T msq);
+    TransportRateLimit createDefault(TransportRateLimitType type);
 
 }
-

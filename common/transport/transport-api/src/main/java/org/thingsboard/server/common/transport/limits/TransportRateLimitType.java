@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.util;
+package org.thingsboard.server.common.transport.limits;
 
-import java.util.Optional;
+import lombok.Getter;
 
-public interface DataDecodingEncodingService {
+public enum TransportRateLimitType {
 
-    <T> Optional<T> decode(byte[] byteArray);
+    TENANT_MAX_MSGS("transport.tenant.max.msg"),
+    TENANT_MAX_DATA_POINTS("transport.tenant.max.dataPoints"),
+    DEVICE_MAX_MSGS("transport.device.max.msg"),
+    DEVICE_MAX_DATA_POINTS("transport.device.max.dataPoints");
 
-    <T> byte[] encode(T msq);
+    @Getter
+    private final String configurationKey;
 
+    TransportRateLimitType(String configurationKey) {
+        this.configurationKey = configurationKey;
+    }
 }
-

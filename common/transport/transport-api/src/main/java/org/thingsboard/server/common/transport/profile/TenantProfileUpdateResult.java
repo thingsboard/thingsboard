@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.util;
+package org.thingsboard.server.common.transport.profile;
 
-import java.util.Optional;
+import lombok.Data;
+import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.TenantId;
 
-public interface DataDecodingEncodingService {
+import java.util.Set;
 
-    <T> Optional<T> decode(byte[] byteArray);
+@Data
+public class TenantProfileUpdateResult {
 
-    <T> byte[] encode(T msq);
+    private final TenantProfile profile;
+    private final Set<TenantId> affectedTenants;
 
 }
-

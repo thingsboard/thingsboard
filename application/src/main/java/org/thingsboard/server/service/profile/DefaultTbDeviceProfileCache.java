@@ -61,7 +61,7 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
                     profile = deviceProfileService.findDeviceProfileById(tenantId, deviceProfileId);
                     if (profile != null) {
                         deviceProfilesMap.put(deviceProfileId, profile);
-                        log.info("[{}] Fetch device profile into cache: {}", profile.getId(), profile);
+                        log.debug("[{}] Fetch device profile into cache: {}", profile.getId(), profile);
                     }
                 }
             } finally {
@@ -91,7 +91,7 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
     public void put(DeviceProfile profile) {
         if (profile.getId() != null) {
             deviceProfilesMap.put(profile.getId(), profile);
-            log.info("[{}] pushed device profile to cache: {}", profile.getId(), profile);
+            log.debug("[{}] pushed device profile to cache: {}", profile.getId(), profile);
             notifyListeners(profile);
         }
     }
@@ -99,7 +99,7 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
     @Override
     public void evict(TenantId tenantId, DeviceProfileId profileId) {
         DeviceProfile oldProfile = deviceProfilesMap.remove(profileId);
-        log.info("[{}] evict device profile from cache: {}", profileId, oldProfile);
+        log.debug("[{}] evict device profile from cache: {}", profileId, oldProfile);
         DeviceProfile newProfile = get(tenantId, profileId);
         if (newProfile != null) {
             notifyListeners(newProfile);
@@ -114,6 +114,16 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
     @Override
     public void addListener(TenantId tenantId, EntityId listenerId, Consumer<DeviceProfile> listener) {
         listeners.computeIfAbsent(tenantId, id -> new ConcurrentHashMap<>()).put(listenerId, listener);
+    }
+
+    @Override
+    public DeviceProfile find(DeviceProfileId deviceProfileId) {
+        return deviceProfileService.findDeviceProfileById(TenantId.SYS_TENANT_ID, deviceProfileId);
+    }
+
+    @Override
+    public DeviceProfile findOrCreateDeviceProfile(TenantId tenantId, String profileName) {
+        return deviceProfileService.findOrCreateDeviceProfile(tenantId, profileName);
     }
 
     @Override
