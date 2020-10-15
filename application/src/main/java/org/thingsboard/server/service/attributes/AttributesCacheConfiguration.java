@@ -23,6 +23,6 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "cache.attributes")
 @Data
 public class AttributesCacheConfiguration {
-    private int maxSize;
+    private int maxSizePerTenant;
     private int expireAfterAccessInMinutes;
 }

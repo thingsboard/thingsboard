@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.service.attributes;
 
+import com.google.common.base.Ticker;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,15 +34,29 @@ import java.util.stream.Collectors;
 public class GoogleTbAttributesCache implements TbAttributesCache {
     private final Map<TenantId, Cache<AttributesKey, Optional<AttributeKvEntry>>> tenantsCache = new ConcurrentHashMap<>();
 
-    @Autowired
-    private AttributesCacheConfiguration cacheConfiguration;
+    private final AttributesCacheConfiguration cacheConfiguration;
+
+    private Ticker customTicker;
+
+    public void setCustomTicker(Ticker customTicker) {
+        this.customTicker = customTicker;
+    }
+
+    public GoogleTbAttributesCache(AttributesCacheConfiguration cacheConfiguration) {
+        this.cacheConfiguration = cacheConfiguration;
+    }
 
     private Cache<AttributesKey, Optional<AttributeKvEntry>> getTenantCache(TenantId tenantId) {
         return tenantsCache.computeIfAbsent(tenantId,
-                id -> CacheBuilder.newBuilder()
-                        .maximumSize(cacheConfiguration.getMaxSize())
-                        .expireAfterAccess(cacheConfiguration.getExpireAfterAccessInMinutes(), TimeUnit.MINUTES)
-                        .build()
+                id -> {
+                    CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder()
+                            .maximumSize(cacheConfiguration.getMaxSizePerTenant())
+                            .expireAfterAccess(cacheConfiguration.getExpireAfterAccessInMinutes(), TimeUnit.MINUTES);
+                    if (customTicker != null){
+                        cacheBuilder.ticker(customTicker);
+                    }
+                    return cacheBuilder.build();
+                }
         );
     }
 
