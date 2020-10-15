@@ -502,7 +502,7 @@ js:
   remote:
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
-    # Maximum time in seconds for black listed function to stay in the list.
+    # Maximum time in seconds for black listed function to stay in 1:the list.
     max_black_list_duration_sec: "${REMOTE_JS_SANDBOX_MAX_BLACKLIST_DURATION_SEC:60}"
     stats:
       enabled: "${TB_JS_REMOTE_STATS_ENABLED:false}"
@@ -512,10 +512,6 @@ transport:
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
-  rate_limits:
-    enabled: "${TB_TRANSPORT_RATE_LIMITS_ENABLED:false}"
-    tenant: "${TB_TRANSPORT_RATE_LIMITS_TENANT:1000:1,20000:60}"
-    device: "${TB_TRANSPORT_RATE_LIMITS_DEVICE:10:1,300:60}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
     type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"

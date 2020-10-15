@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.util;
+package org.thingsboard.server.common.transport.limits;
 
-import java.util.Optional;
+public class DummyTransportRateLimit implements TransportRateLimit {
 
-public interface DataDecodingEncodingService {
+    @Override
+    public String getConfiguration() {
+        return "";
+    }
 
-    <T> Optional<T> decode(byte[] byteArray);
-
-    <T> byte[] encode(T msq);
+    @Override
+    public boolean tryConsume() {
+        return true;
+    }
 
 }
-

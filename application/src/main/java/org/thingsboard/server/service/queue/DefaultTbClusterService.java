@@ -23,11 +23,15 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -189,21 +193,51 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void onDeviceProfileChange(DeviceProfile deviceProfile, TbQueueCallback callback) {
-        log.trace("[{}][{}] Processing device profile [{}] change event", deviceProfile.getTenantId(), deviceProfile.getId(), deviceProfile.getName());
-        TransportProtos.DeviceProfileUpdateMsg profileUpdateMsg = TransportProtos.DeviceProfileUpdateMsg.newBuilder()
-                .setData(ByteString.copyFrom(encodingService.encode(deviceProfile))).build();
-        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setDeviceProfileUpdateMsg(profileUpdateMsg).build();
-        broadcast(transportMsg);
+        onEntityChange(deviceProfile.getTenantId(), deviceProfile.getId(), deviceProfile, callback);
     }
 
     @Override
-    public void onDeviceProfileDelete(DeviceProfile deviceProfile, TbQueueCallback callback) {
-        log.trace("[{}][{}] Processing device profile [{}] delete event", deviceProfile.getTenantId(), deviceProfile.getId(), deviceProfile.getName());
-        TransportProtos.DeviceProfileDeleteMsg profileDeleteMsg = TransportProtos.DeviceProfileDeleteMsg.newBuilder()
-                .setProfileIdMSB(deviceProfile.getId().getId().getMostSignificantBits())
-                .setProfileIdLSB(deviceProfile.getId().getId().getLeastSignificantBits())
+    public void onTenantProfileChange(TenantProfile tenantProfile, TbQueueCallback callback) {
+        onEntityChange(TenantId.SYS_TENANT_ID, tenantProfile.getId(), tenantProfile, callback);
+    }
+
+    @Override
+    public void onTenantChange(Tenant tenant, TbQueueCallback callback) {
+        onEntityChange(TenantId.SYS_TENANT_ID, tenant.getId(), tenant, callback);
+    }
+
+    @Override
+    public void onDeviceProfileDelete(DeviceProfile entity, TbQueueCallback callback) {
+        onEntityDelete(entity.getTenantId(), entity.getId(), entity.getName(), callback);
+    }
+
+    @Override
+    public void onTenantProfileDelete(TenantProfile entity, TbQueueCallback callback) {
+        onEntityDelete(TenantId.SYS_TENANT_ID, entity.getId(), entity.getName(), callback);
+    }
+
+    @Override
+    public void onTenantDelete(Tenant entity, TbQueueCallback callback) {
+        onEntityDelete(TenantId.SYS_TENANT_ID, entity.getId(), entity.getName(), callback);
+    }
+
+    public <T extends HasName> void onEntityChange(TenantId tenantId, EntityId entityid, T entity, TbQueueCallback callback) {
+        log.trace("[{}][{}][{}] Processing [{}] change event", tenantId, entityid.getEntityType(), entityid.getId(), entity.getName());
+        TransportProtos.EntityUpdateMsg entityUpdateMsg = TransportProtos.EntityUpdateMsg.newBuilder()
+                .setEntityType(entityid.getEntityType().name())
+                .setData(ByteString.copyFrom(encodingService.encode(entity))).build();
+        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setEntityUpdateMsg(entityUpdateMsg).build();
+        broadcast(transportMsg);
+    }
+
+    private void onEntityDelete(TenantId tenantId, EntityId entityId, String name, TbQueueCallback callback) {
+        log.trace("[{}][{}][{}] Processing [{}] delete event", tenantId, entityId.getEntityType(), entityId.getId(), name);
+        TransportProtos.EntityDeleteMsg entityDeleteMsg = TransportProtos.EntityDeleteMsg.newBuilder()
+                .setEntityType(entityId.getEntityType().name())
+                .setEntityIdMSB(entityId.getId().getMostSignificantBits())
+                .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
                 .build();
-        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setDeviceProfileDeleteMsg(profileDeleteMsg).build();
+        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setEntityDeleteMsg(entityDeleteMsg).build();
         broadcast(transportMsg);
     }
 

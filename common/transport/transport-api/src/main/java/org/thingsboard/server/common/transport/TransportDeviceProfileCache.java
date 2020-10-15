@@ -13,15 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.util;
+package org.thingsboard.server.common.transport;
+
+import com.google.protobuf.ByteString;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 
 import java.util.Optional;
 
-public interface DataDecodingEncodingService {
+public interface TransportDeviceProfileCache {
 
-    <T> Optional<T> decode(byte[] byteArray);
+    DeviceProfile getOrCreate(DeviceProfileId id, ByteString profileBody);
 
-    <T> byte[] encode(T msq);
+    DeviceProfile get(DeviceProfileId id);
+
+    void put(DeviceProfile profile);
+
+    DeviceProfile put(ByteString profileBody);
+
+    void evict(DeviceProfileId id);
 
 }
-

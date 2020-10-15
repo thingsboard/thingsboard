@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport;
+package org.thingsboard.server.common.transport.limits;
 
-import com.google.protobuf.ByteString;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
 
-import java.util.Optional;
+@RequiredArgsConstructor
+public class SimpleTransportRateLimit implements TransportRateLimit {
 
-public interface TransportProfileCache {
+    private final TbRateLimits rateLimit;
+    @Getter
+    private final String configuration;
 
-    DeviceProfile getOrCreate(DeviceProfileId id, ByteString profileBody);
-
-    DeviceProfile get(DeviceProfileId id);
-
-    void put(DeviceProfile profile);
-
-    DeviceProfile put(ByteString profileBody);
-
-    void evict(DeviceProfileId id);
+    @Override
+    public boolean tryConsume() {
+        return rateLimit.tryConsume();
+    }
 
 }

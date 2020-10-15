@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.profile;
+package org.thingsboard.server.common.transport.limits;
 
-import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
 
-public interface TbDeviceProfileCache extends RuleEngineDeviceProfileCache {
+public interface TransportRateLimitService {
 
-    void put(DeviceProfile profile);
+    TransportRateLimit getRateLimit(TenantId tenantId, TransportRateLimitType limit);
 
-    void evict(TenantId tenantId, DeviceProfileId id);
+    TransportRateLimit getRateLimit(TenantId tenantId, DeviceId deviceId, TransportRateLimitType limit);
 
-    void evict(DeviceId id);
+    void update(TenantProfileUpdateResult update);
 
-    DeviceProfile find(DeviceProfileId deviceProfileId);
+    void update(TenantId tenantId);
 
-    DeviceProfile findOrCreateDeviceProfile(TenantId tenantId, String deviceType);
+    void remove(TenantId tenantId);
+
+    void remove(DeviceId deviceId);
+
 }
