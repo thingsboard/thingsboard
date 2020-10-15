@@ -61,6 +61,7 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
   private jsonEditor: ace.Ace.Editor;
   private editorsResizeCaf: CancelAnimationFrame;
   private editorResize$: ResizeObserver;
+  private ignoreChange = false;
 
   toastTargetId = `jsonContentEditor-${guid()}`;
 
@@ -140,8 +141,13 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
     this.jsonEditor.session.setUseWrapMode(true);
     this.jsonEditor.setValue(this.contentBody ? this.contentBody : '', -1);
     this.jsonEditor.on('change', () => {
-      this.cleanupJsonErrors();
-      this.updateView();
+      if (!this.ignoreChange) {
+        this.cleanupJsonErrors();
+        this.updateView();
+      }
+    });
+    this.jsonEditor.on('blur', () => {
+      this.contentValid = !this.validateContent || this.doValidate(true);
     });
     this.editorResize$ = new ResizeObserver(() => {
       this.onAceEditorResize();
@@ -210,34 +216,36 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
       this.cleanupJsonErrors();
       this.contentValid = true;
       this.propagateChange(this.contentBody);
-      this.contentValid = this.doValidate();
+      this.contentValid = this.doValidate(true);
       this.propagateChange(this.contentBody);
     }
   }
 
-  private doValidate(): boolean {
+  private doValidate(showErrorToast = false): boolean {
     try {
       if (this.validateContent && this.contentType === ContentType.JSON) {
         JSON.parse(this.contentBody);
       }
       return true;
     } catch (ex) {
-      let errorInfo = 'Error:';
-      if (ex.name) {
-        errorInfo += ' ' + ex.name + ':';
+      if (showErrorToast) {
+        let errorInfo = 'Error:';
+        if (ex.name) {
+          errorInfo += ' ' + ex.name + ':';
+        }
+        if (ex.message) {
+          errorInfo += ' ' + ex.message;
+        }
+        this.store.dispatch(new ActionNotificationShow(
+          {
+            message: errorInfo,
+            type: 'error',
+            target: this.toastTargetId,
+            verticalPosition: 'bottom',
+            horizontalPosition: 'left'
+          }));
+        this.errorShowed = true;
       }
-      if (ex.message) {
-        errorInfo += ' ' + ex.message;
-      }
-      this.store.dispatch(new ActionNotificationShow(
-        {
-          message: errorInfo,
-          type: 'error',
-          target: this.toastTargetId,
-          verticalPosition: 'bottom',
-          horizontalPosition: 'left'
-        }));
-      this.errorShowed = true;
       return false;
     }
   }
@@ -256,8 +264,9 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
     this.contentBody = value;
     this.contentValid = true;
     if (this.jsonEditor) {
+      this.ignoreChange = true;
       this.jsonEditor.setValue(this.contentBody ? this.contentBody : '', -1);
-      // this.jsonEditor.
+      this.ignoreChange = false;
     }
   }
 
