@@ -88,17 +88,17 @@
       {{ 'filter.add' | translate }}
     </button>
     <span fxFlex></span>
-    <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || filtersFormGroup.invalid || !filtersFormGroup.dirty">
-      {{ 'action.save' | translate }}
-    </button>
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()"
             cdkFocusInitial>
       {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || filtersFormGroup.invalid || !filtersFormGroup.dirty">
+      {{ 'action.save' | translate }}
     </button>
   </div>
 </form>

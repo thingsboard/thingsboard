@@ -36,7 +36,10 @@ import {
   DeviceProfile,
   DeviceProfileType,
   deviceProfileTypeTranslationMap,
-  DeviceTransportType, deviceTransportTypeHintMap,
+  DeviceProvisionConfiguration,
+  DeviceProvisionType,
+  DeviceTransportType,
+  deviceTransportTypeHintMap,
   deviceTransportTypeTranslationMap
 } from '@shared/models/device.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
@@ -84,6 +87,8 @@ export class AddDeviceProfileDialogComponent extends
 
   alarmRulesFormGroup: FormGroup;
 
+  provisionConfigFormGroup: FormGroup;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AddDeviceProfileDialogData,
@@ -118,6 +123,14 @@ export class AddDeviceProfileDialogComponent extends
         alarms: [null]
       }
     );
+
+    this.provisionConfigFormGroup = this.fb.group(
+      {
+        provisionConfiguration: [{
+          type: DeviceProvisionType.DISABLED
+        } as DeviceProvisionConfiguration, [Validators.required]]
+      }
+    );
   }
 
   private deviceProfileTransportTypeChanged() {
@@ -138,7 +151,7 @@ export class AddDeviceProfileDialogComponent extends
   }
 
   nextStep() {
-    if (this.selectedIndex < 2) {
+    if (this.selectedIndex < 3) {
       this.addDeviceProfileStepper.next();
     } else {
       this.add();
@@ -153,20 +166,28 @@ export class AddDeviceProfileDialogComponent extends
         return this.transportConfigFormGroup;
       case 2:
         return this.alarmRulesFormGroup;
+      case 3:
+        return this.provisionConfigFormGroup;
     }
   }
 
   add(): void {
     if (this.allValid()) {
+      const deviceProvisionConfiguration: DeviceProvisionConfiguration = this.provisionConfigFormGroup.get('provisionConfiguration').value;
+      const provisionDeviceKey = deviceProvisionConfiguration.provisionDeviceKey;
+      delete deviceProvisionConfiguration.provisionDeviceKey;
       const deviceProfile: DeviceProfile = {
         name: this.deviceProfileDetailsFormGroup.get('name').value,
         type: this.deviceProfileDetailsFormGroup.get('type').value,
         transportType: this.transportConfigFormGroup.get('transportType').value,
+        provisionType: deviceProvisionConfiguration.type,
+        provisionDeviceKey,
         description: this.deviceProfileDetailsFormGroup.get('description').value,
         profileData: {
           configuration: createDeviceProfileConfiguration(DeviceProfileType.DEFAULT),
           transportConfiguration: this.transportConfigFormGroup.get('transportConfiguration').value,
-          alarms: this.alarmRulesFormGroup.get('alarms').value
+          alarms: this.alarmRulesFormGroup.get('alarms').value,
+          provisionConfiguration: deviceProvisionConfiguration
         }
       };
       if (this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value) {
@@ -188,6 +209,8 @@ export class AddDeviceProfileDialogComponent extends
         return 'device-profile.transport-configuration';
       case 2:
         return 'device-profile.alarm-rules';
+      case 3:
+        return 'device-profile.device-provisioning';
     }
   }
 

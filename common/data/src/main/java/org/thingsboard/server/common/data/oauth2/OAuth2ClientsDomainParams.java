@@ -27,6 +27,6 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OAuth2ClientsDomainParams {
-    private Set<DomainInfo> domainInfos;
-    private Set<ClientRegistrationDto> clientRegistrations;
+    private List<DomainInfo> domainInfos;
+    private List<ClientRegistrationDto> clientRegistrations;
 }

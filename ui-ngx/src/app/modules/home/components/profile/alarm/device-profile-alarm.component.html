@@ -56,7 +56,7 @@
     <mat-checkbox formControlName="propagate" style="display: block; padding-bottom: 16px;">
       {{ 'device-profile.propagate-alarm' | translate }}
     </mat-checkbox>
-    <section *ngIf="alarmFormGroup.get('propagate').value === true">
+    <section *ngIf="alarmFormGroup.get('propagate').value === true" style="padding-bottom: 1em;">
       <mat-form-field floatLabel="always" class="mat-block">
         <mat-label translate>device-profile.alarm-rule-relation-types-list</mat-label>
         <mat-chip-list #relationTypesChipList [disabled]="disabled">
@@ -98,7 +98,7 @@
         <mat-icon>remove_circle_outline</mat-icon>
       </button>
     </div>
-    <div *ngIf="!alarmFormGroup.get('clearRule').value">
+    <div *ngIf="disabled && !alarmFormGroup.get('clearRule').value">
       <span translate fxLayoutAlign="center center" style="margin: 16px 0"
             class="tb-prompt">device-profile.no-clear-alarm-rule</span>
     </div>

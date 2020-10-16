@@ -13,24 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport;
+package org.thingsboard.server.dao.device.provision;
 
-import com.google.protobuf.ByteString;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
-
-import java.util.Optional;
-
-public interface TransportProfileCache {
-
-    DeviceProfile getOrCreate(DeviceProfileId id, ByteString profileBody);
-
-    DeviceProfile get(DeviceProfileId id);
-
-    void put(DeviceProfile profile);
-
-    DeviceProfile put(ByteString profileBody);
-
-    void evict(DeviceProfileId id);
-
+public class ProvisionFailedException extends RuntimeException {
+    public ProvisionFailedException(String errorMsg) {
+        super(errorMsg);
+    }
 }

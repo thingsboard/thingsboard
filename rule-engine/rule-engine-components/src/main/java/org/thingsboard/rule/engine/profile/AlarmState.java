@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.profile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
@@ -39,8 +41,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
 
 @Data
-class DeviceProfileAlarmState {
+@Slf4j
+class AlarmState {
 
+    private final ProfileState deviceProfile;
     private final EntityId originator;
     private DeviceProfileAlarm alarmDefinition;
     private volatile List<AlarmRuleState> createRulesSortedBySeverityDesc;
@@ -50,46 +54,81 @@ class DeviceProfileAlarmState {
     private volatile TbMsgMetaData lastMsgMetaData;
     private volatile String lastMsgQueueName;
 
-    public DeviceProfileAlarmState(EntityId originator, DeviceProfileAlarm alarmDefinition, PersistedAlarmState alarmState) {
+    AlarmState(ProfileState deviceProfile, EntityId originator, DeviceProfileAlarm alarmDefinition, PersistedAlarmState alarmState) {
+        this.deviceProfile = deviceProfile;
         this.originator = originator;
         this.updateState(alarmDefinition, alarmState);
     }
 
-    public boolean process(TbContext ctx, TbMsg msg, DeviceDataSnapshot data) throws ExecutionException, InterruptedException {
+    public boolean process(TbContext ctx, TbMsg msg, DataSnapshot data, SnapshotUpdate update) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
         lastMsgMetaData = msg.getMetaData();
         lastMsgQueueName = msg.getQueueName();
-        return createOrClearAlarms(ctx, data, AlarmRuleState::eval);
+        return createOrClearAlarms(ctx, data, update, AlarmRuleState::eval);
     }
 
     public boolean process(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
-        return createOrClearAlarms(ctx, ts, AlarmRuleState::eval);
+        return createOrClearAlarms(ctx, ts, null, AlarmRuleState::eval);
     }
 
-    public <T> boolean createOrClearAlarms(TbContext ctx, T data, BiFunction<AlarmRuleState, T, Boolean> evalFunction) {
+    public <T> boolean createOrClearAlarms(TbContext ctx, T data, SnapshotUpdate update, BiFunction<AlarmRuleState, T, AlarmEvalResult> evalFunction) {
         boolean stateUpdate = false;
         AlarmSeverity resultSeverity = null;
+        log.debug("[{}] processing update: {}", alarmDefinition.getId(), data);
         for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
-            boolean evalResult = evalFunction.apply(state, data);
+            if (!validateUpdate(update, state)) {
+                log.debug("[{}][{}] Update is not valid for current rule state", alarmDefinition.getId(), state.getSeverity());
+                continue;
+            }
+            AlarmEvalResult evalResult = evalFunction.apply(state, data);
             stateUpdate |= state.checkUpdate();
-            if (evalResult) {
+            if (AlarmEvalResult.TRUE.equals(evalResult)) {
                 resultSeverity = state.getSeverity();
                 break;
+            } else if (AlarmEvalResult.FALSE.equals(evalResult)) {
+                state.clear();
+                stateUpdate |= state.checkUpdate();
             }
         }
         if (resultSeverity != null) {
-            pushMsg(ctx, calculateAlarmResult(ctx, resultSeverity));
+            TbAlarmResult result = calculateAlarmResult(ctx, resultSeverity);
+            if (result != null) {
+                pushMsg(ctx, result);
+            }
         } else if (currentAlarm != null && clearState != null) {
-            Boolean evalResult = evalFunction.apply(clearState, data);
-            if (evalResult) {
+            if (!validateUpdate(update, clearState)) {
+                log.debug("[{}] Update is not valid for current clear state", alarmDefinition.getId());
+                return stateUpdate;
+            }
+            AlarmEvalResult evalResult = evalFunction.apply(clearState, data);
+            if (AlarmEvalResult.TRUE.equals(evalResult)) {
                 stateUpdate |= clearState.checkUpdate();
+                for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
+                    state.clear();
+                    stateUpdate |= state.checkUpdate();
+                }
                 ctx.getAlarmService().clearAlarm(ctx.getTenantId(), currentAlarm.getId(), JacksonUtil.OBJECT_MAPPER.createObjectNode(), System.currentTimeMillis());
                 pushMsg(ctx, new TbAlarmResult(false, false, true, currentAlarm));
                 currentAlarm = null;
+            } else if (AlarmEvalResult.FALSE.equals(evalResult)) {
+                clearState.clear();
+                stateUpdate |= clearState.checkUpdate();
             }
         }
         return stateUpdate;
+    }
+
+    public boolean validateUpdate(SnapshotUpdate update, AlarmRuleState state) {
+        if (update != null) {
+            //Check that the update type and that keys match.
+            if (update.getType().equals(EntityKeyType.TIME_SERIES)) {
+                return state.validateTsUpdate(update.getKeys());
+            } else if (update.getType().equals(EntityKeyType.ATTRIBUTE)) {
+                return state.validateAttrUpdate(update.getKeys());
+            }
+        }
+        return true;
     }
 
     public void initCurrentAlarm(TbContext ctx) throws InterruptedException, ExecutionException {
@@ -137,26 +176,34 @@ class DeviceProfileAlarmState {
                     alarmState.getCreateRuleStates().put(severity, ruleState);
                 }
             }
-            createRulesSortedBySeverityDesc.add(new AlarmRuleState(severity, rule, ruleState));
+            createRulesSortedBySeverityDesc.add(new AlarmRuleState(severity, rule,
+                    deviceProfile.getCreateAlarmKeys(alarm.getId(), severity), ruleState));
         });
         createRulesSortedBySeverityDesc.sort(Comparator.comparingInt(state -> state.getSeverity().ordinal()));
         PersistedAlarmRuleState ruleState = alarmState == null ? null : alarmState.getClearRuleState();
         if (alarmDefinition.getClearRule() != null) {
-            clearState = new AlarmRuleState(null, alarmDefinition.getClearRule(), ruleState);
+            clearState = new AlarmRuleState(null, alarmDefinition.getClearRule(), deviceProfile.getClearAlarmKeys(alarm.getId()), ruleState);
         }
     }
 
     private TbAlarmResult calculateAlarmResult(TbContext ctx, AlarmSeverity severity) {
         if (currentAlarm != null) {
+            // TODO: In some extremely rare cases, we might miss the event of alarm clear (If one use in-mem queue and restarted the server) or (if one manipulated the rule chain).
+            // Maybe we should fetch alarm every time?
             currentAlarm.setEndTs(System.currentTimeMillis());
             AlarmSeverity oldSeverity = currentAlarm.getSeverity();
-            if (!oldSeverity.equals(severity)) {
-                currentAlarm.setSeverity(severity);
-                currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
-                return new TbAlarmResult(false, false, true, false, currentAlarm);
+            // Skip update if severity is decreased.
+            if (severity.ordinal() <= oldSeverity.ordinal()) {
+                if (!oldSeverity.equals(severity)) {
+                    currentAlarm.setSeverity(severity);
+                    currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
+                    return new TbAlarmResult(false, false, true, false, currentAlarm);
+                } else {
+                    currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
+                    return new TbAlarmResult(false, true, false, false, currentAlarm);
+                }
             } else {
-                currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
-                return new TbAlarmResult(false, true, false, false, currentAlarm);
+                return null;
             }
         } else {
             currentAlarm = new Alarm();

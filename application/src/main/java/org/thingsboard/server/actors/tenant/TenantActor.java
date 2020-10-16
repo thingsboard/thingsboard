@@ -77,9 +77,7 @@ public class TenantActor extends RuleChainManagerActor {
                 // This Service may be started for specific tenant only.
                 Optional<TenantId> isolatedTenantId = systemContext.getServiceInfoProvider().getIsolatedTenant();
 
-                // TODO: Tenant Profile from cache
-
-                TenantProfile tenantProfile = systemContext.getTenantProfileService().findTenantProfileById(tenantId, tenant.getTenantProfileId());
+                TenantProfile tenantProfile = systemContext.getTenantProfileCache().get(tenant.getTenantProfileId());
 
                 isRuleEngineForCurrentTenant = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
                 isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);

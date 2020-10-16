@@ -20,6 +20,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -224,4 +225,10 @@ public interface TbContext {
     RuleNodeState findRuleNodeStateForEntity(EntityId entityId);
 
     RuleNodeState saveRuleNodeState(RuleNodeState state);
+
+    void clearRuleNodeStates();
+
+    void addProfileListener(Consumer<DeviceProfile> listener);
+
+    void removeProfileListener();
 }

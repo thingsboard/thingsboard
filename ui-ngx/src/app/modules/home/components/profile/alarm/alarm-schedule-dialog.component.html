@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<form [formGroup]="keyFiltersFormGroup" (ngSubmit)="save()" style="width: 700px;">
+<form [formGroup]="alarmScheduleFormGroup" (ngSubmit)="save()" style="width: 800px;">
   <mat-toolbar color="primary">
-    <h2>{{ (readonly ? 'device-profile.alarm-rule-condition' : 'device-profile.edit-alarm-rule-condition') | translate }}</h2>
+    <h2>{{ (readonly ? 'device-profile.schedule' : 'device-profile.edit-schedule') | translate }}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -30,27 +30,24 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
       <div fxFlex fxLayout="column">
-        <tb-key-filter-list
-          [displayUserParameters]="false"
-          [allowUserDynamicSource]="false"
-          [telemetryKeysOnly]="true"
-          formControlName="keyFilters">
-        </tb-key-filter-list>
+        <tb-alarm-schedule
+          formControlName="alarmSchedule">
+        </tb-alarm-schedule>
       </div>
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
-    <button mat-raised-button color="primary"
-            *ngIf="!readonly"
-            type="submit"
-            [disabled]="(isLoading$ | async) || keyFiltersFormGroup.invalid || !keyFiltersFormGroup.dirty">
-      {{ 'action.save' | translate }}
-    </button>
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>
       {{ (readonly ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            *ngIf="!readonly"
+            type="submit"
+            [disabled]="(isLoading$ | async) || alarmScheduleFormGroup.invalid || !alarmScheduleFormGroup.dirty">
+      {{ 'action.save' | translate }}
     </button>
   </div>
 </form>

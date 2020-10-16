@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
@@ -151,6 +152,17 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         DeviceProfile deviceProfile2 = this.createDeviceProfile("Device Profile");
         doPost("/api/deviceProfile", deviceProfile2).andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Device profile with such name already exists")));
+    }
+
+    @Test
+    public void testSaveDeviceProfileWithSameProvisionDeviceKey() throws Exception {
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
+        deviceProfile.setProvisionDeviceKey("testProvisionDeviceKey");
+        doPost("/api/deviceProfile", deviceProfile).andExpect(status().isOk());
+        DeviceProfile deviceProfile2 = this.createDeviceProfile("Device Profile 2");
+        deviceProfile2.setProvisionDeviceKey("testProvisionDeviceKey");
+        doPost("/api/deviceProfile", deviceProfile2).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Device profile with such provision device key already exists")));
     }
 
     @Ignore

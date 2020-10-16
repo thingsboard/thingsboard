@@ -41,6 +41,14 @@
       padding-bottom: 0;
     }
   }
+
+  .mat-expansion-panel {
+    .mat-expansion-panel-header {
+      &.mat-expanded {
+        height: 48px;
+      }
+    }
+  }
 }
 
 :host ::ng-deep{
@@ -48,9 +56,6 @@
     .custom-settings{
       .mat-expansion-panel-body{
         padding: 0 2px 1em;
-      }
-      .mat-tab-label{
-        text-transform: none;
       }
       .mat-form-field-suffix .mat-icon-button .mat-icon{
         font-size: 18px;

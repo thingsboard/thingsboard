@@ -15,21 +15,22 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" fxFlex>
-  <div fxLayout="row" fxLayoutAlign="start center" style="min-height: 40px;">
-    <span fxFlex></span>
-    <a mat-button color="primary"
-       type="button"
-       (click)="openFilterDialog($event)"
-       matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
-       matTooltipPosition="above">
-      {{ (disabled ? 'action.view' : (conditionSet() ? 'action.edit' : 'action.add')) | translate }}
-    </a>
-  </div>
+<div fxLayout="row" fxLayoutAlign="start center" [formGroup]="alarmRuleConditionFormGroup" style="min-width: 0;">
   <div class="tb-alarm-rule-condition" fxFlex fxLayout="column" fxLayoutAlign="center" (click)="openFilterDialog($event)">
-    <tb-filter-text [formControl]="alarmRuleConditionControl"
+    <tb-filter-text formControlName="condition"
+                    [nowrap]="true"
                     required
                     addFilterPrompt="{{'device-profile.enter-alarm-rule-condition-prompt' | translate}}">
     </tb-filter-text>
+    <span *ngIf="specText" class="tb-alarm-rule-condition-spec" [ngClass]="{disabled: this.disabled}" [innerHTML]="specText">
+    </span>
   </div>
+  <button mat-icon-button
+          [color]="conditionSet() ? 'primary' : 'warn'"
+          type="button"
+          (click)="openFilterDialog($event)"
+          matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
+          matTooltipPosition="above">
+    <mat-icon>{{ disabled ? 'visibility' : (conditionSet() ? 'edit' : 'add') }}</mat-icon>
+  </button>
 </div>

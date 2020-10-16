@@ -201,6 +201,11 @@ export class MenuService {
             path: '/settings/security-settings'
           },
           {
+            name: 'admin.oauth2.oauth2',
+            icon: 'security',
+            path: '/settings/oauth2'
+          },
+          {
             name: 'admin.queues',
             icon: 'queues-list',
             isMdiIcon: true,

@@ -21,6 +21,7 @@ import {
   deepClone,
   insertVariable,
   isDefined,
+  isDefinedAndNotNull,
   isEqual,
   isNumber,
   isUndefined
@@ -993,7 +994,7 @@ export class TbFlot {
 
   private seriesInfoDivFromInfo(seriesHoverInfo: TbFlotSeriesHoverInfo, seriesIndex: number): string {
     const units = seriesHoverInfo.units && seriesHoverInfo.units.length ? seriesHoverInfo.units : this.trackUnits;
-    const decimals = isDefined(seriesHoverInfo.decimals) ? seriesHoverInfo.decimals : this.trackDecimals;
+    const decimals = isDefinedAndNotNull(seriesHoverInfo.decimals) ? seriesHoverInfo.decimals : this.trackDecimals;
     const divElement = this.seriesInfoDiv(seriesHoverInfo.label, seriesHoverInfo.color,
       seriesHoverInfo.value, units, decimals, seriesHoverInfo.index === seriesIndex, null, seriesHoverInfo.tooltipValueFormatFunction);
     return divElement.prop('outerHTML');
@@ -1020,7 +1021,7 @@ export class TbFlot {
 
   private formatPieTooltip(item: TbFlotPlotItem): string {
     const units = item.series.dataKey.units && item.series.dataKey.units.length ? item.series.dataKey.units : this.trackUnits;
-    const decimals = isDefined(item.series.dataKey.decimals) ? item.series.dataKey.decimals : this.trackDecimals;
+    const decimals = isDefinedAndNotNull(item.series.dataKey.decimals) ? item.series.dataKey.decimals : this.trackDecimals;
     const divElement = this.seriesInfoDiv(item.series.dataKey.label, item.series.dataKey.color,
       item.datapoint[1][0][1], units, decimals, true, item.series.percent, item.series.dataKey.tooltipValueFormatFunction);
     return divElement.prop('outerHTML');

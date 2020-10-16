@@ -42,6 +42,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.objectMapper;
 
@@ -243,6 +244,11 @@ public class InstallScripts {
                         try {
                             JsonNode oauth2ConfigTemplateJson = objectMapper.readTree(path.toFile());
                             OAuth2ClientRegistrationTemplate clientRegistrationTemplate = objectMapper.treeToValue(oauth2ConfigTemplateJson, OAuth2ClientRegistrationTemplate.class);
+                            Optional<OAuth2ClientRegistrationTemplate> existingClientRegistrationTemplate =
+                                    oAuth2TemplateService.findClientRegistrationTemplateByProviderId(clientRegistrationTemplate.getProviderId());
+                            if (existingClientRegistrationTemplate.isPresent()) {
+                                clientRegistrationTemplate.setId(existingClientRegistrationTemplate.get().getId());
+                            }
                             oAuth2TemplateService.saveClientRegistrationTemplate(clientRegistrationTemplate);
                         } catch (Exception e) {
                             log.error("Unable to load oauth2 config templates from json: [{}]", path.toString());

@@ -46,18 +46,18 @@
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
-    <button mat-raised-button color="primary"
-            *ngIf="!data.readonly"
-            type="submit"
-            [disabled]="(isLoading$ | async) || filterUserInfoFormGroup.invalid || !filterUserInfoFormGroup.dirty">
-      {{ 'action.update' | translate }}
-    </button>
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()"
             cdkFocusInitial>
       {{ (data.readonly ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            *ngIf="!data.readonly"
+            type="submit"
+            [disabled]="(isLoading$ | async) || filterUserInfoFormGroup.invalid || !filterUserInfoFormGroup.dirty">
+      {{ 'action.update' | translate }}
     </button>
   </div>
 </form>

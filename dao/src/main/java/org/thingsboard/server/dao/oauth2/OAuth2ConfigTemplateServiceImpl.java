@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
@@ -37,6 +38,7 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 @Service
 public class OAuth2ConfigTemplateServiceImpl extends AbstractEntityService implements OAuth2ConfigTemplateService {
     public static final String INCORRECT_CLIENT_REGISTRATION_TEMPLATE_ID = "Incorrect clientRegistrationTemplateId ";
+    public static final String INCORRECT_CLIENT_REGISTRATION_PROVIDER_ID = "Incorrect clientRegistrationProviderId ";
 
     @Autowired
     private OAuth2ClientRegistrationTemplateDao clientRegistrationTemplateDao;
@@ -57,6 +59,13 @@ public class OAuth2ConfigTemplateServiceImpl extends AbstractEntityService imple
             }
         }
         return savedClientRegistrationTemplate;
+    }
+
+    @Override
+    public Optional<OAuth2ClientRegistrationTemplate> findClientRegistrationTemplateByProviderId(String providerId) {
+        log.trace("Executing findClientRegistrationTemplateByProviderId [{}]", providerId);
+        validateString(providerId, INCORRECT_CLIENT_REGISTRATION_PROVIDER_ID + providerId);
+        return clientRegistrationTemplateDao.findByProviderId(providerId);
     }
 
     @Override
@@ -95,7 +104,13 @@ public class OAuth2ConfigTemplateServiceImpl extends AbstractEntityService imple
                     if (StringUtils.isEmpty(clientRegistrationTemplate.getProviderId())) {
                         throw new DataValidationException("Provider ID should be specified!");
                     }
-                    if (clientRegistrationTemplate.getBasic() == null) {
+                    if (clientRegistrationTemplate.getMapperConfig() == null) {
+                        throw new DataValidationException("Mapper config should be specified!");
+                    }
+                    if (clientRegistrationTemplate.getMapperConfig().getType() == null) {
+                        throw new DataValidationException("Mapper type should be specified!");
+                    }
+                    if (clientRegistrationTemplate.getMapperConfig().getBasic() == null) {
                         throw new DataValidationException("Basic mapper config should be specified!");
                     }
                 }

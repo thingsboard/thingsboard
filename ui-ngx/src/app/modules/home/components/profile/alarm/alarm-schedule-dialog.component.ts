@@ -19,49 +19,49 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { KeyFilter, keyFilterInfosToKeyFilters, keyFiltersToKeyFilterInfos } from '@shared/models/query/query.models';
+import { AlarmSchedule } from '@shared/models/device.models';
 
-export interface AlarmRuleKeyFiltersDialogData {
+export interface AlarmScheduleDialogData {
   readonly: boolean;
-  keyFilters: Array<KeyFilter>;
+  alarmSchedule: AlarmSchedule;
 }
 
 @Component({
-  selector: 'tb-alarm-rule-key-filters-dialog',
-  templateUrl: './alarm-rule-key-filters-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AlarmRuleKeyFiltersDialogComponent}],
+  selector: 'tb-alarm-schedule-dialog',
+  templateUrl: './alarm-schedule-dialog.component.html',
+  providers: [{provide: ErrorStateMatcher, useExisting: AlarmScheduleDialogComponent}],
   styleUrls: []
 })
-export class AlarmRuleKeyFiltersDialogComponent extends DialogComponent<AlarmRuleKeyFiltersDialogComponent, Array<KeyFilter>>
+export class AlarmScheduleDialogComponent extends DialogComponent<AlarmScheduleDialogComponent, AlarmSchedule>
   implements OnInit, ErrorStateMatcher {
 
   readonly = this.data.readonly;
-  keyFilters = this.data.keyFilters;
+  alarmSchedule = this.data.alarmSchedule;
 
-  keyFiltersFormGroup: FormGroup;
+  alarmScheduleFormGroup: FormGroup;
 
   submitted = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: AlarmRuleKeyFiltersDialogData,
+              @Inject(MAT_DIALOG_DATA) public data: AlarmScheduleDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public dialogRef: MatDialogRef<AlarmRuleKeyFiltersDialogComponent, Array<KeyFilter>>,
+              public dialogRef: MatDialogRef<AlarmScheduleDialogComponent, AlarmSchedule>,
               private fb: FormBuilder,
               private utils: UtilsService,
               public translate: TranslateService) {
     super(store, router, dialogRef);
 
-    this.keyFiltersFormGroup = this.fb.group({
-      keyFilters: [keyFiltersToKeyFilterInfos(this.keyFilters), Validators.required]
+    this.alarmScheduleFormGroup = this.fb.group({
+      alarmSchedule: [this.alarmSchedule]
     });
     if (this.readonly) {
-      this.keyFiltersFormGroup.disable({emitEvent: false});
+      this.alarmScheduleFormGroup.disable({emitEvent: false});
     }
   }
 
@@ -80,7 +80,7 @@ export class AlarmRuleKeyFiltersDialogComponent extends DialogComponent<AlarmRul
 
   save(): void {
     this.submitted = true;
-    this.keyFilters = keyFilterInfosToKeyFilters(this.keyFiltersFormGroup.get('keyFilters').value);
-    this.dialogRef.close(this.keyFilters);
+    this.alarmSchedule = this.alarmScheduleFormGroup.get('alarmSchedule').value;
+    this.dialogRef.close(this.alarmSchedule);
   }
 }
