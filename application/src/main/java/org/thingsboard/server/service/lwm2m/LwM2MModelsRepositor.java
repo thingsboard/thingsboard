@@ -40,6 +40,7 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mGetModels;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -49,27 +50,36 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @Service
 @Component("DeviceLwm2mService")
 @ComponentScan("org.thingsboard.server.transport.lwm2m.utils")
-public class DeviceLwm2mService {
+public class LwM2MModelsRepositor {
 
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
     @Autowired
     LwM2mGetModels lwM2mGetModels;
 
-    public List<LwM2mObject>  getLwm2mObjects(int[] objectIds, String textSearch) {
+    /**
+     * @param objectIds
+     * @param textSearch
+     * @return list of LwM2mObject
+     * Filter by Predicate (uses objectIds, if objectIds is null then it uses textSearch,
+     * if textSearch is null then it uses AllList from  List<ObjectModel>)
+     */
+    public List<LwM2mObject> getLwm2mObjects(int[] objectIds, String textSearch) {
+        return getLwm2mObjects((objectIds != null && objectIds.length > 0) ?
+                (ObjectModel element) -> IntStream.of(objectIds).anyMatch(x -> x == element.id) :
+                (textSearch != null && !textSearch.isEmpty()) ? (ObjectModel element) -> element.name.contains(textSearch) : null);
+    }
+
+    /**
+     * @param predicate
+     * @return list of LwM2mObject
+     */
+    private List<LwM2mObject> getLwm2mObjects(Predicate<? super ObjectModel> predicate) {
         List<LwM2mObject> lwM2mObjects = new ArrayList<>();
-        List<ObjectModel> models = lwM2mGetModels.getModels();
-        List<ObjectModel> listObjects = models;
-        if (objectIds != null && objectIds.length > 0) {
-            listObjects = models.stream()
-                    .filter(obj -> IntStream.of(objectIds).anyMatch(x -> x == obj.id))
-                    .collect(Collectors.toList());
-        }
-        else if (textSearch != null && !textSearch.isEmpty()) {
-            listObjects = models.stream()
-                    .filter(obj -> obj.name.indexOf(textSearch) > -1)
-                    .collect(Collectors.toList());
-        }
+        List<ObjectModel> listObjects = (predicate == null) ? lwM2mGetModels.getModels() :
+                lwM2mGetModels.getModels().stream()
+                        .filter(predicate)
+                        .collect(Collectors.toList());
         listObjects.forEach(obj -> {
             LwM2mObject lwM2mObject = new LwM2mObject();
             lwM2mObject.setId(obj.id);
@@ -90,18 +100,27 @@ public class DeviceLwm2mService {
         return lwM2mObjects;
     }
 
+    /**
+     * @param tenantId
+     * @param pageLink
+     * @return List of LwM2mObject in PageData format
+     */
     public PageData<LwM2mObject> findDeviceLwm2mObjects(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findDeviceProfileInfos tenantId [{}], pageLink [{}]", tenantId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validatePageLink(pageLink);
-        return this.findLwm2mListObjects(tenantId, pageLink);
+        return this.findLwm2mListObjects(pageLink);
     }
 
-    public PageData<LwM2mObject> findLwm2mListObjects(TenantId tenantId, PageLink pageLink) {
-        PageImpl page = new  PageImpl(getLwm2mObjects(null, pageLink.getTextSearch()));
+    /**
+     * @param pageLink
+     * @return List of LwM2mObject in PageData format, filter == TextSearch
+     * PageNumber = 1, PageSize = List<LwM2mObject>.size()
+     */
+    public PageData<LwM2mObject> findLwm2mListObjects(PageLink pageLink) {
+        PageImpl page = new PageImpl(getLwm2mObjects(null, pageLink.getTextSearch()));
         PageData pageData = new PageData(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
         return pageData;
     }
-
 }
 

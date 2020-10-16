@@ -83,10 +83,10 @@ public class LwM2MTransportServerConfiguration {
         builder.setEncoder(new DefaultLwM2mNodeEncoder(new LwM2mValueConverterImpl()));
 
         /** Create CoAP Config */
-        builder.setCoapConfig(getCoapConfig ());
+        builder.setCoapConfig(getCoapConfig());
 
         /** Define model provider (Create Models )*/
-        LwM2mModelProvider modelProvider = new VersionedModelProvider(lwM2mGetModels.getNewModels());
+        LwM2mModelProvider modelProvider = new VersionedModelProvider(lwM2mGetModels.getModels());
         builder.setObjectModelProvider(modelProvider);
 
         /** Create DTLS Config */

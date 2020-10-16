@@ -23,7 +23,7 @@ import lombok.Data;
 public class LwM2mResource {
     int id;
     String name;
-    boolean isObserve;
-    boolean isAttr;
-    boolean isTelemetry;
+    boolean observe;
+    boolean attribute;
+    boolean telemetry;
 }

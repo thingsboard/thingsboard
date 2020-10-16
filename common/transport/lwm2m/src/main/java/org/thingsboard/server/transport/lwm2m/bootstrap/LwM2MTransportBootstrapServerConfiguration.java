@@ -92,7 +92,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
         builder.setSecurityStore(lwM2MBootstrapSecurityStore);
 
         /** Define model provider (Create Models )*/
-        builder.setModel(new StaticModel(lwM2mGetModels.getNewModels()));
+        builder.setModel(new StaticModel(lwM2mGetModels.getModels()));
 
         /** Create and Set DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();

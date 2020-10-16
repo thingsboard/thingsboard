@@ -25,6 +25,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.util.List;
 
@@ -41,11 +42,9 @@ public class LwM2mGetModels {
     @Setter
     private List<ObjectModel> models;
 
-    public List<ObjectModel> getNewModels() {
-        if (getModels() == null || getModels().size() == 0) {
-            setModels(ObjectLoader.loadDefault());
-            getModels().addAll(ObjectLoader.loadObjectsFromDir(new File(getModelPathFile())));
-        }
-        return getModels();
+    @PostConstruct
+    public void init() {
+        models = ObjectLoader.loadDefault();
+        models.addAll(ObjectLoader.loadObjectsFromDir(new File(getModelPathFile())));
     }
 }

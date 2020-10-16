@@ -21,6 +21,8 @@ export const BOOTSTRAP_SERVERS = 'servers';
 export const BOOTSTRAP_SERVER = 'bootstrapServer';
 export const LWM2M_SERVER = 'lwm2mServer';
 export const LWM2M_MODEL = 'lwm2m_model';
+export const OBSERVE_ATTR_TELEMETRY = 'observeAttrTelemetry';
+export const OBSERVE_ATTR = 'observeAttr';
 export const OBSERVE = 'observe';
 export const ATTR = 'attribute';
 export const TELEMETRY = 'telemetry';
@@ -236,20 +238,20 @@ export function getDefaultSecurityConfig(hostname: any): SecurityConfigModels {
 export interface ResourceLwM2M {
   id: number,
   name: string,
-  isObserve: boolean,
-  isAttr: boolean,
-  isTelemetry: boolean
+  observe: boolean,
+  attribute: boolean,
+  telemetry: boolean
 }
 
 export interface Instance {
   id: number,
-  resource: ResourceLwM2M[]
+  resources: ResourceLwM2M[]
 }
 
 export interface ObjectLwM2M {
   id: number,
   name: string,
-  instance?: Instance []
+  instances?: Instance []
 }
 
 export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
@@ -257,1214 +259,1214 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
     {
       id: 1,
       name: "LwM2M Server",
-      instance: [{
+      instances: [{
         id: 0,
-        resource: [
+        resources: [
           {
             id: 0,
             name: "Short Server ID",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 1,
             name: "Lifetime",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 2,
             name: "Default Minimum Period",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 3,
             name: "Default Maximum Period",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 5,
             name: "Disable Timeout",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 6,
             name: "Notification Storing When Disabled or Offline",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 7,
             name: "Binding",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           }
         ]
       }]
     },
-    {
-      id: 2,
-      name: "Access control",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 0,
-            name: "Object ID",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 1,
-            name: "Object Instance ID",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 2,
-            name: "ACL",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 3,
-            name: "Access Control Owner",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
+    // {
+    //   id: 2,
+    //   name: "Access control",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 0,
+    //         name: "Object ID",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 1,
+    //         name: "Object Instance ID",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 2,
+    //         name: "ACL",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 3,
+    //         name: "Access Control Owner",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
     {
       id: 3,
       name: "Device",
-      instance: [{
+      instances: [{
         id: 0,
-        resource: [
+        resources: [
           {
             id: 0,
             name: "Manufacturer",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 1,
             name: "Model Number",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 2,
             name: "Serial Number",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 3,
             name: "Firmware Version",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 6,
             name: "Available Power Sources",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 7,
             name: "Power Source Voltage",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 8,
             name: "Power Source Current",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 9,
             name: "Battery Level",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 10,
             name: "Memory Free",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 11,
             name: "Error Code",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 13,
             name: "Current Time",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 14,
             name: "UTC Offset",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 15,
             name: "Timezone",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 16,
             name: "Supported Binding and Modes",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 17,
             name: "Device Type",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 18,
             name: "Hardware Version",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 19,
             name: "Software Version",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 20,
             name: "Battery Status",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 21,
             name: "Memory Total",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
           {
             id: 22,
             name: "ExtDevInfo",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
+            observe: false,
+            attribute: false,
+            telemetry: false
           },
         ]
       }]
     },
-    {
-      id: 4,
-      name: "Connectivity monitoring",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 0,
-            name: "Network Bearer",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 1,
-            name: "Available Network Bearer",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 2,
-            name: "Radio Signal Strength",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 3,
-            name: "Link Quality",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 4,
-            name: "IP Addresses",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5,
-            name: "Router IP Addresses",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 6,
-            name: "Link Utilization",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 7,
-            name: "APN",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 8,
-            name: "Cell ID",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 9,
-            name: "SMNC",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 10,
-            name: "SMCC",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 5,
-      name: "Firmware upgrade",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 0,
-            name: "Package",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 1,
-            name: "Package URI",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 3,
-            name: "State",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5,
-            name: "Update Result",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 6,
-            name: "PkgName",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 7,
-            name: "PkgVersion",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 8,
-            name: "Firmware Update Protocol Support",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 6,
-      name: "Location",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 0,
-            name: "Latitude",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 1,
-            name: "Longitude",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 2,
-            name: "Altitude",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 3,
-            name: "Radius",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 4,
-            name: "Velocity",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5,
-            name: "Timestamp",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 6,
-            name: "Speed",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 7,
-      name: "Connectivity Statistics",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 0,
-            name: "SMS Tx Counter",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 1,
-            name: "SMS Rx Counter",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 2,
-            name: "Tx Data",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 3,
-            name: "Rx Data",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 4,
-            name: "Max Message Size",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5,
-            name: "Average Message Size",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 8,
-            name: "Collection Period",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 10,
-      name: "Cellular connectivity",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 0,
-            name: "SMSC address",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 1,
-            name: "Disable radio period",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 2,
-            name: "Module activation code",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 3,
-            name: "Vendor specific extensions",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 4,
-            name: "PSM Timer (1)",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5,
-            name: "Active Timer (1)",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 6,
-            name: "Serving PLMN Rate control",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 7,
-            name: "eDRX parameters for lu mode (1)",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 8,
-            name: "eDRX parameters for WB-S1 mode (1)",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 9,
-            name: "eDRX parameters for NB-S1 mode (1)",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 10,
-            name: "eDRX parameters for A/Gb mode (1)",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 11,
-            name: "Activated Profile Names",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 11,
-      name: "APN Connection Profile",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 0,
-            name: "SMS Tx Counter",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 1,
-            name: "SMS Rx Counter",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 2,
-            name: "Tx Data",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 3,
-            name: "Rx Data",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 4,
-            name: "Max Message Size",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5,
-            name: "Average Message Size",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 8,
-            name: "Collection Period",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 13,
-      name: "Bearer Selection",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 0,
-            name: "SMS Tx Counter",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 1,
-            name: "SMS Rx Counter",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 2,
-            name: "Tx Data",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 3,
-            name: "Rx Data",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 4,
-            name: "Max Message Size",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5,
-            name: "Average Message Size",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 8,
-            name: "Collection Period",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 16,
-      name: "Portfolio",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 0,
-            name: "Identity",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 2,
-            name: "AuthData",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 3,
-            name: "AuthStatus",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 18,
-      name: "Stratum (NAS) Configuration",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 0,
-            name: "Identity",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 2,
-            name: "AuthData",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 3,
-            name: "AuthStatus",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 19,
-      name: "BinaryAppDataContainer",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 0,
-            name: "Data",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 1,
-            name: "Data Priority",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 2,
-            name: "Data Creation Time",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 3,
-            name: "Data Description",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 4,
-            name: "Data Format",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5,
-            name: "App ID ",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 3200,
-      name: "Digital input",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 5500,
-            name: "Digital Input State",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5501,
-            name: "Digital Input Counter",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5502,
-            name: "Digital Input Polarity",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5503,
-            name: "Digital Input Debounce",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5504,
-            name: "Digital Input Edge Selection",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5505,
-            name: "Digital Input Counter Reset",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5750,
-            name: "Application Type",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5751,
-            name: "Sensor Type",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 3201,
-      name: "Digital output",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 5550,
-            name: "Digital Output State",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5551,
-            name: "Digital Output Polarity",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5750,
-            name: "Application Type",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 3202,
-      name: "Analog input",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 5600,
-            name: "Analog Input Current Value",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5601,
-            name: "Min Measured Value",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5602,
-            name: "Max Measured Value",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5603,
-            name: "Min Range Value",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5604,
-            name: "Max Range Value",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false,
-          },
-          {
-            id: 5750,
-            name: "Application Type",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5751,
-            name: "Sensor Type",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 3303,
-      name: "Temperature",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 5700,
-            name: "Sensor Value",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5601,
-            name: "Min Measured Value",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5602,
-            name: "Max Measured Value",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5603,
-            name: "Min Range Value",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5604,
-            name: "Max Range Value",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5701,
-            name: "Sensor Units",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5605,
-            name: "Reset Min and Max Measured Values",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 3311,
-      name: "Light Control",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 5701,
-            name: "Sensor Units",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5706,
-            name: "Colour",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5750,
-            name: "Application Type",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5805,
-            name: "Cumulative active power",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5820,
-            name: "Power factor",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5850,
-            name: "On/Off",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5851,
-            name: "Dimmer",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 5852,
-            name: "On time",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 3353,
-      name: "scellID",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 6030,
-            name: "plmnID",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 6031,
-            name: "BandIndicator",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 6032,
-            name: "TrackingAreaCode",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 6033,
-            name: "CellID",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 26241,
-      name: "RTU coil",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 0,
-            name: "Value",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 1,
-            name: "Slave ID",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 2,
-            name: "Address",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 3,
-            name: "Status",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    },
-    {
-      id: 26242,
-      name: "RTU Register",
-      instance: [{
-        id: 0,
-        resource: [
-          {
-            id: 0,
-            name: "Value",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 1,
-            name: "Slave ID",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 2,
-            name: "Address",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          },
-          {
-            id: 3,
-            name: "Status",
-            isObserve: false,
-            isAttr: false,
-            isTelemetry: false
-          }
-        ]
-      }]
-    }
+    // {
+    //   id: 4,
+    //   name: "Connectivity monitoring",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 0,
+    //         name: "Network Bearer",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 1,
+    //         name: "Available Network Bearer",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 2,
+    //         name: "Radio Signal Strength",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 3,
+    //         name: "Link Quality",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 4,
+    //         name: "IP Addresses",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5,
+    //         name: "Router IP Addresses",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 6,
+    //         name: "Link Utilization",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 7,
+    //         name: "APN",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 8,
+    //         name: "Cell ID",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 9,
+    //         name: "SMNC",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 10,
+    //         name: "SMCC",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 5,
+    //   name: "Firmware upgrade",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 0,
+    //         name: "Package",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 1,
+    //         name: "Package URI",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 3,
+    //         name: "State",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5,
+    //         name: "Update Result",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 6,
+    //         name: "PkgName",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 7,
+    //         name: "PkgVersion",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 8,
+    //         name: "Firmware Update Protocol Support",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 6,
+    //   name: "Location",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 0,
+    //         name: "Latitude",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 1,
+    //         name: "Longitude",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 2,
+    //         name: "Altitude",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 3,
+    //         name: "Radius",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 4,
+    //         name: "Velocity",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5,
+    //         name: "Timestamp",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 6,
+    //         name: "Speed",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 7,
+    //   name: "Connectivity Statistics",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 0,
+    //         name: "SMS Tx Counter",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 1,
+    //         name: "SMS Rx Counter",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 2,
+    //         name: "Tx Data",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 3,
+    //         name: "Rx Data",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 4,
+    //         name: "Max Message Size",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5,
+    //         name: "Average Message Size",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 8,
+    //         name: "Collection Period",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 10,
+    //   name: "Cellular connectivity",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 0,
+    //         name: "SMSC address",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 1,
+    //         name: "Disable radio period",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 2,
+    //         name: "Module activation code",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 3,
+    //         name: "Vendor specific extensions",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 4,
+    //         name: "PSM Timer (1)",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5,
+    //         name: "Active Timer (1)",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 6,
+    //         name: "Serving PLMN Rate control",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 7,
+    //         name: "eDRX parameters for lu mode (1)",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 8,
+    //         name: "eDRX parameters for WB-S1 mode (1)",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 9,
+    //         name: "eDRX parameters for NB-S1 mode (1)",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 10,
+    //         name: "eDRX parameters for A/Gb mode (1)",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 11,
+    //         name: "Activated Profile Names",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 11,
+    //   name: "APN Connection Profile",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 0,
+    //         name: "SMS Tx Counter",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 1,
+    //         name: "SMS Rx Counter",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 2,
+    //         name: "Tx Data",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 3,
+    //         name: "Rx Data",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 4,
+    //         name: "Max Message Size",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5,
+    //         name: "Average Message Size",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 8,
+    //         name: "Collection Period",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 13,
+    //   name: "Bearer Selection",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 0,
+    //         name: "SMS Tx Counter",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 1,
+    //         name: "SMS Rx Counter",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 2,
+    //         name: "Tx Data",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 3,
+    //         name: "Rx Data",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 4,
+    //         name: "Max Message Size",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5,
+    //         name: "Average Message Size",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 8,
+    //         name: "Collection Period",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 16,
+    //   name: "Portfolio",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 0,
+    //         name: "Identity",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 2,
+    //         name: "AuthData",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 3,
+    //         name: "AuthStatus",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 18,
+    //   name: "Stratum (NAS) Configuration",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 0,
+    //         name: "Identity",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 2,
+    //         name: "AuthData",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 3,
+    //         name: "AuthStatus",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 19,
+    //   name: "BinaryAppDataContainer",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 0,
+    //         name: "Data",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 1,
+    //         name: "Data Priority",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 2,
+    //         name: "Data Creation Time",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 3,
+    //         name: "Data Description",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 4,
+    //         name: "Data Format",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5,
+    //         name: "App ID ",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 3200,
+    //   name: "Digital input",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 5500,
+    //         name: "Digital Input State",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5501,
+    //         name: "Digital Input Counter",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5502,
+    //         name: "Digital Input Polarity",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5503,
+    //         name: "Digital Input Debounce",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5504,
+    //         name: "Digital Input Edge Selection",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5505,
+    //         name: "Digital Input Counter Reset",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5750,
+    //         name: "Application Type",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5751,
+    //         name: "Sensor Type",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 3201,
+    //   name: "Digital output",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 5550,
+    //         name: "Digital Output State",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5551,
+    //         name: "Digital Output Polarity",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5750,
+    //         name: "Application Type",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 3202,
+    //   name: "Analog input",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 5600,
+    //         name: "Analog Input Current Value",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5601,
+    //         name: "Min Measured Value",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5602,
+    //         name: "Max Measured Value",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5603,
+    //         name: "Min Range Value",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5604,
+    //         name: "Max Range Value",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false,
+    //       },
+    //       {
+    //         id: 5750,
+    //         name: "Application Type",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5751,
+    //         name: "Sensor Type",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 3303,
+    //   name: "Temperature",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 5700,
+    //         name: "Sensor Value",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5601,
+    //         name: "Min Measured Value",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5602,
+    //         name: "Max Measured Value",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5603,
+    //         name: "Min Range Value",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5604,
+    //         name: "Max Range Value",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5701,
+    //         name: "Sensor Units",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5605,
+    //         name: "Reset Min and Max Measured Values",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 3311,
+    //   name: "Light Control",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 5701,
+    //         name: "Sensor Units",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5706,
+    //         name: "Colour",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5750,
+    //         name: "Application Type",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5805,
+    //         name: "Cumulative active power",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5820,
+    //         name: "Power factor",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5850,
+    //         name: "On/Off",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5851,
+    //         name: "Dimmer",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 5852,
+    //         name: "On time",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 3353,
+    //   name: "scellID",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 6030,
+    //         name: "plmnID",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 6031,
+    //         name: "BandIndicator",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 6032,
+    //         name: "TrackingAreaCode",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 6033,
+    //         name: "CellID",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 26241,
+    //   name: "RTU coil",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 0,
+    //         name: "Value",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 1,
+    //         name: "Slave ID",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 2,
+    //         name: "Address",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 3,
+    //         name: "Status",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // },
+    // {
+    //   id: 26242,
+    //   name: "RTU Register",
+    //   instances: [{
+    //     id: 0,
+    //     resources: [
+    //       {
+    //         id: 0,
+    //         name: "Value",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 1,
+    //         name: "Slave ID",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 2,
+    //         name: "Address",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       },
+    //       {
+    //         id: 3,
+    //         name: "Status",
+    //         observe: false,
+    //         attribute: false,
+    //         telemetry: false
+    //       }
+    //     ]
+    //   }]
+    // }
   ]
 }
 
