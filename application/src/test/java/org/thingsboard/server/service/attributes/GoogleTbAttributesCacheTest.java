@@ -50,7 +50,7 @@ public class GoogleTbAttributesCacheTest {
         attributesCache.put(tenantId, entityId, scope, key, entry);
         long insertTime = System.nanoTime();
         Assert.assertNotNull(attributesCache.find(tenantId, entityId, scope, key));
-        Assert.assertEquals(entry, attributesCache.find(tenantId, entityId, scope, key).get());
+        Assert.assertEquals(entry, attributesCache.find(tenantId, entityId, scope, key).getAttributeKvEntry());
         customTicker.supplierRef.getAndSet(() -> insertTime + TimeUnit.SECONDS.toNanos(61));
         Assert.assertNull(attributesCache.find(tenantId, entityId, scope, key));
     }

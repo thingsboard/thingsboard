@@ -99,9 +99,9 @@ public class CachedAttributesService implements AttributesService {
     }
 
     private ListenableFuture<Optional<AttributeKvEntry>> findAndPopulateCache(TenantId tenantId, EntityId entityId, String scope, String attributeKey) {
-        Optional<AttributeKvEntry> cachedAttribute = attributesCache.find(tenantId, entityId, scope, attributeKey);
-        if (Objects.nonNull(cachedAttribute)) {
-            return Futures.immediateFuture(cachedAttribute);
+        AttributeCacheEntry cachedEntry = attributesCache.find(tenantId, entityId, scope, attributeKey);
+        if (cachedEntry != null) {
+            return Futures.immediateFuture(Optional.of(cachedEntry.getAttributeKvEntry()));
         } else {
             ListenableFuture<Optional<AttributeKvEntry>> result = daoAttributesService.find(tenantId, entityId, scope, attributeKey);
             return Futures.transform(result, foundAttrKvEntry -> {
@@ -115,9 +115,11 @@ public class CachedAttributesService implements AttributesService {
         Collection<String> notFoundInCacheAttributeKeys = new HashSet<>();
         List<AttributeKvEntry> foundInCacheAttributes = new ArrayList<>();
         for (String attributeKey : attributeKeys) {
-            Optional<AttributeKvEntry> cachedAttribute = attributesCache.find(tenantId, entityId, scope, attributeKey);
-            if (Objects.nonNull(cachedAttribute)) {
-                cachedAttribute.ifPresent(foundInCacheAttributes::add);
+            AttributeCacheEntry cachedEntry = attributesCache.find(tenantId, entityId, scope, attributeKey);
+            if (cachedEntry != null) {
+                if (cachedEntry.isPresent()) {
+                    foundInCacheAttributes.add(cachedEntry.getAttributeKvEntry());
+                }
             } else {
                 notFoundInCacheAttributeKeys.add(attributeKey);
             }

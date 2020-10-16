@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class GoogleTbAttributesCache implements TbAttributesCache {
-    private final Map<TenantId, Cache<AttributesKey, Optional<AttributeKvEntry>>> tenantsCache = new ConcurrentHashMap<>();
+    private final Map<TenantId, Cache<AttributesKey, AttributeCacheEntry>> tenantsCache = new ConcurrentHashMap<>();
 
     private final AttributesCacheConfiguration cacheConfiguration;
 
@@ -46,7 +46,7 @@ public class GoogleTbAttributesCache implements TbAttributesCache {
         this.cacheConfiguration = cacheConfiguration;
     }
 
-    private Cache<AttributesKey, Optional<AttributeKvEntry>> getTenantCache(TenantId tenantId) {
+    private Cache<AttributesKey, AttributeCacheEntry> getTenantCache(TenantId tenantId) {
         return tenantsCache.computeIfAbsent(tenantId,
                 id -> {
                     CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder()
@@ -61,13 +61,14 @@ public class GoogleTbAttributesCache implements TbAttributesCache {
     }
 
     @Override
-    public Optional<AttributeKvEntry> find(TenantId tenantId, EntityId entityId, String scope, String key) {
+    public AttributeCacheEntry find(TenantId tenantId, EntityId entityId, String scope, String key) {
         return getTenantCache(tenantId).getIfPresent(new AttributesKey(scope, entityId, key));
     }
 
     @Override
     public void put(TenantId tenantId, EntityId entityId, String scope, String key, AttributeKvEntry entry) {
-        getTenantCache(tenantId).put(new AttributesKey(scope, entityId, key), Optional.ofNullable(entry));
+        getTenantCache(tenantId).put(new AttributesKey(scope, entityId, key), entry != null ?
+                new AttributeCacheEntry(entry) : AttributeCacheEntry.empty());
     }
 
     @Override

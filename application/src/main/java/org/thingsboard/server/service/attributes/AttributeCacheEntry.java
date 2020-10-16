@@ -15,15 +15,24 @@
  */
 package org.thingsboard.server.service.attributes;
 
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
+import lombok.Getter;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 
-import java.util.List;
-import java.util.Optional;
+@Getter
+public class AttributeCacheEntry {
+    private static final AttributeCacheEntry EMPTY = new AttributeCacheEntry(null);
 
-public interface TbAttributesCache {
-    AttributeCacheEntry find(TenantId tenantId, EntityId entityId, String scope, String key);
-    void put(TenantId tenantId, EntityId entityId, String scope, String key, AttributeKvEntry entry);
-    void evict(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys);
+    private final AttributeKvEntry attributeKvEntry;
+
+    public AttributeCacheEntry(AttributeKvEntry attributeKvEntry) {
+        this.attributeKvEntry = attributeKvEntry;
+    }
+
+    public boolean isPresent(){
+        return attributeKvEntry != null;
+    }
+
+    public static AttributeCacheEntry empty(){
+        return EMPTY;
+    }
 }
