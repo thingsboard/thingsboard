@@ -24,6 +24,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.List;
+
 @Slf4j
 @RestController
 @TbCoreComponent
@@ -34,9 +36,9 @@ public class DeviceLwm2mController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/lwm2m/deviceProfile/{objectIds}", method = RequestMethod.GET)
     @ResponseBody
-    public LwM2mObject[] getLwm2mListObjects(@PathVariable("objectIds") int[] objectIds) throws ThingsboardException {
+    public List<LwM2mObject> getLwm2mListObjects(@PathVariable("objectIds") int[] objectIds) throws ThingsboardException {
         try {
-            return deviceLwm2mService.getLwm2mObjects(objectIds, null).stream().toArray(LwM2mObject[]::new);
+            return lwM2MModelsRepository.getLwm2mObjects(objectIds, null);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -52,7 +54,7 @@ public class DeviceLwm2mController extends BaseController {
                                                      @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            return checkNotNull(deviceLwm2mService.findDeviceLwm2mObjects(getTenantId(), pageLink));
+            return checkNotNull(lwM2MModelsRepository.findDeviceLwm2mObjects(getTenantId(), pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }

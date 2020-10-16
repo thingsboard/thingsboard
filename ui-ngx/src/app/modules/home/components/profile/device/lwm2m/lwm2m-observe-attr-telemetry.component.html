@@ -1,0 +1,90 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<section [formGroup]="observeAttrTelemetryFormGroup" class="mat-padding">
+  <mat-accordion multi="true" class="mat-body-1" formArrayName="clientLwM2M">
+    <mat-expansion-panel
+      *ngFor="let objectLwM2M of clientLwM2MFormArray(observeAttrTelemetryFormGroup).controls; let i = index"
+                         [formGroupName]="i">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <div class="tb-panel-title">Object [<b>{{ objectLwM2M.get('id').value}}</b>]
+            name: <b><i>{{ objectLwM2M.get('name').value}}</i></b></div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div fxLayout="column" fxLayoutGap="8px">
+        <ng-template matExpansionPanelContent>
+          <mat-expansion-panel formArrayName="instances" *ngFor="let instances of instanceLwm2mFormArray(objectLwM2M).controls; let y = index">
+            <mat-expansion-panel-header [formGroupName]="y">
+              <mat-panel-title>
+                <div class="tb-panel-title-height" fxFlex="100">
+                  <div fxLayout="row" fxFill>
+                    <div fxFlex="53">
+                      Instance [<b>{{instances.get('id').value}}</b>]
+                    </div>
+                    <div class="checkbox-padding" fxFlex="15">
+                      <mat-checkbox [formControlName]="observe" color="primary"
+                                    (click)="$event.stopPropagation()"
+                                    (change)="changeInstanceResourcesCheckBox($event, i, y, observe)"
+                                    (keydown)="$event.stopPropagation()"
+                                    [indeterminate]="indeterminate[observe][i][y]"
+                                    matTooltip="{{'device-profile.lwm2m.is-observe-tip' | translate}}"
+                                    matTooltipPosition="above">
+                      </mat-checkbox>
+                    </div>
+                    <div class="checkbox-padding" fxFlex="15">
+                      <mat-checkbox [formControlName]="attribute" color="warn"
+                                    (click)="$event.stopPropagation()"
+                                    (change)="changeInstanceResourcesCheckBox($event, i, y, attribute)"
+                                    (keydown)="$event.stopPropagation()"
+                                    [indeterminate]="indeterminate[attribute][i][y]"
+                                    matTooltip="{{'device-profile.lwm2m.is-attr-tip' | translate}}"
+                                    matTooltipPosition="above">
+                      </mat-checkbox>
+                    </div>
+                    <div class="checkbox-padding" fxFlex="15">
+                      <mat-checkbox [formControlName]="telemetry" color="primary"
+                                    (click)="$event.stopPropagation()"
+                                    (change)="changeInstanceResourcesCheckBox($event, i, y, telemetry)"
+                                    (keydown)="$event.stopPropagation()"
+                                    [indeterminate]="indeterminate[telemetry][i][y]"
+                                    matTooltip="{{'device-profile.lwm2m.is-telemetry-tip' | translate}}"
+                                    matTooltipPosition="above">
+                      </mat-checkbox>
+                    </div>
+                  </div>
+                </div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <tb-profile-observe-attr-telemetry-resource-lwm2m
+                [i]="i"
+                [y]="y"
+                [resourceFormGroup]="instances"
+                [resourceValue]="resourceLwm2mFormArray(instances)"
+                (valueCheckBoxChange)="changeResourceCheckBox($event)">
+              </tb-profile-observe-attr-telemetry-resource-lwm2m>
+            </ng-template>
+
+           </mat-expansion-panel>
+<!--          </div>-->
+        </ng-template>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
+</section>

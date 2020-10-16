@@ -21,11 +21,18 @@
       <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
         <div class="mat-padding">
           <tb-lwm2m-object-list
-            (changeAdd)="changeListAdd($event)"
-            (changeRemove)="changeListRemove($event)"
+            (startList)="startList($event)"
+            (addList)="addList($event)"
+            (removeList)="removeList($event)"
             [required]="required"
             formControlName="objectIds">
           </tb-lwm2m-object-list>
+        </div>
+        <div class="mat-padding">
+          <tb-profile-observe-attr-telemetry-lwm2m
+            [required]="required"
+            formControlName="observeAttrTelemetry">
+          </tb-profile-observe-attr-telemetry-lwm2m>
         </div>
       </mat-tab>
       <mat-tab label="{{ 'device-profile.lwm2m.bootstrap-tab' | translate }}">

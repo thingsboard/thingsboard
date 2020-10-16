@@ -80,10 +80,13 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
   disabled: boolean;
 
   @Output()
-  changeAdd = new EventEmitter<any>();
+  startList = new EventEmitter<any>();
 
   @Output()
-  changeRemove = new EventEmitter<any>();
+  addList = new EventEmitter<any>();
+
+  @Output()
+  removeList = new EventEmitter<any>();
 
   @ViewChild('objectInput') objectInput: ElementRef<HTMLInputElement>;
   @ViewChild('objectAutocomplete') matAutocomplete: MatAutocomplete;
@@ -100,14 +103,14 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
               private deviceProfileService: DeviceProfileService,
               private fb: FormBuilder) {
     this.lwm2mObjectListFormGroup = this.fb.group({
-      objectsList: [this.objectsList, this.required ? [Validators.required] : []],
-      objectLwm2m: [null]
+      objectsList: [this.objectsList],
+      objectLwm2m: [null, , this.required ? [Validators.required] : []]
     });
   }
 
   updateValidators() {
-    this.lwm2mObjectListFormGroup.get('objectsList').setValidators(this.required ? [Validators.required] : []);
-    this.lwm2mObjectListFormGroup.get('objectsList').updateValueAndValidity();
+    this.lwm2mObjectListFormGroup.get('objectLwm2m').setValidators(this.required ? [Validators.required] : []);
+    this.lwm2mObjectListFormGroup.get('objectLwm2m').updateValueAndValidity();
   }
 
   registerOnChange(fn: any): void {
@@ -135,7 +138,6 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    debugger
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
@@ -160,13 +162,13 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
 
   writeValue(value: Array<number> | null): void {
     this.searchText = '';
-
     if (value != null && value.length > 0) {
       this.modelValue = [...value];
       this.deviceProfileService.getLwm2mObjects(this.modelValue).subscribe(
         (objectsList) => {
           this.objectsList = objectsList;
-          this.lwm2mObjectListFormGroup.get('objectsList').setValue(this.objectsList);
+          this.startList.next(this.objectsList);
+          this.lwm2mObjectListFormGroup.get('objectsList').setValue(objectsList);
         }
       );
     } else {
@@ -195,9 +197,9 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
         this.modelValue = [];
       }
       this.modelValue.push(object.id);
-      this.changeAdd.next(object.id);
       this.objectsList.push(object);
       this.lwm2mObjectListFormGroup.get('objectsList').setValue(this.objectsList);
+      this.addList.next(this.objectsList);
     }
     this.propagateChange(this.modelValue);
     this.clear();
@@ -206,11 +208,13 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
   remove(object: ObjectLwM2M) {
     let index = this.objectsList.indexOf(object);
     if (index >= 0) {
+      console.warn("removeList: " + this.objectsList)
+      debugger
       this.objectsList.splice(index, 1);
       this.lwm2mObjectListFormGroup.get('objectsList').setValue(this.objectsList);
       index = this.modelValue.indexOf(object.id);
       this.modelValue.splice(index, 1);
-      this.changeRemove.next(object.id);
+      this.removeList.next(object);
       if (!this.modelValue.length) {
         this.modelValue = null;
       }

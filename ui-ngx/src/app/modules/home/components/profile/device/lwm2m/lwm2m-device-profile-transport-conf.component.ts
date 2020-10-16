@@ -20,38 +20,23 @@ import {
 } from '@shared/models/device.models';
 import {MatTabChangeEvent} from "@angular/material/tabs";
 import {
-  ATTR,
-  BOOTSTRAP_SERVER,
-  BOOTSTRAP_SERVERS, JSON_OBSERVE,
-  LWM2M_SERVER, OBSERVE,
-  OBSERVE_ATTR, TELEMETRY
-} from "../../../../pages/device/lwm2m/security-config.models";
-import {
-  AfterViewInit,
   Component,
-  ElementRef, EventEmitter,
   forwardRef,
   Input,
-  OnChanges,
-  OnInit, Output,
-  SimpleChanges,
-  ViewChild
+  OnInit
+  // ChangeDetectorRef, ChangeDetectionStrategy
 } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
-import { Store } from '@ngrx/store';
-import { AppState } from '@app/core/core.state';
-import { TranslateService } from '@ngx-translate/core';
-import { EntityType } from '@shared/models/entity-type.models';
-import { BaseData } from '@shared/models/base-data';
-import { EntityId } from '@shared/models/id/entity-id';
-import { EntityService } from '@core/http/entity.service';
-import { MatAutocomplete } from '@angular/material/autocomplete';
-import { MatChipList } from '@angular/material/chips';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import {LWM2M_MODEL} from "./profile-config.models";
-import {DeviceProfileId} from "../../../../../../shared/models/id/device-profile-id";
+import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators} from '@angular/forms';
+import {Store} from '@ngrx/store';
+import {AppState} from '@app/core/core.state';
+import {coerceBooleanProperty} from '@angular/cdk/coercion';
+import {
+  ATTR,
+  OBSERVE,
+  OBSERVE_ATTR,
+  TELEMETRY,
+  ObjectLwM2M
+} from "./profile-config.models";
 
 @Component({
   selector: 'tb-lwm2m-device-profile-transport-conf',
@@ -62,12 +47,14 @@ import {DeviceProfileId} from "../../../../../../shared/models/id/device-profile
     useExisting: forwardRef(() => Lwm2mDeviceProfileTransportConfComponent),
     multi: true
   }]
+  // changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAccessor, OnInit {
 
   lwm2mDeviceProfileTransportConfFormGroup: FormGroup;
+  observeAttr: string;
   observe: string;
-  attr: string;
+  attribute: string;
   telemetry: string;
   bootstrapServers: string;
   bootstrapServer: string;
@@ -92,7 +79,10 @@ export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAcc
   };
 
   constructor(private store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: FormBuilder
+              // public cd: ChangeDetectorRef
+  ) {
+    // this.cd.detach();
   }
 
   registerOnChange(fn: any): void {
@@ -103,40 +93,41 @@ export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAcc
   }
 
   ngOnInit() {
+    this.initConstants();
     this.lwm2mDeviceProfileTransportConfFormGroup = this.fb.group({
-      objectIds:  [null, Validators.required],
+      objectIds: [null, Validators.required],
       shortId: [null, Validators.required],
       lifetime: [null, Validators.required],
       defaultMinPeriod: [null, Validators.required],
       notifIfDisabled: [true, []],
       binding: ["U", Validators.required],
+      observeAttrTelemetry: [null, Validators.required],
       configurationJson: [null, Validators.required]
     });
     this.lwm2mDeviceProfileTransportConfFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
+      // this.cd.detectChanges();
+      // this.cd.markForCheck();
+      // this.cd.detach();
     });
   }
 
-  // initConstants(): void {
-  //   this.observe = OBSERVE;
-  //   this.attr = ATTR;
-  //   this.telemetry = TELEMETRY;
-  // }
+  initConstants(): void {
+    this.observeAttr = OBSERVE_ATTR;
+    this.observe = OBSERVE;
+    this.attribute = ATTR;
+    this.telemetry = TELEMETRY;
+  }
 
   /**
    initChildesFormGroup
    */
-
   get bootstrapFormGroup(): FormGroup {
     return this.lwm2mDeviceProfileTransportConfFormGroup.get('bootstrapFormGroup') as FormGroup;
   }
 
   get lwm2mServerFormGroup(): FormGroup {
     return this.lwm2mDeviceProfileTransportConfFormGroup.get('lwm2mServerFormGroup') as FormGroup;
-  }
-
-  get observeAttrTelemetryFormGroup(): FormGroup {
-    return this.lwm2mDeviceProfileTransportConfFormGroup.get('lwm2mDeviceProfileTransportConfModelFormGroup') as FormGroup;
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -175,29 +166,94 @@ export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAcc
     this.propagateChange(configuration);
   }
 
+  private updateObserveAttrTelemetryObjectFormGroup(clientObserveAttr: ObjectLwM2M[], isStart?: boolean) {
+    if (!isStart) {
+      this.lwm2mDeviceProfileTransportConfFormGroup.patchValue({
+          observeAttrTelemetry: this.getObserveAttrTelemetryObjectFormGroup(clientObserveAttr)
+        },
+        {emitEvent: false});
+
+    } else {
+      // debugger
+      // this.cd.markForCheck();
+      // this.cd.detach();
+      // if (!this.disabled) {
+      //
+      //   this.cd.detach();
+      //   setInterval(() => {
+      //     this.cd.reattach();
+      //     this.cd.detectChanges();
+      //     this.cd.detach();
+      //   }, 10000);
+      // }
+      this.lwm2mDeviceProfileTransportConfFormGroup.patchValue({
+          observeAttrTelemetry: this.getObserveAttrTelemetryObjectFormGroup(clientObserveAttr)
+        },
+        {emitEvent: true});
+      // this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").markAsPristine();
+      // this.lwm2mDeviceProfileTransportConfFormGroup.markAsPristine();
+      // this.cd.reattach();
+      // this.cd.detectChanges();
+      // this.applyChanges();
+      //   debugger
+      //   this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").setValue(clientObserveAttr);
+      //   // this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").reset(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value);
+      //   // this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").setValidators(this.required ? [Validators.required] : []);
+      //   // this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").updateValueAndValidity();
+    }
+  }
+
   tabChanged = (tabChangeEvent: MatTabChangeEvent): void => {
     if (this.tabIndexPrevious !== tabChangeEvent.index) this.upDateValueToJson();
     this.tabIndexPrevious = tabChangeEvent.index;
   }
 
-  upDateValueToJson(): void {
-    switch (this.tabIndexPrevious) {
-      case 0:
+  upDateValueToJson()
+    :
+    void {
+    switch (this.tabIndexPrevious
+      ) {
+      case
+      0
+      :
         this.upDateValueToJsonTab_0();
         break;
-      case 1:
-        // this.upDateValueToJsonTab_1();
+      case
+      1
+      :
+        this.upDateValueToJsonTab_1();
         break;
-      case 2:
+      case
+      2
+      :
         // this.upDateValueToJsonTab_2();
         break;
     }
   }
 
-  upDateValueToJsonTab_0(): void {
-    if (this.lwm2mDeviceProfileTransportConfFormGroup !== null) {
-      if (!this.lwm2mDeviceProfileTransportConfFormGroup.get('shortId').pristine && this.lwm2mDeviceProfileTransportConfFormGroup.get('shortId').valid) {
+  upDateValueToJsonTab_0()
+    :
+    void {
+    if (!
+      this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").pristine && this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").valid
+    ) {
+      this.upDateObserveAttrFromGroup(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value);
+      this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").markAsPristine({
+        onlySelf: true
+      });
+      this.upDateJsonAllConfig();
+    }
+  }
+
+
+  upDateValueToJsonTab_1()
+    :
+    void {
+    if (this.lwm2mDeviceProfileTransportConfFormGroup !== null
+    ) {
+      if (this.lwm2mDeviceProfileTransportConfFormGroup.get('shortId').dirty && this.lwm2mDeviceProfileTransportConfFormGroup.get('shortId').valid) {
         this.configurationValue['bootstrap'].servers.shortId = this.lwm2mDeviceProfileTransportConfFormGroup.get('shortId').value;
+        debugger
         this.lwm2mDeviceProfileTransportConfFormGroup.get('shortId').markAsPristine({
           onlySelf: true
         });
@@ -255,12 +311,124 @@ export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAcc
     }
   }
 
-  getObjectsFromJsonAllConfig(): number [] {
-     let observe = this.configurationValue['observeAttr'].observe;
-    let attribute = this.configurationValue['observeAttr'].attribute;
-    let telemetry = this.configurationValue['observeAttr'].telemetry;
-    let objectsIds = new Set<number>();
+  getObserveAttrTelemetryObjectFormGroup(clientObserveAttr
+                                           :
+                                           ObjectLwM2M[]
+  ):
+    ObjectLwM2M [] {
+    if (this.configurationValue[this.observeAttr]) {
+      let observeArray = this.configurationValue[this.observeAttr][this.observe] as Array<string>;
+      let attributeArray = this.configurationValue[this.observeAttr][this.attribute] as Array<string>;
+      let telemetryArray = this.configurationValue[this.observeAttr][this.telemetry] as Array<string>;
+      if (observeArray) clientObserveAttr = this.getObserveAttrTelemetryFormGroup(observeArray, clientObserveAttr, "observe");
+      if (attributeArray) clientObserveAttr = this.getObserveAttrTelemetryFormGroup(attributeArray, clientObserveAttr, "attribute");
+      if (telemetryArray) clientObserveAttr = this.getObserveAttrTelemetryFormGroup(telemetryArray, clientObserveAttr, "telemetry");
+    }
+    return clientObserveAttr;
+  }
 
+  getObserveAttrTelemetryFormGroup(isParameter
+                                     :
+                                     Array<string>, clientObserveAttr
+                                     :
+                                     ObjectLwM2M[], nameParameter
+                                     :
+                                     string
+  ):
+    ObjectLwM2M [] {
+    isParameter.forEach(attr => {
+      let pathParameter = Array.from(attr.substring(1).split('/'), Number);
+      clientObserveAttr.forEach(obj => {
+        if (obj.id === pathParameter[0]) {
+          obj.instances.forEach(inst => {
+            if (inst.id === pathParameter[1]) {
+              inst.resources.forEach(res => {
+                if (res.id === pathParameter[2]) res[nameParameter] = true;
+              })
+            }
+          })
+        }
+      });
+    });
+    return clientObserveAttr;
+  }
+
+  upDateObserveAttrFromGroup(val
+                               :
+                               any
+  ):
+    void {
+    let observeArray = [] as Array<string>;
+    let attributeArray = [] as Array<string>;
+    let telemetryArray = [] as Array<string>;
+    let observeJson = JSON.parse(JSON.stringify(val['clientLwM2M'])) as [];
+    let pathObj;
+    let pathInst;
+    let pathRes
+    observeJson.forEach(obj => {
+      Object.entries(obj).forEach(([key, value]) => {
+        if (key === 'id') {
+          pathObj = value;
+        }
+        if (key === 'instances') {
+          let instancesJson = JSON.parse(JSON.stringify(value)) as [];
+          if (instancesJson.length > 0) {
+            instancesJson.forEach(instance => {
+              Object.entries(instance).forEach(([key, value]) => {
+                if (key === 'id') {
+                  pathInst = value;
+                }
+                let pathInstObserve;
+                if (key === 'observe' && value) {
+                  pathInstObserve = '/' + pathObj + '/' + pathInst;
+                  observeArray.push(pathInstObserve)
+                }
+                if (key === 'resources') {
+                  let resourcesJson = JSON.parse(JSON.stringify(value)) as [];
+                  if (resourcesJson.length > 0) {
+                    resourcesJson.forEach(res => {
+                      Object.entries(res).forEach(([key, value]) => {
+                        if (key === 'id') {
+                          // pathRes = value
+                          pathRes = '/' + pathObj + '/' + pathInst + '/' + value;
+                        } else if (key === 'observe' && value) {
+                          observeArray.push(pathRes)
+                        } else if (key === 'attribute' && value) {
+                          attributeArray.push(pathRes)
+                        } else if (key === 'telemetry' && value) {
+                          telemetryArray.push(pathRes)
+                        }
+                      });
+                    });
+                  }
+                }
+              });
+            });
+          }
+        }
+      });
+    });
+    if (this.configurationValue[this.observeAttr] === undefined
+    ) {
+      this.configurationValue[this.observeAttr] = {
+        [this.observe]: observeArray,
+        [this.attribute]: attributeArray,
+        [this.telemetry]: telemetryArray
+      };
+    } else {
+      this.configurationValue[this.observeAttr][this.observe] = observeArray;
+      this.configurationValue[this.observeAttr][this.attribute] = attributeArray;
+      this.configurationValue[this.observeAttr][this.telemetry] = telemetryArray;
+    }
+  }
+
+  getObjectsFromJsonAllConfig()
+    :
+    number [] {
+    let observe = this.configurationValue[this.observeAttr][this.observe];
+    let attribute = this.configurationValue[this.observeAttr][this.attribute];
+    let telemetry = this.configurationValue[this.observeAttr][this.telemetry];
+    let objectsIds = new Set<number>();
     observe.forEach(obj => {
       objectsIds.add(+obj.split("/")[1]);
     });
@@ -270,22 +438,67 @@ export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAcc
     telemetry.forEach(obj => {
       objectsIds.add(+obj.split("/")[1]);
     });
-    return Array.from( objectsIds );
+    return Array.from(objectsIds);
   }
 
-  upDateJsonAllConfig(): void {
+  upDateJsonAllConfig()
+    :
+    void {
     this.lwm2mDeviceProfileTransportConfFormGroup.patchValue({
       configurationJson: this.configurationValue
     }, {emitEvent: false});
-    this.lwm2mDeviceProfileTransportConfFormGroup.markAsDirty();
+    // this.lwm2mDeviceProfileTransportConfFormGroup.markAsDirty();
+    this.lwm2mDeviceProfileTransportConfFormGroup.markAsPristine({
+      onlySelf: true
+    });
   }
 
-  changeListAdd(value){
-    console.warn("add:" + value)
+  startList(value
+              :
+              any
+  ):
+    void {
+    this.updateObserveAttrTelemetryObjectFormGroup(value, true);
   }
 
-  changeListRemove(value){
-    console.warn("remove:" + value)
+  addList(value
+            :
+            Array<ObjectLwM2M>
+  ):
+    void {
+    this.updateObserveAttrTelemetryObjectFormGroup(value);
   }
 
+  removeList(value
+               :
+               ObjectLwM2M
+  ):
+    void {
+    let objectOld = this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value["clientLwM2M"] as Array<ObjectLwM2M>;
+    const isIdIndex = (element) => element.id === value.id;
+    let index = objectOld.findIndex(isIdIndex);
+    if (index >= 0
+    ) {
+      objectOld.splice(index, 1);
+      this.updateObserveAttrTelemetryObjectFormGroup(objectOld);
+      this.removeObserveAttrTelemetryFromJson(this.observe, value.id);
+      this.removeObserveAttrTelemetryFromJson(this.telemetry, value.id);
+      this.removeObserveAttrTelemetryFromJson(this.attribute, value.id);
+      this.upDateJsonAllConfig();
+    }
+  }
+
+  removeObserveAttrTelemetryFromJson(observeAttrTel
+                                       :
+                                       string, id
+                                       :
+                                       number
+  ) {
+    let isIdIndex = (element) => Array.from(element.substring(1).split('/'), Number)[0] === id;
+    let index = this.configurationValue[this.observeAttr][observeAttrTel].findIndex(isIdIndex);
+    while (index >= 0) {
+      this.configurationValue[this.observeAttr][observeAttrTel].splice(index, 1);
+      index = this.configurationValue[this.observeAttr][observeAttrTel].findIndex(isIdIndex);
+    }
+  }
 }

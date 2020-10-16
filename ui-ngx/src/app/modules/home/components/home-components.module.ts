@@ -109,6 +109,8 @@ import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-di
 import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
 import { Lwm2mDeviceProfileTransportConfComponent } from './profile/device/lwm2m/lwm2m-device-profile-transport-conf.component';
 import { Lwm2mObjectListComponent } from './profile/device/lwm2m/lwm2m-object-list.component';
+import { Lwm2mObserveAttrTelemetryComponent } from './profile/device/lwm2m/lwm2m-observe-attr-telemetry.component';
+import { Lwm2mObserveAttrTelemetryResourceComponent } from './profile/device/lwm2m/lwm2m-observe-attr-telemetry-resoutce.component';
 
 @NgModule({
   declarations:
@@ -200,7 +202,9 @@ import { Lwm2mObjectListComponent } from './profile/device/lwm2m/lwm2m-object-li
       AddDeviceProfileDialogComponent,
       RuleChainAutocompleteComponent,
       Lwm2mDeviceProfileTransportConfComponent,
-      Lwm2mObjectListComponent
+      Lwm2mObjectListComponent,
+      Lwm2mObserveAttrTelemetryComponent,
+      Lwm2mObserveAttrTelemetryResourceComponent
     ],
   imports: [
     CommonModule,
@@ -282,7 +286,9 @@ import { Lwm2mObjectListComponent } from './profile/device/lwm2m/lwm2m-object-li
     RuleChainAutocompleteComponent,
     Lwm2mDeviceProfileTransportConfigurationComponent,
     Lwm2mDeviceProfileTransportConfComponent,
-    Lwm2mObjectListComponent
+    Lwm2mObjectListComponent,
+    Lwm2mObserveAttrTelemetryComponent,
+    Lwm2mObserveAttrTelemetryResourceComponent
   ],
   providers: [
     WidgetComponentService,
