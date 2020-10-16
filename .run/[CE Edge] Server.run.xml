@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="[CE Edge] Server" type="Application" factoryName="Application">
     <envs>
-      <env name="SPRING_DATASOURCE_URL" value="jdbc:postgresql://localhost:5432/tb_ce_edge_3" />
+      <env name="SPRING_DATASOURCE_URL" value="jdbc:postgresql://localhost:5432/tb_ce_3" />
       <env name="EDGES_RPC_PORT" value="7070" />
       <env name="COAP_ENABLED" value="true" />
       <env name="EDGES_RPC_ENABLED" value="true" />

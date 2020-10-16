@@ -48,7 +48,7 @@ export class EdgeComponent extends EntityComponent<EdgeInfo>{
 
   ngOnInit() {
     this.edgeScope = this.entitiesTableConfig.componentsData.edgeScope;
-    super.ngOnInit()
+    super.ngOnInit();
   }
 
   hideDelete() {
@@ -69,6 +69,8 @@ export class EdgeComponent extends EntityComponent<EdgeInfo>{
         name: [entity ? entity.name : '', [Validators.required]],
         type: [entity ? entity.type : null, [Validators.required]],
         label: [entity ? entity.label : ''],
+        cloudEndpoint: '',
+        edgeLicenseKey: '',
         routingKey: guid(),
         secret: this.generateSecret(20),
         additionalInfo: this.fb.group(
@@ -84,6 +86,8 @@ export class EdgeComponent extends EntityComponent<EdgeInfo>{
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({type: entity.type});
     this.entityForm.patchValue({label: entity.label});
+    this.entityForm.patchValue({cloudEndpoint: entity.cloudEndpoint});
+    this.entityForm.patchValue({edgeLicenseKey: entity.edgeLicenseKey});
     this.entityForm.patchValue({routingKey: entity.routingKey});
     this.entityForm.patchValue({secret: entity.secret});
     this.entityForm.patchValue({additionalInfo: {

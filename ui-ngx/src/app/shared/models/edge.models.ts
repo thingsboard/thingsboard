@@ -27,6 +27,8 @@ export interface Edge extends BaseData<EdgeId> {
   type: string;
   secret: string;
   routingKey: string;
+  cloudEndpoint: string;
+  edgeLicenseKey: string;
   label?: string;
   additionalInfo?: any;
 }

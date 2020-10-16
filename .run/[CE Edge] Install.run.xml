@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="[CE Edge] Install" type="Application" factoryName="Application">
     <envs>
-      <env name="SPRING_DATASOURCE_URL" value="jdbc:postgresql://localhost:5432/tb_ce_edge_3" />
+      <env name="SPRING_DATASOURCE_URL" value="jdbc:postgresql://localhost:5432/tb_ce_3" />
     </envs>
     <option name="MAIN_CLASS_NAME" value="org.thingsboard.server.ThingsboardInstallApplication" />
     <module name="application" />

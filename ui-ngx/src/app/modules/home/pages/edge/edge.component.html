@@ -89,6 +89,28 @@
       </div>
     </fieldset>
       <div fxLayout="row">
+        <fieldset fxFlex>
+          <mat-form-field class="mat-block">
+            <mat-label translate>edge.cloud-endpoint</mat-label>
+            <input matInput formControlName="cloudEndpoint" required>
+            <mat-error *ngIf="entityForm.get('cloudEndpoint').hasError('required')">
+              {{ 'edge.cloud-endpoint-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </fieldset>
+      </div>
+      <div fxLayout="row">
+        <fieldset fxFlex>
+          <mat-form-field class="mat-block">
+            <mat-label translate>edge.edge-license-key</mat-label>
+            <input matInput formControlName="edgeLicenseKey" required>
+            <mat-error *ngIf="entityForm.get('edgeLicenseKey').hasError('required')">
+              {{ 'edge.edge-license-key-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </fieldset>
+      </div>
+      <div fxLayout="row">
         <fieldset fxFlex disabled>
           <mat-form-field class="mat-block">
             <mat-label translate>edge.edge-key</mat-label>
