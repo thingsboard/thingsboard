@@ -347,7 +347,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       clientRegistration.get('authorizationUri').disable();
       clientRegistration.get('jwkSetUri').disable();
       clientRegistration.get('userInfoUri').disable();
-      clientRegistration.patchValue(template);
+      clientRegistration.patchValue(template, {emitEvent: false});
     }
   }
 
