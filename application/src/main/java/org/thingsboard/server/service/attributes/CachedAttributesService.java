@@ -15,15 +15,12 @@
  */
 package org.thingsboard.server.service.attributes;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -38,11 +35,6 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.service.queue.TbClusterService;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,18 +45,19 @@ public class CachedAttributesService implements AttributesService {
     private static final List<EntityType> GLOBAL_ENTITIES = Arrays.asList(EntityType.CUSTOMER, EntityType.TENANT);
     public static final String MAIN_QUEUE_NAME = "Main";
 
-    @Autowired
-    @Qualifier("daoAttributesService")
-    private AttributesService daoAttributesService;
+    private final AttributesService daoAttributesService;
+    private final TbClusterService clusterService;
+    private final PartitionService partitionService;
+    private final TbAttributesCache attributesCache;
 
-    @Autowired
-    private TbClusterService clusterService;
-
-    @Autowired
-    private PartitionService partitionService;
-
-    @Autowired
-    private TbAttributesCache attributesCache;
+    public CachedAttributesService(@Qualifier("daoAttributesService") AttributesService daoAttributesService,
+                                   TbClusterService clusterService, PartitionService partitionService,
+                                   TbAttributesCache attributesCache) {
+        this.daoAttributesService = daoAttributesService;
+        this.clusterService = clusterService;
+        this.partitionService = partitionService;
+        this.attributesCache = attributesCache;
+    }
 
 
     @Override
@@ -121,14 +114,14 @@ public class CachedAttributesService implements AttributesService {
     private ListenableFuture<List<AttributeKvEntry>> findAndPopulateCache(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
         Collection<String> notFoundInCacheAttributeKeys = new HashSet<>();
         List<AttributeKvEntry> foundInCacheAttributes = new ArrayList<>();
-        attributeKeys.forEach(attributeKey -> {
+        for (String attributeKey : attributeKeys) {
             Optional<AttributeKvEntry> cachedAttribute = attributesCache.find(tenantId, entityId, scope, attributeKey);
             if (Objects.nonNull(cachedAttribute)) {
                 cachedAttribute.ifPresent(foundInCacheAttributes::add);
             } else {
                 notFoundInCacheAttributeKeys.add(attributeKey);
             }
-        });
+        }
         if (notFoundInCacheAttributeKeys.isEmpty()) {
             return Futures.immediateFuture(foundInCacheAttributes);
         } else {
@@ -159,54 +152,62 @@ public class CachedAttributesService implements AttributesService {
         validate(entityId, scope);
         attributes.forEach(attribute -> validate(attribute));
 
-        try {
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, entityId);
-            if (LOCAL_ENTITIES.contains(entityId.getEntityType()) && tpi.isMyPartition()) {
-                updateCache(tenantId, entityId, scope, attributes);
-            } else if (GLOBAL_ENTITIES.contains(entityId.getEntityType())) {
-                if (tpi.getTenantId().isPresent()) {
-                    updateCache(tenantId, entityId, scope, attributes);
-                } else {
-                    // TODO maybe first check if it's already in cache
-                    clusterService.onAttributesCacheUpdated(tenantId, entityId, scope, attributes.stream()
-                            .map(KvEntry::getKey)
-                            .collect(Collectors.toList())
-                    );
-                }
-            }
-        } catch (Exception e) {
-            log.error("[{}][{}] Failed to update cache.", tenantId, entityId, e);
-        }
-        return daoAttributesService.save(tenantId, entityId, scope, attributes);
+        return Futures.transform(daoAttributesService.save(tenantId, entityId, scope, attributes),
+                result -> {
+                    try {
+                        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, entityId);
+                        if (LOCAL_ENTITIES.contains(entityId.getEntityType()) && tpi.isMyPartition()) {
+                            updateCache(tenantId, entityId, scope, attributes);
+                        } else if (GLOBAL_ENTITIES.contains(entityId.getEntityType())) {
+                            if (tpi.getTenantId().isPresent()) {
+                                updateCache(tenantId, entityId, scope, attributes);
+                            } else {
+                                // TODO maybe first check if it's already in cache
+                                clusterService.onAttributesCacheUpdated(tenantId, entityId, scope, attributes.stream()
+                                        .map(KvEntry::getKey)
+                                        .collect(Collectors.toList())
+                                );
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.error("[{}][{}] Failed to update cache.", tenantId, entityId, e);
+                    }
+                    return result;
+                },
+                MoreExecutors.directExecutor());
     }
 
     private void updateCache(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
-        attributes.forEach(attributeKvEntry -> {
-            if (Objects.nonNull(attributesCache.find(tenantId, entityId, scope, attributeKvEntry.getKey()))) {
-                attributesCache.put(tenantId, entityId, scope, attributeKvEntry.getKey(), attributeKvEntry);
+        for (AttributeKvEntry attribute : attributes) {
+            if (Objects.nonNull(attributesCache.find(tenantId, entityId, scope, attribute.getKey()))) {
+                attributesCache.put(tenantId, entityId, scope, attribute.getKey(), attribute);
             }
-        });
+        }
     }
 
     @Override
     public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
         validate(entityId, scope);
-        try {
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, entityId);
-            if (LOCAL_ENTITIES.contains(entityId.getEntityType())) {
-                attributesCache.evict(tenantId, entityId, scope, attributeKeys);
-            } else if (GLOBAL_ENTITIES.contains(entityId.getEntityType())) {
-                if (tpi.getTenantId().isPresent()) {
-                    attributesCache.evict(tenantId, entityId, scope, attributeKeys);
-                } else {
-                    // TODO maybe first check if it's already in cache
-                    clusterService.onAttributesCacheUpdated(tenantId, entityId, scope, attributeKeys);
-                }
-            }
-        } catch (Exception e) {
-            log.error("[{}][{}] Failed to remove values from cache.", tenantId, entityId, e);
-        }
-        return daoAttributesService.removeAll(tenantId, entityId, scope, attributeKeys);
+        return Futures.transform(daoAttributesService.removeAll(tenantId, entityId, scope, attributeKeys),
+                result -> {
+                    try {
+                        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, entityId);
+                        if (LOCAL_ENTITIES.contains(entityId.getEntityType())) {
+                            attributesCache.evict(tenantId, entityId, scope, attributeKeys);
+                        } else if (GLOBAL_ENTITIES.contains(entityId.getEntityType())) {
+                            if (tpi.getTenantId().isPresent()) {
+                                attributesCache.evict(tenantId, entityId, scope, attributeKeys);
+                            } else {
+                                // TODO maybe first check if it's already in cache
+                                clusterService.onAttributesCacheUpdated(tenantId, entityId, scope, attributeKeys);
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.error("[{}][{}] Failed to remove values from cache.", tenantId, entityId, e);
+                    }
+                    return result;
+                },
+                MoreExecutors.directExecutor());
     }
 
     private static void validate(EntityId id, String scope) {
