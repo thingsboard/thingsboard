@@ -167,14 +167,14 @@ public class TbDeviceProfileNode implements TbNode {
     protected void updateProfile(TbContext ctx, DeviceProfileId deviceProfileId) throws ExecutionException, InterruptedException {
         DeviceProfile deviceProfile = cache.get(ctx.getTenantId(), deviceProfileId);
         if (deviceProfile != null) {
-            log.info("[{}] Received device profile update notification: {}", ctx.getSelfId(), deviceProfile);
+            log.debug("[{}] Received device profile update notification: {}", ctx.getSelfId(), deviceProfile);
             for (DeviceState state : deviceStates.values()) {
                 if (deviceProfile.getId().equals(state.getProfileId())) {
                     state.updateProfile(ctx, deviceProfile);
                 }
             }
         } else {
-            log.info("[{}] Received stale profile update notification: [{}]", ctx.getSelfId(), deviceProfileId);
+            log.debug("[{}] Received stale profile update notification: [{}]", ctx.getSelfId(), deviceProfileId);
         }
     }
 

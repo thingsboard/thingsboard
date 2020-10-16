@@ -72,7 +72,7 @@ class AlarmState {
         return createOrClearAlarms(ctx, ts, null, AlarmRuleState::eval);
     }
 
-    public <T> boolean createOrClearAlarms(TbContext ctx, T data, SnapshotUpdate update, BiFunction<AlarmRuleState, T, Boolean> evalFunction) {
+    public <T> boolean createOrClearAlarms(TbContext ctx, T data, SnapshotUpdate update, BiFunction<AlarmRuleState, T, AlarmEvalResult> evalFunction) {
         boolean stateUpdate = false;
         AlarmSeverity resultSeverity = null;
         log.debug("[{}] processing update: {}", alarmDefinition.getId(), data);
@@ -81,22 +81,28 @@ class AlarmState {
                 log.debug("[{}][{}] Update is not valid for current rule state", alarmDefinition.getId(), state.getSeverity());
                 continue;
             }
-            boolean evalResult = evalFunction.apply(state, data);
+            AlarmEvalResult evalResult = evalFunction.apply(state, data);
             stateUpdate |= state.checkUpdate();
-            if (evalResult) {
+            if (AlarmEvalResult.TRUE.equals(evalResult)) {
                 resultSeverity = state.getSeverity();
                 break;
+            } else if (AlarmEvalResult.FALSE.equals(evalResult)) {
+                state.clear();
+                stateUpdate |= state.checkUpdate();
             }
         }
         if (resultSeverity != null) {
-            pushMsg(ctx, calculateAlarmResult(ctx, resultSeverity));
+            TbAlarmResult result = calculateAlarmResult(ctx, resultSeverity);
+            if (result != null) {
+                pushMsg(ctx, result);
+            }
         } else if (currentAlarm != null && clearState != null) {
             if (!validateUpdate(update, clearState)) {
                 log.debug("[{}] Update is not valid for current clear state", alarmDefinition.getId());
                 return stateUpdate;
             }
-            Boolean evalResult = evalFunction.apply(clearState, data);
-            if (evalResult) {
+            AlarmEvalResult evalResult = evalFunction.apply(clearState, data);
+            if (AlarmEvalResult.TRUE.equals(evalResult)) {
                 stateUpdate |= clearState.checkUpdate();
                 for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
                     state.clear();
@@ -105,6 +111,9 @@ class AlarmState {
                 ctx.getAlarmService().clearAlarm(ctx.getTenantId(), currentAlarm.getId(), JacksonUtil.OBJECT_MAPPER.createObjectNode(), System.currentTimeMillis());
                 pushMsg(ctx, new TbAlarmResult(false, false, true, currentAlarm));
                 currentAlarm = null;
+            } else if (AlarmEvalResult.FALSE.equals(evalResult)) {
+                clearState.clear();
+                stateUpdate |= clearState.checkUpdate();
             }
         }
         return stateUpdate;
@@ -183,13 +192,18 @@ class AlarmState {
             // Maybe we should fetch alarm every time?
             currentAlarm.setEndTs(System.currentTimeMillis());
             AlarmSeverity oldSeverity = currentAlarm.getSeverity();
-            if (!oldSeverity.equals(severity)) {
-                currentAlarm.setSeverity(severity);
-                currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
-                return new TbAlarmResult(false, false, true, false, currentAlarm);
+            // Skip update if severity is decreased.
+            if (severity.ordinal() <= oldSeverity.ordinal()) {
+                if (!oldSeverity.equals(severity)) {
+                    currentAlarm.setSeverity(severity);
+                    currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
+                    return new TbAlarmResult(false, false, true, false, currentAlarm);
+                } else {
+                    currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
+                    return new TbAlarmResult(false, true, false, false, currentAlarm);
+                }
             } else {
-                currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
-                return new TbAlarmResult(false, true, false, false, currentAlarm);
+                return null;
             }
         } else {
             currentAlarm = new Alarm();

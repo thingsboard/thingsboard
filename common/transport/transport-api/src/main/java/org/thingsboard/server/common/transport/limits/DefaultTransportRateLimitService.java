@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.transport.limits;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.TenantProfileData;
@@ -28,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @Service
+@ConditionalOnExpression("('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true') || '${service.type:null}'=='tb-transport'")
 @Slf4j
 public class DefaultTransportRateLimitService implements TransportRateLimitService {
 
