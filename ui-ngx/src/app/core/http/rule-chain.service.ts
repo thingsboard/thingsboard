@@ -298,6 +298,10 @@ export class RuleChainService {
       defaultHttpOptionsFromConfig(config) )
   }
 
+  public getEdgesRuleChains(pageLink: PageLink, config?: RequestConfig): Observable<PageData<RuleChain>> {
+    return this.getRuleChains(pageLink, ruleChainType.edge, config);
+  }
+
   public assignRuleChainToEdge(edgeId: string, ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
     return this.http.post<RuleChain>(`/api/edge/${edgeId}/ruleChain/${ruleChainId}`, null,
       defaultHttpOptionsFromConfig(config));

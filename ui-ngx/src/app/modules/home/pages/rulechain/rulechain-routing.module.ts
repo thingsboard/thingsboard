@@ -164,7 +164,8 @@ const routes: Routes = [
               } as BreadCrumbConfig<RuleChainPageComponent>,
               auth: [Authority.TENANT_ADMIN],
               title: 'rulechain.rulechain',
-              import: false
+              import: false,
+              type: ruleChainType.core
             },
             resolve: {
               ruleChain: RuleChainResolver,
