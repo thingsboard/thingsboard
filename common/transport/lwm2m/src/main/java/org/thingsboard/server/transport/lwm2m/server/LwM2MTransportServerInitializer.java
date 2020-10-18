@@ -32,7 +32,7 @@ import javax.annotation.PreDestroy;
 public class LwM2MTransportServerInitializer {
 
     @Autowired
-    @Qualifier("leshanServerCert")
+    @Qualifier("LeshanServerCert")
     private LeshanServer lhServerCert;
 
     @Autowired
