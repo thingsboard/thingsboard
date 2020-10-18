@@ -128,9 +128,14 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
 
     @Override
     public void saveAndNotify(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, FutureCallback<Void> callback) {
+        saveAndNotify(tenantId, entityId, scope, attributes, callback, true);
+    }
+
+    @Override
+    public void saveAndNotify(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, FutureCallback<Void> callback, boolean notifyDevice) {
         ListenableFuture<List<Void>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
         addMainCallback(saveFuture, callback);
-        addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope, attributes));
+        addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice));
     }
 
     @Override
@@ -157,11 +162,11 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                 , System.currentTimeMillis())), callback);
     }
 
-    private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+    private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
             if (subscriptionManagerService.isPresent()) {
-                subscriptionManagerService.get().onAttributesUpdate(tenantId, entityId, scope, attributes, TbCallback.EMPTY);
+                subscriptionManagerService.get().onAttributesUpdate(tenantId, entityId, scope, attributes, TbCallback.EMPTY, notifyDevice);
             } else {
                 log.warn("Possible misconfiguration because subscriptionManagerService is null!");
             }

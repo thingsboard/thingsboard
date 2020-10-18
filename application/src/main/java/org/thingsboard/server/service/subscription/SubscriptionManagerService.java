@@ -35,4 +35,6 @@ public interface SubscriptionManagerService extends ApplicationListener<Partitio
 
     void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, TbCallback callback);
 
+    void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, TbCallback callback, boolean notifyDevice);
+
 }
