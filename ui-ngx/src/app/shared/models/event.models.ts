@@ -23,7 +23,8 @@ import { ContentType } from '@shared/models/constants';
 export enum EventType {
   ERROR = 'ERROR',
   LC_EVENT = 'LC_EVENT',
-  STATS = 'STATS'
+  STATS = 'STATS',
+  EDGE_EVENT = 'EDGE_EVENT'
 }
 
 export enum DebugEventType {
@@ -36,6 +37,7 @@ export const eventTypeTranslations = new Map<EventType | DebugEventType, string>
     [EventType.ERROR, 'event.type-error'],
     [EventType.LC_EVENT, 'event.type-lc-event'],
     [EventType.STATS, 'event.type-stats'],
+    [EventType.EDGE_EVENT, 'event.type-edge-event'],
     [DebugEventType.DEBUG_RULE_NODE, 'event.type-debug-rule-node'],
     [DebugEventType.DEBUG_RULE_CHAIN, 'event.type-debug-rule-chain'],
   ]
@@ -57,6 +59,11 @@ export interface LcEventEventBody extends BaseEventBody {
 }
 
 export interface StatsEventBody extends BaseEventBody {
+  messagesProcessed: number;
+  errorsOccurred: number;
+}
+
+export interface EdgeEventBody extends BaseEventBody {
   messagesProcessed: number;
   errorsOccurred: number;
 }

@@ -1226,6 +1226,7 @@
         "type-stats": "Statistics",
         "type-debug-rule-node": "Debug",
         "type-debug-rule-chain": "Debug",
+        "type-edge-event": "Downlink",
         "no-events-prompt": "No events found",
         "error": "Error",
         "alarm": "Alarm",

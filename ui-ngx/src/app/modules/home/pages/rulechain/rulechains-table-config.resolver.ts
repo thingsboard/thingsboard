@@ -179,10 +179,10 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   configureEntityFunctions(ruleChainScope: string): void {
     if (ruleChainScope === 'tenant') {
       this.config.tableTitle = this.translate.instant('rulechain.core-rulechains');
-      this.config.entitiesFetchFunction = pageLink => this.fetchRuleChains(pageLink, ruleChainType.core, ruleChainScope);
+      this.config.entitiesFetchFunction = pageLink => this.fetchRuleChains(pageLink, ruleChainType.core);
     } else if (ruleChainScope === 'edges') {
       this.config.tableTitle = this.translate.instant('rulechain.edge-rulechains');
-      this.config.entitiesFetchFunction = pageLink => this.fetchRuleChains(pageLink, ruleChainType.edge, ruleChainScope);
+      this.config.entitiesFetchFunction = pageLink => this.fetchRuleChains(pageLink, ruleChainType.edge);
     } else if (ruleChainScope === 'edge') {
       if (this.edgeId) {
         this.edgeService.getEdge(this.edgeId)
@@ -481,13 +481,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     return (isDefined(ruleChain)) && !ruleChain.root && !ruleChain.isDefault;
   }
 
-  fetchRuleChains(pageLink: PageLink, type: string, ruleChainScope: string) {
-    if (ruleChainScope === 'tenant') {
+  fetchRuleChains(pageLink: PageLink, type: string) {
       return this.ruleChainService.getRuleChains(pageLink, type);
-    }
-    else if (ruleChainScope === 'edges') {
-      this.ruleChainService.getRuleChains(pageLink, type)
-    }
   }
 
 }
