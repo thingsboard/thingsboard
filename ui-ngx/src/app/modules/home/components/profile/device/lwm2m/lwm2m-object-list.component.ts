@@ -80,9 +80,6 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
   disabled: boolean;
 
   @Output()
-  startList = new EventEmitter<any>();
-
-  @Output()
   addList = new EventEmitter<any>();
 
   @Output()
@@ -137,13 +134,12 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
       );
   }
 
+  // TODO Мщжет удалить, оспользуется только при старте по свойству required
   ngOnChanges(changes: SimpleChanges): void {
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        // if (propName === 'entityType') {
-        //   this.reset();
-        // }
+
       }
     }
   }
@@ -160,17 +156,12 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
     }
   }
 
-  writeValue(value: Array<number> | null): void {
+  writeValue(value: any): void {
     this.searchText = '';
-    if (value != null && value.length > 0) {
-      this.modelValue = [...value];
-      this.deviceProfileService.getLwm2mObjects(this.modelValue).subscribe(
-        (objectsList) => {
-          this.objectsList = objectsList;
-          this.startList.next(this.objectsList);
-          this.lwm2mObjectListFormGroup.get('objectsList').setValue(objectsList);
-        }
-      );
+    if (value.hasOwnProperty("objectIds") && value["objectIds"] != null && value["objectIds"].length > 0) {
+      this.modelValue = [...value["objectIds"]];
+      this.objectsList = value["objectsList"];
+      this.lwm2mObjectListFormGroup.get('objectsList').setValue( this.objectsList);
     } else {
       this.objectsList = [];
       this.lwm2mObjectListFormGroup.get('objectsList').setValue(this.objectsList);
@@ -208,8 +199,6 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
   remove(object: ObjectLwM2M) {
     let index = this.objectsList.indexOf(object);
     if (index >= 0) {
-      console.warn("removeList: " + this.objectsList)
-      debugger
       this.objectsList.splice(index, 1);
       this.lwm2mObjectListFormGroup.get('objectsList').setValue(this.objectsList);
       index = this.modelValue.indexOf(object.id);

@@ -31,7 +31,6 @@ import {MatCheckboxChange} from "@angular/material/checkbox";
 import {coerceBooleanProperty} from "@angular/cdk/coercion";
 import {Instance, ObjectLwM2M, ResourceLwM2M} from "./profile-config.models";
 
-
 @Component({
   selector: 'tb-profile-observe-attr-telemetry-lwm2m',
   templateUrl: './lwm2m-observe-attr-telemetry.component.html',
@@ -46,8 +45,8 @@ import {Instance, ObjectLwM2M, ResourceLwM2M} from "./profile-config.models";
 })
 export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor, OnInit {
 
+  valuePrev: any;
   observeAttrTelemetryFormGroup: FormGroup;
-  observeValue: ObjectLwM2M[];
   observe = 'observe' as string;
   attribute = 'attribute' as string;
   telemetry = 'telemetry' as string;
@@ -56,8 +55,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   indeterminateTelemetry: boolean[][];
   indeterminate: {};
   private requiredValue: boolean;
-
-  private propagateChange = (v: any) => { };
 
   get required(): boolean {
     return this.requiredValue;
@@ -81,41 +78,58 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
       clientLwM2M: [this.fb.control(''), this.required ? [Validators.required] : []]
     });
     this.observeAttrTelemetryFormGroup.valueChanges.subscribe(value => {
-      this.propagateChange(value);
+      this.propagateChangeState (value);
     });
-   }
+  }
 
   ngOnInit(): void {
   }
+
+  private propagateChange = (v: any) => {
+  };
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  private propagateChangeState (value: any): void {
+    if (this.disabled !== undefined && !this.disabled) {
+      if (value !== undefined) {
+        if (this.valuePrev !== undefined && this.valuePrev != null && this.valuePrev !== "init") {
+          if (JSON.stringify(value) !== JSON.stringify(this.valuePrev)) {
+            this.propagateChange(value);
+            this.valuePrev = value;
+          }
+        } else {
+          this.valuePrev = value;
+        }
+      }
+    }
   }
 
+
+  registerOnTouched(fn: any): void {
+  }
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
       this.observeAttrTelemetryFormGroup.disable({emitEvent: false});
     } else {
-      this.observeAttrTelemetryFormGroup .enable({emitEvent: false});
+      this.valuePrev = "init";
+      this.observeAttrTelemetryFormGroup.enable({emitEvent: false});
     }
   }
 
-  writeValue(value: ObjectLwM2M[]): void {
-    this.observeValue = value;
-    if (this.observeValue && this.observeValue.length > 0) {
-      this.buildClientObjectsLwM2M(this.observeValue)
+  writeValue(value: FormGroup): void {
+    if ((value.get('clientLwM2M') as FormArray).controls && (value.get('clientLwM2M') as FormArray).controls.length > 0) {
+      this.buildClientObjectsLwM2M((value.get('clientLwM2M') as FormArray).value)
       this.initInstancesCheckBoxs();
     }
   }
 
   initInstancesCheckBoxs(): void {
-    let objects = this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray;
-    objects.controls.forEach((object, objInd) => (
+    (this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls.forEach((object, objInd) => (
       (object.get('instances') as FormArray).controls.forEach((instance, instInd) => ({
           function: this.initInstancesCheckBox(objInd, instInd)
         })
@@ -220,13 +234,11 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   }
 
   changeResourceCheckBox($event: unknown): void {
-    this.changeInstanceCheckBox($event['objInd'], $event['instInd'],  $event['nameFrom']);
+    this.changeInstanceCheckBox($event['objInd'], $event['instInd'], $event['nameFrom']);
   }
-
 
   updateValidators() {
     this.observeAttrTelemetryFormGroup.get('clientLwM2M').setValidators(this.required ? [Validators.required] : []);
     this.observeAttrTelemetryFormGroup.get('clientLwM2M').updateValueAndValidity();
   }
-
 }

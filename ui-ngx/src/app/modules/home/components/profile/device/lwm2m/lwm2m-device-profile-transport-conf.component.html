@@ -21,7 +21,6 @@
       <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
         <div class="mat-padding">
           <tb-lwm2m-object-list
-            (startList)="startList($event)"
             (addList)="addList($event)"
             (removeList)="removeList($event)"
             [required]="required"

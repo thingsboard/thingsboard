@@ -60,7 +60,7 @@ public class LwM2MTransportServerConfiguration {
     LwM2mGetModels lwM2mGetModels;
 
     @Primary
-    @Bean(name = "leshanServerCert")
+    @Bean(name = "LeshanServerCert")
     public LeshanServer getLeshanServerCert() {
         log.info("Starting LwM2M transport ServerCert... PostConstruct");
         return getLeshanServer(context.getServerPortCert(), context.getServerSecurePortCert(), X509);

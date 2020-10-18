@@ -132,7 +132,7 @@ public class LwM2MTransportHandler{
     public static final String EVENT_AWAKE = "AWAKE";
 
     @Autowired
-    @Qualifier("leshanServerCert")
+    @Qualifier("LeshanServerCert")
     private LeshanServer lhServerCert;
 
     @Autowired
