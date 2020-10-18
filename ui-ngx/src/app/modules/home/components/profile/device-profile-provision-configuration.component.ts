@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from "@angular/core";
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -25,14 +25,14 @@ import {
   ValidationErrors,
   Validator,
   Validators
-} from "@angular/forms";
-import { coerceBooleanProperty } from "@angular/cdk/coercion";
+} from '@angular/forms';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   DeviceProvisionConfiguration,
   DeviceProvisionType,
   deviceProvisionTypeTranslationMap
-} from "@shared/models/device.models";
-import { isDefinedAndNotNull } from "@core/utils";
+} from '@shared/models/device.models';
+import { generateSecret, isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-device-profile-provision-configuration',
@@ -85,10 +85,18 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
     this.provisionConfigurationFormGroup.get('type').valueChanges.subscribe((type) => {
       if (type === DeviceProvisionType.DISABLED) {
         this.provisionConfigurationFormGroup.get('provisionDeviceSecret').disable({emitEvent: false});
-        this.provisionConfigurationFormGroup.get('provisionDeviceSecret').patchValue(null,{emitEvent: false});
+        this.provisionConfigurationFormGroup.get('provisionDeviceSecret').patchValue(null, {emitEvent: false});
         this.provisionConfigurationFormGroup.get('provisionDeviceKey').disable({emitEvent: false});
         this.provisionConfigurationFormGroup.get('provisionDeviceKey').patchValue(null);
       } else {
+        const provisionDeviceSecret: string = this.provisionConfigurationFormGroup.get('provisionDeviceSecret').value;
+        if (!provisionDeviceSecret || !provisionDeviceSecret.length) {
+          this.provisionConfigurationFormGroup.get('provisionDeviceSecret').patchValue(generateSecret(20), {emitEvent: false});
+        }
+        const provisionDeviceKey: string = this.provisionConfigurationFormGroup.get('provisionDeviceKey').value;
+        if (!provisionDeviceKey || !provisionDeviceKey.length) {
+          this.provisionConfigurationFormGroup.get('provisionDeviceKey').patchValue(generateSecret(20), {emitEvent: false});
+        }
         this.provisionConfigurationFormGroup.get('provisionDeviceSecret').enable({emitEvent: false});
         this.provisionConfigurationFormGroup.get('provisionDeviceKey').enable({emitEvent: false});
       }
@@ -118,7 +126,11 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
     if (this.disabled){
       this.provisionConfigurationFormGroup.disable();
     } else {
-      this.provisionConfigurationFormGroup.enable({emitEvent: false});
+      if (this.provisionConfigurationFormGroup.get('type').value !== DeviceProvisionType.DISABLED) {
+        this.provisionConfigurationFormGroup.enable({emitEvent: false});
+      } else {
+        this.provisionConfigurationFormGroup.get('type').enable({emitEvent: false});
+      }
     }
   }
 

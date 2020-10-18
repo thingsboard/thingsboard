@@ -88,14 +88,20 @@
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayout="row">
-    <div fxLayout="row" *ngIf="alarm$ | async; let alarm;">
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="close()" cdkFocusInitial>
+      {{ 'action.close' | translate }}
+    </button>
+    <span fxFlex></span>
+    <div fxLayout="row" *ngIf="alarm$ | async; let alarm;" fxLayoutGap="8px">
       <button *ngIf="allowAcknowledgment && (alarm.status === alarmStatuses.ACTIVE_UNACK ||
                                              alarm.status === alarmStatuses.CLEARED_UNACK)"
               mat-raised-button
               color="primary"
               type="button"
               (click)="acknowledge()"
-              style="margin-right: 20px;"
               [disabled]="(isLoading$ | async)">
         {{ 'alarm.acknowledge' | translate }}
       </button>
@@ -109,12 +115,5 @@
         {{ 'alarm.clear' | translate }}
       </button>
     </div>
-    <span fxFlex></span>
-    <button mat-button color="primary"
-            type="button"
-            [disabled]="(isLoading$ | async)"
-            (click)="close()" cdkFocusInitial>
-      {{ 'action.close' | translate }}
-    </button>
   </div>
 </form>

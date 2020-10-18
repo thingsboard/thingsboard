@@ -54,6 +54,9 @@ export class FilterTextComponent implements ControlValueAccessor, OnInit {
   @Input()
   addFilterPrompt = this.translate.instant('filter.add-filter-prompt');
 
+  @Input()
+  nowrap = false;
+
   requiredClass = false;
 
   private filterText: string;

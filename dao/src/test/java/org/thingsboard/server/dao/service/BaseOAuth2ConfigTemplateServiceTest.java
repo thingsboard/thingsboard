@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2BasicMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
+import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 
@@ -106,9 +107,9 @@ public class BaseOAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
         OAuth2ClientRegistrationTemplate clientRegistrationTemplate = new OAuth2ClientRegistrationTemplate();
         clientRegistrationTemplate.setProviderId(providerId);
         clientRegistrationTemplate.setAdditionalInfo(mapper.createObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-        clientRegistrationTemplate.setMapperType(MapperType.BASIC);
-        clientRegistrationTemplate.setBasic(
-                OAuth2BasicMapperConfig.builder()
+        clientRegistrationTemplate.setMapperConfig(OAuth2MapperConfig.builder()
+                .type(MapperType.BASIC)
+                .basic(OAuth2BasicMapperConfig.builder()
                         .firstNameAttributeKey("firstName")
                         .lastNameAttributeKey("lastName")
                         .emailAttributeKey("email")
@@ -116,7 +117,8 @@ public class BaseOAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
                         .defaultDashboardName("Test")
                         .alwaysFullScreen(true)
                         .build()
-        );
+                )
+                .build());
         clientRegistrationTemplate.setAuthorizationUri("authorizationUri");
         clientRegistrationTemplate.setAccessTokenUri("tokenUri");
         clientRegistrationTemplate.setScope(Arrays.asList("scope1", "scope2"));

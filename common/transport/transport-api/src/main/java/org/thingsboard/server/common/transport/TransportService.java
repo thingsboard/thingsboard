@@ -20,11 +20,12 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetTenantRoutingInfoResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
@@ -47,7 +48,7 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public interface TransportService {
 
-    GetTenantRoutingInfoResponseMsg getRoutingInfo(GetTenantRoutingInfoRequestMsg msg);
+    GetEntityProfileResponseMsg getRoutingInfo(GetEntityProfileRequestMsg msg);
 
     void process(DeviceTransportType transportType, ValidateDeviceTokenRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
@@ -63,8 +64,6 @@ public interface TransportService {
 
     void process(ProvisionDeviceRequestMsg msg,
                  TransportServiceCallback<ProvisionDeviceResponseMsg> callback);
-
-    void getDeviceProfile(DeviceProfileId deviceProfileId, TransportServiceCallback<DeviceProfile> callback);
 
     void onProfileUpdate(DeviceProfile deviceProfile);
 

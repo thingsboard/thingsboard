@@ -42,6 +42,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
+import { RuleChainId } from '@shared/models/id/rule-chain-id';
 
 @Component({
   selector: 'tb-device-wizard',
@@ -103,6 +104,7 @@ export class DeviceWizardDialogComponent extends
         addProfileType: [0],
         deviceProfileId: [null, Validators.required],
         newDeviceProfileTitle: [{value: null, disabled: true}],
+        defaultRuleChainId: [{value: null, disabled: true}],
         description: ['']
       }
     );
@@ -114,6 +116,7 @@ export class DeviceWizardDialogComponent extends
           this.deviceWizardFormGroup.get('deviceProfileId').enable();
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').setValidators(null);
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').disable();
+          this.deviceWizardFormGroup.get('defaultRuleChainId').disable();
           this.deviceWizardFormGroup.updateValueAndValidity();
           this.createProfile = false;
           this.createTransportConfiguration = false;
@@ -122,6 +125,7 @@ export class DeviceWizardDialogComponent extends
           this.deviceWizardFormGroup.get('deviceProfileId').disable();
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').setValidators([Validators.required]);
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').enable();
+          this.deviceWizardFormGroup.get('defaultRuleChainId').enable();
           this.deviceWizardFormGroup.updateValueAndValidity();
           this.createProfile = true;
           this.createTransportConfiguration = this.deviceWizardFormGroup.get('transportType').value &&
@@ -274,6 +278,9 @@ export class DeviceWizardDialogComponent extends
           provisionConfiguration: deviceProvisionConfiguration
         }
       };
+      if (this.deviceWizardFormGroup.get('defaultRuleChainId').value) {
+        deviceProfile.defaultRuleChainId = new RuleChainId(this.deviceWizardFormGroup.get('defaultRuleChainId').value);
+      }
       return this.deviceProfileService.saveDeviceProfile(deviceProfile).pipe(
         map(profile => profile.id),
         tap((profileId) => {

@@ -91,6 +91,12 @@
                   </mat-error>
                 </mat-form-field>
               </div>
+              <div fxLayout="column" fxLayoutAlign="flex-end start">
+                <tb-rule-chain-autocomplete
+                  labelText="device-profile.default-rule-chain"
+                  formControlName="defaultRuleChainId">
+                </tb-rule-chain-autocomplete>
+              </div>
             </div>
             <mat-checkbox formControlName="gateway" style="padding-bottom: 16px;">
               {{ 'device.is-gateway' | translate }}
@@ -151,28 +157,25 @@
       </mat-step>
     </mat-horizontal-stepper>
   </div>
-  <div mat-dialog-actions fxLayout="column" fxLayoutAlign="start wrap" fxLayoutGap="8px" style="height: 100px;">
-    <div fxFlex fxLayout="row" fxLayoutAlign="end">
-      <button mat-raised-button
-              *ngIf="showNext"
-              [disabled]="(isLoading$ | async)"
-              (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(this.selectedIndex+1) | translate)} }}</button>
-    </div>
-    <div fxFlex fxLayout="row">
-      <button mat-button
-              color="primary"
-              [disabled]="(isLoading$ | async)"
-              (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-      <span fxFlex></span>
-      <div fxLayout="row wrap" fxLayoutGap="8px">
-        <button mat-raised-button *ngIf="selectedIndex > 0"
-                [disabled]="(isLoading$ | async)"
-                (click)="previousStep()">{{ 'action.back' | translate }}</button>
-        <button mat-raised-button
-                [disabled]="(isLoading$ | async)"
-                color="primary"
-                (click)="add()">{{ 'action.add' | translate }}</button>
-      </div>
-    </div>
+  <div mat-dialog-actions fxLayout="row">
+    <button mat-stroked-button *ngIf="selectedIndex > 0"
+            [disabled]="(isLoading$ | async)"
+            (click)="previousStep()">{{ 'action.back' | translate }}</button>
+    <span fxFlex></span>
+    <button mat-stroked-button
+            color="primary"
+            *ngIf="showNext"
+            [disabled]="(isLoading$ | async)"
+            (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(this.selectedIndex+1) | translate)} }}</button>
+  </div>
+  <mat-divider></mat-divider>
+  <div mat-dialog-actions fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="end">
+    <button mat-button
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    <button mat-raised-button
+            [disabled]="(isLoading$ | async)"
+            color="primary"
+            (click)="add()">{{ 'action.add' | translate }}</button>
   </div>
 </div>

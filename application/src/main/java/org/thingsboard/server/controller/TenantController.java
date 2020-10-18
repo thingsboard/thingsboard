@@ -91,6 +91,8 @@ public class TenantController extends BaseController {
             if (newTenant) {
                 installScripts.createDefaultRuleChains(tenant.getId());
             }
+            tenantProfileCache.evict(tenant.getId());
+            tbClusterService.onTenantChange(tenant, null);
             return tenant;
         } catch (Exception e) {
             throw handleException(e);
@@ -104,8 +106,10 @@ public class TenantController extends BaseController {
         checkParameter("tenantId", strTenantId);
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
-            checkTenantId(tenantId, Operation.DELETE);
+            Tenant tenant = checkTenantId(tenantId, Operation.DELETE);
             tenantService.deleteTenant(tenantId);
+            tenantProfileCache.evict(tenantId);
+            tbClusterService.onTenantDelete(tenant, null);
             tbClusterService.onEntityStateChange(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
             throw handleException(e);

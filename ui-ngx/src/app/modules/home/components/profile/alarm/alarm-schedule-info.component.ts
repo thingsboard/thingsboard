@@ -101,7 +101,7 @@ export class AlarmScheduleInfoComponent implements ControlValueAccessor, OnInit 
         for (const item of schedule.items) {
           if (item.enabled) {
             if (this.scheduleText.length) {
-              this.scheduleText += '<br/>';
+              this.scheduleText += ', ';
             }
             this.scheduleText += this.translate.instant(dayOfWeekTranslations[item.dayOfWeek  - 1]);
             this.scheduleText += ' <b>' + getAlarmScheduleRangeText(utcTimestampToTimeOfDay(item.startsOn),

@@ -23,11 +23,11 @@ import {
   FormControl,
   FormGroup,
   NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
+  NG_VALUE_ACCESSOR, ValidationErrors,
   Validator,
   Validators
 } from '@angular/forms';
-import { AlarmRule } from '@shared/models/device.models';
+import { AlarmRule, alarmRuleValidator } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { AlarmSeverity, alarmSeverityTranslations } from '../../../../../shared/models/alarm.models';
@@ -141,10 +141,23 @@ export class CreateAlarmRulesComponent implements ControlValueAccessor, OnInit, 
     };
     const createAlarmRulesArray = this.createAlarmRulesFormGroup.get('createAlarmRules') as FormArray;
     createAlarmRulesArray.push(this.fb.group({
-      severity: [null, Validators.required],
-      alarmRule: [createAlarmRule, Validators.required]
+      severity: [this.getFirstUnusedSeverity(), Validators.required],
+      alarmRule: [createAlarmRule, alarmRuleValidator]
     }));
     this.createAlarmRulesFormGroup.updateValueAndValidity();
+    if (!this.createAlarmRulesFormGroup.valid) {
+      this.updateModel();
+    }
+  }
+
+  private getFirstUnusedSeverity(): AlarmSeverity {
+    for (const severityKey of Object.keys(AlarmSeverity)) {
+      const severity = AlarmSeverity[severityKey];
+      if (this.usedSeverities.indexOf(severity) === -1) {
+        return severity;
+      }
+    }
+    return null;
   }
 
   public validate(c: FormControl) {

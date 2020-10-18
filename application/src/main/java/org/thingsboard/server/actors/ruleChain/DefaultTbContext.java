@@ -35,6 +35,7 @@ import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -475,6 +476,16 @@ class DefaultTbContext implements TbContext {
             log.debug("[{}][{}] Going to clear rule node states", getTenantId(), getSelfId());
         }
         mainCtx.getRuleNodeStateService().removeByRuleNodeId(getTenantId(), getSelfId());
+    }
+
+    @Override
+    public void addProfileListener(Consumer<DeviceProfile> listener) {
+        mainCtx.getDeviceProfileCache().addListener(getTenantId(), getSelfId(), listener);
+    }
+
+    @Override
+    public void removeProfileListener() {
+        mainCtx.getDeviceProfileCache().removeListener(getTenantId(), getSelfId());
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

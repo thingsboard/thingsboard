@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.common.transport.util;
 
-import org.thingsboard.server.common.msg.TbActorMsg;
-
 import java.util.Optional;
 
 public interface DataDecodingEncodingService {

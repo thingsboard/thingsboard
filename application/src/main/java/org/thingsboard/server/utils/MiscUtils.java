@@ -68,6 +68,22 @@ public class MiscUtils {
         return request.getServerName();
     }
 
+    public static String getDomainNameAndPort(HttpServletRequest request){
+        String domainName = getDomainName(request);
+        String scheme = getScheme(request);
+        int port = MiscUtils.getPort(request);
+        if (needsPort(scheme, port)) {
+            domainName += ":" + port;
+        }
+        return domainName;
+    }
+
+    private static boolean needsPort(String scheme, int port) {
+        boolean isHttpDefault = "http".equals(scheme.toLowerCase()) && port == 80;
+        boolean isHttpsDefault = "https".equals(scheme.toLowerCase()) && port == 443;
+        return !isHttpDefault && !isHttpsDefault;
+    }
+
     public static int getPort(HttpServletRequest request){
         String forwardedProto = request.getHeader("x-forwarded-proto");
 

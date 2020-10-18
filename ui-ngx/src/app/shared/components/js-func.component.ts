@@ -36,7 +36,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
-import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 
 @Component({
   selector: 'tb-js-func',
@@ -64,6 +63,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   private jsEditor: ace.Ace.Editor;
   private editorsResizeCaf: CancelAnimationFrame;
   private editorResize$: ResizeObserver;
+  private ignoreChange = false;
 
   toastTargetId = `jsFuncEditor-${guid()}`;
 
@@ -154,8 +154,10 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     this.jsEditor.session.setUseWrapMode(true);
     this.jsEditor.setValue(this.modelValue ? this.modelValue : '', -1);
     this.jsEditor.on('change', () => {
-      this.cleanupJsErrors();
-      this.updateView();
+      if (!this.ignoreChange) {
+        this.cleanupJsErrors();
+        this.updateView();
+      }
     });
     if (this.editorCompleter) {
       this.jsEditor.completers = [this.editorCompleter, ...(this.jsEditor.completers || [])];
@@ -332,7 +334,9 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   writeValue(value: string): void {
     this.modelValue = value;
     if (this.jsEditor) {
+      this.ignoreChange = true;
       this.jsEditor.setValue(this.modelValue ? this.modelValue : '', -1);
+      this.ignoreChange = false;
     }
   }
 

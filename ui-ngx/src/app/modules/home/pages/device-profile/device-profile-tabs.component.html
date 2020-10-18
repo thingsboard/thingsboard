@@ -70,7 +70,7 @@
     </div>
   </div>
 </mat-tab>
-<mat-tab *ngIf="entity"
+<mat-tab *ngIf="entity && !isEdit"
          label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
   <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
 </mat-tab>
