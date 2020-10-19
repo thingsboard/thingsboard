@@ -72,13 +72,13 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
-              <tb-profile-observe-attr-telemetry-resource-lwm2m
+              <tb-profile-lwm2m-observe-attr-telemetry-resource
                 [i]="i"
                 [y]="y"
                 [resourceFormGroup]="instances"
                 [resourceValue]="resourceLwm2mFormArray(instances)"
                 (valueCheckBoxChange)="changeResourceCheckBox($event)">
-              </tb-profile-observe-attr-telemetry-resource-lwm2m>
+              </tb-profile-lwm2m-observe-attr-telemetry-resource>
             </ng-template>
 
            </mat-expansion-panel>

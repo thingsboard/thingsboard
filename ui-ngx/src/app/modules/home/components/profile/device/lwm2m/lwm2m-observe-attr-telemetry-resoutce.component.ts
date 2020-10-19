@@ -34,8 +34,8 @@ import {
 import {MatCheckboxChange} from "@angular/material/checkbox";
 
 @Component({
-  selector: 'tb-profile-observe-attr-telemetry-resource-lwm2m',
-  templateUrl: './lwm2m-observe-attr-telemetry-resoutce.component.html',
+  selector: 'tb-profile-lwm2m-observe-attr-telemetry-resource',
+  templateUrl: './lwm2m-observe-attr-telemetry-resource.component.html',
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

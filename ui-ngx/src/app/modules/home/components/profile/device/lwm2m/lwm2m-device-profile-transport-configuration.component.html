@@ -28,10 +28,10 @@
           </tb-lwm2m-object-list>
         </div>
         <div class="mat-padding">
-          <tb-profile-observe-attr-telemetry-lwm2m
+          <tb-profile-lwm2m-observe-attr-telemetry
             [required]="required"
             formControlName="observeAttrTelemetry">
-          </tb-profile-observe-attr-telemetry-lwm2m>
+          </tb-profile-lwm2m-observe-attr-telemetry>
         </div>
       </mat-tab>
       <mat-tab label="{{ 'device-profile.lwm2m.bootstrap-tab' | translate }}">
@@ -86,6 +86,42 @@
                     {{ 'device-profile.lwm2m.notif-if-disabled' | translate }}
                   </mat-checkbox>
                 </div>
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+          <mat-accordion multi="true" class="mat-body-1">
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <div
+                    class="tb-panel-title">{{ 'device-profile.lwm2m.bootstrap-server' | translate | uppercase }}</div>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <div class="mat-padding">
+                <tb-profile-lwm2m-device-config-server
+                  [required]="required"
+                  formControlName = "bootstrapServer"
+                  [bootstrapServerIs]=true
+                  (updateServer)="updateServer()">
+                </tb-profile-lwm2m-device-config-server>
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+          <mat-accordion multi="true" class="mat-body-1">
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <div
+                    class="tb-panel-title">{{ 'device-profile.lwm2m.lwm2m-server' | translate | uppercase }}</div>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <div class="mat-padding">
+                <tb-profile-lwm2m-device-config-server
+                  [required]="required"
+                  formControlName="lwm2mServer"
+                  [bootstrapServerIs]=false
+                  (updateServer)="updateServer()">
+                </tb-profile-lwm2m-device-config-server>
               </div>
             </mat-expansion-panel>
           </mat-accordion>

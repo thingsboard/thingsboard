@@ -50,12 +50,12 @@ import {Direction} from "../../../../../../shared/models/page/sort-order";
   styleUrls: [],
   providers: [
     {
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => Lwm2mObjectListComponent),
-    multi: true
-  }]
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => Lwm2mObjectListComponent),
+      multi: true
+    }]
 })
-export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
+export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, Validators {
 
   lwm2mObjectListFormGroup: FormGroup;
   private requiredValue: boolean;
@@ -93,7 +93,8 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
 
   private dirty = false;
 
-  private propagateChange = (v: any) => { };
+  private propagateChange = (v: any) => {
+  };
 
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
@@ -101,7 +102,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
               private fb: FormBuilder) {
     this.lwm2mObjectListFormGroup = this.fb.group({
       objectsList: [this.objectsList],
-      objectLwm2m: [null, , this.required ? [Validators.required] : []]
+      objectLwm2m: [null, this.required ? [Validators.required] : []]
     });
   }
 
@@ -129,12 +130,11 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
         }),
         filter((value) => typeof value === 'string'),
         map((value) => value ? (typeof value === 'string' ? value : value.name) : ''),
-        mergeMap(name => this.fetchListObjects(name) ),
+        mergeMap(name => this.fetchListObjects(name)),
         share()
       );
   }
 
-  // TODO Мщжет удалить, оспользуется только при старте по свойству required
   ngOnChanges(changes: SimpleChanges): void {
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
@@ -161,7 +161,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
     if (value.hasOwnProperty("objectIds") && value["objectIds"] != null && value["objectIds"].length > 0) {
       this.modelValue = [...value["objectIds"]];
       this.objectsList = value["objectsList"];
-      this.lwm2mObjectListFormGroup.get('objectsList').setValue( this.objectsList);
+      this.lwm2mObjectListFormGroup.get('objectsList').setValue(this.objectsList);
     } else {
       this.objectsList = [];
       this.lwm2mObjectListFormGroup.get('objectsList').setValue(this.objectsList);
@@ -245,5 +245,4 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit {
       this.objectInput.nativeElement.focus();
     }, 0);
   }
-
 }

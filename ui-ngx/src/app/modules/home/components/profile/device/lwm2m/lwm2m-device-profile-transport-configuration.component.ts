@@ -21,7 +21,7 @@ import {
 import {MatTabChangeEvent} from "@angular/material/tabs";
 import {
   Component,
-  forwardRef,
+  forwardRef, Inject,
   Input,
   OnInit
 } from '@angular/core';
@@ -38,18 +38,19 @@ import {
 } from "./profile-config.models";
 import {DeviceProfileService} from "../../../../../../core/http/device-profile.service";
 import {deepClone} from "../../../../../../core/utils";
+import {WINDOW} from "../../../../../../core/services/window.service";
 
 @Component({
-  selector: 'tb-lwm2m-device-profile-transport-conf',
-  templateUrl: './lwm2m-device-profile-transport-conf.component.html',
+  selector: 'tb-profile-lwm2m-device-transport-configuration',
+  templateUrl: './lwm2m-device-profile-transport-configuration.component.html',
   styleUrls: [],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => Lwm2mDeviceProfileTransportConfComponent),
+    useExisting: forwardRef(() => Lwm2mDeviceProfileTransportConfigurationComponent),
     multi: true
   }]
 })
-export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAccessor, OnInit {
+export class Lwm2mDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, Validators {
 
   lwm2mDeviceProfileTransportConfFormGroup: FormGroup;
   observeAttr: string;
@@ -80,7 +81,9 @@ export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAcc
 
   constructor(private store: Store<AppState>,
               private fb: FormBuilder,
-              private deviceProfileService: DeviceProfileService) {}
+              private deviceProfileService: DeviceProfileService,
+              @Inject(WINDOW) private window: Window) {
+  }
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
@@ -93,13 +96,15 @@ export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAcc
     this.initConstants();
     this.lwm2mDeviceProfileTransportConfFormGroup = this.fb.group({
       objectIds: [{}, Validators.required],
-      observeAttrTelemetry: [this.fb.group({clientLwM2M: this.fb.control('')}), Validators.required],
+      observeAttrTelemetry: [this.fb.group({clientLwM2M: this.fb.array([])}), Validators.required],
       shortId: [null, Validators.required],
       lifetime: [null, Validators.required],
       defaultMinPeriod: [null, Validators.required],
       notifIfDisabled: [true, []],
       binding: ["U", Validators.required],
-      configurationJson: [null, Validators.required]
+      bootstrapServer: [null, Validators.required],
+      lwm2mServer: [null, Validators.required],
+      configurationJson: [null, Validators.required],
     });
     this.lwm2mDeviceProfileTransportConfFormGroup.valueChanges.subscribe(() => {
       if (!this.disabled) {
@@ -113,17 +118,6 @@ export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAcc
     this.observe = OBSERVE;
     this.attribute = ATTR;
     this.telemetry = TELEMETRY;
-  }
-
-  /**
-   initChildesFormGroup
-   */
-  get bootstrapFormGroup(): FormGroup {
-    return this.lwm2mDeviceProfileTransportConfFormGroup.get('bootstrapFormGroup') as FormGroup;
-  }
-
-  get lwm2mServerFormGroup(): FormGroup {
-    return this.lwm2mDeviceProfileTransportConfFormGroup.get('lwm2mServerFormGroup') as FormGroup;
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -141,42 +135,45 @@ export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAcc
       },
       {emitEvent: false});
     this.configurationValue = this.lwm2mDeviceProfileTransportConfFormGroup.getRawValue().configurationJson;
-    this.initWriteValue ();
+    this.initWriteValue();
   }
 
-  private initWriteValue (): void {
+  private initWriteValue(): void {
     let modelValue = this.getObjectsFromJsonAllConfig();
     this.deviceProfileService.getLwm2mObjects(modelValue).subscribe(
       (objectsList) => {
-        this.updateWriteValue ({"objectIds": modelValue, "objectsList": objectsList});
+        this.updateWriteValue({"objectIds": modelValue, "objectsList": objectsList});
       }
     );
   }
 
-  private updateWriteValue (value: any): void {
+  private updateWriteValue(value: any): void {
     let objectsList = deepClone(value.objectsList);
     this.lwm2mDeviceProfileTransportConfFormGroup.patchValue({
         objectIds: value,
         observeAttrTelemetry: this.initObserveAttrTelemetryFormGroup(this.getObserveAttrTelemetryObjects(objectsList)),
+        // observeAttrTelemetry: this.initObserveAttrTelemetryFormGroup(this.getObserveAttrTelemetryObjects(objectsList)),
         shortId: this.configurationValue['bootstrap'].servers.shortId,
         lifetime: this.configurationValue['bootstrap'].servers.lifetime,
         defaultMinPeriod: this.configurationValue['bootstrap'].servers.defaultMinPeriod,
         notifIfDisabled: this.configurationValue['bootstrap'].servers.notifIfDisabled,
-        binding: this.configurationValue['bootstrap'].servers.binding
+        binding: this.configurationValue['bootstrap'].servers.binding,
+        bootstrapServer: this.configurationValue['bootstrap'].bootstrapServer,
+        lwm2mServer: this.configurationValue['bootstrap'].lwm2mServer
       },
       {emitEvent: false});
   }
 
-  private initObserveAttrTelemetryFormGroup (listObject: ObjectLwM2M[]): FormGroup {
-    return this.fb.group({
-      clientLwM2M: this.fb.array(listObject)
-    });
+  private initObserveAttrTelemetryFormGroup(listObject: ObjectLwM2M[]) {
+    return {clientLwM2M: listObject};
   }
 
   private updateModel() {
     let configuration: DeviceProfileTransportConfiguration = null;
-    this.upDateValueToJson();
     if (this.lwm2mDeviceProfileTransportConfFormGroup.valid) {
+      if (!this.lwm2mDeviceProfileTransportConfFormGroup.pristine) {
+        this.upDateValueToJsonTab_1();
+      }
       configuration = this.lwm2mDeviceProfileTransportConfFormGroup.getRawValue().configurationJson;
       configuration.type = DeviceTransportType.LWM2M;
     }
@@ -219,7 +216,6 @@ export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAcc
     }
   }
 
-
   upDateValueToJsonTab_1(): void {
     if (this.lwm2mDeviceProfileTransportConfFormGroup !== null) {
       if (this.lwm2mDeviceProfileTransportConfFormGroup.get('shortId').dirty && this.lwm2mDeviceProfileTransportConfFormGroup.get('shortId').valid) {
@@ -259,26 +255,31 @@ export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAcc
         this.lwm2mDeviceProfileTransportConfFormGroup.get('binding').markAsPristine({
           onlySelf: true
         });
+        this.upDateJsonAllConfig()
+      }
+
+      if (!this.lwm2mDeviceProfileTransportConfFormGroup.get('bootstrapServer').pristine) {
+        this.configurationValue['bootstrap'].bootstrapServer = this.lwm2mDeviceProfileTransportConfFormGroup.get('bootstrapServer').value;
+        this.lwm2mDeviceProfileTransportConfFormGroup.markAsPristine({
+          onlySelf: true
+        });
         this.upDateJsonAllConfig();
       }
 
-      // if (this.bootstrapFormGroup !== null && !this.bootstrapFormGroup.pristine && this.bootstrapFormGroup.valid) {
-      //   this.configurationValue['bootstrap'].bootstrapServer = this.bootstrapFormGroup.value;
-      //   this.bootstrapFormGroup.markAsPristine({
-      //     onlySelf: true
-      //   });
-      //   this.upDateJsonAllConfig();
-      // }   debugger
-      //
-      // if (this.lwm2mServerFormGroup !== null && !this.lwm2mServerFormGroup.pristine && this.lwm2mServerFormGroup.valid) {
-      //   this.configurationValue['bootstrap'].lwm2mServer = this.lwm2mServerFormGroup.value;
-      //   // this.configurationValue['bootstrap'].lwm2mServer.bootstrapServerIs = false;
-      //   this.lwm2mServerFormGroup.markAsPristine({
-      //     onlySelf: true
-      //   });
-      //   this.upDateJsonAllConfig();
-      // }
+      if (!this.lwm2mDeviceProfileTransportConfFormGroup.get('lwm2mServer').pristine) {
+        this.configurationValue['bootstrap'].lwm2mServer = this.lwm2mDeviceProfileTransportConfFormGroup.get('lwm2mServer').value;
+        this.lwm2mDeviceProfileTransportConfFormGroup.markAsPristine({
+          onlySelf: true
+        });
+        this.upDateJsonAllConfig();
+      }
     }
+  }
+
+  upDateValueToJsonTab_2(): void {
+
+    this.upDateJsonAllConfig();
+
   }
 
   getObserveAttrTelemetryObjects(listObject: ObjectLwM2M[]): ObjectLwM2M [] {
@@ -408,10 +409,7 @@ export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAcc
   }
 
   removeList(value: ObjectLwM2M): void {
-    console.warn(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value);
-    let objectOld = (!this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value['clientLwM2M']) ?
-      deepClone(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value.get('clientLwM2M').value as Array<ObjectLwM2M>) :
-      deepClone(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value['clientLwM2M']);
+    let objectOld = deepClone(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value.clientLwM2M);
     const isIdIndex = (element) => element.id === value.id;
     let index = objectOld.findIndex(isIdIndex);
     if (index >= 0) {
@@ -424,12 +422,16 @@ export class Lwm2mDeviceProfileTransportConfComponent implements ControlValueAcc
     this.upDateJsonAllConfig();
   }
 
-  removeObserveAttrTelemetryFromJson(observeAttrTel: string, id: number) {
+  removeObserveAttrTelemetryFromJson(observeAttrTel: string, id: number): void {
     let isIdIndex = (element) => Array.from(element.substring(1).split('/'), Number)[0] === id;
     let index = this.configurationValue[this.observeAttr][observeAttrTel].findIndex(isIdIndex);
     while (index >= 0) {
       this.configurationValue[this.observeAttr][observeAttrTel].splice(index, 1);
       index = this.configurationValue[this.observeAttr][observeAttrTel].findIndex(isIdIndex);
     }
+  }
+
+  updateServer() {
+    this.upDateValueToJson();
   }
 }

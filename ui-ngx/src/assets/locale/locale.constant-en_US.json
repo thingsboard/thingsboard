@@ -906,6 +906,7 @@
             "server-port": "Port",
             "server-port-tip": "Server Port",
             "client-publicKey-or-id": "Client Public Key/Identity",
+            "client-key": "Client Key",
             "server-public-key": "Server Public Key",
             "client-secret-key": "Client Secret Key",
             "client-hold-off-time": "Hold Off Time",

@@ -97,7 +97,6 @@ import { DeviceProfileTransportConfigurationComponent } from './profile/device/d
 import { DeviceProfileDialogComponent } from './profile/device-profile-dialog.component';
 import { DeviceProfileAutocompleteComponent } from './profile/device-profile-autocomplete.component';
 import { MqttDeviceProfileTransportConfigurationComponent } from './profile/device/mqtt-device-profile-transport-configuration.component';
-import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/device/lwm2m-device-profile-transport-configuration.component';
 import { DeviceProfileAlarmsComponent } from './profile/alarm/device-profile-alarms.component';
 import { DeviceProfileAlarmComponent } from './profile/alarm/device-profile-alarm.component';
 import { CreateAlarmRulesComponent } from './profile/alarm/create-alarm-rules.component';
@@ -107,10 +106,11 @@ import { AlarmRuleKeyFiltersDialogComponent } from './profile/alarm/alarm-rule-k
 import { FilterTextComponent } from './filter/filter-text.component';
 import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
 import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
-import { Lwm2mDeviceProfileTransportConfComponent } from './profile/device/lwm2m/lwm2m-device-profile-transport-conf.component';
+import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/device/lwm2m/lwm2m-device-profile-transport-configuration.component';
 import { Lwm2mObjectListComponent } from './profile/device/lwm2m/lwm2m-object-list.component';
 import { Lwm2mObserveAttrTelemetryComponent } from './profile/device/lwm2m/lwm2m-observe-attr-telemetry.component';
 import { Lwm2mObserveAttrTelemetryResourceComponent } from './profile/device/lwm2m/lwm2m-observe-attr-telemetry-resoutce.component';
+import { Lwm2mDeviceConfigServerComponent } from './profile/device/lwm2m/lwm2m-device-config-server.component';
 
 @NgModule({
   declarations:
@@ -188,7 +188,6 @@ import { Lwm2mObserveAttrTelemetryResourceComponent } from './profile/device/lwm
       DeviceProfileConfigurationComponent,
       DefaultDeviceProfileTransportConfigurationComponent,
       MqttDeviceProfileTransportConfigurationComponent,
-      Lwm2mDeviceProfileTransportConfigurationComponent,
       DeviceProfileTransportConfigurationComponent,
       CreateAlarmRulesComponent,
       AlarmRuleComponent,
@@ -201,10 +200,11 @@ import { Lwm2mObserveAttrTelemetryResourceComponent } from './profile/device/lwm
       DeviceProfileDialogComponent,
       AddDeviceProfileDialogComponent,
       RuleChainAutocompleteComponent,
-      Lwm2mDeviceProfileTransportConfComponent,
+      Lwm2mDeviceProfileTransportConfigurationComponent,
       Lwm2mObjectListComponent,
       Lwm2mObserveAttrTelemetryComponent,
-      Lwm2mObserveAttrTelemetryResourceComponent
+      Lwm2mObserveAttrTelemetryResourceComponent,
+      Lwm2mDeviceConfigServerComponent
     ],
   imports: [
     CommonModule,
@@ -271,7 +271,6 @@ import { Lwm2mObserveAttrTelemetryResourceComponent } from './profile/device/lwm
     DeviceProfileConfigurationComponent,
     DefaultDeviceProfileTransportConfigurationComponent,
     MqttDeviceProfileTransportConfigurationComponent,
-    Lwm2mDeviceProfileTransportConfigurationComponent,
     DeviceProfileTransportConfigurationComponent,
     CreateAlarmRulesComponent,
     AlarmRuleComponent,
@@ -285,10 +284,10 @@ import { Lwm2mObserveAttrTelemetryResourceComponent } from './profile/device/lwm
     AddDeviceProfileDialogComponent,
     RuleChainAutocompleteComponent,
     Lwm2mDeviceProfileTransportConfigurationComponent,
-    Lwm2mDeviceProfileTransportConfComponent,
     Lwm2mObjectListComponent,
     Lwm2mObserveAttrTelemetryComponent,
-    Lwm2mObserveAttrTelemetryResourceComponent
+    Lwm2mObserveAttrTelemetryResourceComponent,
+    Lwm2mDeviceConfigServerComponent
   ],
   providers: [
     WidgetComponentService,

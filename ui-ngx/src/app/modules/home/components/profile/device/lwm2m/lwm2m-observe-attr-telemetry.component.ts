@@ -32,7 +32,7 @@ import {coerceBooleanProperty} from "@angular/cdk/coercion";
 import {Instance, ObjectLwM2M, ResourceLwM2M} from "./profile-config.models";
 
 @Component({
-  selector: 'tb-profile-observe-attr-telemetry-lwm2m',
+  selector: 'tb-profile-lwm2m-observe-attr-telemetry',
   templateUrl: './lwm2m-observe-attr-telemetry.component.html',
   styleUrls: ['./lwm2m-observe-attr-telemetry.component.css'],
   providers: [
@@ -43,7 +43,7 @@ import {Instance, ObjectLwM2M, ResourceLwM2M} from "./profile-config.models";
     }
   ]
 })
-export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor, OnInit {
+export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor, OnInit, Validators {
 
   valuePrev: any;
   observeAttrTelemetryFormGroup: FormGroup;
@@ -75,7 +75,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
     this.observeAttrTelemetryFormGroup = this.fb.group({
-      clientLwM2M: [this.fb.control(''), this.required ? [Validators.required] : []]
+      clientLwM2M: this.fb.array([], this.required ? [Validators.required] : [])
     });
     this.observeAttrTelemetryFormGroup.valueChanges.subscribe(value => {
       this.propagateChangeState (value);
@@ -121,9 +121,10 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     }
   }
 
-  writeValue(value: FormGroup): void {
-    if ((value.get('clientLwM2M') as FormArray).controls && (value.get('clientLwM2M') as FormArray).controls.length > 0) {
-      this.buildClientObjectsLwM2M((value.get('clientLwM2M') as FormArray).value)
+  writeValue(value: any): void {
+    console.log(value);
+    if (value.clientLwM2M && value.clientLwM2M.length>0) {
+      this.buildClientObjectsLwM2M(value.clientLwM2M);
       this.initInstancesCheckBoxs();
     }
   }
