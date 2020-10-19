@@ -61,6 +61,7 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.dao.usagerecord.UsageRecordService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -84,6 +85,9 @@ public abstract class AbstractServiceTest {
 
     @Autowired
     protected UserService userService;
+
+    @Autowired
+    protected UsageRecordService usageRecordService;
 
     @Autowired
     protected AdminSettingsService adminSettingsService;

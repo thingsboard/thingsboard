@@ -439,6 +439,14 @@ public class ModelConstants {
     public static final String OAUTH2_TEMPLATE_HELP_LINK_PROPERTY = "help_link";
 
     /**
+     * Usage Record constants.
+     */
+    public static final String UR_TABLE_NAME = "usage_record";
+    public static final String UR_TENANT_ID_COLUMN = TENANT_ID_PROPERTY;
+    public static final String UR_ENTITY_TYPE_COLUMN = ENTITY_TYPE_COLUMN;
+    public static final String UR_ENTITY_ID_COLUMN = ENTITY_ID_COLUMN;
+
+    /**
      * Cassandra attributes and timeseries constants.
      */
     public static final String ATTRIBUTES_KV_CF = "attributes_kv_cf";

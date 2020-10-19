@@ -15,9 +15,13 @@
  */
 package org.thingsboard.server.common.data;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE, TENANT_PROFILE, DEVICE_PROFILE, USAGE_RECORD;
+public enum UsageRecordKey {
+
+    MSG_COUNT,
+    MSG_BYTES_COUNT,
+    DP_TRANSPORT_COUNT,
+    DP_STORAGE_COUNT,
+    RE_EXEC_COUNT,
+    JS_EXEC_COUNT
+
 }

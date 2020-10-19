@@ -340,6 +340,7 @@ final class MqttClientImpl implements MqttClient {
         MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, getNewMessageId().messageId());
         MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
         MqttPendingPublish pendingPublish = new MqttPendingPublish(variableHeader.packetId(), future, payload.retain(), message, qos);
+
         ChannelFuture channelFuture = this.sendAndFlushPacket(message);
 
         if (channelFuture != null) {

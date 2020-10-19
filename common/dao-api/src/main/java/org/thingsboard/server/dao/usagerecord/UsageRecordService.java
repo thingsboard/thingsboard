@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.usagerecord;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE, TENANT_PROFILE, DEVICE_PROFILE, USAGE_RECORD;
+import org.thingsboard.server.common.data.UsageRecord;
+import org.thingsboard.server.common.data.id.TenantId;
+
+public interface UsageRecordService {
+
+    UsageRecord findTenantUsageRecord(TenantId tenantId);
+
+    void deleteUsageRecordsByTenantId(TenantId tenantId);
+
+    void createDefaultUsageRecord(TenantId id);
 }
