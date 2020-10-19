@@ -30,6 +30,7 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
     private final TbTransportQueueFactory tbQueueProvider;
     private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> toRuleEngine;
     private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> toTbCore;
+    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg>> toUsageStats;
 
     public TbTransportQueueProducerProvider(TbTransportQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
@@ -39,6 +40,7 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
     public void init() {
         this.toTbCore = tbQueueProvider.createTbCoreMsgProducer();
         this.toRuleEngine = tbQueueProvider.createRuleEngineMsgProducer();
+        this.toUsageStats = tbQueueProvider.createToUsageStatsServiceMsgProducer();
     }
 
     @Override
@@ -64,5 +66,10 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer() {
         throw new RuntimeException("Not Implemented! Should not be used by Transport!");
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg>> getTbUsageStatsMsgProducer() {
+        return toUsageStats;
     }
 }

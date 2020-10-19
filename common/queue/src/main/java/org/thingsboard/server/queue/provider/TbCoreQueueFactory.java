@@ -16,6 +16,7 @@
 package org.thingsboard.server.queue.provider;
 
 import org.thingsboard.server.gen.js.JsInvokeProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
@@ -33,7 +34,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
  * Responsible for initialization of various Producers and Consumers used by TB Core Node.
  * Implementation Depends on the queue queue.type from yml or TB_QUEUE_TYPE environment variable
  */
-public interface TbCoreQueueFactory {
+public interface TbCoreQueueFactory extends TbUsageStatsClientQueueFactory {
 
     /**
      * Used to push messages to instances of TB Transport Service
@@ -76,6 +77,16 @@ public interface TbCoreQueueFactory {
      * @return
      */
     TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> createToCoreMsgConsumer();
+
+    /**
+     * Used to consume messages about usage statistics by TB Core Service
+     *
+     * @return
+     */
+    default TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgConsumer() {
+        //TODO: implement
+        return null;
+    }
 
     /**
      * Used to consume high priority messages by TB Core Service
