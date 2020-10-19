@@ -29,7 +29,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetAction, WidgetContext } from '@home/models/widget-component.models';
-import { DataKey, Datasource, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
+import { DataKey, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -394,7 +394,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.displayedColumns.push(...this.columns.map(column => column.def));
     }
     if (this.settings.defaultSortOrder && this.settings.defaultSortOrder.length) {
-      this.defaultSortOrder = this.settings.defaultSortOrder;
+      this.defaultSortOrder = this.utils.customTranslation(this.settings.defaultSortOrder, this.settings.defaultSortOrder);
     }
     this.pageLink.sortOrder = entityDataSortOrderFromString(this.defaultSortOrder, this.columns);
     let sortColumn: EntityColumn;
@@ -959,7 +959,7 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
           }
         }
       }
-      alarm[dataKey.name] = value;
+      alarm[dataKey.label] = value;
     });
     return alarm;
   }
