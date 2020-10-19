@@ -19,15 +19,29 @@ import lombok.Getter;
 
 public enum TransportRateLimitType {
 
-    TENANT_MAX_MSGS("transport.tenant.max.msg"),
-    TENANT_MAX_DATA_POINTS("transport.tenant.max.dataPoints"),
-    DEVICE_MAX_MSGS("transport.device.max.msg"),
-    DEVICE_MAX_DATA_POINTS("transport.device.max.dataPoints");
+    TENANT_MAX_MSGS("transport.tenant.msg", true, true),
+    TENANT_TELEMETRY_MSGS("transport.tenant.telemetry", true, true),
+    TENANT_MAX_DATA_POINTS("transport.tenant.dataPoints", true, false),
+    DEVICE_MAX_MSGS("transport.device.msg", false, true),
+    DEVICE_TELEMETRY_MSGS("transport.device.telemetry", false, true),
+    DEVICE_MAX_DATA_POINTS("transport.device.dataPoints", false, false);
 
     @Getter
     private final String configurationKey;
+    @Getter
+    private final boolean tenantLevel;
+    @Getter
+    private final boolean deviceLevel;
+    @Getter
+    private final boolean messageLevel;
+    @Getter
+    private final boolean dataPointLevel;
 
-    TransportRateLimitType(String configurationKey) {
+    TransportRateLimitType(String configurationKey, boolean tenantLevel, boolean messageLevel) {
         this.configurationKey = configurationKey;
+        this.tenantLevel = tenantLevel;
+        this.deviceLevel = !tenantLevel;
+        this.messageLevel = messageLevel;
+        this.dataPointLevel = !messageLevel;
     }
 }

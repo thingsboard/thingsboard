@@ -33,6 +33,7 @@ import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.TenantRoutingInfo;
 import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
+import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -43,7 +44,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
-@ConditionalOnExpression("('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true') || '${service.type:null}'=='tb-transport'")
+@TbTransportComponent
 @Slf4j
 public class DefaultTransportTenantProfileCache implements TransportTenantProfileCache {
 

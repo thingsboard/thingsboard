@@ -13,26 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.limits;
+package org.thingsboard.server.queue.util;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.common.msg.tools.TbRateLimits;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-@RequiredArgsConstructor
-public class SimpleTransportRateLimit implements TransportRateLimit {
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-    private final TbRateLimits rateLimit;
-    @Getter
-    private final String configuration;
-
-    @Override
-    public boolean tryConsume() {
-        return rateLimit.tryConsume();
-    }
-
-    @Override
-    public boolean tryConsume(long number) {
-        return number <= 0 || rateLimit.tryConsume(number);
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnExpression("('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true') || '${service.type:null}'=='tb-transport'")
+public @interface TbTransportComponent {
 }

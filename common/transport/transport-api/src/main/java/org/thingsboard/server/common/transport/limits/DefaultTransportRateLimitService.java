@@ -23,11 +23,13 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
+import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @Service
+@TbTransportComponent
 @Slf4j
 public class DefaultTransportRateLimitService implements TransportRateLimitService {
 
@@ -43,23 +45,21 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
     }
 
     @Override
-    public TransportRateLimit getRateLimit(TenantId tenantId, TransportRateLimitType limitType) {
-        TransportRateLimit[] limits = perTenantLimits.get(tenantId);
-        if (limits == null) {
-            limits = fetchProfileAndInit(tenantId);
-            perTenantLimits.put(tenantId, limits);
+    public TransportRateLimitType checkLimits(TenantId tenantId, DeviceId deviceId, int dataPoints, TransportRateLimitType... limits) {
+        TransportRateLimit[] tenantLimits = getTenantRateLimits(tenantId);
+        TransportRateLimit[] deviceLimits = getDeviceRateLimits(tenantId, deviceId);
+        for (TransportRateLimitType limitType : limits) {
+            TransportRateLimit rateLimit;
+            if (limitType.isTenantLevel()) {
+                rateLimit = tenantLimits[limitType.ordinal()];
+            } else {
+                rateLimit = deviceLimits[limitType.ordinal()];
+            }
+            if (!rateLimit.tryConsume(limitType.isMessageLevel() ? 1L : dataPoints)) {
+                return limitType;
+            }
         }
-        return limits[limitType.ordinal()];
-    }
-
-    @Override
-    public TransportRateLimit getRateLimit(TenantId tenantId, DeviceId deviceId, TransportRateLimitType limitType) {
-        TransportRateLimit[] limits = perDeviceLimits.get(deviceId);
-        if (limits == null) {
-            limits = fetchProfileAndInit(tenantId);
-            perDeviceLimits.put(deviceId, limits);
-        }
-        return limits[limitType.ordinal()];
+        return null;
     }
 
     @Override
@@ -75,7 +75,17 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         mergeLimits(tenantId, fetchProfileAndInit(tenantId));
     }
 
-    public void mergeLimits(TenantId tenantId, TransportRateLimit[] newRateLimits) {
+    @Override
+    public void remove(TenantId tenantId) {
+        perTenantLimits.remove(tenantId);
+    }
+
+    @Override
+    public void remove(DeviceId deviceId) {
+        perDeviceLimits.remove(deviceId);
+    }
+
+    private void mergeLimits(TenantId tenantId, TransportRateLimit[] newRateLimits) {
         TransportRateLimit[] oldRateLimits = perTenantLimits.get(tenantId);
         if (oldRateLimits == null) {
             perTenantLimits.put(tenantId, newRateLimits);
@@ -90,16 +100,6 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         }
     }
 
-    @Override
-    public void remove(TenantId tenantId) {
-        perTenantLimits.remove(tenantId);
-    }
-
-    @Override
-    public void remove(DeviceId deviceId) {
-        perDeviceLimits.remove(deviceId);
-    }
-
     private TransportRateLimit[] fetchProfileAndInit(TenantId tenantId) {
         return perTenantLimits.computeIfAbsent(tenantId, tmp -> createTransportRateLimits(tenantProfileCache.get(tenantId)));
     }
@@ -111,5 +111,23 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
             rateLimits[type.ordinal()] = rateLimitFactory.create(type, profileData.getProperties().get(type.getConfigurationKey()));
         }
         return rateLimits;
+    }
+
+    private TransportRateLimit[] getTenantRateLimits(TenantId tenantId) {
+        TransportRateLimit[] limits = perTenantLimits.get(tenantId);
+        if (limits == null) {
+            limits = fetchProfileAndInit(tenantId);
+            perTenantLimits.put(tenantId, limits);
+        }
+        return limits;
+    }
+
+    private TransportRateLimit[] getDeviceRateLimits(TenantId tenantId, DeviceId deviceId) {
+        TransportRateLimit[] limits = perDeviceLimits.get(deviceId);
+        if (limits == null) {
+            limits = fetchProfileAndInit(tenantId);
+            perDeviceLimits.put(deviceId, limits);
+        }
+        return limits;
     }
 }

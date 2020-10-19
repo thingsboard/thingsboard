@@ -21,9 +21,7 @@ import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult
 
 public interface TransportRateLimitService {
 
-    TransportRateLimit getRateLimit(TenantId tenantId, TransportRateLimitType limit);
-
-    TransportRateLimit getRateLimit(TenantId tenantId, DeviceId deviceId, TransportRateLimitType limit);
+    TransportRateLimitType checkLimits(TenantId tenantId, DeviceId deviceId, int dataPoints, TransportRateLimitType... limits);
 
     void update(TenantProfileUpdateResult update);
 
