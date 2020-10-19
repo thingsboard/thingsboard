@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.queue;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.ProtocolStringList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.*;
 import org.thingsboard.server.common.stats.StatsFactory;
@@ -39,6 +37,7 @@ import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.service.attributes.TbAttributesCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.*;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
@@ -82,8 +81,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               TbRuleEngineQueueFactory tbRuleEngineQueueFactory, RuleEngineStatisticsService statisticsService,
                                               ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
                                               TbRuleEngineDeviceRpcService tbDeviceRpcService,
-                                              StatsFactory statsFactory, TbDeviceProfileCache deviceProfileCache) {
-        super(actorContext, encodingService, deviceProfileCache, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
+                                              StatsFactory statsFactory, TbDeviceProfileCache deviceProfileCache, TbAttributesCache attributesCache) {
+        super(actorContext, encodingService, deviceProfileCache, attributesCache, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
         this.statisticsService = statisticsService;
         this.ruleEngineSettings = ruleEngineSettings;
         this.tbRuleEngineQueueFactory = tbRuleEngineQueueFactory;
@@ -249,6 +248,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             FromDeviceRpcResponse response = new FromDeviceRpcResponse(new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB())
                     , proto.getResponse(), error);
             tbDeviceRpcService.processRpcResponseFromDevice(response);
+            callback.onSuccess();
+        } else if (nfMsg.getAttributesCacheUpdatedMsg() != null && !nfMsg.getAttributesCacheUpdatedMsg().isEmpty()) {
+            handleAttributesCacheUpdatedMsg(id, nfMsg.getAttributesCacheUpdatedMsg());
             callback.onSuccess();
         } else {
             log.trace("Received notification with missing handler");

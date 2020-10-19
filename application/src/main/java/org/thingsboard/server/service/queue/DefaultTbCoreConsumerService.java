@@ -97,20 +97,18 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final SubscriptionManagerService subscriptionManagerService;
     private final TbCoreDeviceRpcService tbCoreDeviceRpcService;
     private final TbCoreConsumerStats stats;
-    private final TbAttributesCache attributesCache;
 
     public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
                                         DeviceStateService stateService, TbLocalSubscriptionService localSubscriptionService,
                                         SubscriptionManagerService subscriptionManagerService, DataDecodingEncodingService encodingService,
                                         TbCoreDeviceRpcService tbCoreDeviceRpcService, StatsFactory statsFactory, TbDeviceProfileCache deviceProfileCache,
                                         TbAttributesCache attributesCache) {
-        super(actorContext, encodingService, deviceProfileCache, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
+        super(actorContext, encodingService, deviceProfileCache, attributesCache, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.stateService = stateService;
         this.localSubscriptionService = localSubscriptionService;
         this.subscriptionManagerService = subscriptionManagerService;
         this.tbCoreDeviceRpcService = tbCoreDeviceRpcService;
-        this.attributesCache = attributesCache;
         this.stats = new TbCoreConsumerStats(statsFactory);
     }
 
@@ -242,19 +240,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         callback.onSuccess();
     }
 
-
-    private void handleAttributesCacheUpdatedMsg(UUID id, ByteString nfMsg) {
-        Optional<TbActorMsg> actorMsgOpt = encodingService.decode(nfMsg.toByteArray());
-        if (actorMsgOpt.isPresent()) {
-            TbActorMsg actorMsg = actorMsgOpt.get();
-            if (actorMsg instanceof AttributesCacheUpdatedMsg) {
-                AttributesCacheUpdatedMsg attributesCacheUpdatedMsg = (AttributesCacheUpdatedMsg) actorMsg;
-                log.trace("[{}] Clearing attributes cache for {}", id, attributesCacheUpdatedMsg);
-                attributesCache.evict(attributesCacheUpdatedMsg.getTenantId(), attributesCacheUpdatedMsg.getEntityId(),
-                        attributesCacheUpdatedMsg.getScope(), attributesCacheUpdatedMsg.getAttributeKeys());
-            }
-        }
-    }
 
     @Scheduled(fixedDelayString = "${queue.core.stats.print-interval-ms}")
     public void printStats() {
