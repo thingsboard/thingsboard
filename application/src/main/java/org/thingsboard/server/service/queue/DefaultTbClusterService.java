@@ -209,6 +209,15 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
+    public void invalidateAttributesCache() {
+        log.trace("Invalidating attributes cache");
+        broadcast(AttributesCacheUpdatedMsg.INVALIDATE_ALL_CACHE_MSG,
+                bytes -> ToCoreNotificationMsg.newBuilder().setAttributesCacheUpdatedMsg(bytes).build(),
+                bytes -> ToRuleEngineNotificationMsg.newBuilder().setAttributesCacheUpdatedMsg(bytes).build(),
+                true);
+    }
+
+    @Override
     public void onDeviceProfileChange(DeviceProfile deviceProfile, TbQueueCallback callback) {
         onEntityChange(deviceProfile.getTenantId(), deviceProfile.getId(), deviceProfile, callback);
     }

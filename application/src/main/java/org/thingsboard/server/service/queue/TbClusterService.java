@@ -55,6 +55,8 @@ public interface TbClusterService {
 
     void onAttributesCacheUpdated(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys);
 
+    void invalidateAttributesCache();
+
     void onDeviceProfileChange(DeviceProfile deviceProfile, TbQueueCallback callback);
 
     void onDeviceProfileDelete(DeviceProfile deviceProfile, TbQueueCallback callback);

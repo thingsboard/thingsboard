@@ -171,9 +171,14 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             TbActorMsg actorMsg = actorMsgOpt.get();
             if (actorMsg instanceof AttributesCacheUpdatedMsg) {
                 AttributesCacheUpdatedMsg attributesCacheUpdatedMsg = (AttributesCacheUpdatedMsg) actorMsg;
-                log.trace("[{}] Clearing attributes cache for {}", id, attributesCacheUpdatedMsg);
-                attributesCache.evict(attributesCacheUpdatedMsg.getTenantId(), attributesCacheUpdatedMsg.getEntityId(),
-                        attributesCacheUpdatedMsg.getScope(), attributesCacheUpdatedMsg.getAttributeKeys());
+                if (AttributesCacheUpdatedMsg.INVALIDATE_ALL_CACHE_MSG.equals(attributesCacheUpdatedMsg)) {
+                    log.info("[{}] Clearing all attributes cache", id);
+                    attributesCache.invalidateAll();
+                } else {
+                    log.trace("[{}] Clearing attributes cache for {}", id, attributesCacheUpdatedMsg);
+                    attributesCache.evict(attributesCacheUpdatedMsg.getTenantId(), attributesCacheUpdatedMsg.getEntityId(),
+                            attributesCacheUpdatedMsg.getScope(), attributesCacheUpdatedMsg.getAttributeKeys());
+                }
             }
         }
     }

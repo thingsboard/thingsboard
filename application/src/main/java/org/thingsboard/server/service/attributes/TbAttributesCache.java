@@ -26,4 +26,5 @@ public interface TbAttributesCache {
     AttributeCacheEntry find(TenantId tenantId, EntityId entityId, String scope, String key);
     void put(TenantId tenantId, EntityId entityId, String scope, String key, AttributeKvEntry entry);
     void evict(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys);
+    void invalidateAll();
 }

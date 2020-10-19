@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
@@ -53,6 +54,9 @@ public class AdminController extends BaseController {
 
     @Autowired
     private UpdateService updateService;
+
+    @Autowired
+    private TbClusterService clusterService;
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/settings/{key}", method = RequestMethod.GET)
@@ -122,6 +126,16 @@ public class AdminController extends BaseController {
                 String email = getCurrentUser().getEmail();
                 mailService.sendTestMail(adminSettings.getJsonValue(), email);
             }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/cache/attributes/invalidate", method = RequestMethod.DELETE)
+    public void invalidateAttributesCache() throws ThingsboardException {
+        try {
+            clusterService.invalidateAttributesCache();
         } catch (Exception e) {
             throw handleException(e);
         }

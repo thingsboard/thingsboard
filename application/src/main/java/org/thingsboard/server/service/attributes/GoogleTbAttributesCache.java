@@ -78,4 +78,11 @@ public class GoogleTbAttributesCache implements TbAttributesCache {
         List<AttributesKey> keys = attributeKeys.stream().map(key -> new AttributesKey(scope, entityId, key)).collect(Collectors.toList());
         getTenantCache(tenantId).invalidateAll(keys);
     }
+
+    @Override
+    public void invalidateAll() {
+        tenantsCache.forEach((tenantId, cache) -> {
+            cache.invalidateAll();
+        });
+    }
 }
