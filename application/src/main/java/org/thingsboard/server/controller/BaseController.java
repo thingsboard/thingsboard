@@ -35,7 +35,6 @@ import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -54,6 +53,8 @@ import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -710,6 +711,9 @@ public abstract class BaseController {
             case PROVISION_FAILURE:
                 msgType = DataConstants.PROVISION_FAILURE;
                 break;
+            case TIMESERIES_UPDATED:
+                msgType = DataConstants.TIMESERIES_UPDATED;
+                break;
         }
         if (!StringUtils.isEmpty(msgType)) {
             try {
@@ -754,17 +758,7 @@ public abstract class BaseController {
                         metaData.putValue("scope", scope);
                         if (attributes != null) {
                             for (AttributeKvEntry attr : attributes) {
-                                if (attr.getDataType() == DataType.BOOLEAN) {
-                                    entityNode.put(attr.getKey(), attr.getBooleanValue().get());
-                                } else if (attr.getDataType() == DataType.DOUBLE) {
-                                    entityNode.put(attr.getKey(), attr.getDoubleValue().get());
-                                } else if (attr.getDataType() == DataType.LONG) {
-                                    entityNode.put(attr.getKey(), attr.getLongValue().get());
-                                } else if (attr.getDataType() == DataType.JSON) {
-                                    entityNode.set(attr.getKey(), json.readTree(attr.getJsonValue().get()));
-                                } else {
-                                    entityNode.put(attr.getKey(), attr.getValueAsString());
-                                }
+                                addKvEntry(entityNode, attr);
                             }
                         }
                     } else if (actionType == ActionType.ATTRIBUTES_DELETED) {
@@ -774,6 +768,13 @@ public abstract class BaseController {
                         ArrayNode attrsArrayNode = entityNode.putArray("attributes");
                         if (keys != null) {
                             keys.forEach(attrsArrayNode::add);
+                        }
+                    } else if (actionType == ActionType.TIMESERIES_UPDATED) {
+                        List<TsKvEntry> telemetry = extractParameter(List.class, 0, additionalInfo);
+                        if (telemetry != null) {
+                            for (TsKvEntry tsKvEntry : telemetry) {
+                                addKvEntry(entityNode, tsKvEntry);
+                            }
                         }
                     }
                 }
@@ -788,6 +789,22 @@ public abstract class BaseController {
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }
+        }
+    }
+
+    private void addKvEntry(ObjectNode entityNode, KvEntry kvEntry) throws Exception {
+        if (kvEntry.getDataType() == DataType.BOOLEAN) {
+            kvEntry.getBooleanValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
+        } else if (kvEntry.getDataType() == DataType.DOUBLE) {
+            kvEntry.getDoubleValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
+        } else if (kvEntry.getDataType() == DataType.LONG) {
+            kvEntry.getLongValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
+        } else if (kvEntry.getDataType() == DataType.JSON) {
+            if (kvEntry.getJsonValue().isPresent()) {
+                entityNode.set(kvEntry.getKey(), json.readTree(kvEntry.getJsonValue().get()));
+            }
+        } else {
+            entityNode.put(kvEntry.getKey(), kvEntry.getValueAsString());
         }
     }
 

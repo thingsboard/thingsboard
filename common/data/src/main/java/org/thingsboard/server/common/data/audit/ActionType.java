@@ -25,6 +25,7 @@ public enum ActionType {
     ATTRIBUTES_UPDATED(false), // log attributes/values
     ATTRIBUTES_DELETED(false), // log attributes
     TIMESERIES_DELETED(false), // log timeseries
+    TIMESERIES_UPDATED(false), // log timeseries update
     RPC_CALL(false), // log method and params
     CREDENTIALS_UPDATED(false), // log new credentials
     ASSIGNED_TO_CUSTOMER(false), // log customer name

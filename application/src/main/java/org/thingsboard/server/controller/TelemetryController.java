@@ -440,11 +440,13 @@ public class TelemetryController extends BaseController {
             tsSubService.saveAndNotify(tenantId, entityId, entries, ttl, new FutureCallback<Void>() {
                 @Override
                 public void onSuccess(@Nullable Void tmp) {
+                    logTelemetryUpdated(user, entityId, entries, null);
                     result.setResult(new ResponseEntity(HttpStatus.OK));
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
+                    logTelemetryUpdated(user, entityId, entries, t);
                     AccessValidator.handleError(t, result, HttpStatus.INTERNAL_SERVER_ERROR);
                 }
             });
@@ -582,6 +584,14 @@ public class TelemetryController extends BaseController {
                     keys);
         } catch (ThingsboardException te) {
             log.warn("Failed to log timeseries delete", te);
+        }
+    }
+
+    private void logTelemetryUpdated(SecurityUser user, EntityId entityId, List<TsKvEntry> telemetry, Throwable e) {
+        try {
+            logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.TIMESERIES_UPDATED, toException(e), telemetry);
+        } catch (ThingsboardException te) {
+            log.warn("Failed to log telemetry update");
         }
     }
 
