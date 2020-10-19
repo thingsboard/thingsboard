@@ -20,6 +20,7 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.aware.EntityAwareMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 
@@ -27,7 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 @ToString
-public class AttributesCacheUpdatedMsg implements TenantAwareMsg, ToAllNodesMsg {
+public class AttributesCacheUpdatedMsg implements TenantAwareMsg, EntityAwareMsg, ToAllNodesMsg {
     @Getter
     private final TenantId tenantId;
     @Getter

@@ -517,6 +517,7 @@ message ToRuleEngineMsg {
 message ToRuleEngineNotificationMsg {
   bytes componentLifecycleMsg = 1;
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
+  bytes attributesCacheUpdatedMsg = 3;
 }
 
 /* Messages that are handled by ThingsBoard Transport Service */
