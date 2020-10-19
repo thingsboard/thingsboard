@@ -15,29 +15,20 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.thingsboard.server.common.data.UsageRecord;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UsageRecordId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import java.util.UUID;
 
@@ -48,22 +39,22 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.UR_TABLE_NAME)
-public class UsageRecordEntity extends BaseSqlEntity<UsageRecord> implements BaseEntity<UsageRecord> {
+@Table(name = ModelConstants.API_USAGE_STATE_TABLE_NAME)
+public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements BaseEntity<ApiUsageState> {
 
-    @Column(name = ModelConstants.UR_TENANT_ID_COLUMN)
+    @Column(name = ModelConstants.API_USAGE_STATE_TENANT_ID_COLUMN)
     private UUID tenantId;
 
-    @Column(name = ModelConstants.UR_ENTITY_TYPE_COLUMN)
+    @Column(name = ModelConstants.API_USAGE_STATE_ENTITY_TYPE_COLUMN)
     private String entityType;
 
-    @Column(name = ModelConstants.UR_ENTITY_ID_COLUMN)
+    @Column(name = ModelConstants.API_USAGE_STATE_ENTITY_ID_COLUMN)
     private UUID entityId;
 
-    public UsageRecordEntity() {
+    public ApiUsageStateEntity() {
     }
 
-    public UsageRecordEntity(UsageRecord ur) {
+    public ApiUsageStateEntity(ApiUsageState ur) {
         if (ur.getId() != null) {
             this.setUuid(ur.getId().getId());
         }
@@ -78,8 +69,8 @@ public class UsageRecordEntity extends BaseSqlEntity<UsageRecord> implements Bas
     }
 
     @Override
-    public UsageRecord toData() {
-        UsageRecord ur = new UsageRecord(new UsageRecordId(this.getUuid()));
+    public ApiUsageState toData() {
+        ApiUsageState ur = new ApiUsageState(new ApiUsageStateId(this.getUuid()));
         ur.setCreatedTime(createdTime);
         if (tenantId != null) {
             ur.setTenantId(new TenantId(tenantId));

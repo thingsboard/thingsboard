@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.sql;
+package org.thingsboard.server.dao.usagerecord;
 
-import org.thingsboard.server.dao.service.BaseUsageRecordServiceTest;
-import org.thingsboard.server.dao.service.BaseUserServiceTest;
-import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@DaoSqlTest
-public class UsageRecordServiceSqlTest extends BaseUsageRecordServiceTest {
+public interface ApiUsageStateService {
+
+    ApiUsageState findTenantApiUsageState(TenantId tenantId);
+
+    void deleteApiUsageStateByTenantId(TenantId tenantId);
+
+    void createDefaultApiUsageState(TenantId id);
 }
