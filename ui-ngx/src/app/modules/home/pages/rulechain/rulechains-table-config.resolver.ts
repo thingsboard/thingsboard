@@ -269,7 +269,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     this.importExport.importRuleChain().subscribe((ruleChainImport) => {
       if (ruleChainImport) {
         this.itembuffer.storeRuleChainImport(ruleChainImport);
-        this.router.navigateByUrl(`ruleChains/ruleChain/import`);
+        this.router.navigateByUrl(`${this.router.routerState.snapshot.url}/ruleChain/import`);
       }
     });
   }
@@ -278,7 +278,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`ruleChains/${ruleChain.id.id}`);
+    this.router.navigateByUrl(`${this.router.routerState.snapshot.url}/${ruleChain.id.id}`);
   }
 
   saveRuleChain(ruleChain: RuleChain) {
