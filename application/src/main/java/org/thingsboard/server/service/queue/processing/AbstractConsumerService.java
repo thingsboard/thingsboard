@@ -39,6 +39,7 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
 
+import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.Optional;
@@ -62,17 +63,19 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final ActorSystemContext actorContext;
     protected final DataDecodingEncodingService encodingService;
     protected final TbDeviceProfileCache deviceProfileCache;
+
+    @Nullable
     private final TbAttributesCache attributesCache;
 
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
 
     public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
-                                   TbDeviceProfileCache deviceProfileCache, TbAttributesCache attributesCache,
+                                   TbDeviceProfileCache deviceProfileCache, Optional<TbAttributesCache> attributesCacheOpt,
                                    TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
         this.deviceProfileCache = deviceProfileCache;
-        this.attributesCache = attributesCache;
+        this.attributesCache = attributesCacheOpt.orElse(null);
         this.nfConsumer = nfConsumer;
     }
 
@@ -160,6 +163,9 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     }
 
     protected void handleAttributesCacheUpdatedMsg(UUID id, ByteString nfMsg) {
+        if (attributesCache == null) {
+            return;
+        }
         Optional<TbActorMsg> actorMsgOpt = encodingService.decode(nfMsg.toByteArray());
         if (actorMsgOpt.isPresent()) {
             TbActorMsg actorMsg = actorMsgOpt.get();

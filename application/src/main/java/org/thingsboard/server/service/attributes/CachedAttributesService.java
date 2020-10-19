@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.service.attributes;
 
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
@@ -29,7 +31,6 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.service.queue.TbClusterService;
@@ -37,7 +38,10 @@ import org.thingsboard.server.service.queue.TbClusterService;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.service.attributes.AttributeUtils.validate;
+
 @Service
+@ConditionalOnProperty(prefix = "cache.attributes", value = "enabled", havingValue = "true")
 @Primary
 @Slf4j
 public class CachedAttributesService implements AttributesService {
@@ -210,21 +214,5 @@ public class CachedAttributesService implements AttributesService {
                     return result;
                 },
                 MoreExecutors.directExecutor());
-    }
-
-    private static void validate(EntityId id, String scope) {
-        Validator.validateId(id.getId(), "Incorrect id " + id);
-        Validator.validateString(scope, "Incorrect scope " + scope);
-    }
-
-    private static void validate(AttributeKvEntry kvEntry) {
-        if (kvEntry == null) {
-            throw new IncorrectParameterException("Key value entry can't be null");
-        } else if (kvEntry.getDataType() == null) {
-            throw new IncorrectParameterException("Incorrect kvEntry. Data type can't be null");
-        } else {
-            Validator.validateString(kvEntry.getKey(), "Incorrect kvEntry. Key can't be empty");
-            Validator.validatePositiveNumber(kvEntry.getLastUpdateTs(), "Incorrect last update ts. Ts should be positive");
-        }
     }
 }

@@ -36,7 +36,7 @@ import java.util.Optional;
 /**
  * @author Andrew Shvayka
  */
-public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
+public abstract class DaoAttributesServiceTest extends AbstractServiceTest {
 
     @Autowired
     private AttributesService attributesService;

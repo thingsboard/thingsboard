@@ -16,8 +16,8 @@
 package org.thingsboard.server.dao.service.attributes.sql;
 
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.dao.service.attributes.BaseAttributesServiceTest;
+import org.thingsboard.server.dao.service.attributes.DaoAttributesServiceTest;
 
 @DaoSqlTest
-public class AttributesServiceSqlTest extends BaseAttributesServiceTest {
+public class AttributesServiceSqlTest extends DaoAttributesServiceTest {
 }

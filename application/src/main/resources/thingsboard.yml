@@ -309,6 +309,7 @@ cache:
   # caffeine or redis
   type: "${CACHE_TYPE:caffeine}"
   attributes:
+    enabled: "${CACHE_ATTRIBUTES_ENABLED:false}"
     maxSizePerTenant: "${CACHE_ATTRIBUTES_MAX_SIZE_PER_TENANT:100000}"
     expireAfterAccessInMinutes: "${CACHE_ATTRIBUTES_EXPIRE_AFTER_ACCESS_IN_MINUTES:10}"
 

@@ -16,10 +16,12 @@
 package org.thingsboard.server.service.attributes;
 
 import lombok.Data;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@ConditionalOnProperty(prefix = "cache.attributes", value = "enabled", havingValue = "true")
 @ConfigurationProperties(prefix = "cache.attributes")
 @Data
 public class AttributesCacheConfiguration {

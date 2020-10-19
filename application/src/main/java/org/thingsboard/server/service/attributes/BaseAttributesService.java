@@ -13,60 +13,69 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.attributes;
+package org.thingsboard.server.service.attributes;
 
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.service.Validator;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * @author Andrew Shvayka
- */
-@Service("daoAttributesService")
-public class BaseAttributesService implements AttributesService {
+import static org.thingsboard.server.service.attributes.AttributeUtils.validate;
 
-    @Autowired
-    private AttributesDao attributesDao;
+@Service
+@ConditionalOnProperty(prefix = "cache.attributes", value = "enabled", havingValue = "false", matchIfMissing = true)
+@Primary
+@Slf4j
+public class BaseAttributesService implements AttributesService {
+    private final AttributesService daoAttributesService;
+
+    public BaseAttributesService(@Qualifier("daoAttributesService") AttributesService daoAttributesService) {
+        this.daoAttributesService = daoAttributesService;
+    }
+
 
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, String attributeKey) {
-        return attributesDao.find(tenantId, entityId, scope, attributeKey);
+        validate(entityId, scope);
+        Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
+        return daoAttributesService.find(tenantId, entityId, scope, attributeKey);
     }
 
     @Override
     public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
-        return attributesDao.find(tenantId, entityId, scope, attributeKeys);
+        validate(entityId, scope);
+        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
+        return daoAttributesService.find(tenantId, entityId, scope, attributeKeys);
     }
 
     @Override
     public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String scope) {
-        return attributesDao.findAll(tenantId, entityId, scope);
+        validate(entityId, scope);
+        return daoAttributesService.findAll(tenantId, entityId, scope);
     }
 
     @Override
     public ListenableFuture<List<Void>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
-        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(attributes.size());
-        for (AttributeKvEntry attribute : attributes) {
-            futures.add(attributesDao.save(tenantId, entityId, scope, attribute));
-        }
-        return Futures.allAsList(futures);
+        validate(entityId, scope);
+        attributes.forEach(attribute -> validate(attribute));
+
+        return daoAttributesService.save(tenantId, entityId, scope, attributes);
     }
 
     @Override
-    public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
-        return attributesDao.removeAll(tenantId, entityId, scope, keys);
+    public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
+        validate(entityId, scope);
+        return daoAttributesService.removeAll(tenantId, entityId, scope, attributeKeys);
     }
-
 }

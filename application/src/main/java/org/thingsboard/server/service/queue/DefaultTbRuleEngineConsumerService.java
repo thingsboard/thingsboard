@@ -81,8 +81,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               TbRuleEngineQueueFactory tbRuleEngineQueueFactory, RuleEngineStatisticsService statisticsService,
                                               ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
                                               TbRuleEngineDeviceRpcService tbDeviceRpcService,
-                                              StatsFactory statsFactory, TbDeviceProfileCache deviceProfileCache, TbAttributesCache attributesCache) {
-        super(actorContext, encodingService, deviceProfileCache, attributesCache, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
+                                              StatsFactory statsFactory, TbDeviceProfileCache deviceProfileCache,
+                                              Optional<TbAttributesCache> attributesCacheOpt) {
+        super(actorContext, encodingService, deviceProfileCache, attributesCacheOpt, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
         this.statisticsService = statisticsService;
         this.ruleEngineSettings = ruleEngineSettings;
         this.tbRuleEngineQueueFactory = tbRuleEngineQueueFactory;
