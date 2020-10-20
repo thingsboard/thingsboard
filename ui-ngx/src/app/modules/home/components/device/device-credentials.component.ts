@@ -34,7 +34,6 @@ import {
   DeviceCredentialsType
 } from '@shared/models/device.models';
 import { Subscription } from 'rxjs';
-import { isDefinedAndNotNull } from '@core/utils';
 import { distinctUntilChanged } from 'rxjs/operators';
 import {SecurityConfigComponent} from "@home/pages/device/lwm2m/security-config.component";
 import {
@@ -209,14 +208,12 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
         this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([]);
         this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity({emitEvent: false});
-      // TODO: @nickAS21
       case DeviceCredentialsType.LWM2M_CREDENTIALS:
         this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([Validators.required]);
         this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity();
         this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity();
         this.deviceCredentialsFormGroup.get('credentialsBasic').disable();
-        break;
     }
   }
 
@@ -244,7 +241,6 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     });
   }
 
-  // TODO: @nickAS21
   openSecurityInfoLwM2mDialog($event: Event, value: string, id: string): void {
     if ($event) {
       $event.stopPropagation();

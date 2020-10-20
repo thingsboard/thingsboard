@@ -181,6 +181,7 @@ message GetEntityProfileRequestMsg {
   string entityType = 1;
   int64 entityIdMSB = 2;
   int64 entityIdLSB = 3;
+<<<<<<< HEAD
 }
 
 message LwM2MRegistrationRequestMsg {
@@ -225,6 +226,8 @@ message GetTenantRoutingInfoResponseMsg {
 message GetDeviceProfileRequestMsg {
   int64 profileIdMSB = 1;
   int64 profileIdLSB = 2;
+=======
+>>>>>>> origin/master
 }
 
 message GetEntityProfileResponseMsg {

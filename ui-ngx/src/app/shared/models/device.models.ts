@@ -232,10 +232,10 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
         const mqttTransportConfiguration: MqttDeviceTransportConfiguration = {};
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
-      /* case DeviceTransportType.LWM2M:
+      case DeviceTransportType.LWM2M:
         const lwm2mTransportConfiguration: Lwm2mDeviceTransportConfiguration = {};
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
-        break;*/
+        break;
     }
   }
   return transportConfiguration;
@@ -442,7 +442,6 @@ export const credentialTypeNames = new Map<DeviceCredentialsType, string>(
     [DeviceCredentialsType.X509_CERTIFICATE, 'MQTT X.509'],
     [DeviceCredentialsType.MQTT_BASIC, 'MQTT Basic'],
     [DeviceCredentialsType.LWM2M_CREDENTIALS, 'LwM2M Credentials']
-    // [DeviceCredentialsType.X509_CERTIFICATE, 'MQTT X.509']
   ]
 );
 

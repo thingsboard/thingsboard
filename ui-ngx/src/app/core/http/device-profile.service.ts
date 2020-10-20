@@ -22,7 +22,7 @@ import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { DeviceProfile, DeviceProfileInfo, DeviceTransportType } from '@shared/models/device.models';
 import { isDefinedAndNotNull } from '@core/utils';
-import {ObjectLwM2M} from "../../modules/home/components/profile/device/lwm2m/profile-config.models";
+import { ObjectLwM2M } from "../../modules/home/components/profile/device/lwm2m/profile-config.models";
 
 @Injectable({
   providedIn: 'root'
