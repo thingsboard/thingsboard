@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.apiusage;
 
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -26,8 +27,7 @@ public interface TbApiUsageStateService {
 
     TenantApiUsageState getApiUsageState(TenantId tenantId);
 
-    void onAddedToAllowList(TenantId tenantId);
+    void onTenantProfileUpdate(TenantProfileId tenantProfileId);
 
-    void onAddedToDenyList(TenantId tenantId);
-
+    void onTenantUpdate(TenantId tenantId);
 }

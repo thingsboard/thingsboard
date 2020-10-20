@@ -54,6 +54,7 @@ import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
+import org.thingsboard.server.service.profile.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
@@ -102,12 +103,19 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     protected volatile ExecutorService usageStatsExecutor;
 
 
-    public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
-                                        DeviceStateService stateService, TbLocalSubscriptionService localSubscriptionService,
-                                        SubscriptionManagerService subscriptionManagerService, DataDecodingEncodingService encodingService,
-                                        TbCoreDeviceRpcService tbCoreDeviceRpcService, StatsFactory statsFactory, TbDeviceProfileCache deviceProfileCache,
-                                        TbApiUsageStateService statsService) {
-        super(actorContext, encodingService, deviceProfileCache, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
+    public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory,
+                                        ActorSystemContext actorContext,
+                                        DeviceStateService stateService,
+                                        TbLocalSubscriptionService localSubscriptionService,
+                                        SubscriptionManagerService subscriptionManagerService,
+                                        DataDecodingEncodingService encodingService,
+                                        TbCoreDeviceRpcService tbCoreDeviceRpcService,
+                                        StatsFactory statsFactory,
+                                        TbDeviceProfileCache deviceProfileCache,
+                                        TbApiUsageStateService statsService,
+                                        TbTenantProfileCache tenantProfileCache,
+                                        TbApiUsageStateService apiUsageStateService) {
+        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
         this.stateService = stateService;

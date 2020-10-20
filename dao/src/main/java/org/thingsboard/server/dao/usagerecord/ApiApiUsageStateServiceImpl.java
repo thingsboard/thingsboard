@@ -61,6 +61,14 @@ public class ApiApiUsageStateServiceImpl extends AbstractEntityService implement
     }
 
     @Override
+    public ApiUsageState update(ApiUsageState apiUsageState) {
+        log.trace("Executing save [{}]", apiUsageState.getTenantId());
+        validateId(apiUsageState.getTenantId(), INCORRECT_TENANT_ID + apiUsageState.getTenantId());
+        validateId(apiUsageState.getId(), "Can't save new usage state. Only update is allowed!");
+        return apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
+    }
+
+    @Override
     public ApiUsageState findTenantApiUsageState(TenantId tenantId) {
         log.trace("Executing findTenantUsageRecord, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
