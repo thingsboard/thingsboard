@@ -323,9 +323,8 @@ export class RuleChainService {
     return this.http.delete<RuleChain>(`/api/ruleChain/${ruleChainId}/defaultEdge`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getDefaultEdgeRuleChains(config?: RequestConfig): Observable<PageData<RuleChain>> {
-    return this.http.get<PageData<RuleChain>>(`/api/ruleChain/defaultEdgeRuleChains`,
-      defaultHttpOptionsFromConfig(config));
+  public getDefaultEdgeRuleChains(config?: RequestConfig): Observable<Array<RuleChain>> {
+    return this.http.get<Array<RuleChain>>(`/api/ruleChain/defaultEdgeRuleChains`, defaultHttpOptionsFromConfig(config));
   }
 
 }

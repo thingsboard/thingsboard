@@ -29,7 +29,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import {RuleChain, RuleChainType, ruleChainType} from '@shared/models/rule-chain.models';
+import { RuleChain, ruleChainType} from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainComponent } from '@modules/home/pages/rulechain/rulechain.component';
 import { DialogService } from '@core/services/dialog.service';
@@ -141,7 +141,6 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     this.config.groupActionDescriptors = this.configureGroupActions(this.config.componentsData.ruleChainScope);
     this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.ruleChainScope);
     this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.ruleChainScope);
-
     return this.config;
   }
 
@@ -179,10 +178,10 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   configureEntityFunctions(ruleChainScope: string): void {
     if (ruleChainScope === 'tenant') {
       this.config.tableTitle = this.translate.instant('rulechain.core-rulechains');
-      this.config.entitiesFetchFunction = pageLink => this.fetchRuleChains(pageLink, ruleChainType.core);
+      this.config.entitiesFetchFunction = pageLink => this.fetchRuleChains(pageLink);
     } else if (ruleChainScope === 'edges') {
       this.config.tableTitle = this.translate.instant('rulechain.edge-rulechains');
-      this.config.entitiesFetchFunction = pageLink => this.fetchRuleChains(pageLink, ruleChainType.edge);
+      this.config.entitiesFetchFunction = pageLink => this.fetchEdgeRuleChains(pageLink);
     } else if (ruleChainScope === 'edge') {
       if (this.edgeId) {
         this.edgeService.getEdge(this.edgeId)
@@ -238,13 +237,13 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         {
           name: this.translate.instant('rulechain.set-default-edge'),
           icon: 'bookmark_outline',
-          isEnabled: () => true,
+          isEnabled: (entity) => this.isNonDefaultEdgeRuleChain(entity),
           onAction: ($event, entity) => this.setDefaultEdgeRuleChain($event, entity)
         },
         {
           name: this.translate.instant('rulechain.remove-default-edge'),
           icon: 'bookmark',
-          isEnabled: () => true,
+          isEnabled: (entity) => this.isDefaultEdgeRuleChain(entity),
           onAction: ($event, entity) => this.removeDefaultEdgeRuleChain($event, entity)
         }
       )
@@ -481,8 +480,32 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     return (isDefined(ruleChain)) && !ruleChain.root && !ruleChain.isDefault;
   }
 
-  fetchRuleChains(pageLink: PageLink, type: string) {
-      return this.ruleChainService.getRuleChains(pageLink, type);
+  isDefaultEdgeRuleChain(ruleChain) {
+    return (isDefined(ruleChain)) && !ruleChain.root && ruleChain.isDefault;
+  }
+
+  isNonDefaultEdgeRuleChain(ruleChain) {
+    return (isDefined(ruleChain)) && !ruleChain.root && !ruleChain.isDefault;
+  }
+
+  fetchRuleChains(pageLink: PageLink) {
+    return this.ruleChainService.getRuleChains(pageLink, ruleChainType.core);
+  }
+
+  fetchEdgeRuleChains(pageLink: PageLink) {
+   let defaultEdgeRuleChainIds: Array<string> = [];
+   this.ruleChainService.getDefaultEdgeRuleChains().pipe(
+      map(ruleChains =>
+        ruleChains.map(ruleChain =>
+          defaultEdgeRuleChainIds.push(ruleChain.id.id)))
+    ).subscribe();
+    return this.ruleChainService.getRuleChains(pageLink, ruleChainType.edge).pipe(
+      map((response) => {
+        response.data.map(ruleChain =>
+          ruleChain.isDefault = defaultEdgeRuleChainIds.some(id => ruleChain.id.id.includes(id)));
+        return response;
+      })
+    )
   }
 
 }
