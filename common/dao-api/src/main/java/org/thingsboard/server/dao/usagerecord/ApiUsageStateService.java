@@ -24,5 +24,5 @@ public interface ApiUsageStateService {
 
     void deleteApiUsageStateByTenantId(TenantId tenantId);
 
-    void createDefaultApiUsageState(TenantId id);
+    ApiUsageState createDefaultApiUsageState(TenantId id);
 }

@@ -49,14 +49,14 @@ public class ApiApiUsageStateServiceImpl extends AbstractEntityService implement
     }
 
     @Override
-    public void createDefaultApiUsageState(TenantId tenantId) {
+    public ApiUsageState createDefaultApiUsageState(TenantId tenantId) {
         log.trace("Executing createDefaultUsageRecord [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         ApiUsageState apiUsageState = new ApiUsageState();
         apiUsageState.setTenantId(tenantId);
         apiUsageState.setEntityId(tenantId);
         apiUsageStateValidator.validate(apiUsageState, ApiUsageState::getTenantId);
-        apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
+        return apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
     }
 
     @Override

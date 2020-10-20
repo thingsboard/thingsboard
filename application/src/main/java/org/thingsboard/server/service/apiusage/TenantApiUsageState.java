@@ -18,30 +18,65 @@ package org.thingsboard.server.service.apiusage;
 import lombok.Getter;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TenantApiUsageState {
 
-    private final Map<ApiUsageRecordKey, Long> values = new ConcurrentHashMap<>();
+    private final Map<ApiUsageRecordKey, Long> currentCycleValues = new ConcurrentHashMap<>();
+    private final Map<ApiUsageRecordKey, Long> currentHourValues = new ConcurrentHashMap<>();
+
     @Getter
     private final EntityId entityId;
     @Getter
-    private volatile long currentMonthTs;
+    private volatile long currentCycleTs;
+    @Getter
+    private volatile long nextCycleTs;
+    @Getter
+    private volatile long currentHourTs;
 
-    public TenantApiUsageState(long currentMonthTs, EntityId entityId) {
+    public TenantApiUsageState(EntityId entityId) {
         this.entityId = entityId;
-        this.currentMonthTs = currentMonthTs;
+        this.currentCycleTs = SchedulerUtils.getStartOfCurrentMonth();
+        this.nextCycleTs = SchedulerUtils.getStartOfNextMonth();
+        this.currentHourTs = SchedulerUtils.getStartOfCurrentHour();
     }
 
     public void put(ApiUsageRecordKey key, Long value) {
-        values.put(key, value);
+        currentCycleValues.put(key, value);
+    }
+
+    public void putHourly(ApiUsageRecordKey key, Long value) {
+        currentHourValues.put(key, value);
     }
 
     public long add(ApiUsageRecordKey key, long value) {
-        long result = values.getOrDefault(key, 0L) + value;
-        values.put(key, result);
+        long result = currentCycleValues.getOrDefault(key, 0L) + value;
+        currentCycleValues.put(key, result);
         return result;
     }
+
+    public long addToHourly(ApiUsageRecordKey key, long value) {
+        long result = currentHourValues.getOrDefault(key, 0L) + value;
+        currentHourValues.put(key, result);
+        return result;
+    }
+
+    public void setHour(long currentHourTs) {
+        this.currentHourTs = currentHourTs;
+        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+            currentHourValues.put(key, 0L);
+        }
+    }
+
+    public void setCycles(long currentCycleTs, long nextCycleTs) {
+        this.currentCycleTs = currentCycleTs;
+        this.nextCycleTs = nextCycleTs;
+        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+            currentCycleValues.put(key, 0L);
+        }
+    }
+
 }
