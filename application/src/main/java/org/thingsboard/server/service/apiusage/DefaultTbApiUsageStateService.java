@@ -62,7 +62,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
     @Value("${usage.stats.report.enabled:true}")
     private boolean enabled;
 
-    @Value("${usage.stats.check.cycle:6000}")
+    @Value("${usage.stats.check.cycle:60000}")
     private long nextCycleCheckInterval;
 
     private final Lock updateLock = new ReentrantLock();
