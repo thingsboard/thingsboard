@@ -422,6 +422,7 @@
         "devices": "Customer Devices",
         "entity-views": "Customer Entity Views",
         "assets": "Customer Assets",
+        "edges": "Customer Edges",
         "public-dashboards": "Public Dashboards",
         "public-devices": "Public Devices",
         "public-assets": "Public Assets",
@@ -436,6 +437,8 @@
         "manage-public-dashboards": "Manage public dashboards",
         "manage-customer-assets": "Manage customer assets",
         "manage-public-assets": "Manage public assets",
+        "manage-customer-edges": "Manage customer edges",
+        "manage-public-edges": "Manage customer edges",
         "add-customer-text": "Add new customer",
         "no-customers-text": "No customers found",
         "customer-details": "Customer details",
@@ -446,6 +449,7 @@
         "delete-customers-text": "Be careful, after the confirmation all selected customers will be removed and all related data will become unrecoverable.",
         "manage-users": "Manage users",
         "manage-assets": "Manage assets",
+        "manage-edges": "Manage edges",
         "manage-devices": "Manage devices",
         "manage-dashboards": "Manage dashboards",
         "title": "Title",
@@ -980,7 +984,9 @@
       "set-root-rule-chain-to-edges-text": "Set root rule chain for { count, plural, 1 {1 edge} other {# edges} }",
       "status": "Received by edge",
       "success": "Deployed",
-      "failed": "Pending"
+      "failed": "Pending",
+      "search": "Search edges",
+      "selected-edges": "{ count, plural, 1 {1 edge} other {# edges} } selected"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",

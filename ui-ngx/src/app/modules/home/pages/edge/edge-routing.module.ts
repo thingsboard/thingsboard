@@ -40,7 +40,7 @@ const routes: Routes = [
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          edgeScope: 'tenant'
+          edgesType: 'tenant'
         },
         resolve: {
           entitiesTableConfig: EdgesTableConfigResolver

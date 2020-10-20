@@ -95,7 +95,18 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
         icon: 'dashboard',
         isEnabled: (customer) => true,
         onAction: ($event, entity) => this.manageCustomerDashboards($event, entity)
-      }
+      },
+      {
+        name: this.translate.instant('customer.manage-customer-edges'),
+        nameFunction: (customer) => {
+          return customer.additionalInfo && customer.additionalInfo.isPublic
+            ? this.translate.instant('customer.manage-public-edges')
+            : this.translate.instant('customer.manage-customer-edges');
+        },
+        icon: 'router',
+        isEnabled: (customer) => true,
+        onAction: ($event, entity) => this.manageCustomerEdges($event, entity)
+      },
     );
 
     this.config.deleteEntityTitle = customer => this.translate.instant('customer.delete-customer-title', { customerTitle: customer.title });
@@ -145,6 +156,13 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
       $event.stopPropagation();
     }
     this.router.navigateByUrl(`customers/${customer.id.id}/dashboards`);
+  }
+
+  manageCustomerEdges($event: Event, customer: Customer) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(`customers/${customer.id.id}/edges`);
   }
 
   onCustomerAction(action: EntityAction<Customer>): boolean {

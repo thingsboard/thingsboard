@@ -36,7 +36,6 @@ export interface Edge extends BaseData<EdgeId> {
 export interface EdgeInfo extends Edge {
   customerTitle: string;
   customerIsPublic: boolean;
-  // assignedCustomers?: Array<ShortCustomerInfo> //TODO: deaflynx check usage
 }
 
 export interface EdgeSearchQuery extends EntitySearchQuery {

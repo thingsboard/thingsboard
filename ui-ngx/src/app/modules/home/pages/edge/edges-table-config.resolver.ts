@@ -107,7 +107,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<EdgeInfo>> {
     const routeParams = route.params;
     this.config.componentsData = {
-      edgeScope: route.data.edgeScope,
+      edgeScope: route.data.edgesType,
       edgeType: ''
     };
     this.customerId = routeParams.customerId;
