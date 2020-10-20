@@ -119,7 +119,6 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         deviceService.unassignCustomerDevices(customer.getTenantId(), customerId);
         edgeService.unassignCustomerEdges(customer.getTenantId(), customerId);
         userService.deleteCustomerUsers(customer.getTenantId(), customerId);
-        edgeService.unassignCustomerEdges(customer.getTenantId(), customerId);
         deleteEntityRelations(tenantId, customerId);
         customerDao.removeById(tenantId, customerId.getId());
     }
