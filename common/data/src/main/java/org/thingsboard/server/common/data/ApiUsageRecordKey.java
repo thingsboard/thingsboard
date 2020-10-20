@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
-public enum UsageRecordKey {
+public enum ApiUsageRecordKey {
 
     MSG_COUNT,
     MSG_BYTES_COUNT,

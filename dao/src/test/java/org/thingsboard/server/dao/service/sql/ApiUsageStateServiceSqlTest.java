@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.usagestats;
+package org.thingsboard.server.dao.service.sql;
 
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.dao.service.BaseApiUsageStateServiceTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-@Service
-public class DefaultTbUsageStatsService implements TbUsageStatsService {
-    @Override
-    public void process(TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg> msg, TbCallback callback) {
-        
-    }
-
+@DaoSqlTest
+public class ApiUsageStateServiceSqlTest extends BaseApiUsageStateServiceTest {
 }

@@ -17,13 +17,12 @@ package org.thingsboard.server.queue.usagestats;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.UsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
-import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -46,7 +45,7 @@ public class DefaultTbUsageStatsClient implements TbUsageStatsClient {
     @Value("${usage.stats.report.interval:600}")
     private int interval;
 
-    private final ConcurrentMap<TenantId, AtomicLong>[] values = new ConcurrentMap[UsageRecordKey.values().length];
+    private final ConcurrentMap<TenantId, AtomicLong>[] values = new ConcurrentMap[ApiUsageRecordKey.values().length];
     private final PartitionService partitionService;
     private final SchedulerComponent scheduler;
     private final TbQueueProducerProvider producerProvider;
@@ -62,7 +61,7 @@ public class DefaultTbUsageStatsClient implements TbUsageStatsClient {
     private void init() {
         if (enabled) {
             msgProducer = this.producerProvider.getTbUsageStatsMsgProducer();
-            for (UsageRecordKey key : UsageRecordKey.values()) {
+            for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
                 values[key.ordinal()] = new ConcurrentHashMap<>();
             }
             scheduler.scheduleWithFixedDelay(this::reportStats, new Random().nextInt(interval), interval, TimeUnit.SECONDS);
@@ -72,7 +71,7 @@ public class DefaultTbUsageStatsClient implements TbUsageStatsClient {
     private void reportStats() {
         ConcurrentMap<TenantId, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
 
-        for (UsageRecordKey key : UsageRecordKey.values()) {
+        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
             values[key.ordinal()].forEach(((tenantId, atomicLong) -> {
                 long value = atomicLong.getAndSet(0);
                 if (value > 0) {
@@ -95,7 +94,7 @@ public class DefaultTbUsageStatsClient implements TbUsageStatsClient {
     }
 
     @Override
-    public void report(TenantId tenantId, UsageRecordKey key, long value) {
+    public void report(TenantId tenantId, ApiUsageRecordKey key, long value) {
         if (enabled) {
             ConcurrentMap<TenantId, AtomicLong> map = values[key.ordinal()];
             AtomicLong atomicValue = map.computeIfAbsent(tenantId, id -> new AtomicLong());

@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.usagestats;
+package org.thingsboard.server.service.apiusage;
 
+import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
-public interface TbUsageStatsService {
+@Service
+public class DefaultTbUsageStatsService implements TbUsageStatsService {
+    @Override
+    public void process(TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg> msg, TbCallback callback) {
 
-    void process(TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg> msg, TbCallback callback);
+    }
+
 }

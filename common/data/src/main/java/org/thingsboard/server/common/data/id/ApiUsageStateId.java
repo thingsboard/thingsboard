@@ -22,21 +22,21 @@ import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
 
-public class UsageRecordId extends UUIDBased implements EntityId {
+public class ApiUsageStateId extends UUIDBased implements EntityId {
 
     @JsonCreator
-    public UsageRecordId(@JsonProperty("id") UUID id) {
+    public ApiUsageStateId(@JsonProperty("id") UUID id) {
         super(id);
     }
 
-    public static UsageRecordId fromString(String userId) {
-        return new UsageRecordId(UUID.fromString(userId));
+    public static ApiUsageStateId fromString(String userId) {
+        return new ApiUsageStateId(UUID.fromString(userId));
     }
 
     @JsonIgnore
     @Override
     public EntityType getEntityType() {
-        return EntityType.USAGE_RECORD;
+        return EntityType.API_USAGE_STATE;
     }
 
 }

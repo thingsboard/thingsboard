@@ -15,24 +15,21 @@
  */
 package org.thingsboard.server.dao.usagerecord;
 
-import org.thingsboard.server.common.data.UsageRecord;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.UUID;
 
-public interface UsageRecordDao extends Dao<UsageRecord> {
+public interface ApiUsageStateDao extends Dao<ApiUsageState> {
 
     /**
      * Save or update usage record object
      *
-     * @param usageRecord the usage record
+     * @param apiUsageState the usage record
      * @return saved usage record entity
      */
-    UsageRecord save(TenantId tenantId, UsageRecord usageRecord);
+    ApiUsageState save(TenantId tenantId, ApiUsageState apiUsageState);
 
     /**
      * Find usage record by tenantId.
@@ -40,12 +37,12 @@ public interface UsageRecordDao extends Dao<UsageRecord> {
      * @param tenantId the tenantId
      * @return the corresponding usage record
      */
-    UsageRecord findTenantUsageRecord(UUID tenantId);
+    ApiUsageState findTenantApiUsageState(UUID tenantId);
 
     /**
      * Delete usage record by tenantId.
      *
      * @param tenantId the tenantId
      */
-    void deleteUsageRecordsByTenantId(TenantId tenantId);
+    void deleteApiUsageStateByTenantId(TenantId tenantId);
 }

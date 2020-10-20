@@ -62,7 +62,7 @@ import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
-import org.thingsboard.server.service.usagestats.TbUsageStatsService;
+import org.thingsboard.server.service.apiusage.TbUsageStatsService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;

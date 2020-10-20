@@ -441,10 +441,10 @@ public class ModelConstants {
     /**
      * Usage Record constants.
      */
-    public static final String UR_TABLE_NAME = "usage_record";
-    public static final String UR_TENANT_ID_COLUMN = TENANT_ID_PROPERTY;
-    public static final String UR_ENTITY_TYPE_COLUMN = ENTITY_TYPE_COLUMN;
-    public static final String UR_ENTITY_ID_COLUMN = ENTITY_ID_COLUMN;
+    public static final String API_USAGE_STATE_TABLE_NAME = "api_usage_state";
+    public static final String API_USAGE_STATE_TENANT_ID_COLUMN = TENANT_ID_PROPERTY;
+    public static final String API_USAGE_STATE_ENTITY_TYPE_COLUMN = ENTITY_TYPE_COLUMN;
+    public static final String API_USAGE_STATE_ENTITY_ID_COLUMN = ENTITY_ID_COLUMN;
 
     /**
      * Cassandra attributes and timeseries constants.

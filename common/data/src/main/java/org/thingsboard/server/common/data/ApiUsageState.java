@@ -19,27 +19,26 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UsageRecordId;
-import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.id.ApiUsageStateId;
 
 @ToString
 @EqualsAndHashCode(callSuper = true)
-public class UsageRecord extends BaseData<UsageRecordId> implements HasTenantId {
+public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenantId {
 
     private static final long serialVersionUID = 8250339805336035966L;
 
     private TenantId tenantId;
     private EntityId entityId;
 
-    public UsageRecord() {
+    public ApiUsageState() {
         super();
     }
 
-    public UsageRecord(UsageRecordId id) {
+    public ApiUsageState(ApiUsageStateId id) {
         super(id);
     }
 
-    public UsageRecord(UsageRecord ur) {
+    public ApiUsageState(ApiUsageState ur) {
         super(ur);
         this.tenantId = ur.getTenantId();
         this.entityId = ur.getEntityId();

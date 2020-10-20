@@ -15,12 +15,12 @@
  */
 package org.thingsboard.server.queue.usagestats;
 
-import org.thingsboard.server.common.data.UsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.TenantId;
 
 public interface TbUsageStatsClient {
 
-    void report(TenantId tenantId, UsageRecordKey key, long value);
+    void report(TenantId tenantId, ApiUsageRecordKey key, long value);
 
 
 }

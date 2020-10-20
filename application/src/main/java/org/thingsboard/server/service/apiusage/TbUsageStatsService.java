@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.usagerecord;
+package org.thingsboard.server.service.apiusage;
 
-import org.thingsboard.server.common.data.UsageRecord;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
-public interface UsageRecordService {
+public interface TbUsageStatsService {
 
-    UsageRecord findTenantUsageRecord(TenantId tenantId);
-
-    void deleteUsageRecordsByTenantId(TenantId tenantId);
-
-    void createDefaultUsageRecord(TenantId id);
+    void process(TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg> msg, TbCallback callback);
 }
