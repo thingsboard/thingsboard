@@ -84,6 +84,7 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
   }
 
   writeValue(value: DeviceProfileTransportConfiguration | null): void {
+    debugger
     this.transportType = value?.type;
     const configuration = deepClone(value);
     if (configuration) {
@@ -93,6 +94,7 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
   }
 
   private updateModel() {
+    debugger
     let configuration: DeviceProfileTransportConfiguration = null;
     if (this.deviceProfileTransportConfigurationFormGroup.valid) {
       configuration = this.deviceProfileTransportConfigurationFormGroup.getRawValue().configuration;

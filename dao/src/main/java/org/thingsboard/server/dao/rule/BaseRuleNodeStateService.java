@@ -68,6 +68,17 @@ public class BaseRuleNodeStateService extends AbstractEntityService implements R
         return saveOrUpdate(tenantId, ruleNodeState, false);
     }
 
+    @Override
+    public void removeByRuleNodeId(TenantId tenantId, RuleNodeId ruleNodeId) {
+        if (tenantId == null) {
+            throw new DataValidationException("Tenant id should be specified!.");
+        }
+        if (ruleNodeId == null) {
+            throw new DataValidationException("Rule node id should be specified!.");
+        }
+        ruleNodeStateDao.removeByRuleNodeId(ruleNodeId.getId());
+    }
+
     public RuleNodeState saveOrUpdate(TenantId tenantId, RuleNodeState ruleNodeState, boolean update) {
         try {
             if (update) {

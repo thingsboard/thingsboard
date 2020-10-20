@@ -47,6 +47,7 @@ import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import java.util.List;
 import java.util.Optional;
@@ -76,9 +77,7 @@ public class TenantActor extends RuleChainManagerActor {
                 // This Service may be started for specific tenant only.
                 Optional<TenantId> isolatedTenantId = systemContext.getServiceInfoProvider().getIsolatedTenant();
 
-                // TODO: Tenant Profile from cache
-
-                TenantProfile tenantProfile = systemContext.getTenantProfileService().findTenantProfileById(tenantId, tenant.getTenantProfileId());
+                TenantProfile tenantProfile = systemContext.getTenantProfileCache().get(tenant.getTenantProfileId());
 
                 isRuleEngineForCurrentTenant = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
                 isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
@@ -116,6 +115,9 @@ public class TenantActor extends RuleChainManagerActor {
             if (msg.getMsgType().equals(MsgType.QUEUE_TO_RULE_ENGINE_MSG)) {
                 QueueToRuleEngineMsg queueMsg = (QueueToRuleEngineMsg) msg;
                 queueMsg.getTbMsg().getCallback().onSuccess();
+            } else if (msg.getMsgType().equals(MsgType.TRANSPORT_TO_DEVICE_ACTOR_MSG)){
+                TransportToDeviceActorMsgWrapper transportMsg = (TransportToDeviceActorMsgWrapper) msg;
+                transportMsg.getCallback().onSuccess();
             }
             return true;
         }

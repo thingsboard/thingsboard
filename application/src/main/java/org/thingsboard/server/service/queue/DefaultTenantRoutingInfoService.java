@@ -25,6 +25,7 @@ import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.discovery.TenantRoutingInfo;
 import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
+import org.thingsboard.server.service.profile.TbTenantProfileCache;
 
 @Slf4j
 @Service
@@ -33,19 +34,18 @@ public class DefaultTenantRoutingInfoService implements TenantRoutingInfoService
 
     private final TenantService tenantService;
 
-    private final TenantProfileService tenantProfileService;
+    private final TbTenantProfileCache tenantProfileCache;
 
-    public DefaultTenantRoutingInfoService(TenantService tenantService, TenantProfileService tenantProfileService) {
+    public DefaultTenantRoutingInfoService(TenantService tenantService, TbTenantProfileCache tenantProfileCache) {
         this.tenantService = tenantService;
-        this.tenantProfileService = tenantProfileService;
+        this.tenantProfileCache = tenantProfileCache;
     }
 
     @Override
     public TenantRoutingInfo getRoutingInfo(TenantId tenantId) {
         Tenant tenant = tenantService.findTenantById(tenantId);
         if (tenant != null) {
-            // TODO: Tenant Profile from cache
-            TenantProfile tenantProfile = tenantProfileService.findTenantProfileById(tenantId, tenant.getTenantProfileId());
+            TenantProfile tenantProfile = tenantProfileCache.get(tenant.getTenantProfileId());
             return new TenantRoutingInfo(tenantId, tenantProfile.isIsolatedTbCore(), tenantProfile.isIsolatedTbRuleEngine());
         } else {
             throw new RuntimeException("Tenant not found!");

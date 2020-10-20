@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.profile;
 
 import com.google.gson.JsonParser;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.profile.state.PersistedAlarmState;
@@ -29,7 +30,6 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleNodeStateId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -53,17 +53,18 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+@Slf4j
 class DeviceState {
 
     private final boolean persistState;
     private final DeviceId deviceId;
+    private final ProfileState deviceProfile;
     private RuleNodeState state;
-    private DeviceProfileState deviceProfile;
     private PersistedDeviceState pds;
-    private DeviceDataSnapshot latestValues;
-    private final ConcurrentMap<String, DeviceProfileAlarmState> alarmStates = new ConcurrentHashMap<>();
+    private DataSnapshot latestValues;
+    private final ConcurrentMap<String, AlarmState> alarmStates = new ConcurrentHashMap<>();
 
-    public DeviceState(TbContext ctx, TbDeviceProfileNodeConfiguration config, DeviceId deviceId, DeviceProfileState deviceProfile, RuleNodeState state) {
+    DeviceState(TbContext ctx, TbDeviceProfileNodeConfiguration config, DeviceId deviceId, ProfileState deviceProfile, RuleNodeState state) {
         this.persistState = config.isPersistAlarmRulesState();
         this.deviceId = deviceId;
         this.deviceProfile = deviceProfile;
@@ -86,7 +87,7 @@ class DeviceState {
         if (pds != null) {
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
                 alarmStates.computeIfAbsent(alarm.getId(),
-                        a -> new DeviceProfileAlarmState(deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+                        a -> new AlarmState(deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
             }
         }
     }
@@ -107,14 +108,20 @@ class DeviceState {
             if (alarmStates.containsKey(alarm.getId())) {
                 alarmStates.get(alarm.getId()).updateState(alarm, getOrInitPersistedAlarmState(alarm));
             } else {
-                alarmStates.putIfAbsent(alarm.getId(), new DeviceProfileAlarmState(deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+                alarmStates.putIfAbsent(alarm.getId(), new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
             }
         }
     }
 
     public void harvestAlarms(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
-        for (DeviceProfileAlarmState state : alarmStates.values()) {
-            state.process(ctx, ts);
+        log.debug("[{}] Going to harvest alarms: {}", ctx.getSelfId(), ts);
+        boolean stateChanged = false;
+        for (AlarmState state : alarmStates.values()) {
+            stateChanged |= state.process(ctx, ts);
+        }
+        if (persistState && stateChanged) {
+            state.setStateData(JacksonUtil.toString(pds));
+            state = ctx.saveRuleNodeState(state);
         }
     }
 
@@ -146,8 +153,8 @@ class DeviceState {
         boolean stateChanged = false;
         Alarm alarmNf = JacksonUtil.fromString(msg.getData(), Alarm.class);
         for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
-            DeviceProfileAlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
-                    a -> new DeviceProfileAlarmState(deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+            AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
+                    a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
             stateChanged |= alarmState.processAlarmClear(ctx, alarmNf);
         }
         ctx.tellSuccess(msg);
@@ -175,9 +182,9 @@ class DeviceState {
             EntityKeyType keyType = getKeyTypeFromScope(scope);
             keys.forEach(key -> latestValues.removeValue(new EntityKey(keyType, key)));
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
-                DeviceProfileAlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
-                        a -> new DeviceProfileAlarmState(deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
-                stateChanged |= alarmState.process(ctx, msg, latestValues);
+                AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
+                        a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+                stateChanged |= alarmState.process(ctx, msg, latestValues, null);
             }
         }
         ctx.tellSuccess(msg);
@@ -192,11 +199,11 @@ class DeviceState {
     private boolean processAttributesUpdate(TbContext ctx, TbMsg msg, Set<AttributeKvEntry> attributes, String scope) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
         if (!attributes.isEmpty()) {
-            merge(latestValues, attributes, scope);
+            SnapshotUpdate update = merge(latestValues, attributes, scope);
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
-                DeviceProfileAlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
-                        a -> new DeviceProfileAlarmState(deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
-                stateChanged |= alarmState.process(ctx, msg, latestValues);
+                AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
+                        a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+                stateChanged |= alarmState.process(ctx, msg, latestValues, update);
             }
         }
         ctx.tellSuccess(msg);
@@ -206,34 +213,47 @@ class DeviceState {
     protected boolean processTelemetry(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToSortedTelemetry(new JsonParser().parse(msg.getData()), TbMsgTimeseriesNode.getTs(msg));
+        // iterate over data by ts (ASC order).
         for (Map.Entry<Long, List<KvEntry>> entry : tsKvMap.entrySet()) {
             Long ts = entry.getKey();
             List<KvEntry> data = entry.getValue();
-            merge(latestValues, ts, data);
-            for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
-                DeviceProfileAlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
-                        a -> new DeviceProfileAlarmState(deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
-                stateChanged |= alarmState.process(ctx, msg, latestValues);
+            SnapshotUpdate update = merge(latestValues, ts, data);
+            if (update.hasUpdate()) {
+                for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
+                    AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
+                            a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+                    stateChanged |= alarmState.process(ctx, msg, latestValues, update);
+                }
             }
         }
         ctx.tellSuccess(msg);
         return stateChanged;
     }
 
-    private void merge(DeviceDataSnapshot latestValues, Long ts, List<KvEntry> data) {
-        latestValues.setTs(ts);
+    private SnapshotUpdate merge(DataSnapshot latestValues, Long newTs, List<KvEntry> data) {
+        Set<EntityKey> keys = new HashSet<>();
         for (KvEntry entry : data) {
-            latestValues.putValue(new EntityKey(EntityKeyType.TIME_SERIES, entry.getKey()), toEntityValue(entry));
+            EntityKey entityKey = new EntityKey(EntityKeyType.TIME_SERIES, entry.getKey());
+            if (latestValues.putValue(entityKey, newTs, toEntityValue(entry))) {
+                keys.add(entityKey);
+            }
         }
+        latestValues.setTs(newTs);
+        return new SnapshotUpdate(EntityKeyType.TIME_SERIES, keys);
     }
 
-    private void merge(DeviceDataSnapshot latestValues, Set<AttributeKvEntry> attributes, String scope) {
-        long ts = latestValues.getTs();
+    private SnapshotUpdate merge(DataSnapshot latestValues, Set<AttributeKvEntry> attributes, String scope) {
+        long newTs = 0;
+        Set<EntityKey> keys = new HashSet<>();
         for (AttributeKvEntry entry : attributes) {
-            ts = Math.max(ts, entry.getLastUpdateTs());
-            latestValues.putValue(new EntityKey(getKeyTypeFromScope(scope), entry.getKey()), toEntityValue(entry));
+            newTs = Math.max(newTs, entry.getLastUpdateTs());
+            EntityKey entityKey = new EntityKey(getKeyTypeFromScope(scope), entry.getKey());
+            if (latestValues.putValue(entityKey, newTs, toEntityValue(entry))) {
+                keys.add(entityKey);
+            }
         }
-        latestValues.setTs(ts);
+        latestValues.setTs(newTs);
+        return new SnapshotUpdate(EntityKeyType.ATTRIBUTE, keys);
     }
 
     private static EntityKeyType getKeyTypeFromScope(String scope) {
@@ -248,14 +268,14 @@ class DeviceState {
         return EntityKeyType.ATTRIBUTE;
     }
 
-    private DeviceDataSnapshot fetchLatestValues(TbContext ctx, EntityId originator) throws ExecutionException, InterruptedException {
+    private DataSnapshot fetchLatestValues(TbContext ctx, EntityId originator) throws ExecutionException, InterruptedException {
         Set<EntityKey> entityKeysToFetch = deviceProfile.getEntityKeys();
-        DeviceDataSnapshot result = new DeviceDataSnapshot(entityKeysToFetch);
+        DataSnapshot result = new DataSnapshot(entityKeysToFetch);
         addEntityKeysToSnapshot(ctx, originator, entityKeysToFetch, result);
         return result;
     }
 
-    private void addEntityKeysToSnapshot(TbContext ctx, EntityId originator, Set<EntityKey> entityKeysToFetch, DeviceDataSnapshot result) throws InterruptedException, ExecutionException {
+    private void addEntityKeysToSnapshot(TbContext ctx, EntityId originator, Set<EntityKey> entityKeysToFetch, DataSnapshot result) throws InterruptedException, ExecutionException {
         Set<String> serverAttributeKeys = new HashSet<>();
         Set<String> clientAttributeKeys = new HashSet<>();
         Set<String> sharedAttributeKeys = new HashSet<>();
@@ -291,16 +311,16 @@ class DeviceState {
                     if (device != null) {
                         switch (key) {
                             case EntityKeyMapping.NAME:
-                                result.putValue(entityKey, EntityKeyValue.fromString(device.getName()));
+                                result.putValue(entityKey, device.getCreatedTime(), EntityKeyValue.fromString(device.getName()));
                                 break;
                             case EntityKeyMapping.TYPE:
-                                result.putValue(entityKey, EntityKeyValue.fromString(device.getType()));
+                                result.putValue(entityKey, device.getCreatedTime(), EntityKeyValue.fromString(device.getType()));
                                 break;
                             case EntityKeyMapping.CREATED_TIME:
-                                result.putValue(entityKey, EntityKeyValue.fromLong(device.getCreatedTime()));
+                                result.putValue(entityKey, device.getCreatedTime(), EntityKeyValue.fromLong(device.getCreatedTime()));
                                 break;
                             case EntityKeyMapping.LABEL:
-                                result.putValue(entityKey, EntityKeyValue.fromString(device.getLabel()));
+                                result.putValue(entityKey, device.getCreatedTime(), EntityKeyValue.fromString(device.getLabel()));
                                 break;
                         }
                     }
@@ -312,7 +332,7 @@ class DeviceState {
             List<TsKvEntry> data = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), originator, latestTsKeys).get();
             for (TsKvEntry entry : data) {
                 if (entry.getValue() != null) {
-                    result.putValue(new EntityKey(EntityKeyType.TIME_SERIES, entry.getKey()), toEntityValue(entry));
+                    result.putValue(new EntityKey(EntityKeyType.TIME_SERIES, entry.getKey()), entry.getTs(), toEntityValue(entry));
                 }
             }
         }
@@ -330,13 +350,13 @@ class DeviceState {
         }
     }
 
-    private void addToSnapshot(DeviceDataSnapshot snapshot, Set<String> commonAttributeKeys, List<AttributeKvEntry> data) {
+    private void addToSnapshot(DataSnapshot snapshot, Set<String> commonAttributeKeys, List<AttributeKvEntry> data) {
         for (AttributeKvEntry entry : data) {
             if (entry.getValue() != null) {
                 EntityKeyValue value = toEntityValue(entry);
-                snapshot.putValue(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, entry.getKey()), value);
+                snapshot.putValue(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, entry.getKey()), entry.getLastUpdateTs(), value);
                 if (commonAttributeKeys.contains(entry.getKey())) {
-                    snapshot.putValue(new EntityKey(EntityKeyType.ATTRIBUTE, entry.getKey()), value);
+                    snapshot.putValue(new EntityKey(EntityKeyType.ATTRIBUTE, entry.getKey()), entry.getLastUpdateTs(), value);
                 }
             }
         }

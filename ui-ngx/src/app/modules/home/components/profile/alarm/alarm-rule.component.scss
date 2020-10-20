@@ -14,8 +14,20 @@
  * limitations under the License.
  */
 :host {
+  min-width: 0;
   .row {
     margin-top: 1em;
+  }
+  .tb-alarm-rule-details {
+    padding: 4px;
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    &.title {
+      opacity: 0.7;
+      overflow: visible;
+    }
   }
 }
 

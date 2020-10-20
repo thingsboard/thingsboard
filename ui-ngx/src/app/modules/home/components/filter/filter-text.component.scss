@@ -21,6 +21,11 @@
     }
     &.required {
       color: #f44336;
+      padding: 0 4px;
+    }
+    &.nowrap {
+      white-space: nowrap;
+      overflow: hidden;
     }
   }
 }
@@ -62,7 +67,6 @@
       font-size: 0.9em;
     }
     .tb-filter-complex-operation {
-      text-transform: uppercase;
       font-weight: bold;
     }
     .tb-filter-dynamic-value {

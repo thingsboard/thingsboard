@@ -84,7 +84,7 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
 
         client.subscribe(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, MqttQoS.AT_MOST_ONCE.value());
 
-        Thread.sleep(2000);
+        Thread.sleep(1000);
 
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         onUpdateCallback.getLatch().await(3, TimeUnit.SECONDS);
@@ -127,14 +127,15 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
 
         publishMqttMsg(client, connectPayloadBytes, MqttTopics.GATEWAY_CONNECT_TOPIC);
 
-        Thread.sleep(1000);
+        Device savedDevice = doExecuteWithRetriesAndInterval(() -> doGet("/api/tenant/devices?deviceName=" + "Gateway Device Subscribe to attribute updates", Device.class),
+                20,
+                100);
 
-        Device savedDevice = doGet("/api/tenant/devices?deviceName=" + "Gateway Device Subscribe to attribute updates", Device.class);
         assertNotNull(savedDevice);
 
         client.subscribe(MqttTopics.GATEWAY_ATTRIBUTES_TOPIC, MqttQoS.AT_MOST_ONCE.value());
 
-        Thread.sleep(2000);
+        Thread.sleep(1000);
 
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         onUpdateCallback.getLatch().await(3, TimeUnit.SECONDS);

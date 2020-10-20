@@ -130,6 +130,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   writeValue(value: Lwm2mDeviceProfileTransportConfiguration | null): void {
+    debugger
     this.lwm2mDeviceProfileTransportConfFormGroup.patchValue({
         configurationJson: value
       },

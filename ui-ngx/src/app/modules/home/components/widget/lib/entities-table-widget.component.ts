@@ -206,11 +206,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   }
 
   public onDataUpdated() {
-    this.ngZone.run(() => {
-      this.updateTitle(true);
-      this.entityDatasource.dataUpdated();
-      this.ctx.detectChanges();
-    });
+    this.updateTitle(true);
+    this.entityDatasource.dataUpdated();
   }
 
   public pageLinkSortDirection(): SortDirection {
@@ -355,7 +352,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         }
         dataKeys.push(dataKey);
 
-        dataKey.title = this.utils.customTranslation(dataKey.label, dataKey.label);
+        dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
+        dataKey.title = dataKey.label;
         dataKey.def = 'def' + this.columns.length;
         const keySettings: TableWidgetDataKeySettings = dataKey.settings;
         if (dataKey.type === DataKeyType.entityField &&
@@ -377,7 +375,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
 
     if (this.settings.defaultSortOrder && this.settings.defaultSortOrder.length) {
-      this.defaultSortOrder = this.settings.defaultSortOrder;
+      this.defaultSortOrder = this.utils.customTranslation(this.settings.defaultSortOrder, this.settings.defaultSortOrder);
     }
 
     this.pageLink.sortOrder = entityDataSortOrderFromString(this.defaultSortOrder, this.columns);
@@ -488,6 +486,10 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     return column.def;
   }
 
+  public trackByRowIndex(index: number) {
+    return index;
+  }
+
   public headerStyle(key: EntityColumn): any {
     const columnWidth = this.columnWidth[key.def];
     return widthStyle(columnWidth);
@@ -529,7 +531,19 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       } else {
         content = this.defaultContent(key, contentInfo, value);
       }
-      return isDefined(content) ? this.domSanitizer.bypassSecurityTrustHtml(content) : '';
+
+      if (!isDefined(content)) {
+        return '';
+
+      } else {
+        switch (typeof content) {
+          case 'string':
+            return this.domSanitizer.bypassSecurityTrustHtml(content);
+          default:
+            return content;
+        }
+      }
+
     } else {
       return '';
     }

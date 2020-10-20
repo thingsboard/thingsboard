@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -112,6 +114,8 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_profile_name_unq_key")) {
                 throw new DataValidationException("Device profile with such name already exists!");
+            } else if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_provision_key_unq_key")) {
+                    throw new DataValidationException("Device profile with such provision device key already exists!");
             } else {
                 throw t;
             }
@@ -178,11 +182,11 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     }
 
     @Override
-    public PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink) {
+    public PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink, String transportType) {
         log.trace("Executing findDeviceProfileInfos tenantId [{}], pageLink [{}]", tenantId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validatePageLink(pageLink);
-        return deviceProfileDao.findDeviceProfileInfos(tenantId, pageLink);
+        return deviceProfileDao.findDeviceProfileInfos(tenantId, pageLink, transportType);
     }
 
     @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{#tenantId.id, #name}")
@@ -210,12 +214,15 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         deviceProfile.setName(profileName);
         deviceProfile.setType(DeviceProfileType.DEFAULT);
         deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
+        deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
         deviceProfile.setDescription("Default device profile");
         DeviceProfileData deviceProfileData = new DeviceProfileData();
         DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
         DefaultDeviceProfileTransportConfiguration transportConfiguration = new DefaultDeviceProfileTransportConfiguration();
+        DisabledDeviceProfileProvisionConfiguration provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(null);
         deviceProfileData.setConfiguration(configuration);
         deviceProfileData.setTransportConfiguration(transportConfiguration);
+        deviceProfileData.setProvisionConfiguration(provisionConfiguration);
         deviceProfile.setProfileData(deviceProfileData);
         return saveDeviceProfile(deviceProfile);
     }

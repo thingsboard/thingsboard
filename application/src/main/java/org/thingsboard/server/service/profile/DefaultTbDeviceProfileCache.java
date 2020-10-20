@@ -21,14 +21,17 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 @Service
 @Slf4j
@@ -40,6 +43,7 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
 
     private final ConcurrentMap<DeviceProfileId, DeviceProfile> deviceProfilesMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, DeviceProfileId> devicesMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, ConcurrentMap<EntityId, Consumer<DeviceProfile>>> listeners = new ConcurrentHashMap<>();
 
     public DefaultTbDeviceProfileCache(DeviceProfileService deviceProfileService, DeviceService deviceService) {
         this.deviceProfileService = deviceProfileService;
@@ -51,18 +55,20 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
         DeviceProfile profile = deviceProfilesMap.get(deviceProfileId);
         if (profile == null) {
             deviceProfileFetchLock.lock();
-            profile = deviceProfilesMap.get(deviceProfileId);
-            if (profile == null) {
-                try {
+            try {
+                profile = deviceProfilesMap.get(deviceProfileId);
+                if (profile == null) {
                     profile = deviceProfileService.findDeviceProfileById(tenantId, deviceProfileId);
                     if (profile != null) {
                         deviceProfilesMap.put(deviceProfileId, profile);
+                        log.debug("[{}] Fetch device profile into cache: {}", profile.getId(), profile);
                     }
-                } finally {
-                    deviceProfileFetchLock.unlock();
                 }
+            } finally {
+                deviceProfileFetchLock.unlock();
             }
         }
+        log.trace("[{}] Found device profile in cache: {}", deviceProfileId, profile);
         return profile;
     }
 
@@ -74,6 +80,8 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
             if (device != null) {
                 profileId = device.getDeviceProfileId();
                 devicesMap.put(deviceId, profileId);
+            } else {
+                return null;
             }
         }
         return get(tenantId, profileId);
@@ -83,17 +91,54 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
     public void put(DeviceProfile profile) {
         if (profile.getId() != null) {
             deviceProfilesMap.put(profile.getId(), profile);
+            log.debug("[{}] pushed device profile to cache: {}", profile.getId(), profile);
+            notifyListeners(profile);
         }
     }
 
     @Override
-    public void evict(DeviceProfileId profileId) {
-        deviceProfilesMap.remove(profileId);
+    public void evict(TenantId tenantId, DeviceProfileId profileId) {
+        DeviceProfile oldProfile = deviceProfilesMap.remove(profileId);
+        log.debug("[{}] evict device profile from cache: {}", profileId, oldProfile);
+        DeviceProfile newProfile = get(tenantId, profileId);
+        if (newProfile != null) {
+            notifyListeners(newProfile);
+        }
     }
 
     @Override
     public void evict(DeviceId deviceId) {
         devicesMap.remove(deviceId);
+    }
+
+    @Override
+    public void addListener(TenantId tenantId, EntityId listenerId, Consumer<DeviceProfile> listener) {
+        listeners.computeIfAbsent(tenantId, id -> new ConcurrentHashMap<>()).put(listenerId, listener);
+    }
+
+    @Override
+    public DeviceProfile find(DeviceProfileId deviceProfileId) {
+        return deviceProfileService.findDeviceProfileById(TenantId.SYS_TENANT_ID, deviceProfileId);
+    }
+
+    @Override
+    public DeviceProfile findOrCreateDeviceProfile(TenantId tenantId, String profileName) {
+        return deviceProfileService.findOrCreateDeviceProfile(tenantId, profileName);
+    }
+
+    @Override
+    public void removeListener(TenantId tenantId, EntityId listenerId) {
+        ConcurrentMap<EntityId, Consumer<DeviceProfile>> tenantListeners = listeners.get(tenantId);
+        if (tenantListeners != null) {
+            tenantListeners.remove(listenerId);
+        }
+    }
+
+    private void notifyListeners(DeviceProfile profile) {
+        ConcurrentMap<EntityId, Consumer<DeviceProfile>> tenantListeners = listeners.get(profile.getTenantId());
+        if (tenantListeners != null) {
+            tenantListeners.forEach((id, listener) -> listener.accept(profile));
+        }
     }
 
 }

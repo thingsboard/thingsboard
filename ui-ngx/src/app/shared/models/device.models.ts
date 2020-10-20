@@ -14,17 +14,19 @@
 /// limitations under the License.
 ///
 
-import { BaseData } from '@shared/models/base-data';
-import { DeviceId } from './id/device-id';
-import { TenantId } from '@shared/models/id/tenant-id';
-import { CustomerId } from '@shared/models/id/customer-id';
-import { DeviceCredentialsId } from '@shared/models/id/device-credentials-id';
-import { EntitySearchQuery } from '@shared/models/relation.models';
-import { DeviceProfileId } from '@shared/models/id/device-profile-id';
-import { RuleChainId } from '@shared/models/id/rule-chain-id';
-import { EntityInfoData } from '@shared/models/entity.models';
-import { KeyFilter } from '@shared/models/query/query.models';
-import { TimeUnit } from '@shared/models/time/time.models';
+import {BaseData} from '@shared/models/base-data';
+import {DeviceId} from './id/device-id';
+import {TenantId} from '@shared/models/id/tenant-id';
+import {CustomerId} from '@shared/models/id/customer-id';
+import {DeviceCredentialsId} from '@shared/models/id/device-credentials-id';
+import {EntitySearchQuery} from '@shared/models/relation.models';
+import {DeviceProfileId} from '@shared/models/id/device-profile-id';
+import {RuleChainId} from '@shared/models/id/rule-chain-id';
+import {EntityInfoData} from '@shared/models/entity.models';
+import {KeyFilter} from '@shared/models/query/query.models';
+import {TimeUnit} from '@shared/models/time/time.models';
+import * as _moment from 'moment-timezone';
+import {AbstractControl, ValidationErrors} from '@angular/forms';
 
 export enum DeviceProfileType {
   DEFAULT = 'DEFAULT'
@@ -39,6 +41,12 @@ export enum DeviceTransportType {
 export enum MqttTransportPayloadType {
   JSON = 'JSON',
   PROTOBUF = 'PROTOBUF'
+}
+
+export enum DeviceProvisionType {
+  DISABLED = 'DISABLED',
+  ALLOW_CREATE_NEW_DEVICES = 'ALLOW_CREATE_NEW_DEVICES',
+  CHECK_PRE_PROVISIONED_DEVICES = 'CHECK_PRE_PROVISIONED_DEVICES'
 }
 
 export interface DeviceConfigurationFormInfo {
@@ -72,6 +80,23 @@ export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, st
   ]
 );
 
+
+export const deviceProvisionTypeTranslationMap = new Map<DeviceProvisionType, string>(
+  [
+    [DeviceProvisionType.DISABLED, 'device-profile.provision-strategy-disabled'],
+    [DeviceProvisionType.ALLOW_CREATE_NEW_DEVICES, 'device-profile.provision-strategy-created-new'],
+    [DeviceProvisionType.CHECK_PRE_PROVISIONED_DEVICES, 'device-profile.provision-strategy-check-pre-provisioned']
+  ]
+);
+
+export const deviceTransportTypeHintMap = new Map<DeviceTransportType, string>(
+  [
+    [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default-hint'],
+    [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt-hint'],
+    [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint']
+  ]
+);
+
 export const mqttTransportPayloadTypeTranslationMap = new Map<MqttTransportPayloadType, string>(
   [
     [MqttTransportPayloadType.JSON, 'device-profile.mqtt-device-payload-type-json'],
@@ -93,14 +118,14 @@ export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportTy
       DeviceTransportType.MQTT,
       {
         hasProfileConfiguration: true,
-        hasDeviceConfiguration: true,
+        hasDeviceConfiguration: false,
       }
     ],
     [
       DeviceTransportType.LWM2M,
       {
         hasProfileConfiguration: true,
-        hasDeviceConfiguration: true,
+        hasDeviceConfiguration: false,
       }
     ]
   ]
@@ -136,6 +161,12 @@ export type DeviceProfileTransportConfigurations = DefaultDeviceProfileTransport
 
 export interface DeviceProfileTransportConfiguration extends DeviceProfileTransportConfigurations {
   type: DeviceTransportType;
+}
+
+export interface DeviceProvisionConfiguration {
+  type: DeviceProvisionType;
+  provisionDeviceSecret?: string;
+  provisionDeviceKey?: string;
 }
 
 export function createDeviceProfileConfiguration(type: DeviceProfileType): DeviceProfileConfiguration {
@@ -201,10 +232,10 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
         const mqttTransportConfiguration: MqttDeviceTransportConfiguration = {};
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
-      case DeviceTransportType.LWM2M:
+      /* case DeviceTransportType.LWM2M:
         const lwm2mTransportConfiguration: Lwm2mDeviceTransportConfiguration = {};
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
-        break;
+        break;*/
     }
   }
   return transportConfiguration;
@@ -236,9 +267,52 @@ export interface AlarmCondition {
   spec?: AlarmConditionSpec;
 }
 
+export enum AlarmScheduleType {
+  ANY_TIME = 'ANY_TIME',
+  SPECIFIC_TIME = 'SPECIFIC_TIME',
+  CUSTOM = 'CUSTOM'
+}
+
+export const AlarmScheduleTypeTranslationMap = new Map<AlarmScheduleType, string>(
+  [
+    [AlarmScheduleType.ANY_TIME, 'device-profile.schedule-any-time'],
+    [AlarmScheduleType.SPECIFIC_TIME, 'device-profile.schedule-specific-time'],
+    [AlarmScheduleType.CUSTOM, 'device-profile.schedule-custom']
+  ]
+);
+
+export interface AlarmSchedule{
+  type: AlarmScheduleType;
+  timezone?: string;
+  daysOfWeek?: number[];
+  startsOn?: number;
+  endsOn?: number;
+  items?: CustomTimeSchedulerItem[];
+}
+
+export interface CustomTimeSchedulerItem{
+  enabled: boolean;
+  dayOfWeek: number;
+  startsOn: number;
+  endsOn: number;
+}
+
 export interface AlarmRule {
   condition: AlarmCondition;
   alarmDetails?: string;
+  schedule?: AlarmSchedule;
+}
+
+export function alarmRuleValidator(control: AbstractControl): ValidationErrors | null {
+  const alarmRule: AlarmRule = control.value;
+  return alarmRuleValid(alarmRule) ? null : {alarmRule: true};
+}
+
+function alarmRuleValid(alarmRule: AlarmRule): boolean {
+  if (!alarmRule || !alarmRule.condition || !alarmRule.condition.condition || !alarmRule.condition.condition.length) {
+    return false;
+  }
+  return true;
 }
 
 export interface DeviceProfileAlarm {
@@ -250,10 +324,39 @@ export interface DeviceProfileAlarm {
   propagateRelationTypes?: Array<string>;
 }
 
+export function deviceProfileAlarmValidator(control: AbstractControl): ValidationErrors | null {
+  const deviceProfileAlarm: DeviceProfileAlarm = control.value;
+  if (deviceProfileAlarm && deviceProfileAlarm.id && deviceProfileAlarm.alarmType &&
+    deviceProfileAlarm.createRules) {
+    const severities = Object.keys(deviceProfileAlarm.createRules);
+    if (severities.length) {
+      let alarmRulesValid = true;
+      for (const severity of severities) {
+        const alarmRule = deviceProfileAlarm.createRules[severity];
+        if (!alarmRuleValid(alarmRule)) {
+          alarmRulesValid = false;
+          break;
+        }
+      }
+      if (alarmRulesValid) {
+        if (deviceProfileAlarm.clearRule && !alarmRuleValid(deviceProfileAlarm.clearRule)) {
+          alarmRulesValid = false;
+        }
+      }
+      if (alarmRulesValid) {
+        return null;
+      }
+    }
+  }
+  return {deviceProfileAlarm: true};
+}
+
+
 export interface DeviceProfileData {
   configuration: DeviceProfileConfiguration;
   transportConfiguration: DeviceProfileTransportConfiguration;
   alarms?: Array<DeviceProfileAlarm>;
+  provisionConfiguration?: DeviceProvisionConfiguration;
 }
 
 export interface DeviceProfile extends BaseData<DeviceProfileId> {
@@ -263,6 +366,8 @@ export interface DeviceProfile extends BaseData<DeviceProfileId> {
   default?: boolean;
   type: DeviceProfileType;
   transportType: DeviceTransportType;
+  provisionType: DeviceProvisionType;
+  provisionDeviceKey?: string;
   defaultRuleChainId?: RuleChainId;
   profileData: DeviceProfileData;
 }
@@ -373,4 +478,63 @@ export enum ClaimResponse {
 export interface ClaimResult {
   device: Device;
   response: ClaimResponse;
+}
+
+export const dayOfWeekTranslations = new Array<string>(
+  'device-profile.schedule-day.monday',
+  'device-profile.schedule-day.tuesday',
+  'device-profile.schedule-day.wednesday',
+  'device-profile.schedule-day.thursday',
+  'device-profile.schedule-day.friday',
+  'device-profile.schedule-day.saturday',
+  'device-profile.schedule-day.sunday'
+);
+
+export function getDayString(day: number): string {
+  switch (day) {
+    case 0:
+      return 'device-profile.schedule-day.monday';
+    case 1:
+      return this.translate.instant('device-profile.schedule-day.tuesday');
+    case 2:
+      return this.translate.instant('device-profile.schedule-day.wednesday');
+    case 3:
+      return this.translate.instant('device-profile.schedule-day.thursday');
+    case 4:
+      return this.translate.instant('device-profile.schedule-day.friday');
+    case 5:
+      return this.translate.instant('device-profile.schedule-day.saturday');
+    case 6:
+      return this.translate.instant('device-profile.schedule-day.sunday');
+  }
+}
+
+export function timeOfDayToUTCTimestamp(date: Date | number): number {
+  if (typeof date === 'number' || date === null) {
+    return 0;
+  }
+  return _moment.utc([1970, 0, 1, date.getHours(), date.getMinutes(), date.getSeconds(), 0]).valueOf();
+}
+
+export function utcTimestampToTimeOfDay(time = 0): Date {
+  return new Date(time + new Date().getTimezoneOffset() * 60 * 1000);
+}
+
+function timeOfDayToMoment(date: Date | number): _moment.Moment {
+  if (typeof date === 'number' || date === null) {
+    return _moment([1970, 0, 1, 0, 0, 0, 0]);
+  }
+  return _moment([1970, 0, 1, date.getHours(), date.getMinutes(), 0, 0]);
+}
+
+export function getAlarmScheduleRangeText(startsOn: Date | number, endsOn: Date | number): string {
+  const start = timeOfDayToMoment(startsOn);
+  const end = timeOfDayToMoment(endsOn);
+  if (start < end) {
+    return `<span><span class="nowrap">${start.format('hh:mm A')}</span> – <span class="nowrap">${end.format('hh:mm A')}</span></span>`;
+  } else if (start.valueOf() === 0 && end.valueOf() === 0 || start.isSame(_moment([1970, 0])) && end.isSame(_moment([1970, 0]))) {
+    return '<span><span class="nowrap">12:00 AM</span> – <span class="nowrap">12:00 PM</span></span>';
+  }
+  return `<span><span class="nowrap">12:00 AM</span> – <span class="nowrap">${end.format('hh:mm A')}</span>` +
+    ` and <span class="nowrap">${start.format('hh:mm A')}</span> – <span class="nowrap">12:00 PM</span></span>`;
 }

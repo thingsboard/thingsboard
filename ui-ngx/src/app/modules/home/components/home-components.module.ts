@@ -90,7 +90,6 @@ import { TenantProfileDialogComponent } from './profile/tenant-profile-dialog.co
 import { TenantProfileDataComponent } from './profile/tenant-profile-data.component';
 import { DefaultDeviceProfileConfigurationComponent } from './profile/device/default-device-profile-configuration.component';
 import { DeviceProfileConfigurationComponent } from './profile/device/device-profile-configuration.component';
-import { DeviceProfileDataComponent } from './profile/device-profile-data.component';
 import { DeviceProfileComponent } from './profile/device-profile.component';
 import { DefaultDeviceProfileTransportConfigurationComponent } from './profile/device/default-device-profile-transport-configuration.component';
 import { DeviceProfileTransportConfigurationComponent } from './profile/device/device-profile-transport-configuration.component';
@@ -102,10 +101,17 @@ import { DeviceProfileAlarmComponent } from './profile/alarm/device-profile-alar
 import { CreateAlarmRulesComponent } from './profile/alarm/create-alarm-rules.component';
 import { AlarmRuleComponent } from './profile/alarm/alarm-rule.component';
 import { AlarmRuleConditionComponent } from './profile/alarm/alarm-rule-condition.component';
-import { AlarmRuleKeyFiltersDialogComponent } from './profile/alarm/alarm-rule-key-filters-dialog.component';
 import { FilterTextComponent } from './filter/filter-text.component';
 import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
 import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
+import { DeviceProfileProvisionConfigurationComponent } from "./profile/device-profile-provision-configuration.component";
+import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component';
+import { DeviceWizardDialogComponent } from './wizard/device-wizard-dialog.component';
+import { DeviceCredentialsComponent } from './device/device-credentials.component';
+import { AlarmScheduleInfoComponent } from './profile/alarm/alarm-schedule-info.component';
+import { AlarmScheduleDialogComponent } from '@home/components/profile/alarm/alarm-schedule-dialog.component';
+import { EditAlarmDetailsDialogComponent } from './profile/alarm/edit-alarm-details-dialog.component';
+import { AlarmRuleConditionDialogComponent } from '@home/components/profile/alarm/alarm-rule-condition-dialog.component';
 import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/device/lwm2m/lwm2m-device-profile-transport-configuration.component';
 import { Lwm2mObjectListComponent } from './profile/device/lwm2m/lwm2m-object-list.component';
 import { Lwm2mObserveAttrTelemetryComponent } from './profile/device/lwm2m/lwm2m-observe-attr-telemetry.component';
@@ -188,17 +194,25 @@ import { Lwm2mDeviceConfigServerComponent } from './profile/device/lwm2m/lwm2m-d
       DeviceProfileConfigurationComponent,
       DefaultDeviceProfileTransportConfigurationComponent,
       MqttDeviceProfileTransportConfigurationComponent,
+      Lwm2mDeviceProfileTransportConfigurationComponent,
       DeviceProfileTransportConfigurationComponent,
       CreateAlarmRulesComponent,
       AlarmRuleComponent,
-      AlarmRuleKeyFiltersDialogComponent,
+      AlarmRuleConditionDialogComponent,
       AlarmRuleConditionComponent,
       DeviceProfileAlarmComponent,
       DeviceProfileAlarmsComponent,
-      DeviceProfileDataComponent,
       DeviceProfileComponent,
       DeviceProfileDialogComponent,
       AddDeviceProfileDialogComponent,
+      RuleChainAutocompleteComponent,
+      AlarmScheduleInfoComponent,
+      DeviceProfileProvisionConfigurationComponent,
+      AlarmScheduleComponent,
+      DeviceWizardDialogComponent,
+      DeviceCredentialsComponent,
+      AlarmScheduleDialogComponent,
+      EditAlarmDetailsDialogComponent,
       RuleChainAutocompleteComponent,
       Lwm2mDeviceProfileTransportConfigurationComponent,
       Lwm2mObjectListComponent,
@@ -274,14 +288,22 @@ import { Lwm2mDeviceConfigServerComponent } from './profile/device/lwm2m/lwm2m-d
     DeviceProfileTransportConfigurationComponent,
     CreateAlarmRulesComponent,
     AlarmRuleComponent,
-    AlarmRuleKeyFiltersDialogComponent,
+    AlarmRuleConditionDialogComponent,
     AlarmRuleConditionComponent,
     DeviceProfileAlarmComponent,
     DeviceProfileAlarmsComponent,
-    DeviceProfileDataComponent,
     DeviceProfileComponent,
     DeviceProfileDialogComponent,
     AddDeviceProfileDialogComponent,
+    RuleChainAutocompleteComponent,
+    DeviceWizardDialogComponent,
+    DeviceCredentialsComponent,
+    AlarmScheduleInfoComponent,
+    AlarmScheduleComponent,
+    AlarmScheduleDialogComponent,
+    EditAlarmDetailsDialogComponent,
+    DeviceProfileProvisionConfigurationComponent,
+    AlarmScheduleComponent,
     RuleChainAutocompleteComponent,
     Lwm2mDeviceProfileTransportConfigurationComponent,
     Lwm2mObjectListComponent,

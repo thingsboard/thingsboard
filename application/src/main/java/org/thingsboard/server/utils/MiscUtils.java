@@ -49,12 +49,43 @@ public class MiscUtils {
     }
 
     public static String constructBaseUrl(HttpServletRequest request) {
-        String scheme = request.getScheme();
+        return String.format("%s://%s:%d",
+                getScheme(request),
+                getDomainName(request),
+                getPort(request));
+    }
 
+    public static String getScheme(HttpServletRequest request){
+        String scheme = request.getScheme();
         String forwardedProto = request.getHeader("x-forwarded-proto");
         if (forwardedProto != null) {
             scheme = forwardedProto;
         }
+        return scheme;
+    }
+
+    public static String getDomainName(HttpServletRequest request){
+        return request.getServerName();
+    }
+
+    public static String getDomainNameAndPort(HttpServletRequest request){
+        String domainName = getDomainName(request);
+        String scheme = getScheme(request);
+        int port = MiscUtils.getPort(request);
+        if (needsPort(scheme, port)) {
+            domainName += ":" + port;
+        }
+        return domainName;
+    }
+
+    private static boolean needsPort(String scheme, int port) {
+        boolean isHttpDefault = "http".equals(scheme.toLowerCase()) && port == 80;
+        boolean isHttpsDefault = "https".equals(scheme.toLowerCase()) && port == 443;
+        return !isHttpDefault && !isHttpsDefault;
+    }
+
+    public static int getPort(HttpServletRequest request){
+        String forwardedProto = request.getHeader("x-forwarded-proto");
 
         int serverPort = request.getServerPort();
         if (request.getHeader("x-forwarded-port") != null) {
@@ -72,11 +103,6 @@ public class MiscUtils {
                     break;
             }
         }
-
-        String baseUrl = String.format("%s://%s:%d",
-                scheme,
-                request.getServerName(),
-                serverPort);
-        return baseUrl;
+        return serverPort;
     }
 }

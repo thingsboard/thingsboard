@@ -16,37 +16,14 @@
 
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
-import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import {
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  FormGroupDirective,
-  NgForm,
-  ValidationErrors,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm } from '@angular/forms';
 import { DeviceService } from '@core/http/device.service';
-import {
-  credentialTypeNames,
-  DeviceCredentialMQTTBasic,
-  DeviceCredentials,
-  DeviceCredentialsType
-} from '@shared/models/device.models';
+import { credentialTypeNames, DeviceCredentials, DeviceCredentialsType } from '@shared/models/device.models';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
-import {SecurityConfigComponent} from "./lwm2m/security-config.component";
-import {
-  DEFAULT_END_POINT,
-  DeviceCredentialsDialogLwm2mData, END_POINT,
-  getDefaultSecurityConfig, JSON_ALL_CONFIG,
-  SecurityConfigModels
-} from "./lwm2m/security-config.models";
-import {TranslateService} from "@ngx-translate/core";
-import {WINDOW} from "../../../../core/services/window.service";
 
 export interface DeviceCredentialsDialogData {
   isReadOnly: boolean;
@@ -59,7 +36,8 @@ export interface DeviceCredentialsDialogData {
   providers: [{provide: ErrorStateMatcher, useExisting: DeviceCredentialsDialogComponent}],
   styleUrls: []
 })
-export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCredentialsDialogComponent, DeviceCredentials> implements OnInit, ErrorStateMatcher {
+export class DeviceCredentialsDialogComponent extends
+  DialogComponent<DeviceCredentialsDialogComponent, DeviceCredentials> implements OnInit, ErrorStateMatcher {
 
   deviceCredentialsFormGroup: FormGroup;
 
@@ -83,11 +61,7 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
               private deviceService: DeviceService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<DeviceCredentialsDialogComponent, DeviceCredentials>,
-              public fb: FormBuilder,
-             private translate: TranslateService,
-             private dialog: MatDialog,
-             @Inject(WINDOW) private window: Window
-              ) {
+              public fb: FormBuilder) {
     super(store, router, dialogRef);
 
     this.isReadOnly = data.isReadOnly;
@@ -95,19 +69,10 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
 
   ngOnInit(): void {
     this.deviceCredentialsFormGroup = this.fb.group({
-      credentialsType: [DeviceCredentialsType.ACCESS_TOKEN],
-      credentialsId: [''],
-      credentialsValue: [''],
-      credentialsBasic: this.fb.group({
-          clientId: ['', [Validators.pattern(/^[A-Za-z0-9]+$/)]],
-          userName: [''],
-          password: ['']
-      }, {validators: this.atLeastOne(Validators.required, ['clientId', 'userName'])})
+      credential: [null]
     });
     if (this.isReadOnly) {
       this.deviceCredentialsFormGroup.disable({emitEvent: false});
-    } else {
-      this.registerDisableOnLoadFormControl(this.deviceCredentialsFormGroup.get('credentialsType'));
     }
     this.loadDeviceCredentials();
   }
@@ -122,77 +87,11 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
     this.deviceService.getDeviceCredentials(this.data.deviceId).subscribe(
       (deviceCredentials) => {
         this.deviceCredentials = deviceCredentials;
-        let credentialsValue = deviceCredentials.credentialsValue;
-        let credentialsBasic = {clientId: null, userName: null, password: null};
-        if (deviceCredentials.credentialsType === DeviceCredentialsType.MQTT_BASIC) {
-          credentialsValue = null;
-          credentialsBasic = JSON.parse(deviceCredentials.credentialsValue) as DeviceCredentialMQTTBasic;
-        }
         this.deviceCredentialsFormGroup.patchValue({
-          credentialsType: deviceCredentials.credentialsType,
-          credentialsId: deviceCredentials.credentialsId,
-          credentialsValue,
-          credentialsBasic
-        });
-        this.updateValidators();
+          credential: deviceCredentials
+        }, {emitEvent: false});
       }
     );
-  }
-
-  credentialsTypeChanged(): void {
-    this.deviceCredentialsFormGroup.patchValue({
-      credentialsId: null,
-      credentialsValue: null,
-      credentialsBasic: {clientId: '', userName: '', password: ''}
-    }, {emitEvent: true});
-    this.updateValidators();
-  }
-
-  updateValidators(): void {
-    this.hidePassword = true;
-    const crendetialsType = this.deviceCredentialsFormGroup.get('credentialsType').value as DeviceCredentialsType;
-    switch (crendetialsType) {
-      case DeviceCredentialsType.ACCESS_TOKEN:
-        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([Validators.required, Validators.pattern(/^.{1,20}$/)]);
-        this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity();
-        this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([]);
-        this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity();
-        this.deviceCredentialsFormGroup.get('credentialsBasic').disable();
-        break;
-      case DeviceCredentialsType.X509_CERTIFICATE:
-        this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([Validators.required]);
-        this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity();
-        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
-        this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity();
-        this.deviceCredentialsFormGroup.get('credentialsBasic').disable();
-        break;
-      case DeviceCredentialsType.MQTT_BASIC:
-        this.deviceCredentialsFormGroup.get('credentialsBasic').enable();
-        this.deviceCredentialsFormGroup.get('credentialsBasic').updateValueAndValidity();
-        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
-        this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity();
-        this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([]);
-        this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity();
-      // TODO: @nickAS21
-      case DeviceCredentialsType.LWM2M_CREDENTIALS:
-        this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([Validators.required]);
-        this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity();
-        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
-        this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity();
-        this.deviceCredentialsFormGroup.get('credentialsBasic').disable();
-        break;
-    }
-  }
-
-  private atLeastOne(validator: ValidatorFn, controls: string[] = null) {
-    return (group: FormGroup): ValidationErrors | null => {
-      if (!controls) {
-        controls = Object.keys(group.controls);
-      }
-      const hasAtLeastOne = group?.controls && controls.some(k => !validator(group.controls[k]));
-
-      return hasAtLeastOne ? null : {atLeastOne: true};
-    };
   }
 
   cancel(): void {
@@ -201,55 +100,12 @@ export class DeviceCredentialsDialogComponent extends DialogComponent<DeviceCred
 
   save(): void {
     this.submitted = true;
-    const deviceCredentialsValue = this.deviceCredentialsFormGroup.value;
-    if (deviceCredentialsValue.credentialsType === DeviceCredentialsType.MQTT_BASIC) {
-      deviceCredentialsValue.credentialsValue = JSON.stringify(deviceCredentialsValue.credentialsBasic);
-    }
-    delete deviceCredentialsValue.credentialsBasic;
+    const deviceCredentialsValue = this.deviceCredentialsFormGroup.value.credential;
     this.deviceCredentials = {...this.deviceCredentials, ...deviceCredentialsValue};
     this.deviceService.saveDeviceCredentials(this.deviceCredentials).subscribe(
       (deviceCredentials) => {
         this.dialogRef.close(deviceCredentials);
       }
     );
-  }
-
-  // TODO: @nickAS21
-  openSecurityInfoLwM2mDialog($event: Event, value: string, id: string): void {
-    if ($event) {
-      $event.stopPropagation();
-      $event.preventDefault();
-    }
-    this.dialog.open<SecurityConfigComponent, DeviceCredentialsDialogLwm2mData, object>(SecurityConfigComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        jsonAllConfig: (value === null || value.length === 0) ? getDefaultSecurityConfig(this.window.location.hostname) as SecurityConfigModels : JSON.parse(value) as SecurityConfigModels,
-        endPoint: (id === null) ? DEFAULT_END_POINT : id,
-        isNew: (id === null || value === null || value.length === 0) ? true : false
-      }
-    }).afterClosed().subscribe(
-      (res) => {
-        if (res) {
-          this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res[JSON_ALL_CONFIG]).length === 0 || JSON.stringify(res[JSON_ALL_CONFIG]) === "[{}]") ? null : JSON.stringify(res[JSON_ALL_CONFIG]));
-          this.deviceCredentialsFormGroup.get('credentialsId').patchValue((Object.keys(res[END_POINT]).length === 0 || JSON.stringify(res[END_POINT]) === "[{}]") ? null : JSON.stringify(res[END_POINT]).split('\"').join(''));
-          this.deviceCredentialsFormGroup.get('credentialsValue').markAsDirty();
-        }
-      }
-    );
-  }
-
-  passwordChanged() {
-    const value = this.deviceCredentialsFormGroup.get('credentialsBasic.password').value;
-    if (value !== '') {
-      this.deviceCredentialsFormGroup.get('credentialsBasic.userName').setValidators([Validators.required]);
-      if (this.deviceCredentialsFormGroup.get('credentialsBasic.userName').untouched) {
-        this.deviceCredentialsFormGroup.get('credentialsBasic.userName').markAsTouched({onlySelf: true});
-      }
-      this.deviceCredentialsFormGroup.get('credentialsBasic.userName').updateValueAndValidity();
-    } else {
-      this.deviceCredentialsFormGroup.get('credentialsBasic.userName').setValidators([]);
-      this.deviceCredentialsFormGroup.get('credentialsBasic.userName').updateValueAndValidity();
-    }
   }
 }

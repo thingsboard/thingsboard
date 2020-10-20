@@ -26,11 +26,13 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -40,6 +42,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.objectMapper;
 
@@ -61,6 +64,7 @@ public class InstallScripts {
     public static final String DEMO_DIR = "demo";
     public static final String RULE_CHAINS_DIR = "rule_chains";
     public static final String WIDGET_BUNDLES_DIR = "widget_bundles";
+    public static final String OAUTH2_CONFIG_TEMPLATES_DIR = "oauth2_config_templates";
     public static final String DASHBOARDS_DIR = "dashboards";
 
     public static final String JSON_EXT = ".json";
@@ -79,6 +83,9 @@ public class InstallScripts {
 
     @Autowired
     private WidgetsBundleService widgetsBundleService;
+
+    @Autowired
+    private OAuth2ConfigTemplateService oAuth2TemplateService;
 
     public Path getTenantRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, RULE_CHAINS_DIR);
@@ -226,6 +233,29 @@ public class InstallScripts {
         } catch (Exception e) {
             log.error("Unable to load dashboard from json", e);
             throw new RuntimeException("Unable to load dashboard from json", e);
+        }
+    }
+
+    public void createOAuth2Templates() throws Exception {
+        Path oauth2ConfigTemplatesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, OAUTH2_CONFIG_TEMPLATES_DIR);
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(oauth2ConfigTemplatesDir, path -> path.toString().endsWith(JSON_EXT))) {
+            dirStream.forEach(
+                    path -> {
+                        try {
+                            JsonNode oauth2ConfigTemplateJson = objectMapper.readTree(path.toFile());
+                            OAuth2ClientRegistrationTemplate clientRegistrationTemplate = objectMapper.treeToValue(oauth2ConfigTemplateJson, OAuth2ClientRegistrationTemplate.class);
+                            Optional<OAuth2ClientRegistrationTemplate> existingClientRegistrationTemplate =
+                                    oAuth2TemplateService.findClientRegistrationTemplateByProviderId(clientRegistrationTemplate.getProviderId());
+                            if (existingClientRegistrationTemplate.isPresent()) {
+                                clientRegistrationTemplate.setId(existingClientRegistrationTemplate.get().getId());
+                            }
+                            oAuth2TemplateService.saveClientRegistrationTemplate(clientRegistrationTemplate);
+                        } catch (Exception e) {
+                            log.error("Unable to load oauth2 config templates from json: [{}]", path.toString());
+                            throw new RuntimeException("Unable to load oauth2 config templates from json", e);
+                        }
+                    }
+            );
         }
     }
 }

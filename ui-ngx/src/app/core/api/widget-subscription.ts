@@ -47,7 +47,7 @@ import {
 import { forkJoin, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { EntityType } from '@shared/models/entity-type.models';
-import { createLabelFromDatasource, deepClone, isDefined, isEqual } from '@core/utils';
+import { createLabelFromDatasource, deepClone, isDefined, isDefinedAndNotNull, isEqual } from '@core/utils';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import * as moment_ from 'moment';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
@@ -1241,6 +1241,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     return datasource.dataKeys.map((dataKey, keyIndex) => {
       dataKey.hidden = !!dataKey.settings.hideDataByDefault;
       dataKey.inLegend = !dataKey.settings.removeFromLegend;
+      dataKey.label = this.ctx.utils.customTranslation(dataKey.label, dataKey.label);
       if (this.comparisonEnabled && dataKey.isAdditional && dataKey.settings.comparisonSettings.comparisonValuesLabel) {
          dataKey.label = createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
       } else {
@@ -1332,7 +1333,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private updateLegend(dataIndex: number, data: DataSet, detectChanges: boolean) {
     const dataKey = this.legendData.keys.find(key => key.dataIndex === dataIndex).dataKey;
-    const decimals = isDefined(dataKey.decimals) ? dataKey.decimals : this.decimals;
+    const decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals : this.decimals;
     const units = dataKey.units && dataKey.units.length ? dataKey.units : this.units;
     const legendKeyData = this.legendData.data[dataIndex];
     if (this.legendConfig.showMin) {

@@ -94,7 +94,6 @@ public class DeviceProfileController extends BaseController {
 
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
 
-            deviceProfileCache.put(savedDeviceProfile);
             tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);
             tbClusterService.onEntityStateChange(deviceProfile.getTenantId(), savedDeviceProfile.getId(),
                     created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
@@ -120,7 +119,6 @@ public class DeviceProfileController extends BaseController {
             DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
             DeviceProfile deviceProfile = checkDeviceProfileId(deviceProfileId, Operation.DELETE);
             deviceProfileService.deleteDeviceProfile(getTenantId(), deviceProfileId);
-            deviceProfileCache.evict(deviceProfileId);
 
             tbClusterService.onDeviceProfileDelete(deviceProfile, null);
             tbClusterService.onEntityStateChange(deviceProfile.getTenantId(), deviceProfile.getId(), ComponentLifecycleEvent.DELETED);
@@ -192,10 +190,11 @@ public class DeviceProfileController extends BaseController {
                                                              @RequestParam int page,
                                                              @RequestParam(required = false) String textSearch,
                                                              @RequestParam(required = false) String sortProperty,
-                                                             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+                                                             @RequestParam(required = false) String sortOrder,
+                                                             @RequestParam(required = false) String transportType) throws ThingsboardException {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            return checkNotNull(deviceProfileService.findDeviceProfileInfos(getTenantId(), pageLink));
+            return checkNotNull(deviceProfileService.findDeviceProfileInfos(getTenantId(), pageLink, transportType));
         } catch (Exception e) {
             throw handleException(e);
         }

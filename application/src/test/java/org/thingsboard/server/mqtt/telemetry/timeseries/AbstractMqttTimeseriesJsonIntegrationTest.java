@@ -73,10 +73,10 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
         publishMqttMsg(client, payload.getBytes(), MqttTopics.GATEWAY_CONNECT_TOPIC);
 
-        Thread.sleep(2000);
-
         String deviceName = "Device A";
-        Device device = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
+        Device device = doExecuteWithRetriesAndInterval(() -> doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class),
+                20,
+                100);
         assertNotNull(device);
     }
 }
