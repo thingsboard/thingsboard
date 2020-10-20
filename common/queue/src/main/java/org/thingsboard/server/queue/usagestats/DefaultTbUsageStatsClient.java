@@ -91,7 +91,7 @@ public class DefaultTbUsageStatsClient implements TbUsageStatsClient {
 
             report.forEach(((tenantId, builder) -> {
                 //TODO: figure out how to minimize messages into the queue. Maybe group by 100s of messages?
-                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, tenantId);
+                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, tenantId).newByTopic(msgProducer.getDefaultTopic());
                 msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), builder.build()), null);
             }));
             log.info("Report statistics for: {} tenants", report.size());
