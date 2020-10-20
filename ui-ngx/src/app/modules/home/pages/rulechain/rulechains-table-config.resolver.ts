@@ -493,8 +493,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   }
 
   fetchEdgeRuleChains(pageLink: PageLink) {
-   let defaultEdgeRuleChainIds: Array<string> = [];
-   this.ruleChainService.getDefaultEdgeRuleChains().pipe(
+    let defaultEdgeRuleChainIds: Array<string> = [];
+    this.ruleChainService.getDefaultEdgeRuleChains().pipe(
       map(ruleChains =>
         ruleChains.map(ruleChain =>
           defaultEdgeRuleChainIds.push(ruleChain.id.id)))
@@ -503,9 +503,9 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       map((response) => {
         response.data.map(ruleChain =>
           ruleChain.isDefault = defaultEdgeRuleChainIds.some(id => ruleChain.id.id.includes(id)));
-        return response;
-      })
-    )
+       return response;
+     })
+   );
   }
 
 }
