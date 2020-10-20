@@ -21,9 +21,6 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
 public interface TbUsageStatsClientQueueFactory {
 
-    default TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgProducer() {
-        //TODO: implement
-        return null;
-    }
+    TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgProducer();
 
 }

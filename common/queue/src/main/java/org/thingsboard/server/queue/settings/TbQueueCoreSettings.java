@@ -26,6 +26,9 @@ public class TbQueueCoreSettings {
     @Value("${queue.core.topic}")
     private String topic;
 
+    @Value("${queue.core.usage-stats-topic}")
+    private String usageStatsTopic;
+
     @Value("${queue.core.partitions}")
     private int partitions;
 }
