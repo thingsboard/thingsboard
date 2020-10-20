@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
@@ -42,7 +41,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
  */
 @Component
 @SqlDao
-@Slf4j
 public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> implements UserDao {
 
     @Autowired

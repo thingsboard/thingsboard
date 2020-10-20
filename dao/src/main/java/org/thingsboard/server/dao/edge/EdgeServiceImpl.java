@@ -80,6 +80,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.CacheConstants.EDGE_CACHE;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -518,9 +519,9 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     }
 
     private void initRestTemplate() {
-        boolean jdkHttpClientEnabled = org.apache.commons.lang3.StringUtils.isNotEmpty(System.getProperty("tb.proxy.jdk")) && System.getProperty("tb.proxy.jdk").equalsIgnoreCase("true");
-        boolean systemProxyEnabled = org.apache.commons.lang3.StringUtils.isNotEmpty(System.getProperty("tb.proxy.system")) && System.getProperty("tb.proxy.system").equalsIgnoreCase("true");
-        boolean proxyEnabled = org.apache.commons.lang3.StringUtils.isNotEmpty(System.getProperty("tb.proxy.host")) && org.apache.commons.lang3.StringUtils.isNotEmpty(System.getProperty("tb.proxy.port"));
+        boolean jdkHttpClientEnabled = isNotEmpty(System.getProperty("tb.proxy.jdk")) && System.getProperty("tb.proxy.jdk").equalsIgnoreCase("true");
+        boolean systemProxyEnabled = isNotEmpty(System.getProperty("tb.proxy.system")) && System.getProperty("tb.proxy.system").equalsIgnoreCase("true");
+        boolean proxyEnabled = isNotEmpty(System.getProperty("tb.proxy.host")) && isNotEmpty(System.getProperty("tb.proxy.port"));
         if (jdkHttpClientEnabled) {
             log.warn("Going to use plain JDK Http Client!");
             SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();

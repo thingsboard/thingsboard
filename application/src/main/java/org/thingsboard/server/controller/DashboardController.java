@@ -535,7 +535,7 @@ public class DashboardController extends BaseController {
 
             logEntityAction(dashboardId, dashboard,
                     null,
-                    ActionType.UNASSIGNED_FROM_EDGE, null, strDashboardId, edge.getId().toString(), edge.getName());
+                    ActionType.UNASSIGNED_FROM_EDGE, null, strDashboardId, strEdgeId, edge.getName());
 
             sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedDashboard.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
 
@@ -544,7 +544,7 @@ public class DashboardController extends BaseController {
 
             logEntityAction(emptyId(EntityType.DASHBOARD), null,
                     null,
-                    ActionType.UNASSIGNED_FROM_EDGE, e, strDashboardId);
+                    ActionType.UNASSIGNED_FROM_EDGE, e, strDashboardId, strEdgeId);
 
             throw handleException(e);
         }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,7 +42,6 @@ import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -454,7 +453,7 @@ public class RuleChainController extends BaseController {
 
             logEntityAction(ruleChainId, ruleChain,
                     null,
-                    ActionType.UNASSIGNED_FROM_EDGE, null, strRuleChainId, edge.getId().toString(), edge.getName());
+                    ActionType.UNASSIGNED_FROM_EDGE, null, strRuleChainId, strEdgeId, edge.getName());
 
             sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedRuleChain.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
 
@@ -463,7 +462,7 @@ public class RuleChainController extends BaseController {
 
             logEntityAction(emptyId(EntityType.RULE_CHAIN), null,
                     null,
-                    ActionType.UNASSIGNED_FROM_EDGE, e, strRuleChainId);
+                    ActionType.UNASSIGNED_FROM_EDGE, e, strRuleChainId, strEdgeId);
 
             throw handleException(e);
         }

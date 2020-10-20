@@ -680,10 +680,14 @@ public abstract class BaseController {
                     metaData.putValue("assignedToTenantName", strTenantName);
                 } else if (actionType == ActionType.ASSIGNED_TO_EDGE) {
                     String strEdgeId = extractParameter(String.class, 1, additionalInfo);
+                    String strEdgeName = extractParameter(String.class, 2, additionalInfo);
                     metaData.putValue("assignedEdgeId", strEdgeId);
+                    metaData.putValue("assignedEdgeName", strEdgeName);
                 } else if (actionType == ActionType.UNASSIGNED_FROM_EDGE) {
                     String strEdgeId = extractParameter(String.class, 1, additionalInfo);
+                    String strEdgeName = extractParameter(String.class, 2, additionalInfo);
                     metaData.putValue("unassignedEdgeId", strEdgeId);
+                    metaData.putValue("unassignedEdgeName", strEdgeName);
                 }
                 ObjectNode entityNode;
                 if (entity != null) {

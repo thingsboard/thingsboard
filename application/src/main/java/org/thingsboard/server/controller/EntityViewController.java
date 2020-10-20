@@ -433,7 +433,7 @@ public class EntityViewController extends BaseController {
             EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromEdge(getTenantId(), entityViewId, edgeId));
             logEntityAction(entityViewId, entityView,
                     entityView.getCustomerId(),
-                    ActionType.UNASSIGNED_FROM_EDGE, null, strEntityViewId, edge.getId().toString(), edge.getName());
+                    ActionType.UNASSIGNED_FROM_EDGE, null, strEntityViewId, strEdgeId, edge.getName());
 
             sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedEntityView.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
 
@@ -441,7 +441,7 @@ public class EntityViewController extends BaseController {
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ENTITY_VIEW), null,
                     null,
-                    ActionType.UNASSIGNED_FROM_EDGE, e, strEntityViewId);
+                    ActionType.UNASSIGNED_FROM_EDGE, e, strEntityViewId, strEdgeId);
             throw handleException(e);
         }
     }

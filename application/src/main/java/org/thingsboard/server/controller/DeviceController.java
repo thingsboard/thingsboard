@@ -608,7 +608,7 @@ public class DeviceController extends BaseController {
 
             logEntityAction(deviceId, device,
                     device.getCustomerId(),
-                    ActionType.UNASSIGNED_FROM_EDGE, null, strDeviceId, edge.getId().toString(), edge.getName());
+                    ActionType.UNASSIGNED_FROM_EDGE, null, strDeviceId, strEdgeId, edge.getName());
 
             sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedDevice.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
 
@@ -616,7 +616,7 @@ public class DeviceController extends BaseController {
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), null,
                     null,
-                    ActionType.UNASSIGNED_FROM_EDGE, e, strDeviceId);
+                    ActionType.UNASSIGNED_FROM_EDGE, e, strDeviceId, strEdgeId);
             throw handleException(e);
         }
     }

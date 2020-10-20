@@ -397,7 +397,7 @@ public class AssetController extends BaseController {
 
             logEntityAction(assetId, asset,
                     asset.getCustomerId(),
-                    ActionType.UNASSIGNED_FROM_EDGE, null, strAssetId, edge.getId().toString(), edge.getName());
+                    ActionType.UNASSIGNED_FROM_EDGE, null, strAssetId, strEdgeId, edge.getName());
 
             sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedAsset.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
 
@@ -406,7 +406,7 @@ public class AssetController extends BaseController {
 
             logEntityAction(emptyId(EntityType.ASSET), null,
                     null,
-                    ActionType.UNASSIGNED_FROM_EDGE, e, strAssetId);
+                    ActionType.UNASSIGNED_FROM_EDGE, e, strAssetId, strEdgeId);
 
             throw handleException(e);
         }

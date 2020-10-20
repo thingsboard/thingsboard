@@ -19,7 +19,6 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.UUIDConverter;
@@ -43,7 +42,6 @@ import javax.persistence.Table;
 import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_TYPE_PROPERTY;
 
 @Data
-@Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)

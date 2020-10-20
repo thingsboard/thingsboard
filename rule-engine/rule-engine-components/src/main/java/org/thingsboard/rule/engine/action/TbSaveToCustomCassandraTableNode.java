@@ -48,6 +48,7 @@ import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
 import org.thingsboard.server.dao.model.type.ComponentScopeCodec;
 import org.thingsboard.server.dao.model.type.ComponentTypeCodec;
 import org.thingsboard.server.dao.model.type.DeviceCredentialsTypeCodec;
+import org.thingsboard.server.dao.model.type.EdgeEventActionTypeCodec;
 import org.thingsboard.server.dao.model.type.EdgeEventTypeCodec;
 import org.thingsboard.server.dao.model.type.EntityTypeCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
@@ -148,6 +149,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
             registerCodecIfNotFound(registry, new EntityTypeCodec());
             registerCodecIfNotFound(registry, new EdgeEventTypeCodec());
             registerCodecIfNotFound(registry, new RuleChainTypeCodec());
+            registerCodecIfNotFound(registry, new EdgeEventActionTypeCodec());
         }
         return session;
     }
