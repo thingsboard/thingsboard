@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
@@ -73,7 +74,7 @@ public class WidgetTypeController extends BaseController {
             WidgetType savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
 
             sendNotificationMsgToEdgeService(getTenantId(), savedWidgetType.getId(),
-                    widgetType.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+                    widgetType.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
 
             return checkNotNull(savedWidgetType);
         } catch (Exception e) {
@@ -91,7 +92,7 @@ public class WidgetTypeController extends BaseController {
             checkWidgetTypeId(widgetTypeId, Operation.DELETE);
             widgetTypeService.deleteWidgetType(getCurrentUser().getTenantId(), widgetTypeId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), widgetTypeId, ActionType.DELETED);
+            sendNotificationMsgToEdgeService(getTenantId(), widgetTypeId, EdgeEventActionType.DELETED);
 
         } catch (Exception e) {
             throw handleException(e);

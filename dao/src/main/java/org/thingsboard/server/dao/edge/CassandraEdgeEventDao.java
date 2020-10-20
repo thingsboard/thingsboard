@@ -26,8 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EdgeEventId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -118,7 +118,7 @@ public class CassandraEdgeEventDao extends CassandraAbstractSearchTimeDao<EdgeEv
         List<EdgeEvent> edgeEvents = DaoUtil.convertDataList(entities);
         if (!withTsUpdate) {
             return edgeEvents.stream()
-                    .filter(edgeEvent -> !edgeEvent.getAction().equals(ActionType.TIMESERIES_UPDATED.name()))
+                    .filter(edgeEvent -> !edgeEvent.getAction().equals(EdgeEventActionType.TIMESERIES_UPDATED.name()))
                     .collect(Collectors.toList());
         } else {
             return edgeEvents;

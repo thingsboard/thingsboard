@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -755,7 +756,7 @@ public abstract class BaseController {
         return null;
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, CustomerId customerId, ActionType action) {
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, CustomerId customerId, EdgeEventActionType action) {
         if (!edgesSupportEnabled) {
             return;
         }
@@ -766,7 +767,7 @@ public abstract class BaseController {
         }
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, CustomerId customerId, ActionType action) {
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, CustomerId customerId, EdgeEventActionType action) {
         if (!edgesSupportEnabled) {
             return;
         }
@@ -780,7 +781,7 @@ public abstract class BaseController {
         }
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityRelation relation, ActionType action) {
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityRelation relation, EdgeEventActionType action) {
         if (!edgesSupportEnabled) {
             return;
         }
@@ -794,11 +795,11 @@ public abstract class BaseController {
         }
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, ActionType action) {
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
         sendNotificationMsgToEdgeService(tenantId, null, entityId, action);
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, ActionType action) {
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
         if (!edgesSupportEnabled) {
             return;
         }
@@ -808,7 +809,7 @@ public abstract class BaseController {
         }
     }
 
-    private void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, ActionType action) {
+    private void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action) {
         TransportProtos.EdgeNotificationMsgProto.Builder builder = TransportProtos.EdgeNotificationMsgProto.newBuilder();
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());

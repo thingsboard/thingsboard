@@ -15,16 +15,16 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Component
-@Slf4j
+@TbCoreComponent
 public class CustomerMsgConstructor {
 
     public CustomerUpdateMsg constructCustomerUpdatedMsg(UpdateMsgType msgType, Customer customer) {

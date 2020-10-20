@@ -32,12 +32,14 @@ import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.RuleNodeProto;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
 @Slf4j
+@TbCoreComponent
 public class RuleChainMsgConstructor {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();

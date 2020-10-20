@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.rpc;
+package org.thingsboard.server.dao.model.type;
 
-import org.thingsboard.rule.engine.api.RuleEngineRpcService;
+import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 
-/**
- * Created by ashvayka on 16.04.18.
- */
-public interface TbRuleEngineDeviceRpcService extends RuleEngineRpcService {
+public class EdgeEventActionTypeCodec extends EnumNameCodec<EdgeEventActionType> {
 
-    /**
-     * Handles the RPC response from the Device Actor (Transport).
-     *
-     * @param response the RPC response
-     */
-    void processRpcResponseFromDevice(FromDeviceRpcResponse response);
+    public EdgeEventActionTypeCodec() {
+        super(EdgeEventActionType.class);
+    }
+
 }

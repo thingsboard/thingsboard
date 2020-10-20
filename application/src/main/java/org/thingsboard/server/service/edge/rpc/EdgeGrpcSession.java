@@ -37,9 +37,9 @@ import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -313,8 +313,7 @@ public final class EdgeGrpcSession implements Closeable {
             log.trace("Processing edge event [{}]", edgeEvent);
             try {
                 DownlinkMsg downlinkMsg = null;
-                ActionType action = ActionType.valueOf(edgeEvent.getAction());
-                switch (action) {
+                switch (edgeEvent.getAction()) {
                     case UPDATED:
                     case ADDED:
                     case DELETED:
@@ -327,7 +326,7 @@ public final class EdgeGrpcSession implements Closeable {
                     case RELATION_DELETED:
                     case ASSIGNED_TO_CUSTOMER:
                     case UNASSIGNED_FROM_CUSTOMER:
-                        downlinkMsg = processEntityMessage(edgeEvent, action);
+                        downlinkMsg = processEntityMessage(edgeEvent, edgeEvent.getAction());
                         break;
                     case ATTRIBUTES_UPDATED:
                     case ATTRIBUTES_DELETED:
@@ -439,8 +438,7 @@ public final class EdgeGrpcSession implements Closeable {
         if (entityId != null) {
             log.debug("Sending telemetry data msg, entityId [{}], body [{}]", edgeEvent.getEntityId(), edgeEvent.getBody());
             try {
-                ActionType actionType = ActionType.valueOf(edgeEvent.getAction());
-                downlinkMsg = constructEntityDataProtoMsg(entityId, actionType, JsonUtils.parse(mapper.writeValueAsString(edgeEvent.getBody())));
+                downlinkMsg = constructEntityDataProtoMsg(entityId, edgeEvent.getAction(), JsonUtils.parse(mapper.writeValueAsString(edgeEvent.getBody())));
             } catch (Exception e) {
                 log.warn("Can't send telemetry data msg, entityId [{}], body [{}]", edgeEvent.getEntityId(), edgeEvent.getBody(), e);
             }
@@ -448,8 +446,8 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processEntityMessage(EdgeEvent edgeEvent, ActionType action) {
-        UpdateMsgType msgType = getResponseMsgType(ActionType.valueOf(edgeEvent.getAction()));
+    private DownlinkMsg processEntityMessage(EdgeEvent edgeEvent, EdgeEventActionType action) {
+        UpdateMsgType msgType = getResponseMsgType(edgeEvent.getAction());
         log.trace("Executing processEntityMessage, edgeEvent [{}], action [{}], msgType [{}]", edgeEvent, action, msgType);
         switch (edgeEvent.getType()) {
             case EDGE:
@@ -487,10 +485,10 @@ public final class EdgeGrpcSession implements Closeable {
         }
     }
 
-    private DownlinkMsg processDevice(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType edgeActionType) {
+    private DownlinkMsg processDevice(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType edgeEdgeEventActionType) {
         DeviceId deviceId = new DeviceId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (edgeActionType) {
+        switch (edgeEdgeEventActionType) {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
@@ -528,7 +526,7 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processAsset(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType action) {
+    private DownlinkMsg processAsset(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
         AssetId assetId = new AssetId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (action) {
@@ -559,7 +557,7 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processEntityView(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType action) {
+    private DownlinkMsg processEntityView(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
         EntityViewId entityViewId = new EntityViewId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (action) {
@@ -590,7 +588,7 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processDashboard(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType action) {
+    private DownlinkMsg processDashboard(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
         DashboardId dashboardId = new DashboardId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (action) {
@@ -624,7 +622,7 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processCustomer(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType action) {
+    private DownlinkMsg processCustomer(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
         CustomerId customerId = new CustomerId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (action) {
@@ -650,7 +648,7 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processRuleChain(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType action) {
+    private DownlinkMsg processRuleChain(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
         RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (action) {
@@ -693,10 +691,10 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processUser(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType edgeActionType) {
+    private DownlinkMsg processUser(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType edgeEdgeEventActionType) {
         UserId userId = new UserId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (edgeActionType) {
+        switch (edgeEdgeEventActionType) {
             case ADDED:
             case UPDATED:
                 User user = ctx.getUserService().findUserById(edgeEvent.getTenantId(), userId);
@@ -757,10 +755,10 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processWidgetsBundle(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType edgeActionType) {
+    private DownlinkMsg processWidgetsBundle(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType edgeEdgeEventActionType) {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (edgeActionType) {
+        switch (edgeEdgeEventActionType) {
             case ADDED:
             case UPDATED:
                 WidgetsBundle widgetsBundle = ctx.getWidgetsBundleService().findWidgetsBundleById(edgeEvent.getTenantId(), widgetsBundleId);
@@ -783,10 +781,10 @@ public final class EdgeGrpcSession implements Closeable {
         return downlinkMsg;
     }
 
-    private DownlinkMsg processWidgetType(EdgeEvent edgeEvent, UpdateMsgType msgType, ActionType edgeActionType) {
+    private DownlinkMsg processWidgetType(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType edgeEdgeEventActionType) {
         WidgetTypeId widgetTypeId = new WidgetTypeId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (edgeActionType) {
+        switch (edgeEdgeEventActionType) {
             case ADDED:
             case UPDATED:
                 WidgetType widgetType = ctx.getWidgetTypeService().findWidgetTypeById(edgeEvent.getTenantId(), widgetTypeId);
@@ -817,7 +815,7 @@ public final class EdgeGrpcSession implements Closeable {
                 .build();
     }
 
-    private UpdateMsgType getResponseMsgType(ActionType actionType) {
+    private UpdateMsgType getResponseMsgType(EdgeEventActionType actionType) {
         switch (actionType) {
             case UPDATED:
             case CREDENTIALS_UPDATED:
@@ -841,7 +839,7 @@ public final class EdgeGrpcSession implements Closeable {
         }
     }
 
-    private DownlinkMsg constructEntityDataProtoMsg(EntityId entityId, ActionType actionType, JsonElement entityData) {
+    private DownlinkMsg constructEntityDataProtoMsg(EntityId entityId, EdgeEventActionType actionType, JsonElement entityData) {
         EntityDataProto entityDataProto = ctx.getEntityDataMsgConstructor().constructEntityDataMsg(entityId, actionType, entityData);
         DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                 .addAllEntityData(Collections.singletonList(entityDataProto));

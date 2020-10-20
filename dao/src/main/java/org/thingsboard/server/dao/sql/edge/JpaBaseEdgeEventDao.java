@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EdgeEventId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -108,7 +109,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTimeDao<EdgeEventEntit
                 predicates.add(entityIdPredicate);
             }
             if (!withTsUpdate) {
-                Predicate edgeEventActionPredicate = criteriaBuilder.notEqual(root.get("edgeEventAction"), ActionType.TIMESERIES_UPDATED.name());
+                Predicate edgeEventActionPredicate = criteriaBuilder.notEqual(root.get("edgeEventAction"), EdgeEventActionType.TIMESERIES_UPDATED);
                 predicates.add(edgeEventActionPredicate);
             }
             return criteriaBuilder.and(predicates.toArray(new Predicate[]{}));

@@ -44,7 +44,7 @@ import java.util.UUID;
 public class RelationProcessor extends BaseProcessor {
 
     public ListenableFuture<Void> onRelationUpdate(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
-        log.info("onRelationUpdate {}", relationUpdateMsg);
+        log.trace("[{}] onRelationUpdate [{}]", tenantId, relationUpdateMsg);
         try {
             EntityRelation entityRelation = new EntityRelation();
 
