@@ -288,6 +288,7 @@
         "filter-type-device-search-query-description": "Devices with types {{deviceTypes}} that have {{relationType}} relation {{direction}} {{rootEntity}}",
         "filter-type-entity-view-search-query": "Entity view search query",
         "filter-type-entity-view-search-query-description": "Entity views with types {{entityViewTypes}} that have {{relationType}} relation {{direction}} {{rootEntity}}",
+        "filter-type-apiUsageState": "Api Usage State",
         "entity-filter": "Entity filter",
         "resolve-multiple": "Resolve as multiple entities",
         "filter-type": "Filter type",

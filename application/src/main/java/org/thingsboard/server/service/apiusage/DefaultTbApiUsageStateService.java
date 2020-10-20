@@ -62,7 +62,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
     @Value("${usage.stats.report.enabled:true}")
     private boolean enabled;
 
-    @Value("${usage.stats.check.cycle:60000}")
+    @Value("${usage.stats.check.cycle:6000}")
     private long nextCycleCheckInterval;
 
     private final Lock updateLock = new ReentrantLock();
@@ -107,7 +107,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         } finally {
             updateLock.unlock();
         }
-        tsService.save(tenantId, tenantState.getEntityId(), updatedEntries, 0L);
+        tsService.save(tenantId, tenantState.getId(), updatedEntries, 0L);
     }
 
     @Override
@@ -150,7 +150,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                     dbStateEntity = apiUsageStateService.findTenantApiUsageState(tenantId);
                 }
             }
-            tenantState = new TenantApiUsageState(dbStateEntity.getEntityId());
+            tenantState = new TenantApiUsageState(dbStateEntity.getId());
             try {
                 List<TsKvEntry> dbValues = tsService.findAllLatest(tenantId, dbStateEntity.getEntityId()).get();
                 for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {

@@ -396,6 +396,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         if (mainConsumer != null) {
             mainConsumer.unsubscribe();
         }
+        if (usageStatsConsumer != null) {
+            usageStatsConsumer.unsubscribe();
+        }
     }
 
 }

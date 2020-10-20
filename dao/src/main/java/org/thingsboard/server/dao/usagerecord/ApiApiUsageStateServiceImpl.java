@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -65,6 +66,13 @@ public class ApiApiUsageStateServiceImpl extends AbstractEntityService implement
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return apiUsageStateDao.findTenantApiUsageState(tenantId.getId());
     }
+
+    @Override
+    public ApiUsageState findApiUsageStateById(TenantId tenantId, ApiUsageStateId id) {
+        log.trace("Executing findApiUsageStateById, tenantId [{}], apiUsageStateId [{}]", tenantId, id);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(id, "Incorrect apiUsageStateId " + id);
+        return apiUsageStateDao.findById(tenantId, id.getId());    }
 
     private DataValidator<ApiUsageState> apiUsageStateValidator =
             new DataValidator<ApiUsageState>() {

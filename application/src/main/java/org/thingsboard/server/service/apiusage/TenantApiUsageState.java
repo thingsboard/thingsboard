@@ -17,6 +17,7 @@ package org.thingsboard.server.service.apiusage;
 
 import lombok.Getter;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 
@@ -29,7 +30,7 @@ public class TenantApiUsageState {
     private final Map<ApiUsageRecordKey, Long> currentHourValues = new ConcurrentHashMap<>();
 
     @Getter
-    private final EntityId entityId;
+    private final ApiUsageStateId id;
     @Getter
     private volatile long currentCycleTs;
     @Getter
@@ -37,8 +38,8 @@ public class TenantApiUsageState {
     @Getter
     private volatile long currentHourTs;
 
-    public TenantApiUsageState(EntityId entityId) {
-        this.entityId = entityId;
+    public TenantApiUsageState(ApiUsageStateId id) {
+        this.id = id;
         this.currentCycleTs = SchedulerUtils.getStartOfCurrentMonth();
         this.nextCycleTs = SchedulerUtils.getStartOfNextMonth();
         this.currentHourTs = SchedulerUtils.getStartOfCurrentHour();
