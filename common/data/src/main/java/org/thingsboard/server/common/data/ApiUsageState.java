@@ -16,6 +16,8 @@
 package org.thingsboard.server.common.data;
 
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -27,8 +29,18 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
 
     private static final long serialVersionUID = 8250339805336035966L;
 
+    @Getter @Setter
     private TenantId tenantId;
+    @Getter @Setter
     private EntityId entityId;
+    @Getter @Setter
+    private boolean transportEnabled;
+    @Getter @Setter
+    private boolean dbStorageEnabled;
+    @Getter @Setter
+    private boolean ruleEngineEnabled;
+    @Getter @Setter
+    private boolean jsExecEnabled;
 
     public ApiUsageState() {
         super();
@@ -43,22 +55,4 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
         this.tenantId = ur.getTenantId();
         this.entityId = ur.getEntityId();
     }
-
-    @Override
-    public TenantId getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(TenantId tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public EntityId getEntityId() {
-        return entityId;
-    }
-
-    public void setEntityId(EntityId entityId) {
-        this.entityId = entityId;
-    }
-
 }

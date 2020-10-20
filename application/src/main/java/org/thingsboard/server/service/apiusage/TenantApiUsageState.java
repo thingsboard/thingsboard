@@ -16,8 +16,13 @@
 package org.thingsboard.server.service.apiusage;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.TenantProfileData;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 
 import java.util.Map;
@@ -29,7 +34,13 @@ public class TenantApiUsageState {
     private final Map<ApiUsageRecordKey, Long> currentHourValues = new ConcurrentHashMap<>();
 
     @Getter
-    private final EntityId entityId;
+    @Setter
+    private TenantProfileId tenantProfileId;
+    @Getter
+    @Setter
+    private TenantProfileData tenantProfileData;
+    @Getter
+    private final ApiUsageState apiUsageState;
     @Getter
     private volatile long currentCycleTs;
     @Getter
@@ -37,8 +48,10 @@ public class TenantApiUsageState {
     @Getter
     private volatile long currentHourTs;
 
-    public TenantApiUsageState(EntityId entityId) {
-        this.entityId = entityId;
+    public TenantApiUsageState(TenantProfile tenantProfile, ApiUsageState apiUsageState) {
+        this.tenantProfileId = tenantProfile.getId();
+        this.tenantProfileData = tenantProfile.getProfileData();
+        this.apiUsageState = apiUsageState;
         this.currentCycleTs = SchedulerUtils.getStartOfCurrentMonth();
         this.nextCycleTs = SchedulerUtils.getStartOfNextMonth();
         this.currentHourTs = SchedulerUtils.getStartOfCurrentHour();
@@ -56,6 +69,10 @@ public class TenantApiUsageState {
         long result = currentCycleValues.getOrDefault(key, 0L) + value;
         currentCycleValues.put(key, result);
         return result;
+    }
+
+    public long get(ApiUsageRecordKey key) {
+        return currentCycleValues.getOrDefault(key, 0L);
     }
 
     public long addToHourly(ApiUsageRecordKey key, long value) {
@@ -79,4 +96,103 @@ public class TenantApiUsageState {
         }
     }
 
+    public long getProfileThreshold(ApiUsageRecordKey key) {
+        Object threshold = tenantProfileData.getProperties().get(key.name());
+        if (threshold != null) {
+            if (threshold instanceof String) {
+                return Long.parseLong((String) threshold);
+            } else if (threshold instanceof Long) {
+                return (Long) threshold;
+            }
+        }
+        return 0L;
+    }
+
+    public EntityId getEntityId() {
+        return apiUsageState.getEntityId();
+    }
+
+    public boolean isTransportEnabled() {
+        return apiUsageState.isTransportEnabled();
+    }
+
+    public boolean isDbStorageEnabled() {
+        return apiUsageState.isDbStorageEnabled();
+    }
+
+    public boolean isRuleEngineEnabled() {
+        return apiUsageState.isRuleEngineEnabled();
+    }
+
+    public boolean isJsExecEnabled() {
+        return apiUsageState.isJsExecEnabled();
+    }
+
+    public void setTransportEnabled(boolean transportEnabled) {
+        apiUsageState.setTransportEnabled(transportEnabled);
+    }
+
+    public void setDbStorageEnabled(boolean dbStorageEnabled) {
+        apiUsageState.setDbStorageEnabled(dbStorageEnabled);
+    }
+
+    public void setRuleEngineEnabled(boolean ruleEngineEnabled) {
+        apiUsageState.setRuleEngineEnabled(ruleEngineEnabled);
+    }
+
+    public void setJsExecEnabled(boolean jsExecEnabled) {
+        apiUsageState.setJsExecEnabled(jsExecEnabled);
+    }
+
+    public boolean isFeatureEnabled(ApiUsageRecordKey recordKey) {
+        switch (recordKey) {
+            case MSG_COUNT:
+            case MSG_BYTES_COUNT:
+            case DP_TRANSPORT_COUNT:
+                return isTransportEnabled();
+            case RE_EXEC_COUNT:
+                return isRuleEngineEnabled();
+            case DP_STORAGE_COUNT:
+                return isDbStorageEnabled();
+            case JS_EXEC_COUNT:
+                return isJsExecEnabled();
+            default:
+                return true;
+        }
+    }
+
+    public boolean setFeatureValue(ApiUsageRecordKey recordKey, boolean value) {
+        boolean currentValue = isFeatureEnabled(recordKey);
+        switch (recordKey) {
+            case MSG_COUNT:
+            case MSG_BYTES_COUNT:
+            case DP_TRANSPORT_COUNT:
+                setTransportEnabled(value);
+                break;
+            case RE_EXEC_COUNT:
+                setRuleEngineEnabled(value);
+                break;
+            case DP_STORAGE_COUNT:
+                setDbStorageEnabled(value);
+                break;
+            case JS_EXEC_COUNT:
+                setJsExecEnabled(value);
+                break;
+        }
+        return currentValue == value;
+    }
+
+    public boolean checkStateUpdatedDueToThresholds() {
+        boolean update = false;
+        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+            update |= checkStateUpdatedDueToThreshold(key);
+        }
+        return update;
+    }
+
+    public boolean checkStateUpdatedDueToThreshold(ApiUsageRecordKey recordKey) {
+        long value = get(recordKey);
+        long threshold = getProfileThreshold(recordKey);
+        return setFeatureValue(recordKey, threshold == 0 || value < threshold);
+    }
 }

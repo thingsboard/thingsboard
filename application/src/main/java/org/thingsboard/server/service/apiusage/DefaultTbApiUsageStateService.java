@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -87,6 +88,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         TenantId tenantId = new TenantId(new UUID(statsMsg.getTenantIdMSB(), statsMsg.getTenantIdLSB()));
         TenantApiUsageState tenantState;
         List<TsKvEntry> updatedEntries;
+        boolean stateUpdated = false;
         updateLock.lock();
         try {
             tenantState = getOrFetchState(tenantId);
@@ -101,13 +103,21 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                 ApiUsageRecordKey recordKey = ApiUsageRecordKey.valueOf(kvProto.getKey());
                 long newValue = tenantState.add(recordKey, kvProto.getValue());
                 updatedEntries.add(new BasicTsKvEntry(ts, new LongDataEntry(recordKey.name(), newValue)));
-                newValue = tenantState.addToHourly(recordKey, kvProto.getValue());
-                updatedEntries.add(new BasicTsKvEntry(hourTs, new LongDataEntry(HOURLY + recordKey.name(), newValue)));
+                long newHourlyValue = tenantState.addToHourly(recordKey, kvProto.getValue());
+                updatedEntries.add(new BasicTsKvEntry(hourTs, new LongDataEntry(HOURLY + recordKey.name(), newHourlyValue)));
+                stateUpdated |= tenantState.checkStateUpdatedDueToThreshold(recordKey);
             }
         } finally {
             updateLock.unlock();
         }
         tsService.save(tenantId, tenantState.getEntityId(), updatedEntries, 0L);
+        if (stateUpdated) {
+            // Save new state into the database;
+            apiUsageStateService.update(tenantState.getApiUsageState());
+            //TODO: clear cache on cluster repartition.
+            //TODO: update profiles on tenant and profile updates.
+            //TODO: broadcast to everyone notifications about enabled/disabled features.
+        }
     }
 
     @Override
@@ -116,12 +126,26 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
     }
 
     @Override
-    public void onAddedToAllowList(TenantId tenantId) {
-
+    public void onTenantProfileUpdate(TenantProfileId tenantProfileId) {
+        TenantProfile tenantProfile = tenantProfileCache.get(tenantProfileId);
+        updateLock.lock();
+        try {
+            tenantStates.values().forEach(state -> {
+                if (tenantProfile.getId().equals(state.getTenantProfileId())) {
+                    state.setTenantProfileData(tenantProfile.getProfileData());
+                    if (state.checkStateUpdatedDueToThresholds()) {
+                        apiUsageStateService.update(state.getApiUsageState());
+                        //TODO: send notification to cluster;
+                    }
+                }
+            });
+        } finally {
+            updateLock.unlock();
+        }
     }
 
     @Override
-    public void onAddedToDenyList(TenantId tenantId) {
+    public void onTenantUpdate(TenantId tenantId) {
 
     }
 
@@ -150,7 +174,8 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                     dbStateEntity = apiUsageStateService.findTenantApiUsageState(tenantId);
                 }
             }
-            tenantState = new TenantApiUsageState(dbStateEntity.getEntityId());
+            TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
+            tenantState = new TenantApiUsageState(tenantProfile, dbStateEntity);
             try {
                 List<TsKvEntry> dbValues = tsService.findAllLatest(tenantId, dbStateEntity.getEntityId()).get();
                 for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {

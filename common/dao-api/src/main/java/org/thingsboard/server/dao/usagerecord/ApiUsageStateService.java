@@ -20,9 +20,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 public interface ApiUsageStateService {
 
+    ApiUsageState createDefaultApiUsageState(TenantId id);
+
+    ApiUsageState update(ApiUsageState apiUsageState);
+
     ApiUsageState findTenantApiUsageState(TenantId tenantId);
 
     void deleteApiUsageStateByTenantId(TenantId tenantId);
 
-    ApiUsageState createDefaultApiUsageState(TenantId id);
 }

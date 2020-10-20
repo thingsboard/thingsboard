@@ -107,7 +107,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         SubscriptionManagerService subscriptionManagerService, DataDecodingEncodingService encodingService,
                                         TbCoreDeviceRpcService tbCoreDeviceRpcService, StatsFactory statsFactory, TbDeviceProfileCache deviceProfileCache,
                                         TbApiUsageStateService statsService) {
-        super(actorContext, encodingService, deviceProfileCache, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
+        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
         this.stateService = stateService;

@@ -40,8 +40,6 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.profile.TbTenantProfileCache;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
@@ -150,15 +148,12 @@ public class AppActor extends ContextAwareActor {
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
         TbActorRef target = null;
         if (TenantId.SYS_TENANT_ID.equals(msg.getTenantId())) {
-            if (msg.getEntityId().getEntityType() == EntityType.TENANT_PROFILE) {
-                tenantProfileCache.evict(new TenantProfileId(msg.getEntityId().getId()));
-            } else {
+            if (!EntityType.TENANT_PROFILE.equals(msg.getEntityId().getEntityType())) {
                 log.warn("Message has system tenant id: {}", msg);
             }
         } else {
-            if (msg.getEntityId().getEntityType() == EntityType.TENANT) {
+            if (EntityType.TENANT.equals(msg.getEntityId().getEntityType())) {
                 TenantId tenantId = new TenantId(msg.getEntityId().getId());
-                tenantProfileCache.evict(tenantId);
                 if (msg.getEvent() == ComponentLifecycleEvent.DELETED) {
                     log.info("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
                     deletedTenants.add(tenantId);
