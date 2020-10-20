@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.usagestats;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -38,11 +39,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
+@Slf4j
 public class DefaultTbUsageStatsClient implements TbUsageStatsClient {
 
     @Value("${usage.stats.report.enabled:true}")
     private boolean enabled;
-    @Value("${usage.stats.report.interval:600}")
+    @Value("${usage.stats.report.interval:10}")
     private int interval;
 
     private final ConcurrentMap<TenantId, AtomicLong>[] values = new ConcurrentMap[ApiUsageRecordKey.values().length];
@@ -69,28 +71,33 @@ public class DefaultTbUsageStatsClient implements TbUsageStatsClient {
     }
 
     private void reportStats() {
-        ConcurrentMap<TenantId, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
+        try {
+            ConcurrentMap<TenantId, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
 
-        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-            values[key.ordinal()].forEach(((tenantId, atomicLong) -> {
-                long value = atomicLong.getAndSet(0);
-                if (value > 0) {
-                    ToUsageStatsServiceMsg.Builder msgBuilder = report.computeIfAbsent(tenantId, id -> {
-                        ToUsageStatsServiceMsg.Builder msg = ToUsageStatsServiceMsg.newBuilder();
-                        msg.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
-                        msg.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
-                        return msg;
-                    });
-                    msgBuilder.addValues(UsageStatsKVProto.newBuilder().setKey(key.name()).setValue(value).build());
-                }
+            for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+                values[key.ordinal()].forEach(((tenantId, atomicLong) -> {
+                    long value = atomicLong.getAndSet(0);
+                    if (value > 0) {
+                        ToUsageStatsServiceMsg.Builder msgBuilder = report.computeIfAbsent(tenantId, id -> {
+                            ToUsageStatsServiceMsg.Builder msg = ToUsageStatsServiceMsg.newBuilder();
+                            msg.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
+                            msg.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+                            return msg;
+                        });
+                        msgBuilder.addValues(UsageStatsKVProto.newBuilder().setKey(key.name()).setValue(value).build());
+                    }
+                }));
+            }
+
+            report.forEach(((tenantId, builder) -> {
+                //TODO: figure out how to minimize messages into the queue. Maybe group by 100s of messages?
+                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, tenantId);
+                msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), builder.build()), null);
             }));
+            log.info("Report statistics for: {} tenants", report.size());
+        } catch (Exception e) {
+            log.warn("Failed to report statistics: ", e);
         }
-
-        report.forEach(((tenantId, builder) -> {
-            //TODO: figure out how to minimize messages into the queue. Maybe group by 100s of messages?
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, tenantId);
-            msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), builder.build()), null);
-        }));
     }
 
     @Override

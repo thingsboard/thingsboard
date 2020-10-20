@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
@@ -78,6 +79,7 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbTransportQueueFactory;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
+import org.thingsboard.server.queue.usagestats.TbUsageStatsClient;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import javax.annotation.PostConstruct;
@@ -122,6 +124,7 @@ public class DefaultTransportService implements TransportService {
     private final StatsFactory statsFactory;
     private final TransportDeviceProfileCache deviceProfileCache;
     private final TransportTenantProfileCache tenantProfileCache;
+    private final TbUsageStatsClient apiUsageStatsClient;
     private final TransportRateLimitService rateLimitService;
     private final DataDecodingEncodingService dataDecodingEncodingService;
     private final SchedulerComponent scheduler;
@@ -150,7 +153,8 @@ public class DefaultTransportService implements TransportService {
                                    StatsFactory statsFactory,
                                    TransportDeviceProfileCache deviceProfileCache,
                                    TransportTenantProfileCache tenantProfileCache,
-                                   TransportRateLimitService rateLimitService, DataDecodingEncodingService dataDecodingEncodingService, SchedulerComponent scheduler) {
+                                   TbUsageStatsClient apiUsageStatsClient, TransportRateLimitService rateLimitService,
+                                   DataDecodingEncodingService dataDecodingEncodingService, SchedulerComponent scheduler) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.queueProvider = queueProvider;
         this.producerProvider = producerProvider;
@@ -158,6 +162,7 @@ public class DefaultTransportService implements TransportService {
         this.statsFactory = statsFactory;
         this.deviceProfileCache = deviceProfileCache;
         this.tenantProfileCache = tenantProfileCache;
+        this.apiUsageStatsClient = apiUsageStatsClient;
         this.rateLimitService = rateLimitService;
         this.dataDecodingEncodingService = dataDecodingEncodingService;
         this.scheduler = scheduler;
@@ -362,7 +367,7 @@ public class DefaultTransportService implements TransportService {
             reportActivityInternal(sessionInfo);
             TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
             DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
-            MsgPackCallback packCallback = new MsgPackCallback(msg.getTsKvListCount(), callback);
+            MsgPackCallback packCallback = new MsgPackCallback(msg.getTsKvListCount(), new ApiStatsProxyCallback<>(tenantId, dataPoints, callback));
             for (TransportProtos.TsKvListProto tsKv : msg.getTsKvListList()) {
                 TbMsgMetaData metaData = new TbMsgMetaData();
                 metaData.putValue("deviceName", sessionInfo.getDeviceName());
@@ -804,6 +809,33 @@ public class DefaultTransportService implements TransportService {
         @Override
         public void onFailure(Throwable t) {
             callback.onError(t);
+        }
+    }
+
+    private class ApiStatsProxyCallback<T> implements TransportServiceCallback<T> {
+        private final TenantId tenantId;
+        private final int dataPoints;
+        private final TransportServiceCallback<T> callback;
+
+        public ApiStatsProxyCallback(TenantId tenantId, int dataPoints, TransportServiceCallback<T> callback) {
+            this.tenantId = tenantId;
+            this.dataPoints = dataPoints;
+            this.callback = callback;
+        }
+
+        @Override
+        public void onSuccess(T msg) {
+            try {
+                apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.MSG_COUNT, 1);
+                apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.DP_TRANSPORT_COUNT, dataPoints);
+            } finally {
+                callback.onSuccess(msg);
+            }
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            callback.onError(e);
         }
     }
 }
