@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -62,11 +63,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 final class MqttClientImpl implements MqttClient {
 
     private final Set<String> serverSubscriptions = new HashSet<>();
-    private final ConcurrentHashMap<Integer, MqttPendingUnsubscription> pendingServerUnsubscribes = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Integer, MqttIncomingQos2Publish> qos2PendingIncomingPublishes = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Integer, MqttPendingPublish> pendingPublishes = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Integer, MqttPendingUnsubscription> pendingServerUnsubscribes = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Integer, MqttIncomingQos2Publish> qos2PendingIncomingPublishes = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Integer, MqttPendingPublish> pendingPublishes = new ConcurrentHashMap<>();
     private final HashMultimap<String, MqttSubscription> subscriptions = HashMultimap.create();
-    private final ConcurrentHashMap<Integer, MqttPendingSubscription> pendingSubscriptions = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Integer, MqttPendingSubscription> pendingSubscriptions = new ConcurrentHashMap<>();
     private final Set<String> pendingSubscribeTopics = new HashSet<>();
     private final HashMultimap<MqttHandler, MqttSubscription> handlerToSubscribtion = HashMultimap.create();
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
@@ -489,7 +490,7 @@ final class MqttClientImpl implements MqttClient {
         }
     }
 
-    ConcurrentHashMap<Integer, MqttPendingSubscription> getPendingSubscriptions() {
+    ConcurrentMap<Integer, MqttPendingSubscription> getPendingSubscriptions() {
         return pendingSubscriptions;
     }
 
@@ -509,15 +510,15 @@ final class MqttClientImpl implements MqttClient {
         return serverSubscriptions;
     }
 
-    ConcurrentHashMap<Integer, MqttPendingUnsubscription> getPendingServerUnsubscribes() {
+    ConcurrentMap<Integer, MqttPendingUnsubscription> getPendingServerUnsubscribes() {
         return pendingServerUnsubscribes;
     }
 
-    ConcurrentHashMap<Integer, MqttPendingPublish> getPendingPublishes() {
+    ConcurrentMap<Integer, MqttPendingPublish> getPendingPublishes() {
         return pendingPublishes;
     }
 
-    ConcurrentHashMap<Integer, MqttIncomingQos2Publish> getQos2PendingIncomingPublishes() {
+    ConcurrentMap<Integer, MqttIncomingQos2Publish> getQos2PendingIncomingPublishes() {
         return qos2PendingIncomingPublishes;
     }
 
