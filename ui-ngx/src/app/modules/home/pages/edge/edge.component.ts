@@ -32,10 +32,10 @@ import { EntityTableConfig } from "@home/models/entity/entities-table-config.mod
   templateUrl: './edge.component.html',
   styleUrls: ['./edge.component.scss']
 })
-
-export class EdgeComponent extends EntityComponent<EdgeInfo>{
+export class EdgeComponent extends EntityComponent<EdgeInfo> {
 
   entityType = EntityType;
+
   edgeScope: 'tenant' | 'customer' | 'customer_user';
 
   constructor(protected store: Store<AppState>,
@@ -138,5 +138,4 @@ export class EdgeComponent extends EntityComponent<EdgeInfo>{
     }
     return str.concat(this.generateSecret(length - str.length));
   }
-
 }
