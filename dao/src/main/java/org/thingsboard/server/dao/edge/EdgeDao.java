@@ -91,6 +91,26 @@ public interface EdgeDao extends Dao<Edge> {
      */
     PageData<Edge> findEdgesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink);
 
+    /**
+     * Find edge infos by tenantId, customerId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param pageLink the page link
+     * @return the list of edge info objects
+     */
+    PageData<EdgeInfo> findEdgeInfosByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink);
+
+    /**
+     * Find edge infos by tenantId, customerId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of edge info objects
+     */
+    PageData<EdgeInfo> findEdgeInfosByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink);
 
     /**
      * Find edges by tenantId, customerId and edges Ids.

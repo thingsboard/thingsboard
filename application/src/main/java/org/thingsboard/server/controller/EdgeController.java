@@ -374,6 +374,33 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/customer/{customerId}/edgeInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<EdgeInfo> getCustomerEdgeInfos(
+            @PathVariable("customerId") String strCustomerId,
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        checkParameter("customerId", strCustomerId);
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+            checkCustomerId(customerId, Operation.READ);
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            if (type != null && type.trim().length() > 0) {
+                return checkNotNull(edgeService.findEdgeInfosByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
+            } else {
+                return checkNotNull(edgeService.findEdgeInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+            }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edges", params = {"edgeIds"}, method = RequestMethod.GET)
     @ResponseBody
     public List<Edge> getEdgesByIds(

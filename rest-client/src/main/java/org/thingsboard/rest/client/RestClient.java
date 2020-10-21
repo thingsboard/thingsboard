@@ -2343,7 +2343,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
-    public PageData<Edge> getCustomerEdges(CustomerId customerId, String edgeType, PageLink pageLink) {
+    public PageData<Edge> getCustomerEdges(CustomerId customerId, PageLink pageLink, String edgeType) {
         Map<String, String> params = new HashMap<>();
         params.put("customerId", customerId.getId().toString());
         params.put("type", edgeType);

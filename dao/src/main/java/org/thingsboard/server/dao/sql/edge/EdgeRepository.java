@@ -80,6 +80,30 @@ public interface EdgeRepository extends PagingAndSortingRepository<EdgeEntity, U
                                                         @Param("textSearch") String textSearch,
                                                         Pageable pageable);
 
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.EdgeInfoEntity(a, c.title, c.additionalInfo) " +
+            "FROM EdgeEntity a " +
+            "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND a.customerId = :customerId " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<EdgeInfoEntity> findEdgeInfosByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
+                                                                @Param("customerId") UUID customerId,
+                                                                @Param("searchText") String searchText,
+                                                                Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.EdgeInfoEntity(a, c.title, c.additionalInfo) " +
+            "FROM EdgeEntity a " +
+            "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND a.customerId = :customerId " +
+            "AND a.type = :type " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<EdgeInfoEntity> findEdgeInfosByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
+                                                                       @Param("customerId") UUID customerId,
+                                                                       @Param("type") String type,
+                                                                       @Param("textSearch") String textSearch,
+                                                                       Pageable pageable);
+
     @Query("SELECT DISTINCT d.type FROM EdgeEntity d WHERE d.tenantId = :tenantId")
     List<String> findTenantEdgeTypes(@Param("tenantId") UUID tenantId);
 

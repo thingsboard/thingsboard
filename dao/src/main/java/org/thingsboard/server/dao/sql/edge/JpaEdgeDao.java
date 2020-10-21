@@ -125,6 +125,27 @@ public class JpaEdgeDao extends JpaAbstractSearchTextDao<EdgeEntity, Edge> imple
     }
 
     @Override
+    public PageData<EdgeInfo> findEdgeInfosByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink) {
+        return DaoUtil.toPageData(
+                edgeRepository.findEdgeInfosByTenantIdAndCustomerId(
+                        tenantId,
+                        customerId,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink, EdgeInfoEntity.edgeInfoColumnMap)));
+    }
+
+    @Override
+    public PageData<EdgeInfo> findEdgeInfosByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink) {
+        return DaoUtil.toPageData(
+                edgeRepository.findEdgeInfosByTenantIdAndCustomerIdAndType(
+                        tenantId,
+                        customerId,
+                        type,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink, EdgeInfoEntity.edgeInfoColumnMap)));
+    }
+
+    @Override
     public ListenableFuture<List<EntitySubtype>> findTenantEdgeTypesAsync(UUID tenantId) {
         return service.submit(() -> convertTenantEdgeTypesToDto(tenantId, edgeRepository.findTenantEdgeTypes(tenantId)));
     }

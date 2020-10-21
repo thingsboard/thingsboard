@@ -64,6 +64,12 @@ export class EdgeService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public getCustomerEdgeInfos(customerId: string, pageLink: PageLink, type: string = '',
+                               config?: RequestConfig): Observable<PageData<EdgeInfo>> {
+    return this.http.get<PageData<EdgeInfo>>(`/api/customer/${customerId}/edgeInfos${pageLink.toQuery()}&type=${type}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public assignEdgeToCustomer(customerId: string, edgeId: string, config?: RequestConfig): Observable<Edge> {
     return this.http.post<Edge>(`/api/customer/${customerId}/edge/${edgeId}`, null, defaultHttpOptionsFromConfig(config));
   }
