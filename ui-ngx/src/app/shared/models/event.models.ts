@@ -64,8 +64,9 @@ export interface StatsEventBody extends BaseEventBody {
 }
 
 export interface EdgeEventBody extends BaseEventBody {
-  messagesProcessed: number;
-  errorsOccurred: number;
+  type: string;
+  action: string;
+  entityId: string;
 }
 
 export interface DebugRuleNodeEventBody extends BaseEventBody {
@@ -81,7 +82,7 @@ export interface DebugRuleNodeEventBody extends BaseEventBody {
   error: string;
 }
 
-export type EventBody = ErrorEventBody & LcEventEventBody & StatsEventBody & DebugRuleNodeEventBody;
+export type EventBody = ErrorEventBody & LcEventEventBody & StatsEventBody & DebugRuleNodeEventBody & EdgeEventBody;
 
 export interface Event extends BaseData<EventId> {
   tenantId: TenantId;

@@ -38,4 +38,9 @@ export class EventService {
               `${pageLink.toQuery()}&tenantId=${tenantId}`,
       defaultHttpOptionsFromConfig(config));
   }
+
+  public getEdgeEvents(entityId: EntityId, pageLink: TimePageLink, config?: RequestConfig): Observable<PageData<Event>> {
+    return this.http.get<PageData<Event>>(`/api/edge/${entityId.id}/events` + `${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
 }

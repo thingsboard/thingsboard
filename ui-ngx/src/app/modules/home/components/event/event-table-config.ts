@@ -20,25 +20,25 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { DebugEventType, Event, EventType } from '@shared/models/event.models';
-import { TimePageLink } from '@shared/models/page/page-link';
-import { TranslateService } from '@ngx-translate/core';
-import { DatePipe } from '@angular/common';
-import { MatDialog } from '@angular/material/dialog';
-import { EntityId } from '@shared/models/id/entity-id';
-import { EventService } from '@app/core/http/event.service';
-import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
-import { EntityTypeResource } from '@shared/models/entity-type.models';
-import { Observable } from 'rxjs';
-import { PageData } from '@shared/models/page/page-data';
-import { Direction } from '@shared/models/page/sort-order';
-import { DialogService } from '@core/services/dialog.service';
-import { ContentType } from '@shared/models/constants';
+import {DebugEventType, Event, EventType} from '@shared/models/event.models';
+import {TimePageLink} from '@shared/models/page/page-link';
+import {TranslateService} from '@ngx-translate/core';
+import {DatePipe} from '@angular/common';
+import {MatDialog} from '@angular/material/dialog';
+import {EntityId} from '@shared/models/id/entity-id';
+import {EventService} from '@app/core/http/event.service';
+import {EventTableHeaderComponent} from '@home/components/event/event-table-header.component';
+import {EntityTypeResource} from '@shared/models/entity-type.models';
+import {Observable} from 'rxjs';
+import {PageData} from '@shared/models/page/page-data';
+import {Direction} from '@shared/models/page/sort-order';
+import {DialogService} from '@core/services/dialog.service';
+import {ContentType} from '@shared/models/constants';
 import {
   EventContentDialogComponent,
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
-import { sortObjectKeys } from '@core/utils';
+import {sortObjectKeys} from '@core/utils';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -104,7 +104,11 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   }
 
   fetchEvents(pageLink: TimePageLink): Observable<PageData<Event>> {
-    return this.eventService.getEvents(this.entityId, this.eventType, this.tenantId, pageLink);
+    if (this.eventTypeValue === EventType.EDGE_EVENT) {
+      return this.eventService.getEdgeEvents(this.entityId, pageLink);
+    } else {
+      return this.eventService.getEvents(this.entityId, this.eventType, this.tenantId, pageLink);
+    }
   }
 
   updateColumns(updateTableColumns: boolean = false): void {
@@ -157,6 +161,12 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             () => ({}),
             false,
             () => ({}), () => undefined, true)
+        );
+        break;
+      case EventType.EDGE_EVENT:
+        this.columns.push(
+          new EntityTableColumn<Event>('type', 'event.type', '100%',
+            (entity) => entity.type, entity => ({}), false),
         );
         break;
       case DebugEventType.DEBUG_RULE_NODE:

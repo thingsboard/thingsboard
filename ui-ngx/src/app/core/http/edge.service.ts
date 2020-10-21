@@ -14,14 +14,16 @@
 /// limitations under the License.
 ///
 
-import {Inject, Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { PageLink } from '@shared/models/page/page-link';
+import { PageLink, TimePageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { Edge, EdgeInfo, EdgeSearchQuery } from "@shared/models/edge.models";
+import { EntityId } from "@shared/models/id/entity-id";
+import { Event } from "@shared/models/event.models";
 @Injectable({
   providedIn: 'root'
 })
@@ -96,4 +98,8 @@ export class EdgeService {
     return this.http.post<Array<Edge>>('/api/edges', query, defaultHttpOptionsFromConfig(config));
   }
 
+  public getEdgeEvents(entityId: EntityId, pageLink: TimePageLink, config?: RequestConfig): Observable<PageData<Event>> {
+    return this.http.get<PageData<Event>>(`/api/edge/${entityId.id}/events` + `${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
 }
