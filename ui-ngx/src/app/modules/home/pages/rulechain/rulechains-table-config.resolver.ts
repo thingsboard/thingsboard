@@ -497,12 +497,15 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     this.ruleChainService.getDefaultEdgeRuleChains().pipe(
       map(ruleChains =>
         ruleChains.map(ruleChain =>
-          defaultEdgeRuleChainIds.push(ruleChain.id.id)))
+          defaultEdgeRuleChainIds.push(ruleChain.id.id)
+        )
+      )
     ).subscribe();
     return this.ruleChainService.getRuleChains(pageLink, ruleChainType.edge).pipe(
       map((response) => {
         response.data.map(ruleChain =>
-          ruleChain.isDefault = defaultEdgeRuleChainIds.some(id => ruleChain.id.id.includes(id)));
+          ruleChain.isDefault = defaultEdgeRuleChainIds.some(id => ruleChain.id.id.includes(id))
+        );
        return response;
      })
    );

@@ -70,8 +70,8 @@ import {
 import { alarmFields } from '@shared/models/alarm.models';
 
 import { EdgeService } from "@core/http/edge.service";
-import { EdgeSearchQuery } from "@shared/models/edge.models";
 import { ruleChainType } from "@shared/models/rule-chain.models";
+import { Router } from "@angular/router";
 
 @Injectable({
   providedIn: 'root'
@@ -92,7 +92,8 @@ export class EntityService {
     private dashboardService: DashboardService,
     private entityRelationService: EntityRelationService,
     private attributeService: AttributeService,
-    private utils: UtilsService
+    private utils: UtilsService,
+    private route: Router
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -322,7 +323,11 @@ export class EntityService {
         break;
       case EntityType.RULE_CHAIN:
         pageLink.sortOrder.property = 'name';
-        entitiesObservable = this.ruleChainService.getRuleChains(pageLink, subType, config);
+        if (this.route.url.includes('edges')) {
+          entitiesObservable = this.ruleChainService.getRuleChains(pageLink, ruleChainType.edge, config);
+        } else {
+          entitiesObservable = this.ruleChainService.getRuleChains(pageLink, ruleChainType.core, config);
+        }
         break;
       case EntityType.DASHBOARD:
         pageLink.sortOrder.property = 'title';
