@@ -250,6 +250,9 @@ public class AccessValidator {
         if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
+            if (!operation.equals(Operation.READ_TELEMETRY)) {
+                callback.onSuccess(ValidationResult.accessDenied("Allowed only READ_TELEMETRY operation!"));
+            }
             ApiUsageState apiUsageState = apiUsageStateService.findApiUsageStateById(currentUser.getTenantId(), new ApiUsageStateId(entityId.getId()));
             if (apiUsageState == null) {
                 callback.onSuccess(ValidationResult.entityNotFound("Api Usage State with requested id wasn't found!"));
