@@ -115,7 +115,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         } finally {
             updateLock.unlock();
         }
-        tsService.save(tenantId, tenantState.getEntityId(), updatedEntries, 0L);
+        tsService.save(tenantId, tenantState.getApiUsageState().getId(), updatedEntries, 0L);
         if (stateUpdated) {
             // Save new state into the database;
             apiUsageStateService.update(tenantState.getApiUsageState());

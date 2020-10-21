@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.usagerecord;
 
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 public interface ApiUsageStateService {
@@ -28,4 +29,5 @@ public interface ApiUsageStateService {
 
     void deleteApiUsageStateByTenantId(TenantId tenantId);
 
+    ApiUsageState findApiUsageStateById(TenantId tenantId, ApiUsageStateId id);
 }

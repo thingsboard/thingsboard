@@ -210,6 +210,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.CUSTOMER, "customer");
         entityTableMap.put(EntityType.USER, "tb_user");
         entityTableMap.put(EntityType.TENANT, "tenant");
+        entityTableMap.put(EntityType.API_USAGE_STATE, "(select aus.id, aus.created_time, aus.tenant_id, '' as name, '' as additional_info from api_usage_state as aus)");
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
@@ -431,6 +432,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case DEVICE_SEARCH_QUERY:
             case ASSET_SEARCH_QUERY:
             case ENTITY_VIEW_SEARCH_QUERY:
+            case API_USAGE_STATE:
                 return "";
             default:
                 throw new RuntimeException("Not implemented!");
@@ -682,6 +684,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 return EntityType.ENTITY_VIEW;
             case RELATIONS_QUERY:
                 return ((RelationsQueryFilter) entityFilter).getRootEntity().getEntityType();
+            case API_USAGE_STATE:
+                return EntityType.API_USAGE_STATE;
             default:
                 throw new RuntimeException("Not implemented!");
         }

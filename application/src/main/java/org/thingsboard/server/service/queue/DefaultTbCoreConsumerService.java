@@ -102,14 +102,18 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
 
     protected volatile ExecutorService usageStatsExecutor;
 
-
-    public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
-                                        DeviceStateService stateService, TbLocalSubscriptionService localSubscriptionService,
+    public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory,
+                                        ActorSystemContext actorContext,
+                                        DeviceStateService stateService,
+                                        TbLocalSubscriptionService localSubscriptionService,
+                                        SubscriptionManagerService subscriptionManagerService,
+                                        DataDecodingEncodingService encodingService,
+                                        TbCoreDeviceRpcService tbCoreDeviceRpcService,
+                                        StatsFactory statsFactory,
+                                        TbDeviceProfileCache deviceProfileCache,
+                                        TbApiUsageStateService statsService,
                                         TbTenantProfileCache tenantProfileCache,
-                                        TbApiUsageStateService apiUsageStateService,
-                                        SubscriptionManagerService subscriptionManagerService, DataDecodingEncodingService encodingService,
-                                        TbCoreDeviceRpcService tbCoreDeviceRpcService, StatsFactory statsFactory, TbDeviceProfileCache deviceProfileCache,
-                                        TbApiUsageStateService statsService) {
+                                        TbApiUsageStateService apiUsageStateService) {
         super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
@@ -398,6 +402,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     protected void stopMainConsumers() {
         if (mainConsumer != null) {
             mainConsumer.unsubscribe();
+        }
+        if (usageStatsConsumer != null) {
+            usageStatsConsumer.unsubscribe();
         }
     }
 
