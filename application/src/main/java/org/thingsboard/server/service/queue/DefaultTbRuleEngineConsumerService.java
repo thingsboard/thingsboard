@@ -37,7 +37,9 @@ import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
+import org.thingsboard.server.service.profile.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.processing.*;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
@@ -77,6 +79,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     public DefaultTbRuleEngineConsumerService(TbRuleEngineProcessingStrategyFactory processingStrategyFactory,
                                               TbRuleEngineSubmitStrategyFactory submitStrategyFactory,
                                               TbQueueRuleEngineSettings ruleEngineSettings,
+                                              TbTenantProfileCache tenantProfileCache,
+                                              TbApiUsageStateService apiUsageStateService,
                                               TbRuleEngineQueueFactory tbRuleEngineQueueFactory, RuleEngineStatisticsService statisticsService,
                                               ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
                                               TbRuleEngineDeviceRpcService tbDeviceRpcService,
