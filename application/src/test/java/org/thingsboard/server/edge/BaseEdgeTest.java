@@ -82,11 +82,13 @@ import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.RpcRequestMsg;
+import org.thingsboard.server.gen.edge.RpcResponseMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.gen.edge.UplinkMsg;
+import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 import org.thingsboard.server.gen.edge.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.WidgetTypeUpdateMsg;
@@ -875,6 +877,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         sendRuleChainMetadataRequest();
         sendUserCredentialsRequest();
         sendDeviceCredentialsRequest();
+        sendDeviceRpcResponse();
         log.info("Messages were sent successfully");
     }
 
@@ -1056,11 +1059,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     }
 
     private void sendDeviceCredentialsRequest() throws Exception {
-        List<Device> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getId().getId().toString() + "/devices?",
-                new TypeReference<TimePageData<Device>>() {}, new TextPageLink(100)).getData();
-        Optional<Device> foundDevice = edgeDevices.stream().filter(device1 -> device1.getName().equals("Edge Device 1")).findAny();
-        Assert.assertTrue(foundDevice.isPresent());
-        Device device = foundDevice.get();
+        Device device = findDeviceByName("Edge Device 1");
 
         DeviceCredentials deviceCredentials = doGet("/api/device/" + device.getId().getId().toString() + "/credentials", DeviceCredentials.class);
 
@@ -1083,6 +1082,26 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(deviceCredentialsUpdateMsg.getDeviceIdLSB(), device.getUuidId().getLeastSignificantBits());
         Assert.assertEquals(deviceCredentialsUpdateMsg.getCredentialsType(), deviceCredentials.getCredentialsType().name());
         Assert.assertEquals(deviceCredentialsUpdateMsg.getCredentialsId(), deviceCredentials.getCredentialsId());
+    }
+
+    private void sendDeviceRpcResponse() throws Exception {
+        Device device = findDeviceByName("Edge Device 1");
+
+        UplinkMsg.Builder builder = UplinkMsg.newBuilder();
+        DeviceRpcCallMsg.Builder deviceRpcCallResponse = DeviceRpcCallMsg.newBuilder();
+        deviceRpcCallResponse.setDeviceIdMSB(device.getUuidId().getMostSignificantBits());
+        deviceRpcCallResponse.setDeviceIdLSB(device.getUuidId().getLeastSignificantBits());
+        deviceRpcCallResponse.setOneway(true);
+        deviceRpcCallResponse.setOriginServiceId("originServiceId");
+        deviceRpcCallResponse.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10));
+        RpcResponseMsg.Builder responseBuilder =
+                RpcResponseMsg.newBuilder().setResponse("{}");
+        deviceRpcCallResponse.setResponseMsg(responseBuilder.build());
+        builder.addDeviceRpcCallMsg(deviceRpcCallResponse.build());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(builder.build());
+        edgeImitator.waitForResponses();
     }
 
     private void sendDeleteDeviceOnEdge() throws Exception {
