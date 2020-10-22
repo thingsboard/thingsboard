@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.protobuf.AbstractMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
@@ -45,6 +48,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -71,11 +75,13 @@ import org.thingsboard.server.gen.edge.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
+import org.thingsboard.server.gen.edge.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.RelationUpdateMsg;
+import org.thingsboard.server.gen.edge.RpcRequestMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
@@ -90,7 +96,9 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -159,6 +167,69 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         testTimeseries();
         testAttributes();
         testSendMessagesToCloud();
+        testRpcCall();
+    }
+
+    private Device findDeviceByName(String deviceName) throws Exception {
+        List<Device> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getId().getId().toString() + "/devices?",
+                new TypeReference<TimePageData<Device>>() {}, new TextPageLink(100)).getData();
+        Optional<Device> foundDevice = edgeDevices.stream().filter(d -> d.getName().equals(deviceName)).findAny();
+        Assert.assertTrue(foundDevice.isPresent());
+        Device device = foundDevice.get();
+        Assert.assertEquals(deviceName, device.getName());
+        return device;
+    }
+
+    private Asset findAssetByName(String assetName) throws Exception {
+        List<Asset> edgeAssets = doGetTypedWithPageLink("/api/edge/" + edge.getId().getId().toString() + "/assets?",
+                new TypeReference<TimePageData<Asset>>() {}, new TextPageLink(100)).getData();
+
+        Assert.assertEquals(1, edgeAssets.size());
+        Asset asset = edgeAssets.get(0);
+        Assert.assertEquals(assetName, asset.getName());
+        return asset;
+    }
+
+    private Device saveDevice(String deviceName) throws Exception {
+        Device device = new Device();
+        device.setName(deviceName);
+        device.setType("test");
+        return doPost("/api/device", device, Device.class);
+    }
+
+    private Asset saveAsset(String assetName) throws Exception {
+        Asset asset = new Asset();
+        asset.setName(assetName);
+        asset.setType("test");
+        return doPost("/api/asset", asset, Asset.class);
+    }
+
+    private void testRpcCall() throws Exception {
+        Device device = findDeviceByName("Edge Device 1");
+
+        RuleEngineDeviceRpcRequest request = RuleEngineDeviceRpcRequest.builder()
+                .oneway(true)
+                .method("test_method")
+                .body("{\"param1\":\"value1\"}")
+                .tenantId(device.getTenantId())
+                .deviceId(device.getId())
+                .requestId(new Random().nextInt())
+                .requestUUID(UUIDs.timeBased())
+                .originServiceId("originServiceId")
+                .expirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10))
+                .restApiCall(true)
+                .build();
+
+        JsonNode body = mapper.valueToTree(request);
+        EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.RPC_CALL, device.getId().getId(), EdgeEventType.DEVICE, body);
+        edgeImitator.expectMessageAmount(1);
+        edgeEventService.saveAsync(edgeEvent);
+        edgeImitator.waitForMessages();
+
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceRpcCallMsg);
+        DeviceRpcCallMsg latestDeviceRpcCallMsg = (DeviceRpcCallMsg) latestMessage;
+        Assert.assertEquals("test_method", latestDeviceRpcCallMsg.getRequestMsg().getMethod());
     }
 
     private void testReceivedInitialData() throws Exception {
@@ -210,10 +281,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
    private void testDevices() throws Exception {
         log.info("Testing devices");
 
-        Device device = new Device();
-        device.setName("Edge Device 2");
-        device.setType("test");
-        Device savedDevice = doPost("/api/device", device, Device.class);
+        Device savedDevice = saveDevice("Edge Device 2");
 
         edgeImitator.expectMessageAmount(1);
         doPost("/api/edge/" + edge.getId().getId().toString()
@@ -259,10 +327,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private void testAssets() throws Exception {
         log.info("Testing assets");
-        Asset asset = new Asset();
-        asset.setName("Edge Asset 2");
-        asset.setType("test");
-        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+        Asset savedAsset = saveAsset("Edge Asset 2");
 
         edgeImitator.expectMessageAmount(1);
         doPost("/api/edge/" + edge.getId().getId().toString()
@@ -411,18 +476,10 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private void testRelations() throws Exception {
         log.info("Testing Relations");
-        List<Device> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getId().getId().toString() + "/devices?",
-                new TypeReference<TimePageData<Device>>() {}, new TextPageLink(100)).getData();
-        List<Asset> edgeAssets = doGetTypedWithPageLink("/api/edge/" + edge.getId().getId().toString() + "/assets?",
-                new TypeReference<TimePageData<Asset>>() {}, new TextPageLink(100)).getData();
 
-        Assert.assertEquals(1, edgeDevices.size());
-        Assert.assertEquals(1, edgeAssets.size());
-        Device device = edgeDevices.get(0);
-        Asset asset = edgeAssets.get(0);
-        Assert.assertEquals("Edge Device 1", device.getName());
-        Assert.assertEquals("Edge Asset 1", asset.getName());
-
+        Device device = findDeviceByName("Edge Device 1");
+        Asset asset = findAssetByName("Edge Asset 1");
+        
         EntityRelation relation = new EntityRelation();
         relation.setType("test");
         relation.setFrom(device.getId());
@@ -474,11 +531,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private void testAlarms() throws Exception {
         log.info("Testing Alarms");
-        List<Device> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getId().getId().toString() + "/devices?",
-                new TypeReference<TimePageData<Device>>() {}, new TextPageLink(100)).getData();
-        Assert.assertEquals(1, edgeDevices.size());
-        Device device = edgeDevices.get(0);
-        Assert.assertEquals("Edge Device 1", device.getName());
+        Device device = findDeviceByName("Edge Device 1");
 
         Alarm alarm = new Alarm();
         alarm.setOriginator(device.getId());
@@ -533,11 +586,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private void testEntityView() throws Exception {
         log.info("Testing EntityView");
-        List<Device> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getId().getId().toString() + "/devices?",
-                new TypeReference<TimePageData<Device>>() {}, new TextPageLink(100)).getData();
-        Assert.assertEquals(1, edgeDevices.size());
-        Device device = edgeDevices.get(0);
-        Assert.assertEquals("Edge Device 1", device.getName());
+        Device device = findDeviceByName("Edge Device 1");
 
         EntityView entityView = new EntityView();
         entityView.setName("Edge EntityView 1");
@@ -704,11 +753,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private void testTimeseries() throws Exception {
         log.info("Testing timeseries");
-        List<Device> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getId().getId().toString() + "/devices?",
-                new TypeReference<TimePageData<Device>>() {}, new TextPageLink(100)).getData();
-        Assert.assertEquals(1, edgeDevices.size());
-        Device device = edgeDevices.get(0);
-        Assert.assertEquals("Edge Device 1", device.getName());
+        Device device = findDeviceByName("Edge Device 1");
 
         String timeseriesData = "{\"data\":{\"temperature\":25},\"ts\":" + System.currentTimeMillis() + "}";
         JsonNode timeseriesEntityData = mapper.readTree(timeseriesData);
@@ -738,12 +783,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private void testAttributes() throws Exception {
         log.info("Testing attributes");
-
-        List<Device> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getId().getId().toString() + "/devices?",
-                new TypeReference<TimePageData<Device>>() {}, new TextPageLink(100)).getData();
-        Assert.assertEquals(1, edgeDevices.size());
-        Device device = edgeDevices.get(0);
-        Assert.assertEquals("Edge Device 1", device.getName());
+        Device device = findDeviceByName("Edge Device 1");
 
         testAttributesUpdatedMsg(device);
         testPostAttributesMsg(device);
@@ -859,11 +899,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     }
 
     private void sendAlarm() throws Exception {
-        List<Device> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getId().getId().toString() + "/devices?",
-                new TypeReference<TimePageData<Device>>() {}, new TextPageLink(100)).getData();
-        Optional<Device> foundDevice = edgeDevices.stream().filter(device1 -> device1.getName().equals("Edge Device 2")).findAny();
-        Assert.assertTrue(foundDevice.isPresent());
-        Device device = foundDevice.get();
+        Device device = findDeviceByName("Edge Device 2");
 
         UplinkMsg.Builder builder = UplinkMsg.newBuilder();
         AlarmUpdateMsg.Builder alarmUpdateMgBuilder = AlarmUpdateMsg.newBuilder();
@@ -1075,17 +1111,11 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     private void installation() throws Exception {
         edge = doPost("/api/edge", constructEdge("Test Edge", "test"), Edge.class);
 
-        Device device = new Device();
-        device.setName("Edge Device 1");
-        device.setType("test");
-        Device savedDevice = doPost("/api/device", device, Device.class);
+        Device savedDevice = saveDevice("Edge Device 1");
         doPost("/api/edge/" + edge.getId().getId().toString()
                 + "/device/" + savedDevice.getId().getId().toString(), Device.class);
 
-        Asset asset = new Asset();
-        asset.setName("Edge Asset 1");
-        asset.setType("test");
-        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+        Asset savedAsset = saveAsset("Edge Asset 1");
         doPost("/api/edge/" + edge.getId().getId().toString()
                 + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
     }

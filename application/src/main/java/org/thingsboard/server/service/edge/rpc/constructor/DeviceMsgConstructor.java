@@ -89,9 +89,11 @@ public class DeviceMsgConstructor {
                 .setRequestIdMSB(request.getRequestUUID().getMostSignificantBits())
                 .setRequestIdLSB(request.getRequestUUID().getLeastSignificantBits())
                 .setExpirationTime(request.getExpirationTime())
-                .setOriginServiceId(request.getOriginServiceId())
                 .setOneway(request.isOneway())
                 .setRequestMsg(requestBuilder.build());
+        if (request.getOriginServiceId() != null) {
+            builder.setOriginServiceId(request.getOriginServiceId());
+        }
         return builder.build();
     }
 }
