@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -55,8 +55,6 @@ import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGateway
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
-import org.thingsboard.server.common.transport.limits.TransportRateLimitType;
-import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -364,7 +362,7 @@ public class DefaultTransportService implements TransportService {
         for (TransportProtos.TsKvListProto tsKv : msg.getTsKvListList()) {
             dataPoints += tsKv.getKvCount();
         }
-        if (checkLimits(sessionInfo, msg, callback, dataPoints, TELEMETRY)) {
+        if (checkLimits(sessionInfo, msg, callback, dataPoints)) {
             reportActivityInternal(sessionInfo);
             TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
             DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
@@ -385,7 +383,7 @@ public class DefaultTransportService implements TransportService {
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, msg, callback, msg.getKvCount(), TELEMETRY)) {
+        if (checkLimits(sessionInfo, msg, callback, msg.getKvCount())) {
             reportActivityInternal(sessionInfo);
             TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
             DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
@@ -575,31 +573,23 @@ public class DefaultTransportService implements TransportService {
         sessions.remove(toSessionId(sessionInfo));
     }
 
-    private TransportRateLimitType[] DEFAULT = new TransportRateLimitType[]{TransportRateLimitType.TENANT_MAX_MSGS, TransportRateLimitType.DEVICE_MAX_MSGS};
-    private TransportRateLimitType[] TELEMETRY = TransportRateLimitType.values();
-
-    @Override
-    public boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback) {
-        return checkLimits(sessionInfo, msg, callback, 0, DEFAULT);
+    private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback) {
+        return checkLimits(sessionInfo, msg, callback, 0);
     }
 
-    @Override
-    public boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback, int dataPoints, TransportRateLimitType... limits) {
+    private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback, int dataPoints) {
         if (log.isTraceEnabled()) {
             log.trace("[{}] Processing msg: {}", toSessionId(sessionInfo), msg);
         }
         TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
         DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
 
-        TransportRateLimitType limit = rateLimitService.checkLimits(tenantId, deviceId, 0, limits);
-        if (limit == null) {
+        EntityType rateLimitedEntityType = rateLimitService.checkLimits(tenantId, deviceId, dataPoints);
+        if (rateLimitedEntityType == null) {
             return true;
         } else {
             if (callback != null) {
-                callback.onError(new TbRateLimitsException(limit.isTenantLevel() ? EntityType.TENANT : EntityType.DEVICE));
-            }
-            if (log.isTraceEnabled()) {
-                log.trace("[{}][{}] {} rateLimit detected: {}", toSessionId(sessionInfo), tenantId, limit, msg);
+                callback.onError(new TbRateLimitsException(rateLimitedEntityType));
             }
             return false;
         }
@@ -831,8 +821,8 @@ public class DefaultTransportService implements TransportService {
         @Override
         public void onSuccess(T msg) {
             try {
-                apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.MSG_COUNT, 1);
-                apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.DP_TRANSPORT_COUNT, dataPoints);
+                apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.TRANSPORT_MSG_COUNT, 1);
+                apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.TRANSPORT_DP_COUNT, dataPoints);
             } finally {
                 callback.onSuccess(msg);
             }

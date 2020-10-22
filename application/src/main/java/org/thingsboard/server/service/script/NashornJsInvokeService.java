@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.queue.usagestats.TbUsageStatsClient;
 
 import java.util.concurrent.TimeUnit;
 
@@ -41,6 +42,10 @@ public class NashornJsInvokeService extends AbstractNashornJsInvokeService {
 
     @Value("${js.local.max_black_list_duration_sec:60}")
     private int maxBlackListDurationSec;
+
+    public NashornJsInvokeService(TbUsageStatsClient apiUsageStatsClient, JsExecutorService jsExecutor) {
+        super(apiUsageStatsClient, jsExecutor);
+    }
 
     @Override
     protected boolean useJsSandbox() {

@@ -15,10 +15,15 @@
  */
 package org.thingsboard.server.common.transport.limits;
 
-public interface TransportRateLimitFactory {
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-    TransportRateLimit create(TransportRateLimitType type, Object config);
+@Data
+@AllArgsConstructor
+public class EntityTransportRateLimits {
 
-    TransportRateLimit createDefault(TransportRateLimitType type);
+    private TransportRateLimit regularMsgRateLimit;
+    private TransportRateLimit telemetryMsgRateLimit;
+    private TransportRateLimit telemetryDataPointsRateLimit;
 
 }

@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.queue.usagestats.TbUsageStatsClient;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -38,7 +38,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -57,15 +56,19 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     private final FutureCallback<UUID> evalCallback = new JsStatCallback<>(jsEvalMsgs, jsTimeoutMsgs, jsFailedMsgs);
     private final FutureCallback<Object> invokeCallback = new JsStatCallback<>(jsInvokeMsgs, jsTimeoutMsgs, jsFailedMsgs);
 
-    @Autowired
     @Getter
-    private JsExecutorService jsExecutor;
+    private final JsExecutorService jsExecutor;
 
     @Value("${js.local.max_requests_timeout:0}")
     private long maxRequestsTimeout;
 
     @Value("${js.local.stats.enabled:false}")
     private boolean statsEnabled;
+
+    public AbstractNashornJsInvokeService(TbUsageStatsClient apiUsageStatsClient, JsExecutorService jsExecutor) {
+        super(apiUsageStatsClient);
+        this.jsExecutor = jsExecutor;
+    }
 
     @Scheduled(fixedDelayString = "${js.local.stats.print_interval_ms:10000}")
     public void printStats() {

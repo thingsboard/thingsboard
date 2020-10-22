@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
@@ -262,7 +263,9 @@ public class BaseTenantProfileServiceTest extends AbstractServiceTest {
         TenantProfile tenantProfile = new TenantProfile();
         tenantProfile.setName(name);
         tenantProfile.setDescription(name + " Test");
-        tenantProfile.setProfileData(new TenantProfileData());
+        TenantProfileData profileData = new TenantProfileData();
+        profileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        tenantProfile.setProfileData(profileData);
         tenantProfile.setDefault(false);
         tenantProfile.setIsolatedTbCore(false);
         tenantProfile.setIsolatedTbRuleEngine(false);

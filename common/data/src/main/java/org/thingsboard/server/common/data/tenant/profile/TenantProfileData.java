@@ -28,17 +28,4 @@ public class TenantProfileData {
 
     private TenantProfileConfiguration configuration;
 
-    @JsonIgnore
-    private Map<String, Object> properties = new HashMap<>();
-
-    @JsonAnyGetter
-    public Map<String, Object> properties() {
-        return this.properties;
-    }
-
-    @JsonAnySetter
-    public void put(String name, Object value) {
-        this.properties.put(name, value);
-    }
-
 }

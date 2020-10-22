@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -145,7 +146,9 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
             defaultTenantProfile = new TenantProfile();
             defaultTenantProfile.setDefault(true);
             defaultTenantProfile.setName("Default");
-            defaultTenantProfile.setProfileData(new TenantProfileData());
+            TenantProfileData profileData = new TenantProfileData();
+            profileData.setConfiguration(new DefaultTenantProfileConfiguration());
+            defaultTenantProfile.setProfileData(profileData);
             defaultTenantProfile.setDescription("Default tenant profile");
             defaultTenantProfile.setIsolatedTbCore(false);
             defaultTenantProfile.setIsolatedTbRuleEngine(false);

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,7 @@ import org.springframework.data.util.Pair;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -100,15 +101,18 @@ public class TenantApiUsageState {
     }
 
     public long getProfileThreshold(ApiUsageRecordKey key) {
-        Object threshold = tenantProfileData.getProperties().get(key.name());
-        if (threshold != null) {
-            if (threshold instanceof String) {
-                return Long.parseLong((String) threshold);
-            } else if (threshold instanceof Long) {
-                return (Long) threshold;
-            } else if (threshold instanceof Integer) {
-                return (Integer) threshold;
-            }
+        DefaultTenantProfileConfiguration config = (DefaultTenantProfileConfiguration) tenantProfileData.getConfiguration();
+        switch (key) {
+            case TRANSPORT_MSG_COUNT:
+                return config.getMaxTransportMessages();
+            case TRANSPORT_DP_COUNT:
+                return config.getMaxTransportDataPoints();
+            case JS_EXEC_COUNT:
+                return config.getMaxJSExecutions();
+            case RE_EXEC_COUNT:
+                return config.getMaxREExecutions();
+            case STORAGE_DP_COUNT:
+                return config.getMaxDPStorageDays();
         }
         return 0L;
     }
@@ -155,12 +159,12 @@ public class TenantApiUsageState {
 
     public boolean isFeatureEnabled(ApiUsageRecordKey recordKey) {
         switch (recordKey) {
-            case MSG_COUNT:
-            case DP_TRANSPORT_COUNT:
+            case TRANSPORT_MSG_COUNT:
+            case TRANSPORT_DP_COUNT:
                 return isTransportEnabled();
             case RE_EXEC_COUNT:
                 return isRuleEngineEnabled();
-            case DP_STORAGE_COUNT:
+            case STORAGE_DP_COUNT:
                 return isDbStorageEnabled();
             case JS_EXEC_COUNT:
                 return isJsExecEnabled();
@@ -173,8 +177,8 @@ public class TenantApiUsageState {
         ApiFeature feature = null;
         boolean currentValue = isFeatureEnabled(recordKey);
         switch (recordKey) {
-            case MSG_COUNT:
-            case DP_TRANSPORT_COUNT:
+            case TRANSPORT_MSG_COUNT:
+            case TRANSPORT_DP_COUNT:
                 feature = ApiFeature.TRANSPORT;
                 setTransportEnabled(value);
                 break;
@@ -182,7 +186,7 @@ public class TenantApiUsageState {
                 feature = ApiFeature.RE;
                 setRuleEngineEnabled(value);
                 break;
-            case DP_STORAGE_COUNT:
+            case STORAGE_DP_COUNT:
                 feature = ApiFeature.DB;
                 setDbStorageEnabled(value);
                 break;
