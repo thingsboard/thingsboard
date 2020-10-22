@@ -112,7 +112,6 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
                                 scope.eventType, scope.tenantId, scope.events.nextPageLink);
                         } else {
                             promise = edgeService.getEdgeEvents(scope.entityId, scope.events.nextPageLink);
-                            scope.loadEdgeInfo();
                         }
                         if (promise) {
                             scope.events.pending = true;
@@ -142,7 +141,6 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
 
         scope.$watch("entityId", function(newVal, prevVal) {
             if (newVal && !angular.equals(newVal, prevVal)) {
-                scope.loadEdgeInfo();
                 scope.resetFilter();
                 scope.reload();
             }
