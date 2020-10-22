@@ -314,7 +314,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
 
         try {
             createRelation(tenantId, new EntityRelation(edgeId, entityViewId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("[{}] Failed to create entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }
@@ -330,7 +330,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         }
         try {
             deleteRelation(tenantId, new EntityRelation(edgeId, entityViewId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("[{}] Failed to delete entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }

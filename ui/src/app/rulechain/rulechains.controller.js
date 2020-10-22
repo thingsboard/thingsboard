@@ -22,7 +22,8 @@ import addRuleChainsToEdgeTemplate from "./add-rulechains-to-edge.tpl.html";
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function RuleChainsController(ruleChainService, userService, importExport, $state, $stateParams, $filter, $translate, $mdDialog, types,
+export default function RuleChainsController(ruleChainService, userService, importExport, $state,
+                                             $stateParams, $filter, $translate, $mdDialog, types,
                                              $document, $q, edgeService) {
 
     var vm = this;
@@ -104,7 +105,6 @@ export default function RuleChainsController(ruleChainService, userService, impo
         var deleteRuleChainFunction = null;
 
         if (edgeId) {
-            vm.edgeRuleChainsTitle = $translate.instant('edge.rulechains');
             edgeService.getEdge(edgeId).then(
                 function success(edge) {
                     vm.edge = edge;

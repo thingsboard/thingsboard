@@ -346,7 +346,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         }
         try {
             createRelation(tenantId, new EntityRelation(edgeId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("[{}] Failed to create device relation. Edge Id: [{}]", deviceId, edgeId);
             throw new RuntimeException(e);
         }
@@ -365,7 +365,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
         try {
             deleteRelation(tenantId, new EntityRelation(edgeId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("[{}] Failed to delete device relation. Edge Id: [{}]", deviceId, edgeId);
             throw new RuntimeException(e);
         }

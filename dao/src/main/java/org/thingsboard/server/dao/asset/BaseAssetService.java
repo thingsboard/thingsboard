@@ -294,7 +294,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         }
         try {
             createRelation(tenantId, new EntityRelation(edgeId, assetId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("[{}] Failed to create asset relation. Edge Id: [{}]", assetId, edgeId);
             throw new RuntimeException(e);
         }
@@ -313,7 +313,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
 
         try {
             deleteRelation(tenantId, new EntityRelation(edgeId, assetId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("[{}] Failed to delete asset relation. Edge Id: [{}]", assetId, edgeId);
             throw new RuntimeException(e);
         }
