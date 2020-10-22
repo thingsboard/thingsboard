@@ -198,7 +198,7 @@ export default function EdgeRoutes($stateProvider, types) {
                 ruleChainsType: 'edge'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "settings_ethernet", "label": "rulechain.edge-rulechains"}'
+                label: '{"icon": "code", "label": "rulechain.edge-rulechains"}'
             }
         }).state('home.edges.ruleChains.ruleChain', {
             url: '/:ruleChainId',
@@ -235,7 +235,7 @@ export default function EdgeRoutes($stateProvider, types) {
                 pageTitle: 'edge.rulechain'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "settings_ethernet", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
+                label: '{"icon": "code", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
             }
         });
 }
