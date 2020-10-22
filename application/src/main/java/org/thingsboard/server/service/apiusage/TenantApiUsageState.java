@@ -20,7 +20,7 @@ import lombok.Setter;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.TenantProfileData;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;

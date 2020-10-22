@@ -21,6 +21,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

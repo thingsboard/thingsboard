@@ -18,7 +18,12 @@ import { Component, Inject, Input, Optional } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { TenantProfile } from '@app/shared/models/tenant.model';
+import {
+  createTenantProfileConfiguration,
+  TenantProfile,
+  TenantProfileData,
+  TenantProfileType
+} from '@app/shared/models/tenant.model';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
@@ -56,7 +61,9 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
         name: [entity ? entity.name : '', [Validators.required]],
         isolatedTbCore: [entity ? entity.isolatedTbCore : false, []],
         isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
-        profileData: [entity && !this.isAdd ? entity.profileData : {}, []],
+        profileData: [entity && !this.isAdd ? entity.profileData : {
+          configuration: createTenantProfileConfiguration(TenantProfileType.DEFAULT)
+        } as TenantProfileData, []],
         description: [entity ? entity.description : '', []],
       }
     );
@@ -66,7 +73,9 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore});
     this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine});
-    this.entityForm.patchValue({profileData: entity.profileData});
+    this.entityForm.patchValue({profileData: !this.isAdd ? entity.profileData: {
+        configuration: createTenantProfileConfiguration(TenantProfileType.DEFAULT)
+      } as TenantProfileData});
     this.entityForm.patchValue({description: entity.description});
   }
 
