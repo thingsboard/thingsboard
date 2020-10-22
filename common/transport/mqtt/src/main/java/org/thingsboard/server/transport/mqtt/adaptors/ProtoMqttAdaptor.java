@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
+import org.thingsboard.server.gen.transport.TransportApiProtos.ActionMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
@@ -185,6 +186,17 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         builder.setRpcRequestMsg(rpcRequest);
         byte[] payloadBytes = builder.build().toByteArray();
         return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_RPC_TOPIC, payloadBytes));
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.EntityDeleteMsg entityDeleteMsg) {
+        TransportApiProtos.GatewayActionMsg.Builder builder = TransportApiProtos.GatewayActionMsg.newBuilder();
+        builder.setMsg(TransportApiProtos.ActionMsg.newBuilder()
+                              .setDeviceName(deviceName)
+                              .setAction("DELETED")
+                        .build());
+        byte[] payloadBytes = builder.build().toByteArray();
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_DEVICE_ACTION_TOPIC, payloadBytes));
     }
 
     public static byte[] toBytes(ByteBuf inbound) {

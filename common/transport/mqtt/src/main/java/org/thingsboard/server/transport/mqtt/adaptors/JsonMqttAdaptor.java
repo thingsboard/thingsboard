@@ -35,6 +35,7 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
 import java.nio.charset.Charset;
@@ -141,6 +142,11 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     @Override
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
         return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_RPC_TOPIC, JsonConverter.toGatewayJson(deviceName, rpcRequest)));
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.EntityDeleteMsg entityDeleteMsg) {
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_DEVICE_ACTION_TOPIC, JsonConverter.toGatewayJson(deviceName, entityDeleteMsg)));
     }
 
     @Override

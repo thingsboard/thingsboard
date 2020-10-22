@@ -42,6 +42,7 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
@@ -326,6 +327,11 @@ public class DeviceApiController {
         @Override
         public void onToServerRpcResponse(ToServerRpcResponseMsg msg) {
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
+        }
+
+        @Override
+        public void onDeviceDeleted(EntityDeleteMsg entityDeleteMsg) {
+            responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(entityDeleteMsg).toString(), HttpStatus.OK));
         }
     }
 

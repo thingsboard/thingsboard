@@ -63,4 +63,6 @@ public interface TbClusterService {
     void onTenantChange(Tenant tenant, TbQueueCallback callback);
 
     void onTenantDelete(Tenant tenant, TbQueueCallback callback);
+
+    void onDeviceDelete(TenantId tenantId, EntityId entityId, TbQueueCallback callback);
 }

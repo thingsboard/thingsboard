@@ -21,6 +21,7 @@ import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGateway
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitType;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
@@ -63,6 +64,8 @@ public interface TransportService {
                  TransportServiceCallback<ProvisionDeviceResponseMsg> callback);
 
     void onProfileUpdate(DeviceProfile deviceProfile);
+
+    void onDeviceDelete(EntityDeleteMsg entityDeleteMsg);
 
     boolean checkLimits(SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback);
 

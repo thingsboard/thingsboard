@@ -30,6 +30,7 @@ public class MqttTopics {
     private static final String CLAIM = "/claim";
     private static final String SUB_TOPIC = "+";
     private static final String PROVISION = "/provision";
+    private static final String ACTION = "/action";
 
     private static final String ATTRIBUTES_RESPONSE = ATTRIBUTES + RESPONSE;
     private static final String ATTRIBUTES_REQUEST = ATTRIBUTES + REQUEST;
@@ -66,6 +67,7 @@ public class MqttTopics {
     public static final String GATEWAY_TELEMETRY_TOPIC = BASE_GATEWAY_API_TOPIC + TELEMETRY;
     public static final String GATEWAY_CLAIM_TOPIC = BASE_GATEWAY_API_TOPIC + CLAIM;
     public static final String GATEWAY_RPC_TOPIC = BASE_GATEWAY_API_TOPIC + RPC;
+    public static final String GATEWAY_DEVICE_ACTION_TOPIC = BASE_GATEWAY_API_TOPIC + ACTION;
     public static final String GATEWAY_ATTRIBUTES_REQUEST_TOPIC = BASE_GATEWAY_API_TOPIC + ATTRIBUTES_REQUEST;
     public static final String GATEWAY_ATTRIBUTES_RESPONSE_TOPIC = BASE_GATEWAY_API_TOPIC + ATTRIBUTES_RESPONSE;
 

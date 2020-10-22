@@ -443,6 +443,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId);
         Set<DeviceId> deviceIdSet = partitionedDevices.get(tpi);
         deviceIdSet.remove(deviceId);
+        clusterService.onDeviceDelete(tenantId, deviceId, null);
     }
 
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {

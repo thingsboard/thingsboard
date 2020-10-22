@@ -38,6 +38,7 @@ import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 
 import java.lang.reflect.Field;
@@ -452,6 +453,11 @@ public class CoapTransportResource extends CoapResource {
                 log.trace("Failed to reply due to error", e);
                 exchange.respond(ResponseCode.INTERNAL_SERVER_ERROR);
             }
+        }
+
+        @Override
+        public void onDeviceDeleted(EntityDeleteMsg entityDeleteMsg) {
+            exchange.respond(ResponseCode.SERVICE_UNAVAILABLE);
         }
 
         public int getNextSeqNumber() {

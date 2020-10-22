@@ -19,8 +19,10 @@ import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.transport.coap.CoapTransportResource;
+import org.thingsboard.server.transport.coap.CoapTransportResource.CoapSessionListener;
 
 import java.util.UUID;
 

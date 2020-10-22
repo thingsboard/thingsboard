@@ -16,11 +16,12 @@
 package org.thingsboard.server.common.transport;
 
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 
 /**
  * Created by ashvayka on 04.10.18.
@@ -36,6 +37,8 @@ public interface SessionMsgListener {
     void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest);
 
     void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse);
+
+    void onDeviceDeleted(EntityDeleteMsg entityDeleteMsg);
 
     default void onProfileUpdate(DeviceProfile deviceProfile) {
     }

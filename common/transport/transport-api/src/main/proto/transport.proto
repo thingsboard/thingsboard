@@ -55,6 +55,11 @@ message AttributesMsg {
   transport.PostAttributeMsg msg = 2;
 }
 
+message ActionMsg {
+  string deviceName = 1;
+  string action = 2;
+}
+
 message ClaimDeviceMsg {
   string deviceName = 1;
   ClaimDevice claimRequest = 2;
@@ -70,6 +75,10 @@ message GatewayClaimMsg {
 
 message GatewayAttributesMsg {
   repeated AttributesMsg msg = 1;
+}
+
+message GatewayActionMsg {
+  ActionMsg msg = 1;
 }
 
 message GatewayRpcResponseMsg {

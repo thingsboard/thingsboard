@@ -99,6 +99,16 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     }
 
     @Override
+    public void onDeviceDeleted(TransportProtos.EntityDeleteMsg entityDeleteMsg) {
+        try {
+            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), entityDeleteMsg).ifPresent(parent::writeAndFlush);
+            parent.deregisterSession(getDeviceInfo().getDeviceName());
+        } catch (Exception e) {
+            log.trace("[{}] Failed to convert entity deleted to MQTT msg", sessionId, e);
+    }
+    }
+
+    @Override
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
         // This feature is not supported in the TB IoT Gateway yet.
     }

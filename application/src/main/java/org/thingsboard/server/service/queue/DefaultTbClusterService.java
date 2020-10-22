@@ -221,6 +221,11 @@ public class DefaultTbClusterService implements TbClusterService {
         onEntityDelete(TenantId.SYS_TENANT_ID, entity.getId(), entity.getName(), callback);
     }
 
+    @Override
+    public void onDeviceDelete(TenantId tenantId, EntityId entityId, TbQueueCallback callback) {
+        onEntityDelete(tenantId, entityId, EntityType.DEVICE.name(), callback);
+    }
+
     public <T extends HasName> void onEntityChange(TenantId tenantId, EntityId entityid, T entity, TbQueueCallback callback) {
         log.trace("[{}][{}][{}] Processing [{}] change event", tenantId, entityid.getEntityType(), entityid.getId(), entity.getName());
         TransportProtos.EntityUpdateMsg entityUpdateMsg = TransportProtos.EntityUpdateMsg.newBuilder()

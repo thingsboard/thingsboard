@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
@@ -59,8 +60,10 @@ import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
@@ -664,6 +667,7 @@ public class DefaultTransportService implements TransportService {
                 } else if (EntityType.TENANT.equals(entityType)) {
                     rateLimitService.remove(new TenantId(entityUuid));
                 } else if (EntityType.DEVICE.equals(entityType)) {
+                    onDeviceDelete(msg);
                     rateLimitService.remove(new DeviceId(entityUuid));
                 }
             } else {
@@ -681,6 +685,18 @@ public class DefaultTransportService implements TransportService {
             if (md.getSessionInfo().getDeviceProfileIdMSB() == deviceProfileIdMSB
                     && md.getSessionInfo().getDeviceProfileIdLSB() == deviceProfileIdLSB) {
                 transportCallbackExecutor.submit(() -> md.getListener().onProfileUpdate(deviceProfile));
+            }
+        });
+    }
+
+    @Override
+    public void onDeviceDelete(EntityDeleteMsg msg) {
+        long deviceIdMSB = msg.getEntityIdMSB();
+        long deviceIdLSB = msg.getEntityIdLSB();
+        sessions.forEach((id, md) -> {
+            if (md.getSessionInfo().getDeviceIdMSB() == deviceIdMSB
+                    && md.getSessionInfo().getDeviceIdLSB() == deviceIdLSB) {
+                transportCallbackExecutor.submit(() -> md.getListener().onDeviceDeleted(msg));
             }
         });
     }

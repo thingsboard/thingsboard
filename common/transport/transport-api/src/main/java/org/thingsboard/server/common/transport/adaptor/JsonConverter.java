@@ -69,6 +69,7 @@ public class JsonConverter {
     private static final JsonParser JSON_PARSER = new JsonParser();
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
     private static final String DEVICE_PROPERTY = "device";
+    private static final String ACTION_PROPERTY = "action";
 
     private static boolean isTypeCastEnabled = true;
 
@@ -412,6 +413,12 @@ public class JsonConverter {
         return toJson(payload, true, requestId);
     }
 
+    public static JsonElement toJson(TransportProtos.EntityDeleteMsg entityDeleteMsg) {
+        JsonObject result = new JsonObject();
+        result.addProperty(ACTION_PROPERTY, "DELETED");
+        return result;
+    }
+
     private static JsonObject toJson(ProvisionDeviceResponseMsg payload, boolean toGateway, int requestId) {
         JsonObject result = new JsonObject();
         if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.NOT_FOUND) {
@@ -451,6 +458,13 @@ public class JsonConverter {
         JsonObject result = new JsonObject();
         result.addProperty(DEVICE_PROPERTY, deviceName);
         result.add("data", JsonConverter.toJson(responseRequest));
+        return result;
+    }
+
+    public static JsonElement toGatewayJson(String deviceName, TransportProtos.EntityDeleteMsg entityDeleteMsg) {
+        JsonObject result = new JsonObject();
+        result.addProperty(DEVICE_PROPERTY, deviceName);
+        result.addProperty(ACTION_PROPERTY, "DELETED");
         return result;
     }
 
