@@ -15,16 +15,13 @@
     limitations under the License.
 
 -->
-<form [formGroup]="tenantProfileDataFormGroup" style="padding-bottom: 16px;">
-  <mat-expansion-panel [expanded]="true">
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        <div translate>tenant-profile.profile-configuration</div>
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-    <tb-tenant-profile-configuration
-      formControlName="configuration"
-      required>
-    </tb-tenant-profile-configuration>
-  </mat-expansion-panel>
-</form>
+<div [formGroup]="tenantProfileConfigurationFormGroup">
+  <div [ngSwitch]="type">
+    <ng-template [ngSwitchCase]="tenantProfileType.DEFAULT">
+      <tb-default-tenant-profile-configuration
+        [required]="required"
+        formControlName="configuration">
+      </tb-default-tenant-profile-configuration>
+    </ng-template>
+  </div>
+</div>
