@@ -19,6 +19,7 @@ public enum EdgeEventActionType {
     ADDED,
     DELETED,
     UPDATED,
+    POST_ATTRIBUTES,
     ATTRIBUTES_UPDATED,
     ATTRIBUTES_DELETED,
     TIMESERIES_UPDATED,

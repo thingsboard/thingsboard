@@ -335,6 +335,7 @@ public final class EdgeGrpcSession implements Closeable {
                         downlinkMsg = processEntityMessage(edgeEvent, edgeEvent.getAction());
                         break;
                     case ATTRIBUTES_UPDATED:
+                    case POST_ATTRIBUTES:
                     case ATTRIBUTES_DELETED:
                     case TIMESERIES_UPDATED:
                         downlinkMsg = processTelemetryMessage(edgeEvent);
