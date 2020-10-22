@@ -90,4 +90,5 @@ export interface Event extends BaseData<EventId> {
   type: string;
   uid: string;
   body: EventBody;
+  action: string; //TODO: refactor edgeEvents - move parameters to the entity.body
 }

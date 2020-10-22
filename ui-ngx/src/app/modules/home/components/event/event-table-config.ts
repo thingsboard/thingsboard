@@ -119,8 +119,9 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.columns = [];
     this.columns.push(
       new DateEntityTableColumn<Event>('createdTime', 'event.event-time', this.datePipe, '120px'),
-      new EntityTableColumn<Event>('server', 'event.server', '100px',
-        (entity) => entity.body.server, entity => ({}), false));
+      // new EntityTableColumn<Event>('server', 'event.server', '100px',
+      //   (entity) => entity.body.server, entity => ({}), false)
+    );
     switch (this.eventType) {
       case EventType.ERROR:
         this.columns.push(
@@ -171,7 +172,11 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         this.columns.push(
           new EntityTableColumn<Event>('type', 'event.type', '100%',
             (entity) => entity.type, entity => ({}), false),
-        );
+          new EntityTableColumn<Event>('action', 'event.action', '100%',
+            (entity) => entity.action, entity => ({}), false),
+          new EntityTableColumn<Event>('entityId', 'event.entityId', '100%',
+            (entity) => entity.id.id, entity => ({}), false)   //TODO: replace this to entity.entityId because of conflict wiht entityId model
+      );
         break;
       case DebugEventType.DEBUG_RULE_NODE:
       case DebugEventType.DEBUG_RULE_CHAIN:
