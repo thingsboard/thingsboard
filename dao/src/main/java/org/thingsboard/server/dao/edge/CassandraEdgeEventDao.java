@@ -118,7 +118,7 @@ public class CassandraEdgeEventDao extends CassandraAbstractSearchTimeDao<EdgeEv
         List<EdgeEvent> edgeEvents = DaoUtil.convertDataList(entities);
         if (!withTsUpdate) {
             return edgeEvents.stream()
-                    .filter(edgeEvent -> !edgeEvent.getAction().equals(EdgeEventActionType.TIMESERIES_UPDATED.name()))
+                    .filter(edgeEvent -> !edgeEvent.getAction().equals(EdgeEventActionType.TIMESERIES_UPDATED))
                     .collect(Collectors.toList());
         } else {
             return edgeEvents;
