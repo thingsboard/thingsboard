@@ -80,6 +80,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.CacheConstants.EDGE_CACHE;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -173,6 +174,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Override
     public Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, CustomerId customerId) {
+        log.trace("[{}] Executing assignEdgeToCustomer [{}][{}]", tenantId, edgeId, customerId);
         Edge edge = findEdgeById(tenantId, edgeId);
         edge.setCustomerId(customerId);
         return saveEdge(edge);
@@ -180,6 +182,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Override
     public Edge unassignEdgeFromCustomer(TenantId tenantId, EdgeId edgeId) {
+        log.trace("[{}] Executing unassignEdgeFromCustomer [{}]", tenantId, edgeId);
         Edge edge = findEdgeById(tenantId, edgeId);
         edge.setCustomerId(null);
         return saveEdge(edge);
@@ -278,6 +281,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Override
     public ListenableFuture<List<Edge>> findEdgesByQuery(TenantId tenantId, EdgeSearchQuery query) {
+        log.trace("[{}] Executing findEdgesByQuery [{}]", tenantId, query);
         ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(tenantId, query.toEntitySearchQuery());
         ListenableFuture<List<Edge>> edges = Futures.transformAsync(relations, r -> {
             EntitySearchDirection direction = query.toEntitySearchQuery().getParameters().getDirection();
@@ -454,6 +458,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Override
     public ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId) {
+        log.trace("[{}] Executing findRelatedEdgeIdsByEntityId [{}]", tenantId, entityId);
         if (EntityType.TENANT.equals(entityId.getEntityType())) {
             TextPageData<Edge> edgesByTenantId = findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
             return Futures.immediateFuture(edgesByTenantId.getData().stream().map(IdBased::getId).collect(Collectors.toList()));
@@ -518,9 +523,9 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     }
 
     private void initRestTemplate() {
-        boolean jdkHttpClientEnabled = org.apache.commons.lang3.StringUtils.isNotEmpty(System.getProperty("tb.proxy.jdk")) && System.getProperty("tb.proxy.jdk").equalsIgnoreCase("true");
-        boolean systemProxyEnabled = org.apache.commons.lang3.StringUtils.isNotEmpty(System.getProperty("tb.proxy.system")) && System.getProperty("tb.proxy.system").equalsIgnoreCase("true");
-        boolean proxyEnabled = org.apache.commons.lang3.StringUtils.isNotEmpty(System.getProperty("tb.proxy.host")) && org.apache.commons.lang3.StringUtils.isNotEmpty(System.getProperty("tb.proxy.port"));
+        boolean jdkHttpClientEnabled = isNotEmpty(System.getProperty("tb.proxy.jdk")) && System.getProperty("tb.proxy.jdk").equalsIgnoreCase("true");
+        boolean systemProxyEnabled = isNotEmpty(System.getProperty("tb.proxy.system")) && System.getProperty("tb.proxy.system").equalsIgnoreCase("true");
+        boolean proxyEnabled = isNotEmpty(System.getProperty("tb.proxy.host")) && isNotEmpty(System.getProperty("tb.proxy.port"));
         if (jdkHttpClientEnabled) {
             log.warn("Going to use plain JDK Http Client!");
             SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();

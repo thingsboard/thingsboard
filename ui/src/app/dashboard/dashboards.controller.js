@@ -156,17 +156,6 @@ export function DashboardsController(userService, dashboardService, customerServ
             );
         }
 
-        if (edgeId) {
-            vm.edgeDashboardsTitle = $translate.instant('edge.dashboards');
-            edgeService.getEdge(edgeId).then(
-                function success(edge) {
-                    if (edge.customerId) {
-                        vm.edgeCustomerId = edge.customerId;
-                    }
-                }
-            )
-        }
-
         if (vm.dashboardsScope === 'tenant') {
             fetchDashboardsFunction = function (pageLink) {
                 return dashboardService.getTenantDashboards(pageLink);
@@ -726,7 +715,7 @@ export function DashboardsController(userService, dashboardService, customerServ
                     controller: 'AddDashboardsToEdgeController',
                     controllerAs: 'vm',
                     templateUrl: addDashboardsToEdgeTemplate,
-                    locals: {edgeId: edgeId, edgeCustomerId: vm.edgeCustomerId.id, dashboards: dashboards},
+                    locals: {edgeId: edgeId, dashboards: dashboards},
                     parent: angular.element($document[0].body),
                     fullscreen: true,
                     targetEvent: $event

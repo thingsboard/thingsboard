@@ -66,6 +66,7 @@ public class TelemetryProcessor extends BaseProcessor {
     private final Gson gson = new Gson();
 
     public List<ListenableFuture<Void>> onTelemetryUpdate(TenantId tenantId, EntityDataProto entityData) {
+        log.trace("[{}] onTelemetryUpdate [{}]", tenantId, entityData);
         List<ListenableFuture<Void>> result = new ArrayList<>();
         EntityId entityId = constructEntityId(entityData);
         if ((entityData.hasPostAttributesMsg() || entityData.hasPostTelemetryMsg() || entityData.hasAttributesUpdatedMsg()) && entityId != null) {

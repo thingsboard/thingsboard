@@ -15,15 +15,15 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Component
-@Slf4j
+@TbCoreComponent
 public class RelationMsgConstructor {
 
     public RelationUpdateMsg constructRelationUpdatedMsg(UpdateMsgType msgType, EntityRelation entityRelation) {

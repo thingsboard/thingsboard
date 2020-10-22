@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -185,7 +186,7 @@ public class EdgeController extends BaseController {
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strEdgeId, strCustomerId, customer.getName());
 
             sendNotificationMsgToEdgeService(savedEdge.getTenantId(), savedEdge.getId(),
-                    customerId, ActionType.ASSIGNED_TO_CUSTOMER);
+                    customerId, EdgeEventActionType.ASSIGNED_TO_CUSTOMER);
 
             return savedEdge;
         } catch (Exception e) {
@@ -219,7 +220,7 @@ public class EdgeController extends BaseController {
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strEdgeId, customer.getId().toString(), customer.getName());
 
             sendNotificationMsgToEdgeService(savedEdge.getTenantId(), savedEdge.getId(),
-                    customer.getId(), ActionType.UNASSIGNED_FROM_CUSTOMER);
+                    customer.getId(), EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
 
             return savedEdge;
         } catch (Exception e) {

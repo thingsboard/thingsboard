@@ -123,7 +123,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (dashboard.addAssignedCustomer(customer)) {
             try {
                 createRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD));
-            } catch (ExecutionException | InterruptedException e) {
+            } catch (Exception e) {
                 log.warn("[{}] Failed to create dashboard relation. Customer Id: [{}]", dashboardId, customerId);
                 throw new RuntimeException(e);
             }
@@ -143,7 +143,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (dashboard.removeAssignedCustomer(customer)) {
             try {
                 deleteRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD));
-            } catch (ExecutionException | InterruptedException e) {
+            } catch (Exception e) {
                 log.warn("[{}] Failed to delete dashboard relation. Customer Id: [{}]", dashboardId, customerId);
                 throw new RuntimeException(e);
             }
@@ -237,7 +237,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
         try {
             createRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("[{}] Failed to create dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }
@@ -253,7 +253,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
         try {
             deleteRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("[{}] Failed to delete dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }

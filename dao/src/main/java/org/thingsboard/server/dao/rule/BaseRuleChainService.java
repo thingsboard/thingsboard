@@ -86,7 +86,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             try {
                 createRelation(ruleChain.getTenantId(), new EntityRelation(savedRuleChain.getTenantId(), savedRuleChain.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
-            } catch (ExecutionException | InterruptedException e) {
+            } catch (Exception e) {
                 log.warn("[{}] Failed to create tenant to root rule chain relation. from: [{}], to: [{}]",
                         savedRuleChain.getTenantId(), savedRuleChain.getId());
                 throw new RuntimeException(e);
@@ -166,7 +166,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             try {
                 createRelation(tenantId, new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
-            } catch (ExecutionException | InterruptedException e) {
+            } catch (Exception e) {
                 log.warn("[{}] Failed to create rule chain to rule node relation. from: [{}], to: [{}]",
                         ruleChainMetaData.getRuleChainId(), savedNode.getId());
                 throw new RuntimeException(e);
@@ -194,7 +194,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 String type = nodeConnection.getType();
                 try {
                     createRelation(tenantId, new EntityRelation(from, to, type, RelationTypeGroup.RULE_NODE));
-                } catch (ExecutionException | InterruptedException e) {
+                } catch (Exception e) {
                     log.warn("[{}] Failed to create rule node relation. from: [{}], to: [{}]", from, to);
                     throw new RuntimeException(e);
                 }
@@ -207,7 +207,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 String type = nodeToRuleChainConnection.getType();
                 try {
                     createRelation(tenantId, new EntityRelation(from, to, type, RelationTypeGroup.RULE_NODE, nodeToRuleChainConnection.getAdditionalInfo()));
-                } catch (ExecutionException | InterruptedException e) {
+                } catch (Exception e) {
                     log.warn("[{}] Failed to create rule node to rule chain relation. from: [{}], to: [{}]", from, to);
                     throw new RuntimeException(e);
                 }
@@ -409,7 +409,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
         try {
             createRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("[{}] Failed to create ruleChain relation. Edge Id: [{}]", ruleChainId, edgeId);
             throw new RuntimeException(e);
         }
@@ -428,7 +428,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
         try {
             deleteRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("[{}] Failed to delete rule chain relation. Edge Id: [{}]", ruleChainId, edgeId);
             throw new RuntimeException(e);
         }
@@ -474,7 +474,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 ruleChain.setRoot(true);
                 ruleChainDao.save(tenantId, ruleChain);
                 return true;
-            } catch (ExecutionException | InterruptedException e) {
+            } catch (Exception e) {
                 log.warn("Failed to set default root edge rule chain, ruleChainId: [{}]", ruleChainId, e);
                 throw new RuntimeException(e);
             }
@@ -488,7 +488,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             createRelation(tenantId, new EntityRelation(tenantId, ruleChainId,
                     EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE_DEFAULT_RULE_CHAIN));
             return true;
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("Failed to add default edge rule chain, ruleChainId: [{}]", ruleChainId, e);
             throw new RuntimeException(e);
         }
@@ -500,7 +500,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             deleteRelation(tenantId, new EntityRelation(tenantId, ruleChainId,
                     EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE_DEFAULT_RULE_CHAIN));
             return true;
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.warn("Failed to remove default edge rule chain, ruleChainId: [{}]", ruleChainId, e);
             throw new RuntimeException(e);
         }

@@ -577,6 +577,8 @@ transport:
       key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
       # Type of the key store
       key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
+      # Skip certificate validity check for client certificates.
+      skip_validity_check_for_client_cert: "${MQTT_SSL_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
   # Local CoAP transport parameters
   coap:
     # Enable/disable coap transport protocol.
@@ -756,6 +758,7 @@ queue:
           retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_RETRIES:3}" # Number of retries, 0 is unlimited
           failure-percentage: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
           pause-between-retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_RETRY_PAUSE:3}"# Time in seconds to wait in consumer thread before retries;
+          max-pause-between-retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:3}"# Max allowed time in seconds for pause between retries.
       - name: "${TB_QUEUE_RE_HP_QUEUE_NAME:HighPriority}"
         topic: "${TB_QUEUE_RE_HP_TOPIC:tb_rule_engine.hp}"
         poll-interval: "${TB_QUEUE_RE_HP_POLL_INTERVAL_MS:25}"
@@ -771,6 +774,7 @@ queue:
           retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_RETRIES:0}" # Number of retries, 0 is unlimited
           failure-percentage: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
           pause-between-retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_RETRY_PAUSE:5}"# Time in seconds to wait in consumer thread before retries;
+          max-pause-between-retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:5}"# Max allowed time in seconds for pause between retries.
       - name: "${TB_QUEUE_RE_SQ_QUEUE_NAME:SequentialByOriginator}"
         topic: "${TB_QUEUE_RE_SQ_TOPIC:tb_rule_engine.sq}"
         poll-interval: "${TB_QUEUE_RE_SQ_POLL_INTERVAL_MS:25}"
@@ -786,6 +790,7 @@ queue:
           retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_RETRIES:3}" # Number of retries, 0 is unlimited
           failure-percentage: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
           pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_RETRY_PAUSE:5}"# Time in seconds to wait in consumer thread before retries;
+          max-pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:5}"# Max allowed time in seconds for pause between retries.
   transport:
     # For high priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"

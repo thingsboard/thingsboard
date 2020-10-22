@@ -36,8 +36,8 @@ import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -156,7 +156,7 @@ public class TbSendRPCRequestNode implements TbNode {
     private void sendRpcRequestToEdgeDevice(TbContext ctx, TbMsg msg, EdgeId edgeId, RuleEngineDeviceRpcRequest request) {
         EdgeEvent edgeEvent = new EdgeEvent();
         edgeEvent.setTenantId(ctx.getTenantId());
-        edgeEvent.setAction(ActionType.RPC_CALL.name());
+        edgeEvent.setAction(EdgeEventActionType.RPC_CALL);
         edgeEvent.setEntityId(request.getDeviceId().getId());
         edgeEvent.setType(EdgeEventType.DEVICE);
         edgeEvent.setBody(json.valueToTree(request));

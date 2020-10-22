@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.state;
+package org.thingsboard.server.common.data.edge;
 
-import lombok.Builder;
-import lombok.Data;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
-
-/**
- * Created by ashvayka on 01.05.18.
- */
-@Data
-@Builder
-class DeviceStateData {
-
-    private final TenantId tenantId;
-    private final DeviceId deviceId;
-    private final long deviceCreationTime;
-    private TbMsgMetaData metaData;
-    private final DeviceState state;
-    
+public enum EdgeEventActionType {
+    ADDED,
+    DELETED,
+    UPDATED,
+    ATTRIBUTES_UPDATED,
+    ATTRIBUTES_DELETED,
+    TIMESERIES_UPDATED,
+    CREDENTIALS_UPDATED,
+    ASSIGNED_TO_CUSTOMER,
+    UNASSIGNED_FROM_CUSTOMER,
+    RELATION_ADD_OR_UPDATE,
+    RELATION_DELETED,
+    RPC_CALL,
+    ALARM_ACK,
+    ALARM_CLEAR,
+    ASSIGNED_TO_EDGE,
+    UNASSIGNED_FROM_EDGE,
+    CREDENTIALS_REQUEST,
+    ENTITY_EXISTS_REQUEST
 }

@@ -20,8 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -39,7 +39,6 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.queue.TbClusterService;
-import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
 @Slf4j
@@ -92,7 +91,7 @@ public abstract class BaseProcessor {
     protected ListenableFuture<EdgeEvent> saveEdgeEvent(TenantId tenantId,
                                                         EdgeId edgeId,
                                                         EdgeEventType type,
-                                                        ActionType action,
+                                                        EdgeEventActionType action,
                                                         EntityId entityId,
                                                         JsonNode body) {
         log.debug("Pushing event to edge queue. tenantId [{}], edgeId [{}], type[{}], " +
@@ -103,7 +102,7 @@ public abstract class BaseProcessor {
         edgeEvent.setTenantId(tenantId);
         edgeEvent.setEdgeId(edgeId);
         edgeEvent.setType(type);
-        edgeEvent.setAction(action.name());
+        edgeEvent.setAction(action);
         if (entityId != null) {
             edgeEvent.setEntityId(entityId.getId());
         }

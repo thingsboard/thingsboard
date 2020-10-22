@@ -34,6 +34,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 public class AlarmProcessor extends BaseProcessor {
 
     public ListenableFuture<Void> onAlarmUpdate(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg) {
+        log.trace("[{}] onAlarmUpdate [{}]", tenantId, alarmUpdateMsg);
         EntityId originatorId = getAlarmOriginator(tenantId, alarmUpdateMsg.getOriginatorName(),
                 EntityType.valueOf(alarmUpdateMsg.getOriginatorType()));
         if (originatorId == null) {

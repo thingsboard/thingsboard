@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
@@ -72,7 +73,7 @@ public class WidgetsBundleController extends BaseController {
             WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
 
             sendNotificationMsgToEdgeService(getTenantId(), savedWidgetsBundle.getId(),
-                    widgetsBundle.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+                    widgetsBundle.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
 
             return checkNotNull(savedWidgetsBundle);
         } catch (Exception e) {
@@ -90,7 +91,7 @@ public class WidgetsBundleController extends BaseController {
             checkWidgetsBundleId(widgetsBundleId, Operation.DELETE);
             widgetsBundleService.deleteWidgetsBundle(getTenantId(), widgetsBundleId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), widgetsBundleId, ActionType.DELETED);
+            sendNotificationMsgToEdgeService(getTenantId(), widgetsBundleId, EdgeEventActionType.DELETED);
 
         } catch (Exception e) {
             throw handleException(e);

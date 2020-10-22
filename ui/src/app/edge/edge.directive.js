@@ -83,18 +83,17 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
         $compile(element.contents())(scope);
 
         scope.onEdgeInfoCopied = function(type) {
-            let translateInstant = "";
+            let infoTypeLabel = "";
             switch (type) {
                 case 'key':
-                    translateInstant = "edge.edge-key-copied-message";
+                    infoTypeLabel = "edge.edge-key-copied-message";
                     break;
                 case 'secret':
-                    translateInstant = "edge.edge-secret-copied-message";
+                    infoTypeLabel = "edge.edge-secret-copied-message";
                     break;
             }
-            toast.showSuccess($translate.instant(translateInstant), 750, angular.element(element).parent().parent(), 'top left');
+            toast.showSuccess($translate.instant(infoTypeLabel), 750, angular.element(element).parent().parent(), 'bottom left');
         };
-
 
     };
     return {

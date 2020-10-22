@@ -13,25 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.state;
+package org.thingsboard.server.dao.model.type;
 
-import lombok.Builder;
-import lombok.Data;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
+import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 
-/**
- * Created by ashvayka on 01.05.18.
- */
-@Data
-@Builder
-class DeviceStateData {
+public class EdgeEventActionTypeCodec extends EnumNameCodec<EdgeEventActionType> {
 
-    private final TenantId tenantId;
-    private final DeviceId deviceId;
-    private final long deviceCreationTime;
-    private TbMsgMetaData metaData;
-    private final DeviceState state;
-    
+    public EdgeEventActionTypeCodec() {
+        super(EdgeEventActionType.class);
+    }
+
 }

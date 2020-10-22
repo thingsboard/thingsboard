@@ -171,7 +171,7 @@ function Menu(userService, $state, $rootScope) {
                                     name: 'rulechain.edge-rulechains',
                                     type: 'link',
                                     state: 'home.ruleChains.edge',
-                                    icon: 'router'
+                                    icon: 'code'
                                 }
                             ]
                         },
@@ -235,7 +235,7 @@ function Menu(userService, $state, $rootScope) {
                                 },
                                 {
                                     name: 'rulechain.edge-rulechains',
-                                    icon: 'router',
+                                    icon: 'code',
                                     state: 'home.ruleChains.edge'
                                 }
                             ]

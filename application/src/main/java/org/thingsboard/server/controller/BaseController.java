@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -679,10 +680,14 @@ public abstract class BaseController {
                     metaData.putValue("assignedToTenantName", strTenantName);
                 } else if (actionType == ActionType.ASSIGNED_TO_EDGE) {
                     String strEdgeId = extractParameter(String.class, 1, additionalInfo);
+                    String strEdgeName = extractParameter(String.class, 2, additionalInfo);
                     metaData.putValue("assignedEdgeId", strEdgeId);
+                    metaData.putValue("assignedEdgeName", strEdgeName);
                 } else if (actionType == ActionType.UNASSIGNED_FROM_EDGE) {
                     String strEdgeId = extractParameter(String.class, 1, additionalInfo);
+                    String strEdgeName = extractParameter(String.class, 2, additionalInfo);
                     metaData.putValue("unassignedEdgeId", strEdgeId);
+                    metaData.putValue("unassignedEdgeName", strEdgeName);
                 }
                 ObjectNode entityNode;
                 if (entity != null) {
@@ -755,7 +760,7 @@ public abstract class BaseController {
         return null;
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, CustomerId customerId, ActionType action) {
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, CustomerId customerId, EdgeEventActionType action) {
         if (!edgesSupportEnabled) {
             return;
         }
@@ -766,7 +771,7 @@ public abstract class BaseController {
         }
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, CustomerId customerId, ActionType action) {
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, CustomerId customerId, EdgeEventActionType action) {
         if (!edgesSupportEnabled) {
             return;
         }
@@ -780,7 +785,7 @@ public abstract class BaseController {
         }
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityRelation relation, ActionType action) {
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityRelation relation, EdgeEventActionType action) {
         if (!edgesSupportEnabled) {
             return;
         }
@@ -794,11 +799,11 @@ public abstract class BaseController {
         }
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, ActionType action) {
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
         sendNotificationMsgToEdgeService(tenantId, null, entityId, action);
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, ActionType action) {
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
         if (!edgesSupportEnabled) {
             return;
         }
@@ -808,7 +813,7 @@ public abstract class BaseController {
         }
     }
 
-    private void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, ActionType action) {
+    private void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action) {
         TransportProtos.EdgeNotificationMsgProto.Builder builder = TransportProtos.EdgeNotificationMsgProto.newBuilder();
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());

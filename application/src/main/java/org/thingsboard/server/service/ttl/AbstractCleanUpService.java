@@ -39,8 +39,7 @@ public abstract class AbstractCleanUpService {
     protected String dbPassword;
 
     protected long executeQuery(Connection conn, String query) throws SQLException {
-        try (Statement statement = conn.createStatement()) {
-            ResultSet resultSet = statement.executeQuery(query);
+        try (Statement statement = conn.createStatement(); ResultSet resultSet = statement.executeQuery(query)) {
             if (log.isDebugEnabled()) {
                 getWarnings(statement);
             }

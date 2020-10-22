@@ -105,7 +105,6 @@ message EntityDataProto {
   transport.PostAttributeMsg attributesUpdatedMsg = 6;
   string postAttributeScope = 7;
   AttributeDeleteMsg attributeDeleteMsg = 8;
-  // transport.ToDeviceRpcRequestMsg ???
 }
 
 message AttributeDeleteMsg {

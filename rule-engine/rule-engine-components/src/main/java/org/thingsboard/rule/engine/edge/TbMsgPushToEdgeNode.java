@@ -32,8 +32,8 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -140,13 +140,13 @@ public class TbMsgPushToEdgeNode implements TbNode {
     private EdgeEvent buildEdgeEvent(TbMsg msg, TbContext ctx) throws JsonProcessingException {
         String msgType = msg.getType();
         if (DataConstants.ALARM.equals(msgType)) {
-            return buildEdgeEvent(ctx.getTenantId(), ActionType.ADDED, getUUIDFromMsgData(msg), EdgeEventType.ALARM, null);
+            return buildEdgeEvent(ctx.getTenantId(), EdgeEventActionType.ADDED, getUUIDFromMsgData(msg), EdgeEventType.ALARM, null);
         } else {
             EdgeEventType edgeEventTypeByEntityType = EdgeUtils.getEdgeEventTypeByEntityType(msg.getOriginator().getEntityType());
             if (edgeEventTypeByEntityType == null) {
                 return null;
             }
-            ActionType actionType = getActionTypeByMsgType(msgType);
+            EdgeEventActionType actionType = getEdgeEventActionTypeByMsgType(msgType);
             Map<String, Object> entityBody = new HashMap<>();
             Map<String, String> metadata = msg.getMetaData().getData();
             JsonNode dataJson = json.readTree(msg.getData());
@@ -172,10 +172,10 @@ public class TbMsgPushToEdgeNode implements TbNode {
         }
     }
 
-    private EdgeEvent buildEdgeEvent(TenantId tenantId, ActionType edgeEventAction, UUID entityId, EdgeEventType edgeEventType, JsonNode entityBody) {
+    private EdgeEvent buildEdgeEvent(TenantId tenantId, EdgeEventActionType edgeEventAction, UUID entityId, EdgeEventType edgeEventType, JsonNode entityBody) {
         EdgeEvent edgeEvent = new EdgeEvent();
         edgeEvent.setTenantId(tenantId);
-        edgeEvent.setAction(edgeEventAction.name());
+        edgeEvent.setAction(edgeEventAction);
         edgeEvent.setEntityId(entityId);
         edgeEvent.setType(edgeEventType);
         edgeEvent.setBody(entityBody);
@@ -188,15 +188,15 @@ public class TbMsgPushToEdgeNode implements TbNode {
         return UUID.fromString(id);
     }
 
-    private ActionType getActionTypeByMsgType(String msgType) {
-        ActionType actionType;
+    private EdgeEventActionType getEdgeEventActionTypeByMsgType(String msgType) {
+        EdgeEventActionType actionType;
         if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)) {
-            actionType = ActionType.TIMESERIES_UPDATED;
+            actionType = EdgeEventActionType.TIMESERIES_UPDATED;
         } else if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)
                 || DataConstants.ATTRIBUTES_UPDATED.equals(msgType)) {
-            actionType = ActionType.ATTRIBUTES_UPDATED;
+            actionType = EdgeEventActionType.ATTRIBUTES_UPDATED;
         } else {
-            actionType = ActionType.ATTRIBUTES_DELETED;
+            actionType = EdgeEventActionType.ATTRIBUTES_DELETED;
         }
         return actionType;
     }

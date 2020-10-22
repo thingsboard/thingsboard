@@ -17,7 +17,6 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
 import org.thingsboard.server.common.data.Device;
@@ -30,9 +29,10 @@ import org.thingsboard.server.gen.edge.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.RpcRequestMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Component
-@Slf4j
+@TbCoreComponent
 public class DeviceMsgConstructor {
 
     protected static final ObjectMapper mapper = new ObjectMapper();

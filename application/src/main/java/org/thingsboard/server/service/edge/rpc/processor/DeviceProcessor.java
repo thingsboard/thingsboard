@@ -27,8 +27,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -62,22 +62,23 @@ public class DeviceProcessor extends BaseProcessor {
     private static final ReentrantLock deviceCreationLock = new ReentrantLock();
 
     public ListenableFuture<Void> onDeviceUpdate(TenantId tenantId, Edge edge, DeviceUpdateMsg deviceUpdateMsg) {
+        log.trace("[{}] onDeviceUpdate [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getName());
         DeviceId edgeDeviceId = new DeviceId(new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB()));
         switch (deviceUpdateMsg.getMsgType()) {
             case ENTITY_CREATED_RPC_MESSAGE:
                 String deviceName = deviceUpdateMsg.getName();
                 Device device = deviceService.findDeviceByTenantIdAndName(tenantId, deviceName);
                 if (device != null) {
-                    // device with this name already exists on the cloud - update ID on the edge
+                    log.info("[{}] Device with name '{}' already exists on the cloud. Updating id of device entity on the edge", tenantId, deviceName);
                     if (!device.getId().equals(edgeDeviceId)) {
-                        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, ActionType.ENTITY_EXISTS_REQUEST, device.getId(), null);
+                        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_EXISTS_REQUEST, device.getId(), null);
                     }
                 } else {
                     Device deviceById = deviceService.findDeviceById(edge.getTenantId(), edgeDeviceId);
                     if (deviceById != null) {
-                        // this ID already used by other device - create new device and update ID on the edge
+                        log.info("[{}] Device ID [{}] already used by other device on the cloud. Creating new device and replacing device entity on the edge", tenantId, edgeDeviceId.getId());
                         device = createDevice(tenantId, edge, deviceUpdateMsg);
-                        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, ActionType.ENTITY_EXISTS_REQUEST, device.getId(), null);
+                        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_EXISTS_REQUEST, device.getId(), null);
                     } else {
                         device = createDevice(tenantId, edge, deviceUpdateMsg);
                     }
@@ -135,13 +136,14 @@ public class DeviceProcessor extends BaseProcessor {
         device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo()));
         deviceService.saveDevice(device);
 
-        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, ActionType.CREDENTIALS_REQUEST, deviceId, null);
+        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, deviceId, null);
     }
 
     private Device createDevice(TenantId tenantId, Edge edge, DeviceUpdateMsg deviceUpdateMsg) {
         Device device;
         try {
             deviceCreationLock.lock();
+            log.debug("[{}] Creating device entity [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getName());
             DeviceId deviceId = new DeviceId(new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB()));
             device = new Device();
             device.setTenantId(edge.getTenantId());
@@ -157,7 +159,7 @@ public class DeviceProcessor extends BaseProcessor {
             deviceStateService.onDeviceAdded(device);
             pushDeviceCreatedEventToRuleEngine(tenantId, edge, device);
 
-            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, ActionType.CREDENTIALS_REQUEST, deviceId, null);
+            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, deviceId, null);
         } finally {
             deviceCreationLock.unlock();
         }
@@ -190,23 +192,18 @@ public class DeviceProcessor extends BaseProcessor {
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
-                    // TODO: voba - handle success
                     log.debug("Successfully send ENTITY_CREATED EVENT to rule engine [{}]", device);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    // TODO: voba - handle failure
                     log.debug("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", device, t);
                 }
-
-                ;
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
             log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), DataConstants.ENTITY_CREATED, e);
         }
     }
-
 
     private TbMsgMetaData getActionTbMsgMetaData(Edge edge, CustomerId customerId) {
         TbMsgMetaData metaData = getTbMsgMetaData(edge);
@@ -216,7 +213,6 @@ public class DeviceProcessor extends BaseProcessor {
         return metaData;
     }
 
-
     private TbMsgMetaData getTbMsgMetaData(Edge edge) {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("edgeId", edge.getId().toString());
@@ -225,6 +221,7 @@ public class DeviceProcessor extends BaseProcessor {
     }
 
     public ListenableFuture<Void> processDeviceRpcCallResponseMsg(TenantId tenantId, DeviceRpcCallMsg deviceRpcCallMsg) {
+        log.trace("[{}] processDeviceRpcCallResponseMsg [{}]", tenantId, deviceRpcCallMsg);
         SettableFuture<Void> futureToSet = SettableFuture.create();
         UUID uuid = new UUID(deviceRpcCallMsg.getRequestIdMSB(), deviceRpcCallMsg.getRequestIdLSB());
         FromDeviceRpcResponse response;

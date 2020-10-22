@@ -40,9 +40,9 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -60,7 +60,7 @@ import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.controller.AbstractControllerTest;
-import org.thingsboard.server.dao.edge.EdgeEventService;;
+import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.edge.imitator.EdgeImitator;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
@@ -91,6 +91,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+;
 
 
 @Slf4j
@@ -712,7 +714,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
         String timeseriesData = "{\"data\":{\"temperature\":25},\"ts\":" + System.currentTimeMillis() + "}";
         JsonNode timeseriesEntityData = mapper.readTree(timeseriesData);
-        EdgeEvent edgeEvent1 = constructEdgeEvent(tenantId, edge.getId(), ActionType.TIMESERIES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, timeseriesEntityData);
+        EdgeEvent edgeEvent1 = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.TIMESERIES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, timeseriesEntityData);
         edgeImitator.expectMessageAmount(1);
         edgeEventService.saveAsync(edgeEvent1);
         edgeImitator.waitForMessages();
@@ -746,7 +748,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
         String attributesData = "{\"scope\":\"SERVER_SCOPE\",\"kv\":{\"key\":\"value\"}}";
         JsonNode attributesEntityData = mapper.readTree(attributesData);
-        EdgeEvent edgeEvent1 = constructEdgeEvent(tenantId, edge.getId(), ActionType.ATTRIBUTES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, attributesEntityData);
+        EdgeEvent edgeEvent1 = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.ATTRIBUTES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, attributesEntityData);
         edgeImitator.expectMessageAmount(1);
         edgeEventService.saveAsync(edgeEvent1);
         edgeImitator.waitForMessages();
@@ -767,7 +769,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals("value", keyValueProto.getStringV());
 
         ((ObjectNode) attributesEntityData).put("isPostAttributes", true);
-        EdgeEvent edgeEvent2 = constructEdgeEvent(tenantId, edge.getId(), ActionType.ATTRIBUTES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, attributesEntityData);
+        EdgeEvent edgeEvent2 = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.ATTRIBUTES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, attributesEntityData);
         edgeImitator.expectMessageAmount(1);
         edgeEventService.saveAsync(edgeEvent2);
         edgeImitator.waitForMessages();
@@ -1075,11 +1077,11 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
     }
 
-    private EdgeEvent constructEdgeEvent(TenantId tenantId, EdgeId edgeId, ActionType edgeEventAction, UUID entityId, EdgeEventType edgeEventType, JsonNode entityBody) {
+    private EdgeEvent constructEdgeEvent(TenantId tenantId, EdgeId edgeId, EdgeEventActionType edgeEventAction, UUID entityId, EdgeEventType edgeEventType, JsonNode entityBody) {
         EdgeEvent edgeEvent = new EdgeEvent();
         edgeEvent.setEdgeId(edgeId);
         edgeEvent.setTenantId(tenantId);
-        edgeEvent.setAction(edgeEventAction.name());
+        edgeEvent.setAction(edgeEventAction);
         edgeEvent.setEntityId(entityId);
         edgeEvent.setType(edgeEventType);
         edgeEvent.setBody(entityBody);

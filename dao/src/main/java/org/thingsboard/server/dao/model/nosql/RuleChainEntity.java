@@ -25,7 +25,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -50,7 +49,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_TENANT_
 import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
-@Slf4j
 @Table(name = RULE_CHAIN_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString

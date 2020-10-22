@@ -15,14 +15,14 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.AdminSettingsUpdateMsg;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
-@Slf4j
 @Component
+@TbCoreComponent
 public class AdminSettingsMsgConstructor {
 
     public AdminSettingsUpdateMsg constructAdminSettingsUpdateMsg(AdminSettings adminSettings) {

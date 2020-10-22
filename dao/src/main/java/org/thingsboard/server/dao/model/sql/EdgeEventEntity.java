@@ -23,6 +23,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeEventId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -71,8 +72,9 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
     @Column(name = EDGE_EVENT_TYPE_PROPERTY)
     private EdgeEventType edgeEventType;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = EDGE_EVENT_ACTION_PROPERTY)
-    private String edgeEventAction;
+    private EdgeEventActionType edgeEventAction;
 
     @Type(type = "json")
     @Column(name = EDGE_EVENT_BODY_PROPERTY)

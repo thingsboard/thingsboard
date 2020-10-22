@@ -24,11 +24,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeEventId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
+import org.thingsboard.server.dao.model.type.EdgeEventActionTypeCodec;
 import org.thingsboard.server.dao.model.type.EdgeEventTypeCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
@@ -65,8 +67,8 @@ public class EdgeEventEntity implements BaseEntity<EdgeEvent> {
     private EdgeEventType edgeEventType;
 
     @ClusteringColumn(value = 1)
-    @Column(name = EDGE_EVENT_ACTION_PROPERTY)
-    private String edgeEventAction;
+    @Column(name = EDGE_EVENT_ACTION_PROPERTY, codec = EdgeEventActionTypeCodec.class)
+    private EdgeEventActionType edgeEventAction;
 
     @ClusteringColumn(value = 2)
     @Column(name = EDGE_EVENT_UID_PROPERTY)

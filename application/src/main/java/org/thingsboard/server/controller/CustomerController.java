@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -109,7 +110,7 @@ public class CustomerController extends BaseController {
                     customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
             if (customer.getId() != null) {
-                sendNotificationMsgToEdgeService(savedCustomer.getTenantId(), savedCustomer.getId(),ActionType.UPDATED);
+                sendNotificationMsgToEdgeService(savedCustomer.getTenantId(), savedCustomer.getId(), EdgeEventActionType.UPDATED);
             }
 
             return savedCustomer;
@@ -136,7 +137,7 @@ public class CustomerController extends BaseController {
                     customer.getId(),
                     ActionType.DELETED, null, strCustomerId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), customerId, ActionType.DELETED);
+            sendNotificationMsgToEdgeService(getTenantId(), customerId, EdgeEventActionType.DELETED);
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.CUSTOMER),
