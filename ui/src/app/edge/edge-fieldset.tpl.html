@@ -117,13 +117,36 @@
                 <div translate ng-message="required">edge.cloud-endpoint-required</div>
             </div>
         </md-input-container>
+    </fieldset>
+    <div layout="row">
+
         <md-input-container class="md-block" flex>
             <label translate>edge.edge-key</label>
             <input ng-model="edge.routingKey" disabled>
         </md-input-container>
+        <md-button class="md-icon-button" style="margin-top: 14px;"
+                   ngclipboard data-clipboard-action="copy"
+                   ngclipboard-success="onEdgeInfoCopied('key')"
+                   data-clipboard-text="{{edge.routingKey}}">
+            <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
+            <md-tooltip md-direction="top">
+                {{ 'edge.copy-edge-key' | translate }}
+            </md-tooltip>
+        </md-button>
+    </div>
+    <div layout="row">
         <md-input-container class="md-block" flex>
             <label translate>edge.edge-secret</label>
             <input ng-model="edge.secret" disabled>
         </md-input-container>
-    </fieldset>
+        <md-button class="md-icon-button" style="margin-top: 14px;"
+                   ngclipboard data-clipboard-action="copy"
+                   data-clipboard-text="{{edge.secret}}"
+                   ngclipboard-success="onEdgeInfoCopied('secret')">
+            <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
+            <md-tooltip md-direction="top">
+                {{ 'edge.copy-edge-secret' | translate }}
+            </md-tooltip>
+        </md-button>
+    </div>
 </md-content>
