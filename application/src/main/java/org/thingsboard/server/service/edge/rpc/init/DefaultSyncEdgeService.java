@@ -140,6 +140,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     @Override
     public void sync(Edge edge) {
+        log.trace("[{}] staring sync process for edge [{}]", edge.getTenantId(), edge.getName());
         try {
             syncWidgetsBundleAndWidgetTypes(edge);
             syncAdminSettings(edge);
@@ -155,6 +156,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncRuleChains(Edge edge) {
+        log.trace("[{}] syncRuleChains [{}]", edge.getTenantId(), edge.getName());
         try {
             ListenableFuture<TimePageData<RuleChain>> future =
                     ruleChainService.findRuleChainsByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), new TimePageLink(Integer.MAX_VALUE));
@@ -180,6 +182,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncDevices(Edge edge) {
+        log.trace("[{}] syncDevices [{}]", edge.getTenantId(), edge.getName());
         try {
             ListenableFuture<TimePageData<Device>> future =
                     deviceService.findDevicesByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), new TimePageLink(Integer.MAX_VALUE));
@@ -205,6 +208,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncAssets(Edge edge) {
+        log.trace("[{}] syncAssets [{}]", edge.getTenantId(), edge.getName());
         try {
             ListenableFuture<TimePageData<Asset>> future = assetService.findAssetsByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), new TimePageLink(Integer.MAX_VALUE));
             Futures.addCallback(future, new FutureCallback<TimePageData<Asset>>() {
@@ -229,6 +233,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncEntityViews(Edge edge) {
+        log.trace("[{}] syncEntityViews [{}]", edge.getTenantId(), edge.getName());
         try {
             ListenableFuture<TimePageData<EntityView>> future = entityViewService.findEntityViewsByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), new TimePageLink(Integer.MAX_VALUE));
             Futures.addCallback(future, new FutureCallback<TimePageData<EntityView>>() {
@@ -253,6 +258,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncDashboards(Edge edge) {
+        log.trace("[{}] syncDashboards [{}]", edge.getTenantId(), edge.getName());
         try {
             ListenableFuture<TimePageData<DashboardInfo>> future = dashboardService.findDashboardsByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), new TimePageLink(Integer.MAX_VALUE));
             Futures.addCallback(future, new FutureCallback<TimePageData<DashboardInfo>>() {
@@ -277,6 +283,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncUsers(Edge edge) {
+        log.trace("[{}] syncUsers [{}]", edge.getTenantId(), edge.getName());
         try {
             TextPageData<User> pageData = userService.findTenantAdmins(edge.getTenantId(), new TextPageLink(Integer.MAX_VALUE));
             pushUsersToEdge(pageData, edge);
@@ -291,6 +298,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncWidgetsBundleAndWidgetTypes(Edge edge) {
+        log.trace("[{}] syncWidgetsBundleAndWidgetTypes [{}]", edge.getTenantId(), edge.getName());
         List<WidgetsBundle> widgetsBundlesToPush = new ArrayList<>();
         List<WidgetType> widgetTypesToPush = new ArrayList<>();
         widgetsBundlesToPush.addAll(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(edge.getTenantId()));
@@ -309,6 +317,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncAdminSettings(Edge edge) {
+        log.trace("[{}] syncAdminSettings [{}]", edge.getTenantId(), edge.getName());
         try {
             AdminSettings systemMailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
             saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, EdgeEventActionType.UPDATED, null, mapper.valueToTree(systemMailSettings));
@@ -386,6 +395,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     @Override
     public ListenableFuture<Void> processRuleChainMetadataRequestMsg(Edge edge, RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg) {
+        log.trace("[{}] processRuleChainMetadataRequestMsg [{}][{}]", edge.getTenantId(), edge.getName(), ruleChainMetadataRequestMsg);
         SettableFuture<Void> futureToSet = SettableFuture.create();
         if (ruleChainMetadataRequestMsg.getRuleChainIdMSB() != 0 && ruleChainMetadataRequestMsg.getRuleChainIdLSB() != 0) {
             RuleChainId ruleChainId =
@@ -409,6 +419,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     @Override
     public ListenableFuture<Void> processAttributesRequestMsg(Edge edge, AttributesRequestMsg attributesRequestMsg) {
+        log.trace("[{}] processAttributesRequestMsg [{}][{}]", edge.getTenantId(), edge.getName(), attributesRequestMsg);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(
                 EntityType.valueOf(attributesRequestMsg.getEntityType()),
                 new UUID(attributesRequestMsg.getEntityIdMSB(), attributesRequestMsg.getEntityIdLSB()));
@@ -482,6 +493,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     @Override
     public ListenableFuture<Void> processRelationRequestMsg(Edge edge, RelationRequestMsg relationRequestMsg) {
+        log.trace("[{}] processRelationRequestMsg [{}][{}]", edge.getTenantId(), edge.getName(), relationRequestMsg);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(
                 EntityType.valueOf(relationRequestMsg.getEntityType()),
                 new UUID(relationRequestMsg.getEntityIdMSB(), relationRequestMsg.getEntityIdLSB()));
@@ -528,6 +540,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     @Override
     public ListenableFuture<Void> processDeviceCredentialsRequestMsg(Edge edge, DeviceCredentialsRequestMsg deviceCredentialsRequestMsg) {
+        log.trace("[{}] processDeviceCredentialsRequestMsg [{}][{}]", edge.getTenantId(), edge.getName(), deviceCredentialsRequestMsg);
         SettableFuture<Void> futureToSet = SettableFuture.create();
         if (deviceCredentialsRequestMsg.getDeviceIdMSB() != 0 && deviceCredentialsRequestMsg.getDeviceIdLSB() != 0) {
             DeviceId deviceId = new DeviceId(new UUID(deviceCredentialsRequestMsg.getDeviceIdMSB(), deviceCredentialsRequestMsg.getDeviceIdLSB()));
@@ -550,6 +563,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     @Override
     public ListenableFuture<Void> processUserCredentialsRequestMsg(Edge edge, UserCredentialsRequestMsg userCredentialsRequestMsg) {
+        log.trace("[{}] processUserCredentialsRequestMsg [{}][{}]", edge.getTenantId(), edge.getName(), userCredentialsRequestMsg);
         SettableFuture<Void> futureToSet = SettableFuture.create();
         if (userCredentialsRequestMsg.getUserIdMSB() != 0 && userCredentialsRequestMsg.getUserIdLSB() != 0) {
             UserId userId = new UserId(new UUID(userCredentialsRequestMsg.getUserIdMSB(), userCredentialsRequestMsg.getUserIdLSB()));
@@ -576,7 +590,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
                                EdgeEventActionType action,
                                EntityId entityId,
                                JsonNode body) {
-        log.debug("Pushing edge event to edge queue. tenantId [{}], edgeId [{}], type [{}], action[{}], entityId [{}], body [{}]",
+        log.trace("Pushing edge event to edge queue. tenantId [{}], edgeId [{}], type [{}], action[{}], entityId [{}], body [{}]",
                 tenantId, edgeId, type, action, entityId, body);
 
         EdgeEvent edgeEvent = new EdgeEvent();

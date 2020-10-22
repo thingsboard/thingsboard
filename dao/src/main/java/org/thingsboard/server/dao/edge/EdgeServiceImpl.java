@@ -174,6 +174,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Override
     public Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, CustomerId customerId) {
+        log.trace("[{}] Executing assignEdgeToCustomer [{}][{}]", tenantId, edgeId, customerId);
         Edge edge = findEdgeById(tenantId, edgeId);
         edge.setCustomerId(customerId);
         return saveEdge(edge);
@@ -181,6 +182,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Override
     public Edge unassignEdgeFromCustomer(TenantId tenantId, EdgeId edgeId) {
+        log.trace("[{}] Executing unassignEdgeFromCustomer [{}]", tenantId, edgeId);
         Edge edge = findEdgeById(tenantId, edgeId);
         edge.setCustomerId(null);
         return saveEdge(edge);
@@ -279,6 +281,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Override
     public ListenableFuture<List<Edge>> findEdgesByQuery(TenantId tenantId, EdgeSearchQuery query) {
+        log.trace("[{}] Executing findEdgesByQuery [{}]", tenantId, query);
         ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(tenantId, query.toEntitySearchQuery());
         ListenableFuture<List<Edge>> edges = Futures.transformAsync(relations, r -> {
             EntitySearchDirection direction = query.toEntitySearchQuery().getParameters().getDirection();
@@ -455,6 +458,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Override
     public ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId) {
+        log.trace("[{}] Executing findRelatedEdgeIdsByEntityId [{}]", tenantId, entityId);
         if (EntityType.TENANT.equals(entityId.getEntityType())) {
             TextPageData<Edge> edgesByTenantId = findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
             return Futures.immediateFuture(edgesByTenantId.getData().stream().map(IdBased::getId).collect(Collectors.toList()));

@@ -221,6 +221,7 @@ public class DeviceProcessor extends BaseProcessor {
     }
 
     public ListenableFuture<Void> processDeviceRpcCallResponseMsg(TenantId tenantId, DeviceRpcCallMsg deviceRpcCallMsg) {
+        log.trace("[{}] processDeviceRpcCallResponseMsg [{}]", tenantId, deviceRpcCallMsg);
         SettableFuture<Void> futureToSet = SettableFuture.create();
         UUID uuid = new UUID(deviceRpcCallMsg.getRequestIdMSB(), deviceRpcCallMsg.getRequestIdLSB());
         FromDeviceRpcResponse response;
