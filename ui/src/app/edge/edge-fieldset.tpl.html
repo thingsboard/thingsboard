@@ -68,20 +68,6 @@
         <md-icon md-svg-icon="mdi:sync"></md-icon>
         <span translate>edge.sync</span>
     </md-button>
-    <md-button ngclipboard data-clipboard-action="copy"
-               ngclipboard-success="onEdgeInfoCopied('key')"
-               data-clipboard-text="{{edge.routingKey}}" ng-show="!isEdit"
-               class="md-raised">
-        <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
-        <span translate>edge.copy-edge-key</span>
-    </md-button>
-    <md-button ngclipboard data-clipboard-action="copy"
-               ngclipboard-success="onEdgeInfoCopied('secret')"
-               data-clipboard-text="{{edge.secret}}" ng-show="!isEdit"
-               class="md-raised">
-        <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
-        <span translate>edge.copy-edge-secret</span>
-    </md-button>
 </div>
 
 <md-content class="md-padding" layout="column">
