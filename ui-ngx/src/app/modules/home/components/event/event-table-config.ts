@@ -28,7 +28,7 @@ import {MatDialog} from '@angular/material/dialog';
 import {EntityId} from '@shared/models/id/entity-id';
 import {EventService} from '@app/core/http/event.service';
 import {EventTableHeaderComponent} from '@home/components/event/event-table-header.component';
-import {EntityTypeResource} from '@shared/models/entity-type.models';
+import {EntityType, EntityTypeResource} from '@shared/models/entity-type.models';
 import {Observable} from 'rxjs';
 import {PageData} from '@shared/models/page/page-data';
 import {Direction} from '@shared/models/page/sort-order';
@@ -80,6 +80,10 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.headerComponent = EventTableHeaderComponent;
 
     this.eventTypes = Object.keys(EventType).map(type => EventType[type]);
+
+    if (this.entityId.entityType !== EntityType.EDGE) {
+      this.eventTypes.pop();
+    }
 
     if (disabledEventTypes && disabledEventTypes.length) {
       this.eventTypes = this.eventTypes.filter(type => disabledEventTypes.indexOf(type) === -1);
