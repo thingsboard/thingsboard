@@ -45,7 +45,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509Ce
  */
 public interface TransportService {
 
-    GetEntityProfileResponseMsg getRoutingInfo(GetEntityProfileRequestMsg msg);
+    GetEntityProfileResponseMsg getEntityProfile(GetEntityProfileRequestMsg msg);
 
     void process(DeviceTransportType transportType, ValidateDeviceTokenRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
@@ -61,8 +61,6 @@ public interface TransportService {
 
     void process(ProvisionDeviceRequestMsg msg,
                  TransportServiceCallback<ProvisionDeviceResponseMsg> callback);
-
-    void onProfileUpdate(DeviceProfile deviceProfile);
 
     boolean checkLimits(SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback);
 

@@ -48,4 +48,17 @@ public abstract class BaseApiUsageStateServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(apiUsageState);
     }
 
+    @Test
+    public void testUpdateApiUsageState(){
+        ApiUsageState apiUsageState = apiUsageStateService.findTenantApiUsageState(tenantId);
+        Assert.assertNotNull(apiUsageState);
+        Assert.assertTrue(apiUsageState.isTransportEnabled());
+        apiUsageState.setTransportEnabled(false);
+        apiUsageState = apiUsageStateService.update(apiUsageState);
+        Assert.assertNotNull(apiUsageState);
+        apiUsageState = apiUsageStateService.findTenantApiUsageState(tenantId);
+        Assert.assertNotNull(apiUsageState);
+        Assert.assertFalse(apiUsageState.isTransportEnabled());
+    }
+
 }

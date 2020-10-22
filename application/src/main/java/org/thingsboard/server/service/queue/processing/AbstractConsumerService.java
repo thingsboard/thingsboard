@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -161,6 +161,8 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                     deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
                 } else if (EntityType.DEVICE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     deviceProfileCache.evict(new DeviceId(componentLifecycleMsg.getEntityId().getId()));
+                } else if (EntityType.API_USAGE_STATE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    apiUsageStateService.onApiUsageStateUpdate(componentLifecycleMsg.getTenantId());
                 }
             }
             log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);

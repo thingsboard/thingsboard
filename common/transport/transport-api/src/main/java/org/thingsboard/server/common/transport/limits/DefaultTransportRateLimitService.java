@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentMap;
 @Slf4j
 public class DefaultTransportRateLimitService implements TransportRateLimitService {
 
+    private final ConcurrentMap<TenantId, Boolean> tenantAllowed = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, TransportRateLimit[]> perTenantLimits = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, TransportRateLimit[]> perDeviceLimits = new ConcurrentHashMap<>();
 
@@ -46,6 +47,9 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
 
     @Override
     public TransportRateLimitType checkLimits(TenantId tenantId, DeviceId deviceId, int dataPoints, TransportRateLimitType... limits) {
+        if (!tenantAllowed.getOrDefault(tenantId, Boolean.TRUE)) {
+            return TransportRateLimitType.TENANT_ADDED_TO_DISABLED_LIST;
+        }
         TransportRateLimit[] tenantLimits = getTenantRateLimits(tenantId);
         TransportRateLimit[] deviceLimits = getDeviceRateLimits(tenantId, deviceId);
         for (TransportRateLimitType limitType : limits) {
@@ -83,6 +87,11 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
     @Override
     public void remove(DeviceId deviceId) {
         perDeviceLimits.remove(deviceId);
+    }
+
+    @Override
+    public void update(TenantId tenantId, boolean allowed) {
+        tenantAllowed.put(tenantId, allowed);
     }
 
     private void mergeLimits(TenantId tenantId, TransportRateLimit[] newRateLimits) {

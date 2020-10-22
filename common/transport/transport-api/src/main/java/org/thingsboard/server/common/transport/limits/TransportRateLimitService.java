@@ -31,4 +31,5 @@ public interface TransportRateLimitService {
 
     void remove(DeviceId deviceId);
 
+    void update(TenantId tenantId, boolean transportEnabled);
 }

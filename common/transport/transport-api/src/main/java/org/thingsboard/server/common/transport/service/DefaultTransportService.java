@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
@@ -237,7 +238,7 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public TransportProtos.GetEntityProfileResponseMsg getRoutingInfo(TransportProtos.GetEntityProfileRequestMsg msg) {
+    public TransportProtos.GetEntityProfileResponseMsg getEntityProfile(TransportProtos.GetEntityProfileRequestMsg msg) {
         TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg> protoMsg =
                 new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setEntityProfileRequestMsg(msg).build());
         try {
@@ -641,8 +642,7 @@ public class DefaultTransportService implements TransportService {
                         onProfileUpdate(deviceProfile);
                     }
                 } else if (EntityType.TENANT_PROFILE.equals(entityType)) {
-                    TenantProfileUpdateResult update = tenantProfileCache.put(msg.getData());
-                    rateLimitService.update(update);
+                    rateLimitService.update(tenantProfileCache.put(msg.getData()));
                 } else if (EntityType.TENANT.equals(entityType)) {
                     Optional<Tenant> profileOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
                     if (profileOpt.isPresent()) {
@@ -651,6 +651,12 @@ public class DefaultTransportService implements TransportService {
                         if (updated) {
                             rateLimitService.update(tenant.getId());
                         }
+                    }
+                } else if (EntityType.API_USAGE_STATE.equals(entityType)) {
+                    Optional<ApiUsageState> stateOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
+                    if (stateOpt.isPresent()) {
+                        ApiUsageState apiUsageState = stateOpt.get();
+                        rateLimitService.update(apiUsageState.getTenantId(), apiUsageState.isTransportEnabled());
                     }
                 }
             } else if (toSessionMsg.hasEntityDeleteMsg()) {
@@ -673,8 +679,7 @@ public class DefaultTransportService implements TransportService {
         }
     }
 
-    @Override
-    public void onProfileUpdate(DeviceProfile deviceProfile) {
+    private void onProfileUpdate(DeviceProfile deviceProfile) {
         long deviceProfileIdMSB = deviceProfile.getId().getId().getMostSignificantBits();
         long deviceProfileIdLSB = deviceProfile.getId().getId().getLeastSignificantBits();
         sessions.forEach((id, md) -> {

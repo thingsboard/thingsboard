@@ -437,6 +437,10 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
     tenant_id uuid,
     entity_type varchar(32),
     entity_id uuid,
+    transport_enabled boolean,
+    db_storage_enabled boolean,
+    re_exec_enabled boolean,
+    js_exec_enabled boolean,
     CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)
 );
 
