@@ -21,8 +21,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.transport.TransportProfileCache;
+import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,14 +31,14 @@ import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @Component
-@ConditionalOnExpression("('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true') || '${service.type:null}'=='tb-transport'")
-public class DefaultTransportProfileCache implements TransportProfileCache {
+@TbTransportComponent
+public class DefaultTransportDeviceProfileCache implements TransportDeviceProfileCache {
 
     private final ConcurrentMap<DeviceProfileId, DeviceProfile> deviceProfiles = new ConcurrentHashMap<>();
 
     private final DataDecodingEncodingService dataDecodingEncodingService;
 
-    public DefaultTransportProfileCache(DataDecodingEncodingService dataDecodingEncodingService) {
+    public DefaultTransportDeviceProfileCache(DataDecodingEncodingService dataDecodingEncodingService) {
         this.dataDecodingEncodingService = dataDecodingEncodingService;
     }
 

@@ -55,17 +55,17 @@ public class DefaultTbTenantProfileCache implements TbTenantProfileCache {
     public TenantProfile get(TenantProfileId tenantProfileId) {
         TenantProfile profile = tenantProfilesMap.get(tenantProfileId);
         if (profile == null) {
-            profile = tenantProfilesMap.get(tenantProfileId);
-            if (profile == null) {
-                tenantProfileFetchLock.lock();
-                try {
+            tenantProfileFetchLock.lock();
+            try {
+                profile = tenantProfilesMap.get(tenantProfileId);
+                if (profile == null) {
                     profile = tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, tenantProfileId);
                     if (profile != null) {
                         tenantProfilesMap.put(tenantProfileId, profile);
                     }
-                } finally {
-                    tenantProfileFetchLock.unlock();
                 }
+            } finally {
+                tenantProfileFetchLock.unlock();
             }
         }
         return profile;

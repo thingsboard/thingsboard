@@ -31,6 +31,8 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
@@ -76,12 +78,15 @@ public abstract class AbstractOAuth2ClientMapper {
 
     private final Lock userCreationLock = new ReentrantLock();
 
-    protected SecurityUser getOrCreateSecurityUserFromOAuth2User(OAuth2User oauth2User, boolean allowUserCreation, boolean activateUser) {
+    protected SecurityUser getOrCreateSecurityUserFromOAuth2User(OAuth2User oauth2User, OAuth2ClientRegistrationInfo clientRegistration) {
+
+        OAuth2MapperConfig config = clientRegistration.getMapperConfig();
+
         UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, oauth2User.getEmail());
 
         User user = userService.findUserByEmail(TenantId.SYS_TENANT_ID, oauth2User.getEmail());
 
-        if (user == null && !allowUserCreation) {
+        if (user == null && !config.isAllowUserCreation()) {
             throw new UsernameNotFoundException("User not found: " + oauth2User.getEmail());
         }
 
@@ -106,21 +111,28 @@ public abstract class AbstractOAuth2ClientMapper {
                     user.setFirstName(oauth2User.getFirstName());
                     user.setLastName(oauth2User.getLastName());
 
+                    ObjectNode additionalInfo = objectMapper.createObjectNode();
+
                     if (!StringUtils.isEmpty(oauth2User.getDefaultDashboardName())) {
                         Optional<DashboardId> dashboardIdOpt =
                                 user.getAuthority() == Authority.TENANT_ADMIN ?
                                         getDashboardId(tenantId, oauth2User.getDefaultDashboardName())
                                         : getDashboardId(tenantId, customerId, oauth2User.getDefaultDashboardName());
                         if (dashboardIdOpt.isPresent()) {
-                            ObjectNode additionalInfo = objectMapper.createObjectNode();
                             additionalInfo.put("defaultDashboardFullscreen", oauth2User.isAlwaysFullScreen());
                             additionalInfo.put("defaultDashboardId", dashboardIdOpt.get().getId().toString());
-                            user.setAdditionalInfo(additionalInfo);
                         }
                     }
 
+                    if (clientRegistration.getAdditionalInfo() != null &&
+                            clientRegistration.getAdditionalInfo().has("providerName")) {
+                        additionalInfo.put("authProviderName", clientRegistration.getAdditionalInfo().get("providerName").asText());
+                    }
+
+                    user.setAdditionalInfo(additionalInfo);
+
                     user = userService.saveUser(user);
-                    if (activateUser) {
+                    if (config.isActivateUser()) {
                         UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
                         userService.activateUserCredentials(user.getTenantId(), userCredentials.getActivateToken(), passwordEncoder.encode(""));
                     }

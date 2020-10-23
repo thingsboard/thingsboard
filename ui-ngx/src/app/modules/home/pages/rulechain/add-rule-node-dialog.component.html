@@ -40,16 +40,16 @@
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
-    <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || tbRuleNode.ruleNodeFormGroup.invalid || !tbRuleNode.ruleNodeFormGroup.dirty">
-      {{ 'action.add' | translate }}
-    </button>
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>
       {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || tbRuleNode.ruleNodeFormGroup.invalid || !tbRuleNode.ruleNodeFormGroup.dirty">
+      {{ 'action.add' | translate }}
     </button>
   </div>
 </form>

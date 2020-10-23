@@ -21,14 +21,14 @@
     }
   }
   .tb-alarm-rule-schedule {
-    line-height: 1.8em;
     padding: 4px;
     cursor: pointer;
-    &.disabled {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    &.title {
       opacity: 0.7;
-    }
-    .nowrap {
-      white-space: nowrap;
+      overflow: visible;
     }
   }
 }

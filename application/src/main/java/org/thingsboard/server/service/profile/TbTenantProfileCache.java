@@ -15,11 +15,7 @@
  */
 package org.thingsboard.server.service.profile;
 
-import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 

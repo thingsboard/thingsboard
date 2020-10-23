@@ -16,21 +16,23 @@
 package org.thingsboard.server.common.transport;
 
 import com.google.protobuf.ByteString;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
+import org.thingsboard.server.queue.discovery.TenantRoutingInfo;
+import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
 
-import java.util.Optional;
+import java.util.Set;
 
-public interface TransportProfileCache {
+public interface TransportTenantProfileCache {
 
-    DeviceProfile getOrCreate(DeviceProfileId id, ByteString profileBody);
+    TenantProfile get(TenantId tenantId);
 
-    DeviceProfile get(DeviceProfileId id);
+    TenantProfileUpdateResult put(ByteString profileBody);
 
-    void put(DeviceProfile profile);
+    boolean put(TenantId tenantId, TenantProfileId profileId);
 
-    DeviceProfile put(ByteString profileBody);
-
-    void evict(DeviceProfileId id);
+    Set<TenantId> remove(TenantProfileId profileId);
 
 }

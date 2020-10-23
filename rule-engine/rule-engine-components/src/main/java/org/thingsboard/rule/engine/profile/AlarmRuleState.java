@@ -123,17 +123,17 @@ class AlarmRuleState {
         }
     }
 
-    public boolean eval(DataSnapshot data) {
+    public AlarmEvalResult eval(DataSnapshot data) {
         boolean active = isActive(data.getTs());
         switch (spec.getType()) {
             case SIMPLE:
-                return active && eval(alarmRule.getCondition(), data);
+                return (active && eval(alarmRule.getCondition(), data)) ? AlarmEvalResult.TRUE : AlarmEvalResult.FALSE;
             case DURATION:
                 return evalDuration(data, active);
             case REPEATING:
                 return evalRepeating(data, active);
             default:
-                return false;
+                return AlarmEvalResult.FALSE;
         }
     }
 
@@ -203,17 +203,17 @@ class AlarmRuleState {
         }
     }
 
-    private boolean evalRepeating(DataSnapshot data, boolean active) {
+    private AlarmEvalResult evalRepeating(DataSnapshot data, boolean active) {
         if (active && eval(alarmRule.getCondition(), data)) {
             state.setEventCount(state.getEventCount() + 1);
             updateFlag = true;
-            return state.getEventCount() >= requiredRepeats;
+            return state.getEventCount() >= requiredRepeats ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
         } else {
-            return false;
+            return AlarmEvalResult.FALSE;
         }
     }
 
-    private boolean evalDuration(DataSnapshot data, boolean active) {
+    private AlarmEvalResult evalDuration(DataSnapshot data, boolean active) {
         if (active && eval(alarmRule.getCondition(), data)) {
             if (state.getLastEventTs() > 0) {
                 if (data.getTs() > state.getLastEventTs()) {
@@ -226,24 +226,28 @@ class AlarmRuleState {
                 state.setDuration(0L);
                 updateFlag = true;
             }
-            return state.getDuration() > requiredDurationInMs;
+            return state.getDuration() > requiredDurationInMs ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
         } else {
-            return false;
+            return AlarmEvalResult.FALSE;
         }
     }
 
-    public boolean eval(long ts) {
+    public AlarmEvalResult eval(long ts) {
         switch (spec.getType()) {
             case SIMPLE:
             case REPEATING:
-                return false;
+                return AlarmEvalResult.NOT_YET_TRUE;
             case DURATION:
                 if (requiredDurationInMs > 0 && state.getLastEventTs() > 0 && ts > state.getLastEventTs()) {
                     long duration = state.getDuration() + (ts - state.getLastEventTs());
-                    return duration > requiredDurationInMs && isActive(ts);
+                    if (isActive(ts)) {
+                        return duration > requiredDurationInMs ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
+                    } else {
+                        return AlarmEvalResult.FALSE;
+                    }
                 }
             default:
-                return false;
+                return AlarmEvalResult.FALSE;
         }
     }
 

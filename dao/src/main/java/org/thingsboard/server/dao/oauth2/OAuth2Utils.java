@@ -32,19 +32,19 @@ public class OAuth2Utils {
     }
 
     public static OAuth2ClientsParams toOAuth2Params(List<ExtendedOAuth2ClientRegistrationInfo> extendedOAuth2ClientRegistrationInfos) {
-        Map<OAuth2ClientRegistrationInfoId, Set<DomainInfo>> domainsByInfoId = new HashMap<>();
-        Map<OAuth2ClientRegistrationInfoId, OAuth2ClientRegistrationInfo> infoById = new HashMap<>();
+        Map<OAuth2ClientRegistrationInfoId, List<DomainInfo>> domainsByInfoId = new LinkedHashMap<>();
+        Map<OAuth2ClientRegistrationInfoId, OAuth2ClientRegistrationInfo> infoById = new LinkedHashMap<>();
         for (ExtendedOAuth2ClientRegistrationInfo extendedClientRegistrationInfo : extendedOAuth2ClientRegistrationInfos) {
             String domainName = extendedClientRegistrationInfo.getDomainName();
             SchemeType domainScheme = extendedClientRegistrationInfo.getDomainScheme();
-            domainsByInfoId.computeIfAbsent(extendedClientRegistrationInfo.getId(), key -> new HashSet<>())
+            domainsByInfoId.computeIfAbsent(extendedClientRegistrationInfo.getId(), key -> new ArrayList<>())
                     .add(new DomainInfo(domainScheme, domainName));
             infoById.put(extendedClientRegistrationInfo.getId(), extendedClientRegistrationInfo);
         }
-        Map<Set<DomainInfo>, OAuth2ClientsDomainParams> domainParamsMap = new HashMap<>();
+        Map<List<DomainInfo>, OAuth2ClientsDomainParams> domainParamsMap = new LinkedHashMap<>();
         domainsByInfoId.forEach((clientRegistrationInfoId, domainInfos) -> {
             domainParamsMap.computeIfAbsent(domainInfos,
-                    key -> new OAuth2ClientsDomainParams(key, new HashSet<>())
+                    key -> new OAuth2ClientsDomainParams(key, new ArrayList<>())
             )
                     .getClientRegistrations()
                     .add(toClientRegistrationDto(infoById.get(clientRegistrationInfoId)));
@@ -52,7 +52,7 @@ public class OAuth2Utils {
         boolean enabled = extendedOAuth2ClientRegistrationInfos.stream()
                 .map(OAuth2ClientRegistrationInfo::isEnabled)
                 .findFirst().orElse(false);
-        return new OAuth2ClientsParams(enabled, new HashSet<>(domainParamsMap.values()));
+        return new OAuth2ClientsParams(enabled, new ArrayList<>(domainParamsMap.values()));
     }
 
     public static ClientRegistrationDto toClientRegistrationDto(OAuth2ClientRegistrationInfo oAuth2ClientRegistrationInfo) {

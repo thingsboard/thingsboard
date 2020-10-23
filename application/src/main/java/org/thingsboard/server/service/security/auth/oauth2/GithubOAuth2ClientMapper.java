@@ -23,6 +23,7 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
@@ -45,12 +46,13 @@ public class GithubOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
     private OAuth2Configuration oAuth2Configuration;
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, String providerAccessToken, OAuth2MapperConfig config) {
+    public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, String providerAccessToken, OAuth2ClientRegistrationInfo clientRegistration) {
+        OAuth2MapperConfig config = clientRegistration.getMapperConfig();
         Map<String, String> githubMapperConfig = oAuth2Configuration.getGithubMapper();
         String email = getEmail(githubMapperConfig.get(EMAIL_URL_KEY), providerAccessToken);
         Map<String, Object> attributes = token.getPrincipal().getAttributes();
         OAuth2User oAuth2User = BasicMapperUtils.getOAuth2User(email, attributes, config);
-        return getOrCreateSecurityUserFromOAuth2User(oAuth2User, config.isAllowUserCreation(), config.isActivateUser());
+        return getOrCreateSecurityUserFromOAuth2User(oAuth2User, clientRegistration);
     }
 
     private synchronized String getEmail(String emailUrl, String oauth2Token) {

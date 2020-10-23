@@ -106,7 +106,6 @@ public class DeviceProfileController extends BaseController {
 
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
 
-            deviceProfileCache.put(savedDeviceProfile);
             tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);
             tbClusterService.onEntityStateChange(deviceProfile.getTenantId(), savedDeviceProfile.getId(),
                     created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
@@ -132,7 +131,6 @@ public class DeviceProfileController extends BaseController {
             DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
             DeviceProfile deviceProfile = checkDeviceProfileId(deviceProfileId, Operation.DELETE);
             deviceProfileService.deleteDeviceProfile(getTenantId(), deviceProfileId);
-            deviceProfileCache.evict(deviceProfileId);
 
             tbClusterService.onDeviceProfileDelete(deviceProfile, null);
             tbClusterService.onEntityStateChange(deviceProfile.getTenantId(), deviceProfile.getId(), ComponentLifecycleEvent.DELETED);

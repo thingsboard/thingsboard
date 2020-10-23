@@ -191,6 +191,11 @@ export class MenuService {
             name: 'admin.security-settings',
             icon: 'security',
             path: '/settings/security-settings'
+          },
+          {
+            name: 'admin.oauth2.oauth2',
+            icon: 'security',
+            path: '/settings/oauth2'
           }
         ]
       }
