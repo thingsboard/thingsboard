@@ -14,28 +14,22 @@
 /// limitations under the License.
 ///
 
-import {Component, EventEmitter, forwardRef, Inject, Input, OnInit, Output} from "@angular/core";
+import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from "@angular/core";
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
+  FormArray, FormBuilder,
   FormGroup,
-  NG_VALUE_ACCESSOR
+  NG_VALUE_ACCESSOR, Validators
 } from "@angular/forms";
-import {PageComponent} from "@shared/components/page.component";
-import {Store} from "@ngrx/store";
-import {AppState} from "@core/core.state";
-import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
-import {
-  DeviceCredentialsDialogLwm2mData,
-  ResourceLwM2M
-} from "@home/pages/device/lwm2m/security-config.models";
-import {MatCheckboxChange} from "@angular/material/checkbox";
+import { ResourceLwM2M } from '@home/components/profile/device/lwm2m/profile-config.models';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry-resource',
   templateUrl: './lwm2m-observe-attr-telemetry-resource.component.html',
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -44,20 +38,22 @@ import {MatCheckboxChange} from "@angular/material/checkbox";
     }
   ]
 })
-export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueAccessor, OnInit {
 
+export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueAccessor, OnInit, Validators {
+
+  @Input() disabled: boolean;
   @Input() i: number;
   @Input() y: number;
   @Input() resourceFormGroup: FormGroup;
   @Input() resourceValue: ResourceLwM2M[];
   @Output() valueCheckBoxChange = new EventEmitter<{}>()
 
-
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
   }
 
   ngOnInit(): void {
+    this.setDisabledState(this.disabled);
   }
 
   registerOnChange(fn: any): void {
@@ -73,12 +69,20 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
     return instance.get('resources') as FormArray;
   }
 
+  setDisabledState(isDisabled: boolean): void {
+    if (isDisabled) {
+      this.resourceFormGroup.disable({emitEvent: false});
+    } else {
+      this.resourceFormGroup.enable({emitEvent: false});
+    }
+  }
+
   changeInstanceResourcesCheckBox(value: boolean, objInd: number, insInd: number, restInd: number, nameFrom?: string): void {
     this.valueCheckBoxChange.emit({
-      value:value,
+      value: value,
       objInd: objInd,
-      instInd:insInd,
-      resInd:restInd,
+      instInd: insInd,
+      resInd: restInd,
       nameFrom: nameFrom
     });
   }

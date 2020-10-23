@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import {Component, EventEmitter, forwardRef, Inject, Input, OnInit, Output, ViewChild} from "@angular/core";
+import { Component, EventEmitter, forwardRef, Inject, Input, OnInit, Output, ViewChild } from "@angular/core";
 
 import {
   ControlValueAccessor,
@@ -37,15 +37,16 @@ import {
   LEN_MAX_PUBLIC_KEY_X509,
   KEY_PUBLIC_REGEXP_X509
 } from "./profile-config.models";
-import {Store} from "@ngrx/store";
-import {AppState} from "@core/core.state";
-import {coerceBooleanProperty} from "@angular/cdk/coercion";
+import { Store } from "@ngrx/store";
+import { AppState } from "@core/core.state";
+import { coerceBooleanProperty } from "@angular/cdk/coercion";
 import {
   DEFAULT_CLIENT_HOLD_OFF_TIME, DEFAULT_ID_SERVER,
   DEFAULT_PORT_BOOTSTRAP_NO_SEC,
   DEFAULT_PORT_SERVER_NO_SEC
 } from "../../../../pages/device/lwm2m/security-config.models";
-import {WINDOW} from "../../../../../../core/services/window.service";
+import { WINDOW } from "../../../../../../core/services/window.service";
+import { pairwise, startWith } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-config-server',
@@ -62,7 +63,7 @@ import {WINDOW} from "../../../../../../core/services/window.service";
 
 export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAccessor, Validators {
 
-  valuePrev: any;
+  valuePrev = null as any;
   private requiredValue: boolean;
   serverFormGroup: FormGroup;
   securityConfigLwM2MType = SECURITY_CONFIG_MODE;
@@ -71,6 +72,8 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   lenMaxClientPublicKeyOrId = LEN_MAX_PSK;
   lenMaxClientSecretKey = LEN_MAX_PRIVATE_KEY;
   lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK;
+  currentSecurityMode = null;
+
 
   @Input()
   disabled: boolean;
@@ -87,15 +90,24 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
     this.requiredValue = coerceBooleanProperty(value);
   }
 
-  @Output()
-  updateServer = new EventEmitter<any>();
-
   constructor(protected store: Store<AppState>,
               public fb: FormBuilder,
               @Inject(WINDOW) private window: Window) {
     this.serverFormGroup = this.getServerGroup();
+    this.serverFormGroup.get('securityMode').valueChanges.pipe(
+      startWith(null),
+      pairwise()
+    ).subscribe(([previousValue, currentValue]) => {
+      if (previousValue !== currentValue) {
+        this.updateValidate(currentValue);
+        this.serverFormGroup.updateValueAndValidity();
+      }
+
+    });
     this.serverFormGroup.valueChanges.subscribe(value => {
+      if (this.disabled !== undefined && !this.disabled) {
         this.propagateChangeState(value);
+      }
     });
   }
 
@@ -121,17 +133,18 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
         this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_RPK;
         this.lenMaxClientSecretKey = LEN_MAX_PSK;
         this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK;
+        this.serverFormGroup.get('clientPublicKeyOrId').clearValidators();
         this.serverFormGroup.get('clientPublicKeyOrId').setValidators([Validators.required]);
         this.serverFormGroup.get('clientSecretKey').setValidators([Validators.required, Validators.pattern(KEY_IDENT_REGEXP_PSK)]);
         this.serverFormGroup.get('serverPublicKey').setValidators([]);
         break;
       case SECURITY_CONFIG_MODE.RPK:
-        this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_X509;569
+        this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_X509;
         this.lenMaxClientSecretKey = LEN_MAX_PRIVATE_KEY;
         this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_X509;
         this.serverFormGroup.get('clientPublicKeyOrId').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
         this.serverFormGroup.get('clientSecretKey').setValidators([Validators.required, Validators.pattern(KEY_PRIVATE_REGEXP)]);
-        this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
+        this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_PSK)]);
         break;
       case SECURITY_CONFIG_MODE.X509:
         this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_X509;
@@ -142,11 +155,22 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
         this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
         break;
     }
-    this.updateValidators();
+    this.checkValueWithNewValidate();
   }
 
-  securityModeChanged(securityMode: SECURITY_CONFIG_MODE): void {
-    this.updateValidate(securityMode);
+  checkValueWithNewValidate(): void {
+    this.serverFormGroup.patchValue({
+        host: this.serverFormGroup.get('host').value,
+        port: this.serverFormGroup.get('port').value,
+        bootstrapServerIs: this.serverFormGroup.get('bootstrapServerIs').value,
+        clientPublicKeyOrId: this.serverFormGroup.get('clientPublicKeyOrId').value,
+        clientSecretKey: this.serverFormGroup.get('clientSecretKey').value,
+        serverPublicKey: this.serverFormGroup.get('serverPublicKey').value,
+        clientHoldOffTime: this.serverFormGroup.get('clientHoldOffTime').value,
+        serverId: this.serverFormGroup.get('serverId').value,
+        bootstrapServerAccountTimeout: this.serverFormGroup.get('bootstrapServerAccountTimeout').value,
+      },
+      {emitEvent: true});
   }
 
   writeValue(value: any): void {
@@ -163,33 +187,29 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   }
 
   private propagateChangeState(value: any): void {
-    if (this.disabled !== undefined && !this.disabled) {
-      if (value !== undefined) {
-        if (this.valuePrev === undefined || this.valuePrev === null) {
-          this.valuePrev = "init";
-        } else if (this.valuePrev === "init") {
-          this.valuePrev = value;
-        } else if (JSON.stringify(value) !== JSON.stringify(this.valuePrev)) {
-          this.valuePrev = value;
-          if (this.serverFormGroup.valid) {
-            this.updateServer.next();
-            this.propagateChange(value);
-          }
-          else {
-            this.propagateChange(null);
-          }
+    if (value !== undefined) {
+      if (this.valuePrev === null) {
+        this.valuePrev = "init";
+      } else if (this.valuePrev === "init") {
+        this.valuePrev = value;
+      } else if (JSON.stringify(value) !== JSON.stringify(this.valuePrev)) {
+        this.valuePrev = value;
+        // debugger
+        if (this.serverFormGroup.valid) {
+          this.propagateChange(value);
+        } else {
+          this.propagateChange(null);
         }
       }
     }
   }
 
-
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    this.valuePrev = null;
     if (isDisabled) {
       this.serverFormGroup.disable({emitEvent: false});
     } else {
-      this.valuePrev = null;
       this.serverFormGroup.enable({emitEvent: false});
     }
   }
@@ -213,8 +233,5 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
     })
   }
 
-  updateValidators() {
-    this.serverFormGroup.setValidators(this.required ? [Validators.required] : []);
-    this.serverFormGroup.updateValueAndValidity();
-  }
+
 }

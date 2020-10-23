@@ -18,9 +18,7 @@
 
 <section [formGroup]="observeAttrTelemetryFormGroup" class="mat-padding">
   <mat-accordion multi="true" class="mat-body-1" formArrayName="clientLwM2M">
-    <mat-expansion-panel
-      *ngFor="let objectLwM2M of clientLwM2MFormArray(observeAttrTelemetryFormGroup).controls; let i = index"
-                         [formGroupName]="i">
+    <mat-expansion-panel *ngFor="let objectLwM2M of clientLwM2MFormArray(observeAttrTelemetryFormGroup).controls; let i = index" [formGroupName]="i">
       <mat-expansion-panel-header>
         <mat-panel-title>
           <div class="tb-panel-title">Object [<b>{{ objectLwM2M.get('id').value}}</b>]
@@ -32,12 +30,12 @@
           <mat-expansion-panel formArrayName="instances" *ngFor="let instances of instanceLwm2mFormArray(objectLwM2M).controls; let y = index">
             <mat-expansion-panel-header [formGroupName]="y">
               <mat-panel-title>
-                <div class="tb-panel-title-height" fxFlex="100">
+                  <div class="tb-panel-title-height" fxFlex="100">
                   <div fxLayout="row" fxFill>
                     <div fxFlex="53">
                       Instance [<b>{{instances.get('id').value}}</b>]
                     </div>
-                    <div class="checkbox-padding" fxFlex="15">
+                    <div class="checkbox-padding" fxFlex="15" >
                       <mat-checkbox [formControlName]="observe" color="primary"
                                     (click)="$event.stopPropagation()"
                                     (change)="changeInstanceResourcesCheckBox($event, i, y, observe)"
@@ -75,9 +73,11 @@
               <tb-profile-lwm2m-observe-attr-telemetry-resource
                 [i]="i"
                 [y]="y"
+                [disabled] = "getDisabledState()"
                 [resourceFormGroup]="instances"
                 [resourceValue]="resourceLwm2mFormArray(instances)"
                 (valueCheckBoxChange)="changeResourceCheckBox($event)">
+<!--                [disabled] = "getDisabledState()"-->
               </tb-profile-lwm2m-observe-attr-telemetry-resource>
             </ng-template>
 

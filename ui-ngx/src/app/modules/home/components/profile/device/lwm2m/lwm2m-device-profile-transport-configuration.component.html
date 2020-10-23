@@ -17,15 +17,15 @@
 -->
 <form [formGroup]="lwm2mDeviceProfileTransportConfFormGroup" style="padding-bottom: 16px;">
   <div mat-dialog-content>
-    <mat-tab-group dynamicHeight #tabGroup (selectedTabChange)="tabChanged($event)">
+    <mat-tab-group dynamicHeight>
       <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
         <div class="mat-padding">
-          <tb-lwm2m-object-list
+          <tb--profile-lwm2m-object-list
             (addList)="addList($event)"
             (removeList)="removeList($event)"
             [required]="required"
             formControlName="objectIds">
-          </tb-lwm2m-object-list>
+          </tb--profile-lwm2m-object-list>
         </div>
         <div class="mat-padding">
           <tb-profile-lwm2m-observe-attr-telemetry
@@ -101,8 +101,8 @@
                 <tb-profile-lwm2m-device-config-server
                   [required]="required"
                   formControlName = "bootstrapServer"
-                  [bootstrapServerIs]=true
-                  (updateServer)="updateServer()">
+                  [bootstrapServerIs]=true>
+<!--                  (updateServer)="updateServer()">-->
                 </tb-profile-lwm2m-device-config-server>
               </div>
             </mat-expansion-panel>
@@ -119,8 +119,8 @@
                 <tb-profile-lwm2m-device-config-server
                   [required]="required"
                   formControlName="lwm2mServer"
-                  [bootstrapServerIs]=false
-                  (updateServer)="updateServer()">
+                  [bootstrapServerIs]=false>
+<!--                  (updateServer)="updateServer()">-->
                 </tb-profile-lwm2m-device-config-server>
               </div>
             </mat-expansion-panel>

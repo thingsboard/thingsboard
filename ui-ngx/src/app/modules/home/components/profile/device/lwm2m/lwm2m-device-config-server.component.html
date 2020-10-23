@@ -19,10 +19,12 @@
   <div class="mat-padding">
     <div fxLayout="column">
       <div fxLayout="row" fxLayoutGap="8px">
+<!--        <div [ngSwitch]="securityConfigLwM2MTypes">-->
         <mat-form-field class="mat-block">
-          <mat-label translate>device-profile.lwm2m.mode</mat-label>
+          <mat-label>{{ 'device-profile.lwm2m.mode' | translate }}</mat-label>
           <mat-select formControlName="securityMode"
-                      (ngModelChange)="securityModeChanged($event)">
+                      [ngSwitch]="securityConfigLwM2MTypes">
+<!--                      (ngModelChange)="securityModeChanged($event)">-->
             <mat-option *ngFor="let securityMode of securityConfigLwM2MTypes"
                         [value]="securityMode"                       >
               {{ credentialTypeLwM2MNamesMap.get(securityConfigLwM2MType[securityMode]) }}
@@ -64,7 +66,7 @@
     <div fxLayout="column">
       <div fxLayout="row" fxLayoutGap="10px">
         <mat-form-field class="mat-block">
-          <mat-label>{{ 'ddevice-profile.lwm2m.client-hold-off-time' | translate }}</mat-label>
+          <mat-label>{{ 'device-profile.lwm2m.client-hold-off-time' | translate }}</mat-label>
           <input matInput type="number" formControlName="clientHoldOffTime" required
                  matTooltip="{{'device-profile.lwm2m.client-hold-off-time-tip' | translate}}"
                  matTooltipPosition="above">

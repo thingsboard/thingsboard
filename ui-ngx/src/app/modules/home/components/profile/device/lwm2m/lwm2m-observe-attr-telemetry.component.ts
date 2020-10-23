@@ -15,7 +15,7 @@
 ///
 
 
-import {Component, forwardRef, Inject, Input, OnInit, Output} from "@angular/core";
+import { Component, forwardRef, Inject, Input, OnInit, Output } from "@angular/core";
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -25,11 +25,11 @@ import {
   NG_VALUE_ACCESSOR,
   Validators
 } from "@angular/forms";
-import {Store} from "@ngrx/store";
-import {AppState} from "@core/core.state";
-import {MatCheckboxChange} from "@angular/material/checkbox";
-import {coerceBooleanProperty} from "@angular/cdk/coercion";
-import {Instance, ObjectLwM2M, ResourceLwM2M} from "./profile-config.models";
+import { Store } from "@ngrx/store";
+import { AppState } from "@core/core.state";
+import { MatCheckboxChange } from "@angular/material/checkbox";
+import { coerceBooleanProperty } from "@angular/cdk/coercion";
+import { Instance, ObjectLwM2M, ResourceLwM2M } from "./profile-config.models";
 
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry',
@@ -45,7 +45,7 @@ import {Instance, ObjectLwM2M, ResourceLwM2M} from "./profile-config.models";
 })
 export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor, OnInit, Validators {
 
-  valuePrev: any;
+  valuePrev = null as any;
   observeAttrTelemetryFormGroup: FormGroup;
   observe = 'observe' as string;
   attribute = 'attribute' as string;
@@ -78,7 +78,9 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
       clientLwM2M: this.fb.array([], this.required ? [Validators.required] : [])
     });
     this.observeAttrTelemetryFormGroup.valueChanges.subscribe(value => {
-      this.propagateChangeState (value);
+      if (this.disabled !== undefined &&!this.disabled) {
+        this.propagateChangeState(value);
+      }
     });
   }
 
@@ -88,48 +90,52 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   private propagateChange = (v: any) => {
   };
 
+
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }
 
-  private propagateChangeState (value: any): void {
-    if (this.disabled !== undefined && !this.disabled) {
-      if (value !== undefined) {
-        if (this.valuePrev !== undefined && this.valuePrev != null && this.valuePrev !== "init") {
-          if (JSON.stringify(value) !== JSON.stringify(this.valuePrev)) {
-            this.propagateChange(value);
-            this.valuePrev = value;
-          }
+  private propagateChangeState(value: any): void {
+    if (value) {
+      if (this.valuePrev === null) {
+        this.valuePrev = "init";
+      } else if (this.valuePrev === "init") {
+        this.valuePrev = value;
+      } else if (JSON.stringify(value) !== JSON.stringify(this.valuePrev)) {
+        this.valuePrev = value;
+        if (this.observeAttrTelemetryFormGroup.valid) {
+          this.propagateChange(value);
         } else {
-          this.valuePrev = value;
+          this.propagateChange(null);
         }
       }
     }
-  }
 
+  }
 
   registerOnTouched(fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    this.valuePrev = null;
     if (isDisabled) {
       this.observeAttrTelemetryFormGroup.disable({emitEvent: false});
     } else {
-      this.valuePrev = "init";
       this.observeAttrTelemetryFormGroup.enable({emitEvent: false});
     }
   }
 
-  writeValue(value: any): void {
-    console.log(value);
-    if (value.clientLwM2M && value.clientLwM2M.length>0) {
-      this.buildClientObjectsLwM2M(value.clientLwM2M);
-      this.initInstancesCheckBoxs();
-    }
+  getDisabledState(): boolean {
+    return this.disabled;
   }
 
-  initInstancesCheckBoxs(): void {
+  writeValue(value: any): void {
+    this.buildClientObjectsLwM2M(value.clientLwM2M);
+    this.initInstancesCheckBoxes();
+  }
+
+  initInstancesCheckBoxes(): void {
     (this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls.forEach((object, objInd) => (
       (object.get('instances') as FormArray).controls.forEach((instance, instInd) => ({
           function: this.initInstancesCheckBox(objInd, instInd)

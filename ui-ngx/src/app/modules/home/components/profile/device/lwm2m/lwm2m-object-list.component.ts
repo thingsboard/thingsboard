@@ -45,7 +45,7 @@ import {PageLink} from "../../../../../../shared/models/page/page-link";
 import {Direction} from "../../../../../../shared/models/page/sort-order";
 
 @Component({
-  selector: 'tb-lwm2m-object-list',
+  selector: 'tb--profile-lwm2m-object-list',
   templateUrl: './lwm2m-object-list.component.html',
   styleUrls: [],
   providers: [

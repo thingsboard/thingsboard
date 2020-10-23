@@ -29,6 +29,7 @@ export const TELEMETRY = 'telemetry';
 export const JSON_OBSERVE = 'jsonObserve';
 export const DEFAULT_ID_SERVER = 123;
 const DEFAULT_ID_BOOTSTRAP = 111;
+export const DEFAULT_HOST_NAME = "localhost";
 export const DEFAULT_PORT_SERVER_NO_SEC = 5685;
 export const DEFAULT_PORT_SERVER_SEC = 5686;
 export const DEFAULT_PORT_SERVER_SEC_CERT = 5688;
@@ -136,6 +137,15 @@ export interface SecurityConfigModels {
   }
 }
 
+export interface ProfileConfigModels {
+  bootstrap: BootstrapSecurityConfig,
+  observeAttr: {
+    observe: string [],
+    attribute: string [],
+    telemetry: string []
+  }
+}
+
 export function getDefaultClientSecurityConfigType(securityConfigMode: SECURITY_CONFIG_MODE, endPoint?: string): ClientSecurityConfigType {
   let security: ClientSecurityConfigType;
   switch (securityConfigMode) {
@@ -232,6 +242,18 @@ export function getDefaultSecurityConfig(hostname: any): SecurityConfigModels {
     }
   };
   return securityConfigModels;
+}
+
+
+export function getDefaultProfileConfig(hostname?: any): ProfileConfigModels {
+  return {
+    bootstrap: getDefaultBootstrapSecurityConfig((hostname)? hostname : DEFAULT_HOST_NAME),
+    observeAttr: {
+      observe: [],
+      attribute: [],
+      telemetry: []
+    }
+  };
 }
 
 

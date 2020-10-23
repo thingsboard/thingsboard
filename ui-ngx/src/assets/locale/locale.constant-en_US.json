@@ -1005,6 +1005,7 @@
             "is-attr-tip": "Is Attribute",
             "is-telemetry-tip": "Is Telemetry",
             "required": " value is required.",
+            "mode": "Security config mode",
             "pattern_hex_dec_64": "must be hex decimal format and 64 characters",
             "pattern_hex_dec_134": "must be hex decimal format and 134 characters",
             "pattern_hex_dec_182": "must be hex decimal format and 182 characters",
