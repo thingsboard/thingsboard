@@ -93,6 +93,7 @@ import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
+import org.thingsboard.server.gen.edge.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.RpcResponseMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
@@ -948,6 +949,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     private void testSendMessagesToCloud() throws Exception {
         log.info("Sending messages to cloud");
         sendDevice();
+        sendRelationRequest();
         sendAlarm();
         sendTelemetry();
         sendRelation();
@@ -960,7 +962,6 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         sendAttributesRequest();
         log.info("Messages were sent successfully");
     }
-
 
     private void sendDevice() throws Exception {
         UUID uuid = UUIDs.timeBased();
@@ -980,6 +981,50 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Device device = doGet("/api/device/" + uuid.toString(), Device.class);
         Assert.assertNotNull(device);
         Assert.assertEquals("Edge Device 2", device.getName());
+    }
+
+    private void sendRelationRequest() throws Exception {
+        Device device = findDeviceByName("Edge Device 1");
+        Asset asset = findAssetByName("Edge Asset 1");
+
+        EntityRelation relation = new EntityRelation();
+        relation.setType("test");
+        relation.setFrom(device.getId());
+        relation.setTo(asset.getId());
+        relation.setTypeGroup(RelationTypeGroup.COMMON);
+
+        edgeImitator.expectMessageAmount(1);
+        doPost("/api/relation", relation);
+        edgeImitator.waitForMessages();
+
+        UplinkMsg.Builder builder = UplinkMsg.newBuilder();
+        RelationRequestMsg.Builder relationRequestMsgBuilder = RelationRequestMsg.newBuilder();
+        relationRequestMsgBuilder.setEntityIdMSB(device.getId().getId().getMostSignificantBits());
+        relationRequestMsgBuilder.setEntityIdLSB(device.getId().getId().getLeastSignificantBits());
+        relationRequestMsgBuilder.setEntityType(device.getId().getEntityType().name());
+        builder.addRelationRequestMsg(relationRequestMsgBuilder.build());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.expectMessageAmount(1);
+        edgeImitator.sendUplinkMsg(builder.build());
+        edgeImitator.waitForResponses();
+        edgeImitator.waitForMessages();
+
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof RelationUpdateMsg);
+        RelationUpdateMsg relationUpdateMsg = (RelationUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, relationUpdateMsg.getMsgType());
+        Assert.assertEquals(relation.getType(), relationUpdateMsg.getType());
+
+        UUID fromUUID = new UUID(relationUpdateMsg.getFromIdMSB(), relationUpdateMsg.getFromIdLSB());
+        EntityId fromEntityId = EntityIdFactory.getByTypeAndUuid(relationUpdateMsg.getFromEntityType(), fromUUID);
+        Assert.assertEquals(relation.getFrom(), fromEntityId);
+
+        UUID toUUID = new UUID(relationUpdateMsg.getToIdMSB(), relationUpdateMsg.getToIdLSB());
+        EntityId toEntityId = EntityIdFactory.getByTypeAndUuid(relationUpdateMsg.getToEntityType(), toUUID);
+        Assert.assertEquals(relation.getTo(), toEntityId);
+
+        Assert.assertEquals(relation.getTypeGroup().name(), relationUpdateMsg.getTypeGroup());
     }
 
     private void sendAlarm() throws Exception {
