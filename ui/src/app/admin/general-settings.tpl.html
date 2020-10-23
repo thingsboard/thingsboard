@@ -34,6 +34,11 @@
 	         					<div translate ng-message="required">admin.base-url-required</div>
 	       				</div>				
 					</md-input-container>
+					<md-checkbox class="md-block"
+								 aria-label="{{ 'admin.prohibit-different-url' | translate }}"
+								 ng-model="vm.settings.jsonValue.prohibitDifferentUrl">
+						{{ 'admin.prohibit-different-url' | translate }}
+					</md-checkbox>
 					<div layout="row" layout-align="end center" width="100%" layout-wrap>
 						<md-button ng-disabled="$root.loading || vm.settingsForm.$invalid || !vm.settingsForm.$dirty" type="submit" class="md-raised md-primary">{{'action.save' | translate}}</md-button>
 					</div>
