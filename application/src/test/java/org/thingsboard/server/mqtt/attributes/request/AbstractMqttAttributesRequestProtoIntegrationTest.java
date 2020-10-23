@@ -55,15 +55,14 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
         processAfterTest();
     }
 
-    @Test
     @Ignore
+    @Test
     public void testRequestAttributesValuesFromTheServer() throws Exception {
         processTestRequestAttributesValuesFromTheServer();
     }
 
 
     @Test
-    @Ignore
     public void testRequestAttributesValuesFromTheServerGateway() throws Exception {
         processTestGatewayRequestAttributesValuesFromTheServer();
     }

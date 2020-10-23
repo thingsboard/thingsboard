@@ -39,13 +39,13 @@ public abstract class AbstractMqttAttributesUpdatesJsonIntegrationTest extends A
         processAfterTest();
     }
 
-    @Test
-    public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
-        processTestSubscribeToAttributesUpdates();
-    }
-
-    @Test
-    public void testSubscribeToAttributesUpdatesFromTheServerGateway() throws Exception {
-        processGatewayTestSubscribeToAttributesUpdates();
-    }
+//    @Test
+//    public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
+//        processTestSubscribeToAttributesUpdates();
+//    }
+//
+//    @Test
+//    public void testSubscribeToAttributesUpdatesFromTheServerGateway() throws Exception {
+//        processGatewayTestSubscribeToAttributesUpdates();
+//    }
 }

@@ -65,15 +65,15 @@ public abstract class AbstractMqttAttributesUpdatesIntegrationTest extends Abstr
         processAfterTest();
     }
 
-    @Test
-    public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
-        processTestSubscribeToAttributesUpdates();
-    }
-
-    @Test
-    public void testSubscribeToAttributesUpdatesFromTheServerGateway() throws Exception {
-        processGatewayTestSubscribeToAttributesUpdates();
-    }
+//    @Test
+//    public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
+//        processTestSubscribeToAttributesUpdates();
+//    }
+//
+//    @Test
+//    public void testSubscribeToAttributesUpdatesFromTheServerGateway() throws Exception {
+//        processGatewayTestSubscribeToAttributesUpdates();
+//    }
 
     protected void processTestSubscribeToAttributesUpdates() throws Exception {
 

@@ -22,12 +22,13 @@ import com.github.os72.protobuf.dynamic.EnumDefinition;
 import com.github.os72.protobuf.dynamic.MessageDefinition;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
-import com.squareup.wire.schema.Field;
+import com.squareup.wire.Syntax;
 import com.squareup.wire.schema.Location;
 import com.squareup.wire.schema.internal.parser.EnumConstantElement;
 import com.squareup.wire.schema.internal.parser.EnumElement;
 import com.squareup.wire.schema.internal.parser.FieldElement;
 import com.squareup.wire.schema.internal.parser.MessageElement;
+import com.squareup.wire.schema.internal.parser.OneOfElement;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import com.squareup.wire.schema.internal.parser.ProtoParser;
 import com.squareup.wire.schema.internal.parser.TypeElement;
@@ -37,6 +38,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,6 +52,10 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
     public static final Location LOCATION = new Location("", "", -1, -1);
     public static final String ATTRIBUTES_PROTO_SCHEMA = "attributes proto schema";
     public static final String TELEMETRY_PROTO_SCHEMA = "telemetry proto schema";
+
+    public static String invalidSchemaProvidedMessage(String schemaName) {
+        return "Invalid " + schemaName + " schema provided!";
+    }
 
     private String deviceTelemetryProtoSchema;
     private String deviceAttributesProtoSchema;
@@ -69,85 +76,212 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
         try {
             protoFileElement = schemaParser.readProtoFile();
         } catch (Exception e) {
-            throw new IllegalArgumentException("Failed to parse: " + schemaName + " due to: " + e.getMessage());
+            throw new IllegalArgumentException("Failed to parse: " + schemaName + " schema due to: " + e.getMessage());
         }
-        List<TypeElement> types = protoFileElement.getTypes();
-        if (!types.isEmpty()) {
-            if (types.stream().noneMatch(typeElement -> typeElement instanceof MessageElement)) {
-                throw new IllegalArgumentException("Invalid " + schemaName + " provided! At least one Message definition should exists!");
-            }
-        } else {
-            throw new IllegalArgumentException("Invalid " + schemaName + " provided!");
-        }
+        checkProtoFileSyntax(schemaName, protoFileElement);
+        checkProtoFileCommonSettings(schemaName, protoFileElement.getOptions().isEmpty(), " Schema options don't support!");
+        checkProtoFileCommonSettings(schemaName, protoFileElement.getPublicImports().isEmpty(), " Schema public imports don't support!");
+        checkProtoFileCommonSettings(schemaName, protoFileElement.getImports().isEmpty(), " Schema imports don't support!");
+        checkProtoFileCommonSettings(schemaName, protoFileElement.getExtendDeclarations().isEmpty(), " Schema extend declarations don't support!");
+        checkTypeElements(schemaName, protoFileElement);
     }
 
     public Descriptors.Descriptor getDynamicMessageDescriptor(String protoSchema, String schemaName) {
-        ProtoFileElement protoFileElement = getTransportProtoSchema(protoSchema);
+        try {
+            ProtoFileElement protoFileElement = getTransportProtoSchema(protoSchema);
+            DynamicSchema dynamicSchema = getDynamicSchema(protoFileElement, schemaName);
+            String lastMsgName = getMessageTypes(protoFileElement.getTypes()).stream()
+                    .map(MessageElement::getName).reduce((previous, last) -> last).get();
+            DynamicMessage.Builder builder = dynamicSchema.newMessageBuilder(lastMsgName);
+            return builder.getDescriptorForType();
+        } catch (Exception e) {
+            log.warn("Failed to get Message Descriptor due to {}", e.getMessage());
+            return null;
+        }
+    }
+
+    public DynamicSchema getDynamicSchema(ProtoFileElement protoFileElement, String schemaName) {
         DynamicSchema.Builder schemaBuilder = DynamicSchema.newBuilder();
         schemaBuilder.setName(schemaName);
         schemaBuilder.setPackage(!isEmptyStr(protoFileElement.getPackageName()) ?
                 protoFileElement.getPackageName() : schemaName.toLowerCase());
-
         List<TypeElement> types = protoFileElement.getTypes();
-
-        List<EnumElement> enumTypes = types.stream()
-                .filter(typeElement -> typeElement instanceof EnumElement)
-                .map(typeElement -> (EnumElement) typeElement)
-                .collect(Collectors.toList());
-
-        List<MessageElement> messageTypes = types.stream()
-                .filter(typeElement -> typeElement instanceof MessageElement)
-                .map(typeElement -> (MessageElement) typeElement)
-                .collect(Collectors.toList());
-
-        if (!enumTypes.isEmpty()) {
-            enumTypes.forEach(enumElement -> {
-                List<EnumConstantElement> enumElementTypeConstants = enumElement.getConstants();
-                EnumDefinition.Builder enumDefinitionBuilder = EnumDefinition.newBuilder(enumElement.getName());
-                if (!enumElementTypeConstants.isEmpty()) {
-                    enumElementTypeConstants.forEach(constantElement -> enumDefinitionBuilder.addValue(constantElement.getName(), constantElement.getTag()));
-                }
-                EnumDefinition enumDefinition = enumDefinitionBuilder.build();
-                schemaBuilder.addEnumDefinition(enumDefinition);
-            });
-        }
+        List<MessageElement> messageTypes = getMessageTypes(types);
 
         if (!messageTypes.isEmpty()) {
-            messageTypes.forEach(messageElement -> {
-                List<FieldElement> messageElementFields = messageElement.getFields();
-                MessageDefinition.Builder messageDefinitionBuilder = MessageDefinition.newBuilder(messageElement.getName());
-                if (!messageElementFields.isEmpty()) {
-                    messageElementFields.forEach(fieldElement -> {
-                        Field.Label label = fieldElement.getLabel();
-                        String labelStr = label != null ? label.name() : null;
-                        messageDefinitionBuilder.addField(
-                                labelStr,
-                                fieldElement.getType(),
-                                fieldElement.getName(),
-                                fieldElement.getTag(),
-                                fieldElement.getDefaultValue());
-                    });
-                }
-                MessageDefinition messageDefinition = messageDefinitionBuilder.build();
-                schemaBuilder.addMessageDefinition(messageDefinition);
-            });
-            MessageElement lastMsg = messageTypes.stream().reduce((previous, last) -> last).get();
+            List<EnumElement> enumTypes = getEnumElements(types);
+            if (!enumTypes.isEmpty()) {
+                enumTypes.forEach(enumElement -> {
+                    EnumDefinition enumDefinition = getEnumDefinition(enumElement);
+                    schemaBuilder.addEnumDefinition(enumDefinition);
+                });
+            }
+            List<MessageDefinition> messageDefinitions = getMessageDefinitions(messageTypes);
+            messageDefinitions.forEach(schemaBuilder::addMessageDefinition);
             try {
-                DynamicSchema dynamicSchema = schemaBuilder.build();
-                DynamicMessage.Builder builder = dynamicSchema.newMessageBuilder(lastMsg.getName());
-                return builder.getDescriptorForType();
+                return schemaBuilder.build();
             } catch (Descriptors.DescriptorValidationException e) {
-                log.error("Failed to create dynamic schema due to: ", e);
-                return null;
+                throw new RuntimeException("Failed to create dynamic schema due to: " + e.getMessage());
             }
         } else {
-            log.error("Failed to get Message Descriptor! Message types is empty for {} schema!", schemaName);
-            return null;
+            throw new RuntimeException("Failed to get Dynamic Schema! Message types is empty for schema:" + schemaName);
+        }
+    }
+
+    private void checkProtoFileSyntax(String schemaName, ProtoFileElement protoFileElement) {
+        if (protoFileElement.getSyntax() == null || !protoFileElement.getSyntax().equals(Syntax.PROTO_3)) {
+            throw new IllegalArgumentException("Invalid schema syntax: " + protoFileElement.getSyntax() +
+                    " for: " + schemaName + " provided! Only " + Syntax.PROTO_3 + " allowed!");
+        }
+    }
+
+    private void checkProtoFileCommonSettings(String schemaName, boolean isEmptySettings, String invalidSettingsMessage) {
+        if (!isEmptySettings) {
+            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + invalidSettingsMessage);
+        }
+    }
+
+    private void checkTypeElements(String schemaName, ProtoFileElement protoFileElement) {
+        List<TypeElement> types = protoFileElement.getTypes();
+        if (!types.isEmpty()) {
+            if (types.stream().noneMatch(typeElement -> typeElement instanceof MessageElement)) {
+                throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " At least one Message definition should exists!");
+            } else {
+                checkEnumElements(schemaName, getEnumElements(types));
+                checkMessageElements(schemaName, getMessageTypes(types));
+            }
+        } else {
+            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Type elements is empty!");
+        }
+    }
+
+    private void checkEnumElements(String schemaName, List<EnumElement> enumTypes) {
+        if (enumTypes.stream().anyMatch(enumElement -> !enumElement.getNestedTypes().isEmpty())) {
+            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Nested types in Enum definitions are not supported!");
+        }
+        if (enumTypes.stream().anyMatch(enumElement -> !enumElement.getOptions().isEmpty())) {
+            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Enum definitions options are not supported!");
+        }
+    }
+
+    private void checkMessageElements(String schemaName, List<MessageElement> messageElementsList) {
+        if (!messageElementsList.isEmpty()) {
+            messageElementsList.forEach(messageElement -> {
+                checkProtoFileCommonSettings(schemaName, messageElement.getGroups().isEmpty(),
+                        " Message definition groups don't support!");
+                checkProtoFileCommonSettings(schemaName, messageElement.getOptions().isEmpty(),
+                        " Message definition options don't support!");
+                checkProtoFileCommonSettings(schemaName, messageElement.getExtensions().isEmpty(),
+                        " Message definition extensions don't support!");
+                checkProtoFileCommonSettings(schemaName, messageElement.getReserveds().isEmpty(),
+                        " Message definition reserved elements don't support!");
+                List<OneOfElement> oneOfs = messageElement.getOneOfs();
+                if (!oneOfs.isEmpty()) {
+                    oneOfs.forEach(oneOfElement ->
+                            checkProtoFileCommonSettings(schemaName, oneOfElement.getGroups().isEmpty(),
+                                    " OneOf definition groups don't support!"));
+                }
+                List<TypeElement> nestedTypes = messageElement.getNestedTypes();
+                if (!nestedTypes.isEmpty()) {
+                    List<EnumElement> nestedEnumTypes = getEnumElements(nestedTypes);
+                    if (!nestedEnumTypes.isEmpty()) {
+                        checkEnumElements(schemaName, nestedEnumTypes);
+                    }
+                    List<MessageElement> nestedMessageTypes = getMessageTypes(nestedTypes);
+                    checkMessageElements(schemaName, nestedMessageTypes);
+                }
+            });
         }
     }
 
     private ProtoFileElement getTransportProtoSchema(String protoSchema) {
         return new ProtoParser(LOCATION, protoSchema.toCharArray()).readProtoFile();
+    }
+
+    private List<MessageElement> getMessageTypes(List<TypeElement> types) {
+        return types.stream()
+                .filter(typeElement -> typeElement instanceof MessageElement)
+                .map(typeElement -> (MessageElement) typeElement)
+                .collect(Collectors.toList());
+    }
+
+    private List<EnumElement> getEnumElements(List<TypeElement> types) {
+        return types.stream()
+                .filter(typeElement -> typeElement instanceof EnumElement)
+                .map(typeElement -> (EnumElement) typeElement)
+                .collect(Collectors.toList());
+    }
+
+    private List<MessageDefinition> getMessageDefinitions(List<MessageElement> messageElementsList) {
+        if (!messageElementsList.isEmpty()) {
+            List<MessageDefinition> messageDefinitions = new ArrayList<>();
+            messageElementsList.forEach(messageElement -> {
+                MessageDefinition.Builder messageDefinitionBuilder = MessageDefinition.newBuilder(messageElement.getName());
+                List<FieldElement> messageElementFields = messageElement.getFields();
+                List<OneOfElement> oneOfs = messageElement.getOneOfs();
+
+                List<TypeElement> nestedTypes = messageElement.getNestedTypes();
+                if (!messageElementFields.isEmpty()) {
+                    addMessageFieldsToTheMessageDefinition(messageElementFields, messageDefinitionBuilder);
+                }
+                if (!oneOfs.isEmpty()) {
+                    for (OneOfElement oneOfelement: oneOfs) {
+                        MessageDefinition.OneofBuilder oneofBuilder = messageDefinitionBuilder.addOneof(oneOfelement.getName());
+                        addMessageFieldsToTheOneOfDefinition(oneOfelement.getFields(), oneofBuilder);
+                    }
+                }
+                if (!nestedTypes.isEmpty()) {
+                    List<EnumElement> nestedEnumTypes = getEnumElements(nestedTypes);
+                    if (!nestedEnumTypes.isEmpty()) {
+                        nestedEnumTypes.forEach(enumElement -> {
+                            EnumDefinition nestedEnumDefinition = getEnumDefinition(enumElement);
+                            messageDefinitionBuilder.addEnumDefinition(nestedEnumDefinition);
+                        });
+                    }
+                    List<MessageElement> nestedMessageTypes = getMessageTypes(nestedTypes);
+                    List<MessageDefinition> nestedMessageDefinitions = getMessageDefinitions(nestedMessageTypes);
+                    nestedMessageDefinitions.forEach(messageDefinitionBuilder::addMessageDefinition);
+                }
+                messageDefinitions.add(messageDefinitionBuilder.build());
+            });
+            return messageDefinitions;
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    private EnumDefinition getEnumDefinition(EnumElement enumElement) {
+        List<EnumConstantElement> enumElementTypeConstants = enumElement.getConstants();
+        EnumDefinition.Builder enumDefinitionBuilder = EnumDefinition.newBuilder(enumElement.getName());
+        if (!enumElementTypeConstants.isEmpty()) {
+            enumElementTypeConstants.forEach(constantElement -> enumDefinitionBuilder.addValue(constantElement.getName(), constantElement.getTag()));
+        }
+        return enumDefinitionBuilder.build();
+    }
+
+
+    private void addMessageFieldsToTheMessageDefinition(List<FieldElement> messageElementFields, MessageDefinition.Builder messageDefinitionBuilder) {
+        messageElementFields.forEach(fieldElement -> {
+            String labelStr = null;
+            if (fieldElement.getLabel() != null) {
+                labelStr = fieldElement.getLabel().name().toLowerCase();
+            }
+            messageDefinitionBuilder.addField(
+                    labelStr,
+                    fieldElement.getType(),
+                    fieldElement.getName(),
+                    fieldElement.getTag(),
+                    fieldElement.getDefaultValue());
+        });
+    }
+
+    private void addMessageFieldsToTheOneOfDefinition(List<FieldElement> oneOfsElementFields, MessageDefinition.OneofBuilder oneofBuilder) {
+        oneOfsElementFields.forEach(fieldElement -> oneofBuilder.addField(
+                fieldElement.getType(),
+                fieldElement.getName(),
+                fieldElement.getTag(),
+                fieldElement.getDefaultValue()));
+        oneofBuilder.msgDefBuilder();
     }
 
     private boolean isEmptyStr(String str) {

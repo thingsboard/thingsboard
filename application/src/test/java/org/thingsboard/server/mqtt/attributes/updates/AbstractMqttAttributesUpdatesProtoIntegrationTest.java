@@ -48,13 +48,11 @@ public abstract class AbstractMqttAttributesUpdatesProtoIntegrationTest extends 
     }
 
     @Test
-    @Ignore
     public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
         processTestSubscribeToAttributesUpdates();
     }
 
     @Test
-    @Ignore
     public void testSubscribeToAttributesUpdatesFromTheServerGateway() throws Exception {
         processGatewayTestSubscribeToAttributesUpdates();
     }
