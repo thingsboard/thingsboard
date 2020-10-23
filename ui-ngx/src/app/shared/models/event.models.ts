@@ -19,6 +19,7 @@ import { TenantId } from '@shared/models/id/tenant-id';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EventId } from './id/event-id';
 import { ContentType } from '@shared/models/constants';
+import { EntityType } from '@shared/models/entity-type.models'
 
 export enum EventType {
   ERROR = 'ERROR',
@@ -30,6 +31,28 @@ export enum EventType {
 export enum DebugEventType {
   DEBUG_RULE_NODE = 'DEBUG_RULE_NODE',
   DEBUG_RULE_CHAIN = 'DEBUG_RULE_CHAIN'
+}
+//TODO deaflynx filter CE only event types
+export enum EdgeEventType {
+  DASHBOARD = "DASHBOARD",
+  ASSET = "ASSET",
+  DEVICE = "DEVICE",
+  ENTITY_VIEW = "ENTITY_VIEW",
+  ALARM = "ALARM",
+  RULE_CHAIN = "RULE_CHAIN",
+  RULE_CHAIN_METADATA = "RULE_CHAIN_METADATA",
+  EDGE = "EDGE",
+  USER = "USER",
+  CUSTOMER = "CUSTOMER",
+  RELATION = "RELATION",
+  ENTITY_GROUP = "ENTITY_GROUP",
+  SCHEDULER_EVENT = "SCHEDULER_EVENT",
+  WHITE_LABELING = "WHITE_LABELING",
+  LOGIN_WHITE_LABELING = "LOGIN_WHITE_LABELING",
+  CUSTOM_TRANSLATION = "CUSTOM_TRANSLATION",
+  WIDGETS_BUNDLE = "WIDGETS_BUNDLE",
+  WIDGET_TYPE = "WIDGET_TYPE",
+  ADMIN_SETTINGS = "ADMIN_SETTINGS"
 }
 
 export const eventTypeTranslations = new Map<EventType | DebugEventType, string>(

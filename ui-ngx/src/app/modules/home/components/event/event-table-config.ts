@@ -20,7 +20,7 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import {DebugEventType, Event, EventType} from '@shared/models/event.models';
+import {DebugEventType, EdgeEventType, Event, EventType} from '@shared/models/event.models';
 import {TimePageLink} from '@shared/models/page/page-link';
 import {TranslateService} from '@ngx-translate/core';
 import {DatePipe} from '@angular/common';
@@ -39,6 +39,7 @@ import {
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
 import {sortObjectKeys} from '@core/utils';
+import {RuleChainService} from "@core/http/rule-chain.service";
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -60,6 +61,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   constructor(private eventService: EventService,
               private dialogService: DialogService,
               private translate: TranslateService,
+              private ruleChainService: RuleChainService,
               private datePipe: DatePipe,
               private dialog: MatDialog,
               public entityId: EntityId,
@@ -119,9 +121,13 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.columns = [];
     this.columns.push(
       new DateEntityTableColumn<Event>('createdTime', 'event.event-time', this.datePipe, '120px'),
-      // new EntityTableColumn<Event>('server', 'event.server', '100px',
-      //   (entity) => entity.body.server, entity => ({}), false)
     );
+    if (this.eventType !== EventType.EDGE_EVENT) {
+      this.columns.push(
+        new EntityTableColumn<Event>('server', 'event.server', '100px',
+        (entity) => entity.body.server, entity => ({}), false)
+      );
+    }
     switch (this.eventType) {
       case EventType.ERROR:
         this.columns.push(
@@ -175,7 +181,16 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           new EntityTableColumn<Event>('action', 'event.action', '100%',
             (entity) => entity.action, entity => ({}), false),
           new EntityTableColumn<Event>('entityId', 'event.entityId', '100%',
-            (entity) => entity.id.id, entity => ({}), false)   //TODO: replace this to entity.entityId because of conflict wiht entityId model
+            (entity) => entity.id.id, entity => ({}), false),   //TODO: replace this to entity.entityId because of conflict wiht entityId model
+          new EntityActionTableColumn<Event>('data', 'event.data',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => this.checkEdgeEventType(entity),
+              onAction: ($event, entity) => this.showEdgeEventContent($event, this.manageEdgeEventContent(entity),
+                'event.data')
+            },
+            '40px'),
       );
         break;
       case DebugEventType.DEBUG_RULE_NODE:
@@ -253,6 +268,51 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     if ($event) {
       $event.stopPropagation();
     }
+    if (contentType === ContentType.JSON && sortKeys) {
+      try {
+        content = JSON.stringify(sortObjectKeys(JSON.parse(content)));
+      } catch (e) {}
+    }
+    this.dialog.open<EventContentDialogComponent, EventContentDialogData>(EventContentDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        content,
+        title,
+        contentType
+      }
+    });
+  }
+
+  checkEdgeEventType(entity) {
+    return !( entity.type === EdgeEventType.WIDGET_TYPE ||
+              entity.type === EdgeEventType.ADMIN_SETTINGS ||
+              entity.type === EdgeEventType.WIDGETS_BUNDLE );
+  }
+
+  manageEdgeEventContent(entity) {
+    var content = '';
+    switch (entity.type) {
+      case EdgeEventType.RELATION:
+        content = entity.body;
+        break;
+      // case EdgeEventType.RULE_CHAIN_METADATA:
+      //   this.ruleChainService.getRuleChainMetadata(entity.entityId, null).pipe(
+      //     map(ruleChainMetaData => content = ruleChainMetaData.nodes)
+      //   );
+      //   break;
+      default:
+        content = entity;
+        break;
+    }
+    return JSON.stringify(content);
+  }
+
+  showEdgeEventContent($event: MouseEvent, content: string, title: string, sortKeys = false): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    var contentType = ContentType.JSON;
     if (contentType === ContentType.JSON && sortKeys) {
       try {
         content = JSON.stringify(sortObjectKeys(JSON.parse(content)));
