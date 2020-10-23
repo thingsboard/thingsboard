@@ -112,6 +112,7 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
                                 scope.eventType, scope.tenantId, scope.events.nextPageLink);
                         } else {
                             promise = edgeService.getEdgeEvents(scope.entityId, scope.events.nextPageLink);
+                            scope.loadEdgeInfo();
                         }
                         if (promise) {
                             scope.events.pending = true;
