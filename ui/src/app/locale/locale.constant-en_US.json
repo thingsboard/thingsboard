@@ -74,6 +74,7 @@
         "test-mail-sent": "Test mail was successfully sent!",
         "base-url": "Base URL",
         "base-url-required": "Base URL is required.",
+        "prohibit-different-url": "Prohibit different URL",
         "mail-from": "Mail From",
         "mail-from-required": "Mail From is required.",
         "smtp-protocol": "SMTP protocol",
