@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -55,8 +56,6 @@ import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGateway
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
-import org.thingsboard.server.common.transport.limits.TransportRateLimitType;
-import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -240,7 +239,7 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public TransportProtos.GetEntityProfileResponseMsg getRoutingInfo(TransportProtos.GetEntityProfileRequestMsg msg) {
+    public TransportProtos.GetEntityProfileResponseMsg getEntityProfile(TransportProtos.GetEntityProfileRequestMsg msg) {
         TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg> protoMsg =
                 new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setEntityProfileRequestMsg(msg).build());
         try {
@@ -366,7 +365,7 @@ public class DefaultTransportService implements TransportService {
         for (TransportProtos.TsKvListProto tsKv : msg.getTsKvListList()) {
             dataPoints += tsKv.getKvCount();
         }
-        if (checkLimits(sessionInfo, msg, callback, dataPoints, TELEMETRY)) {
+        if (checkLimits(sessionInfo, msg, callback, dataPoints)) {
             reportActivityInternal(sessionInfo);
             TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
             DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
@@ -387,7 +386,7 @@ public class DefaultTransportService implements TransportService {
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, msg, callback, msg.getKvCount(), TELEMETRY)) {
+        if (checkLimits(sessionInfo, msg, callback, msg.getKvCount())) {
             reportActivityInternal(sessionInfo);
             TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
             DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
@@ -577,31 +576,23 @@ public class DefaultTransportService implements TransportService {
         sessions.remove(toSessionId(sessionInfo));
     }
 
-    private TransportRateLimitType[] DEFAULT = new TransportRateLimitType[]{TransportRateLimitType.TENANT_MAX_MSGS, TransportRateLimitType.DEVICE_MAX_MSGS};
-    private TransportRateLimitType[] TELEMETRY = TransportRateLimitType.values();
-
-    @Override
-    public boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback) {
-        return checkLimits(sessionInfo, msg, callback, 0, DEFAULT);
+    private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback) {
+        return checkLimits(sessionInfo, msg, callback, 0);
     }
 
-    @Override
-    public boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback, int dataPoints, TransportRateLimitType... limits) {
+    private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback, int dataPoints) {
         if (log.isTraceEnabled()) {
             log.trace("[{}] Processing msg: {}", toSessionId(sessionInfo), msg);
         }
         TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
         DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
 
-        TransportRateLimitType limit = rateLimitService.checkLimits(tenantId, deviceId, 0, limits);
-        if (limit == null) {
+        EntityType rateLimitedEntityType = rateLimitService.checkLimits(tenantId, deviceId, dataPoints);
+        if (rateLimitedEntityType == null) {
             return true;
         } else {
             if (callback != null) {
-                callback.onError(new TbRateLimitsException(limit.isTenantLevel() ? EntityType.TENANT : EntityType.DEVICE));
-            }
-            if (log.isTraceEnabled()) {
-                log.trace("[{}][{}] {} rateLimit detected: {}", toSessionId(sessionInfo), tenantId, limit, msg);
+                callback.onError(new TbRateLimitsException(rateLimitedEntityType));
             }
             return false;
         }
@@ -644,8 +635,7 @@ public class DefaultTransportService implements TransportService {
                         onProfileUpdate(deviceProfile);
                     }
                 } else if (EntityType.TENANT_PROFILE.equals(entityType)) {
-                    TenantProfileUpdateResult update = tenantProfileCache.put(msg.getData());
-                    rateLimitService.update(update);
+                    rateLimitService.update(tenantProfileCache.put(msg.getData()));
                 } else if (EntityType.TENANT.equals(entityType)) {
                     Optional<Tenant> profileOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
                     if (profileOpt.isPresent()) {
@@ -654,6 +644,12 @@ public class DefaultTransportService implements TransportService {
                         if (updated) {
                             rateLimitService.update(tenant.getId());
                         }
+                    }
+                } else if (EntityType.API_USAGE_STATE.equals(entityType)) {
+                    Optional<ApiUsageState> stateOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
+                    if (stateOpt.isPresent()) {
+                        ApiUsageState apiUsageState = stateOpt.get();
+                        rateLimitService.update(apiUsageState.getTenantId(), apiUsageState.isTransportEnabled());
                     }
                 }
             } else if (toSessionMsg.hasEntityDeleteMsg()) {
@@ -677,8 +673,7 @@ public class DefaultTransportService implements TransportService {
         }
     }
 
-    @Override
-    public void onProfileUpdate(DeviceProfile deviceProfile) {
+    private void onProfileUpdate(DeviceProfile deviceProfile) {
         long deviceProfileIdMSB = deviceProfile.getId().getId().getMostSignificantBits();
         long deviceProfileIdLSB = deviceProfile.getId().getId().getLeastSignificantBits();
         sessions.forEach((id, md) -> {
@@ -842,8 +837,8 @@ public class DefaultTransportService implements TransportService {
         @Override
         public void onSuccess(T msg) {
             try {
-                apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.MSG_COUNT, 1);
-                apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.DP_TRANSPORT_COUNT, dataPoints);
+                apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.TRANSPORT_MSG_COUNT, 1);
+                apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.TRANSPORT_DP_COUNT, dataPoints);
             } finally {
                 callback.onSuccess(msg);
             }

@@ -29,18 +29,24 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
 
     private static final long serialVersionUID = 8250339805336035966L;
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private TenantId tenantId;
-    @Getter @Setter
+    @Getter
+    @Setter
     private EntityId entityId;
-    @Getter @Setter
-    private boolean transportEnabled;
-    @Getter @Setter
-    private boolean dbStorageEnabled;
-    @Getter @Setter
-    private boolean ruleEngineEnabled;
-    @Getter @Setter
-    private boolean jsExecEnabled;
+    @Getter
+    @Setter
+    private boolean transportEnabled = true;
+    @Getter
+    @Setter
+    private boolean dbStorageEnabled = true;
+    @Getter
+    @Setter
+    private boolean reExecEnabled = true;
+    @Getter
+    @Setter
+    private boolean jsExecEnabled = true;
 
     public ApiUsageState() {
         super();
@@ -54,5 +60,9 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
         super(ur);
         this.tenantId = ur.getTenantId();
         this.entityId = ur.getEntityId();
+        this.transportEnabled = ur.isTransportEnabled();
+        this.dbStorageEnabled = ur.isDbStorageEnabled();
+        this.reExecEnabled = ur.isReExecEnabled();
+        this.jsExecEnabled = ur.isJsExecEnabled();
     }
 }

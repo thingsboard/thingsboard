@@ -17,14 +17,18 @@ package org.thingsboard.server.service.apiusage;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.util.Pair;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.TenantProfileData;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -97,15 +101,24 @@ public class TenantApiUsageState {
     }
 
     public long getProfileThreshold(ApiUsageRecordKey key) {
-        Object threshold = tenantProfileData.getProperties().get(key.name());
-        if (threshold != null) {
-            if (threshold instanceof String) {
-                return Long.parseLong((String) threshold);
-            } else if (threshold instanceof Long) {
-                return (Long) threshold;
-            }
+        DefaultTenantProfileConfiguration config = (DefaultTenantProfileConfiguration) tenantProfileData.getConfiguration();
+        switch (key) {
+            case TRANSPORT_MSG_COUNT:
+                return config.getMaxTransportMessages();
+            case TRANSPORT_DP_COUNT:
+                return config.getMaxTransportDataPoints();
+            case JS_EXEC_COUNT:
+                return config.getMaxJSExecutions();
+            case RE_EXEC_COUNT:
+                return config.getMaxREExecutions();
+            case STORAGE_DP_COUNT:
+                return config.getMaxDPStorageDays();
         }
         return 0L;
+    }
+
+    public TenantId getTenantId() {
+        return apiUsageState.getTenantId();
     }
 
     public EntityId getEntityId() {
@@ -121,7 +134,7 @@ public class TenantApiUsageState {
     }
 
     public boolean isRuleEngineEnabled() {
-        return apiUsageState.isRuleEngineEnabled();
+        return apiUsageState.isReExecEnabled();
     }
 
     public boolean isJsExecEnabled() {
@@ -137,7 +150,7 @@ public class TenantApiUsageState {
     }
 
     public void setRuleEngineEnabled(boolean ruleEngineEnabled) {
-        apiUsageState.setRuleEngineEnabled(ruleEngineEnabled);
+        apiUsageState.setReExecEnabled(ruleEngineEnabled);
     }
 
     public void setJsExecEnabled(boolean jsExecEnabled) {
@@ -146,13 +159,12 @@ public class TenantApiUsageState {
 
     public boolean isFeatureEnabled(ApiUsageRecordKey recordKey) {
         switch (recordKey) {
-            case MSG_COUNT:
-            case MSG_BYTES_COUNT:
-            case DP_TRANSPORT_COUNT:
+            case TRANSPORT_MSG_COUNT:
+            case TRANSPORT_DP_COUNT:
                 return isTransportEnabled();
             case RE_EXEC_COUNT:
                 return isRuleEngineEnabled();
-            case DP_STORAGE_COUNT:
+            case STORAGE_DP_COUNT:
                 return isDbStorageEnabled();
             case JS_EXEC_COUNT:
                 return isJsExecEnabled();
@@ -161,38 +173,47 @@ public class TenantApiUsageState {
         }
     }
 
-    public boolean setFeatureValue(ApiUsageRecordKey recordKey, boolean value) {
+    public ApiFeature setFeatureValue(ApiUsageRecordKey recordKey, boolean value) {
+        ApiFeature feature = null;
         boolean currentValue = isFeatureEnabled(recordKey);
         switch (recordKey) {
-            case MSG_COUNT:
-            case MSG_BYTES_COUNT:
-            case DP_TRANSPORT_COUNT:
+            case TRANSPORT_MSG_COUNT:
+            case TRANSPORT_DP_COUNT:
+                feature = ApiFeature.TRANSPORT;
                 setTransportEnabled(value);
                 break;
             case RE_EXEC_COUNT:
+                feature = ApiFeature.RE;
                 setRuleEngineEnabled(value);
                 break;
-            case DP_STORAGE_COUNT:
+            case STORAGE_DP_COUNT:
+                feature = ApiFeature.DB;
                 setDbStorageEnabled(value);
                 break;
             case JS_EXEC_COUNT:
+                feature = ApiFeature.JS;
                 setJsExecEnabled(value);
                 break;
         }
-        return currentValue == value;
+        return currentValue == value ? null : feature;
     }
 
-    public boolean checkStateUpdatedDueToThresholds() {
-        boolean update = false;
+    public Map<ApiFeature, Boolean> checkStateUpdatedDueToThresholds() {
+        Map<ApiFeature, Boolean> result = new HashMap<>();
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-            update |= checkStateUpdatedDueToThreshold(key);
+            Pair<ApiFeature, Boolean> featureUpdate = checkStateUpdatedDueToThreshold(key);
+            if (featureUpdate != null) {
+                result.put(featureUpdate.getFirst(), featureUpdate.getSecond());
+            }
         }
-        return update;
+        return result;
     }
 
-    public boolean checkStateUpdatedDueToThreshold(ApiUsageRecordKey recordKey) {
+    public Pair<ApiFeature, Boolean> checkStateUpdatedDueToThreshold(ApiUsageRecordKey recordKey) {
         long value = get(recordKey);
         long threshold = getProfileThreshold(recordKey);
-        return setFeatureValue(recordKey, threshold == 0 || value < threshold);
+        boolean featureValue = threshold == 0 || value < threshold;
+        ApiFeature feature = setFeatureValue(recordKey, featureValue);
+        return feature != null ? Pair.of(feature, featureValue) : null;
     }
 }

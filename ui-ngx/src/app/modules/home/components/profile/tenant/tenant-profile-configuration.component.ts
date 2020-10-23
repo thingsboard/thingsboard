@@ -19,21 +19,24 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Valida
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { TenantProfileData } from '@shared/models/tenant.model';
+import { deepClone } from '@core/utils';
+import { TenantProfileConfiguration, TenantProfileType } from '@shared/models/tenant.model';
 
 @Component({
-  selector: 'tb-tenant-profile-data',
-  templateUrl: './tenant-profile-data.component.html',
+  selector: 'tb-tenant-profile-configuration',
+  templateUrl: './tenant-profile-configuration.component.html',
   styleUrls: [],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => TenantProfileDataComponent),
+    useExisting: forwardRef(() => TenantProfileConfigurationComponent),
     multi: true
   }]
 })
-export class TenantProfileDataComponent implements ControlValueAccessor, OnInit {
+export class TenantProfileConfigurationComponent implements ControlValueAccessor, OnInit {
 
-  tenantProfileDataFormGroup: FormGroup;
+  tenantProfileType = TenantProfileType;
+
+  tenantProfileConfigurationFormGroup: FormGroup;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -46,6 +49,8 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit 
 
   @Input()
   disabled: boolean;
+
+  type: TenantProfileType;
 
   private propagateChange = (v: any) => { };
 
@@ -61,10 +66,10 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit 
   }
 
   ngOnInit() {
-    this.tenantProfileDataFormGroup = this.fb.group({
+    this.tenantProfileConfigurationFormGroup = this.fb.group({
       configuration: [null, Validators.required]
     });
-    this.tenantProfileDataFormGroup.valueChanges.subscribe(() => {
+    this.tenantProfileConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
   }
@@ -72,22 +77,27 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.tenantProfileDataFormGroup.disable({emitEvent: false});
+      this.tenantProfileConfigurationFormGroup.disable({emitEvent: false});
     } else {
-      this.tenantProfileDataFormGroup.enable({emitEvent: false});
+      this.tenantProfileConfigurationFormGroup.enable({emitEvent: false});
     }
   }
 
-  writeValue(value: TenantProfileData | null): void {
-    this.tenantProfileDataFormGroup.patchValue({configuration: value?.configuration}, {emitEvent: false});
+  writeValue(value: TenantProfileConfiguration | null): void {
+    this.type = value?.type;
+    const configuration = deepClone(value);
+    if (configuration) {
+      delete configuration.type;
+    }
+    this.tenantProfileConfigurationFormGroup.patchValue({configuration}, {emitEvent: false});
   }
 
   private updateModel() {
-    let tenantProfileData: TenantProfileData = null;
-    if (this.tenantProfileDataFormGroup.valid) {
-      tenantProfileData = this.tenantProfileDataFormGroup.getRawValue();
+    let configuration: TenantProfileConfiguration = null;
+    if (this.tenantProfileConfigurationFormGroup.valid) {
+      configuration = this.tenantProfileConfigurationFormGroup.getRawValue().configuration;
+      configuration.type = this.type;
     }
-    this.propagateChange(tenantProfileData);
+    this.propagateChange(configuration);
   }
-
 }

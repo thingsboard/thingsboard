@@ -31,13 +31,13 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
-public class ApiApiUsageStateServiceImpl extends AbstractEntityService implements ApiUsageStateService {
+public class ApiUsageStateServiceImpl extends AbstractEntityService implements ApiUsageStateService {
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
     private final ApiUsageStateDao apiUsageStateDao;
     private final TenantDao tenantDao;
 
-    public ApiApiUsageStateServiceImpl(TenantDao tenantDao, ApiUsageStateDao apiUsageStateDao) {
+    public ApiUsageStateServiceImpl(TenantDao tenantDao, ApiUsageStateDao apiUsageStateDao) {
         this.tenantDao = tenantDao;
         this.apiUsageStateDao = apiUsageStateDao;
     }

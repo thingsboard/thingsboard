@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -153,14 +154,20 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                 if (EntityType.TENANT_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     TenantProfileId tenantProfileId = new TenantProfileId(componentLifecycleMsg.getEntityId().getId());
                     tenantProfileCache.evict(tenantProfileId);
-                    apiUsageStateService.onTenantProfileUpdate(tenantProfileId);
+                    if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
+                        apiUsageStateService.onTenantProfileUpdate(tenantProfileId);
+                    }
                 } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
-                    apiUsageStateService.onTenantUpdate(componentLifecycleMsg.getTenantId());
+                    if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
+                        apiUsageStateService.onTenantUpdate(componentLifecycleMsg.getTenantId());
+                    }
                 } else if (EntityType.DEVICE_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
                 } else if (EntityType.DEVICE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     deviceProfileCache.evict(new DeviceId(componentLifecycleMsg.getEntityId().getId()));
+                } else if (EntityType.API_USAGE_STATE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    apiUsageStateService.onApiUsageStateUpdate(componentLifecycleMsg.getTenantId());
                 }
             }
             log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);

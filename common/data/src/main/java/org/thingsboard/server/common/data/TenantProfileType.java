@@ -15,12 +15,6 @@
  */
 package org.thingsboard.server.common.data;
 
-public enum ApiUsageRecordKey {
-
-    TRANSPORT_MSG_COUNT,
-    TRANSPORT_DP_COUNT,
-    STORAGE_DP_COUNT,
-    RE_EXEC_COUNT,
-    JS_EXEC_COUNT
-
+public enum TenantProfileType {
+    DEFAULT
 }

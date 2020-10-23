@@ -19,7 +19,6 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
-import org.thingsboard.server.common.transport.limits.TransportRateLimitType;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
@@ -46,7 +45,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509Ce
  */
 public interface TransportService {
 
-    GetEntityProfileResponseMsg getRoutingInfo(GetEntityProfileRequestMsg msg);
+    GetEntityProfileResponseMsg getEntityProfile(GetEntityProfileRequestMsg msg);
 
     void process(DeviceTransportType transportType, ValidateDeviceTokenRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
@@ -62,14 +61,6 @@ public interface TransportService {
 
     void process(ProvisionDeviceRequestMsg msg,
                  TransportServiceCallback<ProvisionDeviceResponseMsg> callback);
-
-    void onProfileUpdate(DeviceProfile deviceProfile);
-
-    void onDeviceDelete(EntityDeleteMsg entityDeleteMsg);
-
-    boolean checkLimits(SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback);
-
-    boolean checkLimits(SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback, int dataPoints, TransportRateLimitType... limits);
 
     void process(SessionInfoProto sessionInfo, SessionEventMsg msg, TransportServiceCallback<Void> callback);
 
@@ -94,6 +85,8 @@ public interface TransportService {
     void registerAsyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener);
 
     void registerSyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener, long timeout);
+
+    void onDeviceDelete(EntityDeleteMsg entityDeleteMsg);
 
     void reportActivity(SessionInfoProto sessionInfo);
 

@@ -13,14 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.service.apiusage;
 
-public enum ApiUsageRecordKey {
-
-    TRANSPORT_MSG_COUNT,
-    TRANSPORT_DP_COUNT,
-    STORAGE_DP_COUNT,
-    RE_EXEC_COUNT,
-    JS_EXEC_COUNT
-
+public enum ApiFeature {
+    TRANSPORT, DB, RE, JS
 }

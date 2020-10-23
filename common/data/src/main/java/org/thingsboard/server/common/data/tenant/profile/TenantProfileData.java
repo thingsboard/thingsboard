@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.limits;
+package org.thingsboard.server.common.data.tenant.profile;
 
-public interface TransportRateLimitFactory {
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Data;
 
-    TransportRateLimit create(TransportRateLimitType type, Object config);
+import java.util.HashMap;
+import java.util.Map;
 
-    TransportRateLimit createDefault(TransportRateLimitType type);
+@Data
+public class TenantProfileData {
+
+    private TenantProfileConfiguration configuration;
 
 }

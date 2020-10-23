@@ -17,6 +17,8 @@ package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -51,6 +53,15 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
     @Column(name = ModelConstants.API_USAGE_STATE_ENTITY_ID_COLUMN)
     private UUID entityId;
 
+    @Column(name = ModelConstants.API_USAGE_STATE_TRANSPORT_ENABLED_COLUMN)
+    private boolean transportEnabled = true;
+    @Column(name = ModelConstants.API_USAGE_STATE_DB_STORAGE_ENABLED_COLUMN)
+    private boolean dbStorageEnabled = true;
+    @Column(name = ModelConstants.API_USAGE_STATE_RE_EXEC_ENABLED_COLUMN)
+    private boolean reExecEnabled = true;
+    @Column(name = ModelConstants.API_USAGE_STATE_JS_EXEC_ENABLED_COLUMN)
+    private boolean jsExecEnabled = true;
+
     public ApiUsageStateEntity() {
     }
 
@@ -66,6 +77,10 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
             this.entityType = ur.getEntityId().getEntityType().name();
             this.entityId = ur.getEntityId().getId();
         }
+        this.transportEnabled = ur.isTransportEnabled();
+        this.dbStorageEnabled = ur.isDbStorageEnabled();
+        this.reExecEnabled = ur.isReExecEnabled();
+        this.jsExecEnabled = ur.isJsExecEnabled();
     }
 
     @Override
@@ -78,6 +93,10 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
         if (entityId != null) {
             ur.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
         }
+        ur.setTransportEnabled(transportEnabled);
+        ur.setDbStorageEnabled(dbStorageEnabled);
+        ur.setReExecEnabled(reExecEnabled);
+        ur.setJsExecEnabled(jsExecEnabled);
         return ur;
     }
 

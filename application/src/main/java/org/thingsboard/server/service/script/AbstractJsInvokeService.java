@@ -19,6 +19,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.queue.usagestats.TbUsageStatsClient;
 
 import java.util.Map;
 import java.util.UUID;
@@ -33,9 +36,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public abstract class AbstractJsInvokeService implements JsInvokeService {
 
+    private final TbUsageStatsClient apiUsageStatsClient;
     protected ScheduledExecutorService timeoutExecutorService;
     protected Map<UUID, String> scriptIdToNameMap = new ConcurrentHashMap<>();
     protected Map<UUID, BlackListInfo> blackListedFunctions = new ConcurrentHashMap<>();
+
+    protected AbstractJsInvokeService(TbUsageStatsClient apiUsageStatsClient) {
+        this.apiUsageStatsClient = apiUsageStatsClient;
+    }
 
     public void init(long maxRequestsTimeout) {
         if (maxRequestsTimeout > 0) {
@@ -50,7 +58,7 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
     }
 
     @Override
-    public ListenableFuture<UUID> eval(JsScriptType scriptType, String scriptBody, String... argNames) {
+    public ListenableFuture<UUID> eval(TenantId tenantId, JsScriptType scriptType, String scriptBody, String... argNames) {
         UUID scriptId = UUID.randomUUID();
         String functionName = "invokeInternal_" + scriptId.toString().replace('-', '_');
         String jsScript = generateJsScript(scriptType, functionName, scriptBody, argNames);
@@ -58,12 +66,13 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
     }
 
     @Override
-    public ListenableFuture<Object> invokeFunction(UUID scriptId, Object... args) {
+    public ListenableFuture<Object> invokeFunction(TenantId tenantId, UUID scriptId, Object... args) {
         String functionName = scriptIdToNameMap.get(scriptId);
         if (functionName == null) {
             return Futures.immediateFailedFuture(new RuntimeException("No compiled script found for scriptId: [" + scriptId + "]!"));
         }
         if (!isBlackListed(scriptId)) {
+            apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.JS_EXEC_COUNT, 1);
             return doInvokeFunction(scriptId, functionName, args);
         } else {
             return Futures.immediateFailedFuture(

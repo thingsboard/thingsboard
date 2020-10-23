@@ -186,6 +186,7 @@ message GetEntityProfileRequestMsg {
 message GetEntityProfileResponseMsg {
   string entityType = 1;
   bytes data = 2;
+  bytes apiState = 3;
 }
 
 message EntityUpdateMsg {

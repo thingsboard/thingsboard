@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.msg.EncryptionUtil;
+import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -630,7 +631,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
                 @Override
                 public void onError(Throwable e) {
-                    log.warn("[{}] Failed to submit session event", sessionId, e);
+                    if (e instanceof TbRateLimitsException) {
+                        log.trace("[{}] Failed to submit session event", sessionId, e);
+                    } else {
+                        log.warn("[{}] Failed to submit session event", sessionId, e);
+                    }
                     ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE));
                     ctx.close();
                 }

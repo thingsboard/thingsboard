@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.queue;
 
 import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -63,6 +64,8 @@ public interface TbClusterService {
     void onTenantChange(Tenant tenant, TbQueueCallback callback);
 
     void onTenantDelete(Tenant tenant, TbQueueCallback callback);
+
+    void onApiStateChange(ApiUsageState apiUsageState, TbQueueCallback callback);
 
     void onDeviceDelete(TenantId tenantId, EntityId entityId, TbQueueCallback callback);
 }
