@@ -1226,9 +1226,6 @@ export class WidgetSubscription implements IWidgetSubscription {
         });
       });
     }
-    if (this.displayLegend) {
-      this.legendData.keys = this.legendData.keys.sort((key1, key2) => key1.dataKey.label.localeCompare(key2.dataKey.label));
-    }
     if (this.caulculateLegendData) {
       this.data.forEach((dataSetHolder, keyIndex) => {
         this.updateLegend(keyIndex, dataSetHolder.data, false);

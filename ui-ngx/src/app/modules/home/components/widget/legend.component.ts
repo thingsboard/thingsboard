@@ -60,8 +60,11 @@ export class LegendComponent implements OnInit {
   }
 
   legendKeys(): LegendKey[] {
-    return this.legendData.keys
-      .filter(legendKey => this.legendData.keys[legendKey.dataIndex].dataKey.inLegend);
+    let keys = this.legendData.keys;
+    if (this.legendConfig.sortDataKeys) {
+      keys = this.legendData.keys.sort((key1, key2) => key1.dataKey.label.localeCompare(key2.dataKey.label));
+    }
+    return keys.filter(legendKey => this.legendData.keys[legendKey.dataIndex].dataKey.inLegend);
   }
 
 }
