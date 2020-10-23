@@ -19,8 +19,8 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.protobuf.AbstractMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -48,7 +47,6 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -58,7 +56,9 @@ import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.widget.WidgetType;
@@ -81,20 +81,19 @@ import org.thingsboard.server.gen.edge.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.RelationUpdateMsg;
-import org.thingsboard.server.gen.edge.RpcRequestMsg;
 import org.thingsboard.server.gen.edge.RpcResponseMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.gen.edge.UplinkMsg;
-import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 import org.thingsboard.server.gen.edge.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.WidgetTypeUpdateMsg;
 import org.thingsboard.server.gen.edge.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -379,6 +378,11 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         ruleChain.setType(RuleChainType.EDGE);
         RuleChain savedRuleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
 
+        createRuleChainMetadata(savedRuleChain);
+
+        // Wait before rule chain metadata saved to database before rule chain is assigned to edge
+        Thread.sleep(1000);
+
         edgeImitator.expectMessageAmount(1);
         doPost("/api/edge/" + edge.getId().getId().toString()
                 + "/ruleChain/" + savedRuleChain.getId().getId().toString(), RuleChain.class);
@@ -391,6 +395,8 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(ruleChainUpdateMsg.getIdMSB(), savedRuleChain.getUuidId().getMostSignificantBits());
         Assert.assertEquals(ruleChainUpdateMsg.getIdLSB(), savedRuleChain.getUuidId().getLeastSignificantBits());
         Assert.assertEquals(ruleChainUpdateMsg.getName(), savedRuleChain.getName());
+
+        testRuleChainMetadataRequestMsg(savedRuleChain.getId());
 
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/edge/" + edge.getId().getId().toString()
@@ -417,6 +423,65 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(ruleChainUpdateMsg.getIdLSB(), savedRuleChain.getUuidId().getLeastSignificantBits());
 
         log.info("RuleChains tested successfully");
+    }
+
+    private void testRuleChainMetadataRequestMsg(RuleChainId ruleChainId) throws InterruptedException {
+        RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg = RuleChainMetadataRequestMsg.newBuilder()
+                .setRuleChainIdMSB(ruleChainId.getId().getMostSignificantBits())
+                .setRuleChainIdLSB(ruleChainId.getId().getLeastSignificantBits())
+                .build();
+        UplinkMsg uplinkMsg = UplinkMsg.newBuilder()
+                .addRuleChainMetadataRequestMsg(ruleChainMetadataRequestMsg)
+                .build();
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.expectMessageAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsg);
+        edgeImitator.waitForResponses();
+        edgeImitator.waitForMessages();
+
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof RuleChainMetadataUpdateMsg);
+        RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = (RuleChainMetadataUpdateMsg) latestMessage;
+        RuleChainId receivedRuleChainId =
+                new RuleChainId(new UUID(ruleChainMetadataUpdateMsg.getRuleChainIdMSB(), ruleChainMetadataUpdateMsg.getRuleChainIdLSB()));
+        Assert.assertEquals(ruleChainId, receivedRuleChainId);
+    }
+
+    private void createRuleChainMetadata(RuleChain ruleChain) throws Exception {
+        RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
+        ruleChainMetaData.setRuleChainId(ruleChain.getId());
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        RuleNode ruleNode1 = new RuleNode();
+        ruleNode1.setName("name1");
+        ruleNode1.setType("type1");
+        ruleNode1.setConfiguration(mapper.readTree("\"key1\": \"val1\""));
+
+        RuleNode ruleNode2 = new RuleNode();
+        ruleNode2.setName("name2");
+        ruleNode2.setType("type2");
+        ruleNode2.setConfiguration(mapper.readTree("\"key2\": \"val2\""));
+
+        RuleNode ruleNode3 = new RuleNode();
+        ruleNode3.setName("name3");
+        ruleNode3.setType("type3");
+        ruleNode3.setConfiguration(mapper.readTree("\"key3\": \"val3\""));
+
+        List<RuleNode> ruleNodes = new ArrayList<>();
+        ruleNodes.add(ruleNode1);
+        ruleNodes.add(ruleNode2);
+        ruleNodes.add(ruleNode3);
+        ruleChainMetaData.setFirstNodeIndex(0);
+        ruleChainMetaData.setNodes(ruleNodes);
+
+        ruleChainMetaData.addConnectionInfo(0,1,"success");
+        ruleChainMetaData.addConnectionInfo(0,2,"fail");
+        ruleChainMetaData.addConnectionInfo(1,2,"success");
+
+        ruleChainMetaData.addRuleChainConnectionInfo(2, edge.getRootRuleChainId(), "success", mapper.createObjectNode());
+
+        doPost("/api/ruleChain/metadata", ruleChainMetaData, RuleChainMetaData.class);
     }
 
     private void testDashboards() throws Exception {
