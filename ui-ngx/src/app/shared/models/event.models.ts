@@ -19,7 +19,6 @@ import { TenantId } from '@shared/models/id/tenant-id';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EventId } from './id/event-id';
 import { ContentType } from '@shared/models/constants';
-import { EntityType } from '@shared/models/entity-type.models'
 
 export enum EventType {
   ERROR = 'ERROR',
@@ -54,6 +53,18 @@ export enum EdgeEventType {
   WIDGET_TYPE = "WIDGET_TYPE",
   ADMIN_SETTINGS = "ADMIN_SETTINGS"
 }
+
+export enum EdgeEventStatusColor {
+  DEPLOYED = "DEPLOYED",
+  PENDING = "PENDING"
+}
+
+export const edgeEventStatusColor = new Map<EdgeEventStatusColor, string> (
+  [
+    [EdgeEventStatusColor.DEPLOYED, '#000000'],
+    [EdgeEventStatusColor.PENDING, '#9e9e9e']
+  ]
+);
 
 export const eventTypeTranslations = new Map<EventType | DebugEventType, string>(
   [

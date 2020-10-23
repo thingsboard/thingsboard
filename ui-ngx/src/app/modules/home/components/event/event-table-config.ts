@@ -20,7 +20,14 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import {DebugEventType, EdgeEventType, Event, EventType} from '@shared/models/event.models';
+import {
+  DebugEventType,
+  EdgeEventType,
+  EdgeEventStatusColor,
+  edgeEventStatusColor,
+  Event,
+  EventType
+} from '@shared/models/event.models';
 import {TimePageLink} from '@shared/models/page/page-link';
 import {TranslateService} from '@ngx-translate/core';
 import {DatePipe} from '@angular/common';
@@ -40,6 +47,8 @@ import {
 } from '@home/components/event/event-content-dialog.component';
 import {sortObjectKeys} from '@core/utils';
 import {RuleChainService} from "@core/http/rule-chain.service";
+import {AttributeService} from "@core/http/attribute.service";
+import {AttributeScope} from "@shared/models/telemetry/telemetry.models";
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -57,11 +66,13 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   }
 
   eventTypes: Array<EventType | DebugEventType>;
+  queueStartTs: any;
 
   constructor(private eventService: EventService,
               private dialogService: DialogService,
               private translate: TranslateService,
               private ruleChainService: RuleChainService,
+              private attributeService: AttributeService,
               private datePipe: DatePipe,
               private dialog: MatDialog,
               public entityId: EntityId,
@@ -111,6 +122,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
   fetchEvents(pageLink: TimePageLink): Observable<PageData<Event>> {
     if (this.eventTypeValue === EventType.EDGE_EVENT) {
+      this.loadEdgeInfo();
       return this.eventService.getEdgeEvents(this.entityId, pageLink);
     } else {
       return this.eventService.getEvents(this.entityId, this.eventType, this.tenantId, pageLink);
@@ -182,6 +194,11 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             (entity) => entity.action, entity => ({}), false),
           new EntityTableColumn<Event>('entityId', 'event.entityId', '100%',
             (entity) => entity.id.id, entity => ({}), false),   //TODO: replace this to entity.entityId because of conflict wiht entityId model
+          new EntityTableColumn<Event>('status', 'event.status', '100%',
+            (entity) => this.updateEdgeEventStatus(entity.createdTime),
+              entity => ({
+                color: this.isPending(entity.createdTime) ? edgeEventStatusColor.get(EdgeEventStatusColor.PENDING) : edgeEventStatusColor.get(EdgeEventStatusColor.DEPLOYED)
+              }), false),
           new EntityActionTableColumn<Event>('data', 'event.data',
             {
               name: this.translate.instant('action.view'),
@@ -291,7 +308,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   }
 
   manageEdgeEventContent(entity) {
-    var content = '';
+    var content: string;
     switch (entity.type) {
       case EdgeEventType.RELATION:
         content = entity.body;
@@ -328,4 +345,40 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       }
     });
   }
+
+  updateEdgeEventStatus(createdTime) {
+    if (this.queueStartTs) {
+      var status: string;
+      if (createdTime < this.queueStartTs) {
+        status = this.translate.instant('edge.success');
+      } else {
+        status = this.translate.instant('edge.failed');
+      }
+      return status;
+    }
+  }
+
+  isPending(createdTime) {
+    return createdTime > this.queueStartTs;
+  }
+
+  loadEdgeInfo() {
+    this.attributeService.getEntityAttributes(this.entityId, AttributeScope.SERVER_SCOPE,["queueStartTs"])
+      .subscribe(
+        attributes => this.onUpdate(attributes)
+      );
+  }
+
+  onUpdate(attributes) {
+    let edge = attributes.reduce(function (map, attribute) {
+      map[attribute.key] = attribute;
+      return map;
+    }, {});
+    if (edge.queueStartTs) {
+      this.queueStartTs = edge.queueStartTs.lastUpdateTs;
+    }
+  }
+
+
 }
+

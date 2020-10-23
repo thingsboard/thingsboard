@@ -108,6 +108,15 @@ export class EntityActionTableColumn<T extends BaseData<HasId>> extends BaseEnti
   }
 }
 
+export class EdgeStatusTableColumn<T extends BaseData<HasId>> extends BaseEntityTableColumn<T> {
+  constructor(public key: string,
+              public title: string,
+              public actionDescriptor: CellActionDescriptor<T>,
+              public width: string = '0px') {
+    super('action', key, title, width, false);
+  }
+}
+
 export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTableColumn<T> {
   constructor(key: string,
               title: string,
