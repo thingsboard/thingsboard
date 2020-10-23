@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.rule;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -123,6 +125,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             return null;
         }
 
+        if (CollectionUtils.isNotEmpty(ruleChainMetaData.getConnections())) {
+            validateCircles(ruleChainMetaData.getConnections());
+        }
+
         List<RuleNode> nodes = ruleChainMetaData.getNodes();
         List<RuleNode> toAddOrUpdate = new ArrayList<>();
         List<RuleNode> toDelete = new ArrayList<>();
@@ -203,6 +209,28 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
 
         return loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId());
+    }
+
+    private void validateCircles(List<NodeConnectionInfo> connectionInfos) {
+        Map<Integer, List<Integer>> connectionsMap = new HashMap<>();
+        for (NodeConnectionInfo nodeConnection : connectionInfos) {
+            connectionsMap
+                    .computeIfAbsent(nodeConnection.getFromIndex(), from -> new ArrayList<>())
+                    .add(nodeConnection.getToIndex());
+        }
+        connectionsMap.keySet().forEach(key -> validateCircles(key, connectionsMap.get(key), connectionsMap));
+    }
+
+    private void validateCircles(int from, List<Integer> toList, Map<Integer, List<Integer>> connectionsMap) {
+        if (toList == null) {
+            return;
+        }
+        for (Integer to : toList) {
+            if (from == to) {
+                throw new IncorrectParameterException("Can't create circling relations in rule chain.");
+            }
+            validateCircles(from, connectionsMap.get(to), connectionsMap);
+        }
     }
 
     @Override
