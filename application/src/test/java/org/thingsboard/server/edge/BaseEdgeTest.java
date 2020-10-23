@@ -72,6 +72,7 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
@@ -955,6 +956,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         sendUserCredentialsRequest();
         sendDeviceCredentialsRequest();
         sendDeviceRpcResponse();
+        sendDeviceCredentialsUpdate();
         sendAttributesRequest();
         log.info("Messages were sent successfully");
     }
@@ -1161,6 +1163,22 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(deviceCredentialsUpdateMsg.getDeviceIdLSB(), device.getUuidId().getLeastSignificantBits());
         Assert.assertEquals(deviceCredentialsUpdateMsg.getCredentialsType(), deviceCredentials.getCredentialsType().name());
         Assert.assertEquals(deviceCredentialsUpdateMsg.getCredentialsId(), deviceCredentials.getCredentialsId());
+    }
+
+    private void sendDeviceCredentialsUpdate() throws Exception {
+        Device device = findDeviceByName("Edge Device 1");
+
+        UplinkMsg.Builder builder = UplinkMsg.newBuilder();
+        DeviceCredentialsUpdateMsg.Builder deviceCredentialsUpdateMsgBuilder = DeviceCredentialsUpdateMsg.newBuilder();
+        deviceCredentialsUpdateMsgBuilder.setDeviceIdMSB(device.getUuidId().getMostSignificantBits());
+        deviceCredentialsUpdateMsgBuilder.setDeviceIdLSB(device.getUuidId().getLeastSignificantBits());
+        deviceCredentialsUpdateMsgBuilder.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN.name());
+        deviceCredentialsUpdateMsgBuilder.setCredentialsId("NEW_TOKEN");
+        builder.addDeviceCredentialsUpdateMsg(deviceCredentialsUpdateMsgBuilder.build());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(builder.build());
+        edgeImitator.waitForResponses();
     }
 
     private void sendDeviceRpcResponse() throws Exception {
