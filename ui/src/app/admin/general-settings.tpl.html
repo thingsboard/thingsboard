@@ -39,6 +39,9 @@
 								 ng-model="vm.settings.jsonValue.prohibitDifferentUrl">
 						{{ 'admin.prohibit-different-url' | translate }}
 					</md-checkbox>
+					<div translate class="tb-hint">
+						admin.prohibit-different-url-hint
+					</div>
 					<div layout="row" layout-align="end center" width="100%" layout-wrap>
 						<md-button ng-disabled="$root.loading || vm.settingsForm.$invalid || !vm.settingsForm.$dirty" type="submit" class="md-raised md-primary">{{'action.save' | translate}}</md-button>
 					</div>
