@@ -62,7 +62,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                     } else if (alarmResult.isUpdated) {
                         tellNext(ctx, msg, alarmResult, DataConstants.ENTITY_UPDATED, "Updated");
                     } else if (alarmResult.isCleared) {
-                        tellNext(ctx, msg, alarmResult, DataConstants.ENTITY_UPDATED, "Cleared");
+                        tellNext(ctx, msg, alarmResult, DataConstants.ALARM_CLEAR, "Cleared");
                     } else {
                         ctx.tellSuccess(msg);
                     }
