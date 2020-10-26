@@ -112,5 +112,4 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                 () -> ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), alarmAction),
                 throwable -> ctx.tellFailure(toAlarmMsg(ctx, alarmResult, msg), throwable));
     }
-
 }

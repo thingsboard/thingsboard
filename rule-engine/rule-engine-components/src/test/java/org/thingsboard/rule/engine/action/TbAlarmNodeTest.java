@@ -252,7 +252,6 @@ public class TbAlarmNodeTest {
 
         verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
         successCaptor.getValue().run();
-
         verify(ctx).tellNext(any(), eq("Updated"));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
