@@ -41,11 +41,10 @@ import { AppState } from '@core/core.state';
 
 export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueAccessor, OnInit, Validators {
 
-  @Input() disabled: boolean;
   @Input() i: number;
   @Input() y: number;
-  @Input() resourceFormGroup: FormGroup;
-  @Input() resourceValue: ResourceLwM2M[];
+  @Input() resourceFormGroup : FormGroup;
+  @Input() disabled : boolean;
   @Output() valueCheckBoxChange = new EventEmitter<{}>()
 
   constructor(private store: Store<AppState>,
@@ -63,18 +62,11 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
   }
 
   writeValue(value: ResourceLwM2M[]): void {
+    debugger
   }
 
   resourceLwm2mFormArray(instance: AbstractControl): FormArray {
     return instance.get('resources') as FormArray;
-  }
-
-  setDisabledState(isDisabled: boolean): void {
-    if (isDisabled) {
-      this.resourceFormGroup.disable({emitEvent: false});
-    } else {
-      this.resourceFormGroup.enable({emitEvent: false});
-    }
   }
 
   changeInstanceResourcesCheckBox(value: boolean, objInd: number, insInd: number, restInd: number, nameFrom?: string): void {
@@ -85,5 +77,13 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
       resInd: restInd,
       nameFrom: nameFrom
     });
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    if (isDisabled) {
+      this.resourceFormGroup.disable({emitEvent: false});
+    } else {
+      this.resourceFormGroup.enable({emitEvent: false});
+    }
   }
 }

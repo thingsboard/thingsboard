@@ -19,6 +19,7 @@ package org.thingsboard.server.service.lwm2m;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -48,9 +49,10 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
 @Service
-@Component("DeviceLwm2mService")
+@Component("LwM2MModelsRepository")
 @ComponentScan("org.thingsboard.server.transport.lwm2m.utils")
-public class LwM2MModelsRepositor {
+@ConditionalOnExpression("('${(service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || ('${service.type:null}'=='monolith'  && '${transport.lwm2m.enabled}'=='true') || '${service.type:null}'=='tb-core'")
+public class LwM2MModelsRepository {
 
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 

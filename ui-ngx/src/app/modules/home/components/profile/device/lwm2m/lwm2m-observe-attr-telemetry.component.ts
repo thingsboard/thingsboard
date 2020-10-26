@@ -211,10 +211,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     return objectLwM2M.get('instances') as FormArray;
   }
 
-  resourceLwm2mFormArray(instance: AbstractControl): FormArray {
-    return instance.get('resources') as FormArray;
-  }
-
   changeInstanceResourcesCheckBox(value: MatCheckboxChange, objInd: number, instInd: number, nameFrom?: string): void {
     let instance = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).at(objInd).get('instances') as FormArray).at(instInd);
     let resources = instance.get('resources');

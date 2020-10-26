@@ -35,7 +35,6 @@ import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -93,7 +92,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.lwm2m.LwM2MModelsRepositor;
+import org.thingsboard.server.service.lwm2m.LwM2MModelsRepository;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.profile.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
@@ -214,7 +213,7 @@ public abstract class BaseController {
     protected TbDeviceProfileCache deviceProfileCache;
 
     @Autowired
-    protected LwM2MModelsRepositor lwM2MModelsRepository;
+    protected LwM2MModelsRepository lwM2MModelsRepository;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
