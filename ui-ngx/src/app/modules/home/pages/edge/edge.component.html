@@ -34,6 +34,36 @@
           [fxShow]="!isEdit && (edgeScope === 'customer' || edgeScope === 'tenant') && isAssignedToCustomer(entity)">
     {{ (entity?.customerIsPublic ? 'edge.make-private' : 'edge.unassign-from-customer') | translate }}
   </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'openEdgeAssets')"
+          [fxShow]="!isEdit && edgeScope === 'tenant'">
+    {{'edge.manage-edge-assets' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'openEdgeDevices')"
+          [fxShow]="!isEdit && edgeScope === 'tenant'">
+    {{'edge.manage-edge-devices' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'openEdgeEntityViews')"
+          [fxShow]="!isEdit && edgeScope === 'tenant'">
+    {{'edge.manage-edge-entity-views' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'openEdgeDashboards')"
+          [fxShow]="!isEdit && edgeScope === 'tenant'">
+    {{'edge.manage-edge-dashboards' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'openEdgeRuleChains')"
+          [fxShow]="!isEdit && edgeScope === 'tenant'">
+    {{'edge.manage-edge-rulechains' | translate }}
+  </button>
   <button mat-raised-button color="primary" fxFlex.xs
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
