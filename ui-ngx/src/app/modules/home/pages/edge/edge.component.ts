@@ -18,7 +18,7 @@ import { Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from "@core/core.state";
 import { EntityComponent } from "@home/components/entity/entity.component";
-import {FormBuilder, FormControl, FormGroup, NgModel, Validators} from "@angular/forms";
+import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { EntityType } from "@shared/models/entity-type.models";
 import { EdgeInfo } from "@shared/models/edge.models";
 import { TranslateService } from "@ngx-translate/core";
@@ -26,6 +26,7 @@ import { NULL_UUID } from "@shared/models/id/has-uuid";
 import { ActionNotificationShow } from "@core/notification/notification.actions";
 import { guid, isUndefined } from "@core/utils";
 import { EntityTableConfig } from "@home/models/entity/entities-table-config.models";
+import { WINDOW } from "@core/services/window.service";
 
 @Component({
   selector: 'tb-edge',
@@ -42,8 +43,9 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: EdgeInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<EdgeInfo>,
-              public fb: FormBuilder) {
-    super(store, fb, entityValue, entitiesTableConfigValue);
+              public fb: FormBuilder,
+              @Inject(WINDOW) protected window: Window) {
+    super(store, fb, entityValue, entitiesTableConfigValue, window);
   }
 
   ngOnInit() {
@@ -69,8 +71,8 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
         name: [entity ? entity.name : '', [Validators.required]],
         type: [entity ? entity.type : null, [Validators.required]],
         label: [entity ? entity.label : ''],
-        cloudEndpoint: '',
-        edgeLicenseKey: '',
+        cloudEndpoint: [this.window.location.origin, [Validators.required]],
+        edgeLicenseKey: ['', [Validators.required]],
         routingKey: guid(),
         secret: this.generateSecret(20),
         additionalInfo: this.fb.group(

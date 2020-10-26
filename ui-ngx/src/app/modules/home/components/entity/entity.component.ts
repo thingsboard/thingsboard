@@ -17,13 +17,14 @@
 import { BaseData, HasId } from '@shared/models/base-data';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
-import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Directive, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { isObject, isString } from '@core/utils';
+import { WINDOW } from "@core/services/window.service";
 
 // @dynamic
 @Directive()
@@ -80,7 +81,8 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
   protected constructor(protected store: Store<AppState>,
                         protected fb: FormBuilder,
                         protected entityValue: T,
-                        protected entitiesTableConfigValue: C) {
+                        protected entitiesTableConfigValue: C,
+                        @Inject(WINDOW) protected window: Window) {
     super(store);
     this.entityForm = this.buildForm(this.entityValue);
   }
