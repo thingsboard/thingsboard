@@ -47,8 +47,10 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -212,16 +214,19 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     private void validateCircles(List<NodeConnectionInfo> connectionInfos) {
-        Map<Integer, List<Integer>> connectionsMap = new HashMap<>();
+        Map<Integer, Set<Integer>> connectionsMap = new HashMap<>();
         for (NodeConnectionInfo nodeConnection : connectionInfos) {
+            if (nodeConnection.getFromIndex() == nodeConnection.getToIndex()) {
+                throw new IncorrectParameterException("Can't create the relation to yourself.");
+            }
             connectionsMap
-                    .computeIfAbsent(nodeConnection.getFromIndex(), from -> new ArrayList<>())
+                    .computeIfAbsent(nodeConnection.getFromIndex(), from -> new HashSet<>())
                     .add(nodeConnection.getToIndex());
         }
         connectionsMap.keySet().forEach(key -> validateCircles(key, connectionsMap.get(key), connectionsMap));
     }
 
-    private void validateCircles(int from, List<Integer> toList, Map<Integer, List<Integer>> connectionsMap) {
+    private void validateCircles(int from, Set<Integer> toList, Map<Integer, Set<Integer>> connectionsMap) {
         if (toList == null) {
             return;
         }
