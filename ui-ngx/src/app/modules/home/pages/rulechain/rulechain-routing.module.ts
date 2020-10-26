@@ -71,7 +71,8 @@ export class RuleNodeComponentsResolver implements Resolve<Array<RuleNodeCompone
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<Array<RuleNodeComponentDescriptor>> {
-    return this.ruleChainService.getRuleNodeComponents(this.modulesMap);
+    const ruleChainType = route.data.type;
+    return this.ruleChainService.getRuleNodeComponents(this.modulesMap, ruleChainType);
   }
 }
 

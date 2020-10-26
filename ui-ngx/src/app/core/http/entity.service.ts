@@ -323,7 +323,7 @@ export class EntityService {
         break;
       case EntityType.RULE_CHAIN:
         pageLink.sortOrder.property = 'name';
-        if (this.route.url.includes('edges')) {
+        if (this.route.url.includes('edge')) {
           entitiesObservable = this.ruleChainService.getRuleChains(pageLink, ruleChainType.edge, config);
         } else {
           entitiesObservable = this.ruleChainService.getRuleChains(pageLink, ruleChainType.core, config);
