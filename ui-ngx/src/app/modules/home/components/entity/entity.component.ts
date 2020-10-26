@@ -82,7 +82,7 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
                         protected fb: FormBuilder,
                         protected entityValue: T,
                         protected entitiesTableConfigValue: C,
-                        @Inject(WINDOW) protected window: Window) {
+                        @Inject(WINDOW) protected window?: Window) {
     super(store);
     this.entityForm = this.buildForm(this.entityValue);
   }
