@@ -39,7 +39,6 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -52,7 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 /**
  * Created by igor on 3/12/18.
@@ -217,7 +215,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         Map<Integer, Set<Integer>> connectionsMap = new HashMap<>();
         for (NodeConnectionInfo nodeConnection : connectionInfos) {
             if (nodeConnection.getFromIndex() == nodeConnection.getToIndex()) {
-                throw new IncorrectParameterException("Can't create the relation to yourself.");
+                throw new DataValidationException("Can't create the relation to yourself.");
             }
             connectionsMap
                     .computeIfAbsent(nodeConnection.getFromIndex(), from -> new HashSet<>())
@@ -232,7 +230,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
         for (Integer to : toList) {
             if (from == to) {
-                throw new IncorrectParameterException("Can't create circling relations in rule chain.");
+                throw new DataValidationException("Can't create circling relations in rule chain.");
             }
             validateCircles(from, connectionsMap.get(to), connectionsMap);
         }
