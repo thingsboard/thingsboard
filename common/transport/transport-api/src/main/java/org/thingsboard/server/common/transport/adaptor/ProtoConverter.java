@@ -120,7 +120,6 @@ public class ProtoConverter {
             ts = System.currentTimeMillis();
         }
         tsKvListBuilder.setTs(ts);
-        log.info(tsKvListProto.toString());
         List<TransportProtos.KeyValueProto> kvList = tsKvListProto.getKvList();
         if (!CollectionUtils.isEmpty(kvList)) {
             List<TransportProtos.KeyValueProto> keyValueListProtos = validateKeyValueProtos(kvList);
