@@ -13,11 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.common.data.device.data;
 
-public enum DeviceTransportType {
-    DEFAULT,
-    MQTT,
-    LWM2M,
-    SNMP
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.device.JsonBasedTransportProfile;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class SnmpDeviceTransportConfiguration extends JsonBasedTransportProfile implements DeviceTransportConfiguration {
+
+    @Override
+    public DeviceTransportType getType() {
+        return DeviceTransportType.SNMP;
+    }
 }

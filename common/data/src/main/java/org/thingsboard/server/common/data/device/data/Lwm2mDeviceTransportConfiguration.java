@@ -19,14 +19,16 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import org.thingsboard.server.common.data.DeviceProfileType;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.device.JsonBasedTransportProfile;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class Lwm2mDeviceTransportConfiguration implements DeviceTransportConfiguration {
+@EqualsAndHashCode(callSuper = true)
+public class Lwm2mDeviceTransportConfiguration extends JsonBasedTransportProfile implements DeviceTransportConfiguration {
 
     @JsonIgnore
     private Map<String, Object> properties = new HashMap<>();

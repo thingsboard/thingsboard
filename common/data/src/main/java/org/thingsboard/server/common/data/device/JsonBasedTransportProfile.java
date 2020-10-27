@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.device;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.device.JsonBasedTransportProfile;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class Lwm2mDeviceProfileTransportConfiguration extends JsonBasedTransportProfile implements DeviceProfileTransportConfiguration {
+import java.util.HashMap;
+import java.util.Map;
 
-    @Override
-    public DeviceTransportType getType() {
-        return DeviceTransportType.LWM2M;
+public abstract class JsonBasedTransportProfile {
+
+    @JsonIgnore
+    private final Map<String, Object> properties = new HashMap<>();
+
+    @JsonAnyGetter
+    public Map<String, Object> properties() {
+        return this.properties;
     }
 
+    @JsonAnySetter
+    public void put(String name, Object value) {
+        this.properties.put(name, value);
+    }
 }

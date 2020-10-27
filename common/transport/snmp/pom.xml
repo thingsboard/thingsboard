@@ -19,27 +19,23 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
+        <artifactId>thingsboard</artifactId>
         <groupId>org.thingsboard</groupId>
         <version>3.2.0-SNAPSHOT</version>
-        <artifactId>common</artifactId>
     </parent>
-    <groupId>org.thingsboard.common</groupId>
-    <artifactId>transport</artifactId>
-    <packaging>pom</packaging>
+    <groupId>org.thingsboard.transport</groupId>
+    <artifactId>snmp</artifactId>
+    <packaging>jar</packaging>
 
-    <name>Thingsboard Server Commons</name>
+    <name>Thingsboard SNMP Transport Service</name>
     <url>https://thingsboard.io</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <main.dir>${basedir}/../..</main.dir>
+        <main.dir>${basedir}/../../..</main.dir>
     </properties>
-    <modules>
-        <module>transport-api</module>
-        <module>mqtt</module>
-        <module>http</module>
-        <module>coap</module>
-        <module>snmp</module>
-    </modules>
+
+    <dependencies>
+    </dependencies>
 
 </project>

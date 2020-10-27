@@ -106,6 +106,7 @@
         <commons-collections.version>3.2.2</commons-collections.version>
         <java-websocket.version>1.5.0</java-websocket.version>
         <micrometer.version>1.5.2</micrometer.version>
+        <snmp4j.version>2.8.5</snmp4j.version>
     </properties>
 
     <modules>
@@ -1368,6 +1369,11 @@
                 <groupId>io.micrometer</groupId>
                 <artifactId>micrometer-registry-prometheus</artifactId>
                 <version>${micrometer.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.snmp4j</groupId>
+                <artifactId>snmp4j</artifactId>
+                <version>${snmp4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
