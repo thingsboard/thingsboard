@@ -21,6 +21,7 @@ import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-uti
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { RuleNodeType } from '@shared/models/rule-node.models';
+import { RuleChainType } from "@shared/models/rule-chain.models";
 
 @Injectable({
   providedIn: 'root'
@@ -53,7 +54,7 @@ export class ComponentDescriptorService {
     }
   }
 
-  public getComponentDescriptorsByTypes(componentTypes: Array<ComponentType>, ruleChainType: string, config?: RequestConfig): Observable<Array<ComponentDescriptor>> {
+  public getComponentDescriptorsByTypes(componentTypes: Array<ComponentType>, ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<ComponentDescriptor>> {
     let result: ComponentDescriptor[] = [];
     for (let i = componentTypes.length - 1; i >= 0; i--) {
       const componentType = componentTypes[i];

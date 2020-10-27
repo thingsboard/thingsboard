@@ -25,7 +25,7 @@ import {
   RuleChain,
   RuleChainConnectionInfo,
   RuleChainMetaData,
-  ruleChainNodeComponent,
+  ruleChainNodeComponent, RuleChainType,
   ruleNodeTypeComponentTypes,
   unknownNodeComponent
 } from '@shared/models/rule-chain.models';
@@ -116,7 +116,7 @@ export class RuleChainService {
     );
   }
 
-  public getRuleNodeComponents(ruleNodeConfigResourcesModulesMap: {[key: string]: any}, ruleChainType: string, config?: RequestConfig):
+  public getRuleNodeComponents(ruleNodeConfigResourcesModulesMap: {[key: string]: any}, ruleChainType: RuleChainType, config?: RequestConfig):
     Observable<Array<RuleNodeComponentDescriptor>> {
      if (this.ruleNodeComponents) {
        return of(this.ruleNodeComponents);
@@ -204,7 +204,7 @@ export class RuleChainService {
     }
   }
 
-  private loadRuleNodeComponents(ruleChainType: string, config?: RequestConfig): Observable<Array<RuleNodeComponentDescriptor>> {
+  private loadRuleNodeComponents(ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<RuleNodeComponentDescriptor>> {
     return this.componentDescriptorService.getComponentDescriptorsByTypes(ruleNodeTypeComponentTypes, ruleChainType, config).pipe(
       map((components) => {
         const ruleNodeComponents: RuleNodeComponentDescriptor[] = [];

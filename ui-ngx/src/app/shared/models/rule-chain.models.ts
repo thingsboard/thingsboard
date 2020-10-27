@@ -64,11 +64,6 @@ export interface RuleChainConnectionInfo {
   type: string;
 }
 
-export interface RuleChainType {
-  core: string;
-  edge: string;
-}
-
 export const ruleNodeTypeComponentTypes: ComponentType[] =
   [
     ComponentType.FILTER,
@@ -118,7 +113,9 @@ export const inputNodeComponent: RuleNodeComponentDescriptor = {
   clazz: 'tb.internal.Input'
 };
 
-export const ruleChainType: RuleChainType = {
-  core: 'CORE',
-  edge: 'EDGE'
+export declare type RuleChainType = 'CORE' | 'EDGE';
+
+export enum ruleChainType {
+  core = 'CORE',
+  edge = 'EDGE'
 }

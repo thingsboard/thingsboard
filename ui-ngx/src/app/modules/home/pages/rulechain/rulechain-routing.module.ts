@@ -31,7 +31,12 @@ import { Authority } from '@shared/models/authority.enum';
 import { RuleChainsTableConfigResolver } from '@modules/home/pages/rulechain/rulechains-table-config.resolver';
 import { Observable } from 'rxjs';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
-import { ResolvedRuleChainMetaData, RuleChain, ruleChainType} from '@shared/models/rule-chain.models';
+import {
+  ResolvedRuleChainMetaData,
+  RuleChain,
+  RuleChainType,
+  ruleChainType,
+} from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
 import { RuleNodeComponentDescriptor } from '@shared/models/rule-node.models';
@@ -71,7 +76,7 @@ export class RuleNodeComponentsResolver implements Resolve<Array<RuleNodeCompone
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<Array<RuleNodeComponentDescriptor>> {
-    const ruleChainType = route.data.type;
+    const ruleChainType: RuleChainType = route.data.type;
     return this.ruleChainService.getRuleNodeComponents(this.modulesMap, ruleChainType);
   }
 }
@@ -228,8 +233,7 @@ const routes: Routes = [
               } as BreadCrumbConfig<RuleChainPageComponent>,
               auth: [Authority.TENANT_ADMIN],
               title: 'rulechain.rulechain',
-              import: true,
-              type: ruleChainType.edge
+              import: true
             },
             resolve: {
               ruleNodeComponents: RuleNodeComponentsResolver
