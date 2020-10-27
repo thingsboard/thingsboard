@@ -25,7 +25,7 @@ import {
   Input,
   OnInit
 } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, FormArray, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -34,11 +34,12 @@ import {
   OBSERVE,
   OBSERVE_ATTR,
   TELEMETRY,
-  ObjectLwM2M, getDefaultProfileConfig
+  ObjectLwM2M, getDefaultProfileConfig, NAME_THINGSBOARD
 } from "./profile-config.models";
 import { DeviceProfileService } from "../../../../../../core/http/device-profile.service";
 import { deepClone } from "../../../../../../core/utils";
 import { WINDOW } from "../../../../../../core/services/window.service";
+import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-transport-configuration',
@@ -57,12 +58,12 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   observe: string;
   attribute: string;
   telemetry: string;
+  nameThingsboard: string;
   bootstrapServers: string;
   bootstrapServer: string;
   lwm2mServer: string;
   private configurationValue: {};
   private requiredValue: boolean;
-  private tabIndexPrevious = 0 as number;
 
   get required(): boolean {
     return this.requiredValue;
@@ -97,7 +98,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     this.lwm2mDeviceProfileTransportConfFormGroup = this.fb.group({
       objectIds: [{}, Validators.required],
       observeAttrTelemetry: [{'clientLwM2M': [] as ObjectLwM2M []}, Validators.required],
-      // observeAttrTelemetry: [this.fb.group({clientLwM2M: this.fb.array([] as ObjectLwM2M [])}), Validators.required],
       shortId: [null, Validators.required],
       lifetime: [null, Validators.required],
       defaultMinPeriod: [null, Validators.required],
@@ -119,6 +119,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     this.observe = OBSERVE;
     this.attribute = ATTR;
     this.telemetry = TELEMETRY;
+    this.nameThingsboard = NAME_THINGSBOARD;
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -132,7 +133,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   writeValue(value: any | null): void {
     value = (Object.keys(value).length === 0) ? getDefaultProfileConfig() : value;
-     this.lwm2mDeviceProfileTransportConfFormGroup.patchValue({
+    this.lwm2mDeviceProfileTransportConfFormGroup.patchValue({
         configurationJson: value
       },
       {emitEvent: false});
@@ -150,8 +151,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
           this.updateWriteValue(modelValue);
         }
       );
-    }
-    else {
+    } else {
       this.updateWriteValue(modelValue);
     }
   }
@@ -171,10 +171,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       },
       {emitEvent: false});
   }
-
-  // private initObserveAttrTelemetryFormGroup(listObject: ObjectLwM2M[]): {}{
-  //   return {clientLwM2M: deepClone(listObject)};
-  // }
 
   private updateModel() {
     let configuration: DeviceProfileTransportConfiguration = null;
@@ -275,9 +271,11 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       let observeArray = this.configurationValue[this.observeAttr][this.observe] as Array<string>;
       let attributeArray = this.configurationValue[this.observeAttr][this.attribute] as Array<string>;
       let telemetryArray = this.configurationValue[this.observeAttr][this.telemetry] as Array<string>;
+      let nameThingsJson = this.configurationValue[this.observeAttr][this.nameThingsboard] as JsonObject;
       if (observeArray) clientObserveAttr = this.updateObserveAttrTelemetryObjects(observeArray, clientObserveAttr, "observe");
       if (attributeArray) clientObserveAttr = this.updateObserveAttrTelemetryObjects(attributeArray, clientObserveAttr, "attribute");
       if (telemetryArray) clientObserveAttr = this.updateObserveAttrTelemetryObjects(telemetryArray, clientObserveAttr, "telemetry");
+      if (nameThingsJson) clientObserveAttr = this.updateNameThingsboardObjects(nameThingsJson, clientObserveAttr);
     }
     return clientObserveAttr;
   }
@@ -294,6 +292,27 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
               })
             }
           })
+        }
+      });
+    });
+    return clientObserveAttr;
+  }
+
+  updateNameThingsboardObjects(nameJson: JsonObject, clientObserveAttr: ObjectLwM2M[]): ObjectLwM2M [] {
+    let nameTningsJson = JSON.parse(JSON.stringify(nameJson));
+    Object.keys(nameTningsJson).forEach(function (key) {
+      let idKeys = Array.from(key.substring(1).split('/'), Number);
+      clientObserveAttr.forEach(obj => {
+        if (obj.id === idKeys[0]) {
+          obj.instances.forEach(inst => {
+            if (inst.id === idKeys[1]) {
+              inst.resources.forEach(res => {
+                if (res.id === idKeys[2]){
+                  res['nameThingsboard'] = nameTningsJson[key];
+                }
+              });
+            }
+          });
         }
       });
     });
@@ -400,16 +419,18 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   removeList(value: ObjectLwM2M): void {
-    let objectOld = deepClone(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value.clientLwM2M);
+    let objectsOld = deepClone(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value.clientLwM2M);
     const isIdIndex = (element) => element.id === value.id;
-    let index = objectOld.findIndex(isIdIndex);
+    let index = objectsOld.findIndex(isIdIndex);
     if (index >= 0) {
-      objectOld.splice(index, 1);
+      objectsOld.splice(index, 1);
     }
-    this.updateObserveAttrTelemetryObjectFormGroup(objectOld);
+    this.updateObserveAttrTelemetryObjectFormGroup(objectsOld);
     this.removeObserveAttrTelemetryFromJson(this.observe, value.id);
     this.removeObserveAttrTelemetryFromJson(this.telemetry, value.id);
     this.removeObserveAttrTelemetryFromJson(this.attribute, value.id);
+    this.removeObserveAttrTelemetryFromJson(this.attribute, value.id);
+    this.removeNameThingsboardFromJson(value.id);
     this.upDateJsonAllConfig();
   }
 
@@ -419,6 +440,62 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     while (index >= 0) {
       this.configurationValue[this.observeAttr][observeAttrTel].splice(index, 1);
       index = this.configurationValue[this.observeAttr][observeAttrTel].findIndex(isIdIndex);
+    }
+  }
+
+  removeNameThingsboardFromJson(id: number): void {
+    let nameTningsJson = this.configurationValue[this.observeAttr][this.nameThingsboard];
+    Object.keys(nameTningsJson).forEach(function (key) {
+      let idKey = Array.from(key.substring(1).split('/'), Number)[0];
+      if (idKey === id) {
+        delete nameTningsJson[key];
+      }
+    });
+  }
+
+  changeResourceNameThingsboardToJson($event: unknown): void {
+    let path = $event["path"];
+    let valueName = $event["value"];
+    if (path && this.isPathInJson(path)) {
+      this.configurationValue[this.observeAttr][this.nameThingsboard][path] = valueName;
+      this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").markAsPristine({
+        onlySelf: true
+      });
+      this.upDateJsonAllConfig();
+    }
+  }
+
+  isPathInJson(path: string): boolean {
+    let isPath = this.findPathInJson(path, this.attribute);
+    if (!isPath) {
+      isPath = this.findPathInJson(path, this.telemetry);
+    }
+    return (isPath) ? true : false;
+  }
+
+  findPathInJson(path: string, side: string): string {
+    if (this.configurationValue[this.observeAttr]) {
+      if (this.configurationValue[this.observeAttr][side]) {
+        return this.configurationValue[this.observeAttr][side].find(
+          pathJs => pathJs === path);
+      }
+    }
+  }
+
+  updateNameThingsboaard(path: string, value: string) {
+    let pathParameter = Array.from(path.substring(1).split('/'), Number);
+    let objectsOld = deepClone(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value.clientLwM2M) as ObjectLwM2M[];
+    let isIdIndex = (element) => element.id === pathParameter[0];
+    let objIndex = objectsOld.findIndex(isIdIndex);
+    if (objIndex >= 0) {
+      isIdIndex = (element) => element.id === pathParameter[1];
+      let instIndex = objectsOld[objIndex].instances.findIndex(isIdIndex);
+      if (instIndex >= 0) {
+        isIdIndex = (element) => element.id === pathParameter[2];
+        let resIndex = objectsOld[objIndex].instances[instIndex].resources.findIndex(isIdIndex);
+        objectsOld[objIndex].instances[instIndex].resources[resIndex][this.nameThingsboard] = value;
+        this.updateObserveAttrTelemetryObjectFormGroup(objectsOld);
+      }
     }
   }
 }

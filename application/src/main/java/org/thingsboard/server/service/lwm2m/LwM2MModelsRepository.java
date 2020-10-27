@@ -91,7 +91,7 @@ public class LwM2MModelsRepository {
             List<LwM2mResource> resources = new ArrayList<>();
             obj.resources.forEach((k, v) -> {
                 if (!v.operations.isExecutable()) {
-                    LwM2mResource resource = new LwM2mResource(k, v.name, false, false, false);
+                    LwM2mResource resource = new LwM2mResource(k, v.name, false, false, false, getCamelCase (v.name));
                     resources.add(resource);
                 }
             });
@@ -123,6 +123,10 @@ public class LwM2MModelsRepository {
         PageImpl page = new PageImpl(getLwm2mObjects(null, pageLink.getTextSearch()));
         PageData pageData = new PageData(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
         return pageData;
+    }
+
+    private String getCamelCase (String name) {
+        return name;
     }
 }
 

@@ -15,7 +15,7 @@
 ///
 
 
-import { Component, forwardRef, Inject, Input, OnInit, Output } from "@angular/core";
+import { Component, EventEmitter, forwardRef, Inject, Input, OnInit, Output } from "@angular/core";
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -50,6 +50,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   observe = 'observe' as string;
   attribute = 'attribute' as string;
   telemetry = 'telemetry' as string;
+  nameThingsboard = 'nameThingsboard' as string;
   indeterminateObserve: boolean[][];
   indeterminateAttr: boolean[][];
   indeterminateTelemetry: boolean[][];
@@ -71,6 +72,8 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
 
   @Input()
   disabled: boolean;
+
+  @Output() valueNameThingsboardChange = new EventEmitter<{}>();
 
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
@@ -198,7 +201,8 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         name: resourceLwM2M.name,
         [this.observe]: resourceLwM2M.observe,
         [this.attribute]: resourceLwM2M.attribute,
-        [this.telemetry]: resourceLwM2M.telemetry
+        [this.telemetry]: resourceLwM2M.telemetry,
+        [this.nameThingsboard]: resourceLwM2M.nameThingsboard
       })
     }))
   }
@@ -238,6 +242,10 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
 
   changeResourceCheckBox($event: unknown): void {
     this.changeInstanceCheckBox($event['objInd'], $event['instInd'], $event['nameFrom']);
+  }
+
+  changeResourceNameThingsboard($event: unknown): void {
+    this.valueNameThingsboardChange.emit($event);
   }
 
   updateValidators() {

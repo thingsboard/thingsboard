@@ -26,4 +26,5 @@ public class LwM2mResource {
     boolean observe;
     boolean attribute;
     boolean telemetry;
+    String nameThingsboard;
 }

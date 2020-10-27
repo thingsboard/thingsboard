@@ -26,6 +26,7 @@ export const OBSERVE_ATTR = 'observeAttr';
 export const OBSERVE = 'observe';
 export const ATTR = 'attribute';
 export const TELEMETRY = 'telemetry';
+export const NAME_THINGSBOARD = 'nameThingsboard';
 export const JSON_OBSERVE = 'jsonObserve';
 export const DEFAULT_ID_SERVER = 123;
 const DEFAULT_ID_BOOTSTRAP = 111;
@@ -50,6 +51,7 @@ export const KEY_IDENT_REGEXP_PSK = /^[0-9a-fA-F]{64,64}$/;
 export const KEY_PRIVATE_REGEXP = /^[0-9a-fA-F]{134,134}$/;
 export const KEY_PUBLIC_REGEXP_PSK = /^[0-9a-fA-F]{182,182}$/;
 export const KEY_PUBLIC_REGEXP_X509 = /^[0-9a-fA-F]{0,3000}$/;
+export const CAMEL_CASE_REGEXP = /[-_&@.,*+!?^${}()|[\]\\]/g;
 
 export interface DeviceCredentialsDialogLwm2mData {
   jsonAllConfig?: SecurityConfigModels;
@@ -142,7 +144,8 @@ export interface ProfileConfigModels {
   observeAttr: {
     observe: string [],
     attribute: string [],
-    telemetry: string []
+    telemetry: string [],
+    nameThingsboard: []
   }
 }
 
@@ -251,7 +254,8 @@ export function getDefaultProfileConfig(hostname?: any): ProfileConfigModels {
     observeAttr: {
       observe: [],
       attribute: [],
-      telemetry: []
+      telemetry: [],
+      nameThingsboard: []
     }
   };
 }
@@ -262,7 +266,8 @@ export interface ResourceLwM2M {
   name: string,
   observe: boolean,
   attribute: boolean,
-  telemetry: boolean
+  telemetry: boolean,
+  nameThingsboard: string
 }
 
 export interface Instance {
@@ -289,49 +294,56 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             name: "Short Server ID",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "shortServerID"
           },
           {
             id: 1,
             name: "Lifetime",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "lifetime"
           },
           {
             id: 2,
             name: "Default Minimum Period",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "defaultMinimumPeriod"
           },
           {
             id: 3,
             name: "Default Maximum Period",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "defaultMaximumPeriod"
           },
           {
             id: 5,
             name: "Disable Timeout",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "disableTimeout"
           },
           {
             id: 6,
             name: "Notification Storing When Disabled or Offline",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "notificationStoringWhenDisabledOrOffline"
           },
           {
             id: 7,
             name: "Binding",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "binding"
           }
         ]
       }]
@@ -384,140 +396,160 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             name: "Manufacturer",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "manufacturer"
           },
           {
             id: 1,
             name: "Model Number",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "modelNumber"
           },
           {
             id: 2,
             name: "Serial Number",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "serialNumber"
           },
           {
             id: 3,
             name: "Firmware Version",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "firmwareVersion"
           },
           {
             id: 6,
             name: "Available Power Sources",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "availablePowerSources"
           },
           {
             id: 7,
             name: "Power Source Voltage",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "powerSourceVoltage"
           },
           {
             id: 8,
             name: "Power Source Current",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "powerSourceCurrent"
           },
           {
             id: 9,
             name: "Battery Level",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "batteryLevel"
           },
           {
             id: 10,
             name: "Memory Free",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "memoryFree"
           },
           {
             id: 11,
             name: "Error Code",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "errorCode"
           },
           {
             id: 13,
             name: "Current Time",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "currentTime"
           },
           {
             id: 14,
             name: "UTC Offset",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "utcOffset"
           },
           {
             id: 15,
             name: "Timezone",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "timeZone"
           },
           {
             id: 16,
             name: "Supported Binding and Modes",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "supportedBindingAndModes"
           },
           {
             id: 17,
             name: "Device Type",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "deviceType"
           },
           {
             id: 18,
             name: "Hardware Version",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "hardwareVersion"
           },
           {
             id: 19,
             name: "Software Version",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "softwareVersion"
           },
           {
             id: 20,
             name: "Battery Status",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "batteryStatus"
           },
           {
             id: 21,
             name: "Memory Total",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "memoryTotal"
           },
           {
             id: 22,
             name: "ExtDevInfo",
             observe: false,
             attribute: false,
-            telemetry: false
+            telemetry: false,
+            nameThingsboard: "extDevInfo"
           },
         ]
       }]

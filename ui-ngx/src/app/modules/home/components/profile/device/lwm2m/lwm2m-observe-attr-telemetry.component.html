@@ -35,10 +35,10 @@
               <mat-panel-title>
                 <div class="tb-panel-title-height" fxFlex="100">
                   <div fxLayout="row" fxFill>
-                    <div fxFlex="53">
+                    <div fxFlex="44">
                       Instance [<b>{{instances.get('id').value}}</b>]
                     </div>
-                    <div class="checkbox-padding" fxFlex="15">
+                    <div class="checkbox-padding" fxFlex="10">
                       <mat-checkbox [formControlName]="observe" color="primary"
                                     (click)="$event.stopPropagation()"
                                     (change)="changeInstanceResourcesCheckBox($event, i, y, observe)"
@@ -49,7 +49,7 @@
                                     [disabled]="getDisabledState()">
                       </mat-checkbox>
                     </div>
-                    <div class="checkbox-padding" fxFlex="15">
+                    <div class="checkbox-padding" fxFlex="10">
                       <mat-checkbox [formControlName]="attribute" color="warn"
                                     (click)="$event.stopPropagation()"
                                     (change)="changeInstanceResourcesCheckBox($event, i, y, attribute)"
@@ -60,7 +60,7 @@
                                     [disabled]="getDisabledState()">
                       </mat-checkbox>
                     </div>
-                    <div class="checkbox-padding" fxFlex="15">
+                    <div class="checkbox-padding" fxFlex="10">
                       <mat-checkbox [formControlName]="telemetry" color="primary"
                                     (click)="$event.stopPropagation()"
                                     (change)="changeInstanceResourcesCheckBox($event, i, y, telemetry)"
@@ -71,6 +71,8 @@
                                     [disabled]="getDisabledState()">
                       </mat-checkbox>
                     </div>
+                    <div class="checkbox-padding" fxFlex="25">
+                    </div>
                   </div>
                 </div>
               </mat-panel-title>
@@ -79,9 +81,11 @@
               <tb-profile-lwm2m-observe-attr-telemetry-resource
                 [i]="i"
                 [y]="y"
+                [objId]="objectLwM2M.get('id').value"
                 [resourceFormGroup]="instances"
                 [disabled]="getDisabledState()"
-                (valueCheckBoxChange)="changeResourceCheckBox($event)">
+                (valueCheckBoxChange)="changeResourceCheckBox($event)"
+                (valueNameThingsboardChange)="changeResourceNameThingsboard($event)">
               </tb-profile-lwm2m-observe-attr-telemetry-resource>
             </ng-template>
 

@@ -22,9 +22,10 @@ import {
   FormGroup,
   NG_VALUE_ACCESSOR, Validators
 } from "@angular/forms";
-import { ResourceLwM2M } from '@home/components/profile/device/lwm2m/profile-config.models';
+import { CAMEL_CASE_REGEXP, ResourceLwM2M } from '@home/components/profile/device/lwm2m/profile-config.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { deepClone } from '@core/utils';
 
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry-resource',
@@ -43,12 +44,15 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
 
   @Input() i: number;
   @Input() y: number;
+  @Input() objId: number;
   @Input() resourceFormGroup : FormGroup;
   @Input() disabled : boolean;
   @Output() valueCheckBoxChange = new EventEmitter<{}>()
+  @Output() valueNameThingsboardChange = new EventEmitter<{}>()
 
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
+
   }
 
   ngOnInit(): void {
@@ -62,18 +66,18 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
   }
 
   writeValue(value: ResourceLwM2M[]): void {
-    debugger
+
   }
 
   resourceLwm2mFormArray(instance: AbstractControl): FormArray {
     return instance.get('resources') as FormArray;
   }
 
-  changeInstanceResourcesCheckBox(value: boolean, objInd: number, insInd: number, restInd: number, nameFrom?: string): void {
+  changeInstanceResourcesCheckBox(value: boolean, restInd: number, nameFrom?: string): void {
     this.valueCheckBoxChange.emit({
       value: value,
-      objInd: objInd,
-      instInd: insInd,
+      objInd: this.i,
+      instInd: this.y,
       resInd: restInd,
       nameFrom: nameFrom
     });
@@ -85,5 +89,27 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
     } else {
       this.resourceFormGroup.enable({emitEvent: false});
     }
+  }
+
+  updateValueNameThingsboard (event: any, z: number): void {
+    let newVal = this.keysToCamel(deepClone(event.target.value));
+    let insId = this.resourceFormGroup.value.id;
+    let path = "/"+ this.objId + "/" + insId + "/" + z;
+    this.valueNameThingsboardChange.emit({
+      path: path,
+      value: newVal
+    });
+    event.target.value =  newVal;
+  }
+
+  keysToCamel(o: any): string {
+    let val = o.split(" ");
+    let playStore = [];
+    val.forEach(function (item, k){
+      item = item.replace(CAMEL_CASE_REGEXP, '');
+      item = (k===0)? item.charAt(0).toLowerCase() + item.substr(1) : item.charAt(0).toUpperCase() + item.substr(1)
+      playStore.push(item);
+    });
+    return playStore.join('');
   }
 }

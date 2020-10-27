@@ -115,7 +115,7 @@ import { AlarmRuleConditionDialogComponent } from '@home/components/profile/alar
 import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/device/lwm2m/lwm2m-device-profile-transport-configuration.component';
 import { Lwm2mObjectListComponent } from './profile/device/lwm2m/lwm2m-object-list.component';
 import { Lwm2mObserveAttrTelemetryComponent } from './profile/device/lwm2m/lwm2m-observe-attr-telemetry.component';
-import { Lwm2mObserveAttrTelemetryResourceComponent } from './profile/device/lwm2m/lwm2m-observe-attr-telemetry-resoutce.component';
+import { Lwm2mObserveAttrTelemetryResourceComponent } from './profile/device/lwm2m/lwm2m-observe-attr-telemetry-resource.component';
 import { Lwm2mDeviceConfigServerComponent } from './profile/device/lwm2m/lwm2m-device-config-server.component';
 
 @NgModule({

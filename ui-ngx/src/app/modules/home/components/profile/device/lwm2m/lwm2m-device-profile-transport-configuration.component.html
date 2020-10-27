@@ -30,7 +30,8 @@
         <div class="mat-padding">
           <tb-profile-lwm2m-observe-attr-telemetry
             [required]="required"
-            formControlName="observeAttrTelemetry">
+            formControlName="observeAttrTelemetry"
+            (valueNameThingsboardChange)="changeResourceNameThingsboardToJson($event)">
           </tb-profile-lwm2m-observe-attr-telemetry>
         </div>
       </mat-tab>
