@@ -27,13 +27,12 @@ import io.netty.handler.codec.mqtt.MqttPublishVariableHeader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
-import org.thingsboard.server.gen.transport.TransportApiProtos.ActionMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
 import java.util.Optional;
@@ -113,11 +112,30 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     @Override
     public TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(MqttDeviceAwareSessionContext ctx, MqttPublishMessage mqttMsg) throws AdaptorException {
         byte[] bytes = toBytes(mqttMsg.payload());
-        String topicName = mqttMsg.variableHeader().topicName();
         try {
             return ProtoConverter.convertToProvisionRequestMsg(bytes);
         } catch (InvalidProtocolBufferException ex) {
             throw new AdaptorException(ex);
+        }
+    }
+
+    @Override
+    public TransportPayloadType convertToPayloadType(MqttDeviceAwareSessionContext ctx, MqttPublishMessage mqttMsg) throws AdaptorException {
+        byte[] bytes = toBytes(mqttMsg.payload());
+        try {
+            TransportProtos.PayloadTypeDeviceRequestMsg payloadTypeMsg = TransportProtos.PayloadTypeDeviceRequestMsg.parseFrom(bytes);
+            if (payloadTypeMsg != null && payloadTypeMsg.getType() != null) {
+                return TransportPayloadType.valueOf(payloadTypeMsg.getType().name());
+            } else {
+                log.warn("Payload type not found!");
+                throw new AdaptorException("Payload type not found!");
+            }
+        } catch (InvalidProtocolBufferException ex) {
+            log.warn("Payload type not found!");
+            return TransportPayloadType.PROTOBUF;
+        } catch (IllegalArgumentException ex) {
+            log.warn("Unknown payload type!");
+            throw new AdaptorException("Unknown payload type!");
         }
     }
 
@@ -166,7 +184,11 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
             responseMsgBuilder.setDeviceName(deviceName);
             responseMsgBuilder.setResponseMsg(responseMsg);
             byte[] payloadBytes = responseMsgBuilder.build().toByteArray();
-            return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, payloadBytes));
+            if (ctx.isMinimizedGatewayTopics()) {
+                return Optional.of(createMqttPublishMsg(ctx, MqttTopics.MINIMIZED_GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, payloadBytes));
+            } else {
+                return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, payloadBytes));
+            }
         }
     }
 
@@ -176,7 +198,11 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         builder.setDeviceName(deviceName);
         builder.setNotificationMsg(notificationMsg);
         byte[] payloadBytes = builder.build().toByteArray();
-        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_ATTRIBUTES_TOPIC, payloadBytes));
+        if (ctx.isMinimizedGatewayTopics()) {
+            return Optional.of(createMqttPublishMsg(ctx, MqttTopics.MINIMIZED_GATEWAY_ATTRIBUTES_TOPIC, payloadBytes));
+        } else {
+            return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_ATTRIBUTES_TOPIC, payloadBytes));
+        }
     }
 
     @Override
@@ -185,18 +211,26 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         builder.setDeviceName(deviceName);
         builder.setRpcRequestMsg(rpcRequest);
         byte[] payloadBytes = builder.build().toByteArray();
-        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_RPC_TOPIC, payloadBytes));
+        if (ctx.isMinimizedGatewayTopics()) {
+            return Optional.of(createMqttPublishMsg(ctx, MqttTopics.MINIMIZED_GATEWAY_RPC_TOPIC, payloadBytes));
+        } else {
+            return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_RPC_TOPIC, payloadBytes));
+        }
     }
 
     @Override
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.EntityDeleteMsg entityDeleteMsg) {
         TransportApiProtos.GatewayActionMsg.Builder builder = TransportApiProtos.GatewayActionMsg.newBuilder();
         builder.setMsg(TransportApiProtos.ActionMsg.newBuilder()
-                              .setDeviceName(deviceName)
-                              .setAction("DELETED")
-                        .build());
+                .setDeviceName(deviceName)
+                .setAction("DELETED")
+                .build());
         byte[] payloadBytes = builder.build().toByteArray();
-        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_DEVICE_ACTION_TOPIC, payloadBytes));
+        if (ctx.isMinimizedGatewayTopics()) {
+            return Optional.of(createMqttPublishMsg(ctx, MqttTopics.MINIMIZED_GATEWAY_DEVICE_ACTION_TOPIC, payloadBytes));
+        } else {
+            return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_DEVICE_ACTION_TOPIC, payloadBytes));
+        }
     }
 
     public static byte[] toBytes(ByteBuf inbound) {

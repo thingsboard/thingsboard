@@ -279,6 +279,15 @@ enum ProvisionResponseStatus {
   NOT_FOUND = 2;
   FAILURE = 3;
 }
+
+enum PayloadTypeDevice {
+  JSON = 0;
+  PROTOBUF = 1;
+}
+
+message PayloadTypeDeviceRequestMsg {
+  PayloadTypeDevice type = 1;
+}
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
 message SubscriptionInfoProto {
   int64 lastActivityTime = 1;

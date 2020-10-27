@@ -16,7 +16,10 @@
 package org.thingsboard.server.transport.mqtt;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
@@ -62,6 +65,7 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
+import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
 import org.thingsboard.server.transport.mqtt.util.SslUtil;
 
@@ -224,7 +228,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         int msgId = mqttMsg.variableHeader().packetId();
         log.trace("[{}][{}] Processing publish msg [{}][{}]!", sessionId, deviceSessionCtx.getDeviceId(), topicName, msgId);
 
-        if (topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC)) {
+        if (topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC) || topicName.startsWith(MqttTopics.MINIMIZED_BASE_GATEWAY_API_TOPIC)) {
             if (gatewaySessionHandler != null) {
                 handleGatewayPublishMsg(topicName, msgId, mqttMsg);
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
@@ -236,25 +240,38 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void handleGatewayPublishMsg(String topicName, int msgId, MqttPublishMessage mqttMsg) {
         try {
+            if (topicName.startsWith(MqttTopics.MINIMIZED_BASE_GATEWAY_API_TOPIC)) {
+                if (TransportPayloadType.JSON.equals(deviceSessionCtx.getPayloadType())) {
+                    deviceSessionCtx.setPayloadType(TransportPayloadType.PROTOBUF);
+                }
+                deviceSessionCtx.setMinimizedGatewayTopics(true);
+            }
             switch (topicName) {
+                case MqttTopics.MINIMIZED_GATEWAY_TELEMETRY_TOPIC:
                 case MqttTopics.GATEWAY_TELEMETRY_TOPIC:
                     gatewaySessionHandler.onDeviceTelemetry(mqttMsg);
                     break;
+                case MqttTopics.MINIMIZED_GATEWAY_CLAIM_TOPIC:
                 case MqttTopics.GATEWAY_CLAIM_TOPIC:
                     gatewaySessionHandler.onDeviceClaim(mqttMsg);
                     break;
+                case MqttTopics.MINIMIZED_GATEWAY_ATTRIBUTES_TOPIC:
                 case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
                     gatewaySessionHandler.onDeviceAttributes(mqttMsg);
                     break;
+                case MqttTopics.MINIMIZED_GATEWAY_ATTRIBUTES_REQUEST_TOPIC:
                 case MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC:
                     gatewaySessionHandler.onDeviceAttributesRequest(mqttMsg);
                     break;
+                case MqttTopics.MINIMIZED_GATEWAY_RPC_TOPIC:
                 case MqttTopics.GATEWAY_RPC_TOPIC:
                     gatewaySessionHandler.onDeviceRpcResponse(mqttMsg);
                     break;
+                case MqttTopics.MINIMIZED_GATEWAY_CONNECT_TOPIC:
                 case MqttTopics.GATEWAY_CONNECT_TOPIC:
                     gatewaySessionHandler.onDeviceConnect(mqttMsg);
                     break;
+                case MqttTopics.MINIMIZED_GATEWAY_DISCONNECT_TOPIC:
                 case MqttTopics.GATEWAY_DISCONNECT_TOPIC:
                     gatewaySessionHandler.onDeviceDisconnect(mqttMsg);
                     break;
@@ -285,6 +302,13 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             } else if (topicName.equals(MqttTopics.DEVICE_CLAIM_TOPIC)) {
                 TransportProtos.ClaimDeviceMsg claimDeviceMsg = payloadAdaptor.convertToClaimDevice(deviceSessionCtx, mqttMsg);
                 transportService.process(deviceSessionCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(ctx, msgId, claimDeviceMsg));
+            } else if (topicName.equals(MqttTopics.PAYLOAD_TYPE_TOPIC)) {
+                TransportPayloadType transportPayloadType = payloadAdaptor.convertToPayloadType(deviceSessionCtx, mqttMsg);
+                if (!deviceSessionCtx.getPayloadType().name().equals(transportPayloadType.name())) {
+                    deviceSessionCtx.setPayloadType(transportPayloadType);
+                    deviceSessionCtx.setProvisionPayloadType(transportPayloadType);
+                    log.info("[{}] Payload type was changed to [{}]", sessionId, transportPayloadType.name());
+                }
             } else {
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
             }
@@ -381,6 +405,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     case MqttTopics.GATEWAY_RPC_TOPIC:
                     case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
                     case MqttTopics.GATEWAY_DEVICE_ACTION_TOPIC:
+                    case MqttTopics.MINIMIZED_GATEWAY_ATTRIBUTES_TOPIC:
+                    case MqttTopics.MINIMIZED_GATEWAY_RPC_TOPIC:
+                    case MqttTopics.MINIMIZED_GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
+                    case MqttTopics.MINIMIZED_GATEWAY_DEVICE_ACTION_TOPIC:
                         registerSubQoS(topic, grantedQoSList, reqQoS);
                         break;
                     default:
