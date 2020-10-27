@@ -78,7 +78,7 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbTransportQueueFactory;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
-import org.thingsboard.server.queue.usagestats.TbUsageStatsClient;
+import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import javax.annotation.PostConstruct;
@@ -123,7 +123,7 @@ public class DefaultTransportService implements TransportService {
     private final StatsFactory statsFactory;
     private final TransportDeviceProfileCache deviceProfileCache;
     private final TransportTenantProfileCache tenantProfileCache;
-    private final TbUsageStatsClient apiUsageStatsClient;
+    private final TbApiUsageClient apiUsageClient;
     private final TransportRateLimitService rateLimitService;
     private final DataDecodingEncodingService dataDecodingEncodingService;
     private final SchedulerComponent scheduler;
@@ -152,7 +152,7 @@ public class DefaultTransportService implements TransportService {
                                    StatsFactory statsFactory,
                                    TransportDeviceProfileCache deviceProfileCache,
                                    TransportTenantProfileCache tenantProfileCache,
-                                   TbUsageStatsClient apiUsageStatsClient, TransportRateLimitService rateLimitService,
+                                   TbApiUsageClient apiUsageClient, TransportRateLimitService rateLimitService,
                                    DataDecodingEncodingService dataDecodingEncodingService, SchedulerComponent scheduler) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.queueProvider = queueProvider;
@@ -161,7 +161,7 @@ public class DefaultTransportService implements TransportService {
         this.statsFactory = statsFactory;
         this.deviceProfileCache = deviceProfileCache;
         this.tenantProfileCache = tenantProfileCache;
-        this.apiUsageStatsClient = apiUsageStatsClient;
+        this.apiUsageClient = apiUsageClient;
         this.rateLimitService = rateLimitService;
         this.dataDecodingEncodingService = dataDecodingEncodingService;
         this.scheduler = scheduler;
@@ -647,6 +647,7 @@ public class DefaultTransportService implements TransportService {
                     if (stateOpt.isPresent()) {
                         ApiUsageState apiUsageState = stateOpt.get();
                         rateLimitService.update(apiUsageState.getTenantId(), apiUsageState.isTransportEnabled());
+                        //TODO: if transport is disabled, we should close all sessions and not to check credentials.
                     }
                 }
             } else if (toSessionMsg.hasEntityDeleteMsg()) {
@@ -821,8 +822,8 @@ public class DefaultTransportService implements TransportService {
         @Override
         public void onSuccess(T msg) {
             try {
-                apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.TRANSPORT_MSG_COUNT, 1);
-                apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.TRANSPORT_DP_COUNT, dataPoints);
+                apiUsageClient.report(tenantId, ApiUsageRecordKey.TRANSPORT_MSG_COUNT, 1);
+                apiUsageClient.report(tenantId, ApiUsageRecordKey.TRANSPORT_DP_COUNT, dataPoints);
             } finally {
                 callback.onSuccess(msg);
             }

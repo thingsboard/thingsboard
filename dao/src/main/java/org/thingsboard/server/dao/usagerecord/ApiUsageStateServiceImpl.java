@@ -17,15 +17,26 @@ package org.thingsboard.server.dao.usagerecord;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantProfileDao;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -35,11 +46,15 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
     private final ApiUsageStateDao apiUsageStateDao;
+    private final TenantProfileDao tenantProfileDao;
     private final TenantDao tenantDao;
+    private final TimeseriesService tsService;
 
-    public ApiUsageStateServiceImpl(TenantDao tenantDao, ApiUsageStateDao apiUsageStateDao) {
+    public ApiUsageStateServiceImpl(TenantDao tenantDao, ApiUsageStateDao apiUsageStateDao, TenantProfileDao tenantProfileDao, TimeseriesService tsService) {
         this.tenantDao = tenantDao;
         this.apiUsageStateDao = apiUsageStateDao;
+        this.tenantProfileDao = tenantProfileDao;
+        this.tsService = tsService;
     }
 
     @Override
@@ -57,7 +72,18 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         apiUsageState.setTenantId(tenantId);
         apiUsageState.setEntityId(tenantId);
         apiUsageStateValidator.validate(apiUsageState, ApiUsageState::getTenantId);
-        return apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
+
+        ApiUsageState saved = apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
+
+        Tenant tenant = tenantDao.findById(tenantId, tenantId.getId());
+        TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
+        TenantProfileConfiguration configuration = tenantProfile.getProfileData().getConfiguration();
+        List<TsKvEntry> profileThresholds = new ArrayList<>();
+        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+            profileThresholds.add(new BasicTsKvEntry(saved.getCreatedTime(), new LongDataEntry(key.getApiLimitKey(), configuration.getProfileThreshold(key))));
+        }
+        tsService.save(tenantId, saved.getId(), profileThresholds, 0L);
+        return saved;
     }
 
     @Override
@@ -80,7 +106,8 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         log.trace("Executing findApiUsageStateById, tenantId [{}], apiUsageStateId [{}]", tenantId, id);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(id, "Incorrect apiUsageStateId " + id);
-        return apiUsageStateDao.findById(tenantId, id.getId());    }
+        return apiUsageStateDao.findById(tenantId, id.getId());
+    }
 
     private DataValidator<ApiUsageState> apiUsageStateValidator =
             new DataValidator<ApiUsageState>() {

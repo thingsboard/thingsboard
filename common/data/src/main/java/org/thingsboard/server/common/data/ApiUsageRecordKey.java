@@ -15,12 +15,24 @@
  */
 package org.thingsboard.server.common.data;
 
+import lombok.Getter;
+
 public enum ApiUsageRecordKey {
 
-    TRANSPORT_MSG_COUNT,
-    TRANSPORT_DP_COUNT,
-    STORAGE_DP_COUNT,
-    RE_EXEC_COUNT,
-    JS_EXEC_COUNT
+    TRANSPORT_MSG_COUNT("transportMsgCount", "transportMsgLimit"),
+    TRANSPORT_DP_COUNT("transportDataPointsCount", "transportDataPointsLimit"),
+    STORAGE_DP_COUNT("storageDataPointsCount", "storageDataPointsLimit"),
+    RE_EXEC_COUNT("ruleEngineExecutionCount", "ruleEngineExecutionLimit"),
+    JS_EXEC_COUNT("jsExecutionCount", "jsExecutionLimit");
+
+    @Getter
+    private final String apiCountKey;
+    @Getter
+    private final String apiLimitKey;
+
+    ApiUsageRecordKey(String apiCountKey, String apiLimitKey) {
+        this.apiCountKey = apiCountKey;
+        this.apiLimitKey = apiLimitKey;
+    }
 
 }

@@ -21,7 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.queue.usagestats.TbUsageStatsClient;
+import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import java.util.Map;
 import java.util.UUID;
@@ -36,13 +37,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public abstract class AbstractJsInvokeService implements JsInvokeService {
 
-    private final TbUsageStatsClient apiUsageStatsClient;
+    private final TbApiUsageStateService apiUsageStateService;
+    private final TbApiUsageClient apiUsageClient;
     protected ScheduledExecutorService timeoutExecutorService;
     protected Map<UUID, String> scriptIdToNameMap = new ConcurrentHashMap<>();
-    protected Map<UUID, BlackListInfo> blackListedFunctions = new ConcurrentHashMap<>();
+    protected Map<UUID, DisableListInfo> disabledFunctions = new ConcurrentHashMap<>();
 
-    protected AbstractJsInvokeService(TbUsageStatsClient apiUsageStatsClient) {
-        this.apiUsageStatsClient = apiUsageStatsClient;
+    protected AbstractJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient) {
+        this.apiUsageStateService = apiUsageStateService;
+        this.apiUsageClient = apiUsageClient;
     }
 
     public void init(long maxRequestsTimeout) {
@@ -59,24 +62,32 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
 
     @Override
     public ListenableFuture<UUID> eval(TenantId tenantId, JsScriptType scriptType, String scriptBody, String... argNames) {
-        UUID scriptId = UUID.randomUUID();
-        String functionName = "invokeInternal_" + scriptId.toString().replace('-', '_');
-        String jsScript = generateJsScript(scriptType, functionName, scriptBody, argNames);
-        return doEval(scriptId, functionName, jsScript);
+        if (apiUsageStateService.getApiUsageState(tenantId).isJsExecEnabled()) {
+            UUID scriptId = UUID.randomUUID();
+            String functionName = "invokeInternal_" + scriptId.toString().replace('-', '_');
+            String jsScript = generateJsScript(scriptType, functionName, scriptBody, argNames);
+            return doEval(scriptId, functionName, jsScript);
+        } else {
+            return Futures.immediateFailedFuture(new RuntimeException("JS Execution is disabled due to API limits!"));
+        }
     }
 
     @Override
     public ListenableFuture<Object> invokeFunction(TenantId tenantId, UUID scriptId, Object... args) {
-        String functionName = scriptIdToNameMap.get(scriptId);
-        if (functionName == null) {
-            return Futures.immediateFailedFuture(new RuntimeException("No compiled script found for scriptId: [" + scriptId + "]!"));
-        }
-        if (!isBlackListed(scriptId)) {
-            apiUsageStatsClient.report(tenantId, ApiUsageRecordKey.JS_EXEC_COUNT, 1);
-            return doInvokeFunction(scriptId, functionName, args);
+        if (apiUsageStateService.getApiUsageState(tenantId).isJsExecEnabled()) {
+            String functionName = scriptIdToNameMap.get(scriptId);
+            if (functionName == null) {
+                return Futures.immediateFailedFuture(new RuntimeException("No compiled script found for scriptId: [" + scriptId + "]!"));
+            }
+            if (!isDisabled(scriptId)) {
+                apiUsageClient.report(tenantId, ApiUsageRecordKey.JS_EXEC_COUNT, 1);
+                return doInvokeFunction(scriptId, functionName, args);
+            } else {
+                return Futures.immediateFailedFuture(
+                        new RuntimeException("Script invocation is blocked due to maximum error count " + getMaxErrors() + "!"));
+            }
         } else {
-            return Futures.immediateFailedFuture(
-                    new RuntimeException("Script is blacklisted due to maximum error count " + getMaxErrors() + "!"));
+            return Futures.immediateFailedFuture(new RuntimeException("JS Execution is disabled due to API limits!"));
         }
     }
 
@@ -86,7 +97,7 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
         if (functionName != null) {
             try {
                 scriptIdToNameMap.remove(scriptId);
-                blackListedFunctions.remove(scriptId);
+                disabledFunctions.remove(scriptId);
                 doRelease(scriptId, functionName);
             } catch (Exception e) {
                 return Futures.immediateFailedFuture(e);
@@ -106,7 +117,7 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
     protected abstract long getMaxBlacklistDuration();
 
     protected void onScriptExecutionError(UUID scriptId) {
-        blackListedFunctions.computeIfAbsent(scriptId, key -> new BlackListInfo()).incrementAndGet();
+        disabledFunctions.computeIfAbsent(scriptId, key -> new DisableListInfo()).incrementAndGet();
     }
 
     private String generateJsScript(JsScriptType scriptType, String functionName, String scriptBody, String... argNames) {
@@ -116,11 +127,11 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
         throw new RuntimeException("No script factory implemented for scriptType: " + scriptType);
     }
 
-    private boolean isBlackListed(UUID scriptId) {
-        BlackListInfo errorCount = blackListedFunctions.get(scriptId);
+    private boolean isDisabled(UUID scriptId) {
+        DisableListInfo errorCount = disabledFunctions.get(scriptId);
         if (errorCount != null) {
             if (errorCount.getExpirationTime() <= System.currentTimeMillis()) {
-                blackListedFunctions.remove(scriptId);
+                disabledFunctions.remove(scriptId);
                 return false;
             } else {
                 return errorCount.get() >= getMaxErrors();
@@ -130,11 +141,11 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
         }
     }
 
-    private class BlackListInfo {
+    private class DisableListInfo {
         private final AtomicInteger counter;
         private long expirationTime;
 
-        private BlackListInfo() {
+        private DisableListInfo() {
             this.counter = new AtomicInteger(0);
         }
 

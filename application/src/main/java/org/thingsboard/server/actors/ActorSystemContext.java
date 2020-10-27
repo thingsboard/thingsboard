@@ -32,7 +32,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.DataConstants;
@@ -65,6 +64,8 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -105,6 +106,14 @@ public class ActorSystemContext {
     public ConcurrentMap<TenantId, DebugTbRateLimits> getDebugPerTenantLimits() {
         return debugPerTenantLimits;
     }
+
+    @Autowired
+    @Getter
+    private TbApiUsageStateService apiUsageStateService;
+
+    @Autowired
+    @Getter
+    private TbApiUsageClient apiUsageClient;
 
     @Autowired
     @Getter
