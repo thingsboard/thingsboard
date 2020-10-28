@@ -14,10 +14,9 @@ jobs:
 
     steps:
       - name: Send Dispatch Request
-        run: |
-          curl \
-            --request POST https://api.github.com/repos/${{ env.REMOTE_REPOSITORY }}/dispatches \
-            --header 'Content-Type: application/json' \
-            --header 'Accept: application/vnd.github.v3+json' \
-            --header 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' \
-            --data '{ "event_type": "dispatch", "client_payload": { "repository": "${{ github.repository }}" }}'
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: $REMOTE_REPOSITORY
+          event-type: dispatch
+          client-payload: '{ "ref": "${{ github.ref }}", "sha": "${{ github.sha }}", "repository": "$GITHUB_REPOSITORY" }'
