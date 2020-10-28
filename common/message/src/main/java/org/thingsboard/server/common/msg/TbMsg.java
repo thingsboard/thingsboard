@@ -95,6 +95,11 @@ public final class TbMsg implements Serializable {
                 origMsg.data, origMsg.getRuleChainId(), null, origMsg.getCallback());
     }
 
+    public static TbMsg transformMsg(TbMsg origMsg, RuleChainId ruleChainId, String queueName) {
+        return new TbMsg(queueName, origMsg.id, origMsg.ts, origMsg.type, origMsg.originator, origMsg.metaData, origMsg.dataType,
+                origMsg.data, ruleChainId, null, origMsg.getCallback());
+    }
+
     public static TbMsg newMsg(TbMsg tbMsg, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
         return new TbMsg(tbMsg.getQueueName(), UUID.randomUUID(), tbMsg.getTs(), tbMsg.getType(), tbMsg.getOriginator(), tbMsg.getMetaData().copy(),
                 tbMsg.getDataType(), tbMsg.getData(), ruleChainId, ruleNodeId, TbMsgCallback.EMPTY);
