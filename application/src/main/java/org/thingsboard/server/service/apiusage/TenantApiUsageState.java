@@ -21,11 +21,10 @@ import org.springframework.data.util.Pair;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 
 import java.util.HashMap;
@@ -101,28 +100,11 @@ public class TenantApiUsageState {
     }
 
     public long getProfileThreshold(ApiUsageRecordKey key) {
-        DefaultTenantProfileConfiguration config = (DefaultTenantProfileConfiguration) tenantProfileData.getConfiguration();
-        switch (key) {
-            case TRANSPORT_MSG_COUNT:
-                return config.getMaxTransportMessages();
-            case TRANSPORT_DP_COUNT:
-                return config.getMaxTransportDataPoints();
-            case JS_EXEC_COUNT:
-                return config.getMaxJSExecutions();
-            case RE_EXEC_COUNT:
-                return config.getMaxREExecutions();
-            case STORAGE_DP_COUNT:
-                return config.getMaxDPStorageDays();
-        }
-        return 0L;
+        return tenantProfileData.getConfiguration().getProfileThreshold(key);
     }
 
     public TenantId getTenantId() {
         return apiUsageState.getTenantId();
-    }
-
-    public EntityId getEntityId() {
-        return apiUsageState.getEntityId();
     }
 
     public boolean isTransportEnabled() {

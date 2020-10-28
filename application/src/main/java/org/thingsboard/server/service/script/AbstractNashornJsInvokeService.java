@@ -24,10 +24,10 @@ import delight.nashornsandbox.NashornSandboxes;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.thingsboard.server.queue.usagestats.TbUsageStatsClient;
+import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -65,8 +65,8 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     @Value("${js.local.stats.enabled:false}")
     private boolean statsEnabled;
 
-    public AbstractNashornJsInvokeService(TbUsageStatsClient apiUsageStatsClient, JsExecutorService jsExecutor) {
-        super(apiUsageStatsClient);
+    public AbstractNashornJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, JsExecutorService jsExecutor) {
+        super(apiUsageStateService, apiUsageClient);
         this.jsExecutor = jsExecutor;
     }
 

@@ -129,8 +129,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         tenantProfileService.findOrCreateDefaultTenantProfile(TenantId.SYS_TENANT_ID);
 
         TenantProfileData tenantProfileData = new TenantProfileData();
-        DefaultTenantProfileConfiguration configuration = new DefaultTenantProfileConfiguration();
-        tenantProfileData.setConfiguration(configuration);
+        tenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
 
         TenantProfile isolatedTbCoreProfile = new TenantProfile();
         isolatedTbCoreProfile.setDefault(false);

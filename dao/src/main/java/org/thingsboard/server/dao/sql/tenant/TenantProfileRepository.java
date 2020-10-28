@@ -51,4 +51,5 @@ public interface TenantProfileRepository extends PagingAndSortingRepository<Tena
             "FROM TenantProfileEntity t " +
             "WHERE t.isDefault = true")
     EntityInfo findDefaultTenantProfileInfo();
+
 }

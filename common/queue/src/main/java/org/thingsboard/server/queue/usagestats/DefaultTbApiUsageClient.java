@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @Slf4j
-public class DefaultTbUsageStatsClient implements TbUsageStatsClient {
+public class DefaultTbApiUsageClient implements TbApiUsageClient {
 
     @Value("${usage.stats.report.enabled:true}")
     private boolean enabled;
@@ -53,7 +53,7 @@ public class DefaultTbUsageStatsClient implements TbUsageStatsClient {
     private final TbQueueProducerProvider producerProvider;
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> msgProducer;
 
-    public DefaultTbUsageStatsClient(PartitionService partitionService, SchedulerComponent scheduler, TbQueueProducerProvider producerProvider) {
+    public DefaultTbApiUsageClient(PartitionService partitionService, SchedulerComponent scheduler, TbQueueProducerProvider producerProvider) {
         this.partitionService = partitionService;
         this.scheduler = scheduler;
         this.producerProvider = producerProvider;
@@ -109,4 +109,8 @@ public class DefaultTbUsageStatsClient implements TbUsageStatsClient {
         }
     }
 
+    @Override
+    public void report(TenantId tenantId, ApiUsageRecordKey key) {
+        report(tenantId, key, 1L);
+    }
 }

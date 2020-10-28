@@ -30,7 +30,8 @@ import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.usagestats.TbUsageStatsClient;
+import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -69,8 +70,8 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     private final AtomicInteger queueFailedMsgs = new AtomicInteger(0);
     private final AtomicInteger queueTimeoutMsgs = new AtomicInteger(0);
 
-    public RemoteJsInvokeService(TbUsageStatsClient apiUsageStatsClient) {
-        super(apiUsageStatsClient);
+    public RemoteJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient) {
+        super(apiUsageStateService, apiUsageClient);
     }
 
     @Scheduled(fixedDelayString = "${js.remote.stats.print_interval_ms}")
