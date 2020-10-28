@@ -43,6 +43,7 @@ import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
+import {ServiceType} from "@shared/models/queue.models";
 
 @Component({
   selector: 'tb-device-wizard',
@@ -84,6 +85,8 @@ export class DeviceWizardDialogComponent extends
 
   labelPosition = 'end';
 
+  serviceType = ServiceType.TB_RULE_ENGINE;
+
   private subscriptions: Subscription[] = [];
 
   constructor(protected store: Store<AppState>,
@@ -105,6 +108,7 @@ export class DeviceWizardDialogComponent extends
         deviceProfileId: [null, Validators.required],
         newDeviceProfileTitle: [{value: null, disabled: true}],
         defaultRuleChainId: [{value: null, disabled: true}],
+        defaultQueueName: [''],
         description: ['']
       }
     );
@@ -117,6 +121,7 @@ export class DeviceWizardDialogComponent extends
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').setValidators(null);
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').disable();
           this.deviceWizardFormGroup.get('defaultRuleChainId').disable();
+          this.deviceWizardFormGroup.get('defaultQueueName').disable();
           this.deviceWizardFormGroup.updateValueAndValidity();
           this.createProfile = false;
           this.createTransportConfiguration = false;
@@ -126,6 +131,8 @@ export class DeviceWizardDialogComponent extends
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').setValidators([Validators.required]);
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').enable();
           this.deviceWizardFormGroup.get('defaultRuleChainId').enable();
+          this.deviceWizardFormGroup.get('defaultQueueName').enable();
+
           this.deviceWizardFormGroup.updateValueAndValidity();
           this.createProfile = true;
           this.createTransportConfiguration = this.deviceWizardFormGroup.get('transportType').value &&

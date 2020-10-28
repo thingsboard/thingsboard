@@ -159,6 +159,10 @@ public class DefaultTbClusterService implements TbClusterService {
             if (targetRuleChainId != null && !targetRuleChainId.equals(tbMsg.getRuleChainId())) {
                 tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId);
             }
+            String targetQueueName = deviceProfile.getDefaultQueueName();
+            if (targetQueueName != null && !targetQueueName.equals(tbMsg.getQueueName())) {
+                tbMsg = TbMsg.transformMsg(tbMsg, targetQueueName);
+            }
         }
         return tbMsg;
     }
