@@ -19,4 +19,5 @@ jobs:
             --request POST https://api.github.com/repos/${{ env.REMOTE_REPOSITORY }}/dispatches \
             --header 'Content-Type: application/json' \
             --header 'Accept: application/vnd.github.v3+json' \
-            --data '{"event_type": "dispatch", "client_payload": { "repository": "${{ env.GITHUB_REPOSITORY }}" }}'
+            --header 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' \
+            --data '{ "event_type": "dispatch", "client_payload": { "repository": "${{ github.repository }}" }}'
