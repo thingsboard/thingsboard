@@ -221,39 +221,37 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
         }
 
         scope.subscriptionId = null;
-        scope.queueStartTs;
+        scope.queueStartTs = 0;
 
         scope.loadEdgeInfo = function() {
-            attributeService.getEntityAttributesValues(scope.entityType, scope.entityId, types.attributesScope.server.value,
-                types.edgeAttributeKeys.queueStartTs, {})
+            attributeService.getEntityAttributesValues(
+                scope.entityType,
+                scope.entityId,
+                types.attributesScope.server.value,
+                types.edgeAttributeKeys.queueStartTs,
+                {})
                 .then(function success(attributes) {
-                    scope.onUpdate(attributes);
+                    scope.onEdgeAttributesUpdate(attributes);
                 });
 
             scope.checkSubscription();
-
-            attributeService.getEntityAttributes(scope.entityType, scope.entityId, types.attributesScope.server.value, {order: '', limit: 1, page: 1, search: ''},
-                function (attributes) {
-                    if (attributes && attributes.data) {
-                        scope.onUpdate(attributes.data);
-                    }
-                });
         }
 
-        scope.onUpdate = function(attributes) {
-            let edge = attributes.reduce(function (map, attribute) {
+        scope.onEdgeAttributesUpdate = function(attributes) {
+            let edgeAttributes = attributes.reduce(function (map, attribute) {
                 map[attribute.key] = attribute;
                 return map;
             }, {});
-            if (edge.queueStartTs) {
-                scope.queueStartTs = edge.queueStartTs.lastUpdateTs;
+            if (edgeAttributes.queueStartTs) {
+                scope.queueStartTs = edgeAttributes.queueStartTs.lastUpdateTs;
             }
         }
 
         scope.checkSubscription = function() {
             var newSubscriptionId = null;
             if (scope.entityId && scope.entityType && types.attributesScope.server.value) {
-                newSubscriptionId = attributeService.subscribeForEntityAttributes(scope.entityType, scope.entityId, types.attributesScope.server.value);
+                newSubscriptionId =
+                    attributeService.subscribeForEntityAttributes(scope.entityType, scope.entityId, types.attributesScope.server.value);
             }
             if (scope.subscriptionId && scope.subscriptionId != newSubscriptionId) {
                 attributeService.unsubscribeForEntityAttributes(scope.subscriptionId);
