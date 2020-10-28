@@ -19,5 +19,5 @@ jobs:
             --request POST https://api.github.com/repos/$REMOTE_REPOSITORY/dispatches \
             --header 'Content-Type: application/json' \
             --header 'Accept: application/vnd.github.everest-preview+json' \
-            --header 'Authorization: Bearer ${{ secrets.ACCESS_TOKEN }}' \
+            --header 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' \
             --data '{"event_type": "dispatch", "client_payload": { "repository": "$GITHUB_REPOSITORY" }}'
