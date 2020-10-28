@@ -36,4 +36,4 @@ jobs:
             --header 'Content-Type: application/json' \
             --header 'Accept: application/vnd.github.v3+json' \
             --header 'Authorization: token ${{ secrets.REMOTE_TRIGGER_PAT }}' \
-            --data '{ "event_type": "dispatch", "client_payload": { "repository": "$GITHUB_REPOSITORY" }}'
+            --data '{ "event_type": "remote-dispatch", "client_payload": { "repository": "$GITHUB_REPOSITORY" }}'
