@@ -1447,7 +1447,7 @@
         "unassign-rulechain-from-edge-text": "Après la confirmation, l'actif sera non attribué et ne sera pas accessible a la bordure.",
         "unassign-rulechains-from-edge-action-title": "Retirer {count, plural, 1 {1 chaîne de règles} other {# chaînes de règles}} de la bordure",
         "unassign-rulechains-from-edge-text": "Après la confirmation, tous les chaînes de règles sélectionnés ne seront pas attribués et ne seront pas accessibles a la bordure.",
-        "assign-rulechain-to-edge": "Attribuer les chaînes de règles a la bordure",
+        "assign-rulechain-to-edge-title": "Attribuer les chaînes de règles a la bordure",
         "assign-rulechain-to-edge-text": "Veuillez sélectionner la bordure pour attribuer le ou les chaînes de règles",
         "set-default-root-edge": "Définir la racine par défaut de la chaîne de règles",
         "set-default-root-edge-rulechain-title": "AVoulez-vous vraiment créer de chaînes de règles par défaut '{{ruleChainName}}'?",

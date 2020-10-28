@@ -1573,7 +1573,7 @@
         "unassign-rulechain-from-edge-text": "Después de la confirmación, la cadena de reglas quedará sin asignar y el borde no podrá acceder a ella",
         "unassign-rulechains-from-edge-action-title": "Anular asignación {count, plural, 1 {1 cadena de reglas} other {# cadenas de reglas}} des bordes",
         "unassign-rulechains-from-edge-text": "Después de la confirmación, todas las cadenas de reglas seleccionadas quedarán sin asignar y el borde no podrá acceder a ellas",
-        "assign-rulechain-to-edge": "Asignar cadena (s) de reglas a borde",
+        "assign-rulechain-to-edge-title": "Asignar cadena (s) de reglas a borde",
         "assign-rulechain-to-edge-text": "Seleccione las cadenas de reglas para asignar al borde",
         "set-default-root-edge": "Hacer que la cadena de reglas sea la raíz predeterminada",
         "set-default-root-edge-rulechain-title": "¿Está seguro de que desea hacer que la cadena de reglas '{{ruleChainName}}' sea la raíz de borde predeterminada?",

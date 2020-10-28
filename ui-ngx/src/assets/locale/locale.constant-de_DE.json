@@ -1402,7 +1402,7 @@
     "unassign-rulechain-from-edge-text": "Nach der Bestätigung wird die Zuordnung aller ausgewählten Regelkette aufgehoben und sie sind für den Rand nicht mehr zugänglich.",
     "unassign-rulechains-from-edge-action-title": "Zuordnung { count, plural, 1 {1 Regelkette} other {# Regelketten} } vom Rand aufheben",
     "unassign-rulechains-from-edge-text": "Nach der Bestätigung wird die Zuordnung aller ausgewählten Regelketten aufgehoben und sie sind für den Rand nicht mehr zugänglich.",
-    "assign-rulechain-to-edge": "Regelkette(n) dem Rand zuordnen",
+    "assign-rulechain-to-edge-title": "Regelkette(n) dem Rand zuordnen",
     "assign-rulechain-to-edge-text": "Bitte wählen Sie die Regelketten aus, die Sie dem Rand zuordnen möchten",
     "set-default-root-edge": "Machen Sie Randregelkette zur Wurzel Standard",
     "set-default-root-edge-rulechain-title": "Sind Sie sicher, dass Sie die Randregelkette '{{ruleChainName}}' zur Wurzel machen Standard?",
