@@ -1,22 +1,9 @@
-[
-  {
-    "deviceName": "Raspberry Pi Demo Device",
-    "snmpConfig": {
-      "address": "127.0.0.1",
-      "port": 161,
-      "poolPeriodMs": 10000,
-      "community": "public",
-      "protocolVersion": "v2"
-    }
-  },
-  {
-    "deviceName": "Thermostat T1",
-    "snmpConfig": {
-      "address": "192.168.1.2",
-      "port": 161,
-      "poolPeriodMs": 10000,
-      "community": "U5J=$HWj6f@7",
-      "protocolVersion": "v2"
-    }
+{
+  "deviceName": "Thermostat T1",
+  "snmpConfig": {
+    "address": "192.168.1.2",
+    "port": 161,
+    "community": "U5J=$HWj6f@7",
+    "protocolVersion": "v2"
   }
-]
+}
