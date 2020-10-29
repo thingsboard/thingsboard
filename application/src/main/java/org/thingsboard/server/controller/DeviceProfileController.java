@@ -214,8 +214,8 @@ public class DeviceProfileController extends BaseController {
 
     private void checkProtoSchemas(MqttProtoDeviceProfileTransportConfiguration mqttTransportConfiguration) throws ThingsboardException {
         try {
-            mqttTransportConfiguration.validateTransportProtoSchema(mqttTransportConfiguration.getDeviceAttributesProtoSchema(), "attributes proto schema");
-            mqttTransportConfiguration.validateTransportProtoSchema(mqttTransportConfiguration.getDeviceTelemetryProtoSchema(), "telemetry proto schema");
+            mqttTransportConfiguration.validateTransportProtoSchema(mqttTransportConfiguration.getDeviceAttributesProtoSchema(), MqttProtoDeviceProfileTransportConfiguration.ATTRIBUTES_PROTO_SCHEMA);
+            mqttTransportConfiguration.validateTransportProtoSchema(mqttTransportConfiguration.getDeviceTelemetryProtoSchema(), MqttProtoDeviceProfileTransportConfiguration.TELEMETRY_PROTO_SCHEMA);
         } catch (Exception exception) {
             throw new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.GENERAL);
         }

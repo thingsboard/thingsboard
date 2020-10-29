@@ -15,12 +15,17 @@
  */
 package org.thingsboard.server.mqtt.telemetry.attributes;
 
+import com.github.os72.protobuf.dynamic.DynamicSchema;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
+import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.MqttProtoDeviceProfileTransportConfiguration;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
@@ -36,27 +41,35 @@ public abstract class AbstractMqttAttributesProtoIntegrationTest extends Abstrac
 
     private static final String POST_DATA_ATTRIBUTES_TOPIC = "proto/attributes";
 
-    @Before
-    public void beforeTest() throws Exception {
-        processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, POST_DATA_ATTRIBUTES_TOPIC);
-    }
-
     @After
     public void afterTest() throws Exception {
         processAfterTest();
     }
 
     @Test
-    @Ignore
     public void testPushMqttAttributes() throws Exception {
+        super.processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, POST_DATA_ATTRIBUTES_TOPIC);
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        TransportProtos.PostAttributeMsg msg = getPostAttributeMsg(expectedKeys);
-        processAttributesTest(POST_DATA_ATTRIBUTES_TOPIC, expectedKeys, msg.toByteArray());
+        assertTrue(transportConfiguration instanceof MqttProtoDeviceProfileTransportConfiguration);
+        MqttProtoDeviceProfileTransportConfiguration configuration = (MqttProtoDeviceProfileTransportConfiguration) transportConfiguration;
+        ProtoFileElement transportProtoSchema = configuration.getTransportProtoSchema(DEVICE_ATTRIBUTES_PROTO_SCHEMA);
+        DynamicSchema telemetrySchema = configuration.getDynamicSchema(transportProtoSchema, "attributesSchema");
+        DynamicMessage.Builder postAttributesBuilder = telemetrySchema.newMessageBuilder("PostAttributes");
+        Descriptors.Descriptor postAttributesMsgDescriptor = postAttributesBuilder.getDescriptorForType();
+        assertNotNull(postAttributesMsgDescriptor);
+        DynamicMessage postAttributesMsg = postAttributesBuilder
+                .setField(postAttributesMsgDescriptor.findFieldByName("key1"), "value1")
+                .setField(postAttributesMsgDescriptor.findFieldByName("key2"), true)
+                .setField(postAttributesMsgDescriptor.findFieldByName("key3"), 3.0)
+                .setField(postAttributesMsgDescriptor.findFieldByName("key4"), 4)
+                .setField(postAttributesMsgDescriptor.findFieldByName("key5"), "{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}")
+                .build();
+        processAttributesTest(POST_DATA_ATTRIBUTES_TOPIC, expectedKeys, postAttributesMsg.toByteArray());
     }
 
     @Test
-    @Ignore
     public void testPushMqttAttributesGateway() throws Exception {
+        super.processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, null);
         TransportApiProtos.GatewayAttributesMsg.Builder gatewayAttributesMsgProtoBuilder = TransportApiProtos.GatewayAttributesMsg.newBuilder();
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         String deviceName1 = "Device A";

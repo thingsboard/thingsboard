@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
@@ -26,13 +27,8 @@ import org.thingsboard.server.common.data.TransportPayloadType;
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Data
-@JsonDeserialize(using = JsonDeserializer.None.class)
+@JsonDeserialize(as = MqttJsonDeviceProfileTransportConfiguration.class)
 public class MqttJsonDeviceProfileTransportConfiguration extends MqttDeviceProfileTransportConfiguration{
-
-    @Override
-    public DeviceTransportType getType() {
-        return super.getType();
-    }
 
     @Override
     public TransportPayloadType getTransportPayloadType() {

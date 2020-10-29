@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
          @JsonSubTypes.Type(value = Lwm2mDeviceProfileTransportConfiguration.class, name = "LWM2M")})
 public interface DeviceProfileTransportConfiguration {
 
-    @JsonIgnore
+//    @JsonIgnore
     DeviceTransportType getType();
 
 }

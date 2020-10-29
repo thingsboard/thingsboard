@@ -62,39 +62,28 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
 
     private static final AtomicInteger atomicInteger = new AtomicInteger(2);
 
-    protected static final String DEVICE_TELEMETRY_PROTO_SCHEMA = "syntax = \"proto2\";\n" +
+    protected static final String DEVICE_TELEMETRY_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
+            "\n" +
             "package test;\n" +
-            "\n" +
-            "option java_package = \"org.thingsboard.server.gen.test\";\n" +
-            "option java_outer_classname = \"TestProtos\";\n" +
-            "\n" +
-            "message nestedPostTelemetry {\n" +
-            "  required bool bool_v = 1;\n" +
-            "  required int64 long_v = 2;\n" +
-            "  required double double_v = 3;\n" +
-            "  required string string_v = 4;\n" +
-            "  required string json_v = 5;\n" +
-            "}\n" +
-            "\n" +
+            "        \n" +
             "message PostTelemetry {\n" +
-            "  repeated nestedPostTelemetry postTelemetry = 1;\n" +
+            "  string key1 = 1;\n" +
+            "  bool key2 = 2;\n" +
+            "  double key3 = 3;\n" +
+            "  int32 key4 = 4;\n" +
+            "  string key5 = 5;\n" +
             "}";
-    protected static final String DEVICE_ATTRIBUTES_PROTO_SCHEMA = "syntax = \"proto2\";\n" +
+
+    protected static final String DEVICE_ATTRIBUTES_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
+            "\n" +
             "package test;\n" +
-            "\n" +
-            "option java_package = \"org.thingsboard.server.gen.test\";\n" +
-            "option java_outer_classname = \"TestProtos\";\n" +
-            "\n" +
-            "message nestedPostAttributes {\n" +
-            "  required bool bool_v = 1;\n" +
-            "  required int64 long_v = 2;\n" +
-            "  required double double_v = 3;\n" +
-            "  required string string_v = 4;\n" +
-            "  required string json_v = 5;\n" +
-            "}\n" +
             "\n" +
             "message PostAttributes {\n" +
-            "  repeated nestedPostAttributes postAttributes = 1;\n" +
+            "  string key1 = 1;\n" +
+            "  bool key2 = 2;\n" +
+            "  double key3 = 3;\n" +
+            "  int32 key4 = 4;\n" +
+            "  string key5 = 5;\n" +
             "}";
 
     protected Tenant savedTenant;
@@ -106,8 +95,10 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
     protected Device savedGateway;
     protected String gatewayAccessToken;
 
+    protected MqttDeviceProfileTransportConfiguration transportConfiguration;
+
     protected void processBeforeTest (String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic) throws Exception {
-        this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, DeviceProfileProvisionType.DISABLED, null, null);
+        this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, null, null, DeviceProfileProvisionType.DISABLED, null, null);
     }
 
     protected void processBeforeTest(String deviceName,
@@ -115,6 +106,8 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
                                      TransportPayloadType payloadType,
                                      String telemetryTopic,
                                      String attributesTopic,
+                                     String telemetryProtoSchema,
+                                     String attributesProtoSchema,
                                      DeviceProfileProvisionType provisionType,
                                      String provisionKey, String provisionSecret
                                      ) throws Exception {
@@ -146,7 +139,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
         gateway.setAdditionalInfo(additionalInfo);
 
         if (payloadType != null) {
-            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType, telemetryTopic, attributesTopic, provisionType, provisionKey, provisionSecret);
+            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType, telemetryTopic, attributesTopic, telemetryProtoSchema, attributesProtoSchema, provisionType, provisionKey, provisionSecret);
             DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", mqttDeviceProfile, DeviceProfile.class);
             device.setType(savedDeviceProfile.getName());
             device.setDeviceProfileId(savedDeviceProfile.getId());
@@ -238,9 +231,9 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
 
     protected DeviceProfile createMqttDeviceProfile(TransportPayloadType transportPayloadType,
                                                     String telemetryTopic, String attributesTopic,
+                                                    String telemetryProtoSchema, String attributesProtoSchema,
                                                     DeviceProfileProvisionType provisionType,
-                                                    String provisionKey, String provisionSecret
-    ) {
+                                                    String provisionKey, String provisionSecret) {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName(transportPayloadType.name());
         deviceProfile.setType(DeviceProfileType.DEFAULT);
@@ -250,13 +243,18 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
         deviceProfile.setDescription(transportPayloadType.name() + " Test");
         DeviceProfileData deviceProfileData = new DeviceProfileData();
         DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
-        MqttDeviceProfileTransportConfiguration transportConfiguration;
         if (TransportPayloadType.JSON.equals(transportPayloadType)) {
             transportConfiguration = new MqttJsonDeviceProfileTransportConfiguration();
         } else {
             MqttProtoDeviceProfileTransportConfiguration protoTransportConfiguration = new MqttProtoDeviceProfileTransportConfiguration();
-            protoTransportConfiguration.setDeviceAttributesProtoSchema(DEVICE_TELEMETRY_PROTO_SCHEMA);
-            protoTransportConfiguration.setDeviceTelemetryProtoSchema(DEVICE_ATTRIBUTES_PROTO_SCHEMA);
+            if (StringUtils.isEmpty(telemetryProtoSchema)) {
+                telemetryProtoSchema = DEVICE_TELEMETRY_PROTO_SCHEMA;
+            }
+            if (StringUtils.isEmpty(attributesProtoSchema)) {
+                attributesProtoSchema = DEVICE_ATTRIBUTES_PROTO_SCHEMA;
+            }
+            protoTransportConfiguration.setDeviceTelemetryProtoSchema(telemetryProtoSchema);
+            protoTransportConfiguration.setDeviceAttributesProtoSchema(attributesProtoSchema);
             transportConfiguration = protoTransportConfiguration;
         }
         if (!StringUtils.isEmpty(telemetryTopic)) {

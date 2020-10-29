@@ -15,18 +15,24 @@
  */
 package org.thingsboard.server.mqtt.attributes.request;
 
+import com.github.os72.protobuf.dynamic.DynamicSchema;
+import com.google.gson.Gson;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.MqttProtoDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -39,40 +45,60 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
 public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends AbstractMqttAttributesRequestIntegrationTest {
 
-    @Before
-    public void beforeTest() throws Exception {
-        processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto", TransportPayloadType.PROTOBUF, null, null);
-    }
+    public static final String ATTRIBUTES_SCHEMA_STR = "syntax =\"proto3\";\n" +
+            "\n" +
+            "package test;\n" +
+            "\n" +
+            "message PostAttributes {\n" +
+            "  string attribute1 = 1;\n" +
+            "  bool attribute2 = 2;\n" +
+            "  double attribute3 = 3;\n" +
+            "  int32 attribute4 = 4;\n" +
+            "  string attribute5 = 5;\n" +
+            "}";
 
     @After
     public void afterTest() throws Exception {
         processAfterTest();
     }
 
-    @Ignore
     @Test
     public void testRequestAttributesValuesFromTheServer() throws Exception {
+        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto", TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, DeviceProfileProvisionType.DISABLED, null, null);
         processTestRequestAttributesValuesFromTheServer();
     }
 
 
     @Test
     public void testRequestAttributesValuesFromTheServerGateway() throws Exception {
+        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto", TransportPayloadType.PROTOBUF, null, null);
         processTestGatewayRequestAttributesValuesFromTheServer();
     }
 
     protected void postAttributesAndSubscribeToTopic(Device savedDevice, MqttAsyncClient client) throws Exception {
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
-        String keys = "attribute1,attribute2,attribute3,attribute4,attribute5";
-        List<String> expectedKeys = Arrays.asList(keys.split(","));
-        TransportProtos.PostAttributeMsg postAttributeMsg = getPostAttributeMsg(expectedKeys);
-        byte[] payload = postAttributeMsg.toByteArray();
+        assertTrue(transportConfiguration instanceof MqttProtoDeviceProfileTransportConfiguration);
+        MqttProtoDeviceProfileTransportConfiguration configuration = (MqttProtoDeviceProfileTransportConfiguration) transportConfiguration;
+        ProtoFileElement transportProtoSchema = configuration.getTransportProtoSchema(ATTRIBUTES_SCHEMA_STR);
+        DynamicSchema telemetrySchema = configuration.getDynamicSchema(transportProtoSchema, "attributesSchema");
+        DynamicMessage.Builder postAttributesBuilder = telemetrySchema.newMessageBuilder("PostAttributes");
+        Descriptors.Descriptor postAttributesMsgDescriptor = postAttributesBuilder.getDescriptorForType();
+        assertNotNull(postAttributesMsgDescriptor);
+        DynamicMessage postAttributesMsg = postAttributesBuilder
+                .setField(postAttributesMsgDescriptor.findFieldByName("attribute1"), "value1")
+                .setField(postAttributesMsgDescriptor.findFieldByName("attribute2"), true)
+                .setField(postAttributesMsgDescriptor.findFieldByName("attribute3"), 42.0)
+                .setField(postAttributesMsgDescriptor.findFieldByName("attribute4"), 73)
+                .setField(postAttributesMsgDescriptor.findFieldByName("attribute5"), "{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}")
+                .build();
+        byte[] payload = postAttributesMsg.toByteArray();
         client.publish(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, new MqttMessage(payload));
         client.subscribe(MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttQoS.AT_MOST_ONCE.value());
     }

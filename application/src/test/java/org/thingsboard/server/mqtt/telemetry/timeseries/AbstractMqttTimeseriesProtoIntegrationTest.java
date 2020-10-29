@@ -15,14 +15,19 @@
  */
 package org.thingsboard.server.mqtt.telemetry.timeseries;
 
+import com.github.os72.protobuf.dynamic.DynamicSchema;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
+import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
+
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.MqttProtoDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -30,18 +35,13 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @Slf4j
 public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends AbstractMqttTimeseriesIntegrationTest {
 
     private static final String POST_DATA_TELEMETRY_TOPIC = "proto/telemetry";
-
-    @Before
-    public void beforeTest() throws Exception {
-        processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null);
-    }
 
     @After
     public void afterTest() throws Exception {
@@ -49,24 +49,77 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
     }
 
     @Test
-    @Ignore
     public void testPushMqttTelemetry() throws Exception {
+        super.processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null);
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        TransportProtos.TsKvListProto tsKvListProto = getTsKvListProto(expectedKeys, 0);
-        processTelemetryTest(POST_DATA_TELEMETRY_TOPIC, expectedKeys, tsKvListProto.toByteArray(), false);
+        assertTrue(transportConfiguration instanceof MqttProtoDeviceProfileTransportConfiguration);
+        MqttProtoDeviceProfileTransportConfiguration configuration = (MqttProtoDeviceProfileTransportConfiguration) transportConfiguration;
+        ProtoFileElement transportProtoSchema = configuration.getTransportProtoSchema(DEVICE_TELEMETRY_PROTO_SCHEMA);
+        DynamicSchema telemetrySchema = configuration.getDynamicSchema(transportProtoSchema, "telemetrySchema");
+        DynamicMessage.Builder postTelemetryBuilder = telemetrySchema.newMessageBuilder("PostTelemetry");
+        Descriptors.Descriptor postTelemetryMsgDescriptor = postTelemetryBuilder.getDescriptorForType();
+        assertNotNull(postTelemetryMsgDescriptor);
+        DynamicMessage postTelemetryMsg = postTelemetryBuilder
+                .setField(postTelemetryMsgDescriptor.findFieldByName("key1"), "value1")
+                .setField(postTelemetryMsgDescriptor.findFieldByName("key2"), true)
+                .setField(postTelemetryMsgDescriptor.findFieldByName("key3"), 3.0)
+                .setField(postTelemetryMsgDescriptor.findFieldByName("key4"), 4)
+                .setField(postTelemetryMsgDescriptor.findFieldByName("key5"), "{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}")
+                .build();
+        processTelemetryTest(POST_DATA_TELEMETRY_TOPIC, expectedKeys, postTelemetryMsg.toByteArray(), false);
     }
 
     @Test
-    @Ignore
     public void testPushMqttTelemetryWithTs() throws Exception {
+        String schemaStr = "syntax =\"proto3\";\n" +
+                "\n" +
+                "package test;\n" +
+                "\n" +
+                "message Values {\n" +
+                "  string key1 = 1;\n" +
+                "  bool key2 = 2;\n" +
+                "  double key3 = 3;\n" +
+                "  int32 key4 = 4;\n" +
+                "  string key5 = 5;\n" +
+                "}\n" +
+                "        \n" +
+                "message PostTelemetry {\n" +
+                "  int64 ts = 1;\n" +
+                "  Values values = 2;\n" +
+                "}";
+        super.processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null, schemaStr, null, DeviceProfileProvisionType.DISABLED, null, null);
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        TransportProtos.TsKvListProto tsKvListProto = getTsKvListProto(expectedKeys, 10000);
-        processTelemetryTest(POST_DATA_TELEMETRY_TOPIC, expectedKeys, tsKvListProto.toByteArray(), true);
+        assertTrue(transportConfiguration instanceof MqttProtoDeviceProfileTransportConfiguration);
+        MqttProtoDeviceProfileTransportConfiguration configuration = (MqttProtoDeviceProfileTransportConfiguration) transportConfiguration;
+        ProtoFileElement transportProtoSchema = configuration.getTransportProtoSchema(schemaStr);
+        DynamicSchema telemetrySchema = configuration.getDynamicSchema(transportProtoSchema, "telemetrySchema");
+
+        DynamicMessage.Builder valuesBuilder = telemetrySchema.newMessageBuilder("Values");
+        Descriptors.Descriptor valuesDescriptor = valuesBuilder.getDescriptorForType();
+        assertNotNull(valuesDescriptor);
+
+        DynamicMessage valuesMsg = valuesBuilder
+                .setField(valuesDescriptor.findFieldByName("key1"), "value1")
+                .setField(valuesDescriptor.findFieldByName("key2"), true)
+                .setField(valuesDescriptor.findFieldByName("key3"), 3.0)
+                .setField(valuesDescriptor.findFieldByName("key4"), 4)
+                .setField(valuesDescriptor.findFieldByName("key5"), "{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}")
+                .build();
+
+        DynamicMessage.Builder postTelemetryBuilder = telemetrySchema.newMessageBuilder("PostTelemetry");
+        Descriptors.Descriptor postTelemetryMsgDescriptor = postTelemetryBuilder.getDescriptorForType();
+        assertNotNull(postTelemetryMsgDescriptor);
+        DynamicMessage postTelemetryMsg = postTelemetryBuilder
+                .setField(postTelemetryMsgDescriptor.findFieldByName("ts"), 10000L)
+                .setField(postTelemetryMsgDescriptor.findFieldByName("values"), valuesMsg)
+                .build();
+
+        processTelemetryTest(POST_DATA_TELEMETRY_TOPIC, expectedKeys, postTelemetryMsg.toByteArray(), true);
     }
 
     @Test
-    @Ignore
     public void testPushMqttTelemetryGateway() throws Exception {
+        super.processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, null, null, null, null, DeviceProfileProvisionType.DISABLED, null, null);
         TransportApiProtos.GatewayTelemetryMsg.Builder gatewayTelemetryMsgProtoBuilder = TransportApiProtos.GatewayTelemetryMsg.newBuilder();
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         String deviceName1 = "Device A";
@@ -79,8 +132,8 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
     }
 
     @Test
-    @Ignore
     public void testGatewayConnect() throws Exception {
+        super.processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null, null, null, DeviceProfileProvisionType.DISABLED, null, null);
         String deviceName = "Device A";
         TransportApiProtos.ConnectMsg connectMsgProto = getConnectProto(deviceName);
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);

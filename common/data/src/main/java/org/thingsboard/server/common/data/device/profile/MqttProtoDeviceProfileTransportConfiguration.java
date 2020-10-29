@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.github.os72.protobuf.dynamic.DynamicSchema;
@@ -23,6 +24,7 @@ import com.github.os72.protobuf.dynamic.MessageDefinition;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.squareup.wire.Syntax;
+import com.squareup.wire.schema.Field;
 import com.squareup.wire.schema.Location;
 import com.squareup.wire.schema.internal.parser.EnumConstantElement;
 import com.squareup.wire.schema.internal.parser.EnumElement;
@@ -35,8 +37,8 @@ import com.squareup.wire.schema.internal.parser.TypeElement;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportPayloadType;
+
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +48,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Data
-@JsonDeserialize(using = JsonDeserializer.None.class)
+@JsonDeserialize(as = MqttProtoDeviceProfileTransportConfiguration.class)
 public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProfileTransportConfiguration {
 
     public static final Location LOCATION = new Location("", "", -1, -1);
@@ -59,11 +61,6 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
 
     private String deviceTelemetryProtoSchema;
     private String deviceAttributesProtoSchema;
-
-    @Override
-    public DeviceTransportType getType() {
-        return super.getType();
-    }
 
     @Override
     public TransportPayloadType getTransportPayloadType() {
@@ -155,6 +152,22 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
         }
     }
 
+    private void checkFieldElements(String schemaName, List<FieldElement> fieldElements) {
+        if (!fieldElements.isEmpty()) {
+            boolean hasRequiredLabel = fieldElements.stream().anyMatch(fieldElement -> {
+                Field.Label label = fieldElement.getLabel();
+                return label != null && label.equals(Field.Label.REQUIRED);
+            });
+            if (hasRequiredLabel) {
+                throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Required labels are not supported!");
+            }
+            boolean hasDefaultValue = fieldElements.stream().anyMatch(fieldElement -> fieldElement.getDefaultValue() != null);
+            if (hasDefaultValue) {
+                throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Default values are not supported!");
+            }
+        }
+    }
+
     private void checkEnumElements(String schemaName, List<EnumElement> enumTypes) {
         if (enumTypes.stream().anyMatch(enumElement -> !enumElement.getNestedTypes().isEmpty())) {
             throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Nested types in Enum definitions are not supported!");
@@ -175,11 +188,14 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
                         " Message definition extensions don't support!");
                 checkProtoFileCommonSettings(schemaName, messageElement.getReserveds().isEmpty(),
                         " Message definition reserved elements don't support!");
+                checkFieldElements(schemaName, messageElement.getFields());
                 List<OneOfElement> oneOfs = messageElement.getOneOfs();
                 if (!oneOfs.isEmpty()) {
-                    oneOfs.forEach(oneOfElement ->
-                            checkProtoFileCommonSettings(schemaName, oneOfElement.getGroups().isEmpty(),
-                                    " OneOf definition groups don't support!"));
+                    oneOfs.forEach(oneOfElement -> {
+                        checkProtoFileCommonSettings(schemaName, oneOfElement.getGroups().isEmpty(),
+                                " OneOf definition groups don't support!");
+                        checkFieldElements(schemaName, oneOfElement.getFields());
+                    });
                 }
                 List<TypeElement> nestedTypes = messageElement.getNestedTypes();
                 if (!nestedTypes.isEmpty()) {
@@ -194,7 +210,7 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
         }
     }
 
-    private ProtoFileElement getTransportProtoSchema(String protoSchema) {
+    public ProtoFileElement getTransportProtoSchema(String protoSchema) {
         return new ProtoParser(LOCATION, protoSchema.toCharArray()).readProtoFile();
     }
 
@@ -270,8 +286,7 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
                     labelStr,
                     fieldElement.getType(),
                     fieldElement.getName(),
-                    fieldElement.getTag(),
-                    fieldElement.getDefaultValue());
+                    fieldElement.getTag());
         });
     }
 
@@ -279,8 +294,7 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
         oneOfsElementFields.forEach(fieldElement -> oneofBuilder.addField(
                 fieldElement.getType(),
                 fieldElement.getName(),
-                fieldElement.getTag(),
-                fieldElement.getDefaultValue()));
+                fieldElement.getTag()));
         oneofBuilder.msgDefBuilder();
     }
 
