@@ -16,10 +16,7 @@
 package org.thingsboard.server.transport.mqtt;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
@@ -65,7 +62,6 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
-import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
 import org.thingsboard.server.transport.mqtt.util.SslUtil;
 
@@ -308,6 +304,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     deviceSessionCtx.setPayloadType(transportPayloadType);
                     deviceSessionCtx.setProvisionPayloadType(transportPayloadType);
                     log.info("[{}] Payload type was changed to [{}]", sessionId, transportPayloadType.name());
+                    ctx.writeAndFlush(createMqttPubAckMsg(msgId));
                 }
             } else {
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
