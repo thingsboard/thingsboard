@@ -18,16 +18,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
-        <artifactId>thingsboard</artifactId>
-        <groupId>org.thingsboard</groupId>
+        <groupId>org.thingsboard.common</groupId>
         <version>3.2.0-SNAPSHOT</version>
+        <artifactId>transport</artifactId>
     </parent>
-    <groupId>org.thingsboard.transport</groupId>
+
+    <groupId>org.thingsboard.common.transport</groupId>
     <artifactId>snmp</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard SNMP Transport Service</name>
+    <name>Thingsboard SNMP Transport Common</name>
     <url>https://thingsboard.io</url>
 
     <properties>
@@ -36,6 +38,25 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.thingsboard.common.transport</groupId>
+            <artifactId>transport-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context-support</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.snmp4j</groupId>
+            <artifactId>snmp4j</artifactId>
+        </dependency>
     </dependencies>
-
 </project>
