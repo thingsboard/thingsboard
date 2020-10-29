@@ -91,7 +91,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     this.config.saveEntity = ruleChain => this.saveRuleChain(ruleChain);
     this.config.deleteEntity = id => this.ruleChainService.deleteRuleChain(id.id);
     this.config.onEntityAction = action => this.onRuleChainAction(action);
-    this.config.deleteEnabled = (ruleChain) => ruleChain && !ruleChain.root;
+    this.config.deleteEnabled = (ruleChain) => ruleChain && !ruleChain.root && !this.edgeId;
     this.config.entitySelectionEnabled = (ruleChain) => {
       if (isDefined(this.edgeId) && this.edgeId != null) {
         return this.edge.rootRuleChainId.id != ruleChain.id.id;
@@ -162,7 +162,6 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
           })).subscribe();
       }
       this.config.entitiesFetchFunction = pageLink => this.ruleChainService.getEdgeRuleChains(this.edgeId, pageLink);
-      this.config.entitiesDeleteEnabled = false;
     }
   }
 
