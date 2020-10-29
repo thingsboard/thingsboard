@@ -304,8 +304,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     deviceSessionCtx.setPayloadType(transportPayloadType);
                     deviceSessionCtx.setProvisionPayloadType(transportPayloadType);
                     log.info("[{}] Payload type was changed to [{}]", sessionId, transportPayloadType.name());
-                    ctx.writeAndFlush(createMqttPubAckMsg(msgId));
                 }
+                ctx.writeAndFlush(createMqttPubAckMsg(msgId));
             } else {
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
             }
