@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.device.profile;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +28,7 @@ public class DeviceProfileAlarm {
     private String id;
     private String alarmType;
 
-    private Map<AlarmSeverity, AlarmRule> createRules;
+    private LinkedHashMap<AlarmSeverity, AlarmRule> createRules;
     private AlarmRule clearRule;
 
     // Hidden in advanced settings

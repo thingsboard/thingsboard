@@ -223,6 +223,8 @@ public interface TbContext {
 
     RuleNodeState findRuleNodeStateForEntity(EntityId entityId);
 
+    void removeRuleNodeStateForEntity(EntityId entityId);
+
     RuleNodeState saveRuleNodeState(RuleNodeState state);
 
     void clearRuleNodeStates();

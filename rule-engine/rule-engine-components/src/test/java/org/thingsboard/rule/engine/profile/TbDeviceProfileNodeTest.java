@@ -56,6 +56,7 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.UUID;
 
 import static org.mockito.Mockito.verify;
@@ -139,7 +140,7 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileAlarm dpa = new DeviceProfileAlarm();
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
-        dpa.setCreateRules(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule));
+        dpa.setCreateRules(new LinkedHashMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
         KeyFilter lowTempFilter = new KeyFilter();
         lowTempFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));

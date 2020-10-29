@@ -117,7 +117,7 @@ public class TbDeviceProfileNode implements TbNode {
             if (data.has("profileId")) {
                 invalidateDeviceProfileCache(deviceId, new DeviceProfileId(UUID.fromString(data.get("deviceProfileId").asText())));
             } else {
-                deviceStates.remove(deviceId);
+                removeDeviceState(deviceId);
             }
 
         } else {
@@ -126,7 +126,7 @@ public class TbDeviceProfileNode implements TbNode {
                 if (msg.getType().equals(DataConstants.ENTITY_UPDATED)) {
                     invalidateDeviceProfileCache(deviceId, msg.getData());
                 } else if (msg.getType().equals(DataConstants.ENTITY_DELETED)) {
-                    deviceStates.remove(deviceId);
+                    removeDeviceState(deviceId);
                 } else {
                     DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId, null);
                     if (deviceState != null) {
@@ -209,7 +209,7 @@ public class TbDeviceProfileNode implements TbNode {
             DeviceProfileId currentProfileId = deviceState.getProfileId();
             Device device = JacksonUtil.fromString(deviceJson, Device.class);
             if (!currentProfileId.equals(device.getDeviceProfileId())) {
-                deviceStates.remove(deviceId);
+                removeDeviceState(deviceId);
             }
         }
     }
@@ -218,8 +218,15 @@ public class TbDeviceProfileNode implements TbNode {
         DeviceState deviceState = deviceStates.get(deviceId);
         if (deviceState != null) {
             if (!deviceState.getProfileId().equals(deviceProfileId)) {
-                deviceStates.remove(deviceId);
+                removeDeviceState(deviceId);
             }
+        }
+    }
+
+    private void removeDeviceState(DeviceId deviceId) {
+        DeviceState state = deviceStates.remove(deviceId);
+        if (config.isPersistAlarmRulesState() && (state != null || !config.isFetchAlarmRulesStateOnStart())) {
+            ctx.removeRuleNodeStateForEntity(deviceId);
         }
     }
 }
