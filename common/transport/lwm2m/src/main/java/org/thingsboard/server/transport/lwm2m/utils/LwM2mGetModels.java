@@ -29,22 +29,22 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.util.List;
 
-@Slf4j
-@Component("LwM2mGetModels")
-@ConditionalOnExpression("('${(service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || ('${service.type:null}'=='monolith'  && '${transport.lwm2m.enabled}'=='true') || '${service.type:null}'=='tb-core'")
+//@Slf4j
+//@Component
+//@ConditionalOnExpression("('${(service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 public class LwM2mGetModels {
 
-    @Getter
-    @Value("${transport.lwm2m.model_path_file:}")
-    private String modelPathFile;
-
-    @Getter
-    @Setter
-    private List<ObjectModel> models;
-
-    @PostConstruct
-    public void init() {
-        models = ObjectLoader.loadDefault();
-        models.addAll(ObjectLoader.loadObjectsFromDir(new File(getModelPathFile())));
-    }
+//    @Getter
+//    @Value("${transport.lwm2m.model_path_file:}")
+//    private String modelPathFile;
+//
+//    @Getter
+//    @Setter
+//    private List<ObjectModel> models;
+//
+//    @PostConstruct
+//    public void init() {
+//        models = ObjectLoader.loadDefault();
+//        models.addAll(ObjectLoader.loadObjectsFromDir(new File(getModelPathFile())));
+//    }
 }

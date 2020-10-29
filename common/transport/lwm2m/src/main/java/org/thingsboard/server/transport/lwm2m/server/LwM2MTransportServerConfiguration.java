@@ -56,9 +56,6 @@ public class LwM2MTransportServerConfiguration {
     @Autowired
     private LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
 
-    @Autowired
-    LwM2mGetModels lwM2mGetModels;
-
     @Primary
     @Bean(name = "LeshanServerCert")
     public LeshanServer getLeshanServerCert() {
@@ -86,7 +83,7 @@ public class LwM2MTransportServerConfiguration {
         builder.setCoapConfig(getCoapConfig());
 
         /** Define model provider (Create Models )*/
-        LwM2mModelProvider modelProvider = new VersionedModelProvider(lwM2mGetModels.getModels());
+        LwM2mModelProvider modelProvider = new VersionedModelProvider(context.getModelsValue());
         builder.setObjectModelProvider(modelProvider);
 
         /** Create DTLS Config */

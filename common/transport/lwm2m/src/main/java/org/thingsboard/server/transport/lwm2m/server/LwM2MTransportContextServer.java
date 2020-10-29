@@ -18,17 +18,21 @@ package org.thingsboard.server.transport.lwm2m.server;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
+
+import javax.annotation.PostConstruct;
+import java.io.File;
 import java.security.KeyStore;
 import java.util.List;
 
 @Slf4j
 @Component("LwM2MTransportContext")
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
+@ConditionalOnExpression("('${(service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 public class LwM2MTransportContextServer extends TransportContext {
 
     @Getter
@@ -126,5 +130,11 @@ public class LwM2MTransportContextServer extends TransportContext {
     @Getter
     @Value("${transport.lwm2m.secure.redis_url:}")
     private String redisUrl;
+
+    @PostConstruct
+    public void init() {
+        modelsValue = ObjectLoader.loadDefault();
+        modelsValue.addAll(ObjectLoader.loadObjectsFromDir(new File(getModelPathFile())));
+    }
 
 }

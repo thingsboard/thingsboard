@@ -29,7 +29,7 @@ import java.util.Map;
 
 @Slf4j
 @Component("LwM2MTransportContextBootstrap")
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
+@ConditionalOnExpression("('${(service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 public class LwM2MTransportContextBootstrap extends TransportContext {
 
     @Getter

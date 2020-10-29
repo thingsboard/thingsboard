@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.common.data.lwm2m;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor
-public class LwM2mResource {
-    int id;
-    String name;
-    boolean observe;
-    boolean attribute;
-    boolean telemetry;
-    String nameThingsboard;
+public class BootstrapSecurityConfig {
+    ServerSecurityConfig bootstrapServer;
+    ServerSecurityConfig lwm2mServer;
 }

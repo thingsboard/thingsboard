@@ -61,8 +61,6 @@ public class LwM2MTransportBootstrapServerConfiguration {
     @Autowired
     private LwM2MInMemoryBootstrapConfigStore lwM2MInMemoryBootstrapConfigStore;
 
-    @Autowired
-    LwM2mGetModels lwM2mGetModels;
 
     @Primary
     @Bean(name = "leshanBootstrapCert")
@@ -92,7 +90,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
         builder.setSecurityStore(lwM2MBootstrapSecurityStore);
 
         /** Define model provider (Create Models )*/
-        builder.setModel(new StaticModel(lwM2mGetModels.getModels()));
+        builder.setModel(new StaticModel(contextS.getModelsValue()));
 
         /** Create and Set DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
