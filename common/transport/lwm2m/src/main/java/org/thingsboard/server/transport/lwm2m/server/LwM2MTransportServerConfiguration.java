@@ -17,7 +17,6 @@ package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
-import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
 import org.eclipse.leshan.core.node.codec.LwM2mNodeDecoder;
@@ -34,13 +33,10 @@ import org.springframework.context.annotation.Primary;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2MSetSecurityStoreServer;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
-import org.thingsboard.server.transport.lwm2m.utils.LwM2mGetModels;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
-
-import java.util.List;
-
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
-import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.X509;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.RPK;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getCoapConfig;
 
 
 @Slf4j

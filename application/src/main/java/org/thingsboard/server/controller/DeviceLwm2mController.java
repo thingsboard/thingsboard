@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.lwm2m.BootstrapSecurityConfig;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -55,6 +56,17 @@ public class DeviceLwm2mController extends BaseController {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return checkNotNull(lwM2MModelsRepository.findDeviceLwm2mObjects(getTenantId(), pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{securityMode}", method = RequestMethod.GET)
+    @ResponseBody
+    public BootstrapSecurityConfig getLwm2mBootstrapSecurityKey(@PathVariable("securityMode") String securityMode) throws ThingsboardException {
+        try {
+            return lwM2MModelsRepository.getLwm2mBootstrapSecurityKey(securityMode);
         } catch (Exception e) {
             throw handleException(e);
         }

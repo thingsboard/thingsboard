@@ -17,7 +17,6 @@ package org.thingsboard.server.transport.lwm2m.bootstrap;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
-import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.StaticModel;
 import org.eclipse.leshan.server.bootstrap.BootstrapSessionManager;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
@@ -28,24 +27,23 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBootstrapConfigStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MSetSecurityStoreBootstrap;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBootstrapSessionManager;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
-import org.thingsboard.server.transport.lwm2m.utils.LwM2mGetModels;
-
-import java.util.List;
-
-import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.X509;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.RPK;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getCoapConfig;
 
 @Slf4j
-@ComponentScan("org.thingsboard.server.transport.lwm2m.server")
-@ComponentScan("org.thingsboard.server.transport.lwm2m.bootstrap")
-@ComponentScan("org.thingsboard.server.transport.lwm2m.utils")
-@Configuration("LwM2MTransportBootstrapServerConfiguration")
+//@ComponentScan("org.thingsboard.server.transport.lwm2m.server")
+//@ComponentScan("org.thingsboard.server.transport.lwm2m.bootstrap")
+//@ComponentScan("org.thingsboard.server.transport.lwm2m.utils")
+//@Configuration("LwM2MTransportBootstrapServerConfiguration")
+@Component
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true')")
 public class LwM2MTransportBootstrapServerConfiguration {
 

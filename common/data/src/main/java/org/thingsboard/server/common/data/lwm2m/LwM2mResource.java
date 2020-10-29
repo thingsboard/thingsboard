@@ -28,7 +28,7 @@ public class LwM2mResource {
     boolean observe;
     boolean attribute;
     boolean telemetry;
-    String nameThingsboard;
+    String keyName;
 
     public LwM2mResource(int id, String name, boolean observe, boolean attribute, boolean telemetry) {
         this.id = id;
@@ -36,7 +36,7 @@ public class LwM2mResource {
         this.observe = observe;
         this.attribute = attribute;
         this.telemetry = telemetry;
-        this.nameThingsboard = getCamelCase (this.name);
+        this.keyName = getCamelCase (this.name);
     }
 
     private String getCamelCase (String name) {

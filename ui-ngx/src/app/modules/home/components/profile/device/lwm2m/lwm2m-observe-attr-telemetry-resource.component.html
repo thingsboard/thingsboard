@@ -41,7 +41,7 @@
         </div>
         <div fxFlex="25">
           <b>
-            <mat-label translate>device-profile.lwm2m.name-thingsboard-label</mat-label>
+            <mat-label translate>device-profile.lwm2m.key-name-label</mat-label>
           </b>
         </div>
       </div>
@@ -72,9 +72,9 @@
           </mat-checkbox>
         </div>
         <mat-form-field fxFlex="25">
-          <input matInput type="text" formControlName="nameThingsboard" required
-                 matTooltip="{{'device-profile.lwm2m.name-thingsboard-tip' | translate}}"
-                 (input)="updateValueNameThingsboard($event, resourceLwM2M.get('id').value)">
+          <input matInput type="text" formControlName="keyName" required
+                 matTooltip="{{'device-profile.lwm2m.key-name-tip' | translate}}"
+                 (input)="updateValueKeyName($event, resourceLwM2M.get('id').value)">
         </mat-form-field>
       </div>
     </div>

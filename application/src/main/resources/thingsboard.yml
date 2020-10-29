@@ -564,7 +564,7 @@ transport:
   # Local LwM2M transport parameters
   lwm2m:
     # Enable/disable lvm2m transport protocol.
-    enabled: "${LWM2M_ENABLED:false}"
+    enabled: "${LWM2M_ENABLED:true}"
     #   We choose a default timeout a bit higher to the MAX_TRANSMIT_WAIT(62-93s) which is the time from starting to
     #   send a Confirmable message to the time when an acknowledgement is no longer expected.
     #   DEFAULT_TIMEOUT = 2 * 60 * 1000l; 2 min in ms

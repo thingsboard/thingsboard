@@ -84,8 +84,8 @@
                 [objId]="objectLwM2M.get('id').value"
                 [resourceFormGroup]="instances"
                 [disabled]="getDisabledState()"
-                (valueCheckBoxChange)="changeResourceCheckBox($event)"
-                (valueNameThingsboardChange)="changeResourceNameThingsboard($event)">
+                (changeValueCheckBox)="changeResourceCheckBox($event)"
+                (changeValueKeyName)="changeResourceKeyName($event)">
               </tb-profile-lwm2m-observe-attr-telemetry-resource>
             </ng-template>
 

@@ -29,7 +29,7 @@ import { Store } from "@ngrx/store";
 import { AppState } from "@core/core.state";
 import { MatCheckboxChange } from "@angular/material/checkbox";
 import { coerceBooleanProperty } from "@angular/cdk/coercion";
-import { Instance, ObjectLwM2M, ResourceLwM2M } from "./profile-config.models";
+import { ATTR, Instance, KEY_NAME, ObjectLwM2M, OBSERVE, ResourceLwM2M, TELEMETRY } from "./profile-config.models";
 
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry',
@@ -47,10 +47,10 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
 
   valuePrev = null as any;
   observeAttrTelemetryFormGroup: FormGroup;
-  observe = 'observe' as string;
-  attribute = 'attribute' as string;
-  telemetry = 'telemetry' as string;
-  nameThingsboard = 'nameThingsboard' as string;
+  observe = OBSERVE as string;
+  attribute = ATTR as string;
+  telemetry = TELEMETRY as string;
+  keyName = KEY_NAME as string;
   indeterminateObserve: boolean[][];
   indeterminateAttr: boolean[][];
   indeterminateTelemetry: boolean[][];
@@ -73,7 +73,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   @Input()
   disabled: boolean;
 
-  @Output() valueNameThingsboardChange = new EventEmitter<{}>();
+  @Output() valueKeyNameChange = new EventEmitter<{}>();
 
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
@@ -202,7 +202,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         [this.observe]: resourceLwM2M.observe,
         [this.attribute]: resourceLwM2M.attribute,
         [this.telemetry]: resourceLwM2M.telemetry,
-        [this.nameThingsboard]: resourceLwM2M.nameThingsboard
+        [this.keyName]: resourceLwM2M.keyName
       })
     }))
   }
@@ -244,8 +244,8 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     this.changeInstanceCheckBox($event['objInd'], $event['instInd'], $event['nameFrom']);
   }
 
-  changeResourceNameThingsboard($event: unknown): void {
-    this.valueNameThingsboardChange.emit($event);
+  changeResourceKeyName($event: unknown): void {
+    this.valueKeyNameChange.emit($event);
   }
 
   updateValidators() {

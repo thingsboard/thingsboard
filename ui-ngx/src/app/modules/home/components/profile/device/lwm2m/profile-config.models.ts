@@ -26,7 +26,7 @@ export const OBSERVE_ATTR = 'observeAttr';
 export const OBSERVE = 'observe';
 export const ATTR = 'attribute';
 export const TELEMETRY = 'telemetry';
-export const NAME_THINGSBOARD = 'nameThingsboard';
+export const KEY_NAME = 'keyName';
 export const JSON_OBSERVE = 'jsonObserve';
 export const DEFAULT_ID_SERVER = 123;
 const DEFAULT_ID_BOOTSTRAP = 111;
@@ -145,7 +145,7 @@ export interface ProfileConfigModels {
     observe: string [],
     attribute: string [],
     telemetry: string [],
-    nameThingsboard: []
+    keyName: []
   }
 }
 
@@ -255,7 +255,7 @@ export function getDefaultProfileConfig(hostname?: any): ProfileConfigModels {
       observe: [],
       attribute: [],
       telemetry: [],
-      nameThingsboard: []
+      keyName: []
     }
   };
 }
@@ -267,7 +267,7 @@ export interface ResourceLwM2M {
   observe: boolean,
   attribute: boolean,
   telemetry: boolean,
-  nameThingsboard: string
+  keyName: string
 }
 
 export interface Instance {
@@ -295,7 +295,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "shortServerID"
+            keyName: "shortServerID"
           },
           {
             id: 1,
@@ -303,7 +303,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "lifetime"
+            keyName: "lifetime"
           },
           {
             id: 2,
@@ -311,7 +311,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "defaultMinimumPeriod"
+            keyName: "defaultMinimumPeriod"
           },
           {
             id: 3,
@@ -319,7 +319,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "defaultMaximumPeriod"
+            keyName: "defaultMaximumPeriod"
           },
           {
             id: 5,
@@ -327,7 +327,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "disableTimeout"
+            keyName: "disableTimeout"
           },
           {
             id: 6,
@@ -335,7 +335,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "notificationStoringWhenDisabledOrOffline"
+            keyName: "notificationStoringWhenDisabledOrOffline"
           },
           {
             id: 7,
@@ -343,7 +343,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "binding"
+            keyName: "binding"
           }
         ]
       }]
@@ -397,7 +397,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "manufacturer"
+            keyName: "manufacturer"
           },
           {
             id: 1,
@@ -405,7 +405,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "modelNumber"
+            keyName: "modelNumber"
           },
           {
             id: 2,
@@ -413,7 +413,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "serialNumber"
+            keyName: "serialNumber"
           },
           {
             id: 3,
@@ -421,7 +421,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "firmwareVersion"
+            keyName: "firmwareVersion"
           },
           {
             id: 6,
@@ -429,7 +429,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "availablePowerSources"
+            keyName: "availablePowerSources"
           },
           {
             id: 7,
@@ -437,7 +437,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "powerSourceVoltage"
+            keyName: "powerSourceVoltage"
           },
           {
             id: 8,
@@ -445,7 +445,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "powerSourceCurrent"
+            keyName: "powerSourceCurrent"
           },
           {
             id: 9,
@@ -453,7 +453,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "batteryLevel"
+            keyName: "batteryLevel"
           },
           {
             id: 10,
@@ -461,7 +461,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "memoryFree"
+            keyName: "memoryFree"
           },
           {
             id: 11,
@@ -469,7 +469,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "errorCode"
+            keyName: "errorCode"
           },
           {
             id: 13,
@@ -477,7 +477,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "currentTime"
+            keyName: "currentTime"
           },
           {
             id: 14,
@@ -485,7 +485,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "utcOffset"
+            keyName: "utcOffset"
           },
           {
             id: 15,
@@ -493,7 +493,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "timeZone"
+            keyName: "timeZone"
           },
           {
             id: 16,
@@ -501,7 +501,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "supportedBindingAndModes"
+            keyName: "supportedBindingAndModes"
           },
           {
             id: 17,
@@ -509,7 +509,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "deviceType"
+            keyName: "deviceType"
           },
           {
             id: 18,
@@ -517,7 +517,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "hardwareVersion"
+            keyName: "hardwareVersion"
           },
           {
             id: 19,
@@ -525,7 +525,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "softwareVersion"
+            keyName: "softwareVersion"
           },
           {
             id: 20,
@@ -533,7 +533,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "batteryStatus"
+            keyName: "batteryStatus"
           },
           {
             id: 21,
@@ -541,7 +541,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "memoryTotal"
+            keyName: "memoryTotal"
           },
           {
             id: 22,
@@ -549,7 +549,7 @@ export function getDefaultClientObserveAttr(): ObjectLwM2M [] {
             observe: false,
             attribute: false,
             telemetry: false,
-            nameThingsboard: "extDevInfo"
+            keyName: "extDevInfo"
           },
         ]
       }]

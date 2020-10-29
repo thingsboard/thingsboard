@@ -47,8 +47,8 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
   @Input() objId: number;
   @Input() resourceFormGroup : FormGroup;
   @Input() disabled : boolean;
-  @Output() valueCheckBoxChange = new EventEmitter<{}>()
-  @Output() valueNameThingsboardChange = new EventEmitter<{}>()
+  @Output() changeValueCheckBox = new EventEmitter<{}>()
+  @Output() changeValueKeyName = new EventEmitter<{}>()
 
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
@@ -74,7 +74,7 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
   }
 
   changeInstanceResourcesCheckBox(value: boolean, restInd: number, nameFrom?: string): void {
-    this.valueCheckBoxChange.emit({
+    this.changeValueCheckBox.emit({
       value: value,
       objInd: this.i,
       instInd: this.y,
@@ -91,11 +91,11 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
     }
   }
 
-  updateValueNameThingsboard (event: any, z: number): void {
+  updateValueKeyName (event: any, z: number): void {
     let newVal = this.keysToCamel(deepClone(event.target.value));
     let insId = this.resourceFormGroup.value.id;
     let path = "/"+ this.objId + "/" + insId + "/" + z;
-    this.valueNameThingsboardChange.emit({
+    this.changeValueKeyName.emit({
       path: path,
       value: newVal
     });
