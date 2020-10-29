@@ -73,7 +73,7 @@ export class EdgeService {
   }
 
   public assignEdgeToCustomer(customerId: string, edgeId: string, config?: RequestConfig): Observable<Edge> {
-    return this.http.post<Edge>(`/api/customer/${customerId}/edge/${edgeId}`, null, defaultHttpOptionsFromConfig(config));
+    return this.http.post<Edge>(`/api/customer/${customerId}/edge/${edgeId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public unassignEdgeFromCustomer(edgeId: string, config?: RequestConfig) {
@@ -81,11 +81,11 @@ export class EdgeService {
   }
 
   public makeEdgePublic(edgeId: string, config?: RequestConfig): Observable<Edge> {
-    return this.http.post<Edge>(`/api/customer/public/edge/${edgeId}`, null, defaultHttpOptionsFromConfig(config));
+    return this.http.post<Edge>(`/api/customer/public/edge/${edgeId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public setRootRuleChain(edgeId: string, ruleChainId: string, config?: RequestConfig): Observable<Edge> {
-    return this.http.post<Edge>(`/api/edge/${edgeId}/${ruleChainId}/root`, null, defaultHttpOptionsFromConfig(config));
+    return this.http.post<Edge>(`/api/edge/${edgeId}/${ruleChainId}/root`, defaultHttpOptionsFromConfig(config));
   }
 
   public getTenantEdgeInfos(pageLink: PageLink, type: string = '',

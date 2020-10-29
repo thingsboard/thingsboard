@@ -19,7 +19,7 @@ import addEdgeTemplate from './add-edge.tpl.html';
 import edgeCard from './edge-card.tpl.html';
 import assignToCustomerTemplate from './assign-to-customer.tpl.html';
 import addEdgesToCustomerTemplate from './add-edges-to-customer.tpl.html';
-import setRootRuleChainToEdgesTemplate from './set-root-rule-chain-to-edges.tpl.html';
+import setRootRuleChainToEdgesTemplate from './set-root-rulechain-to-edges.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -303,9 +303,9 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
                     onAction: function ($event, items) {
                         setRootRuleChainToEdges($event, items);
                     },
-                    name: function() { return $translate.instant('edge.set-root-rule-chain-to-edges') },
+                    name: function() { return $translate.instant('edge.set-rootrule-chain-to-edges') },
                     details: function(selectedCount) {
-                        return $translate.instant('edge.set-root-rule-chain-to-edges-text', {count: selectedCount}, "messageformat");
+                        return $translate.instant('edge.set-root-rulechain-to-edges-text', {count: selectedCount}, "messageformat");
                     },
                     icon: "flag"
                 }
