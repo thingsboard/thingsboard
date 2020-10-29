@@ -35,6 +35,7 @@ import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -249,6 +250,8 @@ public class TbAlarmNodeTest {
 
         node.onMsg(ctx, msg);
 
+        verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
+        successCaptor.getValue().run();
         verify(ctx).tellNext(any(), eq("Updated"));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -298,6 +301,8 @@ public class TbAlarmNodeTest {
 
         node.onMsg(ctx, msg);
 
+        verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
+        successCaptor.getValue().run();
         verify(ctx).tellNext(any(), eq("Cleared"));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -346,6 +351,8 @@ public class TbAlarmNodeTest {
 
         node.onMsg(ctx, msg);
 
+        verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
+        successCaptor.getValue().run();
         verify(ctx).tellNext(any(), eq("Cleared"));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);

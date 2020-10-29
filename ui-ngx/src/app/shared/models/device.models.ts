@@ -369,6 +369,7 @@ export interface DeviceProfile extends BaseData<DeviceProfileId> {
   provisionType: DeviceProvisionType;
   provisionDeviceKey?: string;
   defaultRuleChainId?: RuleChainId;
+  defaultQueueName?: string;
   profileData: DeviceProfileData;
 }
 

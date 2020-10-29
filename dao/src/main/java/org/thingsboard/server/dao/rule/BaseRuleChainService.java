@@ -20,11 +20,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
@@ -53,10 +53,12 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -134,6 +136,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
         if (ruleChain == null) {
             return null;
+        }
+
+        if (CollectionUtils.isNotEmpty(ruleChainMetaData.getConnections())) {
+            validateCircles(ruleChainMetaData.getConnections());
         }
 
         List<RuleNode> nodes = ruleChainMetaData.getNodes();
@@ -216,6 +222,31 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
 
         return loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId());
+    }
+
+    private void validateCircles(List<NodeConnectionInfo> connectionInfos) {
+        Map<Integer, Set<Integer>> connectionsMap = new HashMap<>();
+        for (NodeConnectionInfo nodeConnection : connectionInfos) {
+            if (nodeConnection.getFromIndex() == nodeConnection.getToIndex()) {
+                throw new DataValidationException("Can't create the relation to yourself.");
+            }
+            connectionsMap
+                    .computeIfAbsent(nodeConnection.getFromIndex(), from -> new HashSet<>())
+                    .add(nodeConnection.getToIndex());
+        }
+        connectionsMap.keySet().forEach(key -> validateCircles(key, connectionsMap.get(key), connectionsMap));
+    }
+
+    private void validateCircles(int from, Set<Integer> toList, Map<Integer, Set<Integer>> connectionsMap) {
+        if (toList == null) {
+            return;
+        }
+        for (Integer to : toList) {
+            if (from == to) {
+                throw new DataValidationException("Can't create circling relations in rule chain.");
+            }
+            validateCircles(from, connectionsMap.get(to), connectionsMap);
+        }
     }
 
     @Override

@@ -23,7 +23,6 @@ import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -53,7 +52,6 @@ import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
-import org.thingsboard.server.common.transport.limits.TransportRateLimit;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitType;
 import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
@@ -379,10 +377,8 @@ public class DefaultTransportService implements TransportService {
                 metaData.putValue("deviceType", sessionInfo.getDeviceType());
                 metaData.putValue("ts", tsKv.getTs() + "");
                 JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
-                RuleChainId ruleChainId = resolveRuleChainId(sessionInfo);
-                TbMsg tbMsg = TbMsg.newMsg(ServiceQueue.MAIN, SessionMsgType.POST_TELEMETRY_REQUEST.name(),
-                        deviceId, metaData, gson.toJson(json), ruleChainId, null);
-                sendToRuleEngine(tenantId, tbMsg, packCallback);
+                sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData, SessionMsgType.POST_TELEMETRY_REQUEST, packCallback);
+
             }
         }
     }
@@ -398,10 +394,7 @@ public class DefaultTransportService implements TransportService {
             metaData.putValue("deviceName", sessionInfo.getDeviceName());
             metaData.putValue("deviceType", sessionInfo.getDeviceType());
             metaData.putValue("notifyDevice", "false");
-            RuleChainId ruleChainId = resolveRuleChainId(sessionInfo);
-            TbMsg tbMsg = TbMsg.newMsg(ServiceQueue.MAIN, SessionMsgType.POST_ATTRIBUTES_REQUEST.name(),
-                    deviceId, metaData, gson.toJson(json), ruleChainId, null);
-            sendToRuleEngine(tenantId, tbMsg, new TransportTbQueueCallback(callback));
+            sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData, SessionMsgType.POST_ATTRIBUTES_REQUEST, new TransportTbQueueCallback(callback));
         }
     }
 
@@ -482,10 +475,8 @@ public class DefaultTransportService implements TransportService {
             metaData.putValue("requestId", Integer.toString(msg.getRequestId()));
             metaData.putValue("serviceId", serviceInfoProvider.getServiceId());
             metaData.putValue("sessionId", sessionId.toString());
-            RuleChainId ruleChainId = resolveRuleChainId(sessionInfo);
-            TbMsg tbMsg = TbMsg.newMsg(ServiceQueue.MAIN, SessionMsgType.TO_SERVER_RPC_REQUEST.name(),
-                    deviceId, metaData, gson.toJson(json), ruleChainId, null);
-            sendToRuleEngine(tenantId, tbMsg, new TransportTbQueueCallback(callback));
+            sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData,
+                    SessionMsgType.TO_SERVER_RPC_REQUEST, new TransportTbQueueCallback(callback));
             String requestId = sessionId + "-" + msg.getRequestId();
             toServerRpcPendingMap.put(requestId, new RpcRequestMetadata(sessionId, msg.getRequestId()));
             schedulerExecutor.schedule(() -> processTimeout(requestId), clientSideRpcTimeout, TimeUnit.MILLISECONDS);
@@ -740,17 +731,25 @@ public class DefaultTransportService implements TransportService {
         ruleEngineMsgProducer.send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), wrappedCallback);
     }
 
-    private RuleChainId resolveRuleChainId(TransportProtos.SessionInfoProto sessionInfo) {
+    protected void sendToRuleEngine(TenantId tenantId, DeviceId deviceId, TransportProtos.SessionInfoProto sessionInfo, JsonObject json,
+                                    TbMsgMetaData metaData, SessionMsgType sessionMsgType, TbQueueCallback callback) {
         DeviceProfileId deviceProfileId = new DeviceProfileId(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
         DeviceProfile deviceProfile = deviceProfileCache.get(deviceProfileId);
         RuleChainId ruleChainId;
+        String queueName;
+
         if (deviceProfile == null) {
             log.warn("[{}] Device profile is null!", deviceProfileId);
             ruleChainId = null;
+            queueName = ServiceQueue.MAIN;
         } else {
             ruleChainId = deviceProfile.getDefaultRuleChainId();
+            String defaultQueueName = deviceProfile.getDefaultQueueName();
+            queueName = defaultQueueName != null ? defaultQueueName : ServiceQueue.MAIN;
         }
-        return ruleChainId;
+
+        TbMsg tbMsg = TbMsg.newMsg(queueName, sessionMsgType.name(), deviceId, metaData, gson.toJson(json), ruleChainId, null);
+        sendToRuleEngine(tenantId, tbMsg, callback);
     }
 
     private class TransportTbQueueCallback implements TbQueueCallback {
