@@ -334,7 +334,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private void pushMsgToNode(RuleNodeCtx nodeCtx, TbMsg msg, String fromRelationType) {
         if (nodeCtx != null) {
-            apiUsageClient.report(tenantId, ApiUsageRecordKey.RE_EXEC_COUNT);
             nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg, fromRelationType));
         } else {
             log.error("[{}][{}] RuleNodeCtx is empty", entityId, ruleChainName);
