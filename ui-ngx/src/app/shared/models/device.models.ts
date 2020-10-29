@@ -148,6 +148,7 @@ export interface DefaultDeviceProfileTransportConfiguration {
 export interface MqttDeviceProfileTransportConfiguration {
   deviceTelemetryTopic?: string;
   deviceAttributesTopic?: string;
+  transportPayloadType?: MqttTransportPayloadType;
   [key: string]: any;
 }
 

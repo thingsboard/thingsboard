@@ -36,7 +36,6 @@ public class MqttTransportConfigurationDeserializer extends StdDeserializer<Mqtt
     public MqttDeviceProfileTransportConfiguration deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
         try {
             JsonNode jsonNode = jsonParser.readValueAsTree();
-
             if (jsonNode.hasNonNull("transportPayloadType") && jsonNode.get("transportPayloadType").asText().equals(TransportPayloadType.PROTOBUF.name())) {
                 return jsonParser.getCodec().treeToValue(jsonNode, MqttProtoDeviceProfileTransportConfiguration.class);
             } else {

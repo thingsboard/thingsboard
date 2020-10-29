@@ -111,6 +111,12 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   writeValue(value: MqttDeviceProfileTransportConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
+      let configurationFormGroup = this.mqttDeviceProfileTransportConfigurationFormGroup.controls.configuration as FormGroup;
+      let payloadType = value.transportPayloadType;
+      if (payloadType ===  MqttTransportPayloadType.PROTOBUF) {
+        configurationFormGroup.registerControl('deviceTelemetryProtoSchema', this.fb.control(null, Validators.required));
+        configurationFormGroup.registerControl('deviceAttributesProtoSchema', this.fb.control(null, Validators.required));
+      }
       this.mqttDeviceProfileTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
     }
   }
@@ -121,9 +127,10 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       configuration = this.mqttDeviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
       configuration.type = DeviceTransportType.MQTT;
       let configurationFormGroup = this.mqttDeviceProfileTransportConfigurationFormGroup.controls.configuration as FormGroup;
-      if (configuration.transportPayloadType ===  MqttTransportPayloadType.PROTOBUF) {
-        configurationFormGroup.addControl('deviceTelemetryProtoSchema', this.fb.control(null, Validators.required));
-        configurationFormGroup.addControl('deviceAttributesProtoSchema', this.fb.control(null, Validators.required));
+      let transportPayloadType = configuration.transportPayloadType;
+      if (transportPayloadType ===  MqttTransportPayloadType.PROTOBUF) {
+        configurationFormGroup.registerControl('deviceTelemetryProtoSchema', this.fb.control(null, Validators.required));
+        configurationFormGroup.registerControl('deviceAttributesProtoSchema', this.fb.control(null, Validators.required));
       } else {
         configurationFormGroup.removeControl('deviceTelemetryProtoSchema');
         configurationFormGroup.removeControl('deviceAttributesProtoSchema');
