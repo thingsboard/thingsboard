@@ -39,6 +39,7 @@ import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
+import java.lang.Thread;
 
 @Service
 @Slf4j
@@ -146,6 +147,9 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     private DataValidator<DeviceCredentials> credentialsValidator =
             new DataValidator<DeviceCredentials>() {
 
+                private int maxRetryCount = 5;
+                private int attemptRetryInterval = 1000;
+
                 @Override
                 protected void validateCreate(TenantId tenantId, DeviceCredentials deviceCredentials) {
                     if (deviceCredentialsDao.findByDeviceId(tenantId, deviceCredentials.getDeviceId().getId()) != null) {
@@ -178,8 +182,18 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                     if (StringUtils.isEmpty(deviceCredentials.getCredentialsId())) {
                         throw new DataValidationException("Device credentials id should be specified!");
                     }
-                    Device device = deviceService.findDeviceById(tenantId, deviceCredentials.getDeviceId());
-                    if (device == null) {
+                    int retryCount = 0;
+                    boolean found = false;
+                    while (!found && retryCount < maxRetryCount) {
+                        Device device = deviceService.findDeviceById(tenantId, deviceCredentials.getDeviceId());
+                        if (device != null) {
+                            found = true;
+                        } else {
+                            retryCount += 1;
+                            Thread.sleep(attemptRetryInterval);
+                        }
+                    }
+                    if (!found) {
                         throw new DataValidationException("Can't assign device credentials to non-existent device!");
                     }
                 }
