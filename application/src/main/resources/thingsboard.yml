@@ -569,7 +569,8 @@ transport:
     #   send a Confirmable message to the time when an acknowledgement is no longer expected.
     #   DEFAULT_TIMEOUT = 2 * 60 * 1000l; 2 min in ms
     timeout: "${LWM2M_TIMEOUT:120000}"
-    model_path_file: "${LWM2M_MODEL_PATH_FILE:./common/transport/lwm2m/src/main/resources/models/}"
+#    model_path_file: "${LWM2M_MODEL_PATH_FILE:./common/transport/lwm2m/src/main/resources/models/}"
+    model_path_file: "${LWM2M_MODEL_PATH_FILE:}"
     support_deprecated_ciphers_enable: "${LWM2M_SUPPORT_DEPRECATED_CIPHERS_ENABLED:true}"
     secure:
       # Only Certificate_x509:
