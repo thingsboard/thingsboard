@@ -50,6 +50,7 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.profile.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.service.telemetry.InternalTelemetryService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.PostConstruct;
@@ -82,7 +83,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
     private final TenantService tenantService;
     private final ApiUsageStateService apiUsageStateService;
     private final TimeseriesService tsService;
-    private final TelemetrySubscriptionService tsWsService;
+    private final InternalTelemetryService tsWsService;
     private final SchedulerComponent scheduler;
     private final TbTenantProfileCache tenantProfileCache;
 

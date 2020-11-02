@@ -116,6 +116,12 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     @Override
     public void saveAndNotify(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        saveAndNotifyInternal(tenantId, entityId, ts, ttl, callback);
+    }
+
+    @Override
+    public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Void> callback) {
         ListenableFuture<List<Void>> saveFuture = tsService.save(tenantId, entityId, ts, ttl);
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
@@ -176,6 +182,12 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     @Override
     public void saveAndNotify(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        saveAndNotifyInternal(tenantId, entityId, scope, attributes, notifyDevice, callback);
+    }
+
+    @Override
+    public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
         ListenableFuture<List<Void>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice));
@@ -183,6 +195,12 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     @Override
     public void saveLatestAndNotify(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        saveLatestAndNotifyInternal(tenantId, entityId, ts, callback);
+    }
+
+    @Override
+    public void saveLatestAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Void> callback) {
         ListenableFuture<List<Void>> saveFuture = tsService.saveLatest(tenantId, entityId, ts);
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
@@ -190,6 +208,12 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     @Override
     public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        deleteAndNotifyInternal(tenantId, entityId, scope, keys, callback);
+    }
+
+    @Override
+    public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
         ListenableFuture<List<Void>> deleteFuture = attrService.removeAll(tenantId, entityId, scope, keys);
         addMainCallback(deleteFuture, callback);
         addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys));
@@ -197,6 +221,12 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     @Override
     public void deleteLatest(TenantId tenantId, EntityId entityId, List<String> keys, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        deleteLatestInternal(tenantId, entityId, keys, callback);
+    }
+
+    @Override
+    public void deleteLatestInternal(TenantId tenantId, EntityId entityId, List<String> keys, FutureCallback<Void> callback) {
         ListenableFuture<List<Void>> deleteFuture = tsService.removeLatest(tenantId, entityId, keys);
         addMainCallback(deleteFuture, callback);
     }
@@ -296,4 +326,11 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             }
         }, tsCallBackExecutor);
     }
+
+    private void checkInternalEntity(EntityId entityId) {
+        if (EntityType.API_USAGE_STATE.equals(entityId.getEntityType())) {
+            throw new RuntimeException("Can't update API Usage State!");
+        }
+    }
+
 }
