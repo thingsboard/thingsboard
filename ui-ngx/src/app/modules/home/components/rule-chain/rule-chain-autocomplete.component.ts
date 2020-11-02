@@ -202,8 +202,8 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
   createDefaultRuleChain($event: Event, ruleChainName: string) {
     $event.preventDefault();
     this.ruleChainAutocomplete.closePanel();
-    this.ruleChainService.createDefaultRuleChain(ruleChainName).subscribe((ruleChain) => {
-      this.updateView(ruleChain.id.id);
+    this.ruleChainService.createDefaultRuleChain(ruleChainName.trim()).subscribe((ruleChain) => {
+      this.selectRuleChainFormGroup.get('ruleChainId').patchValue(ruleChain);
     });
   }
 }
