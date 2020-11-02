@@ -38,7 +38,6 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.*;
 import java.util.Arrays;
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getInKeyStore;
 
 @Slf4j
 @Data
@@ -158,8 +157,8 @@ public class LwM2MSetSecurityStoreServer {
 
     private void setServerWithX509Cert() {
         try {
-            KeyStore keyStoreServer = getKeyStoreServer();
-            X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(context.getRootAlias());
+            setBuilderX509();
+            X509Certificate rootCAX509Cert = (X509Certificate) context.getKeyStoreValue().getCertificate(context.getRootAlias());
             if (rootCAX509Cert != null) {
                 X509Certificate[] trustedCertificates = new X509Certificate[1];
                 trustedCertificates[0] = rootCAX509Cert;
@@ -173,29 +172,21 @@ public class LwM2MSetSecurityStoreServer {
         }
     }
 
-    private KeyStore getKeyStoreServer() {
-        KeyStore keyStoreServer = null;
-        try {
-            keyStoreServer = (context.getKeyStoreValue() != null && context.getKeyStoreValue().size() > 0) ? context.getKeyStoreValue() : getInKeyStore(context);
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        }
-
+    private void setBuilderX509() {
         /**
          * For deb => KeyStorePathFile == yml or commandline: KEY_STORE_PATH_FILE
          * For idea => KeyStorePathResource == common/transport/lwm2m/src/main/resources/credentials: in LwM2MTransportContextServer: credentials/serverKeyStore.jks
          */
         try {
-           if (keyStoreServer != null) {
-               X509Certificate serverCertificate = (X509Certificate) keyStoreServer.getCertificate(context.getServerAlias());
-               PrivateKey privateKey = (PrivateKey) keyStoreServer.getKey(context.getServerAlias(), context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
+           if (context.getKeyStoreValue() != null) {
+               X509Certificate serverCertificate = (X509Certificate) context.getKeyStoreValue().getCertificate(context.getServerAlias());
+               PrivateKey privateKey = (PrivateKey) context.getKeyStoreValue().getKey(context.getServerAlias(), context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
                this.builder.setPrivateKey(privateKey);
                this.builder.setCertificateChain(new X509Certificate[]{serverCertificate});
            }
         } catch (Exception ex) {
             log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
         }
-        return keyStoreServer;
     }
 
     private void getParamsPSK() {

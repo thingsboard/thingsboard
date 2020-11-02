@@ -19,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.lwm2m.BootstrapSecurityConfig;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
+import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -62,11 +62,12 @@ public class DeviceLwm2mController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{securityMode}", method = RequestMethod.GET)
+    @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{securityMode}/{bootstrapServerIs}", method = RequestMethod.GET)
     @ResponseBody
-    public BootstrapSecurityConfig getLwm2mBootstrapSecurityKey(@PathVariable("securityMode") String securityMode) throws ThingsboardException {
+    public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(@PathVariable("securityMode") String securityMode,
+                                                              @PathVariable("bootstrapServerIs") boolean bootstrapServerIs) throws ThingsboardException {
         try {
-            return lwM2MModelsRepository.getLwm2mBootstrapSecurityKey(securityMode);
+            return lwM2MModelsRepository.getBootstrapSecurityInfo(securityMode, bootstrapServerIs);
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -18,6 +18,7 @@ package org.thingsboard.server.service.lwm2m;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.core.util.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.data.domain.PageImpl;
@@ -31,6 +32,11 @@ import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBoo
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
 
+import java.math.BigInteger;
+import java.security.*;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import java.security.spec.*;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -40,7 +46,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
 @Service
-@ConditionalOnExpression("('${(service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
+@ConditionalOnExpression("('${(service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core')")
 public class LwM2MModelsRepository {
 
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
@@ -117,51 +123,126 @@ public class LwM2MModelsRepository {
         return pageData;
     }
 
-    public BootstrapSecurityConfig getLwm2mBootstrapSecurityKey(String securityMode) {
+    /**
+     *
+     * @param securityMode
+     * @param bootstrapServerIs
+     * @return ServerSecurityConfig more value is default: Important - port, host, publicKey
+     */
+    public ServerSecurityConfig getBootstrapSecurityInfo(String securityMode, boolean bootstrapServerIs) {
         LwM2MSecurityMode lwM2MSecurityMode = LwM2MSecurityMode.fromSecurityMode(securityMode.toLowerCase());
-        switch (lwM2MSecurityMode) {
-            case RPK:
-                return  getBootstrapSecurityInfoRPK();
-            case X509:
-                return getBootstrapSecurityInfoX509();
-            default:
-                break;
-        }
-        return null;
+        return getBootstrapServer(bootstrapServerIs, lwM2MSecurityMode);
     }
 
-    private BootstrapSecurityConfig getBootstrapSecurityInfoRPK() {
-        BootstrapSecurityConfig bsConf = new BootstrapSecurityConfig();
-        bsConf.setBootstrapServer(getBootstrapServer (true));
-        bsConf.setLwm2mServer(getBootstrapServer (false));
-        return bsConf;
-
-    }
-
-    private BootstrapSecurityConfig getBootstrapSecurityInfoX509() {
-        BootstrapSecurityConfig bsConf = new BootstrapSecurityConfig();
-
-        return bsConf;
-
-    }
-
-    private ServerSecurityConfig getBootstrapServer (boolean bootstrapServerIs) {
+    /**
+     *
+     * @param bootstrapServerIs
+     * @param mode
+     * @return ServerSecurityConfig more value is default: Important - port, host, publicKey
+     */
+    private ServerSecurityConfig getBootstrapServer(boolean bootstrapServerIs, LwM2MSecurityMode mode) {
         ServerSecurityConfig bsServ = new ServerSecurityConfig();
         if (bootstrapServerIs) {
-
-        }
-        else {
+            switch (mode) {
+                case NO_SEC:
+                    bsServ.setHost(contextBs.getBootstrapHost());
+                    bsServ.setPort(contextBs.getBootstrapPort());
+                    bsServ.setServerPublicKey("");
+                    break;
+                case PSK:
+                    bsServ.setHost(contextBs.getBootstrapSecureHost());
+                    bsServ.setPort(contextBs.getBootstrapSecurePort());
+                    bsServ.setServerPublicKey("");
+                    break;
+                case RPK:
+                    bsServ.setHost(contextBs.getBootstrapSecureHost());
+                    bsServ.setPort(contextBs.getBootstrapSecurePort());
+                    bsServ.setServerPublicKey(getRPKPublicKey(this.contextBs.getBootstrapPublicX(), this.contextBs.getBootstrapPublicY()));
+                    break;
+                case X509:
+                    bsServ.setHost(contextBs.getBootstrapSecureHost());
+                    bsServ.setPort(contextBs.getBootstrapSecurePortCert());
+                    bsServ.setServerPublicKey(getServerPublicKeyX509(contextBs.getBootstrapAlias()));
+                    break;
+                default:
+                    break;
+            }
+        } else {
             bsServ.setBootstrapServerIs(bootstrapServerIs);
             bsServ.setServerId(123);
+            switch (mode) {
+                case NO_SEC:
+                    bsServ.setHost(contextS.getServerHost());
+                    bsServ.setPort(contextS.getServerPort());
+                    bsServ.setServerPublicKey("");
+                    break;
+                case PSK:
+                    bsServ.setHost(contextS.getServerSecureHost());
+                    bsServ.setPort(contextS.getServerSecurePort());
+                    bsServ.setServerPublicKey("");
+                    break;
+                case RPK:
+                    bsServ.setHost(contextS.getServerSecureHost());
+                    bsServ.setPort(contextS.getServerSecurePort());
+                    bsServ.setServerPublicKey(getRPKPublicKey(this.contextS.getServerPublicX(), this.contextS.getServerPublicY()));
+                    break;
+                case X509:
+                    bsServ.setHost(contextS.getServerSecureHost());
+                    bsServ.setPort(contextS.getServerPortCert());
+                    bsServ.setServerPublicKey(getServerPublicKeyX509(contextS.getServerAlias()));
+                    break;
+                default:
+                    break;
+            }
         }
         return bsServ;
     }
 
     /**
-     * export const BOOTSTRAP_PUBLIC_KEY_RPK = '3059301306072A8648CE3D020106082A8648CE3D03010703420004993EF2B698C6A9C0C1D8BE78B13A9383C0854C7C7C7A504D289B403794648183267412D5FC4E5CEB2257CB7FD7F76EBDAC2FA9AA100AFB162E990074CC0BFAA2';
-     * export const LWM2M_SERVER_PUBLIC_KEY_RPK = '3059301306072A8648CE3D020106082A8648CE3D03010703420004405354EA8893471D9296AFBC8B020A5C6201B0BB25812A53B849D4480FA5F06930C9237E946A3A1692C1CAFAA01A238A077F632C99371348337512363F28212B';
-     * export const BOOTSTRAP_PUBLIC_KEY_X509 = '30820249308201eca003020102020439d220d5300c06082a8648ce3d04030205003076310b3009060355040613025553310b3009060355040813024341310b300906035504071302534631143012060355040a130b5468696e6773626f61726431143012060355040b130b5468696e6773626f6172643121301f060355040313186e69636b2d5468696e6773626f6172642020726f6f7443413020170d3230303632343039313230395a180f32313230303533313039313230395a308197310b3009060355040613025553310b3009060355040813024341310b300906035504071302534631143012060355040a130b5468696e6773626f61726431143012060355040b130b5468696e6773626f61726431423040060355040313396e69636b2d5468696e6773626f61726420626f6f74737472617020736572766572204c774d324d207369676e656420627920726f6f742043413059301306072a8648ce3d020106082a8648ce3d03010703420004cf870030ce976dd3d1b034f135ef299fbbb288b0c54af5a5aef08239c635d615577f37fb8282f0ce1706db2bd83bb46eea05584b6db04ce0f08494875153d140a3423040301f0603551d23041830168014330c72547f0c8ae50332260ee1d29e172cdcbde7301d0603551d0e041604143ee7b65fef5f50da8b026b10ab0a4835e9db0aec300c06082a8648ce3d04030205000349003046022100a2c5a3617f9315d10782e3911519b7c9a27b6bbc87c8ca7aad2c5978a88cf8ad022100bd6682c9f87e09d94f498d277d2e8b86b35c4c0b0f3541305ed3f4e8c30d971f';
-     * export const LWM2M_SERVER_PUBLIC_KEY_X509 = '3082023f308201e2a003020102020452e452ab300c06082a8648ce3d04030205003076310b3009060355040613025553310b3009060355040813024341310b300906035504071302534631143012060355040a130b5468696e6773626f61726431143012060355040b130b5468696e6773626f6172643121301f060355040313186e69636b2d5468696e6773626f6172642020726f6f7443413020170d3230303632343039313230385a180f32313230303533313039313230385a30818d310b3009060355040613025553310b3009060355040813024341310b300906035504071302534631143012060355040a130b5468696e6773626f61726431143012060355040b130b5468696e6773626f617264313830360603550403132f6e69636b2d5468696e6773626f61726420736572766572204c774d324d207369676e656420627920726f6f742043413059301306072a8648ce3d020106082a8648ce3d0301070342000461cde351cfeca5e4c65957d538982226b6625d2e456f0c7e993d8be8f23d5779441ba34cffe84d34acd4ba67d100861100edd0e77e70c0582324f4ed335c171ca3423040301f0603551d23041830168014330c72547f0c8ae50332260ee1d29e172cdcbde7301d0603551d0e0416041490eff1d5323fcd5620da145a7cfd27eeefb8d34a300c06082a8648ce3d04030205000349003046022100b21c02023ed29382441d2b4fcba2d28dbfad6f7e37349594819acc87dd7600d4022100c053000ef668187f6ab567c3401e8a67206e97a534c0db8400d819151a9c0f2e';
+     *
+     * @param alias
+     * @return PublicKey format HexString or null
      */
+    private String getServerPublicKeyX509 (String alias) {
+        try {
+            X509Certificate  serverCertificate = (X509Certificate) contextS.getKeyStoreValue().getCertificate(alias);
+            return  Hex.encodeHexString(serverCertificate.getEncoded());
+        } catch (CertificateEncodingException | KeyStoreException e) {
+            e.printStackTrace();
+        }
+        return  null;
+    }
+
+    /**
+     *
+     * @param publicServerX
+     * @param publicServerY
+     * @return  PublicKey format HexString or null
+     */
+    private String getRPKPublicKey(String publicServerX, String publicServerY) {
+        try {
+            /** Get Elliptic Curve Parameter spec for secp256r1 */
+            AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
+            algoParameters.init(new ECGenParameterSpec("secp256r1"));
+            ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
+            if (publicServerX != null && !publicServerX.isEmpty() && publicServerY != null && !publicServerY.isEmpty()) {
+                /** Get point values */
+                byte[] publicX = Hex.decodeHex(publicServerX.toCharArray());
+                byte[] publicY = Hex.decodeHex(publicServerY.toCharArray());
+                /** Create key specs */
+                KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
+                        parameterSpec);
+                /** Get keys */
+                PublicKey  publicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
+                if (publicKey != null && publicKey.getEncoded().length > 0 ) {
+                   return Hex.encodeHexString(publicKey.getEncoded());
+                }
+            }
+        } catch (GeneralSecurityException | IllegalArgumentException e) {
+            log.error("[{}] Failed generate Server RPK for profile", e.getMessage());
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
 }
 

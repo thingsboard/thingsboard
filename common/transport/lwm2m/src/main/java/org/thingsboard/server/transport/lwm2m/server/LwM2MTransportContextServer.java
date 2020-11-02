@@ -42,14 +42,15 @@ import org.thingsboard.server.common.transport.TransportContext;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.util.List;
 
 @Slf4j
 @Component
-//@ConditionalOnExpression("('${(service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 @ConditionalOnExpression("('${(service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core')")
 public class LwM2MTransportContextServer extends TransportContext {
 
@@ -63,6 +64,9 @@ public class LwM2MTransportContextServer extends TransportContext {
 
     @Getter
     private String MODEL_RESOURCE_PATH_DEFAULT = "/models";
+
+    @Getter
+    private String KEY_STORE_DEFAULT_RESOURCE_PATH = "credentials/serverKeyStore.jks";
 
     @Getter
     @Setter
@@ -157,10 +161,30 @@ public class LwM2MTransportContextServer extends TransportContext {
         modelsValue = ObjectLoader.loadDefault();
         File path = getPathModels();
         modelsValue.addAll(ObjectLoader.loadObjectsFromDir(path));
+        getInKeyStore();
     }
 
     private File getPathModels() {
         return (modelPathFile != null && !modelPathFile.isEmpty()) ? new File(modelPathFile) :
                 new File(getClass().getResource(MODEL_RESOURCE_PATH_DEFAULT).getPath());
+    }
+
+    private KeyStore getInKeyStore() {
+        KeyStore keyStoreServer = null;
+        try {
+            if (keyStoreValue != null && keyStoreValue.size() > 0)
+                return keyStoreValue;
+        }
+        catch (KeyStoreException e) {
+        }
+        try (InputStream inKeyStore = keyStorePathFile.isEmpty() ?
+                ClassLoader.getSystemResourceAsStream(KEY_STORE_DEFAULT_RESOURCE_PATH) : new FileInputStream(new File(keyStorePathFile))) {
+            keyStoreServer = KeyStore.getInstance(keyStoreType);
+            keyStoreServer.load(inKeyStore, keyStorePasswordServer == null ? null : keyStorePasswordServer.toCharArray());
+        } catch (Exception ex) {
+            log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
+        }
+        keyStoreValue = keyStoreServer;
+        return  keyStoreValue;
     }
 }

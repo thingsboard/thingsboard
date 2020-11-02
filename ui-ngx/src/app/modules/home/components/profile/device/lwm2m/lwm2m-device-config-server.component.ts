@@ -21,19 +21,13 @@ import {
   FormBuilder, FormGroup, NG_VALUE_ACCESSOR, NgModel, Validators
 } from "@angular/forms";
 import {
-  BOOTSTRAP_SERVER,
   SECURITY_CONFIG_MODE,
   SECURITY_CONFIG_MODE_NAMES,
-  getDefaultPortBootstrap,
-  getDefaultPortServer,
-  KEY_IDENT_REGEXP_PSK,
   KEY_PUBLIC_REGEXP_PSK,
   ServerSecurityConfig,
-  DeviceCredentialsDialogLwm2mData,
   LEN_MAX_PSK,
   LEN_MAX_PRIVATE_KEY,
   LEN_MAX_PUBLIC_KEY_RPK,
-  KEY_PRIVATE_REGEXP,
   LEN_MAX_PUBLIC_KEY_X509,
   KEY_PUBLIC_REGEXP_X509
 } from "./profile-config.models";
@@ -47,6 +41,7 @@ import {
 } from "../../../../pages/device/lwm2m/security-config.models";
 import { WINDOW } from "../../../../../../core/services/window.service";
 import { pairwise, startWith } from 'rxjs/operators';
+import { DeviceProfileService } from '@core/http/device-profile.service';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-config-server',
@@ -92,13 +87,15 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
 
   constructor(protected store: Store<AppState>,
               public fb: FormBuilder,
+              private deviceProfileService: DeviceProfileService,
               @Inject(WINDOW) private window: Window) {
     this.serverFormGroup = this.getServerGroup();
     this.serverFormGroup.get('securityMode').valueChanges.pipe(
       startWith(null),
       pairwise()
     ).subscribe(([previousValue, currentValue]) => {
-      if (previousValue !== currentValue) {
+      if (previousValue === null || previousValue !== currentValue) {
+        this.getLwm2mBootstrapSecurityInfo(currentValue);
         this.updateValidate(currentValue);
         this.serverFormGroup.updateValueAndValidity();
       }
@@ -125,33 +122,24 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   updateValidate(securityMode: SECURITY_CONFIG_MODE): void {
     switch (securityMode) {
       case SECURITY_CONFIG_MODE.NO_SEC:
-        this.serverFormGroup.get('clientPublicKeyOrId').setValidators([]);
-        this.serverFormGroup.get('clientSecretKey').setValidators([]);
         this.serverFormGroup.get('serverPublicKey').setValidators([]);
         break;
       case SECURITY_CONFIG_MODE.PSK:
         this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_RPK;
         this.lenMaxClientSecretKey = LEN_MAX_PSK;
         this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK;
-        this.serverFormGroup.get('clientPublicKeyOrId').clearValidators();
-        this.serverFormGroup.get('clientPublicKeyOrId').setValidators([Validators.required]);
-        this.serverFormGroup.get('clientSecretKey').setValidators([Validators.required, Validators.pattern(KEY_IDENT_REGEXP_PSK)]);
         this.serverFormGroup.get('serverPublicKey').setValidators([]);
         break;
       case SECURITY_CONFIG_MODE.RPK:
         this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_X509;
         this.lenMaxClientSecretKey = LEN_MAX_PRIVATE_KEY;
         this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_X509;
-        this.serverFormGroup.get('clientPublicKeyOrId').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
-        this.serverFormGroup.get('clientSecretKey').setValidators([Validators.required, Validators.pattern(KEY_PRIVATE_REGEXP)]);
         this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_PSK)]);
         break;
       case SECURITY_CONFIG_MODE.X509:
         this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_X509;
         this.lenMaxClientSecretKey = LEN_MAX_PRIVATE_KEY;
         this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_X509;
-        this.serverFormGroup.get('clientPublicKeyOrId').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
-        this.serverFormGroup.get('clientSecretKey').setValidators([Validators.required, Validators.pattern(KEY_PRIVATE_REGEXP)]);
         this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
         break;
     }
@@ -163,8 +151,8 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
         host: this.serverFormGroup.get('host').value,
         port: this.serverFormGroup.get('port').value,
         bootstrapServerIs: this.serverFormGroup.get('bootstrapServerIs').value,
-        clientPublicKeyOrId: this.serverFormGroup.get('clientPublicKeyOrId').value,
-        clientSecretKey: this.serverFormGroup.get('clientSecretKey').value,
+        // clientPublicKeyOrId: this.serverFormGroup.get('clientPublicKeyOrId').value,
+        // clientSecretKey: this.serverFormGroup.get('clientSecretKey').value,
         serverPublicKey: this.serverFormGroup.get('serverPublicKey').value,
         clientHoldOffTime: this.serverFormGroup.get('clientHoldOffTime').value,
         serverId: this.serverFormGroup.get('serverId').value,
@@ -224,8 +212,8 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
       port: [port, this.required ? [Validators.required] : []],
       bootstrapServerIs: [this.bootstrapServerIs, []],
       securityMode: [this.fb.control(SECURITY_CONFIG_MODE.NO_SEC), []],
-      clientPublicKeyOrId: ['', this.required ? [Validators.required] : []],
-      clientSecretKey: ['', this.required ? [Validators.required] : []],
+      // clientPublicKeyOrId: ['', this.required ? [Validators.required] : []],
+      // clientSecretKey: ['', this.required ? [Validators.required] : []],
       serverPublicKey: ['', this.required ? [Validators.required] : []],
       clientHoldOffTime: [DEFAULT_CLIENT_HOLD_OFF_TIME, this.required ? [Validators.required] : []],
       serverId: [DEFAULT_ID_SERVER, this.required ? [Validators.required] : []],
@@ -233,5 +221,20 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
     })
   }
 
+  getLwm2mBootstrapSecurityInfo(mode: string) {
+    this.deviceProfileService.getLwm2mBootstrapSecurityInfo(mode, this.serverFormGroup.get('bootstrapServerIs').value).subscribe(
+      (serverSecurityConfig) => {
+        this.serverFormGroup.patchValue({
+            host: serverSecurityConfig.host,
+            port: serverSecurityConfig.port,
+            serverPublicKey: serverSecurityConfig.serverPublicKey,
+            clientHoldOffTime: serverSecurityConfig.clientHoldOffTime,
+            serverId: serverSecurityConfig.serverId,
+            bootstrapServerAccountTimeout: serverSecurityConfig.bootstrapServerAccountTimeout
+          },
+          {emitEvent: true});
+      }
+    );
+  }
 
 }

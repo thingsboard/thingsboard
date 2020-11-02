@@ -147,25 +147,25 @@ public class LwM2MTransportHandler{
         this.lhServerNoSecPskRpk.getObservationService().addListener(lwM2mServerListener.observationListener);
     }
 
-    public static KeyStore getInKeyStore(LwM2MTransportContextServer context) {
-        KeyStore keyStoreServer = null;
-        try {
-            if (context.getKeyStoreValue() != null && context.getKeyStoreValue().size() > 0)
-                return context.getKeyStoreValue();
-        }
-        catch (KeyStoreException e) {
-        }
-        try (InputStream inKeyStore = context.getKeyStorePathFile().isEmpty() ?
-                ClassLoader.getSystemResourceAsStream(KEY_STORE_DEFAULT_RESOURCE_PATH) : new FileInputStream(new File(context.getKeyStorePathFile()))) {
-            keyStoreServer = KeyStore.getInstance(context.getKeyStoreType());
-            keyStoreServer.load(inKeyStore, context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
-        } catch (Exception ex) {
-            log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
-        }
-
-        context.setKeyStoreValue(keyStoreServer);
-        return keyStoreServer;
-    }
+//    public static KeyStore getInKeyStore(LwM2MTransportContextServer context) {
+//        KeyStore keyStoreServer = null;
+//        try {
+//            if (context.getKeyStoreValue() != null && context.getKeyStoreValue().size() > 0)
+//                return context.getKeyStoreValue();
+//        }
+//        catch (KeyStoreException e) {
+//        }
+//        try (InputStream inKeyStore = context.getKeyStorePathFile().isEmpty() ?
+//                ClassLoader.getSystemResourceAsStream(KEY_STORE_DEFAULT_RESOURCE_PATH) : new FileInputStream(new File(context.getKeyStorePathFile()))) {
+//            keyStoreServer = KeyStore.getInstance(context.getKeyStoreType());
+//            keyStoreServer.load(inKeyStore, context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
+//        } catch (Exception ex) {
+//            log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
+//        }
+//
+//        context.setKeyStoreValue(keyStoreServer);
+//        return keyStoreServer;
+//    }
 
     public static List<ObjectModel> getModels(LwM2MTransportContextServer context) {
         if (context.getModelsValue() != null && context.getModelsValue().size() > 0) return context.getModelsValue();
