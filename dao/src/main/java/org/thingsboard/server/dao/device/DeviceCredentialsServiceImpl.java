@@ -147,7 +147,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     private DataValidator<DeviceCredentials> credentialsValidator =
             new DataValidator<DeviceCredentials>() {
 
-                private int maxRetryCount = 5;
+                private int maxRetryCount = 10;
                 private int attemptRetryInterval = 1000;
 
                 @Override
