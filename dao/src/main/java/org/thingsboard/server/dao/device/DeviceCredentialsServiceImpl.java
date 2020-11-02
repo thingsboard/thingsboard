@@ -190,7 +190,11 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                             found = true;
                         } else {
                             retryCount += 1;
-                            Thread.sleep(attemptRetryInterval);
+                            try {
+                                Thread.sleep(attemptRetryInterval);
+                            } catch (InterruptedException e) {
+                                log.error("validateDataImpl error", e);
+                            }
                         }
                     }
                     if (!found) {
