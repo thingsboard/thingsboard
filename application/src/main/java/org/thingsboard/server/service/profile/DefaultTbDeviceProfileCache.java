@@ -26,11 +26,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @Service
@@ -43,7 +43,8 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
 
     private final ConcurrentMap<DeviceProfileId, DeviceProfile> deviceProfilesMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, DeviceProfileId> devicesMap = new ConcurrentHashMap<>();
-    private final ConcurrentMap<TenantId, ConcurrentMap<EntityId, Consumer<DeviceProfile>>> listeners = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, ConcurrentMap<EntityId, Consumer<DeviceProfile>>> profileListeners = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, ConcurrentMap<EntityId, BiConsumer<DeviceId, DeviceProfile>>> deviceProfileListeners = new ConcurrentHashMap<>();
 
     public DefaultTbDeviceProfileCache(DeviceProfileService deviceProfileService, DeviceService deviceService) {
         this.deviceProfileService = deviceProfileService;
@@ -88,32 +89,36 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
     }
 
     @Override
-    public void put(DeviceProfile profile) {
-        if (profile.getId() != null) {
-            deviceProfilesMap.put(profile.getId(), profile);
-            log.debug("[{}] pushed device profile to cache: {}", profile.getId(), profile);
-            notifyListeners(profile);
-        }
-    }
-
-    @Override
     public void evict(TenantId tenantId, DeviceProfileId profileId) {
         DeviceProfile oldProfile = deviceProfilesMap.remove(profileId);
         log.debug("[{}] evict device profile from cache: {}", profileId, oldProfile);
         DeviceProfile newProfile = get(tenantId, profileId);
         if (newProfile != null) {
-            notifyListeners(newProfile);
+            notifyProfileListeners(newProfile);
         }
     }
 
     @Override
-    public void evict(DeviceId deviceId) {
-        devicesMap.remove(deviceId);
+    public void evict(TenantId tenantId, DeviceId deviceId) {
+        DeviceProfileId old = devicesMap.remove(deviceId);
+        if (old != null) {
+            DeviceProfile newProfile = get(tenantId, deviceId);
+            if (newProfile == null || !old.equals(newProfile.getId())) {
+                notifyDeviceListeners(deviceId, newProfile);
+            }
+        }
     }
 
     @Override
-    public void addListener(TenantId tenantId, EntityId listenerId, Consumer<DeviceProfile> listener) {
-        listeners.computeIfAbsent(tenantId, id -> new ConcurrentHashMap<>()).put(listenerId, listener);
+    public void addListener(TenantId tenantId, EntityId listenerId,
+                            Consumer<DeviceProfile> profileListener,
+                            BiConsumer<DeviceId, DeviceProfile> deviceListener) {
+        if (profileListener != null) {
+            profileListeners.computeIfAbsent(tenantId, id -> new ConcurrentHashMap<>()).put(listenerId, profileListener);
+        }
+        if (deviceListener != null) {
+            deviceProfileListeners.computeIfAbsent(tenantId, id -> new ConcurrentHashMap<>()).put(listenerId, deviceListener);
+        }
     }
 
     @Override
@@ -128,16 +133,27 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
 
     @Override
     public void removeListener(TenantId tenantId, EntityId listenerId) {
-        ConcurrentMap<EntityId, Consumer<DeviceProfile>> tenantListeners = listeners.get(tenantId);
+        ConcurrentMap<EntityId, Consumer<DeviceProfile>> tenantListeners = profileListeners.get(tenantId);
         if (tenantListeners != null) {
             tenantListeners.remove(listenerId);
         }
+        ConcurrentMap<EntityId, BiConsumer<DeviceId, DeviceProfile>> deviceListeners = deviceProfileListeners.get(tenantId);
+        if (deviceListeners != null) {
+            deviceListeners.remove(listenerId);
+        }
     }
 
-    private void notifyListeners(DeviceProfile profile) {
-        ConcurrentMap<EntityId, Consumer<DeviceProfile>> tenantListeners = listeners.get(profile.getTenantId());
+    private void notifyProfileListeners(DeviceProfile profile) {
+        ConcurrentMap<EntityId, Consumer<DeviceProfile>> tenantListeners = profileListeners.get(profile.getTenantId());
         if (tenantListeners != null) {
             tenantListeners.forEach((id, listener) -> listener.accept(profile));
+        }
+    }
+
+    private void notifyDeviceListeners(DeviceId deviceId, DeviceProfile profile) {
+        ConcurrentMap<EntityId, BiConsumer<DeviceId, DeviceProfile>> tenantListeners = deviceProfileListeners.get(profile.getTenantId());
+        if (tenantListeners != null) {
+            tenantListeners.forEach((id, listener) -> listener.accept(deviceId, profile));
         }
     }
 

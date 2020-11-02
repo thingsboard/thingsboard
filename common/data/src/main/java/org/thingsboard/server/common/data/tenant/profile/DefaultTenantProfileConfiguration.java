@@ -61,4 +61,9 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     public TenantProfileType getType() {
         return TenantProfileType.DEFAULT;
     }
+
+    @Override
+    public int getMaxRuleNodeExecsPerMessage() {
+        return maxRuleNodeExecutionsPerMessage;
+    }
 }

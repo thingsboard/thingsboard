@@ -37,4 +37,7 @@ public interface TenantProfileConfiguration {
     @JsonIgnore
     long getProfileThreshold(ApiUsageRecordKey key);
 
+    @JsonIgnore
+    int getMaxRuleNodeExecsPerMessage();
+
 }
