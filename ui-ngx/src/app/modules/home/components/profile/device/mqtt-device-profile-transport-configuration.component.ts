@@ -92,7 +92,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     });
     let configurationFormGroup = this.mqttDeviceProfileTransportConfigurationFormGroup.controls.configuration as FormGroup;
     configurationFormGroup.get('transportPayloadType').valueChanges.subscribe(payloadType => {
-        this.updateTransportPayloadBasedControls(type, configurationFormGroup)
+        this.updateTransportPayloadBasedControls(payloadType, configurationFormGroup)
         this.mqttDeviceProfileTransportConfigurationFormGroup.updateValueAndValidity();
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
