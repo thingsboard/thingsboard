@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -215,6 +215,12 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
                 protected void validateDataImpl(TenantId tenantId, TenantProfile tenantProfile) {
                     if (StringUtils.isEmpty(tenantProfile.getName())) {
                         throw new DataValidationException("Tenant profile name should be specified!");
+                    }
+                    if (tenantProfile.getProfileData() == null) {
+                        throw new DataValidationException("Tenant profile data should be specified!");
+                    }
+                    if (tenantProfile.getProfileData().getConfiguration() == null) {
+                        throw new DataValidationException("Tenant profile data configuration should be specified!");
                     }
                     if (tenantProfile.isDefault()) {
                         TenantProfile defaultTenantProfile = findDefaultTenantProfile(tenantId);

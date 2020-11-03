@@ -156,7 +156,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         } finally {
             updateLock.unlock();
         }
-        tsWsService.saveAndNotify(tenantId, tenantState.getApiUsageState().getId(), updatedEntries, 0L, VOID_CALLBACK);
+        tsWsService.saveAndNotifyInternal(tenantId, tenantState.getApiUsageState().getId(), updatedEntries, 0L, VOID_CALLBACK);
         if (!result.isEmpty()) {
             persistAndNotify(tenantState, result);
         }
@@ -256,7 +256,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
             }
         }
         if (!profileThresholds.isEmpty()) {
-            tsWsService.saveAndNotify(tenantId, id, profileThresholds, 0L, VOID_CALLBACK);
+            tsWsService.saveAndNotifyInternal(tenantId, id, profileThresholds, 0L, VOID_CALLBACK);
         }
     }
 
@@ -266,7 +266,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         long ts = System.currentTimeMillis();
         List<TsKvEntry> stateTelemetry = new ArrayList<>();
         result.forEach(((apiFeature, aState) -> stateTelemetry.add(new BasicTsKvEntry(ts, new BooleanDataEntry(apiFeature.getApiStateKey(), aState)))));
-        tsWsService.saveAndNotify(state.getTenantId(), state.getApiUsageState().getId(), stateTelemetry, 0L, VOID_CALLBACK);
+        tsWsService.saveAndNotifyInternal(state.getTenantId(), state.getApiUsageState().getId(), stateTelemetry, 0L, VOID_CALLBACK);
     }
 
     private void checkStartOfNextCycle() {
