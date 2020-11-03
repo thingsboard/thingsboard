@@ -168,10 +168,10 @@ public class LwM2MTransportHandler{
 //    }
 
     public static List<ObjectModel> getModels(LwM2MTransportContextServer context) {
-        if (context.getModelsValue() != null && context.getModelsValue().size() > 0) return context.getModelsValue();
+        if (context.getCtxServer().getModelsValue() != null && context.getCtxServer().getModelsValue().size() > 0) return context.getCtxServer().getModelsValue();
         List<ObjectModel> models = ObjectLoader.loadDefault();
-        if (context.getModelPathFile() != null && !context.getModelPathFile().isEmpty()) {
-            models.addAll(ObjectLoader.loadObjectsFromDir(new File(context.getModelPathFile())));
+        if (context.getCtxServer().getModelPathFile() != null && !context.getCtxServer().getModelPathFile().isEmpty()) {
+            models.addAll(ObjectLoader.loadObjectsFromDir(new File(context.getCtxServer().getModelPathFile())));
         } else {
             try {
                 List<ObjectModel> listModels = ObjectLoader.loadDdfResources(MODEL_DEFAULT_RESOURCE_PATH, modelPaths);
@@ -180,7 +180,7 @@ public class LwM2MTransportHandler{
                 log.error(e.toString());
             }
         }
-        context.setModelsValue(models);
+        context.getCtxServer().setModelsValue(models);
         return models;
     }
 

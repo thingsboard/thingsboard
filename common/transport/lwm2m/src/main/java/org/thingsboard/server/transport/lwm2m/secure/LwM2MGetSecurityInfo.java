@@ -87,7 +87,7 @@ public class LwM2MGetSecurityInfo {
                     }
                 });
         try {
-            latch.await(contextS.getTimeout(), TimeUnit.MILLISECONDS);
+            latch.await(contextS.getCtxServer().getTimeout(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

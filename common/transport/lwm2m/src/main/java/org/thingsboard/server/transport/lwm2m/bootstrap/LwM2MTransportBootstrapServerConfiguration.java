@@ -39,10 +39,6 @@ import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.RP
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getCoapConfig;
 
 @Slf4j
-//@ComponentScan("org.thingsboard.server.transport.lwm2m.server")
-//@ComponentScan("org.thingsboard.server.transport.lwm2m.bootstrap")
-//@ComponentScan("org.thingsboard.server.transport.lwm2m.utils")
-//@Configuration("LwM2MTransportBootstrapServerConfiguration")
 @Component
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true')")
 public class LwM2MTransportBootstrapServerConfiguration {
@@ -64,19 +60,19 @@ public class LwM2MTransportBootstrapServerConfiguration {
     @Bean(name = "leshanBootstrapCert")
     public LeshanBootstrapServer getLeshanBootstrapServerCert() {
         log.info("Prepare and start BootstrapServerCert... PostConstruct");
-        return getLeshanBootstrapServer(contextBs.getBootstrapPortCert(), contextBs.getBootstrapSecurePortCert(), X509);
+        return getLeshanBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPortCert(), this.contextBs.getCtxBootStrap().getBootstrapSecurePortCert(), X509);
     }
 
     @Bean(name = "leshanBootstrapRPK")
     public LeshanBootstrapServer getLeshanBootstrapServerRPK() {
         log.info("Prepare and start BootstrapServerRPK... PostConstruct");
-        return getLeshanBootstrapServer(contextBs.getBootstrapPort(), contextBs.getBootstrapSecurePort(), RPK);
+        return getLeshanBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPort(), this.contextBs.getCtxBootStrap().getBootstrapSecurePort(), RPK);
     }
 
     public LeshanBootstrapServer getLeshanBootstrapServer(Integer bootstrapPort, Integer bootstrapSecurePort, LwM2MSecurityMode dtlsMode) {
         LeshanBootstrapServerBuilder builder = new LeshanBootstrapServerBuilder();
-        builder.setLocalAddress(contextBs.getBootstrapHost(), bootstrapPort);
-        builder.setLocalSecureAddress(contextBs.getBootstrapSecureHost(), bootstrapSecurePort);
+        builder.setLocalAddress(this.contextBs.getCtxBootStrap().getBootstrapHost(), bootstrapPort);
+        builder.setLocalSecureAddress(this.contextBs.getCtxBootStrap().getBootstrapSecureHost(), bootstrapSecurePort);
 
         /** Create CoAP Config */
         builder.setCoapConfig(getCoapConfig ());
@@ -88,11 +84,11 @@ public class LwM2MTransportBootstrapServerConfiguration {
         builder.setSecurityStore(lwM2MBootstrapSecurityStore);
 
         /** Define model provider (Create Models )*/
-        builder.setModel(new StaticModel(contextS.getModelsValue()));
+        builder.setModel(new StaticModel(contextS.getCtxServer().getModelsValue()));
 
         /** Create and Set DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setRecommendedCipherSuitesOnly(contextS.isSupportDeprecatedCiphersEnable());
+        dtlsConfig.setRecommendedCipherSuitesOnly(contextS.getCtxServer().isSupportDeprecatedCiphersEnable());
         builder.setDtlsConfig(dtlsConfig);
 
         /**  Create credentials */

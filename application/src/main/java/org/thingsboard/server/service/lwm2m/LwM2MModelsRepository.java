@@ -27,17 +27,22 @@ import org.thingsboard.server.common.data.lwm2m.*;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigBootstrap;
+import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigServer;
 import org.thingsboard.server.dao.service.Validator;
-import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBootstrap;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
 
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
-import java.security.spec.*;
-import java.util.*;
+import java.security.spec.ECGenParameterSpec;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.ECPublicKeySpec;
+import java.security.spec.ECPoint;
+import java.security.spec.KeySpec;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -46,16 +51,20 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
 @Service
-@ConditionalOnExpression("('${(service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core')")
+//@ConditionalOnExpression("('${(service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core')")
+//@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.lwm2m.enabled}'=='true') || '${service.type:null}'=='tb-core'")
+//@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true') || '${service.type:null}'=='tb-core'")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 public class LwM2MModelsRepository {
 
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
     @Autowired
-    LwM2MTransportContextServer contextS;
+    LwM2MTransportConfigServer contextServer;
+
 
     @Autowired
-    LwM2MTransportContextBootstrap contextBs;
+    LwM2MTransportConfigBootstrap contextBootStrap;
 
     /**
      * @param objectIds
@@ -76,8 +85,8 @@ public class LwM2MModelsRepository {
      */
     private List<LwM2mObject> getLwm2mObjects(Predicate<? super ObjectModel> predicate) {
         List<LwM2mObject> lwM2mObjects = new ArrayList<>();
-        List<ObjectModel> listObjects = (predicate == null) ? contextS.getModelsValue() :
-                contextS.getModelsValue().stream()
+        List<ObjectModel> listObjects = (predicate == null) ? this.contextServer.getModelsValue() :
+                contextServer.getModelsValue().stream()
                         .filter(predicate)
                         .collect(Collectors.toList());
         listObjects.forEach(obj -> {
@@ -145,24 +154,24 @@ public class LwM2MModelsRepository {
         if (bootstrapServerIs) {
             switch (mode) {
                 case NO_SEC:
-                    bsServ.setHost(contextBs.getBootstrapHost());
-                    bsServ.setPort(contextBs.getBootstrapPort());
+                    bsServ.setHost(contextBootStrap.getBootstrapHost());
+                    bsServ.setPort(contextBootStrap.getBootstrapPort());
                     bsServ.setServerPublicKey("");
                     break;
                 case PSK:
-                    bsServ.setHost(contextBs.getBootstrapSecureHost());
-                    bsServ.setPort(contextBs.getBootstrapSecurePort());
+                    bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
+                    bsServ.setPort(contextBootStrap.getBootstrapSecurePort());
                     bsServ.setServerPublicKey("");
                     break;
                 case RPK:
-                    bsServ.setHost(contextBs.getBootstrapSecureHost());
-                    bsServ.setPort(contextBs.getBootstrapSecurePort());
-                    bsServ.setServerPublicKey(getRPKPublicKey(this.contextBs.getBootstrapPublicX(), this.contextBs.getBootstrapPublicY()));
+                    bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
+                    bsServ.setPort(contextBootStrap.getBootstrapSecurePort());
+                    bsServ.setServerPublicKey(getRPKPublicKey(this.contextBootStrap.getBootstrapPublicX(), this.contextBootStrap.getBootstrapPublicY()));
                     break;
                 case X509:
-                    bsServ.setHost(contextBs.getBootstrapSecureHost());
-                    bsServ.setPort(contextBs.getBootstrapSecurePortCert());
-                    bsServ.setServerPublicKey(getServerPublicKeyX509(contextBs.getBootstrapAlias()));
+                    bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
+                    bsServ.setPort(contextBootStrap.getBootstrapSecurePortCert());
+                    bsServ.setServerPublicKey(getServerPublicKeyX509(contextBootStrap.getBootstrapAlias()));
                     break;
                 default:
                     break;
@@ -172,24 +181,24 @@ public class LwM2MModelsRepository {
             bsServ.setServerId(123);
             switch (mode) {
                 case NO_SEC:
-                    bsServ.setHost(contextS.getServerHost());
-                    bsServ.setPort(contextS.getServerPort());
+                    bsServ.setHost(contextServer.getServerHost());
+                    bsServ.setPort(contextServer.getServerPort());
                     bsServ.setServerPublicKey("");
                     break;
                 case PSK:
-                    bsServ.setHost(contextS.getServerSecureHost());
-                    bsServ.setPort(contextS.getServerSecurePort());
+                    bsServ.setHost(contextServer.getServerSecureHost());
+                    bsServ.setPort(contextServer.getServerSecurePort());
                     bsServ.setServerPublicKey("");
                     break;
                 case RPK:
-                    bsServ.setHost(contextS.getServerSecureHost());
-                    bsServ.setPort(contextS.getServerSecurePort());
-                    bsServ.setServerPublicKey(getRPKPublicKey(this.contextS.getServerPublicX(), this.contextS.getServerPublicY()));
+                    bsServ.setHost(contextServer.getServerSecureHost());
+                    bsServ.setPort(contextServer.getServerSecurePort());
+                    bsServ.setServerPublicKey(getRPKPublicKey(this.contextServer.getServerPublicX(), this.contextServer.getServerPublicY()));
                     break;
                 case X509:
-                    bsServ.setHost(contextS.getServerSecureHost());
-                    bsServ.setPort(contextS.getServerSecurePortCert());
-                    bsServ.setServerPublicKey(getServerPublicKeyX509(contextS.getServerAlias()));
+                    bsServ.setHost(contextServer.getServerSecureHost());
+                    bsServ.setPort(contextServer.getServerSecurePortCert());
+                    bsServ.setServerPublicKey(getServerPublicKeyX509(contextServer.getServerAlias()));
                     break;
                 default:
                     break;
@@ -205,7 +214,7 @@ public class LwM2MModelsRepository {
      */
     private String getServerPublicKeyX509 (String alias) {
         try {
-            X509Certificate  serverCertificate = (X509Certificate) contextS.getKeyStoreValue().getCertificate(alias);
+            X509Certificate  serverCertificate = (X509Certificate) contextServer.getKeyStoreValue().getCertificate(alias);
             return  Hex.encodeHexString(serverCertificate.getEncoded());
         } catch (CertificateEncodingException | KeyStoreException e) {
             e.printStackTrace();

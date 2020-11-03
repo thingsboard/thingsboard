@@ -97,7 +97,7 @@ public class LwM2MSetSecurityStoreServer {
                  */
                 Pool<Jedis> jedis = null;
                 try {
-                    jedis = new JedisPool(new URI(context.getRedisUrl()));
+                    jedis = new JedisPool(new URI(this.context.getCtxServer().getRedisUrl()));
                     securityStore = new RedisSecurityStore(jedis);
                     builder.setRegistrationStore(new RedisRegistrationStore(jedis));
                 } catch (URISyntaxException e) {
@@ -131,19 +131,19 @@ public class LwM2MSetSecurityStoreServer {
             AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
             algoParameters.init(new ECGenParameterSpec("secp256r1"));
             ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
-            if (context.getServerPublicX() != null && !context.getServerPublicX().isEmpty() && context.getServerPublicY() != null && !context.getServerPublicY().isEmpty()) {
+            if (this.context.getCtxServer().getServerPublicX() != null && !this.context.getCtxServer().getServerPublicX().isEmpty() && this.context.getCtxServer().getServerPublicY() != null && !this.context.getCtxServer().getServerPublicY().isEmpty()) {
                 /** Get point values */
-                byte[] publicX = Hex.decodeHex(context.getServerPublicX().toCharArray());
-                byte[] publicY = Hex.decodeHex(context.getServerPublicY().toCharArray());
+                byte[] publicX = Hex.decodeHex(this.context.getCtxServer().getServerPublicX().toCharArray());
+                byte[] publicY = Hex.decodeHex(this.context.getCtxServer().getServerPublicY().toCharArray());
                 /** Create key specs */
                 KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
                         parameterSpec);
                 /** Get keys */
                 this.publicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
             }
-            if (context.getServerPrivateS() != null && !context.getServerPrivateS().isEmpty()) {
+            if (this.context.getCtxServer().getServerPrivateS() != null && !this.context.getCtxServer().getServerPrivateS().isEmpty()) {
                 /** Get point values */
-                byte[] privateS = Hex.decodeHex(context.getServerPrivateS().toCharArray());
+                byte[] privateS = Hex.decodeHex(this.context.getCtxServer().getServerPrivateS().toCharArray());
                 /** Create key specs */
                 KeySpec privateKeySpec = new ECPrivateKeySpec(new BigInteger(privateS), parameterSpec);
                 /** Get keys */
@@ -158,7 +158,7 @@ public class LwM2MSetSecurityStoreServer {
     private void setServerWithX509Cert() {
         try {
             setBuilderX509();
-            X509Certificate rootCAX509Cert = (X509Certificate) context.getKeyStoreValue().getCertificate(context.getRootAlias());
+            X509Certificate rootCAX509Cert = (X509Certificate) this.context.getCtxServer().getKeyStoreValue().getCertificate(this.context.getCtxServer().getRootAlias());
             if (rootCAX509Cert != null) {
                 X509Certificate[] trustedCertificates = new X509Certificate[1];
                 trustedCertificates[0] = rootCAX509Cert;
@@ -178,9 +178,9 @@ public class LwM2MSetSecurityStoreServer {
          * For idea => KeyStorePathResource == common/transport/lwm2m/src/main/resources/credentials: in LwM2MTransportContextServer: credentials/serverKeyStore.jks
          */
         try {
-           if (context.getKeyStoreValue() != null) {
-               X509Certificate serverCertificate = (X509Certificate) context.getKeyStoreValue().getCertificate(context.getServerAlias());
-               PrivateKey privateKey = (PrivateKey) context.getKeyStoreValue().getKey(context.getServerAlias(), context.getKeyStorePasswordServer() == null ? null : context.getKeyStorePasswordServer().toCharArray());
+           if (this.context.getCtxServer().getKeyStoreValue() != null) {
+               X509Certificate serverCertificate = (X509Certificate) this.context.getCtxServer().getKeyStoreValue().getCertificate(this.context.getCtxServer().getServerAlias());
+               PrivateKey privateKey = (PrivateKey) this.context.getCtxServer().getKeyStoreValue().getKey(this.context.getCtxServer().getServerAlias(), this.context.getCtxServer().getKeyStorePasswordServer() == null ? null : this.context.getCtxServer().getKeyStorePasswordServer().toCharArray());
                this.builder.setPrivateKey(privateKey);
                this.builder.setCertificateChain(new X509Certificate[]{serverCertificate});
            }
@@ -192,7 +192,7 @@ public class LwM2MSetSecurityStoreServer {
     private void getParamsPSK() {
         log.info("\nServer uses PSK -> private key : \n security key : [{}] \n serverSecureURI : [{}]",
                 Hex.encodeHexString(this.privateKey.getEncoded()),
-                context.getServerSecureHost() + ":" + Integer.toString(context.getServerSecurePort()));
+                this.context.getCtxServer().getServerSecureHost() + ":" + Integer.toString(this.context.getCtxServer().getServerSecurePort()));
     }
 
     private void getParamsRPK() {

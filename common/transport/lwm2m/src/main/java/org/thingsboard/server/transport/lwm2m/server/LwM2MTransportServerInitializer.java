@@ -44,13 +44,13 @@ public class LwM2MTransportServerInitializer {
 
     @PostConstruct
     public void init() {
-        if (context.getEnableGenPskRpk()) new LWM2MGenerationPSkRPkECC();
-        if (this.context.isServerStartAll()) {
+        if (this.context.getCtxServer().getEnableGenPskRpk()) new LWM2MGenerationPSkRPkECC();
+        if (this.context.getCtxServer().isServerStartAll()) {
             this.lhServerCert.start();
             this.lhServerNoSecPskRpk.start();
         }
         else {
-            if (this.context.getServerDtlsMode() == LwM2MSecurityMode.X509.code) {
+            if (this.context.getCtxServer().getServerDtlsMode() == LwM2MSecurityMode.X509.code) {
                 this.lhServerCert.start();
             }
             else {

@@ -167,7 +167,7 @@ public class LwM2MTransportService {
             ResultIds pathIds = new ResultIds(url.getUrl());
             if (pathIds.instanceId > -1 && pathIds.resourceId == -1) {
                 lwM2MTransportRequest.sendAllRequest(lwServer, registration, url.getUrl(), GET_TYPE_OPER_READ,
-                        ContentFormat.TLV.getName(), modelClient, null, "", context.getTimeout());
+                        ContentFormat.TLV.getName(), modelClient, null, "", this.context.getCtxServer().getTimeout());
             }
         });
     }
@@ -184,7 +184,7 @@ public class LwM2MTransportService {
             log.warn("[{}] [{}]", modelClient.getEndPoint(), CONNECTION_REFUSED_NOT_AUTHORIZED.toString());
         } else {
             sessionInfo = SessionInfoProto.newBuilder()
-                    .setNodeId(context.getNodeId())
+                    .setNodeId(this.context.getNodeId())
                     .setSessionIdMSB(sessionId.getMostSignificantBits())
                     .setSessionIdLSB(sessionId.getLeastSignificantBits())
                     .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
@@ -470,7 +470,7 @@ public class LwM2MTransportService {
                 if (modelObject != null) {
                     if (getResourceValue(modelObject, pathIds) != null) {
                         lwM2MTransportRequest.sendAllRequest(lwServer, registration, target, GET_TYPE_OPER_OBSERVE,
-                                null, null, null, "", context.getTimeout());
+                                null, null, null, "", this.context.getCtxServer().getTimeout());
                     }
                 }
             }
@@ -840,10 +840,10 @@ public class LwM2MTransportService {
                     .getInstances().get(pathIds.getInstanceId()).getResource(pathIds.getResourceId()).getValue() != null) {
                 if (GET_TYPE_OPER_READ.equals(typeOper)) {
                     lwM2MTransportRequest.sendAllRequest(lwServer, registration, target, typeOper,
-                            ContentFormat.TLV.getName(), null, null, "", context.getTimeout());
+                            ContentFormat.TLV.getName(), null, null, "", this.context.getCtxServer().getTimeout());
                 } else if (GET_TYPE_OPER_OBSERVE.equals(typeOper)) {
                     lwM2MTransportRequest.sendAllRequest(lwServer, registration, target, typeOper,
-                            null, null, null, "", context.getTimeout());
+                            null, null, null, "", this.context.getCtxServer().getTimeout());
                 }
             }
         });
@@ -864,7 +864,7 @@ public class LwM2MTransportService {
      */
     public void doTrigger(LeshanServer lwServer, Registration registration, String path) {
         lwM2MTransportRequest.sendAllRequest(lwServer, registration, path, POST_TYPE_OPER_EXECUTE,
-                ContentFormat.TLV.getName(), null, null, "", context.getTimeout());
+                ContentFormat.TLV.getName(), null, null, "", this.context.getCtxServer().getTimeout());
     }
 
     /**

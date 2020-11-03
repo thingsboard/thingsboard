@@ -79,19 +79,19 @@ public class LwM2MSetSecurityStoreBootstrap {
             AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
             algoParameters.init(new ECGenParameterSpec("secp256r1"));
             ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
-            if (this.contextBs.getBootstrapPublicX() != null && !this.contextBs.getBootstrapPublicX().isEmpty() && this.contextBs.getBootstrapPublicY() != null && !this.contextBs.getBootstrapPublicY().isEmpty()) {
+            if (this.contextBs.getCtxBootStrap().getBootstrapPublicX() != null && !this.contextBs.getCtxBootStrap().getBootstrapPublicX().isEmpty() && this.contextBs.getCtxBootStrap().getBootstrapPublicY() != null && !this.contextBs.getCtxBootStrap().getBootstrapPublicY().isEmpty()) {
                 /** Get point values */
-                byte[] publicX = Hex.decodeHex(this.contextBs.getBootstrapPublicX().toCharArray());
-                byte[] publicY = Hex.decodeHex(this.contextBs.getBootstrapPublicY().toCharArray());
+                byte[] publicX = Hex.decodeHex(this.contextBs.getCtxBootStrap().getBootstrapPublicX().toCharArray());
+                byte[] publicY = Hex.decodeHex(this.contextBs.getCtxBootStrap().getBootstrapPublicY().toCharArray());
                 /** Create key specs */
                 KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
                         parameterSpec);
                 /** Get keys */
                 this.publicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
             }
-            if (this.contextBs.getBootstrapPrivateS() != null && !this.contextBs.getBootstrapPrivateS().isEmpty()) {
+            if (this.contextBs.getCtxBootStrap().getBootstrapPrivateS() != null && !this.contextBs.getCtxBootStrap().getBootstrapPrivateS().isEmpty()) {
                 /** Get point values */
-                byte[] privateS = Hex.decodeHex(contextBs.getBootstrapPrivateS().toCharArray());
+                byte[] privateS = Hex.decodeHex(this.contextBs.getCtxBootStrap().getBootstrapPrivateS().toCharArray());
                 /** Create key specs */
                 KeySpec privateKeySpec = new ECPrivateKeySpec(new BigInteger(privateS), parameterSpec);
                 /** Get keys */
@@ -101,7 +101,7 @@ public class LwM2MSetSecurityStoreBootstrap {
                     this.privateKey != null && this.privateKey.getEncoded().length > 0) {
                 this.builder.setPublicKey(this.publicKey);
                 this.builder.setPrivateKey(this.privateKey);
-                this.contextBs.setBootstrapPublicKey(this.publicKey);
+                this.contextBs.getCtxBootStrap().setBootstrapPublicKey(this.publicKey);
                 getParamsRPK();
             }
         } catch (GeneralSecurityException | IllegalArgumentException e) {
@@ -112,9 +112,9 @@ public class LwM2MSetSecurityStoreBootstrap {
 
     private void setServerWithX509Cert(int securityModeCode) {
         try {
-            KeyStore keyStoreServer = contextS.getKeyStoreValue();
+            KeyStore keyStoreServer = this.contextS.getCtxServer().getKeyStoreValue();
             setBuilderX509();
-            X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(contextS.getRootAlias());
+            X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(this.contextS.getCtxServer().getRootAlias());
             rootCAX509Cert = null;
             if (rootCAX509Cert != null && securityModeCode == X509.code) {
                 X509Certificate[] trustedCertificates = new X509Certificate[1];
@@ -135,15 +135,15 @@ public class LwM2MSetSecurityStoreBootstrap {
          * For idea => KeyStorePathResource == common/transport/lwm2m/src/main/resources/credentials: in LwM2MTransportContextServer: credentials/serverKeyStore.jks
          */
         try {
-            if (contextS.getKeyStoreValue() != null) {
-                X509Certificate serverCertificate =  (X509Certificate) contextS.getKeyStoreValue().getCertificate(contextBs.getBootstrapAlias());
-                this.privateKey = (PrivateKey) contextS.getKeyStoreValue().getKey(contextBs.getBootstrapAlias(), contextS.getKeyStorePasswordServer() == null ? null : contextS.getKeyStorePasswordServer().toCharArray());
+            if (this.contextS.getCtxServer().getKeyStoreValue() != null) {
+                X509Certificate serverCertificate =  (X509Certificate) this.contextS.getCtxServer().getKeyStoreValue().getCertificate(this.contextBs.getCtxBootStrap().getBootstrapAlias());
+                this.privateKey = (PrivateKey) this.contextS.getCtxServer().getKeyStoreValue().getKey(this.contextBs.getCtxBootStrap().getBootstrapAlias(), this.contextS.getCtxServer().getKeyStorePasswordServer() == null ? null : this.contextS.getCtxServer().getKeyStorePasswordServer().toCharArray());
                 if (this.privateKey != null && this.privateKey.getEncoded().length > 0) {
                     this.builder.setPrivateKey(this.privateKey);
                 }
                 if (serverCertificate != null) {
                     this.builder.setCertificateChain(new X509Certificate[]{serverCertificate});
-                    this.contextBs.setBootstrapCertificate(serverCertificate);
+                    this.contextBs.getCtxBootStrap().setBootstrapCertificate(serverCertificate);
 //                    getParamsX509();
                 }
             }

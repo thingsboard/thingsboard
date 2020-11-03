@@ -18,78 +18,38 @@ package org.thingsboard.server.transport.lwm2m.bootstrap;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
+import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigBootstrap;
+import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigServer;
 import org.thingsboard.server.gen.transport.TransportProtos;
+
+import javax.annotation.PostConstruct;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 
+
 @Slf4j
 @Component
-@ConditionalOnExpression("('${(service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true') || ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core')")
+//@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
+//@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.lwm2m.enabled}'=='true')")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportContextBootstrap extends TransportContext {
 
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.bind_address:}")
-    private String bootstrapHost;
+    private LwM2MTransportConfigBootstrap ctxBootStrap;
+    @Autowired
+    LwM2MTransportConfigBootstrap lwM2MTransportConfigBootstarp;
 
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.bind_port:}")
-    private Integer bootstrapPort;
+    @PostConstruct
+    public void init() {
+        this.ctxBootStrap = lwM2MTransportConfigBootstarp;
+    }
 
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.bind_port_cert:}")
-    private Integer bootstrapPortCert;
-
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.start_all:}")
-    private boolean bootstrapStartAll;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.dtls_mode:}")
-    private Integer bootStrapDtlsMode;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_address:}")
-    private String bootstrapSecureHost;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_port:}")
-    private Integer bootstrapSecurePort;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_port_cert:}")
-    private Integer bootstrapSecurePortCert;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.public_x:}")
-    private String bootstrapPublicX;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.public_y:}")
-    private String bootstrapPublicY;
-
-    @Getter
-    @Setter
-    private PublicKey bootstrapPublicKey;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.private_s:}")
-    private String bootstrapPrivateS;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.alias:}")
-    private String bootstrapAlias;
-
-    @Getter
-    @Setter
-    private X509Certificate bootstrapCertificate;
-
-    @Getter
-    @Setter
-    private Map<String /** clientEndPoint */, TransportProtos.ValidateDeviceCredentialsResponseMsg> sessions;
+    public LwM2MTransportConfigBootstrap getCtxBootStrap () {
+        return this.ctxBootStrap;
+    }
 }

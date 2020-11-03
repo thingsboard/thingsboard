@@ -26,7 +26,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 @Slf4j
-@Service("LwM2MTransportBootstrapServerInitializer")
+@Service
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true')")
 public class LwM2MTransportBootstrapServerInitializer {
 
@@ -43,12 +43,12 @@ public class LwM2MTransportBootstrapServerInitializer {
 
     @PostConstruct
     public void init() {
-        if (this.contextBS.isBootstrapStartAll()) {
+        if (this.contextBS.getCtxBootStrap().isBootstrapStartAll()) {
             this.lhBServerCert.start();
             this.lhBServerRPK.start();
         }
         else {
-            if (this.contextBS.getBootStrapDtlsMode() == LwM2MSecurityMode.X509.code) {
+            if (this.contextBS.getCtxBootStrap().getBootStrapDtlsMode() == LwM2MSecurityMode.X509.code) {
                 this.lhBServerCert.start();
             }
             else {

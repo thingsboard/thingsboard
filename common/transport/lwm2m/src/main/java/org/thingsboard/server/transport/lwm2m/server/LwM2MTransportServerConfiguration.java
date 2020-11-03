@@ -56,20 +56,20 @@ public class LwM2MTransportServerConfiguration {
     @Bean(name = "LeshanServerCert")
     public LeshanServer getLeshanServerCert() {
         log.info("Starting LwM2M transport ServerCert... PostConstruct");
-        return getLeshanServer(context.getServerPortCert(), context.getServerSecurePortCert(), X509);
+        return getLeshanServer(this.context.getCtxServer().getServerPortCert(), this.context.getCtxServer().getServerSecurePortCert(), X509);
     }
 
     @Bean(name = "leshanServerNoSecPskRpk")
     public LeshanServer getLeshanServerNoSecPskRpk() {
         log.info("Starting LwM2M transport ServerNoSecPskRpk... PostConstruct");
-        return getLeshanServer(context.getServerPort(), context.getServerSecurePort(), RPK);
+        return getLeshanServer(this.context.getCtxServer().getServerPort(), this.context.getCtxServer().getServerSecurePort(), RPK);
     }
 
     private LeshanServer getLeshanServer(Integer serverPort, Integer serverSecurePort, LwM2MSecurityMode dtlsMode) {
 
         LeshanServerBuilder builder = new LeshanServerBuilder();
-        builder.setLocalAddress(context.getServerHost(), serverPort);
-        builder.setLocalSecureAddress(context.getServerSecureHost(), serverSecurePort);
+        builder.setLocalAddress(this.context.getCtxServer().getServerHost(), serverPort);
+        builder.setLocalSecureAddress(this.context.getCtxServer().getServerSecureHost(), serverSecurePort);
         builder.setEncoder(new DefaultLwM2mNodeEncoder());
         LwM2mNodeDecoder decoder = new DefaultLwM2mNodeDecoder();
         builder.setDecoder(decoder);
@@ -79,12 +79,12 @@ public class LwM2MTransportServerConfiguration {
         builder.setCoapConfig(getCoapConfig());
 
         /** Define model provider (Create Models )*/
-        LwM2mModelProvider modelProvider = new VersionedModelProvider(context.getModelsValue());
+        LwM2mModelProvider modelProvider = new VersionedModelProvider(this.context.getCtxServer().getModelsValue());
         builder.setObjectModelProvider(modelProvider);
 
         /** Create DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setRecommendedCipherSuitesOnly(context.isSupportDeprecatedCiphersEnable());
+        dtlsConfig.setRecommendedCipherSuitesOnly(this.context.getCtxServer().isSupportDeprecatedCiphersEnable());
         /** Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);
 
