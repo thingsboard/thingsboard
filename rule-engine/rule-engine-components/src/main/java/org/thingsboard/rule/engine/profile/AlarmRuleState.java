@@ -99,6 +99,10 @@ class AlarmRuleState {
             }
         }
         for (EntityKey key : changedKeys) {
+            EntityKeyType keyType = key.getType();
+            if (EntityKeyType.CLIENT_ATTRIBUTE.equals(keyType) || EntityKeyType.SERVER_ATTRIBUTE.equals(keyType) || EntityKeyType.SHARED_ATTRIBUTE.equals(keyType)) {
+                key = new EntityKey(EntityKeyType.ATTRIBUTE, key.getKey());
+            }
             if (entityKeys.contains(key)) {
                 return true;
             }

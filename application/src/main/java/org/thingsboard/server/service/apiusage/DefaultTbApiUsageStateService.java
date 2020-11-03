@@ -50,6 +50,7 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.profile.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.service.telemetry.InternalTelemetryService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.PostConstruct;
@@ -70,9 +71,9 @@ import java.util.concurrent.locks.ReentrantLock;
 public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
     public static final String HOURLY = "Hourly";
-    public static final FutureCallback<Void> VOID_CALLBACK = new FutureCallback<Void>() {
+    public static final FutureCallback<Integer> VOID_CALLBACK = new FutureCallback<Integer>() {
         @Override
-        public void onSuccess(@Nullable Void result) {}
+        public void onSuccess(@Nullable Integer result) {}
 
         @Override
         public void onFailure(Throwable t) {}
@@ -82,7 +83,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
     private final TenantService tenantService;
     private final ApiUsageStateService apiUsageStateService;
     private final TimeseriesService tsService;
-    private final TelemetrySubscriptionService tsWsService;
+    private final InternalTelemetryService tsWsService;
     private final SchedulerComponent scheduler;
     private final TbTenantProfileCache tenantProfileCache;
 
@@ -155,7 +156,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         } finally {
             updateLock.unlock();
         }
-        tsWsService.saveAndNotify(tenantId, tenantState.getApiUsageState().getId(), updatedEntries, 0L, VOID_CALLBACK);
+        tsWsService.saveAndNotifyInternal(tenantId, tenantState.getApiUsageState().getId(), updatedEntries, 0L, VOID_CALLBACK);
         if (!result.isEmpty()) {
             persistAndNotify(tenantState, result);
         }
@@ -255,7 +256,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
             }
         }
         if (!profileThresholds.isEmpty()) {
-            tsWsService.saveAndNotify(tenantId, id, profileThresholds, 0L, VOID_CALLBACK);
+            tsWsService.saveAndNotifyInternal(tenantId, id, profileThresholds, 0L, VOID_CALLBACK);
         }
     }
 
@@ -265,7 +266,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         long ts = System.currentTimeMillis();
         List<TsKvEntry> stateTelemetry = new ArrayList<>();
         result.forEach(((apiFeature, aState) -> stateTelemetry.add(new BasicTsKvEntry(ts, new BooleanDataEntry(apiFeature.getApiStateKey(), aState)))));
-        tsWsService.saveAndNotify(state.getTenantId(), state.getApiUsageState().getId(), stateTelemetry, 0L, VOID_CALLBACK);
+        tsWsService.saveAndNotifyInternal(state.getTenantId(), state.getApiUsageState().getId(), stateTelemetry, 0L, VOID_CALLBACK);
     }
 
     private void checkStartOfNextCycle() {

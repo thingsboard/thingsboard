@@ -160,7 +160,7 @@ public class RuleChainController extends BaseController {
     public RuleChain saveRuleChain(@RequestBody DefaultRuleChainCreateRequest request) throws ThingsboardException {
         try {
             checkNotNull(request);
-            checkNotNull(request.getName());
+            checkParameter(request.getName(), "name");
 
             RuleChain savedRuleChain = installScripts.createDefaultRuleChain(getCurrentUser().getTenantId(), request.getName());
 

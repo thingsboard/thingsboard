@@ -120,7 +120,7 @@ public class DeviceController extends BaseController {
 
             tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(savedDevice.getTenantId(),
                     savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
-            tbClusterService.onEntityStateChange(savedDevice.getTenantId(), device.getId(),
+            tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(),
                     device.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(savedDevice.getId(), savedDevice,
