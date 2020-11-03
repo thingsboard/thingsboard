@@ -90,6 +90,11 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
         transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required],
       })
     });
+    let configurationFormGroup = this.mqttDeviceProfileTransportConfigurationFormGroup.controls.configuration as FormGroup;
+    configurationFormGroup.get('transportPayloadType').valueChanges.subscribe(payloadType => {
+        this.onTransportPayloadTypeChanged(payloadType, configurationFormGroup);
+        this.mqttDeviceProfileTransportConfigurationFormGroup.updateValueAndValidity();
+    });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
@@ -112,11 +117,8 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
   writeValue(value: MqttDeviceProfileTransportConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
       let configurationFormGroup = this.mqttDeviceProfileTransportConfigurationFormGroup.controls.configuration as FormGroup;
-      let payloadType = value.transportPayloadType;
-      if (payloadType ===  MqttTransportPayloadType.PROTOBUF) {
-        configurationFormGroup.registerControl('deviceTelemetryProtoSchema', this.fb.control(null, Validators.required));
-        configurationFormGroup.registerControl('deviceAttributesProtoSchema', this.fb.control(null, Validators.required));
-      }
+      let type = value.transportPayloadType;
+      this.updateTransportPayloadBasedControls(type, configurationFormGroup);
       this.mqttDeviceProfileTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
     }
   }
@@ -126,17 +128,22 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     if (this.mqttDeviceProfileTransportConfigurationFormGroup.valid) {
       configuration = this.mqttDeviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
       configuration.type = DeviceTransportType.MQTT;
-      let configurationFormGroup = this.mqttDeviceProfileTransportConfigurationFormGroup.controls.configuration as FormGroup;
-      let transportPayloadType = configuration.transportPayloadType;
-      if (transportPayloadType ===  MqttTransportPayloadType.PROTOBUF) {
-        configurationFormGroup.registerControl('deviceTelemetryProtoSchema', this.fb.control(null, Validators.required));
-        configurationFormGroup.registerControl('deviceAttributesProtoSchema', this.fb.control(null, Validators.required));
-      } else {
-        configurationFormGroup.removeControl('deviceTelemetryProtoSchema');
-        configurationFormGroup.removeControl('deviceAttributesProtoSchema');
-      }
     }
     this.propagateChange(configuration);
+  }
+
+  private onTransportPayloadTypeChanged(type: MqttTransportPayloadType, configurationFormGroup: FormGroup) {
+    this.updateTransportPayloadBasedControls(type, configurationFormGroup)
+  }
+
+  private updateTransportPayloadBasedControls(type: MqttTransportPayloadType, configurationFormGroup: FormGroup) {
+    if (type === MqttTransportPayloadType.PROTOBUF) {
+      configurationFormGroup.registerControl('deviceTelemetryProtoSchema', this.fb.control(null, Validators.required));
+      configurationFormGroup.registerControl('deviceAttributesProtoSchema', this.fb.control(null, Validators.required));
+    } else {
+      configurationFormGroup.removeControl('deviceTelemetryProtoSchema');
+      configurationFormGroup.removeControl('deviceAttributesProtoSchema');
+    }
   }
 
   private validationMQTTTopic(): ValidatorFn {
