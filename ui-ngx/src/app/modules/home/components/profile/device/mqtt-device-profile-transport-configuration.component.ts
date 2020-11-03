@@ -87,12 +87,12 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       configuration: this.fb.group({
         deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]],
-        transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required],
+        transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required]
       })
     });
     let configurationFormGroup = this.mqttDeviceProfileTransportConfigurationFormGroup.controls.configuration as FormGroup;
     configurationFormGroup.get('transportPayloadType').valueChanges.subscribe(payloadType => {
-        this.updateTransportPayloadBasedControls(payloadType, configurationFormGroup)
+        this.updateTransportPayloadBasedControls(payloadType, configurationFormGroup);
         this.mqttDeviceProfileTransportConfigurationFormGroup.updateValueAndValidity();
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
@@ -117,8 +117,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
   writeValue(value: MqttDeviceProfileTransportConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
       let configurationFormGroup = this.mqttDeviceProfileTransportConfigurationFormGroup.controls.configuration as FormGroup;
-      let type = value.transportPayloadType;
-      this.updateTransportPayloadBasedControls(type, configurationFormGroup);
+      this.updateTransportPayloadBasedControls(value.transportPayloadType, configurationFormGroup);
       this.mqttDeviceProfileTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
     }
   }
