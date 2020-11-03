@@ -193,6 +193,8 @@ public class LwM2MTransportService {
                     .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
                     .setDeviceName(msg.getDeviceInfo().getDeviceName())
                     .setDeviceType(msg.getDeviceInfo().getDeviceType())
+                    .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileIdLSB())
+                    .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileIdMSB())
                     .build();
         }
         return sessionInfo;

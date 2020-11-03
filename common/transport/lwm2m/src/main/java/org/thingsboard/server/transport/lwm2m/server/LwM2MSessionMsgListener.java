@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
@@ -62,5 +63,10 @@ public class LwM2MSessionMsgListener implements SessionMsgListener {
     @Override
     public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
         log.info("6.6)  onToServerRpcResponse");
+    }
+
+
+    public void onProfileUpdate(DeviceProfile deviceProfile) {
+        log.info("6.7)  onProfileUpdate {}", deviceProfile);
     }
 }

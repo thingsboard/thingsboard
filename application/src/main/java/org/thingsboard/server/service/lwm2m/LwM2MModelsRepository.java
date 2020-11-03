@@ -188,7 +188,7 @@ public class LwM2MModelsRepository {
                     break;
                 case X509:
                     bsServ.setHost(contextS.getServerSecureHost());
-                    bsServ.setPort(contextS.getServerPortCert());
+                    bsServ.setPort(contextS.getServerSecurePortCert());
                     bsServ.setServerPublicKey(getServerPublicKeyX509(contextS.getServerAlias()));
                     break;
                 default:

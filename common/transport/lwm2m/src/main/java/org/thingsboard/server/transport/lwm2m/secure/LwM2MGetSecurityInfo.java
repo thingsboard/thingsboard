@@ -17,13 +17,18 @@ package org.thingsboard.server.transport.lwm2m.secure;
 
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.elements.util.StandardCharsets;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.eclipse.leshan.server.security.SecurityInfo;
+import org.nustaq.serialization.FSTConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.common.transport.util.ProtoWithFSTService;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBootstrap;
@@ -34,6 +39,7 @@ import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -61,6 +67,13 @@ public class LwM2MGetSecurityInfo {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponseMsg msg) {
                         String ingfosStr = msg.getCredentialsBody();
+                        Optional<DeviceProfile> deviceProfile = decode(msg.getProfileBody().toByteArray());
+                        if (deviceProfile.isPresent()) {
+                            DeviceProfile profile = deviceProfile.get();
+
+                        }
+
+                        //                        Optional<DeviceProfile> deviceProfile = decodeProfile(msg.getProfileBody().toByteArray());
                         resultSecurityStore[0] = putSecurityInfo(endPoint, msg.getDeviceInfo().getDeviceName(), ingfosStr, keyValue);
                         resultSecurityStore[0].setMsg(msg);
                         latch.countDown();
@@ -165,5 +178,16 @@ public class LwM2MGetSecurityInfo {
     private void getClientSecurityInfoX509(ReadResultSecurityStore result, String endpoint) {
         result.setSecurityInfo(SecurityInfo.newX509CertInfo(endpoint));
         result.setSecurityMode(X509.code);
+    }
+
+    private <T> Optional<T> decode(byte[] byteArray) {
+        try {
+            FSTConfiguration config = FSTConfiguration.createDefaultConfiguration();;
+            T msg = (T) config.asObject(byteArray);
+            return Optional.ofNullable(msg);
+        } catch (IllegalArgumentException e) {
+            log.error("Error during deserialization message, [{}]", e.getMessage());
+            return Optional.empty();
+        }
     }
 }
