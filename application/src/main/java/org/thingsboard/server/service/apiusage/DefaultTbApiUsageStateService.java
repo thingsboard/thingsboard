@@ -71,9 +71,9 @@ import java.util.concurrent.locks.ReentrantLock;
 public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
     public static final String HOURLY = "Hourly";
-    public static final FutureCallback<Void> VOID_CALLBACK = new FutureCallback<Void>() {
+    public static final FutureCallback<Integer> VOID_CALLBACK = new FutureCallback<Integer>() {
         @Override
-        public void onSuccess(@Nullable Void result) {}
+        public void onSuccess(@Nullable Integer result) {}
 
         @Override
         public void onFailure(Throwable t) {}

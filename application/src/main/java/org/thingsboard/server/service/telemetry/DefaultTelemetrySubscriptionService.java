@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,10 +20,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -42,10 +41,9 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.queue.TbClusterService;
-import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import javax.annotation.Nullable;
@@ -59,12 +57,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -76,6 +70,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final AttributesService attrService;
     private final TimeseriesService tsService;
     private final EntityViewService entityViewService;
+    private final TbApiUsageClient apiUsageClient;
 
     private ExecutorService tsCallBackExecutor;
 
@@ -83,11 +78,13 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                TimeseriesService tsService,
                                                EntityViewService entityViewService,
                                                TbClusterService clusterService,
-                                               PartitionService partitionService) {
+                                               PartitionService partitionService,
+                                               TbApiUsageClient apiUsageClient) {
         super(clusterService, partitionService);
         this.attrService = attrService;
         this.tsService = tsService;
         this.entityViewService = entityViewService;
+        this.apiUsageClient = apiUsageClient;
     }
 
     @PostConstruct
@@ -117,12 +114,25 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void saveAndNotify(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Void> callback) {
         checkInternalEntity(entityId);
-        saveAndNotifyInternal(tenantId, entityId, ts, ttl, callback);
+        saveAndNotifyInternal(tenantId, entityId, ts, ttl, new FutureCallback<Integer>() {
+            @Override
+            public void onSuccess(Integer result) {
+                if (result != null && result > 0) {
+                    apiUsageClient.report(tenantId, ApiUsageRecordKey.STORAGE_DP_COUNT, result);
+                }
+                callback.onSuccess(null);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                callback.onFailure(t);
+            }
+        });
     }
 
     @Override
-    public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Void> callback) {
-        ListenableFuture<List<Void>> saveFuture = tsService.save(tenantId, entityId, ts, ttl);
+    public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Integer> callback) {
+        ListenableFuture<List<Integer>> saveFuture = tsService.save(tenantId, entityId, ts, ttl);
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
         if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
@@ -147,9 +157,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                             Optional<TsKvEntry> tsKvEntry = entries.stream()
                                                     .filter(entry -> entry.getTs() > startTs && entry.getTs() <= endTs)
                                                     .max(Comparator.comparingLong(TsKvEntry::getTs));
-                                            if (tsKvEntry.isPresent()) {
-                                                entityViewLatest.add(tsKvEntry.get());
-                                            }
+                                            tsKvEntry.ifPresent(entityViewLatest::add);
                                         }
                                     }
                                     if (!entityViewLatest.isEmpty()) {
