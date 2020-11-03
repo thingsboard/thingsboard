@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class JsonBasedTransportProfile {
+public abstract class JsonBasedTransportConfiguration {
 
     @JsonIgnore
     private final Map<String, Object> properties = new HashMap<>();

@@ -16,42 +16,75 @@
 package org.thingsboard.server.transport.snmp;
 
 import lombok.extern.slf4j.Slf4j;
-import org.snmp4j.CommunityTarget;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
-import org.snmp4j.Target;
-import org.snmp4j.mp.SnmpConstants;
-import org.snmp4j.smi.GenericAddress;
 import org.snmp4j.smi.OID;
-import org.snmp4j.smi.OctetString;
 import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileKvMapping;
+import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.transport.snmp.session.DeviceSessionCtx;
+import org.thingsboard.server.transport.snmp.temp.SnmpDeviceProfileTransportConfigFactory;
+import org.thingsboard.server.transport.snmp.temp.SnmpDeviceTransportConfigFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Service("SnmpTransportService")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.snmp.enabled}'=='true')")
 @Slf4j
 public class SnmpTransportService {
 
-    private Target target;
     private Snmp snmp;
     private ScheduledExecutorService schedulerExecutor;
+    private Map<DeviceProfileId, SnmpDeviceProfileTransportConfiguration> deviceProfileTransportConfig;
+    //TODO: PDU list should be updated on every device profile event
+    private Map<DeviceProfileId, List<PDU>> pduPerProfile;
+    private List<DeviceSessionCtx> deviceSessionCtxList;
 
     @PostConstruct
     public void init() {
         log.info("Starting SNMP transport...");
 
-        this.target = getCommunityTarget();
         initializeSnmp();
+
+        DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.fromString("7876dea0-1dbe-11eb-99f0-0719747fb6f9"));
+        this.deviceProfileTransportConfig = Collections.singletonMap(deviceProfileId, SnmpDeviceProfileTransportConfigFactory.getDeviceProfileTransportConfig());
+
+        deviceSessionCtxList = deviceProfileTransportConfig.keySet().stream()
+                .map(id -> {
+                    DeviceProfile deviceProfile = new DeviceProfile(id);
+                    DeviceSessionCtx deviceSessionCtx = new DeviceSessionCtx(UUID.randomUUID());
+                    deviceSessionCtx.setDeviceId(new DeviceId(UUID.randomUUID()));
+                    deviceSessionCtx.setDeviceProfile(deviceProfile);
+                    deviceSessionCtx.setTransportConfiguration(SnmpDeviceTransportConfigFactory.getSnmpTransportConfig());
+                    //TODO: re-init target on device transport configuration event
+                    deviceSessionCtx.initTarget(deviceProfileTransportConfig.get(id));
+                    return deviceSessionCtx;
+                })
+                .collect(Collectors.toList());
+
+        pduPerProfile = new HashMap<>();
+        deviceProfileTransportConfig.forEach((id, config) -> pduPerProfile.put(id, getPduList(config)));
+
         this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("snmp-pooling-scheduler"));
         this.schedulerExecutor.scheduleAtFixedRate(this::executeSnmp, 5000, 5000, TimeUnit.MILLISECONDS);
 
@@ -64,7 +97,6 @@ public class SnmpTransportService {
         if (schedulerExecutor != null) {
             schedulerExecutor.shutdownNow();
         }
-
         if (snmp != null) {
             try {
                 snmp.close();
@@ -72,18 +104,7 @@ public class SnmpTransportService {
                 log.error(e.getMessage(), e);
             }
         }
-
         log.info("SNMP transport stopped!");
-    }
-
-    private Target getCommunityTarget() {
-        CommunityTarget communityTarget = new CommunityTarget();
-        communityTarget.setVersion(SnmpConstants.version2c);
-        communityTarget.setAddress(GenericAddress.parse(GenericAddress.TYPE_UDP + ":" + "192.168.1.131" + "/" + 161));
-        communityTarget.setCommunity(new OctetString("test321"));
-        communityTarget.setTimeout(5000);
-        communityTarget.setRetries(5);
-        return communityTarget;
     }
 
     private void initializeSnmp() {
@@ -96,19 +117,45 @@ public class SnmpTransportService {
     }
 
     private void executeSnmp() {
-        PDU request = new PDU();
-        request.setType(PDU.GET);
-        request.add(new VariableBinding(new OID("1.3.6.1.2.1.25.1.1.0")));
+        deviceSessionCtxList.forEach(deviceSessionCtx ->
+                pduPerProfile.get(deviceSessionCtx.getDeviceProfile().getId())
+                        .forEach(pdu -> {
+                            try {
+                                log.info("[{}] Sending SNMP message...", pdu.getRequestID());
+                                this.snmp.send(pdu, deviceSessionCtx.getTarget(), "someUserHandle", deviceSessionCtx.getSnmpSessionListener());
+                            } catch (IOException e) {
+                                log.error(e.getMessage(), e);
+                            }
+                        }));
+    }
 
-        try {
-            PDU response = this.snmp.send(request, this.target).getResponse();
-            for (int i = 0; i < response.size(); i++) {
-                VariableBinding vb = response.get(i);
-                log.info("SNMP response received: {}, {}", vb.getOid(), vb.getVariable());
-            }
+    private List<PDU> getPduList(SnmpDeviceProfileTransportConfiguration deviceProfileConfig) {
+        Map<String, List<VariableBinding>> varBindingPerMethod = new HashMap<>();
 
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
+        Consumer<SnmpDeviceProfileKvMapping> varBindingPerMethodConsumer = mapping -> varBindingPerMethod
+                .computeIfAbsent(mapping.getMethod(), v -> new ArrayList<>())
+                .add(new VariableBinding(new OID(mapping.getOid())));
+
+        deviceProfileConfig.getAttributes().forEach(varBindingPerMethodConsumer);
+        deviceProfileConfig.getTelemetry().forEach(varBindingPerMethodConsumer);
+
+        return varBindingPerMethod.keySet().stream()
+                .map(method -> {
+                    PDU request = new PDU();
+                    request.setType(getSnmpMethod(method));
+                    request.addAll(varBindingPerMethod.get(method));
+                    return request;
+                })
+                .collect(Collectors.toList());
+    }
+
+    //TODO: temp implementation
+    private int getSnmpMethod(String configMethod) {
+        switch (configMethod) {
+            case "get":
+                return PDU.GET;
+            default:
+                return -1;
         }
     }
 }

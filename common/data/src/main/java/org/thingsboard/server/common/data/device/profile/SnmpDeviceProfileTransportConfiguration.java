@@ -16,13 +16,18 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.device.JsonBasedTransportProfile;
+
+import java.util.List;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class SnmpDeviceProfileTransportConfiguration extends JsonBasedTransportProfile implements DeviceProfileTransportConfiguration {
+public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
+
+    private int poolPeriodMs;
+    private int timeoutMs;
+    private int retries;
+    private List<SnmpDeviceProfileKvMapping> attributes;
+    private List<SnmpDeviceProfileKvMapping> telemetry;
 
     @Override
     public DeviceTransportType getType() {

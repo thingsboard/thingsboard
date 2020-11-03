@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data;
+package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.kv.DataType;
 
+//TODO: rename class
 @Data
-public class SnmpDeviceTransportConfiguration implements DeviceTransportConfiguration {
-
-    private String address;
-    private int port;
-    private String community;
-    private String protocolVersion;
-
-    @Override
-    public DeviceTransportType getType() {
-        return DeviceTransportType.SNMP;
-    }
+public class SnmpDeviceProfileKvMapping {
+    private String key;
+    private DataType type;
+    private String method;
+    private String oid;
 }
