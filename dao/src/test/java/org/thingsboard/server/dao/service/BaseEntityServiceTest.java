@@ -793,7 +793,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
             }
         }
 
-        List<ListenableFuture<List<Void>>> timeseriesFutures = new ArrayList<>();
+        List<ListenableFuture<Integer>> timeseriesFutures = new ArrayList<>();
         for (int i = 0; i < devices.size(); i++) {
             Device device = devices.get(i);
             timeseriesFutures.add(saveLongTimeseries(device.getId(), "temperature", temperatures.get(i)));
@@ -1272,7 +1272,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         return attributesService.save(SYSTEM_TENANT_ID, entityId, scope, Collections.singletonList(attr));
     }
 
-    private ListenableFuture<List<Void>> saveLongTimeseries(EntityId entityId, String key, Double value) {
+    private ListenableFuture<Integer> saveLongTimeseries(EntityId entityId, String key, Double value) {
         TsKvEntity tsKv = new TsKvEntity();
         tsKv.setStrKey(key);
         tsKv.setDoubleValue(value);

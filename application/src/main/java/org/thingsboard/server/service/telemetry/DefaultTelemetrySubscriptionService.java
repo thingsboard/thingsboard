@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,9 +40,11 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
@@ -71,6 +73,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final TimeseriesService tsService;
     private final EntityViewService entityViewService;
     private final TbApiUsageClient apiUsageClient;
+    private final TbApiUsageStateService apiUsageStateService;
 
     private ExecutorService tsCallBackExecutor;
 
@@ -79,12 +82,14 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                EntityViewService entityViewService,
                                                TbClusterService clusterService,
                                                PartitionService partitionService,
-                                               TbApiUsageClient apiUsageClient) {
+                                               TbApiUsageClient apiUsageClient,
+                                               TbApiUsageStateService apiUsageStateService) {
         super(clusterService, partitionService);
         this.attrService = attrService;
         this.tsService = tsService;
         this.entityViewService = entityViewService;
         this.apiUsageClient = apiUsageClient;
+        this.apiUsageStateService = apiUsageStateService;
     }
 
     @PostConstruct
@@ -114,25 +119,34 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void saveAndNotify(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Void> callback) {
         checkInternalEntity(entityId);
-        saveAndNotifyInternal(tenantId, entityId, ts, ttl, new FutureCallback<Integer>() {
-            @Override
-            public void onSuccess(Integer result) {
-                if (result != null && result > 0) {
-                    apiUsageClient.report(tenantId, ApiUsageRecordKey.STORAGE_DP_COUNT, result);
+        if (apiUsageStateService.getApiUsageState(tenantId).isDbStorageEnabled()) {
+            saveAndNotifyInternal(tenantId, entityId, ts, ttl, new FutureCallback<Integer>() {
+                @Override
+                public void onSuccess(Integer result) {
+                    if (result != null && result > 0) {
+                        apiUsageClient.report(tenantId, ApiUsageRecordKey.STORAGE_DP_COUNT, result);
+                    }
+                    callback.onSuccess(null);
                 }
-                callback.onSuccess(null);
-            }
 
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(t);
-            }
-        });
+                @Override
+                public void onFailure(Throwable t) {
+                    callback.onFailure(t);
+                }
+            });
+        } else{
+            callback.onFailure(new RuntimeException("DB storage writes are disabled due to API limits!"));
+        }
+    }
+
+    @Override
+    public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Integer> callback) {
+        saveAndNotifyInternal(tenantId, entityId, ts, 0L, callback);
     }
 
     @Override
     public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Integer> callback) {
-        ListenableFuture<List<Integer>> saveFuture = tsService.save(tenantId, entityId, ts, ttl);
+        ListenableFuture<Integer> saveFuture = tsService.save(tenantId, entityId, ts, ttl);
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
         if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
@@ -197,7 +211,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
         ListenableFuture<List<Void>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
-        addMainCallback(saveFuture, callback);
+        addVoidCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice));
     }
 
@@ -210,7 +224,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void saveLatestAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Void> callback) {
         ListenableFuture<List<Void>> saveFuture = tsService.saveLatest(tenantId, entityId, ts);
-        addMainCallback(saveFuture, callback);
+        addVoidCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
     }
 
@@ -223,7 +237,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
         ListenableFuture<List<Void>> deleteFuture = attrService.removeAll(tenantId, entityId, scope, keys);
-        addMainCallback(deleteFuture, callback);
+        addVoidCallback(deleteFuture, callback);
         addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys));
     }
 
@@ -236,7 +250,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void deleteLatestInternal(TenantId tenantId, EntityId entityId, List<String> keys, FutureCallback<Void> callback) {
         ListenableFuture<List<Void>> deleteFuture = tsService.removeLatest(tenantId, entityId, keys);
-        addMainCallback(deleteFuture, callback);
+        addVoidCallback(deleteFuture, callback);
     }
 
     @Override
@@ -321,11 +335,25 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private <S, R> void addMainCallback(ListenableFuture<S> saveFuture, final FutureCallback<R> callback) {
+    private <S> void addVoidCallback(ListenableFuture<S> saveFuture, final FutureCallback<Void> callback) {
         Futures.addCallback(saveFuture, new FutureCallback<S>() {
             @Override
             public void onSuccess(@Nullable S result) {
                 callback.onSuccess(null);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                callback.onFailure(t);
+            }
+        }, tsCallBackExecutor);
+    }
+
+    private <S> void addMainCallback(ListenableFuture<S> saveFuture, final FutureCallback<S> callback) {
+        Futures.addCallback(saveFuture, new FutureCallback<S>() {
+            @Override
+            public void onSuccess(@Nullable S result) {
+                callback.onSuccess(result);
             }
 
             @Override

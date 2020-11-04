@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class BasicTsKvEntry implements TsKvEntry {
-
+    private static final int MAX_CHARS_PER_DATA_POINT = 512;
     private final long ts;
     private final KvEntry kv;
 
@@ -99,4 +99,21 @@ public class BasicTsKvEntry implements TsKvEntry {
     public String getValueAsString() {
         return kv.getValueAsString();
     }
+
+    @Override
+    public int getDataPoints() {
+        int length;
+        switch (getDataType()) {
+            case STRING:
+                length = getStrValue().get().length();
+                break;
+            case JSON:
+                length = getJsonValue().get().length();
+                break;
+            default:
+                return 1;
+        }
+        return Math.max(1, (length + MAX_CHARS_PER_DATA_POINT - 1) / MAX_CHARS_PER_DATA_POINT);
+    }
+
 }
