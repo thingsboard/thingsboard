@@ -152,11 +152,9 @@ public class TbMsgPushToEdgeNode implements TbNode {
             JsonNode dataJson = json.readTree(msg.getData());
             switch (actionType) {
                 case ATTRIBUTES_UPDATED:
+                case POST_ATTRIBUTES:
                     entityBody.put("kv", dataJson);
                     entityBody.put("scope", metadata.get("scope"));
-                    if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)) {
-                        entityBody.put("isPostAttributes", true);
-                    }
                     break;
                 case ATTRIBUTES_DELETED:
                     List<String> keys = json.treeToValue(dataJson.get("attributes"), List.class);
@@ -192,9 +190,10 @@ public class TbMsgPushToEdgeNode implements TbNode {
         EdgeEventActionType actionType;
         if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)) {
             actionType = EdgeEventActionType.TIMESERIES_UPDATED;
-        } else if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)
-                || DataConstants.ATTRIBUTES_UPDATED.equals(msgType)) {
+        } else if (DataConstants.ATTRIBUTES_UPDATED.equals(msgType)) {
             actionType = EdgeEventActionType.ATTRIBUTES_UPDATED;
+        } else if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)) {
+            actionType = EdgeEventActionType.POST_ATTRIBUTES;
         } else {
             actionType = EdgeEventActionType.ATTRIBUTES_DELETED;
         }

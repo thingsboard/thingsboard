@@ -60,15 +60,21 @@ public class EntityDataMsgConstructor {
             case ATTRIBUTES_UPDATED:
                 try {
                     JsonObject data = entityData.getAsJsonObject();
-                    TransportProtos.PostAttributeMsg postAttributeMsg = JsonConverter.convertToAttributesProto(data.getAsJsonObject("kv"));
-                    if (data.has("isPostAttributes") && data.getAsJsonPrimitive("isPostAttributes").getAsBoolean()) {
-                        builder.setPostAttributesMsg(postAttributeMsg);
-                    } else {
-                        builder.setAttributesUpdatedMsg(postAttributeMsg);
-                    }
+                    TransportProtos.PostAttributeMsg attributesUpdatedMsg = JsonConverter.convertToAttributesProto(data.getAsJsonObject("kv"));
+                    builder.setAttributesUpdatedMsg(attributesUpdatedMsg);
                     builder.setPostAttributeScope(data.getAsJsonPrimitive("scope").getAsString());
                 } catch (Exception e) {
-                    log.warn("[{}] Can't convert to attributes proto, entityData [{}]", entityId, entityData, e);
+                    log.warn("[{}] Can't convert to AttributesUpdatedMsg proto, entityData [{}]", entityId, entityData, e);
+                }
+                break;
+            case POST_ATTRIBUTES:
+                try {
+                    JsonObject data = entityData.getAsJsonObject();
+                    TransportProtos.PostAttributeMsg postAttributesMsg = JsonConverter.convertToAttributesProto(data.getAsJsonObject("kv"));
+                    builder.setPostAttributesMsg(postAttributesMsg);
+                    builder.setPostAttributeScope(data.getAsJsonPrimitive("scope").getAsString());
+                } catch (Exception e) {
+                    log.warn("[{}] Can't convert to PostAttributesMsg, entityData [{}]", entityId, entityData, e);
                 }
                 break;
             case ATTRIBUTES_DELETED:
