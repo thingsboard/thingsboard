@@ -874,7 +874,7 @@
         "profile-configuration": "Profile configuration",
         "transport-configuration": "Transport configuration",
         "default-rule-chain": "Default rule chain",
-        "select-queue-hint": "The queue name can be selected from a drop-down list or add a custom name.",
+        "select-queue-hint": "Select from a drop-down list or add a custom name.",
         "delete-device-profile-title": "Are you sure you want to delete the device profile '{{deviceProfileName}}'?",
         "delete-device-profile-text": "Be careful, after the confirmation the device profile and all related data will become unrecoverable.",
         "delete-device-profiles-title": "Are you sure you want to delete { count, plural, 1 {1 device profile} other {# device profiles} }?",
