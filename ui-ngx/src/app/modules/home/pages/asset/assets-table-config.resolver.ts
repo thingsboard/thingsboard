@@ -137,8 +137,9 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
             this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('asset.assets');
           }
         } else if (this.config.componentsData.assetScope === 'edge') {
-          this.edgeService.getEdge(this.edgeId).pipe(map(edge =>
-            this.config.tableTitle = edge.name + ': ' + this.translate.instant('asset.assets'))).subscribe();
+          this.edgeService.getEdge(this.edgeId).subscribe(
+            edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('asset.assets')
+          );
         } else {
           this.config.tableTitle = this.translate.instant('asset.assets');
         }
