@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.tenant.profile;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.TenantProfileType;
 
 @Data
@@ -39,7 +40,30 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private int maxRuleNodeExecutionsPerMessage;
 
     @Override
+    public long getProfileThreshold(ApiUsageRecordKey key) {
+        switch (key) {
+            case TRANSPORT_MSG_COUNT:
+                return maxTransportMessages;
+            case TRANSPORT_DP_COUNT:
+                return maxTransportDataPoints;
+            case JS_EXEC_COUNT:
+                return maxJSExecutions;
+            case RE_EXEC_COUNT:
+                return maxREExecutions;
+            case STORAGE_DP_COUNT:
+                return maxDPStorageDays;
+        }
+        return 0L;
+    }
+
+
+    @Override
     public TenantProfileType getType() {
         return TenantProfileType.DEFAULT;
+    }
+
+    @Override
+    public int getMaxRuleNodeExecsPerMessage() {
+        return maxRuleNodeExecutionsPerMessage;
     }
 }

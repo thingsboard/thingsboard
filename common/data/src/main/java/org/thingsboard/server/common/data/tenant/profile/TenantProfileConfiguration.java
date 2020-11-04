@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.TenantProfileType;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -32,5 +33,11 @@ public interface TenantProfileConfiguration {
 
     @JsonIgnore
     TenantProfileType getType();
+
+    @JsonIgnore
+    long getProfileThreshold(ApiUsageRecordKey key);
+
+    @JsonIgnore
+    int getMaxRuleNodeExecsPerMessage();
 
 }

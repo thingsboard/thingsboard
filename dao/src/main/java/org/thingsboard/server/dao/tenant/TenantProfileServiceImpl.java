@@ -216,6 +216,12 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
                     if (StringUtils.isEmpty(tenantProfile.getName())) {
                         throw new DataValidationException("Tenant profile name should be specified!");
                     }
+                    if (tenantProfile.getProfileData() == null) {
+                        throw new DataValidationException("Tenant profile data should be specified!");
+                    }
+                    if (tenantProfile.getProfileData().getConfiguration() == null) {
+                        throw new DataValidationException("Tenant profile data configuration should be specified!");
+                    }
                     if (tenantProfile.isDefault()) {
                         TenantProfile defaultTenantProfile = findDefaultTenantProfile(tenantId);
                         if (defaultTenantProfile != null && !defaultTenantProfile.getId().equals(tenantProfile.getId())) {

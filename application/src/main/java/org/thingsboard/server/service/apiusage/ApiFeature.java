@@ -15,6 +15,15 @@
  */
 package org.thingsboard.server.service.apiusage;
 
+import lombok.Getter;
+
 public enum ApiFeature {
-    TRANSPORT, DB, RE, JS
+    TRANSPORT("transportApiState"), DB("dbApiState"), RE("ruleEngineApiState"), JS("jsExecutionApiState");
+
+    @Getter
+    private final String apiStateKey;
+
+    ApiFeature(String apiStateKey) {
+        this.apiStateKey = apiStateKey;
+    }
 }

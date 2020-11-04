@@ -103,6 +103,7 @@ class AlarmState {
             }
             AlarmEvalResult evalResult = evalFunction.apply(clearState, data);
             if (AlarmEvalResult.TRUE.equals(evalResult)) {
+                clearState.clear();
                 stateUpdate |= clearState.checkUpdate();
                 for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
                     state.clear();

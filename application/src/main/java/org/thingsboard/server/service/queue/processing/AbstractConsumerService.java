@@ -165,7 +165,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                 } else if (EntityType.DEVICE_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
                 } else if (EntityType.DEVICE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    deviceProfileCache.evict(new DeviceId(componentLifecycleMsg.getEntityId().getId()));
+                    deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceId(componentLifecycleMsg.getEntityId().getId()));
                 } else if (EntityType.API_USAGE_STATE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     apiUsageStateService.onApiUsageStateUpdate(componentLifecycleMsg.getTenantId());
                 }

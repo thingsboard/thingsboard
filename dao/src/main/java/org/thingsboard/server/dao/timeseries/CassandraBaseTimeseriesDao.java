@@ -60,6 +60,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
@@ -74,6 +75,8 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
     protected static final int MIN_AGGREGATION_STEP_MS = 1000;
     public static final String ASC_ORDER = "ASC";
+    public static final long SECONDS_IN_DAY = TimeUnit.DAYS.toSeconds(1);
+
     protected static List<Long> FIXED_PARTITION = Arrays.asList(new Long[]{0L});
 
     @Autowired
@@ -141,9 +144,10 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     @Override
-    public ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
+    public ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
         List<ListenableFuture<Void>> futures = new ArrayList<>();
         ttl = computeTtl(ttl);
+        int dataPointDays = tsKvEntry.getDataPoints() * Math.max(1, (int) (ttl / SECONDS_IN_DAY));
         long partition = toPartitionTs(tsKvEntry.getTs());
         DataType type = tsKvEntry.getDataType();
         if (setNullValuesEnabled) {
@@ -161,11 +165,11 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         }
         BoundStatement stmt = stmtBuilder.build();
         futures.add(getFuture(executeAsyncWrite(tenantId, stmt), rs -> null));
-        return Futures.transform(Futures.allAsList(futures), result -> null, MoreExecutors.directExecutor());
+        return Futures.transform(Futures.allAsList(futures), result -> dataPointDays, MoreExecutors.directExecutor());
     }
 
     @Override
-    public ListenableFuture<Void> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key, long ttl) {
+    public ListenableFuture<Integer> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key, long ttl) {
         if (isFixedPartitioning()) {
             return Futures.immediateFuture(null);
         }
@@ -181,7 +185,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
             stmtBuilder.setInt(4, (int) ttl);
         }
         BoundStatement stmt = stmtBuilder.build();
-        return getFuture(executeAsyncWrite(tenantId, stmt), rs -> null);
+        return getFuture(executeAsyncWrite(tenantId, stmt), rs -> 0);
     }
 
     @Override
@@ -649,9 +653,10 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     /**
-     //     * Select existing partitions from the table
-     //     * <code>{@link ModelConstants#TS_KV_PARTITIONS_CF}</code> for the given entity
-     //     */
+     * //     * Select existing partitions from the table
+     * //     * <code>{@link ModelConstants#TS_KV_PARTITIONS_CF}</code> for the given entity
+     * //
+     */
     private TbResultSetFuture fetchPartitions(TenantId tenantId, EntityId entityId, String key, long minPartition, long maxPartition) {
         Select select = QueryBuilder.selectFrom(ModelConstants.TS_KV_PARTITIONS_CF).column(ModelConstants.PARTITION_COLUMN)
                 .whereColumn(ModelConstants.ENTITY_TYPE_COLUMN).isEqualTo(literal(entityId.getEntityType().name()))
