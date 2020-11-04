@@ -25,9 +25,10 @@ import {
   RuleChain,
   RuleChainConnectionInfo,
   RuleChainMetaData,
-  ruleChainNodeComponent, RuleChainType,
+  ruleChainNodeComponent,
   ruleNodeTypeComponentTypes,
-  unknownNodeComponent
+  unknownNodeComponent,
+  RuleChainType
 } from '@shared/models/rule-chain.models';
 import { ComponentDescriptorService } from './component-descriptor.service';
 import {
