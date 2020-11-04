@@ -22,11 +22,11 @@ import {
 } from '@home/models/entity/entities-table-config.models';
 import {
   DebugEventType,
+  Event,
+  EventType,
   EdgeEventType,
   EdgeEventStatusColor,
-  edgeEventStatusColor,
-  Event,
-  EventType
+  edgeEventStatusColor
 } from '@shared/models/event.models';
 import {TimePageLink} from '@shared/models/page/page-link';
 import {TranslateService} from '@ngx-translate/core';
@@ -66,7 +66,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   }
 
   eventTypes: Array<EventType | DebugEventType>;
-  queueStartTs: any;
+  queueStartTs: number;
 
   constructor(private eventService: EventService,
               private dialogService: DialogService,
@@ -347,14 +347,10 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   }
 
   updateEdgeEventStatus(createdTime) {
-    if (this.queueStartTs) {
-      var status: string;
-      if (createdTime < this.queueStartTs) {
-        status = this.translate.instant('edge.success');
-      } else {
-        status = this.translate.instant('edge.failed');
-      }
-      return status;
+    if (this.queueStartTs && createdTime < this.queueStartTs) {
+      return this.translate.instant('edge.success');
+    } else {
+      return this.translate.instant('edge.failed');
     }
   }
 
@@ -363,13 +359,14 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   }
 
   loadEdgeInfo() {
-    this.attributeService.getEntityAttributes(this.entityId, AttributeScope.SERVER_SCOPE,["queueStartTs"])
+    this.attributeService.getEntityAttributes(this.entityId, AttributeScope.SERVER_SCOPE, ['queueStartTs'])
       .subscribe(
         attributes => this.onUpdate(attributes)
       );
   }
 
   onUpdate(attributes) {
+    this.queueStartTs = 0;
     let edge = attributes.reduce(function (map, attribute) {
       map[attribute.key] = attribute;
       return map;
