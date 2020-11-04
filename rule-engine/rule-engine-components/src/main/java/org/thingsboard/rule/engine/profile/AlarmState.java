@@ -254,13 +254,13 @@ class AlarmState {
                 result = entityKeyValue.getJsonValue();
                 break;
             case LONG:
-                result = String.valueOf(entityKeyValue.getLngValue());
+                result = entityKeyValue.getLngValue();
                 break;
             case DOUBLE:
-                result = String.valueOf(entityKeyValue.getDblValue());
+                result = entityKeyValue.getDblValue();
                 break;
             case BOOLEAN:
-                result = String.valueOf(entityKeyValue.getBoolValue());
+                result = entityKeyValue.getBoolValue();
                 break;
         }
         return String.valueOf(result);
