@@ -55,6 +55,7 @@ class AlarmState {
     private volatile boolean initialFetchDone;
     private volatile TbMsgMetaData lastMsgMetaData;
     private volatile String lastMsgQueueName;
+    private volatile DataSnapshot dataSnapshot;
 
     AlarmState(ProfileState deviceProfile, EntityId originator, DeviceProfileAlarm alarmDefinition, PersistedAlarmState alarmState) {
         this.deviceProfile = deviceProfile;
@@ -94,7 +95,7 @@ class AlarmState {
             }
         }
         if (resultState != null) {
-            TbAlarmResult result = calculateAlarmResult(ctx, resultState, data);
+            TbAlarmResult result = calculateAlarmResult(ctx, resultState);
             if (result != null) {
                 pushMsg(ctx, result);
             }
@@ -189,7 +190,7 @@ class AlarmState {
         }
     }
 
-    private <T> TbAlarmResult calculateAlarmResult(TbContext ctx, AlarmRuleState ruleState, T data) {
+    private <T> TbAlarmResult calculateAlarmResult(TbContext ctx, AlarmRuleState ruleState) {
         AlarmSeverity severity = ruleState.getSeverity();
         if (currentAlarm != null) {
             // TODO: In some extremely rare cases, we might miss the event of alarm clear (If one use in-mem queue and restarted the server) or (if one manipulated the rule chain).
@@ -216,7 +217,7 @@ class AlarmState {
             currentAlarm.setSeverity(severity);
             currentAlarm.setStartTs(System.currentTimeMillis());
             currentAlarm.setEndTs(currentAlarm.getStartTs());
-            currentAlarm.setDetails(createDetails(ruleState, (DataSnapshot) data));
+            currentAlarm.setDetails(createDetails(ruleState));
             currentAlarm.setOriginator(originator);
             currentAlarm.setTenantId(ctx.getTenantId());
             currentAlarm.setPropagate(alarmDefinition.isPropagate());
@@ -229,7 +230,7 @@ class AlarmState {
         }
     }
 
-    private <T> JsonNode createDetails(AlarmRuleState ruleState, DataSnapshot dataSnapshot) {
+    private <T> JsonNode createDetails(AlarmRuleState ruleState) {
         ObjectNode details = JacksonUtil.OBJECT_MAPPER.createObjectNode();
         String alarmDetails = ruleState.getAlarmRule().getAlarmDetails();
 
