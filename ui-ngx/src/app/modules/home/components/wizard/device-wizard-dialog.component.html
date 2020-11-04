@@ -76,6 +76,7 @@
                   [required]="!createProfile"
                   [transportType]="deviceWizardFormGroup.get('transportType').value"
                   formControlName="deviceProfileId"
+                  [ngClass]="{invisible: deviceWizardFormGroup.get('addProfileType').value !== 0}"                              
                   (deviceProfileChanged)="$event?.transportType ? deviceWizardFormGroup.get('transportType').patchValue($event?.transportType) : {}"
                   [addNewProfile]="false"
                   [selectDefaultProfile]="true"
