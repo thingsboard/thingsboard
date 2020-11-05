@@ -1001,7 +1001,10 @@
       "success": "Deployed",
       "failed": "Pending",
       "search": "Search edges",
-      "selected-edges": "{ count, plural, 1 {1 edge} other {# edges} } selected"
+      "selected-edges": "{ count, plural, 1 {1 edge} other {# edges} } selected",
+      "enter-edge-type": "Enter entity view type",
+      "any-edge": "Any edge",
+      "no-edge-types-matching": "No edge types matching '{{entitySubtype}}' were found."
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",
