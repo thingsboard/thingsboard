@@ -9,6 +9,7 @@
     </envs>
     <option name="MAIN_CLASS_NAME" value="org.thingsboard.server.ThingsboardServerApplication" />
     <module name="application" />
+    <option name="PROGRAM_PARAMETERS" value="$ContentRoot$" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="org.thingsboard.server.*" />

@@ -137,8 +137,9 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
             this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('entity-view.entity-views');
           }
         } else if (this.config.componentsData.entityViewScope === 'edge') {
-          this.edgeService.getEdge(this.edgeId).pipe(map(edge =>
-            this.config.tableTitle = edge.name + ': ' + this.translate.instant('entity-view.entity-views'))).subscribe();
+          this.edgeService.getEdge(this.edgeId).subscribe(
+            edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('entity-view.entity-views')
+          );
         }
         else {
           this.config.tableTitle = this.translate.instant('entity-view.entity-views');

@@ -155,11 +155,11 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       this.config.entitiesFetchFunction = pageLink => this.fetchEdgeRuleChains(pageLink);
     } else if (ruleChainScope === 'edge') {
       if (isDefined(this.edgeId) && this.edgeId != null) {
-        this.edgeService.getEdge(this.edgeId)
-          .pipe(map(edge => {
+        this.edgeService.getEdge(this.edgeId).subscribe(
+            edge => {
             this.edge = edge;
             this.config.tableTitle = edge.name + ': ' + this.translate.instant('rulechain.edge-rulechains')
-          })).subscribe();
+          });
       }
       this.config.entitiesFetchFunction = pageLink => this.ruleChainService.getEdgeRuleChains(this.edgeId, pageLink);
     }

@@ -142,8 +142,9 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
             this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('device.devices');
           }
         } else if (this.config.componentsData.deviceScope === 'edge') {
-          this.edgeService.getEdge(this.edgeId).pipe(map(edge =>
-            this.config.tableTitle = edge.name + ': ' + this.translate.instant('device.devices'))).subscribe();
+          this.edgeService.getEdge(this.edgeId).subscribe(
+            edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('device.devices')
+          );
         } else {
           this.config.tableTitle = this.translate.instant('device.devices');
         }

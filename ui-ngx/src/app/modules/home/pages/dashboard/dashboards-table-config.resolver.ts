@@ -132,8 +132,9 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
             this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('dashboard.dashboards');
           }
         } else if (this.config.componentsData.dashboardScope === 'edge') {
-          this.edgeService.getEdge(this.config.componentsData.edgeId).pipe(map(edge =>
-            this.config.tableTitle = edge.name + ': ' + this.translate.instant('dashboard.dashboards'))).subscribe();
+          this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(
+            edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('dashboard.dashboards')
+          );
         } else {
           this.config.tableTitle = this.translate.instant('dashboard.dashboards');
         }
