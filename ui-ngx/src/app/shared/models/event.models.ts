@@ -54,15 +54,15 @@ export enum EdgeEventType {
   ADMIN_SETTINGS = "ADMIN_SETTINGS"
 }
 
-export enum EdgeEventStatusColor {
+export enum EdgeEventStatus {
   DEPLOYED = "DEPLOYED",
   PENDING = "PENDING"
 }
 
-export const edgeEventStatusColor = new Map<EdgeEventStatusColor, string> (
+export const edgeEventStatusColor = new Map<EdgeEventStatus, string> (
   [
-    [EdgeEventStatusColor.DEPLOYED, '#000000'],
-    [EdgeEventStatusColor.PENDING, '#9e9e9e']
+    [EdgeEventStatus.DEPLOYED, '#000000'],
+    [EdgeEventStatus.PENDING, '#9e9e9e']
   ]
 );
 

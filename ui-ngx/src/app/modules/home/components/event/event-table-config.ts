@@ -25,7 +25,7 @@ import {
   Event,
   EventType,
   EdgeEventType,
-  EdgeEventStatusColor,
+  EdgeEventStatus,
   edgeEventStatusColor
 } from '@shared/models/event.models';
 import {TimePageLink} from '@shared/models/page/page-link';
@@ -197,7 +197,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           new EntityTableColumn<Event>('status', 'event.status', '100%',
             (entity) => this.updateEdgeEventStatus(entity.createdTime),
               entity => ({
-                color: this.isPending(entity.createdTime) ? edgeEventStatusColor.get(EdgeEventStatusColor.PENDING) : edgeEventStatusColor.get(EdgeEventStatusColor.DEPLOYED)
+                color: this.isPending(entity.createdTime) ? edgeEventStatusColor.get(EdgeEventStatus.PENDING) : edgeEventStatusColor.get(EdgeEventStatus.DEPLOYED)
               }), false),
           new EntityActionTableColumn<Event>('data', 'event.data',
             {
