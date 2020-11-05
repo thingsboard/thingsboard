@@ -167,17 +167,15 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
         $compile(element.contents())(scope);
 
         scope.updateStatus = function(eventCreatedTime) {
-            if (scope.queueStartTs) {
-                var status;
-                if (eventCreatedTime < scope.queueStartTs) {
-                    status = $translate.instant('edge.success');
-                    scope.isPending = false;
-                } else {
-                    status = $translate.instant('edge.failed');
-                    scope.isPending = true;
-                }
-                return status;
+            var status;
+            if (eventCreatedTime < scope.queueStartTs) {
+                status = $translate.instant('edge.success');
+                scope.statusColor = '#000';
+            } else {
+                status = $translate.instant('edge.failed');
+                scope.statusColor = 'rgba(0, 0, 0, .38)';
             }
+            return status;
         }
     }
 

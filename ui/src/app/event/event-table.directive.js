@@ -220,7 +220,6 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
         }
 
         scope.subscriptionId = null;
-        scope.queueStartTs = 0;
 
         scope.loadEdgeInfo = function() {
             attributeService.getEntityAttributesValues(
@@ -228,11 +227,10 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
                 scope.entityId,
                 types.attributesScope.server.value,
                 types.edgeAttributeKeys.queueStartTs,
-                {})
-                .then(function success(attributes) {
-                    scope.onEdgeAttributesUpdate(attributes);
-                });
-
+                null).then(
+                    function success(attributes) {
+                        attributes.length > 0 ? scope.onEdgeAttributesUpdate(attributes) : scope.queueStartTs = 0;
+                    });
             scope.checkSubscription();
         }
 
