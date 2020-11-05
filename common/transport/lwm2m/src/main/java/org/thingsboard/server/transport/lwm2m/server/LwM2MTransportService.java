@@ -59,7 +59,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 
 @Slf4j
 @Service("LwM2MTransportService")
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' ) || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportService {
 
     private final UUID sessionId = UUID.randomUUID();

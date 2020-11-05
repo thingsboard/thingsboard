@@ -25,18 +25,17 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.util.List;
 
 @Slf4j
 @Component
-//@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.lwm2m.enabled}'=='true') || '${service.type:null}'=='tb-core'")
-//@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true') || '${service.type:null}'=='tb-core'")
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 public class LwM2MTransportConfigServer {
 
     @Getter
@@ -52,6 +51,12 @@ public class LwM2MTransportConfigServer {
 
     @Getter
     private String KEY_STORE_DEFAULT_RESOURCE_PATH = "credentials/serverKeyStore.jks";
+
+    @Getter
+    private String BASE_DIR_PATH = System.getProperty("user.dir");
+
+    @Getter
+    private String PATH_DATA_MICROSERVICE = "transport/lwm2m/target/data";
 
     @Getter
     @Setter
@@ -145,7 +150,17 @@ public class LwM2MTransportConfigServer {
     public void init() {
         modelsValue = ObjectLoader.loadDefault();
         File path = getPathModels();
-        modelsValue.addAll(ObjectLoader.loadObjectsFromDir(path));
+        if (path.isDirectory()) {
+            modelsValue.addAll(ObjectLoader.loadObjectsFromDir(path));
+            log.warn("Models directory is [{}]", path.getAbsoluteFile());
+        } else {
+            path = getPathModelsMicroservice();
+            if (path.isDirectory()) {
+                modelsValue.addAll(ObjectLoader.loadObjectsFromDir(path));
+                log.warn("Models directory is [{}]", path.getAbsoluteFile());
+            }
+            log.warn(" [{}] is models not directory", path.getAbsoluteFile());
+        }
         getInKeyStore();
     }
 
@@ -154,22 +169,53 @@ public class LwM2MTransportConfigServer {
                 new File(getClass().getResource(MODEL_RESOURCE_PATH_DEFAULT).getPath());
     }
 
+    private File getPathModelsMicroservice() {
+        String FULL_FILE_PATH = getBaseDirPath();
+        String newPath = FULL_FILE_PATH + PATH_DATA_MICROSERVICE + MODEL_RESOURCE_PATH_DEFAULT;
+        return new File(newPath);
+    }
+
     private KeyStore getInKeyStore() {
         KeyStore keyStoreServer = null;
         try {
             if (keyStoreValue != null && keyStoreValue.size() > 0)
                 return keyStoreValue;
-        }
-        catch (KeyStoreException e) {
+        } catch (KeyStoreException e) {
         }
         try (InputStream inKeyStore = keyStorePathFile.isEmpty() ?
                 ClassLoader.getSystemResourceAsStream(KEY_STORE_DEFAULT_RESOURCE_PATH) : new FileInputStream(new File(keyStorePathFile))) {
-            keyStoreServer = KeyStore.getInstance(keyStoreType);
-            keyStoreServer.load(inKeyStore, keyStorePasswordServer == null ? null : keyStorePasswordServer.toCharArray());
+            InputStream  inKeyStoreAll = (inKeyStore != null) ? inKeyStore : getKeyStoreMicroservice();
+            if (inKeyStoreAll != null) {
+                keyStoreServer = KeyStore.getInstance(keyStoreType);
+                keyStoreServer.load(inKeyStoreAll, keyStorePasswordServer == null ? null : keyStorePasswordServer.toCharArray());
+            }
         } catch (Exception ex) {
             log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
         }
         keyStoreValue = keyStoreServer;
-        return  keyStoreValue;
+
+        return keyStoreValue;
+    }
+
+    private InputStream getKeyStoreMicroservice() {
+        String newPath = getBaseDirPath() + PATH_DATA_MICROSERVICE + "/" + KEY_STORE_DEFAULT_RESOURCE_PATH;
+        try (InputStream inKeyStore = new FileInputStream(new File(newPath))) {
+            return inKeyStore;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private String getBaseDirPath() {
+        Path FULL_FILE_PATH;
+        if (BASE_DIR_PATH.endsWith("bin")) {
+            FULL_FILE_PATH = Paths.get(BASE_DIR_PATH.replaceAll("bin$", ""));
+        } else if (BASE_DIR_PATH.endsWith("conf")) {
+            FULL_FILE_PATH = Paths.get(BASE_DIR_PATH.replaceAll("conf$", ""));
+        } else {
+            FULL_FILE_PATH = Paths.get(BASE_DIR_PATH);
+        }
+        return FULL_FILE_PATH.toUri().getPath();
     }
 }

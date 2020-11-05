@@ -43,7 +43,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 @ComponentScan("org.thingsboard.server.transport.lwm2m.server")
 @ComponentScan("org.thingsboard.server.transport.lwm2m.utils")
 @Configuration("LwM2MTransportServerConfiguration")
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' ) || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportServerConfiguration {
 
     @Autowired

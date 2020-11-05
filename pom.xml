@@ -253,7 +253,8 @@
                                             </resource>
                                         </resources>
                                         <filters>
-                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties</filter>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties
+                                            </filter>
                                         </filters>
                                     </configuration>
                                 </execution>
@@ -314,7 +315,8 @@
                                             </resource>
                                         </resources>
                                         <filters>
-                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties</filter>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties
+                                            </filter>
                                         </filters>
                                     </configuration>
                                 </execution>
@@ -336,7 +338,8 @@
                                             </resource>
                                         </resources>
                                         <filters>
-                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties</filter>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties
+                                            </filter>
                                         </filters>
                                     </configuration>
                                 </execution>
@@ -360,9 +363,39 @@
                                                 </includes>
                                                 <filtering>false</filtering>
                                             </resource>
+                                            <resource>
+                                                <directory>../common/transport/lwm2m/src/main/resources</directory>
+                                                <includes>
+                                                    <include>**/*.xml</include>
+                                                    <include>**/*.jks</include>
+                                                </includes>
+                                                <filtering>false</filtering>
+                                            </resource>
                                         </resources>
                                     </configuration>
                                 </execution>
+                                <execution>
+                                    <id>copy-lwm2m-resources</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>../transport/lwm2m/target/data</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>../common/transport/lwm2m/src/main/resources</directory>
+                                                <includes>
+                                                    <include>**/*.xml</include>
+                                                    <include>**/*.jks</include>
+                                                </includes>
+                                                <filtering>false</filtering>
+                                            </resource>
+                                        </resources>
+
+                                    </configuration>
+                                </execution>
+
                                 <execution>
                                     <id>copy-docker-config</id>
                                     <phase>${pkg.process-resources.phase}</phase>

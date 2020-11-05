@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright © 2016-2020 The Thingsboard Authors
 #
@@ -15,12 +14,20 @@
 # limitations under the License.
 #
 
-mkdir -p tb-node/log/ && sudo chown -R 799:799 tb-node/log/
+FROM thingsboard/openjdk8
 
-mkdir -p tb-transports/coap/log && sudo chown -R 799:799 tb-transports/coap/log
+COPY start-tb-lwm2m-transport.sh ${pkg.name}.deb /tmp/
 
-mkdir -p tb-transports/lwm2m/log && sudo chown -R 799:799 tb-transports/lwm2m/log
+RUN chmod a+x /tmp/*.sh \
+    && mv /tmp/start-tb-lwm2m-transport.sh /usr/bin
 
-mkdir -p tb-transports/http/log && sudo chown -R 799:799 tb-transports/http/log
+RUN yes | dpkg -i /tmp/${pkg.name}.deb
+RUN rm /tmp/${pkg.name}.deb
 
-mkdir -p tb-transports/mqtt/log && sudo chown -R 799:799 tb-transports/mqtt/log
+RUN systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :
+
+RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar
+
+USER ${pkg.user}
+
+CMD ["start-tb-lwm2m-transport.sh"]
