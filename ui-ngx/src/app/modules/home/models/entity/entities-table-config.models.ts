@@ -107,6 +107,7 @@ export class EntityActionTableColumn<T extends BaseData<HasId>> extends BaseEnti
     super('action', key, title, width, false);
   }
 }
+
 export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTableColumn<T> {
   constructor(key: string,
               title: string,

@@ -25,7 +25,7 @@ import { EventService } from '@core/http/event.service';
 import { DialogService } from '@core/services/dialog.service';
 import { DebugEventType, EventType } from '@shared/models/event.models';
 import { RuleChainService } from "@core/http/rule-chain.service";
-import {AttributeService} from "@core/http/attribute.service";
+import { AttributeService } from "@core/http/attribute.service";
 
 @Component({
   selector: 'tb-event-table',
