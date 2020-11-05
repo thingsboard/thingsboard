@@ -17,7 +17,6 @@
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntitySearchDirection, EntityTypeFilter } from '@shared/models/relation.models';
-import { EntityInfo } from './entity.models';
 import { EntityFilter } from '@shared/models/query/query.models';
 
 export enum AliasFilterType {
