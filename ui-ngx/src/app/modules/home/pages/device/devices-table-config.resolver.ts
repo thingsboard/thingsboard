@@ -73,7 +73,6 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
   private readonly config: EntityTableConfig<DeviceInfo> = new EntityTableConfig<DeviceInfo>();
 
   private customerId: string;
-  private edgeId: string;
 
   constructor(private store: Store<AppState>,
               private broadcast: BroadcastService,
@@ -120,10 +119,11 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     const routeParams = route.params;
     this.config.componentsData = {
       deviceScope: route.data.devicesType,
-      deviceProfileId: null
+      deviceProfileId: null,
+      edgeId: routeParams.edgeId
     };
     this.customerId = routeParams.customerId;
-    this.edgeId = routeParams.edgeId;
+    this.config.componentsData.edgeId = routeParams.edgeId;
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
       tap((authUser) => {
         if (authUser.authority === Authority.CUSTOMER_USER) {
@@ -142,7 +142,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
             this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('device.devices');
           }
         } else if (this.config.componentsData.deviceScope === 'edge') {
-          this.edgeService.getEdge(this.edgeId).subscribe(
+          this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(
             edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('device.devices')
           );
         } else {
@@ -195,7 +195,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       this.config.deleteEntity = id => this.deviceService.deleteDevice(id.id);
     } else if (deviceScope === 'edge') {
       this.config.entitiesFetchFunction = pageLink =>
-        this.deviceService.getEdgeDevices(this.edgeId, pageLink, this.config.componentsData.edgeType);
+        this.deviceService.getEdgeDevices(this.config.componentsData.edgeId, pageLink, this.config.componentsData.edgeType);
     } else {
       this.config.entitiesFetchFunction = pageLink =>
         this.deviceService.getCustomerDeviceInfosByDeviceProfileId(this.customerId, pageLink,
@@ -535,7 +535,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        edgeId: this.edgeId,
+        edgeId: this.config.componentsData.edgeId,
         entityType: EntityType.DEVICE
       }
     }).afterClosed()
@@ -558,7 +558,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       true
     ).subscribe((res) => {
         if (res) {
-          this.deviceService.unassignDeviceFromEdge(this.edgeId, device.id.id).subscribe(
+          this.deviceService.unassignDeviceFromEdge(this.config.componentsData.edgeId, device.id.id).subscribe(
             () => {
               this.config.table.updateData();
             }
@@ -583,7 +583,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           const tasks: Observable<any>[] = [];
           devices.forEach(
             (device) => {
-              tasks.push(this.deviceService.unassignDeviceFromEdge(this.edgeId, device.id.id));
+              tasks.push(this.deviceService.unassignDeviceFromEdge(this.config.componentsData.edgeId, device.id.id));
             }
           );
           forkJoin(tasks).subscribe(

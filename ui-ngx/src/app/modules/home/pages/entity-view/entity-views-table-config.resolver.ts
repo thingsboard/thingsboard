@@ -68,7 +68,6 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
   private readonly config: EntityTableConfig<EntityViewInfo> = new EntityTableConfig<EntityViewInfo>();
 
   private customerId: string;
-  private edgeId: string;
 
   constructor(private store: Store<AppState>,
               private broadcast: BroadcastService,
@@ -115,10 +114,10 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
     const routeParams = route.params;
     this.config.componentsData = {
       entityViewScope: route.data.entityViewsType,
-      entityViewType: ''
+      entityViewType: '',
+      edgeId: routeParams.edgeId
     };
     this.customerId = routeParams.customerId;
-    this.edgeId = routeParams.edgeId;
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
       tap((authUser) => {
         if (authUser.authority === Authority.CUSTOMER_USER) {
@@ -137,7 +136,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
             this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('entity-view.entity-views');
           }
         } else if (this.config.componentsData.entityViewScope === 'edge') {
-          this.edgeService.getEdge(this.edgeId).subscribe(
+          this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(
             edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('entity-view.entity-views')
           );
         }
@@ -182,7 +181,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
       this.config.deleteEntity = id => this.entityViewService.deleteEntityView(id.id);
     } else if (entityViewScope === 'edge') {
       this.config.entitiesFetchFunction = pageLink =>
-        this.entityViewService.getEdgeEntityViews(this.edgeId, pageLink, this.config.componentsData.entityViewType);
+        this.entityViewService.getEdgeEntityViews(this.config.componentsData.edgeId, pageLink, this.config.componentsData.entityViewType);
     } else {
       this.config.entitiesFetchFunction = pageLink =>
         this.entityViewService.getCustomerEntityViewInfos(this.customerId, pageLink, this.config.componentsData.entityViewType);
@@ -455,7 +454,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        edgeId: this.edgeId,
+        edgeId: this.config.componentsData.edgeId,
         entityType: EntityType.ENTITY_VIEW
       }
     }).afterClosed()
@@ -478,7 +477,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
       true
     ).subscribe((res) => {
         if (res) {
-          this.entityViewService.unassignEntityViewFromEdge(this.edgeId, entityView.id.id).subscribe(
+          this.entityViewService.unassignEntityViewFromEdge(this.config.componentsData.edgeId, entityView.id.id).subscribe(
             () => {
               this.config.table.updateData();
             }
@@ -503,7 +502,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
           const tasks: Observable<any>[] = [];
           entityViews.forEach(
             (entityView) => {
-              tasks.push(this.entityViewService.unassignEntityViewFromEdge(this.edgeId, entityView.id.id));
+              tasks.push(this.entityViewService.unassignEntityViewFromEdge(this.config.componentsData.edgeId, entityView.id.id));
             }
           );
           forkJoin(tasks).subscribe(
