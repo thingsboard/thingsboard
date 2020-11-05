@@ -21,6 +21,7 @@ import org.snmp4j.Snmp;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -53,9 +54,12 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SnmpTransportService {
 
+    @Autowired
+    private SnmpTransportContext snmpTransportContext;
+
     private Snmp snmp;
     private ScheduledExecutorService schedulerExecutor;
-    private Map<DeviceProfileId, SnmpDeviceProfileTransportConfiguration> deviceProfileTransportConfig;
+
     //TODO: PDU list should be updated on every device profile event
     private Map<DeviceProfileId, List<PDU>> pduPerProfile;
     private List<DeviceSessionCtx> deviceSessionCtxList;
@@ -67,23 +71,23 @@ public class SnmpTransportService {
         initializeSnmp();
 
         DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.fromString("7876dea0-1dbe-11eb-99f0-0719747fb6f9"));
-        this.deviceProfileTransportConfig = Collections.singletonMap(deviceProfileId, SnmpDeviceProfileTransportConfigFactory.getDeviceProfileTransportConfig());
+        snmpTransportContext.getDeviceProfileTransportConfig().putAll(Collections.singletonMap(deviceProfileId, SnmpDeviceProfileTransportConfigFactory.getDeviceProfileTransportConfig()));
 
-        deviceSessionCtxList = deviceProfileTransportConfig.keySet().stream()
+        deviceSessionCtxList = snmpTransportContext.getDeviceProfileTransportConfig().keySet().stream()
                 .map(id -> {
                     DeviceProfile deviceProfile = new DeviceProfile(id);
-                    DeviceSessionCtx deviceSessionCtx = new DeviceSessionCtx(UUID.randomUUID());
+                    DeviceSessionCtx deviceSessionCtx = new DeviceSessionCtx(UUID.randomUUID(), snmpTransportContext, "A2_TEST_TOKEN");
                     deviceSessionCtx.setDeviceId(new DeviceId(UUID.randomUUID()));
                     deviceSessionCtx.setDeviceProfile(deviceProfile);
                     deviceSessionCtx.setTransportConfiguration(SnmpDeviceTransportConfigFactory.getSnmpTransportConfig());
                     //TODO: re-init target on device transport configuration event
-                    deviceSessionCtx.initTarget(deviceProfileTransportConfig.get(id));
+                    deviceSessionCtx.initTarget(snmpTransportContext.getDeviceProfileTransportConfig().get(id));
                     return deviceSessionCtx;
                 })
                 .collect(Collectors.toList());
 
         pduPerProfile = new HashMap<>();
-        deviceProfileTransportConfig.forEach((id, config) -> pduPerProfile.put(id, getPduList(config)));
+        snmpTransportContext.getDeviceProfileTransportConfig().forEach((id, config) -> pduPerProfile.put(id, getPduList(config)));
 
         this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("snmp-pooling-scheduler"));
         this.schedulerExecutor.scheduleAtFixedRate(this::executeSnmp, 5000, 5000, TimeUnit.MILLISECONDS);
@@ -122,7 +126,10 @@ public class SnmpTransportService {
                         .forEach(pdu -> {
                             try {
                                 log.info("[{}] Sending SNMP message...", pdu.getRequestID());
-                                this.snmp.send(pdu, deviceSessionCtx.getTarget(), "someUserHandle", deviceSessionCtx.getSnmpSessionListener());
+                                this.snmp.send(pdu,
+                                        deviceSessionCtx.getTarget(),
+                                        deviceSessionCtx.getDeviceProfile().getId(),
+                                        deviceSessionCtx.getSnmpSessionListener());
                             } catch (IOException e) {
                                 log.error(e.getMessage(), e);
                             }
@@ -136,8 +143,7 @@ public class SnmpTransportService {
                 .computeIfAbsent(mapping.getMethod(), v -> new ArrayList<>())
                 .add(new VariableBinding(new OID(mapping.getOid())));
 
-        deviceProfileConfig.getAttributes().forEach(varBindingPerMethodConsumer);
-        deviceProfileConfig.getTelemetry().forEach(varBindingPerMethodConsumer);
+        deviceProfileConfig.getKvMappings().forEach(varBindingPerMethodConsumer);
 
         return varBindingPerMethod.keySet().stream()
                 .map(method -> {

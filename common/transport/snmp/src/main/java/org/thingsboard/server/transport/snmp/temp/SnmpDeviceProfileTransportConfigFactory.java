@@ -29,7 +29,7 @@ public class SnmpDeviceProfileTransportConfigFactory {
     public static SnmpDeviceProfileTransportConfiguration getDeviceProfileTransportConfig() {
         SnmpDeviceProfileTransportConfiguration config = null;
         try {
-            String jsonConfig = "{\"type\":\"SNMP\",\"poolPeriodMs\":10000,\"timeoutMs\":5000,\"retries\":5,\"attributes\":[{\"key\":\"snmpNodeManagerEmail\",\"type\":\"STRING\",\"method\":\"get\",\"oid\":\".1.3.6.1.2.1.1.4.0\"}],\"telemetry\":[{\"key\":\"snmpNodeSysUpTime\",\"type\":\"LONG\",\"method\":\"get\",\"oid\":\".1.3.6.1.2.1.25.1.1.0\"}]}";
+            String jsonConfig = "{\"type\":\"SNMP\",\"poolPeriodMs\":10000,\"timeoutMs\":1000,\"retries\":1,\"attributes\":[{\"key\":\"snmpNodeManagerEmail\",\"type\":\"STRING\",\"method\":\"get\",\"oid\":\".1.3.6.1.2.1.1.4.0\"}],\"telemetry\":[{\"key\":\"snmpNodeSysUpTime\",\"type\":\"STRING\",\"method\":\"get\",\"oid\":\".1.3.6.1.2.1.25.1.1.0\"}]}";
             config = mapper.readValue(jsonConfig, SnmpDeviceProfileTransportConfiguration.class);
         } catch (JsonProcessingException e) {
             e.printStackTrace();

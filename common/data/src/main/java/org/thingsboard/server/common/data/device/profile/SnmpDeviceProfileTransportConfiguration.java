@@ -19,6 +19,8 @@ import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Data
 public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
@@ -29,8 +31,14 @@ public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTra
     private List<SnmpDeviceProfileKvMapping> attributes;
     private List<SnmpDeviceProfileKvMapping> telemetry;
 
+    private List<SnmpDeviceProfileKvMapping> kvMappings;
+
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.SNMP;
+    }
+
+    public List<SnmpDeviceProfileKvMapping> getKvMappings() {
+        return Stream.concat(attributes.stream(), telemetry.stream()).collect(Collectors.toList());
     }
 }

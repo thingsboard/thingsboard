@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
+import org.thingsboard.server.transport.snmp.SnmpTransportContext;
 
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,13 +43,14 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext {
     private SnmpDeviceTransportConfiguration transportConfiguration;
     @Getter
     @Setter
-    private SnmpSessionListener snmpSessionListener = new SnmpSessionListener();
+    private SnmpSessionListener snmpSessionListener;
     @Getter
     @Setter
     private Target target;
 
-    public DeviceSessionCtx(UUID sessionId) {
+    public DeviceSessionCtx(UUID sessionId, SnmpTransportContext transportContext, String token) {
         super(sessionId);
+        snmpSessionListener = new SnmpSessionListener(transportContext, token);
     }
 
     @Override
@@ -73,7 +75,7 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext {
         this.target = communityTarget;
     }
 
-    //TODO: replace with enum, wtih preliminary disussion of type version in config (string or integer)
+    //TODO: replace with enum, wtih preliminary discussion of type version in config (string or integer)
     private int getSnmpVersion(String configSnmpVersion) {
         switch (configSnmpVersion) {
             case ("v1"):
