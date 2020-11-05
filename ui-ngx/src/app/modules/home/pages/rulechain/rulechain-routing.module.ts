@@ -151,7 +151,7 @@ const routes: Routes = [
             data: {
               auth: [Authority.TENANT_ADMIN],
               title: 'rulechain.rulechains',
-              ruleChainScope: 'tenant',
+              ruleChainsType: 'tenant',
               type: ruleChainType.core
             },
             resolve: {
@@ -214,7 +214,7 @@ const routes: Routes = [
             data: {
               auth: [Authority.TENANT_ADMIN],
               title: 'edge.rulechains',
-              ruleChainScope: 'edges',
+              ruleChainsType: 'edges',
               type: ruleChainType.edge
             },
             resolve: {

@@ -103,7 +103,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   resolve(route: ActivatedRouteSnapshot): EntityTableConfig<RuleChain> {
     const routeParams = route.params;
     this.config.componentsData = {
-      ruleChainScope: route.data.ruleChainScope,
+      ruleChainScope: route.data.ruleChainsType,
       type: route.data.type,
       edgeId: routeParams.edgeId
     };
