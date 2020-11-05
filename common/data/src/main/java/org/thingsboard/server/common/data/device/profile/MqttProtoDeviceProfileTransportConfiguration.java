@@ -56,7 +56,7 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
     public static final String TELEMETRY_PROTO_SCHEMA = "telemetry proto schema";
 
     public static String invalidSchemaProvidedMessage(String schemaName) {
-        return "Invalid " + schemaName + " schema provided!";
+        return "[Transport Configuration] invalid " + schemaName + " schema provided!";
     }
 
     private String deviceTelemetryProtoSchema;
@@ -73,7 +73,7 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
         try {
             protoFileElement = schemaParser.readProtoFile();
         } catch (Exception e) {
-            throw new IllegalArgumentException("Failed to parse: " + schemaName + " schema due to: " + e.getMessage());
+            throw new IllegalArgumentException("[Transport Configuration] failed to parse " + schemaName + " due to: " + e.getMessage());
         }
         checkProtoFileSyntax(schemaName, protoFileElement);
         checkProtoFileCommonSettings(schemaName, protoFileElement.getOptions().isEmpty(), " Schema options don't support!");
@@ -127,7 +127,7 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
 
     private void checkProtoFileSyntax(String schemaName, ProtoFileElement protoFileElement) {
         if (protoFileElement.getSyntax() == null || !protoFileElement.getSyntax().equals(Syntax.PROTO_3)) {
-            throw new IllegalArgumentException("Invalid schema syntax: " + protoFileElement.getSyntax() +
+            throw new IllegalArgumentException("[Transport Configuration] invalid schema syntax: " + protoFileElement.getSyntax() +
                     " for: " + schemaName + " provided! Only " + Syntax.PROTO_3 + " allowed!");
         }
     }

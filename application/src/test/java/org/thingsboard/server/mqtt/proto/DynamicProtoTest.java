@@ -229,67 +229,67 @@ public class DynamicProtoTest {
 
     @Test
     public void testDynamicSchemaProtoFileValidation() {
-        processValidation("Failed to parse: testParseToProtoFile schema due to: Syntax error in :6:4: 'required' label forbidden in proto3 field declarations", IVALID_PROTO_SCHEMA_REQUIRED_FIELD_EXISTS, "testParseToProtoFile");
+        processValidation("[Transport Configuration] failed to parse testParseToProtoFile due to: Syntax error in :6:4: 'required' label forbidden in proto3 field declarations", IVALID_PROTO_SCHEMA_REQUIRED_FIELD_EXISTS, "testParseToProtoFile");
     }
 
     @Test
     public void testDynamicSchemaSyntaxValidation() {
-        processValidation("Invalid schema syntax: proto2 for: testSyntaxValidation provided! Only proto3 allowed!", INVALID_PROTO_SCHEMA_NOT_VALID_SYNTAX, "testSyntaxValidation");
+        processValidation("[Transport Configuration] invalid schema syntax: proto2 for: testSyntaxValidation provided! Only proto3 allowed!", INVALID_PROTO_SCHEMA_NOT_VALID_SYNTAX, "testSyntaxValidation");
     }
 
     @Test
     public void testDynamicSchemaOptionsValidation() {
-        processValidation("Invalid testOptionsValidation schema provided! Schema options don't support!", INVALID_PROTO_SCHEMA_OPTIONS_NOT_SUPPORTED, "testOptionsValidation");
+        processValidation("[Transport Configuration] invalid testOptionsValidation schema provided! Schema options don't support!", INVALID_PROTO_SCHEMA_OPTIONS_NOT_SUPPORTED, "testOptionsValidation");
     }
 
     @Test
     public void testDynamicSchemaPublicImportsValidation() {
-        processValidation("Invalid testPublicImportsValidation schema provided! Schema public imports don't support!", INVALID_PROTO_SCHEMA_PUBLIC_IMPORTS_NOT_SUPPORTED, "testPublicImportsValidation");
+        processValidation("[Transport Configuration] invalid testPublicImportsValidation schema provided! Schema public imports don't support!", INVALID_PROTO_SCHEMA_PUBLIC_IMPORTS_NOT_SUPPORTED, "testPublicImportsValidation");
     }
 
     @Test
     public void testDynamicSchemaImportsValidation() {
-        processValidation("Invalid testImportsValidation schema provided! Schema imports don't support!", INVALID_PROTO_SCHEMA_IMPORTS_NOT_SUPPORTED, "testImportsValidation");
+        processValidation("[Transport Configuration] invalid testImportsValidation schema provided! Schema imports don't support!", INVALID_PROTO_SCHEMA_IMPORTS_NOT_SUPPORTED, "testImportsValidation");
     }
 
     @Test
     public void testDynamicSchemaExtendDeclarationsValidation() {
-        processValidation("Invalid testExtendDeclarationsValidation schema provided! Schema extend declarations don't support!", INVALID_PROTO_SCHEMA_EXTEND_DECLARATION_NOT_SUPPORTED, "testExtendDeclarationsValidation");
+        processValidation("[Transport Configuration] invalid testExtendDeclarationsValidation schema provided! Schema extend declarations don't support!", INVALID_PROTO_SCHEMA_EXTEND_DECLARATION_NOT_SUPPORTED, "testExtendDeclarationsValidation");
     }
 
     @Test
     public void testDynamicSchemaEnumOptionsValidation() {
-        processValidation("Invalid testEnumOptionsValidation schema provided! Enum definitions options are not supported!", INVALID_PROTO_SCHEMA_ENUM_OPTIONS_NOT_SUPPORTED, "testEnumOptionsValidation");
+        processValidation("[Transport Configuration] invalid testEnumOptionsValidation schema provided! Enum definitions options are not supported!", INVALID_PROTO_SCHEMA_ENUM_OPTIONS_NOT_SUPPORTED, "testEnumOptionsValidation");
     }
 
     @Test
     public void testDynamicSchemaNoOneMessageTypeExistsValidation() {
-        processValidation("Invalid noOneMessageTypeExists schema provided! At least one Message definition should exists!", INVALID_PROTO_SCHEMA_NO_MESSAGE_TYPES_EXISTS, "noOneMessageTypeExists");
+        processValidation("[Transport Configuration] invalid noOneMessageTypeExists schema provided! At least one Message definition should exists!", INVALID_PROTO_SCHEMA_NO_MESSAGE_TYPES_EXISTS, "noOneMessageTypeExists");
     }
 
     @Test
     public void testDynamicSchemaMessageTypeOptionsValidation() {
-        processValidation("Invalid messageTypeOptions schema provided! Message definition options don't support!", INVALID_PROTO_SCHEMA_MESSAGE_OPTIONS_NOT_SUPPORTED, "messageTypeOptions");
+        processValidation("[Transport Configuration] invalid messageTypeOptions schema provided! Message definition options don't support!", INVALID_PROTO_SCHEMA_MESSAGE_OPTIONS_NOT_SUPPORTED, "messageTypeOptions");
     }
 
     @Test
     public void testDynamicSchemaMessageTypeExtensionsValidation() {
-        processValidation("Invalid messageTypeExtensions schema provided! Message definition extensions don't support!", INVALID_PROTO_SCHEMA_MESSAGE_EXTENSIONS_NOT_SUPPORTED, "messageTypeExtensions");
+        processValidation("[Transport Configuration] invalid messageTypeExtensions schema provided! Message definition extensions don't support!", INVALID_PROTO_SCHEMA_MESSAGE_EXTENSIONS_NOT_SUPPORTED, "messageTypeExtensions");
     }
 
     @Test
     public void testDynamicSchemaMessageTypeReservedElementsValidation() {
-        processValidation("Invalid messageTypeReservedElements schema provided! Message definition reserved elements don't support!", INVALID_PROTO_SCHEMA_MESSAGE_RESERVED_NOT_SUPPORTED, "messageTypeReservedElements");
+        processValidation("[Transport Configuration] invalid messageTypeReservedElements schema provided! Message definition reserved elements don't support!", INVALID_PROTO_SCHEMA_MESSAGE_RESERVED_NOT_SUPPORTED, "messageTypeReservedElements");
     }
 
     @Test
     public void testDynamicSchemaMessageTypeGroupsElementsValidation() {
-        processValidation("Invalid messageTypeGroupsElements schema provided! Message definition groups don't support!", INVALID_PROTO_SCHEMA_MESSAGE_GROUPS_NOT_SUPPORTED, "messageTypeGroupsElements");
+        processValidation("[Transport Configuration] invalid messageTypeGroupsElements schema provided! Message definition groups don't support!", INVALID_PROTO_SCHEMA_MESSAGE_GROUPS_NOT_SUPPORTED, "messageTypeGroupsElements");
     }
 
     @Test
     public void testDynamicSchemaOneOfsTypeGroupsElementsValidation() {
-        processValidation("Invalid oneOfsTypeGroupsElements schema provided! OneOf definition groups don't support!", INVALID_PROTO_SCHEMA_ONE_OFS_GROUPS_NOT_SUPPORTED, "oneOfsTypeGroupsElements");
+        processValidation("[Transport Configuration] invalid oneOfsTypeGroupsElements schema provided! OneOf definition groups don't support!", INVALID_PROTO_SCHEMA_ONE_OFS_GROUPS_NOT_SUPPORTED, "oneOfsTypeGroupsElements");
     }
 
     private void processValidation(String expectedMessage, String schema, String schemaName) {

@@ -34,7 +34,7 @@ import {
   MqttTransportPayloadType,
   mqttTransportPayloadTypeTranslationMap
 } from '@shared/models/device.models';
-import {isDefinedAndNotNull} from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-mqtt-device-profile-transport-configuration',
