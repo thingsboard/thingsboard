@@ -1281,7 +1281,7 @@ export class RuleChainPageComponent extends PageComponent
         if (this.isImport) {
           this.isDirtyValue = false;
           this.isImport = false;
-          this.router.navigateByUrl(`ruleChains/${this.ruleChain.id.id}`);
+          this.router.navigateByUrl(`ruleChains/${this.route.snapshot.data.ruleChainType.toLowerCase()}/${this.ruleChain.id.id}`);
         } else {
           this.createRuleChainModel();
         }
