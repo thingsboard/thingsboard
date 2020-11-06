@@ -960,8 +960,8 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private updateAlarmDataSubscription() {
     if (this.alarmDataListener) {
-      const pageLink = this.alarmDataListener.subscription.alarmDataSubscriptionOptions.pageLink;
-      const keyFilters = this.alarmDataListener.subscription.alarmDataSubscriptionOptions.additionalKeyFilters;
+      const pageLink = this.alarmDataListener.alarmDataSubscriptionOptions.pageLink;
+      const keyFilters = this.alarmDataListener.alarmDataSubscriptionOptions.additionalKeyFilters;
       this.subscribeForAlarms(pageLink, keyFilters);
     }
   }
