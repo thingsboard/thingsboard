@@ -20,7 +20,7 @@ import { forkJoin, Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
-import { isDefinedAndNotNull } from '@core/utils';
+import {isDefined, isDefinedAndNotNull} from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -38,6 +38,17 @@ export class AttributeService {
       url += `?keys=${keys.join(',')}`;
     }
     return this.http.get<Array<AttributeData>>(url, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getEntityTimeseriesValues(entityId: EntityId, keys: Array<string>, startTs: number, endTs: number, limit?: number, config?: RequestConfig) {
+    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/timeseries/`;
+      url += `?keys=${keys.join(',')}`;
+      url += `?startTs=${startTs}`;
+      url += `?endTs=${endTs}`;
+      if (isDefined(limit)) {
+        url += `?keys=${limit}`;
+      }
+    return this.http.get(url, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteEntityAttributes(entityId: EntityId, attributeScope: AttributeScope, attributes: Array<AttributeData>,
