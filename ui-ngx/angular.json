@@ -23,7 +23,7 @@
             "polyfills": "src/polyfills.ts",
             "tsConfig": "src/tsconfig.app.json",
             "assets": [
-              "src/thingsboard.ico",
+              "src/favicon.ico",
               "src/assets",
               {
                 "glob": "worker-html.js",
