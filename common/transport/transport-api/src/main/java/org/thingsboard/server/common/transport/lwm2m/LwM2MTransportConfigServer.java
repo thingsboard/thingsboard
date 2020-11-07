@@ -31,6 +31,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.List;
 
 @Slf4j
@@ -42,21 +44,23 @@ public class LwM2MTransportConfigServer {
     @Value("${transport.lwm2m.timeout:}")
     private Long timeout;
 
-    @Getter
-    @Value("${transport.lwm2m.model_path_file:}")
-    private String modelPathFile;
 
     @Getter
-    private String MODEL_RESOURCE_PATH_DEFAULT = "/models";
+    private String MODEL_PATH_DEFAULT = "/models";
 
     @Getter
-    private String KEY_STORE_DEFAULT_RESOURCE_PATH = "credentials/serverKeyStore.jks";
+    private String KEY_STORE_DEFAULT_RESOURCE_PATH = "/credentials/serverKeyStore.jks";
 
     @Getter
     private String BASE_DIR_PATH = System.getProperty("user.dir");
 
     @Getter
-    private String PATH_DATA_MICROSERVICE = "transport/lwm2m/target/data";
+    @Value("${transport.lwm2m.model_path_file:}")
+    private String modelPathFile;
+
+    @Getter
+//    private String PATH_DATA_MICROSERVICE = "/usr/share/tb-lwm2m-transport/data$";
+    private String PATH_DATA = "data";
 
     @Getter
     @Setter
@@ -151,60 +155,50 @@ public class LwM2MTransportConfigServer {
         modelsValue = ObjectLoader.loadDefault();
         File path = getPathModels();
         if (path.isDirectory()) {
-            modelsValue.addAll(ObjectLoader.loadObjectsFromDir(path));
-            log.warn("Models directory is [{}]", path.getAbsoluteFile());
-        } else {
-            path = getPathModelsMicroservice();
-            if (path.isDirectory()) {
+            try {
                 modelsValue.addAll(ObjectLoader.loadObjectsFromDir(path));
-                log.warn("Models directory is [{}]", path.getAbsoluteFile());
+                log.info(" [{}] Models directory is a directory", path.getAbsoluteFile());
             }
-            log.warn(" [{}] is models not directory", path.getAbsoluteFile());
+            catch (Exception e) {
+                log.error(" [{}] Could not parse the resource definition file", e.toString());
+            }
+        }
+        else {
+            log.error("[{}] Models folder is not a directory", path.getAbsoluteFile());
         }
         getInKeyStore();
     }
 
     private File getPathModels() {
         return (modelPathFile != null && !modelPathFile.isEmpty()) ? new File(modelPathFile) :
-                new File(getClass().getResource(MODEL_RESOURCE_PATH_DEFAULT).getPath());
-    }
-
-    private File getPathModelsMicroservice() {
-        String FULL_FILE_PATH = getBaseDirPath();
-        String newPath = FULL_FILE_PATH + PATH_DATA_MICROSERVICE + MODEL_RESOURCE_PATH_DEFAULT;
-        return new File(newPath);
+                new File(getBaseDirPath() + PATH_DATA + MODEL_PATH_DEFAULT);
     }
 
     private KeyStore getInKeyStore() {
-        KeyStore keyStoreServer = null;
         try {
             if (keyStoreValue != null && keyStoreValue.size() > 0)
                 return keyStoreValue;
         } catch (KeyStoreException e) {
+            log.error("Uninitialized keystore [{}]", keyStoreValue.toString());
         }
-        try (InputStream inKeyStore = keyStorePathFile.isEmpty() ?
-                ClassLoader.getSystemResourceAsStream(KEY_STORE_DEFAULT_RESOURCE_PATH) : new FileInputStream(new File(keyStorePathFile))) {
-            InputStream  inKeyStoreAll = (inKeyStore != null) ? inKeyStore : getKeyStoreMicroservice();
-            if (inKeyStoreAll != null) {
-                keyStoreServer = KeyStore.getInstance(keyStoreType);
-                keyStoreServer.load(inKeyStoreAll, keyStorePasswordServer == null ? null : keyStorePasswordServer.toCharArray());
+        keyStorePathFile = (keyStorePathFile != null && !keyStorePathFile.isEmpty()) ? keyStorePathFile : getBaseDirPath() + PATH_DATA + KEY_STORE_DEFAULT_RESOURCE_PATH;
+        File keyStoreFile = new File(keyStorePathFile);
+        if (keyStoreFile.isFile()) {
+            try {
+                InputStream inKeyStore = new FileInputStream(keyStoreFile);
+                keyStoreValue = KeyStore.getInstance(keyStoreType);
+                keyStoreValue.load(inKeyStore, keyStorePasswordServer == null ? null : keyStorePasswordServer.toCharArray());
+            } catch (CertificateException  | NoSuchAlgorithmException | IOException | KeyStoreException  e) {
+                log.error("[{}] Unable to load KeyStore  files server, folder is not a directory", e.getMessage());
+                keyStoreValue = null;
             }
-        } catch (Exception ex) {
-            log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
+            log.info("[{}] Load KeyStore  files server, folder is a directory", keyStoreFile.getAbsoluteFile());
         }
-        keyStoreValue = keyStoreServer;
-
+        else {
+            log.error("[{}] Unable to load KeyStore  files server, is not a file", keyStoreFile.getAbsoluteFile());
+            keyStoreValue = null;
+        }
         return keyStoreValue;
-    }
-
-    private InputStream getKeyStoreMicroservice() {
-        String newPath = getBaseDirPath() + PATH_DATA_MICROSERVICE + "/" + KEY_STORE_DEFAULT_RESOURCE_PATH;
-        try (InputStream inKeyStore = new FileInputStream(new File(newPath))) {
-            return inKeyStore;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     private String getBaseDirPath() {

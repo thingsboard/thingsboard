@@ -381,7 +381,7 @@
                                         <goal>copy-resources</goal>
                                     </goals>
                                     <configuration>
-                                        <outputDirectory>../transport/lwm2m/target/data</outputDirectory>
+                                        <outputDirectory>../transport/lwm2m/src/main/data</outputDirectory>
                                         <resources>
                                             <resource>
                                                 <directory>../common/transport/lwm2m/src/main/resources</directory>

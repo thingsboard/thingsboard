@@ -23,12 +23,14 @@ import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBootstrap;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
+
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.*;
 import java.util.Arrays;
+
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.X509;
 
@@ -112,21 +114,28 @@ public class LwM2MSetSecurityStoreBootstrap {
 
     private void setServerWithX509Cert(int securityModeCode) {
         try {
-            KeyStore keyStoreServer = this.contextS.getCtxServer().getKeyStoreValue();
-            setBuilderX509();
-            X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(this.contextS.getCtxServer().getRootAlias());
-            rootCAX509Cert = null;
-            if (rootCAX509Cert != null && securityModeCode == X509.code) {
-                X509Certificate[] trustedCertificates = new X509Certificate[1];
-                trustedCertificates[0] = rootCAX509Cert;
-                this.builder.setTrustedCertificates(trustedCertificates);
-            } else {
+            if (this.contextS.getCtxServer().getKeyStoreValue() != null) {
+                KeyStore keyStoreServer = this.contextS.getCtxServer().getKeyStoreValue();
+                setBuilderX509();
+                X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(this.contextS.getCtxServer().getRootAlias());
+                if (rootCAX509Cert != null && securityModeCode == X509.code) {
+                    X509Certificate[] trustedCertificates = new X509Certificate[1];
+                    trustedCertificates[0] = rootCAX509Cert;
+                    this.builder.setTrustedCertificates(trustedCertificates);
+                } else {
+                    /** by default trust all */
+                    this.builder.setTrustedCertificates(new X509Certificate[0]);
+                }
+            }
+            else {
                 /** by default trust all */
                 this.builder.setTrustedCertificates(new X509Certificate[0]);
+                log.error("Unable to load X509 files for BootStrapServer");
             }
         } catch (KeyStoreException ex) {
             log.error("[{}] Unable to load X509 files server", ex.getMessage());
         }
+
     }
 
     private void setBuilderX509() {
@@ -135,17 +144,14 @@ public class LwM2MSetSecurityStoreBootstrap {
          * For idea => KeyStorePathResource == common/transport/lwm2m/src/main/resources/credentials: in LwM2MTransportContextServer: credentials/serverKeyStore.jks
          */
         try {
-            if (this.contextS.getCtxServer().getKeyStoreValue() != null) {
-                X509Certificate serverCertificate =  (X509Certificate) this.contextS.getCtxServer().getKeyStoreValue().getCertificate(this.contextBs.getCtxBootStrap().getBootstrapAlias());
-                this.privateKey = (PrivateKey) this.contextS.getCtxServer().getKeyStoreValue().getKey(this.contextBs.getCtxBootStrap().getBootstrapAlias(), this.contextS.getCtxServer().getKeyStorePasswordServer() == null ? null : this.contextS.getCtxServer().getKeyStorePasswordServer().toCharArray());
-                if (this.privateKey != null && this.privateKey.getEncoded().length > 0) {
-                    this.builder.setPrivateKey(this.privateKey);
-                }
-                if (serverCertificate != null) {
-                    this.builder.setCertificateChain(new X509Certificate[]{serverCertificate});
-                    this.contextBs.getCtxBootStrap().setBootstrapCertificate(serverCertificate);
-//                    getParamsX509();
-                }
+            X509Certificate serverCertificate = (X509Certificate) this.contextS.getCtxServer().getKeyStoreValue().getCertificate(this.contextBs.getCtxBootStrap().getBootstrapAlias());
+            this.privateKey = (PrivateKey) this.contextS.getCtxServer().getKeyStoreValue().getKey(this.contextBs.getCtxBootStrap().getBootstrapAlias(), this.contextS.getCtxServer().getKeyStorePasswordServer() == null ? null : this.contextS.getCtxServer().getKeyStorePasswordServer().toCharArray());
+            if (this.privateKey != null && this.privateKey.getEncoded().length > 0) {
+                this.builder.setPrivateKey(this.privateKey);
+            }
+            if (serverCertificate != null) {
+                this.builder.setCertificateChain(new X509Certificate[]{serverCertificate});
+                this.contextBs.getCtxBootStrap().setBootstrapCertificate(serverCertificate);
             }
         } catch (Exception ex) {
             log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());

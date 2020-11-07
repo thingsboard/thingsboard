@@ -29,6 +29,7 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.util.Pool;
+
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -37,6 +38,7 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.*;
 import java.util.Arrays;
+
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
 
 @Slf4j
@@ -157,15 +159,22 @@ public class LwM2MSetSecurityStoreServer {
 
     private void setServerWithX509Cert() {
         try {
-            setBuilderX509();
-            X509Certificate rootCAX509Cert = (X509Certificate) this.context.getCtxServer().getKeyStoreValue().getCertificate(this.context.getCtxServer().getRootAlias());
-            if (rootCAX509Cert != null) {
-                X509Certificate[] trustedCertificates = new X509Certificate[1];
-                trustedCertificates[0] = rootCAX509Cert;
-                builder.setTrustedCertificates(trustedCertificates);
-            } else {
+            if (this.context.getCtxServer().getKeyStoreValue() != null) {
+                setBuilderX509();
+                X509Certificate rootCAX509Cert = (X509Certificate) this.context.getCtxServer().getKeyStoreValue().getCertificate(this.context.getCtxServer().getRootAlias());
+                if (rootCAX509Cert != null) {
+                    X509Certificate[] trustedCertificates = new X509Certificate[1];
+                    trustedCertificates[0] = rootCAX509Cert;
+                    builder.setTrustedCertificates(trustedCertificates);
+                } else {
+                    /** by default trust all */
+                    builder.setTrustedCertificates(new X509Certificate[0]);
+                }
+            }
+            else {
                 /** by default trust all */
-                builder.setTrustedCertificates(new X509Certificate[0]);
+                this.builder.setTrustedCertificates(new X509Certificate[0]);
+                log.error("Unable to load X509 files for LWM2MServer");
             }
         } catch (KeyStoreException ex) {
             log.error("[{}] Unable to load X509 files server", ex.getMessage());
@@ -178,12 +187,10 @@ public class LwM2MSetSecurityStoreServer {
          * For idea => KeyStorePathResource == common/transport/lwm2m/src/main/resources/credentials: in LwM2MTransportContextServer: credentials/serverKeyStore.jks
          */
         try {
-           if (this.context.getCtxServer().getKeyStoreValue() != null) {
-               X509Certificate serverCertificate = (X509Certificate) this.context.getCtxServer().getKeyStoreValue().getCertificate(this.context.getCtxServer().getServerAlias());
-               PrivateKey privateKey = (PrivateKey) this.context.getCtxServer().getKeyStoreValue().getKey(this.context.getCtxServer().getServerAlias(), this.context.getCtxServer().getKeyStorePasswordServer() == null ? null : this.context.getCtxServer().getKeyStorePasswordServer().toCharArray());
-               this.builder.setPrivateKey(privateKey);
-               this.builder.setCertificateChain(new X509Certificate[]{serverCertificate});
-           }
+            X509Certificate serverCertificate = (X509Certificate) this.context.getCtxServer().getKeyStoreValue().getCertificate(this.context.getCtxServer().getServerAlias());
+            PrivateKey privateKey = (PrivateKey) this.context.getCtxServer().getKeyStoreValue().getKey(this.context.getCtxServer().getServerAlias(), this.context.getCtxServer().getKeyStorePasswordServer() == null ? null : this.context.getCtxServer().getKeyStorePasswordServer().toCharArray());
+            this.builder.setPrivateKey(privateKey);
+            this.builder.setCertificateChain(new X509Certificate[]{serverCertificate});
         } catch (Exception ex) {
             log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
         }
