@@ -104,7 +104,7 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
         if (old != null) {
             DeviceProfile newProfile = get(tenantId, deviceId);
             if (newProfile == null || !old.equals(newProfile.getId())) {
-                notifyDeviceListeners(deviceId, newProfile);
+                notifyDeviceListeners(tenantId, deviceId, newProfile);
             }
         }
     }
@@ -150,10 +150,12 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
         }
     }
 
-    private void notifyDeviceListeners(DeviceId deviceId, DeviceProfile profile) {
-        ConcurrentMap<EntityId, BiConsumer<DeviceId, DeviceProfile>> tenantListeners = deviceProfileListeners.get(profile.getTenantId());
-        if (tenantListeners != null) {
-            tenantListeners.forEach((id, listener) -> listener.accept(deviceId, profile));
+    private void notifyDeviceListeners(TenantId tenantId, DeviceId deviceId, DeviceProfile profile) {
+        if (profile != null) {
+            ConcurrentMap<EntityId, BiConsumer<DeviceId, DeviceProfile>> tenantListeners = deviceProfileListeners.get(tenantId);
+            if (tenantListeners != null) {
+                tenantListeners.forEach((id, listener) -> listener.accept(deviceId, profile));
+            }
         }
     }
 

@@ -259,26 +259,26 @@ class DefaultTbContext implements TbContext {
     }
 
     public TbMsg customerCreatedMsg(Customer customer, RuleNodeId ruleNodeId) {
-        return entityCreatedMsg(customer, customer.getId(), ruleNodeId);
+        return entityActionMsg(customer, customer.getId(), ruleNodeId, DataConstants.ENTITY_CREATED);
     }
 
     public TbMsg deviceCreatedMsg(Device device, RuleNodeId ruleNodeId) {
-        return entityCreatedMsg(device, device.getId(), ruleNodeId);
+        return entityActionMsg(device, device.getId(), ruleNodeId, DataConstants.ENTITY_CREATED);
     }
 
     public TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId) {
-        return entityCreatedMsg(asset, asset.getId(), ruleNodeId);
+        return entityActionMsg(asset, asset.getId(), ruleNodeId, DataConstants.ENTITY_CREATED);
     }
 
-    public TbMsg alarmCreatedMsg(Alarm alarm, RuleNodeId ruleNodeId) {
-        return entityCreatedMsg(alarm, alarm.getId(), ruleNodeId);
+    public TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action) {
+        return entityActionMsg(alarm, alarm.getId(), ruleNodeId, action);
     }
 
-    public <E, I extends EntityId> TbMsg entityCreatedMsg(E entity, I id, RuleNodeId ruleNodeId) {
+    public <E, I extends EntityId> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, String action) {
         try {
-            return TbMsg.newMsg(DataConstants.ENTITY_CREATED, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)));
+            return TbMsg.newMsg(action, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)));
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " created msg: " + e);
+            throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " " + action + " msg: " + e);
         }
     }
 

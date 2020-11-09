@@ -30,7 +30,7 @@ import java.nio.charset.StandardCharsets;
 
 @Component(value = "oauth2AuthenticationFailureHandler")
 @ConditionalOnProperty(prefix = "security.oauth2", value = "enabled", havingValue = "true")
-public class Oauth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler  {
+public class Oauth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request,

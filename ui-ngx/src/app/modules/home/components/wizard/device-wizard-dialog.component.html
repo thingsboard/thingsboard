@@ -97,6 +97,12 @@
                   formControlName="defaultRuleChainId">
                 </tb-rule-chain-autocomplete>
               </div>
+              <div fxLayout="column" fxLayoutAlign="flex-end start">
+                <tb-queue-type-list
+                  [queueType]="serviceType"
+                  formControlName="defaultQueueName">
+                </tb-queue-type-list>
+              </div>
             </div>
             <mat-checkbox formControlName="gateway" style="padding-bottom: 16px;">
               {{ 'device.is-gateway' | translate }}
