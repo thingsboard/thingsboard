@@ -243,6 +243,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
     private void updateTenantState(TenantApiUsageState state, TenantProfile tenantProfile) {
         TenantProfileData oldProfileData = state.getTenantProfileData();
+        state.setTenantProfileId(tenantProfile.getId());
         state.setTenantProfileData(tenantProfile.getProfileData());
         Map<ApiFeature, Boolean> result = state.checkStateUpdatedDueToThresholds();
         if (!result.isEmpty()) {
@@ -257,8 +258,10 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         long ts = System.currentTimeMillis();
         List<TsKvEntry> profileThresholds = new ArrayList<>();
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-            if (oldData == null || oldData.getProfileThreshold(key) != newData.getProfileThreshold(key)) {
-                profileThresholds.add(new BasicTsKvEntry(ts, new LongDataEntry(key.getApiLimitKey(), newData.getProfileThreshold(key))));
+            long newProfileThreshold = newData.getProfileThreshold(key);
+            if (oldData == null || oldData.getProfileThreshold(key) != newProfileThreshold) {
+                log.info("[{}] Updating profile threshold [{}]:[{}]", tenantId, key, newProfileThreshold);
+                profileThresholds.add(new BasicTsKvEntry(ts, new LongDataEntry(key.getApiLimitKey(), newProfileThreshold)));
             }
         }
         if (!profileThresholds.isEmpty()) {
@@ -267,6 +270,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
     }
 
     private void persistAndNotify(TenantApiUsageState state, Map<ApiFeature, Boolean> result) {
+        log.info("[{}] Detected update of the API state: {}", state.getTenantId(), result);
         apiUsageStateService.update(state.getApiUsageState());
         clusterService.onApiStateChange(state.getApiUsageState(), null);
         long ts = System.currentTimeMillis();
@@ -320,6 +324,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                         }
                     }
                 }
+                log.debug("[{}] Initialized state: {}", tenantId, dbStateEntity);
                 myTenantStates.put(tenantId, tenantState);
             } catch (InterruptedException | ExecutionException e) {
                 log.warn("[{}] Failed to fetch api usage state from db.", tenantId, e);
