@@ -203,6 +203,8 @@ public interface DeviceDao extends Dao<Device> {
      */
     ListenableFuture<Device> findDeviceByTenantIdAndIdAsync(TenantId tenantId, UUID id);
 
+    Long countDevicesByTenantId(TenantId tenantId);
+
     Long countDevicesByDeviceProfileId(TenantId tenantId, UUID deviceProfileId);
 
     /**

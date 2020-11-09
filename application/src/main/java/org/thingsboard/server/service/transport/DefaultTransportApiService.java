@@ -71,7 +71,7 @@ import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.profile.TbTenantProfileCache;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;
 

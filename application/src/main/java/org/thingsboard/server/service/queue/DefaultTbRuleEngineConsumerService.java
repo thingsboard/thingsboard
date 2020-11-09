@@ -45,7 +45,7 @@ import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.profile.TbTenantProfileCache;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingDecision;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
