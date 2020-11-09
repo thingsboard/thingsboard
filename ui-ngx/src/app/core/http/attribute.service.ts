@@ -21,6 +21,7 @@ import { HttpClient } from '@angular/common/http';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import {isDefined, isDefinedAndNotNull} from '@core/utils';
+import {AggregationType} from "@shared/models/time/time.models";
 
 @Injectable({
   providedIn: 'root'
@@ -40,14 +41,27 @@ export class AttributeService {
     return this.http.get<Array<AttributeData>>(url, defaultHttpOptionsFromConfig(config));
   }
 
-  public getEntityTimeseriesValues(entityId: EntityId, keys: Array<string>, startTs: number, endTs: number, limit?: number, config?: RequestConfig) {
-    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/timeseries/`;
+  public getEntityTimeseriesValues(entityId: EntityId, keys: Array<string>, startTs: number, endTs: number,
+                                   interval?: number, limit?: number, agg?: string, orderBy?: string, useStrictDataTypes?: boolean, config?: RequestConfig) {
+    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/timeseries`;
       url += `?keys=${keys.join(',')}`;
-      url += `?startTs=${startTs}`;
-      url += `?endTs=${endTs}`;
-      if (isDefined(limit)) {
-        url += `?keys=${limit}`;
+      url += `&startTs=${startTs}`;
+      url += `&endTs=${endTs}`;
+      if (isDefined(interval)) {
+        url += `&interval=${interval}`;
       }
+    if (isDefined(limit)) {
+      url += `&limit=${limit}`;
+    }
+    if (isDefined(agg)) {
+      url += `&agg=${agg}`;
+    }
+    if (isDefined(orderBy)) {
+      url += `&orderBy=${orderBy}`;
+    }
+    if (isDefined(useStrictDataTypes)) {
+      url += `&useStrictDataTypes=${useStrictDataTypes}`;
+    }
     return this.http.get(url, defaultHttpOptionsFromConfig(config));
   }
 
