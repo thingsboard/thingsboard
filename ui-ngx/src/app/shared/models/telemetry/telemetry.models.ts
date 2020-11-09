@@ -21,7 +21,14 @@ import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { map } from 'rxjs/operators';
 import { NgZone } from '@angular/core';
-import { AlarmData, AlarmDataQuery, EntityData, EntityDataQuery, EntityKey } from '@shared/models/query/query.models';
+import {
+  AlarmData,
+  AlarmDataQuery,
+  EntityData,
+  EntityDataQuery,
+  EntityKey,
+  TsValue
+} from '@shared/models/query/query.models';
 import { PageData } from '@shared/models/page/page-data';
 
 export enum DataKeyType {
@@ -82,12 +89,7 @@ export interface AttributeData {
 }
 
 export interface TimeseriesData {
-  [key: string]: Array<TimeseriesKeyData>;
-}
-
-export interface TimeseriesKeyData {
-  value: any;
-  ts: number;
+  [key: string]: Array<TsValue>;
 }
 
 export enum DataSortOrder {

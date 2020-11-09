@@ -116,10 +116,7 @@ export class AttributeService {
                              limit: number = 100, agg: AggregationType = AggregationType.NONE, interval?: number,
                              orderBy: DataSortOrder = DataSortOrder.DESC, useStrictDataTypes: boolean = false,
                              config?: RequestConfig): Observable<TimeseriesData> {
-    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/timeseries`;
-    url += `?keys=${keys.join(',')}`;
-    url += `&startTs=${startTs}`;
-    url += `&endTs=${endTs}`;
+    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/timeseries?keys=${keys.join(',')}&startTs=${startTs}&endTs=${endTs}`;
     if (isDefinedAndNotNull(limit)) {
       url += `&limit=${limit}`;
     }
@@ -136,6 +133,6 @@ export class AttributeService {
       url += `&useStrictDataTypes=${useStrictDataTypes}`;
     }
 
-    return this.http.get<any>(url, defaultHttpOptionsFromConfig(config));
+    return this.http.get<TimeseriesData>(url, defaultHttpOptionsFromConfig(config));
   }
 }
