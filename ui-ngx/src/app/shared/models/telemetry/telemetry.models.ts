@@ -81,6 +81,20 @@ export interface AttributeData {
   value: any;
 }
 
+export interface TimeseriesData {
+  [key: string]: Array<TimeseriesKeyData>;
+}
+
+export interface TimeseriesKeyData {
+  value: any;
+  ts: number;
+}
+
+export enum DataSortOrder {
+  ASC = 'ASC',
+  DESC = 'DESC'
+}
+
 export interface WebsocketCmd {
   cmdId: number;
 }
