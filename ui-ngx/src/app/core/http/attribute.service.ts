@@ -22,6 +22,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import {isDefined, isDefinedAndNotNull} from '@core/utils';
 import {AggregationType} from "@shared/models/time/time.models";
+import {TsValue} from "@shared/models/query/query.models";
 
 @Injectable({
   providedIn: 'root'
@@ -42,7 +43,7 @@ export class AttributeService {
   }
 
   public getEntityTimeseriesValues(entityId: EntityId, keys: Array<string>, startTs: number, endTs: number,
-                                   interval?: number, limit?: number, agg?: string, orderBy?: string, useStrictDataTypes?: boolean, config?: RequestConfig) {
+                                   interval?: number, limit?: number, agg?: string, orderBy?: string, useStrictDataTypes?: boolean, config?: RequestConfig): Observable<Array<TsValue>> {
     let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/timeseries`;
       url += `?keys=${keys.join(',')}`;
       url += `&startTs=${startTs}`;
