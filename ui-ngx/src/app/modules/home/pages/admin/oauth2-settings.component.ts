@@ -142,6 +142,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       tenantNamePattern = {value: null, disabled: true};
     }
     const basicGroup = this.fb.group({
+      emailAttributeKey: [mapperConfigBasic?.emailAttributeKey ? mapperConfigBasic.emailAttributeKey : 'email', Validators.required],
       firstNameAttributeKey: [mapperConfigBasic?.firstNameAttributeKey ? mapperConfigBasic.firstNameAttributeKey : ''],
       lastNameAttributeKey: [mapperConfigBasic?.lastNameAttributeKey ? mapperConfigBasic.lastNameAttributeKey : ''],
       tenantNameStrategy: [mapperConfigBasic?.tenantNameStrategy ? mapperConfigBasic.tenantNameStrategy : TenantNameStrategy.DOMAIN],
@@ -150,11 +151,6 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       defaultDashboardName: [mapperConfigBasic?.defaultDashboardName ? mapperConfigBasic.defaultDashboardName : null],
       alwaysFullScreen: [isDefinedAndNotNull(mapperConfigBasic?.alwaysFullScreen) ? mapperConfigBasic.alwaysFullScreen : false]
     });
-
-    if (MapperConfigType.GITHUB !== type) {
-      basicGroup.addControl('emailAttributeKey',
-        this.fb.control( mapperConfigBasic?.emailAttributeKey ? mapperConfigBasic.emailAttributeKey : 'email', Validators.required));
-    }
 
     this.subscriptions.push(basicGroup.get('tenantNameStrategy').valueChanges.subscribe((domain) => {
       if (domain === 'CUSTOM') {
@@ -347,7 +343,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       clientRegistration.get('authorizationUri').disable();
       clientRegistration.get('jwkSetUri').disable();
       clientRegistration.get('userInfoUri').disable();
-      clientRegistration.patchValue(template, {emitEvent: false});
+      clientRegistration.patchValue(template);
     }
   }
 
@@ -358,10 +354,14 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       mapperConfig.addControl('custom', this.formCustomGroup(predefinedValue?.custom));
     } else {
       mapperConfig.removeControl('custom');
-      if (mapperConfig.get('basic')) {
-        mapperConfig.setControl('basic', this.formBasicGroup(type, predefinedValue?.basic));
-      } else {
+      if (!mapperConfig.get('basic')) {
         mapperConfig.addControl('basic', this.formBasicGroup(type, predefinedValue?.basic));
+      }
+      if (type === MapperConfigType.GITHUB) {
+        mapperConfig.get('basic.emailAttributeKey').disable();
+        mapperConfig.get('basic.emailAttributeKey').patchValue(null, {emitEvent: false});
+      } else {
+        mapperConfig.get('basic.emailAttributeKey').enable();
       }
     }
   }
