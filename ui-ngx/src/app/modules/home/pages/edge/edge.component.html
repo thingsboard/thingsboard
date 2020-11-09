@@ -81,20 +81,20 @@
     </button>
     <button mat-raised-button
             ngxClipboard
+            (cbOnSuccess)="onEdgeKeyCopied($event)"
+            [cbContent]="entity?.routingKey"
+            [fxShow]="!isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>edge.copy-edge-key</span>
+    </button>
+    <button mat-raised-button
+            ngxClipboard
             (cbOnSuccess)="onEdgeSecretCopied($event)"
-            [cbContent]="entity?.id?.id"
+            [cbContent]="entity?.secret"
             [fxShow]="!isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>edge.copy-edge-secret</span>
     </button>
-    <button mat-raised-button
-                         ngxClipboard
-                         (cbOnSuccess)="onEdgeKeyCopied($event)"
-                         [cbContent]="entity?.id?.id"
-                         [fxShow]="!isEdit">
-    <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-    <span translate>edge.copy-edge-key</span>
-  </button>
 
   </div>
 </div>
