@@ -25,6 +25,8 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -33,7 +35,9 @@ import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
+import org.thingsboard.server.service.profile.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
 
@@ -59,15 +63,19 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
 
     protected final ActorSystemContext actorContext;
     protected final DataDecodingEncodingService encodingService;
+    protected final TbTenantProfileCache tenantProfileCache;
     protected final TbDeviceProfileCache deviceProfileCache;
+    protected final TbApiUsageStateService apiUsageStateService;
 
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
 
     public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
-                                   TbDeviceProfileCache deviceProfileCache, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
+                                   TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache, TbApiUsageStateService apiUsageStateService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
+        this.tenantProfileCache = tenantProfileCache;
         this.deviceProfileCache = deviceProfileCache;
+        this.apiUsageStateService = apiUsageStateService;
         this.nfConsumer = nfConsumer;
     }
 
@@ -143,10 +151,23 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             TbActorMsg actorMsg = actorMsgOpt.get();
             if (actorMsg instanceof ComponentLifecycleMsg) {
                 ComponentLifecycleMsg componentLifecycleMsg = (ComponentLifecycleMsg) actorMsg;
-                if (EntityType.DEVICE_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                if (EntityType.TENANT_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    TenantProfileId tenantProfileId = new TenantProfileId(componentLifecycleMsg.getEntityId().getId());
+                    tenantProfileCache.evict(tenantProfileId);
+                    if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
+                        apiUsageStateService.onTenantProfileUpdate(tenantProfileId);
+                    }
+                } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
+                    if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
+                        apiUsageStateService.onTenantUpdate(componentLifecycleMsg.getTenantId());
+                    }
+                } else if (EntityType.DEVICE_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
                 } else if (EntityType.DEVICE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    deviceProfileCache.evict(new DeviceId(componentLifecycleMsg.getEntityId().getId()));
+                    deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceId(componentLifecycleMsg.getEntityId().getId()));
+                } else if (EntityType.API_USAGE_STATE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    apiUsageStateService.onApiUsageStateUpdate(componentLifecycleMsg.getTenantId());
                 }
             }
             log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);

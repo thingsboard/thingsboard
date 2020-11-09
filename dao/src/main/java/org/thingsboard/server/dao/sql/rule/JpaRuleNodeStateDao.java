@@ -63,4 +63,10 @@ public class JpaRuleNodeStateDao extends JpaAbstractDao<RuleNodeStateEntity, Rul
     public void removeByRuleNodeId(UUID ruleNodeId) {
         ruleNodeStateRepository.removeByRuleNodeId(ruleNodeId);
     }
+
+    @Transactional
+    @Override
+    public void removeByRuleNodeIdAndEntityId(UUID ruleNodeId, UUID entityId) {
+        ruleNodeStateRepository.removeByRuleNodeIdAndEntityId(ruleNodeId, entityId);
+    }
 }

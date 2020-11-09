@@ -405,3 +405,16 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
     help_link varchar(255),
     CONSTRAINT oauth2_template_provider_id_unq_key UNIQUE (provider_id)
 );
+
+CREATE TABLE IF NOT EXISTS api_usage_state (
+    id uuid NOT NULL CONSTRAINT usage_record_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid,
+    entity_type varchar(32),
+    entity_id uuid,
+    transport_enabled boolean,
+    db_storage_enabled boolean,
+    re_exec_enabled boolean,
+    js_exec_enabled boolean,
+    CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)
+);
