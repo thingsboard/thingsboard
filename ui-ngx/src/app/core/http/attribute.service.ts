@@ -114,7 +114,7 @@ export class AttributeService {
 
   public getEntityTimeseries(entityId: EntityId, keys: Array<string>, startTs: number, endTs: number,
                              limit: number = 100, agg: AggregationType = AggregationType.NONE, interval?: number,
-                             orderBy: DataSortOrder = DataOrder.DESC, useStrictDataTypes: boolean = false,
+                             orderBy: DataSortOrder = DataSortOrder.DESC, useStrictDataTypes: boolean = false,
                              config?: RequestConfig): Observable<TimeseriesData> {
     let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/timeseries`;
     url += `?keys=${keys.join(',')}`;
