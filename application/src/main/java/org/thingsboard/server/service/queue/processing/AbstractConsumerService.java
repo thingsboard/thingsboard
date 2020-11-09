@@ -37,7 +37,7 @@ import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.profile.TbTenantProfileCache;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
 
