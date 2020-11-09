@@ -63,7 +63,7 @@ export class AttributeService {
     if (isDefined(useStrictDataTypes)) {
       url += `&useStrictDataTypes=${useStrictDataTypes}`;
     }
-    return this.http.get(url, defaultHttpOptionsFromConfig(config));
+    return this.http.getArray<TsValue>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteEntityAttributes(entityId: EntityId, attributeScope: AttributeScope, attributes: Array<AttributeData>,
