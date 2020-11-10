@@ -18,17 +18,21 @@ package org.thingsboard.server.service.apiusage;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.util.Pair;
+import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TenantApiUsageState {
@@ -103,99 +107,80 @@ public class TenantApiUsageState {
         return tenantProfileData.getConfiguration().getProfileThreshold(key);
     }
 
+    public long getProfileWarnThreshold(ApiUsageRecordKey key) {
+        return tenantProfileData.getConfiguration().getWarnThreshold(key);
+    }
+
     public TenantId getTenantId() {
         return apiUsageState.getTenantId();
     }
 
-    public boolean isTransportEnabled() {
-        return apiUsageState.isTransportEnabled();
-    }
-
-    public boolean isDbStorageEnabled() {
-        return apiUsageState.isDbStorageEnabled();
-    }
-
-    public boolean isRuleEngineEnabled() {
-        return apiUsageState.isReExecEnabled();
-    }
-
-    public boolean isJsExecEnabled() {
-        return apiUsageState.isJsExecEnabled();
-    }
-
-    public void setTransportEnabled(boolean transportEnabled) {
-        apiUsageState.setTransportEnabled(transportEnabled);
-    }
-
-    public void setDbStorageEnabled(boolean dbStorageEnabled) {
-        apiUsageState.setDbStorageEnabled(dbStorageEnabled);
-    }
-
-    public void setRuleEngineEnabled(boolean ruleEngineEnabled) {
-        apiUsageState.setReExecEnabled(ruleEngineEnabled);
-    }
-
-    public void setJsExecEnabled(boolean jsExecEnabled) {
-        apiUsageState.setJsExecEnabled(jsExecEnabled);
-    }
-
-    public boolean isFeatureEnabled(ApiUsageRecordKey recordKey) {
-        switch (recordKey) {
-            case TRANSPORT_MSG_COUNT:
-            case TRANSPORT_DP_COUNT:
-                return isTransportEnabled();
-            case RE_EXEC_COUNT:
-                return isRuleEngineEnabled();
-            case STORAGE_DP_COUNT:
-                return isDbStorageEnabled();
-            case JS_EXEC_COUNT:
-                return isJsExecEnabled();
+    public ApiUsageStateValue getFeatureValue(ApiFeature feature) {
+        switch (feature) {
+            case TRANSPORT:
+                return apiUsageState.getTransportState();
+            case RE:
+                return apiUsageState.getReExecState();
+            case DB:
+                return apiUsageState.getDbStorageState();
+            case JS:
+                return apiUsageState.getJsExecState();
             default:
-                return true;
+                return ApiUsageStateValue.ENABLED;
         }
     }
 
-    public ApiFeature setFeatureValue(ApiUsageRecordKey recordKey, boolean value) {
-        ApiFeature feature = null;
-        boolean currentValue = isFeatureEnabled(recordKey);
-        switch (recordKey) {
-            case TRANSPORT_MSG_COUNT:
-            case TRANSPORT_DP_COUNT:
-                feature = ApiFeature.TRANSPORT;
-                setTransportEnabled(value);
+    public boolean setFeatureValue(ApiFeature feature, ApiUsageStateValue value) {
+        ApiUsageStateValue currentValue = getFeatureValue(feature);
+        switch (feature) {
+            case TRANSPORT:
+                apiUsageState.setTransportState(value);
                 break;
-            case RE_EXEC_COUNT:
-                feature = ApiFeature.RE;
-                setRuleEngineEnabled(value);
+            case RE:
+                apiUsageState.setReExecState(value);
                 break;
-            case STORAGE_DP_COUNT:
-                feature = ApiFeature.DB;
-                setDbStorageEnabled(value);
+            case DB:
+                apiUsageState.setDbStorageState(value);
                 break;
-            case JS_EXEC_COUNT:
-                feature = ApiFeature.JS;
-                setJsExecEnabled(value);
+            case JS:
+                apiUsageState.setJsExecState(value);
                 break;
         }
-        return currentValue == value ? null : feature;
+        return !currentValue.equals(value);
     }
 
-    public Map<ApiFeature, Boolean> checkStateUpdatedDueToThresholds() {
-        Map<ApiFeature, Boolean> result = new HashMap<>();
-        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-            Pair<ApiFeature, Boolean> featureUpdate = checkStateUpdatedDueToThreshold(key);
-            if (featureUpdate != null) {
-                result.put(featureUpdate.getFirst(), featureUpdate.getSecond());
+    public Map<ApiFeature, ApiUsageStateValue> checkStateUpdatedDueToThresholds() {
+        return checkStateUpdatedDueToThreshold(new HashSet<>(Arrays.asList(ApiFeature.values())));
+    }
+
+    public Map<ApiFeature, ApiUsageStateValue> checkStateUpdatedDueToThreshold(Set<ApiFeature> features) {
+        Map<ApiFeature, ApiUsageStateValue> result = new HashMap<>();
+        for (ApiFeature feature : features) {
+            Pair<ApiFeature, ApiUsageStateValue> tmp = checkStateUpdatedDueToThreshold(feature);
+            if (tmp != null) {
+                result.put(tmp.getFirst(), tmp.getSecond());
             }
         }
         return result;
     }
 
-    public Pair<ApiFeature, Boolean> checkStateUpdatedDueToThreshold(ApiUsageRecordKey recordKey) {
-        long value = get(recordKey);
-        long threshold = getProfileThreshold(recordKey);
-        boolean featureValue = threshold == 0 || value < threshold;
-        ApiFeature feature = setFeatureValue(recordKey, featureValue);
-        return feature != null ? Pair.of(feature, featureValue) : null;
+    public Pair<ApiFeature, ApiUsageStateValue> checkStateUpdatedDueToThreshold(ApiFeature feature) {
+        ApiUsageStateValue featureValue = ApiUsageStateValue.ENABLED;
+        for (ApiUsageRecordKey recordKey : ApiUsageRecordKey.getKeys(feature)) {
+            long value = get(recordKey);
+            long threshold = getProfileThreshold(recordKey);
+            long warnThreshold = getProfileWarnThreshold(recordKey);
+            ApiUsageStateValue tmpValue;
+            if (threshold == 0 || value < warnThreshold) {
+                tmpValue = ApiUsageStateValue.ENABLED;
+            } else if (value < threshold) {
+                tmpValue = ApiUsageStateValue.WARNING;
+            } else {
+                tmpValue = ApiUsageStateValue.DISABLED;
+            }
+            featureValue = ApiUsageStateValue.toMoreRestricted(featureValue, tmpValue);
+        }
+        return setFeatureValue(feature, featureValue) ? Pair.of(feature, featureValue) : null;
     }
+
 }

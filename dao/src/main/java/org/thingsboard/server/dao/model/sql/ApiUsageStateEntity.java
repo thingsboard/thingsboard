@@ -17,10 +17,9 @@ package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
@@ -31,6 +30,8 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import java.util.UUID;
 
@@ -46,21 +47,22 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
 
     @Column(name = ModelConstants.API_USAGE_STATE_TENANT_ID_COLUMN)
     private UUID tenantId;
-
     @Column(name = ModelConstants.API_USAGE_STATE_ENTITY_TYPE_COLUMN)
     private String entityType;
-
     @Column(name = ModelConstants.API_USAGE_STATE_ENTITY_ID_COLUMN)
     private UUID entityId;
-
-    @Column(name = ModelConstants.API_USAGE_STATE_TRANSPORT_ENABLED_COLUMN)
-    private boolean transportEnabled = true;
-    @Column(name = ModelConstants.API_USAGE_STATE_DB_STORAGE_ENABLED_COLUMN)
-    private boolean dbStorageEnabled = true;
-    @Column(name = ModelConstants.API_USAGE_STATE_RE_EXEC_ENABLED_COLUMN)
-    private boolean reExecEnabled = true;
-    @Column(name = ModelConstants.API_USAGE_STATE_JS_EXEC_ENABLED_COLUMN)
-    private boolean jsExecEnabled = true;
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_TRANSPORT_COLUMN)
+    private ApiUsageStateValue transportState = ApiUsageStateValue.ENABLED;
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_DB_STORAGE_COLUMN)
+    private ApiUsageStateValue dbStorageState = ApiUsageStateValue.ENABLED;
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_RE_EXEC_COLUMN)
+    private ApiUsageStateValue reExecState = ApiUsageStateValue.ENABLED;
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_JS_EXEC_COLUMN)
+    private ApiUsageStateValue jsExecState = ApiUsageStateValue.ENABLED;
 
     public ApiUsageStateEntity() {
     }
@@ -77,10 +79,10 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
             this.entityType = ur.getEntityId().getEntityType().name();
             this.entityId = ur.getEntityId().getId();
         }
-        this.transportEnabled = ur.isTransportEnabled();
-        this.dbStorageEnabled = ur.isDbStorageEnabled();
-        this.reExecEnabled = ur.isReExecEnabled();
-        this.jsExecEnabled = ur.isJsExecEnabled();
+        this.transportState = ur.getTransportState();
+        this.dbStorageState = ur.getDbStorageState();
+        this.reExecState = ur.getReExecState();
+        this.jsExecState = ur.getJsExecState();
     }
 
     @Override
@@ -93,10 +95,10 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
         if (entityId != null) {
             ur.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
         }
-        ur.setTransportEnabled(transportEnabled);
-        ur.setDbStorageEnabled(dbStorageEnabled);
-        ur.setReExecEnabled(reExecEnabled);
-        ur.setJsExecEnabled(jsExecEnabled);
+        ur.setTransportState(transportState);
+        ur.setDbStorageState(dbStorageState);
+        ur.setReExecState(reExecState);
+        ur.setJsExecState(jsExecState);
         return ur;
     }
 
