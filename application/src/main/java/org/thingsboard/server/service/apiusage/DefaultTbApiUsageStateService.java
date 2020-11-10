@@ -71,7 +71,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-@TbCoreComponent
 @Service
 public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
