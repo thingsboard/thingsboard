@@ -51,7 +51,7 @@ public class TbMsgPackProcessingContextTest {
                 messages.put(UUID.randomUUID(), new TbProtoQueueMsg<>(UUID.randomUUID(), null));
             }
             when(strategyMock.getPendingMap()).thenReturn(messages);
-            TbMsgPackProcessingContext context = new TbMsgPackProcessingContext(strategyMock);
+            TbMsgPackProcessingContext context = new TbMsgPackProcessingContext("Main", strategyMock);
             for (UUID uuid : messages.keySet()) {
                 for (int i = 0; i < parallelCount; i++) {
                     executorService.submit(() -> context.onSuccess(uuid));

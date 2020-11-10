@@ -59,7 +59,6 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-
         String baseUrl = MiscUtils.constructBaseUrl(request);
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;

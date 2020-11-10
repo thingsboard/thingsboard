@@ -143,7 +143,7 @@ public interface TbContext {
     TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId);
 
     // TODO: Does this changes the message?
-    TbMsg alarmCreatedMsg(Alarm alarm, RuleNodeId ruleNodeId);
+    TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action);
 
     /*
      *
