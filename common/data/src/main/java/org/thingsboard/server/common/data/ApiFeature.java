@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.settings;
+package org.thingsboard.server.common.data;
 
-import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import lombok.Getter;
 
-@Data
-@Component
-public class TbQueueCoreSettings {
+public enum ApiFeature {
+    TRANSPORT("transportApiState"),
+    DB("dbApiState"),
+    RE("ruleEngineApiState"),
+    JS("jsExecutionApiState");
 
-    @Value("${queue.core.topic}")
-    private String topic;
+    @Getter
+    private final String apiStateKey;
 
-    @Value("${queue.core.usage-stats-topic:tb_usage_stats}")
-    private String usageStatsTopic;
+    ApiFeature(String apiStateKey) {
+        this.apiStateKey = apiStateKey;
+    }
 
-    @Value("${queue.core.partitions}")
-    private int partitions;
 }

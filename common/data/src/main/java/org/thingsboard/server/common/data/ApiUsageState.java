@@ -37,16 +37,16 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
     private EntityId entityId;
     @Getter
     @Setter
-    private boolean transportEnabled = true;
+    private ApiUsageStateValue transportState;
     @Getter
     @Setter
-    private boolean dbStorageEnabled = true;
+    private ApiUsageStateValue dbStorageState;
     @Getter
     @Setter
-    private boolean reExecEnabled = true;
+    private ApiUsageStateValue reExecState;
     @Getter
     @Setter
-    private boolean jsExecEnabled = true;
+    private ApiUsageStateValue jsExecState;
 
     public ApiUsageState() {
         super();
@@ -60,9 +60,25 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
         super(ur);
         this.tenantId = ur.getTenantId();
         this.entityId = ur.getEntityId();
-        this.transportEnabled = ur.isTransportEnabled();
-        this.dbStorageEnabled = ur.isDbStorageEnabled();
-        this.reExecEnabled = ur.isReExecEnabled();
-        this.jsExecEnabled = ur.isJsExecEnabled();
+        this.transportState = ur.getTransportState();
+        this.dbStorageState = ur.getDbStorageState();
+        this.reExecState = ur.getReExecState();
+        this.jsExecState = ur.getJsExecState();
+    }
+
+    public boolean isTransportEnabled() {
+        return !ApiUsageStateValue.DISABLED.equals(transportState);
+    }
+
+    public boolean isReExecEnabled() {
+        return !ApiUsageStateValue.DISABLED.equals(reExecState);
+    }
+
+    public boolean isDbStorageEnabled() {
+        return !ApiUsageStateValue.DISABLED.equals(dbStorageState);
+    }
+
+    public boolean isJsExecEnabled() {
+        return !ApiUsageStateValue.DISABLED.equals(jsExecState);
     }
 }
