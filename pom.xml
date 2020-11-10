@@ -682,9 +682,10 @@
                     <artifactId>license-maven-plugin</artifactId>
                     <version>3.0</version>
                     <configuration>
+                        <skip>${skip.license.check}</skip>
                         <header>${main.dir}/license-header-template.txt</header>
                         <properties>
-                            <owner>The Thingsboard Authors</owner>
+                            <owner>The V-Sensor Authors</owner>
                         </properties>
                         <excludes>
                             <exclude>**/.env</exclude>
@@ -718,7 +719,6 @@
                             <exclude>ui/**</exclude>
                             <exclude>src/browserslist</exclude>
                             <exclude>**/*.raw</exclude>
-                            <exclude>ui-ngx/src/index.html</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>
@@ -744,6 +744,9 @@
             <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
+                <configuration>
+                    <skip>${skip.license.check}</skip>
+                </configuration>
             </plugin>
         </plugins>
     </build>
