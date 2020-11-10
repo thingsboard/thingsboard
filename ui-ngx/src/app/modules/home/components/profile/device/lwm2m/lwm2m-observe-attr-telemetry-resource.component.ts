@@ -14,18 +14,21 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from "@angular/core";
+import { Component, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from "@angular/core";
 import {
-  AbstractControl,
   ControlValueAccessor,
   FormArray, FormBuilder,
   FormGroup,
   NG_VALUE_ACCESSOR, Validators
 } from "@angular/forms";
-import { CAMEL_CASE_REGEXP, ResourceLwM2M } from '@home/components/profile/device/lwm2m/profile-config.models';
+import {
+  CAMEL_CASE_REGEXP,
+  ResourceLwM2M
+} from '@home/components/profile/device/lwm2m/profile-config.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { deepClone } from '@core/utils';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry-resource',
@@ -42,34 +45,54 @@ import { deepClone } from '@core/utils';
 
 export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueAccessor, OnInit, Validators {
 
+  resourceFormGroup : FormGroup;
+
   @Input() i: number;
   @Input() y: number;
   @Input() objId: number;
-  @Input() resourceFormGroup : FormGroup;
-  @Input() disabled : boolean;
+  @Input() disabled: boolean;
   @Output() changeValueCheckBox = new EventEmitter<{}>()
   @Output() changeValueKeyName = new EventEmitter<{}>()
+  private requiredValue: boolean;
 
+  get required(): boolean {
+    return this.requiredValue;
+  }
+
+  @Input()
+  set required(value: boolean) {
+    const newVal = coerceBooleanProperty(value);
+    if (this.requiredValue !== newVal) {
+      this.requiredValue = newVal;
+      console.warn("required: " + value);
+    }
+  }
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
-
+    this.resourceFormGroup = this.fb.group({'resources': this.fb.array([])});
+    this.resourceFormGroup.valueChanges.subscribe(value => {
+      // if (this.disabled) {
+        this.propagateChangeState(value.resources);
+      // }
+    });
   }
 
   ngOnInit(): void {
-    this.setDisabledState(this.disabled);
   }
 
-  registerOnChange(fn: any): void {
-  }
 
   registerOnTouched(fn: any): void {
   }
 
   writeValue(value: ResourceLwM2M[]): void {
-
+    this.createResourceLwM2M(value);
   }
 
-  resourceLwm2mFormArray(instance: AbstractControl): FormArray {
+  get resourceFormArray(): FormArray{
+    return this.resourceFormGroup.get('resources') as FormArray;
+  }
+
+  resourceLwm2mFormArray(instance: FormGroup): FormArray {
     return instance.get('resources') as FormArray;
   }
 
@@ -84,14 +107,20 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
   }
 
   setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
     if (isDisabled) {
-      this.resourceFormGroup.disable({emitEvent: false});
+      this.resourceFormGroup.disable();
     } else {
-      this.resourceFormGroup.enable({emitEvent: false});
+      this.resourceFormGroup.enable();
     }
   }
 
+  getDisabledState(): boolean {
+    return this.disabled;
+  }
+
   updateValueKeyName (event: any, z: number): void {
+    debugger
     let newVal = this.keysToCamel(deepClone(event.target.value));
     let insId = this.resourceFormGroup.value.id;
     let path = "/"+ this.objId + "/" + insId + "/" + z;
@@ -111,5 +140,43 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
       playStore.push(item);
     });
     return playStore.join('');
+  }
+
+  createResourceLwM2M(resourcesLwM2MJson: ResourceLwM2M []): void {
+    if(resourcesLwM2MJson.length === this.resourceFormArray.length) {
+      this.resourceFormArray.patchValue(resourcesLwM2MJson, {emitEvent: false})
+    } else {
+      this.resourceFormArray.clear();
+      resourcesLwM2MJson.forEach(resourceLwM2M => {
+        this.resourceFormArray.push(this.fb.group({
+          id: resourceLwM2M.id,
+          name: resourceLwM2M.name,
+          observe: resourceLwM2M.observe,
+          attribute: resourceLwM2M.attribute,
+          telemetry: resourceLwM2M.telemetry,
+          keyName: resourceLwM2M.keyName
+        }));
+      })
+    }
+  }
+
+  private propagateChange = (v: any) => {
+  };
+
+
+  registerOnChange(fn: any): void {
+    this.propagateChange = fn;
+  }
+
+  private propagateChangeState(value: any): void {
+    if (value) {
+      this.propagateChange(value);
+    } else {
+      this.propagateChange(null);
+    }
+  }
+
+  trackByParams(index: number): number {
+    return index;
   }
 }
