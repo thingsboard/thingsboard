@@ -15,127 +15,125 @@
     limitations under the License.
 
 -->
-<section [formGroup]="defaultTenantProfileConfigurationFormGroup">
-  <section formGroupName="configuration" fxLayout="column">
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.maximum-devices</mat-label>
-      <input matInput required min="0" step="1"
-             formControlName="maxDevices"
-             type="number">
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxDevices').hasError('required')">
-        {{ 'tenant-profile.maximum-devices-required' | translate}}
-      </mat-error>
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxDevices').hasError('min')">
-        {{ 'tenant-profile.maximum-devices-range' | translate}}
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.maximum-assets</mat-label>
-      <input matInput required min="0" step="1"
-             formControlName="maxAssets"
-             type="number">
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxAssets').hasError('required')">
-        {{ 'tenant-profile.maximum-assets-required' | translate}}
-      </mat-error>
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxAssets').hasError('min')">
-        {{ 'tenant-profile.maximum-assets-range' | translate}}
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.max-transport-messages</mat-label>
-      <input matInput required min="0" step="1"
-             formControlName="maxTransportMessages"
-             type="number">
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxTransportMessages').hasError('required')">
-        {{ 'tenant-profile.max-transport-messages-range' | translate}}
-      </mat-error>
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxTransportMessages').hasError('min')">
-        {{ 'tenant-profile.max-transport-messages-required' | translate}}
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.max-transport-data-points</mat-label>
-      <input matInput required min="0" step="1"
-             formControlName="maxTransportDataPoints"
-             type="number">
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxTransportDataPoints').hasError('required')">
-        {{ 'tenant-profile.max-transport-data-points-required' | translate}}
-      </mat-error>
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxTransportDataPoints').hasError('min')">
-        {{ 'tenant-profile.max-transport-data-points-range' | translate}}
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.max-r-e-executions</mat-label>
-      <input matInput required min="0" step="1"
-             formControlName="maxREExecutions"
-             type="number">
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxREExecutions').hasError('required')">
-        {{ 'tenant-profile.max-r-e-executions-required' | translate}}
-      </mat-error>
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxREExecutions').hasError('min')">
-        {{ 'tenant-profile.max-r-e-executions-range' | translate}}
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.max-j-s-executions</mat-label>
-      <input matInput required min="0" step="1"
-             formControlName="maxJSExecutions"
-             type="number">
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxJSExecutions').hasError('required')">
-        {{ 'tenant-profile.max-j-s-executions-required' | translate}}
-      </mat-error>
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxJSExecutions').hasError('min')">
-        {{ 'tenant-profile.max-j-s-executions-range' | translate}}
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.max-d-p-storage-days</mat-label>
-      <input matInput required min="0" step="1"
-             formControlName="maxDPStorageDays"
-             type="number">
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxDPStorageDays').hasError('required')">
-        {{ 'tenant-profile.max-d-p-storage-days-required' | translate}}
-      </mat-error>
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxDPStorageDays').hasError('min')">
-        {{ 'tenant-profile.max-d-p-storage-days-range' | translate}}
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.max-rule-node-executions-per-message</mat-label>
-      <input matInput required min="0" step="1"
-             formControlName="maxRuleNodeExecutionsPerMessage"
-             type="number">
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxRuleNodeExecutionsPerMessage').hasError('required')">
-        {{ 'tenant-profile.max-rule-node-executions-per-message-required' | translate}}
-      </mat-error>
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('configuration.maxRuleNodeExecutionsPerMessage').hasError('min')">
-        {{ 'tenant-profile.max-rule-node-executions-per-message-range' | translate}}
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.transport-tenant-msg-rate-limit</mat-label>
-      <input matInput formControlName="transportTenantMsgRateLimit">
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.transport-tenant-telemetry-msg-rate-limit</mat-label>
-      <input matInput formControlName="transportTenantTelemetryMsgRateLimit">
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.transport-tenant-telemetry-data-points-rate-limit</mat-label>
-      <input matInput formControlName="transportTenantTelemetryDataPointsRateLimit">
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.transport-device-msg-rate-limit</mat-label>
-      <input matInput formControlName="transportDeviceMsgRateLimit">
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.transport-device-telemetry-msg-rate-limit</mat-label>
-      <input matInput formControlName="transportDeviceTelemetryMsgRateLimit">
-    </mat-form-field>
-    <mat-form-field class="mat-block">
-      <mat-label translate>tenant-profile.transport-device-telemetry-data-points-rate-limit</mat-label>
-      <input matInput formControlName="transportDeviceTelemetryDataPointsRateLimit">
-    </mat-form-field>
-  </section>
+<section [formGroup]="defaultTenantProfileConfigurationFormGroup" fxLayout="column">
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.maximum-devices</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxDevices"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDevices').hasError('required')">
+      {{ 'tenant-profile.maximum-devices-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDevices').hasError('min')">
+      {{ 'tenant-profile.maximum-devices-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.maximum-assets</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxAssets"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxAssets').hasError('required')">
+      {{ 'tenant-profile.maximum-assets-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxAssets').hasError('min')">
+      {{ 'tenant-profile.maximum-assets-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.max-transport-messages</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxTransportMessages"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportMessages').hasError('required')">
+      {{ 'tenant-profile.max-transport-messages-range' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportMessages').hasError('min')">
+      {{ 'tenant-profile.max-transport-messages-required' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.max-transport-data-points</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxTransportDataPoints"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportDataPoints').hasError('required')">
+      {{ 'tenant-profile.max-transport-data-points-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportDataPoints').hasError('min')">
+      {{ 'tenant-profile.max-transport-data-points-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.max-r-e-executions</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxREExecutions"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxREExecutions').hasError('required')">
+      {{ 'tenant-profile.max-r-e-executions-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxREExecutions').hasError('min')">
+      {{ 'tenant-profile.max-r-e-executions-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.max-j-s-executions</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxJSExecutions"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxJSExecutions').hasError('required')">
+      {{ 'tenant-profile.max-j-s-executions-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxJSExecutions').hasError('min')">
+      {{ 'tenant-profile.max-j-s-executions-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.max-d-p-storage-days</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxDPStorageDays"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDPStorageDays').hasError('required')">
+      {{ 'tenant-profile.max-d-p-storage-days-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDPStorageDays').hasError('min')">
+      {{ 'tenant-profile.max-d-p-storage-days-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.max-rule-node-executions-per-message</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxRuleNodeExecutionsPerMessage"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleNodeExecutionsPerMessage').hasError('required')">
+      {{ 'tenant-profile.max-rule-node-executions-per-message-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleNodeExecutionsPerMessage').hasError('min')">
+      {{ 'tenant-profile.max-rule-node-executions-per-message-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.transport-tenant-msg-rate-limit</mat-label>
+    <input matInput formControlName="transportTenantMsgRateLimit">
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.transport-tenant-telemetry-msg-rate-limit</mat-label>
+    <input matInput formControlName="transportTenantTelemetryMsgRateLimit">
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.transport-tenant-telemetry-data-points-rate-limit</mat-label>
+    <input matInput formControlName="transportTenantTelemetryDataPointsRateLimit">
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.transport-device-msg-rate-limit</mat-label>
+    <input matInput formControlName="transportDeviceMsgRateLimit">
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.transport-device-telemetry-msg-rate-limit</mat-label>
+    <input matInput formControlName="transportDeviceTelemetryMsgRateLimit">
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.transport-device-telemetry-data-points-rate-limit</mat-label>
+    <input matInput formControlName="transportDeviceTelemetryDataPointsRateLimit">
+  </mat-form-field>
 </section>

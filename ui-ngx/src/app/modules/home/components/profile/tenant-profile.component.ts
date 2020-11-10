@@ -23,7 +23,7 @@ import {
   TenantProfile,
   TenantProfileData,
   TenantProfileType
-} from '@app/shared/models/tenant.model';
+} from '@shared/models/tenant.model';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
@@ -73,7 +73,7 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore});
     this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine});
-    this.entityForm.patchValue({profileData: !this.isAdd ? entity.profileData: {
+    this.entityForm.patchValue({profileData: !this.isAdd ? entity.profileData : {
         configuration: createTenantProfileConfiguration(TenantProfileType.DEFAULT)
       } as TenantProfileData});
     this.entityForm.patchValue({description: entity.description});
