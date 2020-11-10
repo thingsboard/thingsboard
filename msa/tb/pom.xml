@@ -27,9 +27,9 @@
     <artifactId>tb</artifactId>
     <packaging>pom</packaging>
 
-    <name>ThingsBoard Docker Images</name>
+    <name>V-Sensor Docker Images</name>
     <url>https://thingsboard.io</url>
-    <description>ThingsBoard Docker Images</description>
+    <description>V-Sensor Docker Images</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -27,7 +27,7 @@
     <artifactId>data</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard Server Common Data</name>
+    <name>V-Sensor Server Common Data</name>
     <url>https://thingsboard.io</url>
 
     <properties>

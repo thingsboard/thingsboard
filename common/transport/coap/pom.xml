@@ -27,7 +27,7 @@
     <artifactId>coap</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard CoAP Transport Common</name>
+    <name>V-Sensor CoAP Transport Common</name>
     <url>https://thingsboard.io</url>
 
     <properties>

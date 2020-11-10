@@ -27,9 +27,9 @@
     <artifactId>mqtt</artifactId>
     <packaging>pom</packaging>
 
-    <name>ThingsBoard MQTT Transport Microservice</name>
+    <name>V-Sensor MQTT Transport Microservice</name>
     <url>https://thingsboard.io</url>
-    <description>ThingsBoard MQTT Transport Microservice</description>
+    <description>V-Sensor MQTT Transport Microservice</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

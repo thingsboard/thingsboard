@@ -21,9 +21,9 @@ server:
   port: "HTTP_BIND_PORT"
 thingsboard:
   enableProxy: "TB_ENABLE_PROXY"
-  # ThingsBoard node host
+  # V-Sensor node host
   host: "TB_HOST"
-  # ThingsBoard node port
+  # V-Sensor node port
   port: "TB_PORT"
 logger:
   level: "LOGGER_LEVEL"

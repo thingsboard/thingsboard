@@ -37,7 +37,7 @@ java -cp "%jarfile%" -Dloader.main=org.thingsboard.server.ThingsboardInstallAppl
                     org.springframework.boot.loader.PropertiesLauncher
 
 if errorlevel 1 (
-   @echo ThingsBoard installation failed!
+   @echo V-Sensor installation failed!
    POPD
    exit /b %errorlevel%
 )
@@ -45,7 +45,7 @@ POPD
 
 "%BASE%"thingsboard.exe install
 
-@ECHO ThingsBoard installed successfully!
+@ECHO V-Sensor installed successfully!
 
 GOTO END
 

@@ -27,7 +27,7 @@
     <artifactId>transport</artifactId>
     <packaging>pom</packaging>
 
-    <name>ThingsBoard Transport Microservices</name>
+    <name>V-Sensor Transport Microservices</name>
     <url>https://thingsboard.io</url>
 
     <properties>

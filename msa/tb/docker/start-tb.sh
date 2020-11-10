@@ -29,7 +29,7 @@ if [ ! -f ${firstlaunch} ]; then
     touch ${firstlaunch}
 fi
 
-echo "Starting ThingsBoard ..."
+echo "Starting V-Sensor ..."
 
 java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardServerApplication \
                     -Dspring.jpa.hibernate.ddl-auto=none \

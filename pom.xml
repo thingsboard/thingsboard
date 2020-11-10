@@ -15,15 +15,15 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
     <version>3.1.1</version>
     <packaging>pom</packaging>
 
-    <name>Thingsboard</name>
+    <name>V-Sensor</name>
     <url>https://thingsboard.io</url>
     <inceptionYear>2016</inceptionYear>
 
@@ -460,9 +460,7 @@
                                     <arg>-PpackagingDir=${main.dir}/packaging</arg>
                                     <arg>-PprojectBuildDir=${basedir}/target</arg>
                                     <arg>-PprojectVersion=${project.version}</arg>
-                                    <arg>
-                                        -PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}
-                                    </arg>
+                                    <arg>-PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}</arg>
                                     <arg>-PpkgName=${pkg.name}</arg>
                                     <arg>-PpkgUser=${pkg.user}</arg>
                                     <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
@@ -622,11 +620,9 @@
                           protobuf-java directly, you will be transitively depending on the
                           protobuf-java version that grpc depends on.
                         -->
-                        <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}
-                        </protocArtifact>
+                        <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
                         <pluginId>grpc-java</pluginId>
-                        <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.0.0:exe:${os.detected.classifier}
-                        </pluginArtifact>
+                        <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.0.0:exe:${os.detected.classifier}</pluginArtifact>
                     </configuration>
                     <executions>
                         <execution>
@@ -666,15 +662,9 @@
                             <pluginExecutions>
                                 <pluginExecution>
                                     <pluginExecutionFilter>
-                                        <groupId>
-                                            org.apache.maven.plugins
-                                        </groupId>
-                                        <artifactId>
-                                            maven-antrun-plugin
-                                        </artifactId>
-                                        <versionRange>
-                                            [1.3,)
-                                        </versionRange>
+                                        <groupId>org.apache.maven.plugins</groupId>
+                                        <artifactId>maven-antrun-plugin</artifactId>
+                                        <versionRange>[1.3,)</versionRange>
                                         <goals>
                                             <goal>run</goal>
                                         </goals>
@@ -728,6 +718,7 @@
                             <exclude>ui/**</exclude>
                             <exclude>src/browserslist</exclude>
                             <exclude>**/*.raw</exclude>
+                            <exclude>ui-ngx/src/index.html</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>

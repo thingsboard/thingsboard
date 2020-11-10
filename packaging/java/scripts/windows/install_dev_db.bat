@@ -22,8 +22,8 @@ java -cp %jarfile% -Dloader.main=org.thingsboard.server.ThingsboardInstallApplic
                     org.springframework.boot.loader.PropertiesLauncher
 
 if errorlevel 1 (
-   @echo ThingsBoard DB installation failed!
+   @echo V-Sensor DB installation failed!
    POPD
    exit /b %errorlevel%
    )
-@echo ThingsBoard DB installed successfully!
+@echo V-Sensor DB installed successfully!

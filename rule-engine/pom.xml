@@ -26,7 +26,7 @@
     <artifactId>rule-engine</artifactId>
     <packaging>pom</packaging>
 
-    <name>Thingsboard Extensions</name>
+    <name>V-Sensor Extensions</name>
     <url>https://thingsboard.io</url>
 
     <properties>

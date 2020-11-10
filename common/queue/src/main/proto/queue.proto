@@ -402,7 +402,7 @@ message FromDeviceRPCResponseProto {
  * Main messages;
  */
 
-/* Request from Transport Service to ThingsBoard Core Service */
+/* Request from Transport Service to V-Sensor Core Service */
 message TransportApiRequestMsg {
   ValidateDeviceTokenRequestMsg validateTokenRequestMsg = 1;
   ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
@@ -410,14 +410,14 @@ message TransportApiRequestMsg {
   GetTenantRoutingInfoRequestMsg getTenantRoutingInfoRequestMsg = 4;
 }
 
-/* Response from ThingsBoard Core Service to Transport Service */
+/* Response from V-Sensor Core Service to Transport Service */
 message TransportApiResponseMsg {
   ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
   GetTenantRoutingInfoResponseMsg getTenantRoutingInfoResponseMsg = 4;
 }
 
-/* Messages that are handled by ThingsBoard Core Service */
+/* Messages that are handled by V-Sensor Core Service */
 message ToCoreMsg {
   TransportToDeviceActorMsg toDeviceActorMsg = 1;
   DeviceStateServiceMsgProto deviceStateServiceMsg = 2;
@@ -425,14 +425,14 @@ message ToCoreMsg {
   bytes toDeviceActorNotificationMsg = 4;
 }
 
-/* High priority messages with low latency are handled by ThingsBoard Core Service separately */
+/* High priority messages with low latency are handled by V-Sensor Core Service separately */
 message ToCoreNotificationMsg {
   LocalSubscriptionServiceMsgProto toLocalSubscriptionServiceMsg = 1;
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
   bytes componentLifecycleMsg = 3;
 }
 
-/* Messages that are handled by ThingsBoard RuleEngine Service */
+/* Messages that are handled by V-Sensor RuleEngine Service */
 message ToRuleEngineMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
@@ -446,7 +446,7 @@ message ToRuleEngineNotificationMsg {
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
 }
 
-/* Messages that are handled by ThingsBoard Transport Service */
+/* Messages that are handled by V-Sensor Transport Service */
 message ToTransportMsg {
   int64 sessionIdMSB = 1;
   int64 sessionIdLSB = 2;

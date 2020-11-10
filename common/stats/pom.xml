@@ -29,7 +29,7 @@
     <artifactId>stats</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard Server Stats</name>
+    <name>V-Sensor Server Stats</name>
     <url>https://thingsboard.io</url>
 
     <properties>

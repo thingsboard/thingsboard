@@ -2,7 +2,7 @@
   "name": "thingsboard-js-executor",
   "private": true,
   "version": "3.1.1",
-  "description": "ThingsBoard JavaScript Executor Microservice",
+  "description": "V-Sensor JavaScript Executor Microservice",
   "main": "server.js",
   "bin": "server.js",
   "scripts": {

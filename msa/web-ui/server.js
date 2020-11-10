@@ -26,7 +26,7 @@ var server;
 
 (async() => {
     try {
-        logger.info('Starting ThingsBoard Web UI Microservice...');
+        logger.info('Starting V-Sensor Web UI Microservice...');
 
         const bindAddress = config.get('server.address');
         const bindPort = config.get('server.port');
@@ -38,9 +38,9 @@ var server;
 
         logger.info('Bind address: %s', bindAddress);
         logger.info('Bind port: %s', bindPort);
-        logger.info('ThingsBoard Enable Proxy: %s', thingsboardEnableProxy);
-        logger.info('ThingsBoard host: %s', thingsboardHost);
-        logger.info('ThingsBoard port: %s', thingsboardPort);
+        logger.info('V-Sensor Enable Proxy: %s', thingsboardEnableProxy);
+        logger.info('V-Sensor host: %s', thingsboardHost);
+        logger.info('V-Sensor port: %s', thingsboardPort);
 
         const useApiProxy = thingsboardEnableProxy === "true";
 
@@ -68,9 +68,9 @@ var server;
                 if (res.writeHead) {
                   res.writeHead(500);
                   if (err.code && err.code === 'ECONNREFUSED') {
-                    res.end('Unable to connect to ThingsBoard server.');
+                    res.end('Unable to connect to V-Sensor server.');
                   } else {
-                    res.end('Thingsboard server connection error: ' + err.code ? err.code : '');
+                    res.end('V-Sensor server connection error: ' + err.code ? err.code : '');
                   }
                 }
             });
@@ -97,17 +97,17 @@ var server;
 
         server.listen(bindPort, bindAddress, (error) => {
             if (error) {
-                logger.error('Failed to start ThingsBoard Web UI Microservice: %s', e.message);
+                logger.error('Failed to start V-Sensor Web UI Microservice: %s', e.message);
                 logger.error(error.stack);
                 exit(-1);
             } else {
                 logger.info('==> 🌎  Listening on port %s.', bindPort);
-                logger.info('Started ThingsBoard Web UI Microservice.');
+                logger.info('Started V-Sensor Web UI Microservice.');
             }
         });
 
     } catch (e) {
-        logger.error('Failed to start ThingsBoard Web UI Microservice: %s', e.message);
+        logger.error('Failed to start V-Sensor Web UI Microservice: %s', e.message);
         logger.error(e.stack);
         exit(-1);
     }

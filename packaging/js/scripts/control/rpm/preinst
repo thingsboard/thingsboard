@@ -3,4 +3,4 @@
 getent group ${pkg.user} >/dev/null || groupadd -r ${pkg.user}
 getent passwd ${pkg.user} >/dev/null || \
 useradd -d ${pkg.installFolder} -g ${pkg.user} -M -r ${pkg.user} -s /sbin/nologin \
--c "Thingsboard application"
+-c "V-Sensor application"

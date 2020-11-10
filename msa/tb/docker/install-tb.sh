@@ -44,7 +44,7 @@ upgradeversion=${DATA_FOLDER}/.upgradeversion
 
 source "${CONF_FOLDER}/${configfile}"
 
-echo "Starting ThingsBoard installation ..."
+echo "Starting V-Sensor installation ..."
 
 java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
                     -Dinstall.load_demo=${loadDemo} \

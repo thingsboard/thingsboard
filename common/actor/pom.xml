@@ -27,7 +27,7 @@
     <artifactId>actor</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard Actor system</name>
+    <name>V-Sensor Actor system</name>
     <url>https://thingsboard.io</url>
 
     <properties>

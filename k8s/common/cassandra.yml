@@ -112,11 +112,11 @@ spec:
           - name: HEAP_NEWSIZE
             value: 256M
           - name: CASSANDRA_CLUSTER_NAME
-            value: "Thingsboard Cluster"
+            value: "V-Sensor Cluster"
           - name: CASSANDRA_DC
             value: "datacenter1"
           - name: CASSANDRA_RACK
-            value: "Rack-Thingsboard-Cluster"
+            value: "Rack-V-Sensor-Cluster"
           - name: CASSANDRA_AUTO_BOOTSTRAP
             value: "false"
           - name: CASSANDRA_ENDPOINT_SNITCH

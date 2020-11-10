@@ -70,7 +70,7 @@ public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateServ
                 table.migrateToSql(cluster.getSession(), conn);
             }
         } catch (Exception e) {
-            log.error("Unexpected error during ThingsBoard entities data migration!", e);
+            log.error("Unexpected error during V-Sensor entities data migration!", e);
             throw e;
         }
         entityDatabaseSchemaService.createDatabaseIndexes();

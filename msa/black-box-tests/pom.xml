@@ -27,9 +27,9 @@
     <groupId>org.thingsboard.msa</groupId>
     <artifactId>black-box-tests</artifactId>
 
-    <name>ThingsBoard Black Box Tests</name>
+    <name>V-Sensor Black Box Tests</name>
     <url>https://thingsboard.io</url>
-    <description>Project for ThingsBoard black box testing with using Docker</description>
+    <description>Project for V-Sensor black box testing with using Docker</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

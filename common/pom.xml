@@ -26,7 +26,7 @@
     <artifactId>common</artifactId>
     <packaging>pom</packaging>
 
-    <name>Thingsboard Server Commons</name>
+    <name>V-Sensor Server Commons</name>
     <url>https://thingsboard.io</url>
 
     <properties>

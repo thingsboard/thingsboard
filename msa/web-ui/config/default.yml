@@ -21,9 +21,9 @@ server:
   port: "8090"
 thingsboard:
   enableProxy: "false"
-  # ThingsBoard node host
+  # V-Sensor node host
   host: "localhost"
-  # ThingsBoard node port
+  # V-Sensor node port
   port: "8080"
 logger:
   level: "info"

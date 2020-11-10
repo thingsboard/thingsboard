@@ -27,7 +27,7 @@
     <artifactId>mqtt</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard MQTT Transport Common</name>
+    <name>V-Sensor MQTT Transport Common</name>
     <url>https://thingsboard.io</url>
 
     <properties>

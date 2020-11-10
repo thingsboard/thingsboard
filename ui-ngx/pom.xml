@@ -27,7 +27,7 @@
     <artifactId>ui-ngx</artifactId>
     <packaging>jar</packaging>
 
-    <name>ThingsBoard Server UI</name>
+    <name>V-Sensor Server UI</name>
     <url>https://thingsboard.io</url>
 
     <properties>

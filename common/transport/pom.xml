@@ -27,7 +27,7 @@
     <artifactId>transport</artifactId>
     <packaging>pom</packaging>
 
-    <name>Thingsboard Server Commons</name>
+    <name>V-Sensorrver Commons</name>
     <url>https://thingsboard.io</url>
 
     <properties>

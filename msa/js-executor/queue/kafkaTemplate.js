@@ -57,7 +57,7 @@ function KafkaProducer() {
 
 (async () => {
     try {
-        logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
+        logger.info('Starting V-Sensor JavaScript Executor Microservice...');
 
         const kafkaBootstrapServers = config.get('kafka.bootstrap.servers');
         const requestTopic = config.get('request_topic');
@@ -101,7 +101,7 @@ function KafkaProducer() {
         await producer.connect();
         await consumer.subscribe({topic: requestTopic});
 
-        logger.info('Started ThingsBoard JavaScript Executor Microservice.');
+        logger.info('Started V-Sensor JavaScript Executor Microservice.');
         await consumer.run({
             eachMessage: async ({topic, partition, message}) => {
                 let headers = message.headers;
@@ -115,7 +115,7 @@ function KafkaProducer() {
         });
 
     } catch (e) {
-        logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
+        logger.error('Failed to start V-Sensor JavaScript Executor Microservice: %s', e.message);
         logger.error(e.stack);
         exit(-1);
     }

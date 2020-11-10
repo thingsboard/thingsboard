@@ -33,7 +33,7 @@ VALUES ( '6a2266e4-4612-11e7-a919-92ebcb67fe33', 1592576748000, 'general', '{
 
 INSERT INTO admin_settings ( id, created_time, key, json_value )
 VALUES ( '6eaaefa6-4612-11e7-a919-92ebcb67fe33', 1592576748000, 'mail', '{
-	"mailFrom": "Thingsboard <sysadmin@localhost.localdomain>",
+	"mailFrom": "V-Sensor <sysadmin@localhost.localdomain>",
 	"smtpProtocol": "smtp",
 	"smtpHost": "localhost",
 	"smtpPort": "25",

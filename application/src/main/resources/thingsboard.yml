@@ -142,7 +142,7 @@ security:
         mapperConfig:
           # Allows to create user if it not exists
           allowUserCreation: "${SECURITY_OAUTH2_DEFAULT_MAPPER_ALLOW_USER_CREATION:true}"
-          # Allows user to setup ThingsBoard internal password and login over default Login window
+          # Allows user to setup V-Sensor internal password and login over default Login window
           activateUser: "${SECURITY_OAUTH2_DEFAULT_MAPPER_ACTIVATE_USER:false}"
           # Mapper type of converter from external user into internal - 'basic' or 'custom'
           type: "${SECURITY_OAUTH2_DEFAULT_MAPPER_TYPE:basic}"
@@ -186,9 +186,9 @@ database:
 
 # Cassandra driver configuration parameters
 cassandra:
-  # Thingsboard cluster name
-  cluster_name: "${CASSANDRA_CLUSTER_NAME:Thingsboard Cluster}"
-  # Thingsboard keyspace name
+  # V-Sensor cluster name
+  cluster_name: "${CASSANDRA_CLUSTER_NAME:V-Sensor Cluster}"
+  # V-Sensor keyspace name
   keyspace_name: "${CASSANDRA_KEYSPACE_NAME:thingsboard}"
   # Specify node list
   url: "${CASSANDRA_URL:127.0.0.1:9042}"
@@ -595,10 +595,10 @@ swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"
   security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api.*}"
   non_security_path_regex: "${SWAGGER_NON_SECURITY_PATH_REGEX:/api/noauth.*}"
-  title: "${SWAGGER_TITLE:ThingsBoard REST API}"
+  title: "${SWAGGER_TITLE:V-Sensor REST API}"
   description: "${SWAGGER_DESCRIPTION:For instructions how to authorize requests please visit <a href='http://thingsboard.io/docs/reference/rest-api/'>REST API documentation page</a>.}"
   contact:
-    name: "${SWAGGER_CONTACT_NAME:Thingsboard team}"
+    name: "${SWAGGER_CONTACT_NAME:V-Sensor team}"
     url: "${SWAGGER_CONTACT_URL:http://thingsboard.io}"
     email: "${SWAGGER_CONTACT_EMAIL:info@thingsboard.io}"
   license:

@@ -27,7 +27,7 @@
     <artifactId>util</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard Server Common Utils</name>
+    <name>V-Sensor Server Common Utils</name>
     <url>https://thingsboard.io</url>
 
     <properties>

@@ -26,7 +26,7 @@
     <artifactId>dao</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard Server DAO Layer</name>
+    <name>V-Sensor Server DAO Layer</name>
     <url>https://thingsboard.io</url>
 
     <properties>

@@ -26,7 +26,7 @@ source "${CONF_FOLDER}/${configfile}"
 
 FROM_VERSION=`cat ${upgradeversion}`
 
-echo "Starting ThingsBoard upgrade ..."
+echo "Starting V-Sensor upgrade ..."
 
 if [[ -z "${FROM_VERSION// }" ]]; then
     echo "FROM_VERSION variable is invalid or unspecified!"

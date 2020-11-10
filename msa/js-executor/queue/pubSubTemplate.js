@@ -52,7 +52,7 @@ function PubSubProducer() {
 
 (async () => {
     try {
-        logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
+        logger.info('Starting V-Sensor JavaScript Executor Microservice...');
         pubSubClient = new PubSub({projectId: projectId, credentials: credentials});
 
         parseQueueProperties();
@@ -90,7 +90,7 @@ function PubSubProducer() {
         subscription.on('message', messageHandler);
 
     } catch (e) {
-        logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
+        logger.error('Failed to start V-Sensor JavaScript Executor Microservice: %s', e.message);
         logger.error(e.stack);
         exit(-1);
     }

@@ -72,7 +72,7 @@ function CustomSender(topic) {
 
 (async () => {
     try {
-        logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
+        logger.info('Starting V-Sensor JavaScript Executor Microservice...');
 
         const connectionString = `Endpoint=sb://${namespaceName}.servicebus.windows.net/;SharedAccessKeyName=${sasKeyName};SharedAccessKey=${sasKey}`;
         sbClient = ServiceBusClient.createFromConnectionString(connectionString);
@@ -114,7 +114,7 @@ function CustomSender(topic) {
         };
         receiver.registerMessageHandler(messageHandler, errorHandler);
     } catch (e) {
-        logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
+        logger.error('Failed to start V-Sensor JavaScript Executor Microservice: %s', e.message);
         logger.error(e.stack);
         exit(-1);
     }

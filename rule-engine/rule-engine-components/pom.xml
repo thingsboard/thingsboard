@@ -29,7 +29,7 @@
     <artifactId>rule-engine-components</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard Rule Engine Components</name>
+    <name>V-Sensor Rule Engine Components</name>
     <url>https://thingsboard.io</url>
 
     <properties>

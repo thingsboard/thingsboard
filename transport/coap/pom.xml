@@ -27,7 +27,7 @@
     <artifactId>coap</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard CoAP Transport Service</name>
+    <name>V-Sensor CoAP Transport Service</name>
     <url>https://thingsboard.io</url>
 
     <properties>
@@ -40,7 +40,7 @@
         <pkg.name>tb-coap-transport</pkg.name>
         <pkg.copyInstallScripts>false</pkg.copyInstallScripts>
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
-        <pkg.implementationTitle>ThingsBoard CoAP Transport Service</pkg.implementationTitle>
+        <pkg.implementationTitle>V-Sensor CoAP Transport Service</pkg.implementationTitle>
         <pkg.mainClass>org.thingsboard.server.coap.ThingsboardCoapTransportApplication</pkg.mainClass>
     </properties>
 

@@ -27,9 +27,9 @@
     <artifactId>coap</artifactId>
     <packaging>pom</packaging>
 
-    <name>ThingsBoard COAP Transport Microservice</name>
+    <name>V-Sensor COAP Transport Microservice</name>
     <url>https://thingsboard.io</url>
-    <description>ThingsBoard COAP Transport Microservice</description>
+    <description>V-Sensor COAP Transport Microservice</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

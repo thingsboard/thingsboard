@@ -122,7 +122,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AdminSettings mailSettings = new AdminSettings();
         mailSettings.setKey("mail");
         node = objectMapper.createObjectNode();
-        node.put("mailFrom", "ThingsBoard <sysadmin@localhost.localdomain>");
+        node.put("mailFrom", "V-Sensor <sysadmin@localhost.localdomain>");
         node.put("smtpProtocol", "smtp");
         node.put("smtpHost", "localhost");
         node.put("smtpPort", "25");

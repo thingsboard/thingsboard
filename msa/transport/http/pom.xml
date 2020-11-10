@@ -27,9 +27,9 @@
     <artifactId>http</artifactId>
     <packaging>pom</packaging>
 
-    <name>ThingsBoard HTTP Transport Microservice</name>
+    <name>V-Sensor HTTP Transport Microservice</name>
     <url>https://thingsboard.io</url>
-    <description>ThingsBoard HTTP Transport Microservice</description>
+    <description>V-Sensor HTTP Transport Microservice</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -27,7 +27,7 @@
     <artifactId>transport-api</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard Server Common Transport components</name>
+    <name>V-Sensor Server Common Transport components</name>
     <url>https://thingsboard.io</url>
 
     <properties>

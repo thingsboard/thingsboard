@@ -26,7 +26,7 @@
     <artifactId>rest-client</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard Rest Client</name>
+    <name>V-Sensor Rest Client</name>
     <url>https://thingsboard.io</url>
 
     <properties>
