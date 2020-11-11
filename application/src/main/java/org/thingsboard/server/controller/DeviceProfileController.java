@@ -97,13 +97,6 @@ public class DeviceProfileController extends BaseController {
 
             checkEntity(deviceProfile.getId(), deviceProfile, Resource.DEVICE_PROFILE);
 
-            DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
-
-            if (transportConfiguration instanceof MqttProtoDeviceProfileTransportConfiguration) {
-                MqttProtoDeviceProfileTransportConfiguration protoTransportConfiguration = (MqttProtoDeviceProfileTransportConfiguration) transportConfiguration;
-                checkProtoSchemas(protoTransportConfiguration);
-            }
-
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
 
             tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);
@@ -209,15 +202,6 @@ public class DeviceProfileController extends BaseController {
             return checkNotNull(deviceProfileService.findDeviceProfileInfos(getTenantId(), pageLink, transportType));
         } catch (Exception e) {
             throw handleException(e);
-        }
-    }
-
-    private void checkProtoSchemas(MqttProtoDeviceProfileTransportConfiguration mqttTransportConfiguration) throws ThingsboardException {
-        try {
-            mqttTransportConfiguration.validateTransportProtoSchema(mqttTransportConfiguration.getDeviceAttributesProtoSchema(), MqttProtoDeviceProfileTransportConfiguration.ATTRIBUTES_PROTO_SCHEMA);
-            mqttTransportConfiguration.validateTransportProtoSchema(mqttTransportConfiguration.getDeviceTelemetryProtoSchema(), MqttProtoDeviceProfileTransportConfiguration.TELEMETRY_PROTO_SCHEMA);
-        } catch (Exception exception) {
-            throw new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.GENERAL);
         }
     }
 

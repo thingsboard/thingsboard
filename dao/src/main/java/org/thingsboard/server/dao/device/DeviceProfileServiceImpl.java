@@ -29,12 +29,13 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttProtoDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -48,7 +49,6 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_PROFILE_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -309,6 +309,17 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                         DeviceProfile defaultDeviceProfile = findDefaultDeviceProfile(tenantId);
                         if (defaultDeviceProfile != null && !defaultDeviceProfile.getId().equals(deviceProfile.getId())) {
                             throw new DataValidationException("Another default device profile is present in scope of current tenant!");
+                        }
+                    } else {
+                        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+                        if (transportConfiguration instanceof MqttProtoDeviceProfileTransportConfiguration) {
+                            MqttProtoDeviceProfileTransportConfiguration protoTransportConfiguration = (MqttProtoDeviceProfileTransportConfiguration) transportConfiguration;
+                            try {
+                                protoTransportConfiguration.validateTransportProtoSchema(protoTransportConfiguration.getDeviceAttributesProtoSchema(), MqttProtoDeviceProfileTransportConfiguration.ATTRIBUTES_PROTO_SCHEMA);
+                                protoTransportConfiguration.validateTransportProtoSchema(protoTransportConfiguration.getDeviceTelemetryProtoSchema(), MqttProtoDeviceProfileTransportConfiguration.TELEMETRY_PROTO_SCHEMA);
+                            } catch (Exception exception) {
+                                throw new DataValidationException(exception.getMessage());
+                            }
                         }
                     }
                 }
