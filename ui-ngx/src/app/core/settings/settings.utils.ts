@@ -35,6 +35,8 @@ export function updateUserLang(translate: TranslateService, userLang: string) {
   }
   translate.use(detectedSupportedLang);
   _moment.locale([detectedSupportedLang]);
+
+  document.documentElement.lang = detectedSupportedLang.split('_')[0];
 }
 
 function detectSupportedLang(targetLang: string): string {
