@@ -19,6 +19,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -53,7 +54,7 @@ public abstract class BaseApiUsageStateServiceTest extends AbstractServiceTest {
         ApiUsageState apiUsageState = apiUsageStateService.findTenantApiUsageState(tenantId);
         Assert.assertNotNull(apiUsageState);
         Assert.assertTrue(apiUsageState.isTransportEnabled());
-        apiUsageState.setTransportEnabled(false);
+        apiUsageState.setTransportState(ApiUsageStateValue.DISABLED);
         apiUsageState = apiUsageStateService.update(apiUsageState);
         Assert.assertNotNull(apiUsageState);
         apiUsageState = apiUsageStateService.findTenantApiUsageState(tenantId);

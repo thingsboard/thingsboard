@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -71,6 +72,10 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         ApiUsageState apiUsageState = new ApiUsageState();
         apiUsageState.setTenantId(tenantId);
         apiUsageState.setEntityId(tenantId);
+        apiUsageState.setTransportState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setReExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setJsExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setDbStorageState(ApiUsageStateValue.ENABLED);
         apiUsageStateValidator.validate(apiUsageState, ApiUsageState::getTenantId);
 
         ApiUsageState saved = apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);

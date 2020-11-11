@@ -170,6 +170,7 @@ CREATE TABLE IF NOT EXISTS device_profile (
     is_default boolean,
     tenant_id uuid,
     default_rule_chain_id uuid,
+    default_queue_name varchar(255),
     provision_device_key varchar,
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
@@ -411,9 +412,9 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
     tenant_id uuid,
     entity_type varchar(32),
     entity_id uuid,
-    transport_enabled boolean,
-    db_storage_enabled boolean,
-    re_exec_enabled boolean,
-    js_exec_enabled boolean,
+    transport varchar(32),
+    db_storage varchar(32),
+    re_exec varchar(32),
+    js_exec varchar(32),
     CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)
 );

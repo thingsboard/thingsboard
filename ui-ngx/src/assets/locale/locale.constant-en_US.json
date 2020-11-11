@@ -80,6 +80,8 @@
         "test-mail-sent": "Test mail was successfully sent!",
         "base-url": "Base URL",
         "base-url-required": "Base URL is required.",
+        "prohibit-different-url": "Prohibit to use hostname from the client request headers",
+        "prohibit-different-url-hint": "This setting should be enabled for production environments. May cause security issues when disabled",
         "mail-from": "Mail From",
         "mail-from-required": "Mail From is required.",
         "smtp-protocol": "SMTP protocol",
@@ -873,6 +875,7 @@
         "profile-configuration": "Profile configuration",
         "transport-configuration": "Transport configuration",
         "default-rule-chain": "Default rule chain",
+        "select-queue-hint": "Select from a drop-down list or add a custom name.",
         "delete-device-profile-title": "Are you sure you want to delete the device profile '{{deviceProfileName}}'?",
         "delete-device-profile-text": "Be careful, after the confirmation the device profile and all related data will become unrecoverable.",
         "delete-device-profiles-title": "Are you sure you want to delete { count, plural, 1 {1 device profile} other {# device profiles} }?",
@@ -1665,6 +1668,7 @@
     "legend": {
         "direction": "Legend direction",
         "position": "Legend position",
+        "sort-legend": "Sort datakeys in legend",
         "show-max": "Show max value",
         "show-min": "Show min value",
         "show-avg": "Show average value",
@@ -2315,7 +2319,10 @@
             "no-entity-selected": "No entity selected",
             "no-image": "No image",
             "no-support-geolocation": "Your browser doesn't support geolocation",
-            "no-support-web-camera": "No supported web camera",
+            "no-support-web-camera": "Your browser does not support cameras",
+            "enable-https-use-widget": "Please enable HTTPS to use this widget",
+            "no-found-your-camera": "Can't find your camera",
+            "no-permission-camera": "Permission was denied by the user / This site doesn't have permission to use the camera",
             "no-timeseries-selected": "No timeseries selected",
             "secret-key": "Secret key",
             "secret-key-required": "Secret key is required",
@@ -2371,7 +2378,8 @@
             "el_GR": "Ελληνικά",
             "ro_RO": "Română",
             "lv_LV": "Latviešu",
-            "ka_GE": "ქართული"
+            "ka_GE": "ქართული",
+            "pt_BR": "Português do Brasil"
         }
     }
 }

@@ -20,19 +20,24 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
@@ -57,8 +62,10 @@ import org.thingsboard.server.service.telemetry.InternalTelemetryService;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -67,7 +74,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-@TbCoreComponent
 @Service
 public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
@@ -126,8 +132,8 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
     public void init() {
         if (enabled) {
             log.info("Starting api usage service.");
-            initStatesFromDataBase();
             scheduler.scheduleAtFixedRate(this::checkStartOfNextCycle, nextCycleCheckInterval, nextCycleCheckInterval, TimeUnit.MILLISECONDS);
+            log.info("Started api usage service.");
         }
     }
 
@@ -137,7 +143,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         TenantId tenantId = new TenantId(new UUID(statsMsg.getTenantIdMSB(), statsMsg.getTenantIdLSB()));
         TenantApiUsageState tenantState;
         List<TsKvEntry> updatedEntries;
-        Map<ApiFeature, Boolean> result = new HashMap<>();
+        Map<ApiFeature, ApiUsageStateValue> result;
         updateLock.lock();
         try {
             tenantState = getOrFetchState(tenantId);
@@ -148,17 +154,16 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                 tenantState.setHour(newHourTs);
             }
             updatedEntries = new ArrayList<>(ApiUsageRecordKey.values().length);
+            Set<ApiFeature> apiFeatures = new HashSet<>();
             for (UsageStatsKVProto kvProto : statsMsg.getValuesList()) {
                 ApiUsageRecordKey recordKey = ApiUsageRecordKey.valueOf(kvProto.getKey());
                 long newValue = tenantState.add(recordKey, kvProto.getValue());
                 updatedEntries.add(new BasicTsKvEntry(ts, new LongDataEntry(recordKey.getApiCountKey(), newValue)));
                 long newHourlyValue = tenantState.addToHourly(recordKey, kvProto.getValue());
                 updatedEntries.add(new BasicTsKvEntry(hourTs, new LongDataEntry(recordKey.getApiCountKey() + HOURLY, newHourlyValue)));
-                Pair<ApiFeature, Boolean> update = tenantState.checkStateUpdatedDueToThreshold(recordKey);
-                if (update != null) {
-                    result.put(update.getFirst(), update.getSecond());
-                }
+                apiFeatures.add(recordKey.getApiFeature());
             }
+            result = tenantState.checkStateUpdatedDueToThreshold(apiFeatures);
         } finally {
             updateLock.unlock();
         }
@@ -196,7 +201,9 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                         state = otherTenantStates.get(tenantId);
                         if (state == null) {
                             state = apiUsageStateService.findTenantApiUsageState(tenantId);
-                            otherTenantStates.put(tenantId, state);
+                            if (state != null) {
+                                otherTenantStates.put(tenantId, state);
+                            }
                         }
                     } finally {
                         updateLock.unlock();
@@ -243,8 +250,9 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
     private void updateTenantState(TenantApiUsageState state, TenantProfile tenantProfile) {
         TenantProfileData oldProfileData = state.getTenantProfileData();
+        state.setTenantProfileId(tenantProfile.getId());
         state.setTenantProfileData(tenantProfile.getProfileData());
-        Map<ApiFeature, Boolean> result = state.checkStateUpdatedDueToThresholds();
+        Map<ApiFeature, ApiUsageStateValue> result = state.checkStateUpdatedDueToThresholds();
         if (!result.isEmpty()) {
             persistAndNotify(state, result);
         }
@@ -257,8 +265,10 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         long ts = System.currentTimeMillis();
         List<TsKvEntry> profileThresholds = new ArrayList<>();
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-            if (oldData == null || oldData.getProfileThreshold(key) != newData.getProfileThreshold(key)) {
-                profileThresholds.add(new BasicTsKvEntry(ts, new LongDataEntry(key.getApiLimitKey(), newData.getProfileThreshold(key))));
+            long newProfileThreshold = newData.getProfileThreshold(key);
+            if (oldData == null || oldData.getProfileThreshold(key) != newProfileThreshold) {
+                log.info("[{}] Updating profile threshold [{}]:[{}]", tenantId, key, newProfileThreshold);
+                profileThresholds.add(new BasicTsKvEntry(ts, new LongDataEntry(key.getApiLimitKey(), newProfileThreshold)));
             }
         }
         if (!profileThresholds.isEmpty()) {
@@ -266,13 +276,15 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         }
     }
 
-    private void persistAndNotify(TenantApiUsageState state, Map<ApiFeature, Boolean> result) {
+    private void persistAndNotify(TenantApiUsageState state, Map<ApiFeature, ApiUsageStateValue> result) {
+        log.info("[{}] Detected update of the API state: {}", state.getTenantId(), result);
         apiUsageStateService.update(state.getApiUsageState());
         clusterService.onApiStateChange(state.getApiUsageState(), null);
         long ts = System.currentTimeMillis();
         List<TsKvEntry> stateTelemetry = new ArrayList<>();
-        result.forEach(((apiFeature, aState) -> stateTelemetry.add(new BasicTsKvEntry(ts, new BooleanDataEntry(apiFeature.getApiStateKey(), aState)))));
+        result.forEach(((apiFeature, aState) -> stateTelemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(apiFeature.getApiStateKey(), aState.name())))));
         tsWsService.saveAndNotifyInternal(state.getTenantId(), state.getApiUsageState().getId(), stateTelemetry, VOID_CALLBACK);
+        //TODO: notify tenant admin via email!
     }
 
     private void checkStartOfNextCycle() {
@@ -320,6 +332,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                         }
                     }
                 }
+                log.debug("[{}] Initialized state: {}", tenantId, dbStateEntity);
                 myTenantStates.put(tenantId, tenantState);
             } catch (InterruptedException | ExecutionException e) {
                 log.warn("[{}] Failed to fetch api usage state from db.", tenantId, e);
@@ -330,12 +343,15 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
     private void initStatesFromDataBase() {
         try {
+            log.info("Initializing tenant states.");
             PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, 1024);
             for (Tenant tenant : tenantIterator) {
                 if (!myTenantStates.containsKey(tenant.getId()) && partitionService.resolve(ServiceType.TB_CORE, tenant.getId(), tenant.getId()).isMyPartition()) {
+                    log.debug("[{}] Initializing tenant state.", tenant.getId());
                     updateLock.lock();
                     try {
                         updateTenantState(getOrFetchState(tenant.getId()), tenantProfileCache.get(tenant.getTenantProfileId()));
+                        log.debug("[{}] Initialized tenant state.", tenant.getId());
                     } catch (Exception e) {
                         log.warn("[{}] Failed to initialize tenant API state", tenant.getId(), e);
                     } finally {
@@ -343,7 +359,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                     }
                 }
             }
-            log.info("Api usage service started.");
+            log.info("Initialized tenant states.");
         } catch (Exception e) {
             log.warn("Unknown failure", e);
         }

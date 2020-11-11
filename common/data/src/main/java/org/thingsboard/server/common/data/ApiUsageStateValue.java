@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.apiusage;
+package org.thingsboard.server.common.data;
 
-import lombok.Getter;
+public enum ApiUsageStateValue {
 
-public enum ApiFeature {
-    TRANSPORT("transportApiState"), DB("dbApiState"), RE("ruleEngineApiState"), JS("jsExecutionApiState");
+    ENABLED, WARNING, DISABLED;
 
-    @Getter
-    private final String apiStateKey;
 
-    ApiFeature(String apiStateKey) {
-        this.apiStateKey = apiStateKey;
+    public static ApiUsageStateValue toMoreRestricted(ApiUsageStateValue a, ApiUsageStateValue b) {
+        return a.ordinal() > b.ordinal() ? a : b;
     }
 }

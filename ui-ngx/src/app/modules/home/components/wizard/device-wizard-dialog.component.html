@@ -76,13 +76,15 @@
                   [required]="!createProfile"
                   [transportType]="deviceWizardFormGroup.get('transportType').value"
                   formControlName="deviceProfileId"
+                  [ngClass]="{invisible: deviceWizardFormGroup.get('addProfileType').value !== 0}"                              
                   (deviceProfileChanged)="$event?.transportType ? deviceWizardFormGroup.get('transportType').patchValue($event?.transportType) : {}"
                   [addNewProfile]="false"
                   [selectDefaultProfile]="true"
                   [selectFirstProfile]="true"
                   [editProfileEnabled]="false">
                 </tb-device-profile-autocomplete>
-                <mat-form-field fxFlex class="mat-block">
+                <mat-form-field fxFlex class="mat-block"
+                                [ngClass]="{invisible: deviceWizardFormGroup.get('addProfileType').value !== 1}">
                   <mat-label translate>device-profile.new-device-profile-name</mat-label>
                   <input matInput formControlName="newDeviceProfileTitle"
                          [required]="createProfile">
@@ -93,9 +95,17 @@
               </div>
               <div fxLayout="column" fxLayoutAlign="flex-end start">
                 <tb-rule-chain-autocomplete
+                  [ngClass]="{invisible: deviceWizardFormGroup.get('addProfileType').value !== 1}"
                   labelText="device-profile.default-rule-chain"
                   formControlName="defaultRuleChainId">
                 </tb-rule-chain-autocomplete>
+              </div>
+              <div fxLayout="column" fxLayoutAlign="flex-end start">
+                <tb-queue-type-list
+                  [ngClass]="{invisible: deviceWizardFormGroup.get('addProfileType').value !== 1}"
+                  [queueType]="serviceType"
+                  formControlName="defaultQueueName">
+                </tb-queue-type-list>
               </div>
             </div>
             <mat-checkbox formControlName="gateway" style="padding-bottom: 16px;">
