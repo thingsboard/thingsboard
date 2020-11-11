@@ -1099,7 +1099,9 @@
         "details": "Entity details",
         "no-entities-prompt": "No entities found",
         "no-data": "No data to display",
-        "columns-to-display": "Columns to Display"
+        "columns-to-display": "Columns to Display",
+        "type-api-usage-state": "Api Usage State",
+        "list-of-api-usage-states": "Api Usage States"
     },
     "entity-field": {
         "created-time": "Created time",
@@ -1116,7 +1118,11 @@
         "address2": "Address 2",
         "zip": "Zip",
         "phone": "Phone",
-        "label": "Label"
+        "label": "Label",
+        "transport": "Transport",
+        "db-storage": "Database storage",
+        "re-exec": "Rule Engine executions",
+        "js-exec": "Java Script executions"
     },
     "entity-view": {
         "entity-view": "Entity View",

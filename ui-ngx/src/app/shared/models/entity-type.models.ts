@@ -47,7 +47,8 @@ export enum EntityType {
   RULE_NODE = 'RULE_NODE',
   ENTITY_VIEW = 'ENTITY_VIEW',
   WIDGETS_BUNDLE = 'WIDGETS_BUNDLE',
-  WIDGET_TYPE = 'WIDGET_TYPE'
+  WIDGET_TYPE = 'WIDGET_TYPE',
+  API_USAGE_STATE = 'API_USAGE_STATE'
 }
 
 export enum AliasEntityType {
@@ -236,6 +237,19 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         noEntities: 'alarm.no-alarms-prompt',
         search: 'alarm.search',
         selectedEntities: 'alarm.selected-alarms'
+      }
+    ],
+    [
+      EntityType.API_USAGE_STATE,
+      {
+        type: 'entity.type-api-usage-state',
+        typePlural: 'entity.type-api-usage-state',
+        list: 'entity.list-of-api-usage-states',
+        // nameStartsWith: 'entity.alarm-name-starts-with',
+        details: 'dashboard.dashboard-details',
+        noEntities: 'api-usage-state.no-api-usage-state-prompt',
+        search: 'api-usage-state.search',
+        selectedEntities: 'api-usage-state.selected-api-usage-state'
       }
     ],
     [

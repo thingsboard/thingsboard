@@ -140,5 +140,25 @@ export const entityFields: {[fieldName: string]: EntityField} = {
     keyName: 'label',
     name: 'entity-field.label',
     value: 'label'
+  },
+  transport: {
+    keyName: 'transport',
+    name: 'entity-field.transport',
+    value: 'transport'
+  },
+  dbStorage: {
+    keyName: 'dbStorage',
+    name: 'entity-field.db-storage',
+    value: 'dbStorage'
+  },
+  reExec: {
+    keyName: 'reExec',
+    name: 'entity-field.re-exec',
+    value: 'reExec'
+  },
+  jsExec: {
+    keyName: 'jsExec',
+    name: 'entity-field.js-exec',
+    value: 'jsExec'
   }
 };

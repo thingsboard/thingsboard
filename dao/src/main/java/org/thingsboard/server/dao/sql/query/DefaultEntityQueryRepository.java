@@ -210,7 +210,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.CUSTOMER, "customer");
         entityTableMap.put(EntityType.USER, "tb_user");
         entityTableMap.put(EntityType.TENANT, "tenant");
-        entityTableMap.put(EntityType.API_USAGE_STATE, "(select aus.id, aus.created_time, aus.tenant_id, '' as name, '' as additional_info from api_usage_state as aus)");
+        entityTableMap.put(EntityType.API_USAGE_STATE, "api_usage_state");
+
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{

@@ -630,6 +630,12 @@ export class EntityService {
       case EntityType.DASHBOARD:
         entityFieldKeys.push(entityFields.title.keyName);
         break;
+      case EntityType.API_USAGE_STATE:
+        entityFieldKeys.push(entityFields.transport.keyName);
+        entityFieldKeys.push(entityFields.dbStorage.keyName);
+        entityFieldKeys.push(entityFields.reExec.keyName);
+        entityFieldKeys.push(entityFields.jsExec.keyName);
+        break;
     }
     return query ? entityFieldKeys.filter((entityField) => entityField.toLowerCase().indexOf(query) === 0) : entityFieldKeys;
   }

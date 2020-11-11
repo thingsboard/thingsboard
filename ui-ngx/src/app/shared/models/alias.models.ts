@@ -136,7 +136,8 @@ export type EntityFilters =
   AssetSearchQueryFilter &
   DeviceSearchQueryFilter &
   EntityViewSearchQueryFilter &
-  EntitySearchQueryFilter;
+  EntitySearchQueryFilter &
+  ApiUsageStateFilter;
 
 export interface EntityAliasFilter extends EntityFilters {
   type?: AliasFilterType;

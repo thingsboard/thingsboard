@@ -72,6 +72,10 @@ public class EntityKeyMapping {
     public static final String ZIP = "zip";
     public static final String PHONE = "phone";
     public static final String ADDITIONAL_INFO = "additionalInfo";
+    public static final String TRANSPORT = "transport";
+    public static final String DB_STORAGE = "dbStorage";
+    public static final String RE_EXEC = "reExec";
+    public static final String JS_EXEC = "jsExec";
 
     public static final List<String> typedEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, ADDITIONAL_INFO);
     public static final List<String> widgetEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME);
@@ -79,9 +83,11 @@ public class EntityKeyMapping {
     public static final List<String> dashboardEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, TITLE);
     public static final List<String> labeledEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL, ADDITIONAL_INFO);
     public static final List<String> contactBasedEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, EMAIL, TITLE, COUNTRY, STATE, CITY, ADDRESS, ADDRESS_2, ZIP, PHONE, ADDITIONAL_INFO);
+    public static final List<String> apiUsageStateEntityFields = Arrays.asList(CREATED_TIME, TRANSPORT, DB_STORAGE, RE_EXEC, JS_EXEC);
+
 
     public static final Set<String> commonEntityFieldsSet = new HashSet<>(commonEntityFields);
-    public static final Set<String> relationQueryEntityFieldsSet = new HashSet<>(Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL, FIRST_NAME, LAST_NAME, EMAIL, REGION, TITLE, COUNTRY, STATE, CITY, ADDRESS, ADDRESS_2, ZIP, PHONE, ADDITIONAL_INFO));
+    public static final Set<String> relationQueryEntityFieldsSet = new HashSet<>(Arrays.asList(CREATED_TIME));
 
     static {
         allowedEntityFieldMap.put(EntityType.DEVICE, new HashSet<>(labeledEntityFields));
@@ -99,6 +105,7 @@ public class EntityKeyMapping {
         allowedEntityFieldMap.put(EntityType.RULE_NODE, new HashSet<>(commonEntityFields));
         allowedEntityFieldMap.put(EntityType.WIDGET_TYPE, new HashSet<>(widgetEntityFields));
         allowedEntityFieldMap.put(EntityType.WIDGETS_BUNDLE, new HashSet<>(widgetEntityFields));
+        allowedEntityFieldMap.put(EntityType.API_USAGE_STATE, new HashSet<>(apiUsageStateEntityFields));
 
         entityFieldColumnMap.put(CREATED_TIME, ModelConstants.CREATED_TIME_PROPERTY);
         entityFieldColumnMap.put(ENTITY_TYPE, ModelConstants.ENTITY_TYPE_PROPERTY);
@@ -118,6 +125,10 @@ public class EntityKeyMapping {
         entityFieldColumnMap.put(ZIP, ModelConstants.ZIP_PROPERTY);
         entityFieldColumnMap.put(PHONE, ModelConstants.PHONE_PROPERTY);
         entityFieldColumnMap.put(ADDITIONAL_INFO, ModelConstants.ADDITIONAL_INFO_PROPERTY);
+        entityFieldColumnMap.put(TRANSPORT, ModelConstants.API_USAGE_STATE_TRANSPORT_COLUMN);
+        entityFieldColumnMap.put(DB_STORAGE, ModelConstants.API_USAGE_STATE_DB_STORAGE_COLUMN);
+        entityFieldColumnMap.put(RE_EXEC, ModelConstants.API_USAGE_STATE_RE_EXEC_COLUMN);
+        entityFieldColumnMap.put(JS_EXEC, ModelConstants.API_USAGE_STATE_JS_EXEC_COLUMN);
 
         Map<String, String> contactBasedAliases = new HashMap<>();
         contactBasedAliases.put(NAME, TITLE);
