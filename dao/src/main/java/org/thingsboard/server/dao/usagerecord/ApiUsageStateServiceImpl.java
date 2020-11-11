@@ -85,7 +85,6 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         Tenant tenant = tenantDao.findById(tenantId, tenantId.getId());
         TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
         TenantProfileConfiguration configuration = tenantProfile.getProfileData().getConfiguration();
-        List<TsKvEntry> profileThresholds = new ArrayList<>();
         List<TsKvEntry> apiUsageStates = new ArrayList<>();
         apiUsageStates.add(new BasicTsKvEntry(apiUsageState.getCreatedTime(),
                 new StringDataEntry(ApiFeature.TRANSPORT.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
@@ -96,6 +95,8 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         apiUsageStates.add(new BasicTsKvEntry(apiUsageState.getCreatedTime(),
                 new StringDataEntry(ApiFeature.JS.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
         tsService.save(tenantId, saved.getId(), apiUsageStates, 0L);
+
+        List<TsKvEntry> profileThresholds = new ArrayList<>();
 
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
             profileThresholds.add(new BasicTsKvEntry(saved.getCreatedTime(), new LongDataEntry(key.getApiLimitKey(), configuration.getProfileThreshold(key))));
