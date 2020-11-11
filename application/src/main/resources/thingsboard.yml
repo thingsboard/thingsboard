@@ -46,6 +46,12 @@ server:
       max_subscriptions_per_regular_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_REGULAR_USER:0}"
       max_subscriptions_per_public_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_PUBLIC_USER:0}"
       max_updates_per_session: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_UPDATES_PER_SESSION:300:1,3000:60}"
+    dynamic_page_link:
+      refresh_interval: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_REFRESH_INTERVAL_SEC:60}"
+      refresh_pool_size: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_REFRESH_POOL_SIZE:1}"
+      max_per_user: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_MAX_PER_USER:10}"
+    max_entities_per_data_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_DATA_SUBSCRIPTION:10000}"
+    max_entities_per_alarm_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_ALARM_SUBSCRIPTION:10000}"
   rest:
     limits:
       tenant:
@@ -107,62 +113,10 @@ security:
   basic:
     enabled: "${SECURITY_BASIC_ENABLED:false}"
   oauth2:
-    # Enable/disable OAuth 2 login functionality
-    # For details please refer to https://thingsboard.io/docs/user-guide/oauth-2-support/
-    enabled: "${SECURITY_OAUTH2_ENABLED:false}"
     # Redirect URL where access code from external user management system will be processed
     loginProcessingUrl: "${SECURITY_OAUTH2_LOGIN_PROCESSING_URL:/login/oauth2/code/}"
-    # List of SSO clients
-    clients:
-      default:
-        # Label that going to be show on login button - 'Login with {loginButtonLabel}'
-        loginButtonLabel: "${SECURITY_OAUTH2_DEFAULT_LOGIN_BUTTON_LABEL:Default}"
-        # Icon that going to be show on login button. Material design icon ID (https://material.angularjs.org/latest/api/directive/mdIcon)
-        loginButtonIcon: "${SECURITY_OAUTH2_DEFAULT_LOGIN_BUTTON_ICON:}"
-        clientName: "${SECURITY_OAUTH2_DEFAULT_CLIENT_NAME:ClientName}"
-        clientId: "${SECURITY_OAUTH2_DEFAULT_CLIENT_ID:}"
-        clientSecret: "${SECURITY_OAUTH2_DEFAULT_CLIENT_SECRET:}"
-        accessTokenUri: "${SECURITY_OAUTH2_DEFAULT_ACCESS_TOKEN_URI:}"
-        authorizationUri: "${SECURITY_OAUTH2_DEFAULT_AUTHORIZATION_URI:}"
-        scope: "${SECURITY_OAUTH2_DEFAULT_SCOPE:}"
-        # Redirect URL that must be in sync with 'security.oauth2.loginProcessingUrl', but domain name added
-        redirectUriTemplate: "${SECURITY_OAUTH2_DEFAULT_REDIRECT_URI_TEMPLATE:http://localhost:8080/login/oauth2/code/}"
-        jwkSetUri: "${SECURITY_OAUTH2_DEFAULT_JWK_SET_URI:}"
-        # 'authorization_code', 'implicit', 'refresh_token' or 'client_credentials'
-        authorizationGrantType: "${SECURITY_OAUTH2_DEFAULT_AUTHORIZATION_GRANT_TYPE:authorization_code}"
-        clientAuthenticationMethod: "${SECURITY_OAUTH2_DEFAULT_CLIENT_AUTHENTICATION_METHOD:post}" # basic or post
-        userInfoUri: "${SECURITY_OAUTH2_DEFAULT_USER_INFO_URI:}"
-        userNameAttributeName: "${SECURITY_OAUTH2_DEFAULT_USER_NAME_ATTRIBUTE_NAME:email}"
-        mapperConfig:
-          # Allows to create user if it not exists
-          allowUserCreation: "${SECURITY_OAUTH2_DEFAULT_MAPPER_ALLOW_USER_CREATION:true}"
-          # Allows user to setup ThingsBoard internal password and login over default Login window
-          activateUser: "${SECURITY_OAUTH2_DEFAULT_MAPPER_ACTIVATE_USER:false}"
-          # Mapper type of converter from external user into internal - 'basic' or 'custom'
-          type: "${SECURITY_OAUTH2_DEFAULT_MAPPER_TYPE:basic}"
-          basic:
-            # Key from attributes of external user object to use as email
-            emailAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_EMAIL_ATTRIBUTE_KEY:email}"
-            firstNameAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_FIRST_NAME_ATTRIBUTE_KEY:}"
-            lastNameAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_LAST_NAME_ATTRIBUTE_KEY:}"
-            # Strategy for generating Tenant from external user object - 'domain', 'email' or 'custom'
-            # 'domain' - name of the Tenant will be extracted as domain from the email of the user
-            # 'email' - name of the Tenant will email of the user
-            # 'custom' - please configure 'tenantNamePattern' for custom mapping
-            tenantNameStrategy: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_TENANT_NAME_STRATEGY:domain}"
-            # %{attribute_key} as placeholder for attribute value of attributes of external user object
-            tenantNamePattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_TENANT_NAME_PATTERN:}"
-            # If this field is not empty, user will be created as a user under defined Customer
-            # %{attribute_key} as placeholder for attribute value of attributes of external user object
-            customerNamePattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_CUSTOMER_NAME_PATTERN:}"
-            # If this field is not empty, user will be created with default defined Dashboard
-            defaultDashboardName: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_DEFAULT_DASHBOARD_NAME:}"
-            # If this field is set 'true' along with non-empty 'defaultDashboardName', user will start from the defined Dashboard in fullscreen mode
-            alwaysFullScreen: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_ALWAYS_FULL_SCREEN:false}"
-          custom:
-            url: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_URL:}"
-            username: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_USERNAME:}"
-            password: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_PASSWORD:}"
+    githubMapper:
+      emailUrl: "${SECURITY_OAUTH2_GITHUB_MAPPER_EMAIL_URL_KEY:https://api.github.com/user/emails}"
 
 # Dashboard parameters
 dashboard:
@@ -171,10 +125,10 @@ dashboard:
 
 database:
   ts_max_intervals: "${DATABASE_TS_MAX_INTERVALS:700}" # Max number of DB queries generated by single API call to fetch telemetry records
-  entities:
-    type: "${DATABASE_ENTITIES_TYPE:sql}" # cassandra OR sql
   ts:
     type: "${DATABASE_TS_TYPE:sql}" # cassandra, sql, or timescale (for hybrid mode, DATABASE_TS_TYPE value should be cassandra, or timescale)
+  ts_latest:
+    type: "${DATABASE_TS_LATEST_TYPE:sql}" # cassandra, sql, or timescale (for hybrid mode, DATABASE_TS_TYPE value should be cassandra, or timescale)
 
 # note: timescale works only with postgreSQL database for DATABASE_ENTITIES_TYPE.
 
@@ -186,12 +140,27 @@ cassandra:
   keyspace_name: "${CASSANDRA_KEYSPACE_NAME:thingsboard}"
   # Specify node list
   url: "${CASSANDRA_URL:127.0.0.1:9042}"
-  # Enable/disable secure connection
-  ssl: "${CASSANDRA_USE_SSL:false}"
+  # Specify local datacenter name
+  local_datacenter: "${CASSANDRA_LOCAL_DATACENTER:datacenter1}"
+  ssl:
+    # Enable/disable secure connection
+    enabled: "${CASSANDRA_USE_SSL:false}"
+    # Enable/disable validation of Cassandra server hostname
+    # If enabled, hostname of Cassandra server must match CN of server certificate
+    hostname_validation: "${CASSANDRA_SSL_HOSTNAME_VALIDATION:true}"
+    # Set trust store for client authentication of server (optional, uses trust store from default SSLContext if not set)
+    trust_store: "${CASSANDRA_SSL_TRUST_STORE:}"
+    trust_store_password: "${CASSANDRA_SSL_TRUST_STORE_PASSWORD:}"
+    # Set key store for server authentication of client (optional, uses key store from default SSLContext if not set)
+    # A key store is only needed if the Cassandra server requires client authentication
+    key_store: "${CASSANDRA_SSL_KEY_STORE:}"
+    key_store_password: "${CASSANDRA_SSL_KEY_STORE_PASSWORD:}"
+    # Comma separated list of cipher suites (optional, uses Java default cipher suites if not set)
+    cipher_suites: "${CASSANDRA_SSL_CIPHER_SUITES:}"
   # Enable/disable JMX
-  jmx: "${CASSANDRA_USE_JMX:true}"
+  jmx: "${CASSANDRA_USE_JMX:false}"
   # Enable/disable metrics collection.
-  metrics: "${CASSANDRA_DISABLE_METRICS:true}"
+  metrics: "${CASSANDRA_USE_METRICS:false}"
   # NONE SNAPPY LZ4
   compression: "${CASSANDRA_COMPRESSION:none}"
   # Specify cassandra cluster initialization timeout in milliseconds (if no hosts available during startup)
@@ -263,8 +232,13 @@ sql:
       batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
       batch_threads: "${SQL_TS_LATEST_BATCH_THREADS:4}"
+    # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
+    batch_sort: "${SQL_BATCH_SORT:false}"
     # Specify whether to remove null characters from strValue of attributes and timeseries before insert
     remove_null_chars: "${SQL_REMOVE_NULL_CHARS:true}"
+  # Specify whether to log database queries and their parameters generated by entity query repository
+    log_queries: "${SQL_LOG_QUERIES:false}"
+    log_queries_threshold: "${SQL_LOG_QUERIES_THRESHOLD:5000}"
     postgres:
       # Specify partitioning size for timestamp key-value storage. Example: DAYS, MONTHS, YEARS, INDEFINITE.
       ts_key_value_partitioning: "${SQL_POSTGRES_TS_KV_PARTITIONING:MONTHS}"
@@ -339,28 +313,34 @@ caffeine:
   specs:
     relations:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     deviceCredentials:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     devices:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     sessions:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     assets:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     entityViews:
       timeToLiveInMinutes: 1440
-      maxSize: 100000
+      maxSize: 0
     claimDevices:
       timeToLiveInMinutes: 1
-      maxSize: 100000
+      maxSize: 0
     securitySettings:
       timeToLiveInMinutes: 1440
-      maxSize: 1
+      maxSize: 0
+    tenantProfiles:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
+    deviceProfiles:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
 
 redis:
   # standalone or cluster
@@ -407,6 +387,9 @@ updates:
   # Enable/disable updates checking.
   enabled: "${UPDATES_ENABLED:true}"
 
+# spring freemarker configuration
+spring.freemarker.checkTemplateLocation: "false"
+
 # spring CORS configuration
 spring.mvc.cors:
   mappings:
@@ -431,6 +414,7 @@ spring.resources.chain:
       enabled: "true"
 
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true"
+spring.jpa.properties.hibernate.order_by.default_null_ordering: "last"
 
 # SQL DAO Configuration
 spring:
@@ -449,7 +433,7 @@ spring:
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:
-      maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:5}"
+      maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
 
 # Audit log parameters
 audit-log:
@@ -471,6 +455,7 @@ audit-log:
       "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}"
       "alarm": "${AUDIT_LOG_MASK_ALARM:W}"
       "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}"
+      "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}"
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"
@@ -503,7 +488,7 @@ js:
     # Specify thread pool size for JavaScript sandbox resource monitor
     monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
     # Maximum CPU time in milliseconds allowed for script execution
-    max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:10000}"
+    max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:8000}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${LOCAL_JS_SANDBOX_MAX_ERRORS:3}"
     # JS Eval max request timeout. 0 - no timeout
@@ -517,7 +502,7 @@ js:
   remote:
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
-    # Maximum time in seconds for black listed function to stay in the list.
+    # Maximum time in seconds for black listed function to stay in 1:the list.
     max_black_list_duration_sec: "${REMOTE_JS_SANDBOX_MAX_BLACKLIST_DURATION_SEC:60}"
     stats:
       enabled: "${TB_JS_REMOTE_STATS_ENABLED:false}"
@@ -527,10 +512,6 @@ transport:
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
-  rate_limits:
-    enabled: "${TB_TRANSPORT_RATE_LIMITS_ENABLED:false}"
-    tenant: "${TB_TRANSPORT_RATE_LIMITS_TENANT:1000:1,20000:60}"
-    device: "${TB_TRANSPORT_RATE_LIMITS_DEVICE:10:1,300:60}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
     type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
@@ -538,6 +519,8 @@ transport:
     max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
   client_side_rpc:
     timeout:  "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
+  # Enable/disable http/mqtt/coap transport protocols (has higher priority than certain protocol's 'enabled' property)
+  api_enabled: "${TB_TRANSPORT_API_ENABLED:true}"
   # Local HTTP transport parameters
   http:
     enabled: "${HTTP_ENABLED:true}"
@@ -690,6 +673,7 @@ queue:
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
     pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
+    usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
     stats:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
@@ -778,6 +762,10 @@ service:
 metrics:
   # Enable/disable actuator metrics.
   enabled: "${METRICS_ENABLED:false}"
+  timer:
+    # Metrics percentiles returned by actuator for timer metrics. List of double values (divided by ,).
+    percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
+
 
 management:
   endpoints:

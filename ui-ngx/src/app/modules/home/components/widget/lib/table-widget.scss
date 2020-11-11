@@ -1,0 +1,61 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+:host {
+  .tb-table-widget {
+    .mat-table, .mat-paginator, mat-toolbar.mat-table-toolbar:not([color="primary"]) {
+      background: transparent;
+    }
+    mat-toolbar {
+      height: 39px;
+      max-height: 39px;
+      .mat-toolbar-tools {
+        height: 39px;
+        max-height: 39px;
+      }
+    }
+    .table-container {
+      overflow: auto;
+    }
+
+    .mat-row:not(.mat-row-select), .mat-header-row:not(.mat-row-select) {
+      mat-cell:nth-child(n+2):nth-last-child(n+2), mat-footer-cell:nth-child(n+2):nth-last-child(n+2), mat-header-cell:nth-child(n+2):nth-last-child(n+2) {
+        padding: 0 5px;
+      }
+    }
+
+    .mat-row.mat-row-select, .mat-header-row.mat-row-select {
+      mat-cell:nth-child(2), mat-footer-cell:nth-child(2), mat-header-cell:nth-child(2) {
+        padding: 0 5px;
+      }
+      mat-cell:nth-child(n+3):nth-last-child(n+2), mat-footer-cell:nth-child(n+3):nth-last-child(n+2), mat-header-cell:nth-child(n+3):nth-last-child(n+2) {
+        padding: 0 5px;
+      }
+    }
+  }
+}
+
+:host-context(.tb-has-timewindow) {
+  .tb-table-widget {
+    mat-toolbar {
+      height: 65px;
+      max-height: 65px;
+      .mat-toolbar-tools {
+        height: 65px;
+        max-height: 65px;
+      }
+    }
+  }
+}

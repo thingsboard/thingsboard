@@ -1,0 +1,104 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-table-widget tb-absolute-fill">
+  <div fxFlex fxLayout="column" class="tb-absolute-fill">
+    <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
+      <div class="mat-toolbar-tools">
+        <button mat-button mat-icon-button
+                matTooltip="{{ 'action.search' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <mat-form-field fxFlex>
+          <mat-label>&nbsp;</mat-label>
+          <input #searchInput matInput
+                 [(ngModel)]="pageLink.textSearch"
+                 placeholder="{{ 'entity.search' | translate }}"/>
+        </mat-form-field>
+        <button mat-button mat-icon-button (click)="exitFilterMode()"
+                matTooltip="{{ 'action.close' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <div fxFlex class="table-container">
+      <table mat-table [dataSource]="entityDatasource" [trackBy]="trackByRowIndex"
+                 matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLinkSortDirection()" matSortDisableClear>
+        <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; trackBy: trackByColumnDef;">
+          <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header> {{ column.title }} </mat-header-cell>
+          <mat-cell *matCellDef="let entity;"
+                    [innerHTML]="cellContent(entity, column)"
+                    [ngStyle]="cellStyle(entity, column)">
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="actions" stickyEnd>
+          <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                maxWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                width: (actionCellDescriptors.length * 40) + 'px' }">
+          </mat-header-cell>
+          <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                maxWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                width: (actionCellDescriptors.length * 40) + 'px' }">
+            <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+              <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                      *ngFor="let actionDescriptor of actionCellDescriptors"
+                      matTooltip="{{ actionDescriptor.displayName }}"
+                      matTooltipPosition="above"
+                      (click)="onActionButtonClick($event, entity, actionDescriptor)">
+                <mat-icon>{{actionDescriptor.icon}}</mat-icon>
+              </button>
+            </div>
+            <div fxHide fxShow.lt-lg *ngIf="actionCellDescriptors.length">
+              <button mat-button mat-icon-button
+                      (click)="$event.stopPropagation(); ctx.detectChanges();"
+                      [matMenuTriggerFor]="cellActionsMenu">
+                <mat-icon class="material-icons">more_vert</mat-icon>
+              </button>
+              <mat-menu #cellActionsMenu="matMenu" xPosition="before">
+                <button mat-menu-item *ngFor="let actionDescriptor of actionCellDescriptors"
+                        [disabled]="isLoading$ | async"
+                        (click)="onActionButtonClick($event, entity, actionDescriptor)">
+                  <mat-icon>{{actionDescriptor.icon}}</mat-icon>
+                  <span>{{ actionDescriptor.displayName }}</span>
+                </button>
+              </mat-menu>
+            </div>
+          </mat-cell>
+        </ng-container>
+        <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-row [ngClass]="{'tb-current-entity': entityDatasource.isCurrentEntity(entity),
+                             'invisible': entityDatasource.dataLoading}"
+                 *matRowDef="let entity; columns: displayedColumns;"
+                 (click)="onRowClick($event, entity)" (dblclick)="onRowClick($event, entity, true)"></mat-row>
+      </table>
+      <span [fxShow]="(entityDatasource.isEmpty() | async) && !entityDatasource.dataLoading"
+            fxLayoutAlign="center center"
+            class="no-data-found" translate>entity.no-entities-prompt</span>
+      <span [fxShow]="entityDatasource.dataLoading"
+            fxLayoutAlign="center center"
+            class="no-data-found">{{ 'common.loading' | translate }}</span>
+    </div>
+    <mat-divider *ngIf="displayPagination"></mat-divider>
+    <mat-paginator *ngIf="displayPagination"
+                   [length]="entityDatasource.total() | async"
+                   [pageIndex]="pageLink.page"
+                   [pageSize]="pageLink.pageSize"
+                   [pageSizeOptions]="pageSizeOptions"></mat-paginator>
+  </div>
+</div>

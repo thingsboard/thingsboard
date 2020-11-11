@@ -26,9 +26,9 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
@@ -37,10 +37,6 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfiguration> implements TbNode {
 
     static final String PREV_ALARM_DETAILS = "prevAlarmDetails";
-
-    static final String IS_NEW_ALARM = "isNewAlarm";
-    static final String IS_EXISTING_ALARM = "isExistingAlarm";
-    static final String IS_CLEARED_ALARM = "isClearedAlarm";
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -74,7 +70,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
-    protected abstract ListenableFuture<AlarmResult> processAlarm(TbContext ctx, TbMsg msg);
+    protected abstract ListenableFuture<TbAlarmResult> processAlarm(TbContext ctx, TbMsg msg);
 
     protected ListenableFuture<JsonNode> buildAlarmDetails(TbContext ctx, TbMsg msg, JsonNode previousDetails) {
         try {
@@ -90,20 +86,19 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
         }
     }
 
-    private TbMsg toAlarmMsg(TbContext ctx, AlarmResult alarmResult, TbMsg originalMsg) {
-        JsonNode jsonNodes = mapper.valueToTree(alarmResult.alarm);
+    public static TbMsg toAlarmMsg(TbContext ctx, TbAlarmResult alarmResult, TbMsg originalMsg) {
+        JsonNode jsonNodes = JacksonUtil.valueToTree(alarmResult.alarm);
         String data = jsonNodes.toString();
         TbMsgMetaData metaData = originalMsg.getMetaData().copy();
         if (alarmResult.isCreated) {
-            metaData.putValue(IS_NEW_ALARM, Boolean.TRUE.toString());
+            metaData.putValue(DataConstants.IS_NEW_ALARM, Boolean.TRUE.toString());
         } else if (alarmResult.isUpdated) {
-            metaData.putValue(IS_EXISTING_ALARM, Boolean.TRUE.toString());
+            metaData.putValue(DataConstants.IS_EXISTING_ALARM, Boolean.TRUE.toString());
         } else if (alarmResult.isCleared) {
-            metaData.putValue(IS_CLEARED_ALARM, Boolean.TRUE.toString());
+            metaData.putValue(DataConstants.IS_CLEARED_ALARM, Boolean.TRUE.toString());
         }
         return ctx.transformMsg(originalMsg, "ALARM", originalMsg.getOriginator(), metaData, data);
     }
-
 
     @Override
     public void destroy() {
@@ -112,23 +107,9 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
         }
     }
 
-    protected static class AlarmResult {
-        boolean isCreated;
-        boolean isUpdated;
-        boolean isCleared;
-        Alarm alarm;
-
-        AlarmResult(boolean isCreated, boolean isUpdated, boolean isCleared, Alarm alarm) {
-            this.isCreated = isCreated;
-            this.isUpdated = isUpdated;
-            this.isCleared = isCleared;
-            this.alarm = alarm;
-        }
-    }
-
-    private void tellNext(TbContext ctx, TbMsg msg, AlarmResult alarmResult, String alarmAction, String alarmResultMsgType) {
-        ctx.enqueue(ctx.alarmActionMsg(alarmResult.alarm, ctx.getSelfId(), alarmAction),
-                () -> ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), alarmResultMsgType),
+    private void tellNext(TbContext ctx, TbMsg msg, TbAlarmResult alarmResult, String entityAction, String alarmAction) {
+        ctx.enqueue(ctx.alarmActionMsg(alarmResult.alarm, ctx.getSelfId(), entityAction),
+                () -> ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), alarmAction),
                 throwable -> ctx.tellFailure(toAlarmMsg(ctx, alarmResult, msg), throwable));
     }
 }

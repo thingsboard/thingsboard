@@ -1,0 +1,80 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="userFilterFormGroup" (ngSubmit)="save()" style="width: 400px;">
+  <mat-toolbar color="primary">
+    <h2>{{ filter.filter }}</h2>
+    <span fxFlex></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async">
+      <div fxFlex fxLayout="column">
+        <div fxFlex fxLayout="row" fxLayoutAlign="start center"
+             formArrayName="userInputs"
+             *ngFor="let userInputControl of userInputsFormArray().controls; let $index = index">
+          <div fxFlex fxLayout="column"
+               [ngSwitch]="userInputControl.get('valueType').value">
+            <ng-template [ngSwitchCase]="valueTypeEnum.STRING">
+              <mat-form-field fxFlex class="mat-block">
+                <mat-label>{{ userInputControl.get('label').value }}</mat-label>
+                <input matInput [formControl]="userInputControl.get('value')">
+              </mat-form-field>
+            </ng-template>
+            <ng-template [ngSwitchCase]="valueTypeEnum.NUMERIC">
+              <mat-form-field fxFlex class="mat-block">
+                <mat-label>{{ userInputControl.get('label').value }}</mat-label>
+                <input required type="number" matInput [formControl]="userInputControl.get('value')">
+              </mat-form-field>
+            </ng-template>
+            <ng-template [ngSwitchCase]="valueTypeEnum.DATE_TIME">
+              <label class="tb-title no-padding tb-required">{{ userInputControl.get('label').value }}</label>
+              <tb-datetime fxFlex [formControl]="userInputControl.get('value')"
+                           dateText="filter.date"
+                           timeText="filter.time"
+                           required [showLabel]="false"></tb-datetime>
+            </ng-template>
+            <ng-template [ngSwitchCase]="valueTypeEnum.BOOLEAN">
+              <mat-checkbox labelPosition="before" fxFlex [formControl]="userInputControl.get('value')">
+                {{ userInputControl.get('label').value }}
+              </mat-checkbox>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || userFilterFormGroup.invalid || !userFilterFormGroup.dirty">
+      {{ 'action.update' | translate }}
+    </button>
+  </div>
+</form>

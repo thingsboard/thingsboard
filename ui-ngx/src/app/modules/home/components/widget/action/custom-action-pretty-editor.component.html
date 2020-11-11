@@ -1,0 +1,54 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-custom-action-pretty mat-elevation-z1" tb-fullscreen [fullscreen]="fullscreen">
+  <div fxLayout="row" fxLayoutAlign="end center" class="tb-action-expand-button" [ngClass]="{'tb-fullscreen-editor': fullscreen}">
+    <button mat-button fxHide.lt-md
+            matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
+            matTooltipPosition="above"
+            (click)="fullscreen = !fullscreen">
+      <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      <span *ngIf="fullscreen" translate>widget.toggle-fullscreen</span>
+    </button>
+  </div>
+  <div class="tb-custom-action-editor" [ngClass]="{'tb-fullscreen-editor': fullscreen}">
+    <div *ngIf="!fullscreen; else fullscreenEditor">
+      <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="true"
+                                              [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
+      </tb-custom-action-pretty-resources-tabs>
+    </div>
+    <ng-template #fullscreenEditor>
+      <div class="tb-fullscreen-panel tb-layout-fill" fxLayout="row">
+        <div #leftPanel class="tb-split tb-content">
+          <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="false"
+                                                  [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
+          </tb-custom-action-pretty-resources-tabs>
+        </div>
+        <div #rightPanel class="tb-split tb-content right-panel">
+          <tb-js-func
+            [(ngModel)]="action.customFunction"
+            (ngModelChange)="onActionUpdated()"
+            [fillHeight]="true"
+            [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
+            [validationArgs]="[]"
+            [editorCompleter]="customPrettyActionEditorCompleter">
+          </tb-js-func>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>

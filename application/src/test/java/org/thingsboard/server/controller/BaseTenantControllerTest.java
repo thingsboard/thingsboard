@@ -15,21 +15,21 @@
  */
 package org.thingsboard.server.controller;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.Assert;
+import org.junit.Test;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantInfo;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
-import org.junit.Assert;
-import org.junit.Test;
-
-import com.fasterxml.jackson.core.type.TypeReference;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseTenantControllerTest extends AbstractControllerTest {
     
@@ -64,6 +64,19 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         Assert.assertEquals(savedTenant, foundTenant);
         doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
         .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testFindTenantInfoById() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant");
+        Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        TenantInfo foundTenant = doGet("/api/tenant/info/"+savedTenant.getId().getId().toString(), TenantInfo.class);
+        Assert.assertNotNull(foundTenant);
+        Assert.assertEquals(new TenantInfo(savedTenant, "Default"), foundTenant);
+        doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
+                .andExpect(status().isOk());
     }
     
     @Test
@@ -102,8 +115,8 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
     public void testFindTenants() throws Exception {
         loginSysAdmin();
         List<Tenant> tenants = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(17);
-        TextPageData<Tenant> pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<TextPageData<Tenant>>(){}, pageLink);
+        PageLink pageLink = new PageLink(17);
+        PageData<Tenant> pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<PageData<Tenant>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getData().size());
         tenants.addAll(pageData.getData());
@@ -115,12 +128,12 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         }
         
         List<Tenant> loadedTenants = new ArrayList<>();
-        pageLink = new TextPageLink(17);
+        pageLink = new PageLink(17);
         do {
-            pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<TextPageData<Tenant>>(){}, pageLink);
+            pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<PageData<Tenant>>(){}, pageLink);
             loadedTenants.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
         
@@ -136,8 +149,8 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
             }
         }
         
-        pageLink = new TextPageLink(17);
-        pageData =  doGetTypedWithPageLink("/api/tenants?", new TypeReference<TextPageData<Tenant>>(){}, pageLink);
+        pageLink = new PageLink(17);
+        pageData =  doGetTypedWithPageLink("/api/tenants?", new TypeReference<PageData<Tenant>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getData().size());
     }
@@ -167,13 +180,13 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         }
         
         List<Tenant> loadedTenantsTitle1 = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(15, title1);
-        TextPageData<Tenant> pageData = null;
+        PageLink pageLink = new PageLink(15, 0, title1);
+        PageData<Tenant> pageData = null;
         do {
-            pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<TextPageData<Tenant>>(){}, pageLink);
+            pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<PageData<Tenant>>(){}, pageLink);
             loadedTenantsTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
         
@@ -183,12 +196,12 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         Assert.assertEquals(tenantsTitle1, loadedTenantsTitle1);
         
         List<Tenant> loadedTenantsTitle2 = new ArrayList<>();
-        pageLink = new TextPageLink(4, title2);
+        pageLink = new PageLink(4, 0, title2);
         do {
-            pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<TextPageData<Tenant>>(){}, pageLink);
+            pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<PageData<Tenant>>(){}, pageLink);
             loadedTenantsTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -202,8 +215,8 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
             .andExpect(status().isOk());        
         }
         
-        pageLink = new TextPageLink(4, title1);
-        pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<TextPageData<Tenant>>(){}, pageLink);
+        pageLink = new PageLink(4, 0, title1);
+        pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<PageData<Tenant>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
         
@@ -212,9 +225,53 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
             .andExpect(status().isOk());     
         }
         
-        pageLink = new TextPageLink(4, title2);
-        pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<TextPageData<Tenant>>(){}, pageLink);
+        pageLink = new PageLink(4, 0, title2);
+        pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<PageData<Tenant>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    @Test
+    public void testFindTenantInfos() throws Exception {
+        loginSysAdmin();
+        List<TenantInfo> tenants = new ArrayList<>();
+        PageLink pageLink = new PageLink(17);
+        PageData<TenantInfo> pageData = doGetTypedWithPageLink("/api/tenantInfos?", new TypeReference<PageData<TenantInfo>>(){}, pageLink);
+        Assert.assertFalse(pageData.hasNext());
+        Assert.assertEquals(1, pageData.getData().size());
+        tenants.addAll(pageData.getData());
+
+        for (int i=0;i<56;i++) {
+            Tenant tenant = new Tenant();
+            tenant.setTitle("Tenant"+i);
+            tenants.add(new TenantInfo(doPost("/api/tenant", tenant, Tenant.class), "Default"));
+        }
+
+        List<TenantInfo> loadedTenants = new ArrayList<>();
+        pageLink = new PageLink(17);
+        do {
+            pageData = doGetTypedWithPageLink("/api/tenantInfos?", new TypeReference<PageData<TenantInfo>>(){}, pageLink);
+            loadedTenants.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Collections.sort(tenants, idComparator);
+        Collections.sort(loadedTenants, idComparator);
+
+        Assert.assertEquals(tenants, loadedTenants);
+
+        for (TenantInfo tenant : loadedTenants) {
+            if (!tenant.getTitle().equals(TEST_TENANT_NAME)) {
+                doDelete("/api/tenant/"+tenant.getId().getId().toString())
+                        .andExpect(status().isOk());
+            }
+        }
+
+        pageLink = new PageLink(17);
+        pageData =  doGetTypedWithPageLink("/api/tenantInfos?", new TypeReference<PageData<TenantInfo>>(){}, pageLink);
+        Assert.assertFalse(pageData.hasNext());
+        Assert.assertEquals(1, pageData.getData().size());
     }
 }

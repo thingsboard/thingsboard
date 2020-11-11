@@ -1,0 +1,119 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="alarmFormGroup" style="min-width: 600px;">
+  <mat-toolbar color="primary">
+    <h2>{{ 'alarm.alarm-details' | translate }}</h2>
+    <span fxFlex></span>
+    <button mat-icon-button
+            (click)="close()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async">
+      <div fxLayout="row" fxLayoutGap="6px">
+        <mat-form-field class="mat-block">
+          <mat-label translate>alarm.created-time</mat-label>
+          <input matInput formControlName="createdTime" readonly>
+        </mat-form-field>
+        <mat-form-field fxFlex class="mat-block">
+          <mat-label translate>alarm.originator</mat-label>
+          <input matInput formControlName="originatorName" readonly>
+        </mat-form-field>
+      </div>
+      <div fxLayout="row" fxLayoutGap="6px" *ngIf="alarmFormGroup.get('startTime').value ||
+                                 alarmFormGroup.get('endTime').value">
+        <mat-form-field *ngIf="alarmFormGroup.get('startTime').value" fxFlex class="mat-block">
+          <mat-label translate>alarm.start-time</mat-label>
+          <input matInput formControlName="startTime" readonly>
+        </mat-form-field>
+        <mat-form-field *ngIf="alarmFormGroup.get('endTime').value" fxFlex class="mat-block">
+          <mat-label translate>alarm.end-time</mat-label>
+          <input matInput formControlName="endTime" readonly>
+        </mat-form-field>
+        <span fxFlex *ngIf="!alarmFormGroup.get('startTime').value || !alarmFormGroup.get('endTime').value"></span>
+      </div>
+      <div fxLayout="row" fxLayoutGap="6px" *ngIf="alarmFormGroup.get('ackTime').value ||
+                                 alarmFormGroup.get('clearTime').value">
+        <mat-form-field *ngIf="alarmFormGroup.get('ackTime').value" fxFlex class="mat-block">
+          <mat-label translate>alarm.ack-time</mat-label>
+          <input matInput formControlName="ackTime" readonly>
+        </mat-form-field>
+        <mat-form-field *ngIf="alarmFormGroup.get('clearTime').value" fxFlex class="mat-block">
+          <mat-label translate>alarm.clear-time</mat-label>
+          <input matInput formControlName="clearTime" readonly>
+        </mat-form-field>
+        <span fxFlex *ngIf="!alarmFormGroup.get('ackTime').value || !alarmFormGroup.get('clearTime').value"></span>
+      </div>
+      <div fxLayout="row" fxLayoutGap="6px">
+        <mat-form-field fxFlex class="mat-block">
+          <mat-label translate>alarm.type</mat-label>
+          <input matInput formControlName="type" readonly>
+        </mat-form-field>
+        <mat-form-field fxFlex class="mat-block">
+          <mat-label translate>alarm.severity</mat-label>
+          <input matInput formControlName="alarmSeverity" readonly
+                 [ngStyle]="{fontWeight: 'bold', color: alarmSeverityColorsMap.get((alarm$ | async)?.severity)}">
+        </mat-form-field>
+        <mat-form-field fxFlex class="mat-block">
+          <mat-label translate>alarm.status</mat-label>
+          <input matInput formControlName="alarmStatus" readonly>
+        </mat-form-field>
+      </div>
+      <tb-json-object-edit
+          *ngIf="displayDetails"
+          formControlName="alarmDetails"
+          readonly
+          label="{{ 'alarm.details' | translate }}">
+      </tb-json-object-edit>
+    </fieldset>
+  </div>
+  <div mat-dialog-actions fxLayout="row">
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="close()" cdkFocusInitial>
+      {{ 'action.close' | translate }}
+    </button>
+    <span fxFlex></span>
+    <div fxLayout="row" *ngIf="alarm$ | async; let alarm;" fxLayoutGap="8px">
+      <button *ngIf="allowAcknowledgment && (alarm.status === alarmStatuses.ACTIVE_UNACK ||
+                                             alarm.status === alarmStatuses.CLEARED_UNACK)"
+              mat-raised-button
+              color="primary"
+              type="button"
+              (click)="acknowledge()"
+              [disabled]="(isLoading$ | async)">
+        {{ 'alarm.acknowledge' | translate }}
+      </button>
+      <button *ngIf="allowClear && (alarm.status === alarmStatuses.ACTIVE_ACK ||
+                                    alarm.status === alarmStatuses.ACTIVE_UNACK)"
+              mat-raised-button
+              color="primary"
+              type="button"
+              (click)="clear()"
+              [disabled]="(isLoading$ | async)">
+        {{ 'alarm.clear' | translate }}
+      </button>
+    </div>
+  </div>
+</form>

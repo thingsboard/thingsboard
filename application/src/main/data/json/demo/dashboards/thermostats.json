@@ -50,6 +50,8 @@
           "datasources": [
             {
               "type": "entity",
+              "name": null,
+              "entityAliasId": "68a058e1-fdda-8482-715b-3ae4a488568e",
               "dataKeys": [
                 {
                   "name": "active",
@@ -92,9 +94,36 @@
                   "_hash": 0.5726727868178358,
                   "units": "%",
                   "decimals": 0
+                },
+                {
+                  "name": "latitude",
+                  "type": "attribute",
+                  "label": "latitude",
+                  "color": "#ffc107",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": ""
+                  },
+                  "_hash": 0.16055765877264894
+                },
+                {
+                  "name": "longitude",
+                  "type": "attribute",
+                  "label": "longitude",
+                  "color": "#607d8b",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": ""
+                  },
+                  "_hash": 0.10969512220289346
                 }
-              ],
-              "entityAliasId": "68a058e1-fdda-8482-715b-3ae4a488568e"
+              ]
             }
           ],
           "showTitleIcon": false,
@@ -115,13 +144,14 @@
                 "setEntityId": false
               },
               {
-                "id": "8ab5a518-67d2-b6a2-956d-81fd512294b2",
                 "name": "Add",
                 "icon": "add",
                 "type": "customPretty",
-                "customHtml": "<md-dialog aria-label=\"Add entity\">\n    <form name=\"addEntityForm\" class=\"add-entity-form\" ng-submit=\"vm.save()\">\n        <md-toolbar>\n            <div class=\"md-toolbar-tools\">\n                <h2>Add thermostat</h2>\n                <span flex></span>\n                <md-button class=\"md-icon-button\" ng-click=\"vm.cancel()\">\n                    <ng-md-icon icon=\"close\" aria-label=\"Close\"></ng-md-icon>\n                </md-button>\n            </div>\n        </md-toolbar>\n        <md-dialog-content>\n            <div class=\"md-dialog-content\">\n                <md-input-container flex class=\"md-block\">\n                    <label>Thermostat name</label>\n                    <input ng-model=\"vm.entityName\" name=entityName required>\n                    <div ng-messages=\"addEntityForm.entityName.$error\">\n                        <div ng-message=\"required\">Thermostat name is required.</div>\n                    </div>\n                </md-input-container>\n                <md-switch ng-model=\"vm.attributes.alarmTemperature\">\n                    High temperature alarm\n                </md-switch>\n                <md-input-container flex class=\"md-block\">\n                    <label>High temperature threshold, °C</label>\n                    <input name=\"thresholdTemperature\" type=\"number\" step=\"any\" \n                            ng-model=\"vm.attributes.thresholdTemperature\"\n                            ng-disabled=\"!vm.attributes.alarmTemperature\"\n                            ng-required=\"vm.attributes.alarmTemperature\">\n                    <div ng-messages=\"addEntityForm.thresholdTemperature.$error\">\n                        <div ng-message=\"required\">High temperature threshold is required.</div>\n                    </div>\n                </md-input-container>\n                <md-switch ng-model=\"vm.attributes.alarmHumidity\">\n                    Low humidity alarm\n                </md-switch>\n                <md-input-container flex class=\"md-block\">\n                    <label>Low humidity threshold, %</label>\n                    <input name=\"thresholdHumidity\" type=\"number\" step=\"any\" \n                            ng-model=\"vm.attributes.thresholdHumidity\"\n                            ng-disabled=\"!vm.attributes.alarmHumidity\"\n                            ng-required=\"vm.attributes.alarmHumidity\">\n                    <div ng-messages=\"addEntityForm.thresholdHumidity.$error\">\n                        <div ng-message=\"required\">Low humidity threshold is required.</div>\n                    </div>\n                </md-input-container>\n            </div>\n        </md-dialog-content>\n        <md-dialog-actions>\n            <md-button type=\"submit\" ng-disabled=\"addEntityForm.$invalid || !addEntityForm.$dirty\" class=\"md-raised md-primary\">Create</md-button>\n            <md-button ng-click=\"vm.cancel()\" class=\"md-primary\">Cancel</md-button>\n        </md-dialog-actions>\n    </form>\n</md-dialog>",
-                "customCss": ".add-entity-form md-input-container {\n    padding-right: 10px;\n}\n\n.add-entity-form .boolean-value-input {\n    padding-left: 5px;\n}\n\n.add-entity-form .boolean-value-input .checkbox-label {\n    margin-bottom: 8px;\n    color: rgba(0,0,0,0.54);\n    font-size: 12px;\n}\n\n",
-                "customFunction": "var $injector = widgetContext.$scope.$injector;\nvar $mdDialog = $injector.get('$mdDialog'),\n    $document = $injector.get('$document'),\n    $q = $injector.get('$q'),\n    $rootScope = $injector.get('$rootScope'),\n    deviceService = $injector.get('deviceService'),\n    attributeService = $injector.get('attributeService');\n\nopenAddEntityDialog();\n\nfunction openAddEntityDialog() {\n    $mdDialog.show({\n        controller: ['$scope','$mdDialog', AddEntityDialogController],\n        controllerAs: 'vm',\n        template: htmlTemplate,\n        locals: {\n            entityId: entityId\n        },\n        parent: angular.element($document[0].body),\n        targetEvent: $event,\n        multiple: true,\n        clickOutsideToClose: false\n    });\n}\n\nfunction AddEntityDialogController($scope, $mdDialog) {\n    var vm = this;\n    vm.attributes = {};\n\n    vm.save = function() {\n        $scope.addEntityForm.$setPristine();\n        saveEntityPromise().then(\n            function (entity) {\n                saveAttributes(entity.id).then(() => {\n                    updateAliasData();\n                    $mdDialog.hide();\n                });\n            }\n        );\n    };\n    vm.cancel = function() {\n        $mdDialog.hide();\n    };\n    \n    \n    function saveEntityPromise() {\n        var entity = {\n            name: vm.entityName,\n            type: \"thermostat\"\n        };\n        return deviceService.saveDevice(entity);\n    }\n    \n    function saveAttributes(entityId) {\n        var attributesArray = [];\n        for (var key in vm.attributes) {\n            attributesArray.push({key: key, value: vm.attributes[key]});\n        }\n        if (attributesArray.length > 0) {\n            return attributeService.saveEntityAttributes(entityId.entityType, entityId.id, \"SERVER_SCOPE\", attributesArray);\n        } else {\n            return $q.when(null);\n        } \n    }\n    \n    function updateAliasData() {\n        var aliasIds = [];\n        for (var id in widgetContext.aliasController.resolvedAliases) {\n            aliasIds.push(id);\n        }\n        var tasks = [];\n        aliasIds.forEach(function(aliasId) {\n            widgetContext.aliasController.setAliasUnresolved(aliasId);\n            tasks.push(widgetContext.aliasController.getAliasInfo(aliasId));\n        });\n        $q.all(tasks).then(function() {\n            $rootScope.$broadcast('widgetForceReInit');\n        });\n    }\n}"
+                "customHtml": "<form #addEntityForm=\"ngForm\" [formGroup]=\"addEntityFormGroup\"\n        (ngSubmit)=\"save()\" class=\"add-entity-form\">\n    <mat-toolbar color=\"primary\">\n        <h2>Add thermostat</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div mat-dialog-content fxLayout=\"column\">\n        <mat-form-field fxFlex class=\"mat-block\">\n            <mat-label>Thermostat name</mat-label>\n            <input matInput formControlName=\"entityName\" required>\n            <mat-error *ngIf=\"addEntityFormGroup.get('entityName').hasError('required')\">\n                Thermostat name is required.\n            </mat-error>\n        </mat-form-field>\n        <div formGroupName=\"attributes\" fxLayout=\"column\">\n            <mat-slide-toggle formControlName=\"alarmTemperature\">\n                High temperature alarm\n            </mat-slide-toggle>\n            <mat-form-field fxFlex class=\"mat-block\">\n                <mat-label>High temperature threshold, °C</mat-label>\n                <input type=\"number\" step=\"any\" matInput\n                    [required] = \"addEntityFormGroup.get('attributes').get('alarmTemperature').value\"\n                    formControlName=\"thresholdTemperature\">\n                <mat-error *ngIf=\"addEntityFormGroup.get('attributes').get('thresholdTemperature').hasError('required')\">\n                    High temperature threshold is required.\n                </mat-error>\n            </mat-form-field>\n        \n            <mat-slide-toggle formControlName=\"alarmHumidity\">\n                Low humidity alarm\n            </mat-slide-toggle>\n                \n            <mat-form-field fxFlex class=\"mat-block\">\n                <mat-label>Low humidity threshold, %</mat-label>\n                <input type=\"number\" step=\"any\" matInput\n                    [required] = \"addEntityFormGroup.get('attributes').get('alarmHumidity').value\"\n                    formControlName=\"thresholdHumidity\">\n                <mat-error *ngIf=\"addEntityFormGroup.get('attributes').get('thresholdHumidity').hasError('required')\">\n                    Low humidity threshold is required.\n                </mat-error>\n            </mat-form-field>\n        </div>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || addEntityForm.invalid || !addEntityForm.dirty\">\n            Create\n        </button>\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n    </div>\n</form>",
+                "customCss": ".add-entity-form{\n    width: 300px;\n}\n",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\nlet attributeService = $injector.get(widgetContext.servicesMap.get('attributeService'));\n\nopenAddEntityDialog();\n\nfunction openAddEntityDialog() {\n    customDialog.customDialog(htmlTemplate, AddEntityDialogController).subscribe();\n}\n\nfunction AddEntityDialogController(instance) {\n    let vm = instance;\n    \n    vm.addEntityFormGroup = vm.fb.group({\n        entityName: ['', [vm.validators.required]],\n        attributes: vm.fb.group({\n            alarmTemperature: [false],\n            thresholdTemperature: [{value: null, disabled: true}],\n            alarmHumidity: [false],\n            thresholdHumidity: [{value: null, disabled: true}]\n        })\n    });\n    \n    vm.addEntityFormGroup.get('attributes').get('alarmTemperature').valueChanges\n    .subscribe(activate => {\n        if (activate) {\n            vm.addEntityFormGroup.get('attributes').get('thresholdTemperature').enable();\n        } else {\n            vm.addEntityFormGroup.get('attributes').get('thresholdTemperature').disable();\n        }\n    });\n    \n    vm.addEntityFormGroup.get('attributes').get('alarmHumidity').valueChanges\n    .subscribe(activate => {\n        if (activate) {\n            vm.addEntityFormGroup.get('attributes').get('thresholdHumidity').enable();\n        } else {\n            vm.addEntityFormGroup.get('attributes').get('thresholdHumidity').disable();\n        }\n    });\n\n    vm.save = function() {\n        vm.addEntityFormGroup.markAsPristine();\n        saveEntityObservable().subscribe(\n            function (entity) {\n                saveAttributes(entity.id).subscribe(\n                    function () {\n                        widgetContext.updateAliases();\n                        vm.dialogRef.close(null);\n                    }\n                );\n            }\n        );\n    };\n    \n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n    \n    function saveEntityObservable() {\n        const formValues = vm.addEntityFormGroup.value;\n        let entity = {\n            name: formValues.entityName,\n            type: \"thermostat\"\n        };\n        return deviceService.saveDevice(entity);\n    }\n    \n    function saveAttributes(entityId) {\n        let attributes = vm.addEntityFormGroup.get('attributes').value;\n        let attributesArray = [];\n        for (let key in attributes) {\n            if(attributes[key] !== null) {\n                attributesArray.push({key: key, value: attributes[key]});\n            }\n        }\n        if (attributesArray.length > 0) {\n            return attributeService.saveEntityAttributes(entityId, \"SERVER_SCOPE\", attributesArray);\n        } else {\n            return widgetContext.rxjs.of([]);\n        }\n    }\n}",
+                "customResources": [],
+                "id": "8ab5a518-67d2-b6a2-956d-81fd512294b2"
               }
             ],
             "actionCellButton": [
@@ -134,20 +164,21 @@
                 "setEntityId": true
               },
               {
-                "id": "7506576f-87ba-d3a0-88fb-e304d451776d",
                 "name": "Edit",
                 "icon": "edit",
                 "type": "customPretty",
-                "customHtml": "<md-dialog aria-label=\"Edit entity\">\n    <form name=\"editEntityForm\" class=\"edit-entity-form\" ng-submit=\"vm.save()\">\n        <md-toolbar>\n            <div class=\"md-toolbar-tools\">\n                <h2>Edit thermostat {{vm.entityName}}</h2>\n                <span flex></span>\n                <md-button class=\"md-icon-button\" ng-click=\"vm.cancel()\">\n                    <ng-md-icon icon=\"close\" aria-label=\"Close\"></ng-md-icon>\n                </md-button>\n            </div>\n        </md-toolbar>\n        <md-dialog-content>\n            <div class=\"md-dialog-content\">\n                <md-input-container flex class=\"md-block\">\n                    <label>Thermostat name</label>\n                    <input ng-model=\"vm.entityName\" readonly>\n                </md-input-container>\n                <md-switch ng-model=\"vm.attributes.alarmTemperature\">\n                    High temperature alarm\n                </md-switch>\n                <md-input-container flex class=\"md-block\">\n                    <label>High temperature threshold, °C</label>\n                    <input name=\"thresholdTemperature\" type=\"number\" step=\"any\" \n                            ng-model=\"vm.attributes.thresholdTemperature\"\n                            ng-disabled=\"!vm.attributes.alarmTemperature\"\n                            ng-required=\"vm.attributes.alarmTemperature\">\n                    <div ng-messages=\"editEntityForm.thresholdTemperature.$error\">\n                        <div ng-message=\"required\">High temperature threshold is required.</div>\n                    </div>\n                </md-input-container>\n                <md-switch ng-model=\"vm.attributes.alarmHumidity\">\n                    Low humidity alarm\n                </md-switch>\n                <md-input-container flex class=\"md-block\">\n                    <label>Low humidity threshold, %</label>\n                    <input name=\"thresholdHumidity\" type=\"number\" step=\"any\" \n                            ng-model=\"vm.attributes.thresholdHumidity\"\n                            ng-disabled=\"!vm.attributes.alarmHumidity\"\n                            ng-required=\"vm.attributes.alarmHumidity\">\n                    <div ng-messages=\"editEntityForm.thresholdHumidity.$error\">\n                        <div ng-message=\"required\">Low humidity threshold is required.</div>\n                    </div>\n                </md-input-container>\n            </div>\n        </md-dialog-content>\n        <md-dialog-actions>\n            <md-button type=\"submit\" ng-disabled=\"editEntityForm.$invalid || !editEntityForm.$dirty\" class=\"md-raised md-primary\">Save</md-button>\n            <md-button ng-click=\"vm.cancel()\" class=\"md-primary\">Cancel</md-button>\n        </md-dialog-actions>\n    </form>\n</md-dialog>",
-                "customCss": ".edit-entity-form md-input-container {\n    padding-right: 10px;\n}\n\n.edit-entity-form .boolean-value-input {\n    padding-left: 5px;\n}\n\n.edit-entity-form .boolean-value-input .checkbox-label {\n    margin-bottom: 8px;\n    color: rgba(0,0,0,0.54);\n    font-size: 12px;\n}\n",
-                "customFunction": "var $injector = widgetContext.$scope.$injector;\nvar $mdDialog = $injector.get('$mdDialog'),\n    $document = $injector.get('$document'),\n    attributeService = $injector.get('attributeService');\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    $mdDialog.show({\n        controller: ['$scope','$mdDialog', EditEntityDialogController],\n        controllerAs: 'vm',\n        template: htmlTemplate,\n        locals: {\n            entityId: entityId\n        },\n        parent: angular.element($document[0].body),\n        targetEvent: $event,\n        multiple: true,\n        clickOutsideToClose: false\n    });\n}\n\nfunction EditEntityDialogController($scope,$mdDialog) {\n    var vm = this;\n    vm.entityId = entityId;\n    vm.entityName = entityName;\n    vm.entityType = entityId.entityType;\n    vm.attributes = {};\n    vm.serverAttributes = {};\n    getEntityInfo();\n    \n    vm.save = function() {\n        saveAttributes();\n        $mdDialog.hide();\n    };\n    vm.cancel = function() {\n        $mdDialog.hide();\n    };\n    \n    function getEntityAttributes(attributes) {\n        for (var i = 0; i < attributes.length; i++) {\n             vm.attributes[attributes[i].key] = attributes[i].value; \n        }\n        vm.serverAttributes = angular.copy(vm.attributes);\n    }\n    \n    function getEntityInfo() {\n        attributeService.getEntityAttributesValues(entityId.entityType, entityId.id, 'SERVER_SCOPE').then(\n            function(data){\n                if (data.length) {\n                    getEntityAttributes(data);\n                }\n            });\n    }\n    \n    function saveAttributes() {\n        var attributesArray = [];\n        for (var key in vm.attributes) {\n            if (vm.attributes[key] !== vm.serverAttributes[key]) {\n                attributesArray.push({key: key, value: vm.attributes[key]});\n            }\n        }\n        if (attributesArray.length > 0) {\n            attributeService.saveEntityAttributes(entityId.entityType, entityId.id, \"SERVER_SCOPE\", attributesArray);\n        } \n    }\n}"
+                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\" class=\"edit-entity-form\">\n    <mat-toolbar color=\"primary\">\n        <h2>Edit thermostat {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div mat-dialog-content fxLayout=\"column\">\n        <mat-form-field fxFlex class=\"mat-block\">\n            <mat-label>Thermostat name</mat-label>\n            <input matInput formControlName=\"entityName\" readonly>\n        </mat-form-field>\n        <div formGroupName=\"attributes\" fxLayout=\"column\">\n            <mat-slide-toggle formControlName=\"alarmTemperature\">\n                High temperature alarm\n            </mat-slide-toggle>\n            <mat-form-field fxFlex class=\"mat-block\">\n                <mat-label>High temperature threshold, °C</mat-label>\n                <input type=\"number\" step=\"any\" matInput\n                        [required] = \"editEntityFormGroup.get('attributes').get('alarmTemperature').value\"\n                        formControlName=\"thresholdTemperature\">\n                <mat-error *ngIf=\"editEntityFormGroup.get('attributes').get('thresholdTemperature').hasError('required')\">\n                    High temperature threshold is required.\n                </mat-error>\n            </mat-form-field>\n\n            <mat-slide-toggle formControlName=\"alarmHumidity\">\n                Low humidity alarm\n            </mat-slide-toggle>\n\n            <mat-form-field fxFlex class=\"mat-block\">\n                <mat-label>Low humidity threshold, %</mat-label>\n                <input type=\"number\" step=\"any\" matInput\n                       [required] = \"editEntityFormGroup.get('attributes').get('alarmHumidity').value\"\n                       formControlName=\"thresholdHumidity\">\n                <mat-error *ngIf=\"editEntityFormGroup.get('attributes').get('thresholdHumidity').hasError('required')\">\n                    Low humidity threshold is required.\n                </mat-error>\n            </mat-form-field>\n        </div>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n    </div>\n</form>",
+                "customCss": ".edit-entity-form{\n    width: 300px;\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet attributeService = $injector.get(widgetContext.servicesMap.get('attributeService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n    \n    vm.entityId = entityId;\n    vm.entityName = entityName;\n    vm.attributes = {};\n    \n    vm.editEntityFormGroup = vm.fb.group({\n        entityName: [''],\n        attributes: vm.fb.group({\n            alarmTemperature: [false],\n            thresholdTemperature: [{value: null, disabled: true}],\n            alarmHumidity: [false],\n            thresholdHumidity: [{value: null, disabled: true}]\n        })\n    });\n    \n    vm.editEntityFormGroup.get('attributes').get('alarmTemperature').valueChanges\n    .subscribe(activate => {\n        if (activate) {\n            vm.editEntityFormGroup.get('attributes').get('thresholdTemperature').enable();\n        } else {\n            vm.editEntityFormGroup.get('attributes').get('thresholdTemperature').disable();\n        }\n    });\n    \n    vm.editEntityFormGroup.get('attributes').get('alarmHumidity').valueChanges\n    .subscribe(activate => {\n        if (activate) {\n            vm.editEntityFormGroup.get('attributes').get('thresholdHumidity').enable();\n        } else {\n            vm.editEntityFormGroup.get('attributes').get('thresholdHumidity').disable();\n        }\n    });\n    \n    \n    getEntityInfo();\n    \n    \n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveAttributes(entityId).subscribe(\n            function () {\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n    \n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n    \n    function getEntityAttributes(attributes) {\n        for (var i = 0; i < attributes.length; i++) {\n            vm.attributes[attributes[i].key] = attributes[i].value;\n        }\n    }\n    \n    function getEntityInfo() {\n        attributeService.getEntityAttributes(entityId, 'SERVER_SCOPE').subscribe(\n            function (attributes) {\n                getEntityAttributes(attributes);\n                vm.editEntityFormGroup.patchValue({\n                    entityName: vm.entityName,\n                    attributes: vm.attributes\n                });\n                // if(vm.attributes.alarmTemperature) {\n                //     vm.editEntityFormGroup.get('attributes').get('thresholdTemperature').enable();\n                // }\n                // if(vm.attributes.alarmHumidity) {\n                //     vm.editEntityFormGroup.get('attributes').get('thresholdHumidity').enable();\n                // }\n            }\n        );\n    }\n    \n    function saveAttributes(entityId) {\n        let attributes = vm.editEntityFormGroup.get('attributes').value;\n        let attributesArray = [];\n        for (let key in attributes) {\n            if (attributes[key] !== vm.attributes[key]) {\n                attributesArray.push({key: key, value: attributes[key]});\n            }\n        }\n        if (attributesArray.length > 0) {\n            return attributeService.saveEntityAttributes(entityId, \"SERVER_SCOPE\", attributesArray);\n        } else {\n            return widgetContext.rxjs.of([]);\n        }\n    }\n}",
+                "customResources": [],
+                "id": "7506576f-87ba-d3a0-88fb-e304d451776d"
               },
               {
-                "id": "3488848b-e47d-6af6-659f-5d78369ece5e",
                 "name": "Delete",
                 "icon": "delete",
                 "type": "custom",
-                "customFunction": "var $injector = widgetContext.$scope.$injector;\nvar $mdDialog = $injector.get('$mdDialog'),\n    $document = $injector.get('$document'),\n    deviceService = $injector.get('deviceService')\n    $rootScope = $injector.get('$rootScope'),\n    $q = $injector.get('$q');\n\nopenDeleteEntityDialog();\n\nfunction openDeleteEntityDialog() {\n    var title = 'Delete thermostat \"' +  entityName + '\"';\n    var content = 'Are you sure you want to delete the thermostat \"' +\n        entityName + '\"?';\n    var confirm = $mdDialog.confirm()\n        .targetEvent($event)\n        .title(title)\n        .htmlContent(content)\n        .ariaLabel(title)\n        .cancel('Cancel')\n        .ok('Delete');\n    $mdDialog.show(confirm).then(function() {\n        deleteEntity();\n    })\n}\n\nfunction deleteEntity() {\n     deviceService.deleteDevice(entityId.id).then(\n        function success() {\n            updateAliasData();\n        },\n        function fail() {\n            showErrorDialog();\n        }\n    );\n}\n\nfunction updateAliasData() {\n    var aliasIds = [];\n    for (var id in widgetContext.aliasController.resolvedAliases) {\n        aliasIds.push(id);\n    }\n    var tasks = [];\n    aliasIds.forEach(function(aliasId) {\n        widgetContext.aliasController.setAliasUnresolved(aliasId);\n        tasks.push(widgetContext.aliasController.getAliasInfo(aliasId));\n    });\n    $q.all(tasks).then(function() {\n        $rootScope.$broadcast('entityAliasesChanged', aliasIds);\n    });\n}\n\nfunction showErrorDialog() {\n    var title = 'Error';\n    var content = 'An error occurred while deleting the thermostat. Please try again.';\n    var alert = $mdDialog.alert()\n        .title(title)\n        .htmlContent(content)\n        .ariaLabel(title)\n        .parent(angular.element($document[0].body))\n        .targetEvent($event)\n        .multiple(true)\n        .clickOutsideToClose(true)\n        .ok('CLOSE');\n    $mdDialog.show(alert);\n}"
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet dialogs = $injector.get(widgetContext.servicesMap.get('dialogs'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenDeleteEntityDialog();\n\nfunction openDeleteEntityDialog() {\n    let title = 'Delete thermostat \"' +  entityName + '\"';\n    let content = 'Are you sure you want to delete the thermostat \"' +\n        entityName + '\"?';\n    dialogs.confirm(title, content, 'Cancel', 'Delete').subscribe(\n        function(result) {\n            if (result) {\n                deleteEntity();\n            }\n        }\n    );\n}\n\nfunction deleteEntity() {\n    deviceService.deleteDevice(entityId.id).subscribe(\n        function success() {\n            widgetContext.updateAliases();\n        },\n        function fail() {\n            showErrorDialog();\n        }\n    );\n}\n\nfunction showErrorDialog() {\n    let title = 'Error';\n    let content = 'An error occurred while deleting the thermostat. Please try again.';\n    dialogs.alert(title, content, 'CLOSE').subscribe(\n        function(result) {}\n    );\n}",
+                "id": "3488848b-e47d-6af6-659f-5d78369ece5e"
               }
             ],
             "rowClick": []
@@ -848,10 +879,7 @@
             "mapProvider": "OpenStreetMap.HOT",
             "showTooltip": true,
             "autocloseTooltip": true,
-            "defaultCenterPosition": [
-              0,
-              0
-            ],
+            "defaultCenterPosition": "0,0",
             "customProviderTileUrl": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             "showTooltipAction": "click",
             "polygonKeyName": "coordinates",
@@ -866,7 +894,9 @@
             "defaultZoomLevel": 12,
             "labelFunction": "var color;\nif(dsData[dsIndex].active !== \"true\"){\n    color = 'rgb(255, 0, 0)';\n} else {\n    color = 'rgb(39, 134, 34)';\n}\nreturn '<span style=\"border: solid ' + color + '; border-radius: 10px; color: ' + color + '; background-color: #fff; padding: 3px 5px; font-size: 14px\">' + \n           '${entityLabel}' + \n        '</span>'",
             "markerImageFunction": "var res;\nif(dsData[dsIndex].active !== \"true\"){\n\tvar res = {\n\t    url: images[0],\n\t    size: 48\n\t}\n} else {\n    var res = {\n\t    url: images[1],\n\t    size: 48\n\t}\n}\nreturn res;",
-            "useLabelFunction": true
+            "useLabelFunction": true,
+            "provider": "openstreet-map",
+            "draggableMarker": true
           },
           "title": "New Markers Placement - OpenStreetMap",
           "dropShadow": true,
@@ -881,11 +911,11 @@
           "actions": {
             "tooltipAction": [
               {
-                "id": "54c293c4-9ca6-e34f-dc6a-0271944c1c66",
                 "name": "delete",
                 "icon": "more_horiz",
                 "type": "custom",
-                "customFunction": "var $rootScope = widgetContext.$scope.$injector.get('$rootScope');\nvar entityDatasource = widgetContext.map.subscription.datasources.filter(\n    function(entity) {\n        return entity.entityId === entityId.id\n    });\n\nwidgetContext.map.saveMarkerLocation(entityDatasource[0],\n    widgetContext.map.locations[0], {\n        \"lat\": null,\n        \"lng\": null\n    }).then(function succes() {\n        $rootScope.$broadcast('widgetForceReInit');\n    });"
+                "customFunction": "var entityDatasource = widgetContext.mapInstance.datasources.filter(\n    function(entity) {\n        return entity.entityId === entityId.id\n    });\n\nwidgetContext.mapInstance.saveMarkerLocation(entityDatasource[0], null, null).subscribe(function success() {\n        widgetContext.updateAliases();\n});",
+                "id": "54c293c4-9ca6-e34f-dc6a-0271944c1c66"
               }
             ]
           },
@@ -984,10 +1014,7 @@
             "mapProvider": "OpenStreetMap.HOT",
             "showTooltip": true,
             "autocloseTooltip": true,
-            "defaultCenterPosition": [
-              37.7749,
-              -122.4194
-            ],
+            "defaultCenterPosition": "0,0",
             "customProviderTileUrl": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             "showTooltipAction": "click",
             "polygonKeyName": "coordinates",
@@ -1003,7 +1030,8 @@
             "labelFunction": "var color;\nif(dsData[dsIndex].active !== \"true\"){\n    color = 'rgb(255, 0, 0)';\n} else {\n    color = 'rgb(39, 134, 34)';\n}\nreturn '<span style=\"border: solid ' + color + '; border-radius: 10px; color: ' + color + '; background-color: #fff; padding: 3px 5px; font-size: 14px\">' + \n           '${entityLabel}' + \n        '</span>'",
             "markerImageFunction": "var res;\nif(dsData[dsIndex].active !== \"true\"){\n\tvar res = {\n\t    url: images[0],\n\t    size: 48\n\t}\n} else {\n    var res = {\n\t    url: images[1],\n\t    size: 48\n\t}\n}\nreturn res;",
             "useLabelFunction": true,
-            "useDefaultCenterPosition": true
+            "provider": "openstreet-map",
+            "draggableMarker": true
           },
           "title": "New Markers Placement - OpenStreetMap",
           "dropShadow": true,
@@ -1018,11 +1046,11 @@
           "actions": {
             "tooltipAction": [
               {
-                "id": "54c293c4-9ca6-e34f-dc6a-0271944c1c66",
                 "name": "delete",
                 "icon": "more_horiz",
                 "type": "custom",
-                "customFunction": "var $rootScope = widgetContext.$scope.$injector.get('$rootScope');\nvar entityDatasource = widgetContext.map.subscription.datasources.filter(\n    function(entity) {\n        return entity.entityId === entityId.id\n    });\n\nwidgetContext.map.saveMarkerLocation(entityDatasource[0],\n    widgetContext.map.locations[0], {\n        \"lat\": null,\n        \"lng\": null\n    }).then(function succes() {\n        $rootScope.$broadcast('widgetForceReInit');\n    });"
+                "customFunction": "var entityDatasource = widgetContext.mapInstance.datasources.filter(\n    function(entity) {\n        return entity.entityId === entityId.id\n    });\n\nwidgetContext.mapInstance.saveMarkerLocation(entityDatasource[0], null, null).subscribe(function success() {\n        widgetContext.updateAliases();\n});",
+                "id": "54c293c4-9ca6-e34f-dc6a-0271944c1c66"
               }
             ]
           },
@@ -1034,6 +1062,61 @@
           "displayTimewindow": true
         },
         "id": "0a430429-9078-9ae6-2b67-e4a15a2bf8bf"
+      },
+      "f4bb2f2d-0164-60bc-f3e8-9b1e7b5a59b3": {
+        "isSystemType": true,
+        "bundleAlias": "input_widgets",
+        "typeAlias": "update_double_timeseries",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "12ae98c7-1ea2-52cf-64d5-763e9d993547",
+              "dataKeys": [
+                {
+                  "name": "temperature",
+                  "type": "timeseries",
+                  "label": "temperature",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.4164505192982848
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "showResultMessage": true,
+            "showLabel": true
+          },
+          "title": "New Update double timeseries",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {}
+        },
+        "row": 0,
+        "col": 0,
+        "id": "f4bb2f2d-0164-60bc-f3e8-9b1e7b5a59b3"
       }
     },
     "states": {
@@ -1066,14 +1149,11 @@
               "backgroundColor": "#eeeeee",
               "color": "rgba(0,0,0,0.870588)",
               "columns": 24,
-              "margins": [
-                10,
-                10
-              ],
               "backgroundSizeMode": "100%",
               "autoFillHeight": true,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "margin": 10
             }
           }
         }
@@ -1095,14 +1175,11 @@
               "backgroundColor": "#eeeeee",
               "color": "rgba(0,0,0,0.870588)",
               "columns": 24,
-              "margins": [
-                10,
-                10
-              ],
               "backgroundSizeMode": "100%",
               "autoFillHeight": true,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "margin": 10
             }
           }
         }
@@ -1138,20 +1215,23 @@
                 "sizeY": 6,
                 "row": 6,
                 "col": 0
+              },
+              "f4bb2f2d-0164-60bc-f3e8-9b1e7b5a59b3": {
+                "sizeX": 7.5,
+                "sizeY": 3,
+                "row": 12,
+                "col": 0
               }
             },
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "color": "rgba(0,0,0,0.870588)",
               "columns": 24,
-              "margins": [
-                10,
-                10
-              ],
               "backgroundSizeMode": "100%",
               "autoFillHeight": true,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "margin": 10
             }
           }
         }

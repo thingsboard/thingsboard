@@ -1,0 +1,158 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="timewindowForm" (ngSubmit)="update()">
+  <fieldset [disabled]="(isLoading$ | async)">
+    <div class="mat-content" style="height: 100%;" fxLayout="column">
+      <mat-tab-group dynamicHeight [ngClass]="{'tb-headless': historyOnly}"
+                     (selectedIndexChange)="timewindowForm.markAsDirty()" [(selectedIndex)]="timewindow.selectedTab">
+        <mat-tab label="{{ 'timewindow.realtime' | translate }}">
+          <div formGroupName="realtime" class="mat-content mat-padding" fxLayout="column">
+            <tb-timeinterval
+              [(hideFlag)]="timewindow.hideInterval"
+              (hideFlagChange)="onHideIntervalChanged()"
+              [isEdit]="isEdit"
+              formControlName="timewindowMs"
+              predefinedName="timewindow.last"
+              [required]="timewindow.selectedTab === timewindowTypes.REALTIME"
+              style="padding-top: 8px;"></tb-timeinterval>
+          </div>
+        </mat-tab>
+        <mat-tab label="{{ 'timewindow.history' | translate }}">
+          <section fxLayout="row">
+            <section *ngIf="isEdit" fxLayout="column" style="padding-top: 8px; padding-left: 16px;">
+              <label class="tb-small hide-label" translate>timewindow.hide</label>
+              <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideInterval"
+                            (ngModelChange)="onHideIntervalChanged()"></mat-checkbox>
+            </section>
+            <section fxLayout="column" fxFlex [fxShow]="isEdit || !timewindow.hideInterval">
+              <div formGroupName="history" class="mat-content mat-padding" style="padding-top: 8px;">
+                <mat-radio-group formControlName="historyType">
+                  <mat-radio-button [value]="historyTypes.LAST_INTERVAL" color="primary">
+                    <section fxLayout="column">
+                      <span translate>timewindow.last</span>
+                      <tb-timeinterval
+                        formControlName="timewindowMs"
+                        predefinedName="timewindow.last"
+                        [fxShow]="timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL"
+                        [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+                                timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL"
+                        style="padding-top: 8px;"></tb-timeinterval>
+                    </section>
+                  </mat-radio-button>
+                  <mat-radio-button [value]="historyTypes.FIXED" color="primary">
+                    <section fxLayout="column">
+                      <span translate>timewindow.time-period</span>
+                      <tb-datetime-period
+                        formControlName="fixedTimewindow"
+                        [fxShow]="timewindowForm.get('history.historyType').value === historyTypes.FIXED"
+                        [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+                                timewindowForm.get('history.historyType').value === historyTypes.FIXED"
+                        style="padding-top: 8px;"></tb-datetime-period>
+                    </section>
+                  </mat-radio-button>
+                </mat-radio-group>
+              </div>
+            </section>
+          </section>
+        </mat-tab>
+      </mat-tab-group>
+      <div *ngIf="aggregation" formGroupName="aggregation" class="mat-content mat-padding" fxLayout="column">
+        <section fxLayout="row">
+          <section fxLayout="column" [fxShow]="isEdit">
+            <label class="tb-small hide-label" translate>timewindow.hide</label>
+            <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideAggregation"
+                          (ngModelChange)="onHideAggregationChanged()"></mat-checkbox>
+          </section>
+          <section fxFlex fxLayout="column" [fxShow]="isEdit || !timewindow.hideAggregation">
+            <mat-form-field>
+              <mat-label translate>aggregation.function</mat-label>
+              <mat-select formControlName="type" style="min-width: 150px;">
+                <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
+                  {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </section>
+        </section>
+        <section fxLayout="row" [fxShow]="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE">
+          <section fxLayout="column" [fxShow]="isEdit">
+            <label class="tb-small hide-label" translate>timewindow.hide</label>
+            <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideAggInterval"
+                          (ngModelChange)="onHideAggIntervalChanged()"></mat-checkbox>
+          </section>
+          <section fxLayout="column" [fxShow]="isEdit || !timewindow.hideAggInterval">
+            <div class="limit-slider-container"
+                 fxLayout="row" fxLayoutAlign="start center">
+              <span translate>aggregation.limit</span>
+              <mat-slider fxFlex formControlName="limit"
+                          thumbLabel
+                          [value]="timewindowForm.get('aggregation.limit').value"
+                          min="{{minDatapointsLimit()}}"
+                          max="{{maxDatapointsLimit()}}">
+              </mat-slider>
+              <mat-form-field style="max-width: 80px;">
+                <input matInput formControlName="limit" type="number" step="1"
+                       [value]="timewindowForm.get('aggregation.limit').value"
+                       min="{{minDatapointsLimit()}}"
+                       max="{{maxDatapointsLimit()}}"/>
+              </mat-form-field>
+            </div>
+          </section>
+        </section>
+      </div>
+      <div formGroupName="realtime"
+           *ngIf="aggregation && timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE &&
+           timewindow.selectedTab === timewindowTypes.REALTIME" class="mat-content mat-padding" fxLayout="column">
+        <tb-timeinterval
+          formControlName="interval"
+          [isEdit]="isEdit"
+          [(hideFlag)]="timewindow.hideAggInterval"
+          (hideFlagChange)="onHideAggIntervalChanged()"
+          [min]="minRealtimeAggInterval()" [max]="maxRealtimeAggInterval()"
+          predefinedName="aggregation.group-interval">
+        </tb-timeinterval>
+      </div>
+      <div formGroupName="history"
+           *ngIf="aggregation && timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE &&
+           timewindow.selectedTab === timewindowTypes.HISTORY" class="mat-content mat-padding" fxLayout="column">
+        <tb-timeinterval
+          formControlName="interval"
+          [isEdit]="isEdit"
+          [(hideFlag)]="timewindow.hideAggInterval"
+          (hideFlagChange)="onHideAggIntervalChanged()"
+          [min]="minHistoryAggInterval()" [max]="maxHistoryAggInterval()"
+          predefinedName="aggregation.group-interval">
+        </tb-timeinterval>
+      </div>
+      <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
+        <button type="button"
+                mat-button
+                [disabled]="(isLoading$ | async)"
+                (click)="cancel()">
+          {{ 'action.cancel' | translate }}
+        </button>
+        <button type="submit"
+                mat-raised-button
+                color="primary"
+                [disabled]="(isLoading$ | async) || timewindowForm.invalid || !timewindowForm.dirty">
+            {{ 'action.update' | translate }}
+        </button>
+      </div>
+    </div>
+  </fieldset>
+</form>

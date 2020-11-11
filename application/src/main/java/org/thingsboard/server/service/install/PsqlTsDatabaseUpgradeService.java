@@ -195,8 +195,10 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                     executeQuery(conn, "UPDATE tb_schema_settings SET schema_version = 2005001");
                 }
                 break;
-            case "2.5.4":
+            case "3.1.1":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Load TTL functions ...");
+                    loadSql(conn, LOAD_TTL_FUNCTIONS_SQL);
                     log.info("Load Drop Partitions functions ...");
                     loadSql(conn, LOAD_DROP_PARTITIONS_FUNCTIONS_SQL);
                 }

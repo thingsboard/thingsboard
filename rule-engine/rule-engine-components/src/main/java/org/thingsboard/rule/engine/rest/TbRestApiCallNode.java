@@ -46,7 +46,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 public class TbRestApiCallNode implements TbNode {
 
     private boolean useRedisQueueForMsgPersistence;
-    private TbHttpClient httpClient;
+    protected TbHttpClient httpClient;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {

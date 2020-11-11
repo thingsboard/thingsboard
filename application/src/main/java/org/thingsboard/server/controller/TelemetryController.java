@@ -357,10 +357,9 @@ public class TelemetryController extends BaseController {
                 DataConstants.SHARED_SCOPE.equals(scope) ||
                 DataConstants.CLIENT_SCOPE.equals(scope)) {
             return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.WRITE_ATTRIBUTES, entityIdSrc, (result, tenantId, entityId) -> {
-                ListenableFuture<List<Void>> future = attributesService.removeAll(user.getTenantId(), entityId, scope, keys);
-                Futures.addCallback(future, new FutureCallback<List<Void>>() {
+                tsSubService.deleteAndNotify(tenantId, entityId, scope, keys, new FutureCallback<Void>() {
                     @Override
-                    public void onSuccess(@Nullable List<Void> tmp) {
+                    public void onSuccess(@Nullable Void tmp) {
                         logAttributesDeleted(user, entityId, scope, keys, null);
                         if (entityIdSrc.getEntityType().equals(EntityType.DEVICE)) {
                             DeviceId deviceId = new DeviceId(entityId.getId());
@@ -377,7 +376,7 @@ public class TelemetryController extends BaseController {
                         logAttributesDeleted(user, entityId, scope, keys, t);
                         result.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
                     }
-                }, executor);
+                });
             });
         } else {
             return getImmediateDeferredResult("Invalid attribute scope: " + scope, HttpStatus.BAD_REQUEST);

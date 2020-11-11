@@ -1,0 +1,68 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-details-buttons" *ngIf="!isAdd && ruleNode.component.type === ruleNodeType.RULE_CHAIN">
+  <button mat-raised-button color="primary"
+          (click)="openRuleChain($event)">
+    {{'rulechain.open-rulechain' | translate }}
+  </button>
+</div>
+<div class="mat-padding" fxLayout="column">
+  <form [formGroup]="ruleNodeFormGroup">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit || isReadOnly">
+      <section *ngIf="ruleNode.component.type !== ruleNodeType.RULE_CHAIN">
+        <section fxLayout="column" fxLayout.gt-sm="row">
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>rulenode.name</mat-label>
+            <input matInput formControlName="name" required>
+            <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('required')
+                           || ruleNodeFormGroup.get('name').hasError('pattern')">
+              {{ 'rulenode.name-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-checkbox formControlName="debugMode">
+            {{ 'rulenode.debug-mode' | translate }}
+          </mat-checkbox>
+        </section>
+        <tb-rule-node-config #ruleNodeConfigComponent
+          formControlName="configuration"
+          [ruleNodeId]="ruleNode.ruleNodeId?.id"
+          [nodeDefinition]="ruleNode.component.configurationDescriptor.nodeDefinition">
+        </tb-rule-node-config>
+        <div formGroupName="additionalInfo" fxLayout="column">
+          <mat-form-field class="mat-block">
+            <mat-label translate>rulenode.description</mat-label>
+            <textarea matInput formControlName="description" rows="2"></textarea>
+          </mat-form-field>
+        </div>
+      </section>
+      <section *ngIf="ruleNode.component.type === ruleNodeType.RULE_CHAIN">
+        <tb-entity-autocomplete required
+                                [excludeEntityIds]="[ruleChainId]"
+                                [entityType]="entityType.RULE_CHAIN"
+                                formControlName="targetRuleChainId">
+        </tb-entity-autocomplete>
+        <div formGroupName="additionalInfo" fxLayout="column">
+          <mat-form-field class="mat-block">
+            <mat-label translate>rulenode.description</mat-label>
+            <textarea matInput formControlName="description" rows="2"></textarea>
+          </mat-form-field>
+        </div>
+      </section>
+    </fieldset>
+  </form>
+</div>

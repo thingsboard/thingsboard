@@ -1,0 +1,267 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxFlex fxLayout="column">
+  <div fxFlex fxLayout="column" tb-fullscreen [fullscreen]="fullscreen" tb-hotkeys [hotkeys]="hotKeys" [cheatSheet]="cheatSheetComponent">
+    <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
+    <mat-toolbar class="mat-elevation-z1 tb-edit-toolbar mat-hue-3" fxLayoutGap="16px" fxLayoutGap.lt-xl="8px">
+      <mat-form-field floatLabel="always" hideRequiredMarker class="tb-widget-title">
+        <mat-label></mat-label>
+        <input [disabled]="isReadOnly" matInput required
+               [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
+               placeholder="{{ 'widget.title' | translate }}"/>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-select [disabled]="isReadOnly" matInput placeholder="{{ 'widget.type' | translate }}"
+                    [(ngModel)]="widget.type" (ngModelChange)="widetTypeChanged()">
+          <mat-option *ngFor="let type of allWidgetTypes" [value]="type">
+            {{ widgetTypesDataMap.get(widgetTypes[type]).name | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <span fxFlex></span>
+      <button mat-button fxHide.lt-md [disabled]="!iframeWidgetEditModeInited"
+              (click)="applyWidgetScript()"
+              matTooltip="{{ 'widget.run' | translate }} (CTRL + Return)"
+              matTooltipPosition="below">
+        <mat-icon>play_arrow</mat-icon>
+        <span translate>action.run</span>
+      </button>
+      <button mat-raised-button
+              fxHide.lt-md [disabled]="(isLoading$ | async) || undoDisabled()"
+              (click)="undoWidget()"
+              matTooltip="{{ 'widget.undo' | translate }} (CTRL + Q)"
+              matTooltipPosition="below">
+        <mat-icon>undo</mat-icon>
+        <span translate>action.undo</span>
+      </button>
+      <button *ngIf="!isReadOnly" mat-raised-button
+              fxHide.lt-md [disabled]="(isLoading$ | async) || saveDisabled()"
+              (click)="saveWidget()"
+              [tb-circular-progress]="saveWidgetPending"
+              matTooltip="{{ 'widget.save' | translate }} (CTRL + S)"
+              matTooltipPosition="below">
+        <mat-icon>save</mat-icon>
+        <span translate>action.save</span>
+      </button>
+      <button mat-raised-button
+              fxHide.lt-md [disabled]="(isLoading$ | async) || saveAsDisabled()"
+              (click)="saveWidgetAs()"
+              [tb-circular-progress]="saveWidgetAsPending"
+              matTooltip="{{ 'widget.saveAs' | translate }} (Shift + CTRL + S)"
+              matTooltipPosition="below">
+        <mat-icon>save</mat-icon>
+        <span translate>action.saveAs</span>
+      </button>
+      <button mat-button
+              fxHide.lt-lg
+              (click)="fullscreen = !fullscreen"
+              matTooltip="{{ 'widget.toggle-fullscreen' | translate }} (Shift + CTRL + F)"
+              matTooltipPosition="below">
+        <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        <span translate>widget.toggle-fullscreen</span>
+      </button>
+      <button mat-icon-button fxHide fxShow.md
+              (click)="fullscreen = !fullscreen"
+              matTooltip="{{ 'widget.toggle-fullscreen' | translate }} (Shift + CTRL + F)"
+              matTooltipPosition="below">
+        <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      </button>
+      <button mat-icon-button fxHide.gt-sm
+              [matMenuTriggerFor]="widgetEditMenu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #widgetEditMenu="matMenu" xPosition="before">
+        <button mat-menu-item
+                [disabled]="!iframeWidgetEditModeInited"
+                (click)="applyWidgetScript()">
+          <mat-icon>play_arrow</mat-icon>
+          <span translate>action.run</span>
+        </button>
+        <button mat-menu-item
+                [disabled]="(isLoading$ | async) || undoDisabled()"
+                (click)="undoWidget()">
+          <mat-icon>undo</mat-icon>
+          <span translate>action.undo</span>
+        </button>
+        <button *ngIf="!isReadOnly" mat-menu-item
+                [disabled]="(isLoading$ | async) || saveDisabled()"
+                (click)="saveWidget()">
+          <mat-icon>save</mat-icon>
+          <span translate>action.save</span>
+        </button>
+        <button mat-menu-item
+                [disabled]="(isLoading$ | async) || saveAsDisabled()"
+                (click)="saveWidgetAs()">
+          <mat-icon>save</mat-icon>
+          <span translate>action.saveAs</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+    <div fxFlex style="position: relative;">
+      <div class="tb-editor tb-absolute-fill">
+        <div #topPanel class="tb-split tb-split-vertical">
+          <div #topLeftPanel class="tb-split tb-content">
+            <mat-tab-group selectedIndex="1" dynamicHeight="true" style="width: 100%; height: 100%;">
+              <mat-tab label="{{ 'widget.resources' | translate }}" style="width: 100%; height: 100%;">
+                <div class="tb-resize-container" style="background-color: #fff;">
+                  <div class="mat-padding">
+                    <div fxFlex fxLayout="row" style="max-height: 40px;"
+                         fxLayoutAlign="start center"
+                         *ngFor="let resource of widget.resources; let i = index" >
+                      <mat-form-field fxFlex class="mat-block resource-field" floatLabel="never"
+                                      style="margin: 10px 0 0 0; max-height: 40px;">
+                        <input required matInput [(ngModel)]="resource.url"
+                               (ngModelChange)="isDirty = true"
+                               placeholder="{{ 'widget.resource-url' | translate }}"/>
+                      </mat-form-field>
+                      <mat-checkbox [(ngModel)]="resource.isModule"
+                                    (ngModelChange)="isDirty = true">
+                        {{ 'widget.resource-is-module' | translate }}
+                      </mat-checkbox>
+                      <button mat-icon-button color="primary"
+                              [disabled]="isLoading$ | async"
+                              (click)="removeResource(i)"
+                              matTooltip="{{'widget.remove-resource' | translate}}"
+                              matTooltipPosition="above">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </div>
+                    <div style="margin-top: 6px;">
+                      <button mat-raised-button color="primary"
+                              [disabled]="isLoading$ | async"
+                              (click)="addResource()"
+                              matTooltip="{{'widget.add-resource' | translate}}"
+                              matTooltipPosition="above">
+                        <span translate>action.add</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </mat-tab>
+              <mat-tab label="{{ 'widget.html' | translate }}" style="width: 100%; height: 100%;">
+                <div class="tb-resize-container" tb-fullscreen [fullscreen]="htmlFullscreen">
+                  <div class="tb-editor-area-title-panel">
+                    <button mat-button (click)="beautifyHtml()">
+                      {{ 'widget.tidy' | translate }}
+                    </button>
+                    <button mat-button mat-icon-button class="tb-mat-32"
+                            (click)="htmlFullscreen = !htmlFullscreen"
+                            matTooltip="{{(htmlFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+                            matTooltipPosition="above">
+                      <mat-icon>{{ htmlFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+                    </button>
+                  </div>
+                  <div #htmlInput></div>
+                </div>
+              </mat-tab>
+              <mat-tab label="{{ 'widget.css' | translate }}" style="width: 100%; height: 100%;">
+                <div class="tb-resize-container" tb-fullscreen [fullscreen]="cssFullscreen">
+                  <div class="tb-editor-area-title-panel">
+                    <button mat-button (click)="beautifyCss()">
+                      {{ 'widget.tidy' | translate }}
+                    </button>
+                    <button mat-icon-button class="tb-mat-32"
+                            (click)="cssFullscreen = !cssFullscreen"
+                            matTooltip="{{(cssFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+                            matTooltipPosition="above">
+                      <mat-icon>{{ cssFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+                    </button>
+                  </div>
+                  <div #cssInput></div>
+                </div>
+              </mat-tab>
+            </mat-tab-group>
+          </div>
+          <div #topRightPanel class="tb-split tb-content">
+            <mat-tab-group dynamicHeight="true" style="width: 100%; height: 100%;">
+              <mat-tab label="{{ 'widget.settings-schema' | translate }}" style="width: 100%; height: 100%;">
+                <div class="tb-resize-container" tb-fullscreen [fullscreen]="jsonSettingsFullscreen">
+                  <div class="tb-editor-area-title-panel">
+                    <button mat-button (click)="beautifyJson()">
+                      {{ 'widget.tidy' | translate }}
+                    </button>
+                    <button mat-icon-button class="tb-mat-32"
+                            (click)="jsonSettingsFullscreen = !jsonSettingsFullscreen"
+                            matTooltip="{{(jsonSettingsFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+                            matTooltipPosition="above">
+                      <mat-icon>{{ jsonSettingsFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+                    </button>
+                  </div>
+                  <div #settingsJsonInput></div>
+                </div>
+              </mat-tab>
+              <mat-tab label="{{ 'widget.datakey-settings-schema' | translate }}" style="width: 100%; height: 100%;">
+                <div class="tb-resize-container" tb-fullscreen [fullscreen]="jsonDataKeySettingsFullscreen">
+                  <div class="tb-editor-area-title-panel">
+                    <button mat-button (click)="beautifyDataKeyJson()">
+                      {{ 'widget.tidy' | translate }}
+                    </button>
+                    <button mat-icon-button class="tb-mat-32"
+                            (click)="jsonDataKeySettingsFullscreen = !jsonDataKeySettingsFullscreen"
+                            matTooltip="{{(jsonDataKeySettingsFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+                            matTooltipPosition="above">
+                      <mat-icon>{{ jsonDataKeySettingsFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+                    </button>
+                  </div>
+                  <div #dataKeySettingsJsonInput></div>
+                </div>
+              </mat-tab>
+            </mat-tab-group>
+          </div>
+        </div>
+        <div #bottomPanel class="tb-split tb-split-vertical">
+          <div #javascriptPanel class="tb-split tb-content" tb-toast toastTarget="javascriptPanel">
+            <div class="tb-resize-container" tb-fullscreen [fullscreen]="javascriptFullscreen">
+              <div class="tb-editor-area-title-panel">
+                <label translate>widget.javascript</label>
+                <button mat-button (click)="beautifyJs()">
+                  {{ 'widget.tidy' | translate }}
+                </button>
+                <button mat-icon-button class="tb-mat-32"
+                        (click)="javascriptFullscreen = !javascriptFullscreen"
+                        matTooltip="{{(javascriptFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+                        matTooltipPosition="above">
+                  <mat-icon>{{ javascriptFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+                </button>
+              </div>
+              <div #javascriptInput></div>
+            </div>
+          </div>
+          <div #framePanel class="tb-split tb-content" style="overflow-y: hidden; position: relative;">
+            <div class="mat-content tb-progress-cover" fxFlex fxLayout="column" fxLayoutAlign="center center"
+                 *ngIf="!iframeWidgetEditModeInited">
+              <mat-spinner diameter="100" mode="indeterminate" color="warn"></mat-spinner>
+            </div>
+            <div tb-fullscreen [fullscreen]="iFrameFullscreen" style="width: 100%; height: 100%;">
+              <iframe #widgetIFrame frameborder="0" height="100%" width="100%"></iframe>
+              <div style="position: absolute; top: 10px; left: 10px; bottom: initial;">
+                <button mat-icon-button
+                        class="tb-fullscreen-button-style"
+                        (click)="iFrameFullscreen = !iFrameFullscreen"
+                        matTooltip="{{(iFrameFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+                        matTooltipPosition="above">
+                  <mat-icon>{{ iFrameFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

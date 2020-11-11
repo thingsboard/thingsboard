@@ -44,7 +44,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
-import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
@@ -58,17 +57,23 @@ import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateExecutor;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.rule.RuleNodeStateService;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
+import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
 import org.thingsboard.server.service.mail.MailExecutorService;
+import org.thingsboard.server.service.profile.TbDeviceProfileCache;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
@@ -76,6 +81,7 @@ import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.transport.TbCoreToTransportService;
 
@@ -88,7 +94,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
@@ -101,6 +106,14 @@ public class ActorSystemContext {
     public ConcurrentMap<TenantId, DebugTbRateLimits> getDebugPerTenantLimits() {
         return debugPerTenantLimits;
     }
+
+    @Autowired
+    @Getter
+    private TbApiUsageStateService apiUsageStateService;
+
+    @Autowired
+    @Getter
+    private TbApiUsageClient apiUsageClient;
 
     @Autowired
     @Getter
@@ -126,6 +139,14 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
+    private TbTenantProfileCache tenantProfileCache;
+
+    @Autowired
+    @Getter
+    private TbDeviceProfileCache deviceProfileCache;
+
+    @Autowired
+    @Getter
     private AssetService assetService;
 
     @Autowired
@@ -138,6 +159,10 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
+    private TenantProfileService tenantProfileService;
+
+    @Autowired
+    @Getter
     private CustomerService customerService;
 
     @Autowired
@@ -147,6 +172,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private RuleChainService ruleChainService;
+
+    @Autowired
+    @Getter
+    private RuleNodeStateService ruleNodeStateService;
 
     @Autowired
     private PartitionService partitionService;
@@ -169,10 +198,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private AlarmService alarmService;
-
-    @Autowired
-    @Getter
     private RelationService relationService;
 
     @Autowired
@@ -186,6 +211,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private TelemetrySubscriptionService tsSubService;
+
+    @Autowired
+    @Getter
+    private AlarmSubscriptionService alarmService;
 
     @Autowired
     @Getter
@@ -524,6 +553,11 @@ public class ActorSystemContext {
 
     public void scheduleMsgWithDelay(TbActorRef ctx, TbActorMsg msg, long delayInMs) {
         log.debug("Scheduling msg {} with delay {} ms", msg, delayInMs);
-        getScheduler().schedule(() -> ctx.tell(msg), delayInMs, TimeUnit.MILLISECONDS);
+        if (delayInMs > 0) {
+            getScheduler().schedule(() -> ctx.tell(msg), delayInMs, TimeUnit.MILLISECONDS);
+        } else {
+            ctx.tell(msg);
+        }
     }
+
 }

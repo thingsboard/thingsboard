@@ -15,20 +15,23 @@
  */
 package org.thingsboard.rule.engine.api;
 
-import com.datastax.driver.core.ResultSetFuture;
 import io.netty.channel.EventLoopGroup;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
@@ -37,6 +40,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
+import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -44,6 +48,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -169,7 +174,7 @@ public interface TbContext {
 
     DashboardService getDashboardService();
 
-    AlarmService getAlarmService();
+    RuleEngineAlarmService getAlarmService();
 
     RuleChainService getRuleChainService();
 
@@ -182,6 +187,8 @@ public interface TbContext {
     RelationService getRelationService();
 
     EntityViewService getEntityViewService();
+
+    RuleEngineDeviceProfileCache getDeviceProfileCache();
 
     ListeningExecutor getJsExecutor();
 
@@ -207,9 +214,22 @@ public interface TbContext {
 
     CassandraCluster getCassandraCluster();
 
-    ResultSetFuture submitCassandraTask(CassandraStatementTask task);
+    TbResultSetFuture submitCassandraTask(CassandraStatementTask task);
 
     @Deprecated
     RedisTemplate<String, Object> getRedisTemplate();
 
+    PageData<RuleNodeState> findRuleNodeStates(PageLink pageLink);
+
+    RuleNodeState findRuleNodeStateForEntity(EntityId entityId);
+
+    void removeRuleNodeStateForEntity(EntityId entityId);
+
+    RuleNodeState saveRuleNodeState(RuleNodeState state);
+
+    void clearRuleNodeStates();
+
+    void addDeviceProfileListeners(Consumer<DeviceProfile> listener, BiConsumer<DeviceId, DeviceProfile> deviceListener);
+
+    void removeProfileListener();
 }

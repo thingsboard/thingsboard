@@ -15,14 +15,12 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -33,6 +31,7 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -42,7 +41,7 @@ import javax.persistence.Table;
 public final class CustomerEntity extends BaseSqlEntity<Customer> implements SearchTextEntity<Customer> {
 
     @Column(name = ModelConstants.CUSTOMER_TENANT_ID_PROPERTY)
-    private String tenantId;
+    private UUID tenantId;
     
     @Column(name = ModelConstants.CUSTOMER_TITLE_PROPERTY)
     private String title;
@@ -86,7 +85,8 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> implements Sea
         if (customer.getId() != null) {
             this.setUuid(customer.getId().getId());
         }
-        this.tenantId = UUIDConverter.fromTimeUUID(customer.getTenantId().getId());
+        this.setCreatedTime(customer.getCreatedTime());
+        this.tenantId = customer.getTenantId().getId();
         this.title = customer.getTitle();
         this.country = customer.getCountry();
         this.state = customer.getState();
@@ -112,8 +112,8 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> implements Sea
     @Override
     public Customer toData() {
         Customer customer = new Customer(new CustomerId(this.getUuid()));
-        customer.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
-        customer.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
+        customer.setCreatedTime(createdTime);
+        customer.setTenantId(new TenantId(tenantId));
         customer.setTitle(title);
         customer.setCountry(country);
         customer.setState(state);
@@ -126,4 +126,5 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> implements Sea
         customer.setAdditionalInfo(additionalInfo);
         return customer;
     }
+
 }

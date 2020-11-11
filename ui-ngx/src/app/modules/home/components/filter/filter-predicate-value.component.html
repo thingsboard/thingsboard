@@ -1,0 +1,82 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="filterPredicateValueFormGroup">
+  <div fxFlex fxLayout="column" [fxShow]="!dynamicMode">
+    <div fxFlex fxLayout="column" [ngSwitch]="valueType">
+      <ng-template [ngSwitchCase]="valueTypeEnum.STRING">
+        <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+          <mat-label></mat-label>
+          <input matInput formControlName="defaultValue" placeholder="{{'filter.value' | translate}}">
+        </mat-form-field>
+      </ng-template>
+      <ng-template [ngSwitchCase]="valueTypeEnum.NUMERIC">
+        <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+          <mat-label></mat-label>
+          <input required type="number" matInput formControlName="defaultValue"
+                 placeholder="{{'filter.value' | translate}}">
+        </mat-form-field>
+      </ng-template>
+      <ng-template [ngSwitchCase]="valueTypeEnum.DATE_TIME">
+        <tb-datetime fxFlex formControlName="defaultValue"
+                     dateText="filter.date"
+                     timeText="filter.time"
+                     required [showLabel]="false"></tb-datetime>
+      </ng-template>
+      <ng-template [ngSwitchCase]="valueTypeEnum.BOOLEAN">
+        <mat-checkbox fxFlex formControlName="defaultValue">
+          {{ (filterPredicateValueFormGroup.get('defaultValue').value ? 'value.true' : 'value.false') | translate }}
+        </mat-checkbox>
+      </ng-template>
+    </div>
+    <div class="tb-hint" translate>filter.default-value</div>
+  </div>
+  <div fxFlex fxLayout="column" [fxShow]="dynamicMode">
+    <div fxFlex formGroupName="dynamicValue" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div fxFlex fxLayout="column">
+        <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+          <mat-label></mat-label>
+          <mat-select formControlName="sourceType" placeholder="{{'filter.dynamic-source-type' | translate}}">
+            <mat-option [value]="null">
+              {{'filter.no-dynamic-value' | translate}}
+            </mat-option>
+            <mat-option *ngFor="let sourceType of dynamicValueSourceTypes" [value]="sourceType">
+              {{dynamicValueSourceTypeTranslations.get(sourceType) | translate}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <div class="tb-hint" translate>filter.dynamic-source-type</div>
+      </div>
+      <div fxFlex fxLayout="column">
+        <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+          <mat-label></mat-label>
+          <input matInput formControlName="sourceAttribute" placeholder="{{'filter.source-attribute' | translate}}">
+        </mat-form-field>
+        <div class="tb-hint" translate>filter.source-attribute</div>
+      </div>
+    </div>
+  </div>
+  <button mat-icon-button
+          class="mat-elevation-z1 tb-mat-32"
+          color="primary"
+          type="button"
+          matTooltip="{{ (dynamicMode ? 'filter.switch-to-default-value' : 'filter.switch-to-dynamic-value') | translate }}"
+          matTooltipPosition="above"
+          (click)="dynamicMode = !dynamicMode">
+    <mat-icon class="tb-mat-20" [svgIcon]="dynamicMode ? 'mdi:numeric' : 'mdi:variable'"></mat-icon>
+  </button>
+</div>

@@ -1,0 +1,146 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+$thumb-img: url("./svg/thumb.svg") !default;
+$thumb-checked-img: url("./svg/thumb-checked.svg") !default;
+$thumb-bar-img: url("./svg/thumb-bar.svg") !default;
+$thumb-bar-checked-img: url("./svg/thumb-bar-checked.svg") !default;
+
+$error-height: 14px !default;
+
+:host {
+
+  .tb-switch {
+    width: 100%;
+    height: 100%;
+
+    .error-container {
+      position: absolute;
+      top: 1%;
+      right: 0;
+      left: 0;
+      z-index: 4;
+      height: $error-height;
+
+      .switch-error {
+        color: #ff3315;
+        white-space: nowrap;
+      }
+    }
+
+    .onoff-container {
+      height: 100%;
+      font-weight: 500;
+      color: #757575;
+      white-space: nowrap;
+
+      .off-label {
+        color: #b7b5b5;
+      }
+
+      .on-label {
+        color: #ff7e57;
+        text-shadow: #ff6e4a 1px 1px 10px, #ffd1c3 1px 1px 10px;
+      }
+    }
+
+    .title-container {
+      .switch-title {
+        font-weight: 500;
+        color: #757575;
+        white-space: nowrap;
+      }
+    }
+
+    #switch-container {
+      padding-right: 10px;
+      padding-left: 10px;
+    }
+
+    .switch {
+      position: relative;
+    }
+
+    #text-measure {
+      position: absolute;
+      width: auto;
+      height: auto;
+      white-space: nowrap;
+      visibility: hidden;
+    }
+  }
+}
+
+:host ::ng-deep {
+  .tb-switch {
+    .switch {
+      mat-slide-toggle {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        margin: 0;
+
+        .mat-slide-toggle-bar {
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: $thumb-bar-img no-repeat;
+          background-size: contain;
+          border-radius: 0;
+        }
+
+        .mat-slide-toggle-thumb-container {
+          top: 5%;
+          left: .25%;
+          width: 50%;
+          height: 90%;
+        }
+
+        .mat-slide-toggle-label{
+          height: 100%;
+        }
+        .mat-slide-toggle-thumb {
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: $thumb-img no-repeat;
+          background-size: contain;
+          border-radius: 0;
+          box-shadow: none;
+        }
+
+        &.mat-checked {
+          .mat-slide-toggle-thumb-container {
+            transform: translate3d(100%,0,0);
+          }
+          .mat-slide-toggle-bar {
+            background: $thumb-bar-checked-img no-repeat;
+            background-size: contain;
+          }
+
+          .mat-slide-toggle-thumb {
+            background: $thumb-checked-img no-repeat;
+            background-size: contain;
+          }
+        }
+      }
+    }
+  }
+}

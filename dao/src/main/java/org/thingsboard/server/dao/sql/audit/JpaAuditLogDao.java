@@ -17,35 +17,25 @@ package org.thingsboard.server.dao.sql.audit;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.audit.AuditLogDao;
 import org.thingsboard.server.dao.model.sql.AuditLogEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTimeDao;
-import org.thingsboard.server.dao.util.SqlDao;
 
-import javax.persistence.criteria.Predicate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
-
 @Component
-@SqlDao
 public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> implements AuditLogDao {
 
     @Autowired
@@ -57,7 +47,7 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
     }
 
     @Override
-    protected CrudRepository<AuditLogEntity, String> getCrudRepository() {
+    protected CrudRepository<AuditLogEntity, UUID> getCrudRepository() {
         return auditLogRepository;
     }
 
@@ -70,78 +60,57 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
     }
 
     @Override
-    public ListenableFuture<Void> saveByTenantIdAndEntityId(AuditLog auditLog) {
-        return service.submit(() -> null);
+    public PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                auditLogRepository
+                        .findAuditLogsByTenantIdAndEntityId(
+                                tenantId,
+                                entityId.getEntityType(),
+                                entityId.getId(),
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
+                                actionTypes,
+                                DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public ListenableFuture<Void> saveByTenantIdAndCustomerId(AuditLog auditLog) {
-        return service.submit(() -> null);
+    public PageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(UUID tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                auditLogRepository
+                        .findAuditLogsByTenantIdAndCustomerId(
+                                tenantId,
+                                customerId.getId(),
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
+                                actionTypes,
+                                DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public ListenableFuture<Void> saveByTenantIdAndUserId(AuditLog auditLog) {
-        return service.submit(() -> null);
+    public PageData<AuditLog> findAuditLogsByTenantIdAndUserId(UUID tenantId, UserId userId, List<ActionType> actionTypes, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                auditLogRepository
+                        .findAuditLogsByTenantIdAndUserId(
+                                tenantId,
+                                userId.getId(),
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
+                                actionTypes,
+                                DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public ListenableFuture<Void> savePartitionsByTenantId(AuditLog auditLog) {
-        return service.submit(() -> null);
-    }
-
-    @Override
-    public List<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink) {
-        return findAuditLogs(tenantId, entityId, null, null, actionTypes, pageLink);
-    }
-
-    @Override
-    public List<AuditLog> findAuditLogsByTenantIdAndCustomerId(UUID tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink) {
-        return findAuditLogs(tenantId, null, customerId, null, actionTypes, pageLink);
-    }
-
-    @Override
-    public List<AuditLog> findAuditLogsByTenantIdAndUserId(UUID tenantId, UserId userId, List<ActionType> actionTypes, TimePageLink pageLink) {
-        return findAuditLogs(tenantId, null, null, userId, actionTypes, pageLink);
-    }
-
-    @Override
-    public List<AuditLog> findAuditLogsByTenantId(UUID tenantId, List<ActionType> actionTypes, TimePageLink pageLink) {
-        return findAuditLogs(tenantId, null, null, null, actionTypes, pageLink);
-    }
-
-    private List<AuditLog> findAuditLogs(UUID tenantId, EntityId entityId, CustomerId customerId, UserId userId, List<ActionType> actionTypes, TimePageLink pageLink) {
-        Specification<AuditLogEntity> timeSearchSpec = JpaAbstractSearchTimeDao.getTimeSearchPageSpec(pageLink, "id");
-        Specification<AuditLogEntity> fieldsSpec = getEntityFieldsSpec(tenantId, entityId, customerId, userId, actionTypes);
-        Sort.Direction sortDirection = pageLink.isAscOrder() ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(0, pageLink.getLimit(), sortDirection, ID_PROPERTY);
-        return DaoUtil.convertDataList(auditLogRepository.findAll(Specification.where(timeSearchSpec).and(fieldsSpec), pageable).getContent());
-    }
-
-    private Specification<AuditLogEntity> getEntityFieldsSpec(UUID tenantId, EntityId entityId, CustomerId customerId, UserId userId, List<ActionType> actionTypes) {
-        return (root, criteriaQuery, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (tenantId != null) {
-                Predicate tenantIdPredicate = criteriaBuilder.equal(root.get("tenantId"), UUIDConverter.fromTimeUUID(tenantId));
-                predicates.add(tenantIdPredicate);
-            }
-            if (entityId != null) {
-                Predicate entityTypePredicate = criteriaBuilder.equal(root.get("entityType"), entityId.getEntityType());
-                predicates.add(entityTypePredicate);
-                Predicate entityIdPredicate = criteriaBuilder.equal(root.get("entityId"), UUIDConverter.fromTimeUUID(entityId.getId()));
-                predicates.add(entityIdPredicate);
-            }
-            if (customerId != null) {
-                Predicate customerIdPredicate = criteriaBuilder.equal(root.get("customerId"), UUIDConverter.fromTimeUUID(customerId.getId()));
-                predicates.add(customerIdPredicate);
-            }
-            if (userId != null) {
-                Predicate userIdPredicate = criteriaBuilder.equal(root.get("userId"), UUIDConverter.fromTimeUUID(userId.getId()));
-                predicates.add(userIdPredicate);
-            }
-            if (actionTypes != null && !actionTypes.isEmpty()) {
-                predicates.add(root.get("actionType").in(actionTypes));
-            }
-            return criteriaBuilder.and(predicates.toArray(new Predicate[]{}));
-        };
+    public PageData<AuditLog> findAuditLogsByTenantId(UUID tenantId, List<ActionType> actionTypes, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                auditLogRepository.findByTenantId(
+                        tenantId,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getStartTime(),
+                        pageLink.getEndTime(),
+                        actionTypes,
+                        DaoUtil.toPageable(pageLink)));
     }
 }

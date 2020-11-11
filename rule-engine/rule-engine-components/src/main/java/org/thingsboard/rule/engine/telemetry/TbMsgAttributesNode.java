@@ -40,7 +40,7 @@ import java.util.Set;
         configClazz = TbMsgAttributesNodeConfiguration.class,
         nodeDescription = "Saves attributes data",
         nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type",
-        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeAttributesConfig",
         icon = "file_upload"
 )
@@ -70,8 +70,8 @@ public class TbMsgAttributesNode implements TbNode {
                 msg.getOriginator(),
                 config.getScope(),
                 new ArrayList<>(attributes),
-                new TelemetryNodeCallback(ctx, msg),
-                config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceStr) || Boolean.parseBoolean(notifyDeviceStr)
+                config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceStr) || Boolean.parseBoolean(notifyDeviceStr),
+                new TelemetryNodeCallback(ctx, msg)
         );
     }
 

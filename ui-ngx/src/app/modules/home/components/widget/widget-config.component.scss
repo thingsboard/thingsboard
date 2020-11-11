@@ -1,0 +1,122 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../../../../scss/constants';
+
+:host {
+  .tb-widget-config {
+    .tb-advanced-widget-config {
+      height: 100%;
+    }
+    .tb-advanced-widget-config {
+      height: 100%;
+    }
+    .tb-datasource-type {
+      min-width: 110px;
+      @media #{$mat-gt-sm} {
+        max-width: 110px;
+      }
+    }
+    .tb-datasource {
+      @media #{$mat-gt-sm} {
+        padding-left: 8px;
+      }
+    }
+    .tb-datasource-name {
+      @media #{$mat-gt-sm} {
+        width: 200px;
+        max-width: 200px;
+      }
+    }
+    .tb-data-keys {
+      @media #{$mat-gt-sm} {
+        padding-left: 8px;
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .tb-widget-config {
+    .mat-tab-body-wrapper {
+      position: absolute;
+      top: 49px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+    .tb-panel-hint {
+      font-size: 12px;
+      color: #808080;
+    }
+    //.mat-tab-body.mat-tab-body-active {
+    //  .mat-tab-body-content > div {
+    //    height: 100%;
+    //  }
+    //}
+    .mat-checkbox-label {
+      white-space: normal;
+    }
+    .mat-expansion-panel {
+      &.tb-datasources{
+        &.mat-expanded {
+          overflow: visible;
+        }
+        .mat-expansion-panel-body{
+          padding: 0 12px 16px;
+        }
+      }
+      .mat-expansion-panel-content {
+        font: inherit;
+      }
+    }
+    .tb-datasource-type {
+      .mat-form-field-infix {
+        width: 100%;
+      }
+      .mat-select-value {
+        min-width: 92px;
+      }
+    }
+    .tb-datasource {
+      tb-entity-alias-select {
+        .mat-form-field {
+          margin-top: 20px;
+        }
+        @media #{$mat-gt-sm} {
+          .mat-form-field {
+            width: 200px;
+            max-width: 200px;
+          }
+        }
+      }
+      tb-filter-select {
+        @media #{$mat-gt-sm} {
+          .mat-form-field {
+            width: 200px;
+            max-width: 200px;
+          }
+        }
+      }
+    }
+    .tb-data-keys {
+      @media #{$mat-gt-sm} {
+        .mat-input-element {
+          min-height: 32px;
+        }
+      }
+    }
+  }
+}

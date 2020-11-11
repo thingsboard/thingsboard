@@ -60,7 +60,7 @@ public class WidgetTypeController extends BaseController {
     @ResponseBody
     public WidgetType saveWidgetType(@RequestBody WidgetType widgetType) throws ThingsboardException {
         try {
-            if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN) {
+            if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
                 widgetType.setTenantId(TenantId.SYS_TENANT_ID);
             } else {
                 widgetType.setTenantId(getCurrentUser().getTenantId());
