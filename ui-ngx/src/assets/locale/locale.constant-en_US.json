@@ -885,6 +885,7 @@
         "no-device-profiles-found": "No device profiles found.",
         "create-new-device-profile": "Create a new one!",
         "mqtt-device-topic-filters": "MQTT device topic filters",
+        "mqtt-device-topic-filters-unique": "MQTT device topic filters need to be unique.",
         "mqtt-device-payload-type": "MQTT device payload",
         "mqtt-device-payload-type-json": "JSON",
         "mqtt-device-payload-type-proto": "Protobuf",
