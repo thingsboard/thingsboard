@@ -39,6 +39,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxDPStorageDays;
     private int maxRuleNodeExecutionsPerMessage;
 
+    private double warnThreshold;
+
     @Override
     public long getProfileThreshold(ApiUsageRecordKey key) {
         switch (key) {
@@ -56,6 +58,10 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
         return 0L;
     }
 
+    @Override
+    public long getWarnThreshold(ApiUsageRecordKey key) {
+        return (long) (getProfileThreshold(key) * (warnThreshold > 0.0 ? warnThreshold : 0.8));
+    }
 
     @Override
     public TenantProfileType getType() {
