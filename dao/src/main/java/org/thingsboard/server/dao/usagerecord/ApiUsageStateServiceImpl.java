@@ -86,13 +86,13 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
         TenantProfileConfiguration configuration = tenantProfile.getProfileData().getConfiguration();
         List<TsKvEntry> apiUsageStates = new ArrayList<>();
-        apiUsageStates.add(new BasicTsKvEntry(apiUsageState.getCreatedTime(),
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.TRANSPORT.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
-        apiUsageStates.add(new BasicTsKvEntry(apiUsageState.getCreatedTime(),
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.DB.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
-        apiUsageStates.add(new BasicTsKvEntry(apiUsageState.getCreatedTime(),
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.RE.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
-        apiUsageStates.add(new BasicTsKvEntry(apiUsageState.getCreatedTime(),
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.JS.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
         tsService.save(tenantId, saved.getId(), apiUsageStates, 0L);
 
