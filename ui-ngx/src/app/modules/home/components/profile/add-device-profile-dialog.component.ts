@@ -48,6 +48,7 @@ import { MatHorizontalStepper } from '@angular/material/stepper';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { deepTrim } from '@core/utils';
+import {ServiceType} from "@shared/models/queue.models";
 
 export interface AddDeviceProfileDialogData {
   deviceProfileName: string;
@@ -89,6 +90,8 @@ export class AddDeviceProfileDialogComponent extends
 
   provisionConfigFormGroup: FormGroup;
 
+  serviceType = ServiceType.TB_RULE_ENGINE;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AddDeviceProfileDialogData,
@@ -104,6 +107,7 @@ export class AddDeviceProfileDialogComponent extends
         name: [data.deviceProfileName, [Validators.required]],
         type: [DeviceProfileType.DEFAULT, [Validators.required]],
         defaultRuleChainId: [null, []],
+        defaultQueueName: ['', []],
         description: ['', []]
       }
     );

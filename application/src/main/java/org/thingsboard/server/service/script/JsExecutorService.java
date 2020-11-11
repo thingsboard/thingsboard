@@ -27,7 +27,7 @@ public class JsExecutorService extends AbstractListeningExecutor {
 
     @Override
     protected int getThreadPollSize() {
-        return jsExecutorThreadPoolSize;
+        return Math.max(jsExecutorThreadPoolSize, 1);
     }
 
 }

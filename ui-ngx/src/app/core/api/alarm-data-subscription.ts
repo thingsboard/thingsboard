@@ -52,6 +52,7 @@ export interface AlarmDataSubscriptionOptions {
 
 export class AlarmDataSubscription {
 
+  private alarmDataSubscriptionOptions = this.listener.alarmDataSubscriptionOptions;
   private datasourceType: DatasourceType = this.alarmDataSubscriptionOptions.datasourceType;
 
   private history: boolean;
@@ -65,8 +66,7 @@ export class AlarmDataSubscription {
 
   private subsTw: SubscriptionTimewindow;
 
-  constructor(public alarmDataSubscriptionOptions: AlarmDataSubscriptionOptions,
-              private listener: AlarmDataListener,
+  constructor(private listener: AlarmDataListener,
               private telemetryService: TelemetryService) {
   }
 

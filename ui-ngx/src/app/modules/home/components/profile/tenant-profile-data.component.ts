@@ -62,7 +62,7 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit 
 
   ngOnInit() {
     this.tenantProfileDataFormGroup = this.fb.group({
-      tenantProfileData: [null, Validators.required]
+      configuration: [null, Validators.required]
     });
     this.tenantProfileDataFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -79,13 +79,13 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit 
   }
 
   writeValue(value: TenantProfileData | null): void {
-    this.tenantProfileDataFormGroup.get('tenantProfileData').patchValue(value, {emitEvent: false});
+    this.tenantProfileDataFormGroup.patchValue({configuration: value?.configuration}, {emitEvent: false});
   }
 
   private updateModel() {
     let tenantProfileData: TenantProfileData = null;
     if (this.tenantProfileDataFormGroup.valid) {
-      tenantProfileData = this.tenantProfileDataFormGroup.getRawValue().tenantProfileData;
+      tenantProfileData = this.tenantProfileDataFormGroup.getRawValue();
     }
     this.propagateChange(tenantProfileData);
   }
