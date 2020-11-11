@@ -34,10 +34,15 @@ public class MqttTopicFilterFactory {
         }
         return filters.computeIfAbsent(topicFilter, filter -> {
             if (filter.contains("+") || filter.contains("#")) {
-                String regex = filter
-                        .replace("\\", "\\\\")
-                        .replace("+", "[^/]+")
-                        .replace("/#", "($|/.*)");
+                String regex;
+                if (filter.equals("#")) {
+                    regex = filter.replace("#", "^(?!/).+");
+                } else {
+                    regex = filter
+                            .replace("\\", "\\\\")
+                            .replace("+", "[^/]+")
+                            .replace("/#", "($|/.*)");
+                }
                 log.debug("Converting [{}] to [{}]", filter, regex);
                 return new RegexTopicFilter(regex);
             } else {
