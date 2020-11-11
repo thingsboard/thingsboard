@@ -16,13 +16,13 @@
 
 -->
 <div fxLayout="column" fxLayoutAlign="center center" class="tb-web-camera" tb-fullscreen [fullscreen]="isShowCamera">
-  <div *ngIf="isEntityDetected && dataKeyDetected && isCameraSupport && isDeviceDetect" fxFlexFill>
+  <div *ngIf="isEntityDetected && dataKeyDetected && isCameraSupport && isProtocolHttps" class="image-container">
     <div [fxShow]="!isShowCamera" fxLayout="column" fxLayoutAlign="space-between center" fxFlexFill>
       <div class="tb-web-camera__last-photo" fxFlex>
         <span [fxShow]="!lastPhoto" class="tb-web-camera__last-photo_text" translate>widgets.input-widgets.no-image</span>
         <img [fxShow]="lastPhoto" class="tb-web-camera__last-photo_img" [src]="lastPhoto" alt="last photo"/>
       </div>
-      <button mat-raised-button color="primary" (click)="takePhoto()">
+      <button mat-raised-button color="primary" (click)="takePhoto()" *ngIf="!textMessage">
         {{ "widgets.input-widgets.take-photo" | translate }}
       </button>
     </div>
@@ -59,16 +59,7 @@
       </div>
     </div>
   </div>
-  <div class="message-text" *ngIf="!isEntityDetected">
-    {{ 'widgets.input-widgets.no-entity-selected' | translate }}
-  </div>
-  <div class="message-text" *ngIf="isEntityDetected && !dataKeyDetected">
-    {{ 'widgets.input-widgets.no-datakey-selected' | translate }}
-  </div>
-  <div class="message-text" *ngIf="isEntityDetected && dataKeyDetected && !isCameraSupport">
-    {{ 'widgets.input-widgets.no-support-web-camera' | translate }}
-  </div>
-  <div class="message-text" *ngIf="isEntityDetected && dataKeyDetected && isCameraSupport && !isDeviceDetect">
-    {{ 'widgets.input-widgets.no-support-web-camera' | translate }}
+  <div class="message-text" *ngIf="textMessage">
+    {{ textMessage | translate }}
   </div>
 </div>
