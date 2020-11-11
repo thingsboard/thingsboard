@@ -30,9 +30,10 @@ public class MqttTopicFilterFactoryTest {
     private static String TEST_STR_1 = "Sensor/Temperature/House/48";
     private static String TEST_STR_2 = "Sensor/Temperature";
     private static String TEST_STR_3 = "Sensor/Temperature2/House/48";
-
-    private static String TEST_STR_4 = String.format("%s%n%s", "/Sensor/Temperature", "/House/48");
-    private static String TEST_STR_5 = "/" + TEST_STR_1;
+    private static String TEST_STR_4 = "/Sensor/Temperature2/House/48";
+    private static String TEST_STR_5 = String.format("%s%n%s", "/Sensor/Temperature", "/House/48");
+    private static String TEST_STR_6 = "";
+    private static String TEST_STR_7 = " ";
 
     @Test
     public void metadataCanBeUpdated() throws ScriptException {
@@ -58,8 +59,10 @@ public class MqttTopicFilterFactoryTest {
         assertTrue(filter.filter(TEST_STR_1));
         assertTrue(filter.filter(TEST_STR_2));
         assertTrue(filter.filter(TEST_STR_3));
-        assertFalse(filter.filter(TEST_STR_4));
+        assertTrue(filter.filter(TEST_STR_4));
         assertFalse(filter.filter(TEST_STR_5));
+        assertFalse(filter.filter(TEST_STR_6));
+        assertFalse(filter.filter(TEST_STR_7));
     }
 
 }
