@@ -29,12 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.MqttProtoDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -204,5 +199,4 @@ public class DeviceProfileController extends BaseController {
             throw handleException(e);
         }
     }
-
 }

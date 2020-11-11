@@ -32,7 +32,7 @@ import java.util.Arrays;
         "org.thingsboard.server.mqtt.attributes.updates.sql.*Test",
         "org.thingsboard.server.mqtt.attributes.request.sql.*Test",
         "org.thingsboard.server.mqtt.claim.sql.*Test",
-        "org.thingsboard.server.mqtt.provision.sql.*Test",
+        "org.thingsboard.server.mqtt.provision.sql.*Test"
 })
 public class MqttSqlTestSuite {
 
