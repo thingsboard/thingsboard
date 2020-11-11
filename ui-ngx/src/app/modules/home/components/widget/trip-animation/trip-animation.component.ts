@@ -241,11 +241,6 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   calcLabel(formattedDataArr: FormattedData[]) {
-    // const data = this.activeTrip;
-    // const labelText: string = this.settings.useLabelFunction ?
-    //   safeExecute(this.settings.labelFunction, [data, this.historicalData, data.dsIndex]) : this.settings.label;
-    // this.label = (parseWithTranslation.parseTemplate(labelText, data, true));
-    // console.log(this.label, 'this.label');
     this.label = '';
     for (let formattedData of formattedDataArr) {
       const data = formattedData;
