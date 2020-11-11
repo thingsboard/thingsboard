@@ -237,7 +237,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
     @Override
     public void onTenantUpdate(TenantId tenantId) {
-        log.info("[{}] On Tenant Update", tenantId);
+        log.info("[{}] On Tenant Update.", tenantId);
         TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
         updateLock.lock();
         try {
@@ -251,7 +251,6 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
     }
 
     private void updateTenantState(TenantApiUsageState state, TenantProfile profile) {
-        log.info("[{}] On Tenant Update.", state.getTenantId());
         TenantProfileData oldProfileData = state.getTenantProfileData();
         state.setTenantProfileId(profile.getId());
         state.setTenantProfileData(profile.getProfileData());
