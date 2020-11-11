@@ -76,7 +76,7 @@
             <artifactId>wire-schema</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.os72</groupId>
+            <groupId>org.thingsboard</groupId>
             <artifactId>protobuf-dynamic</artifactId>
         </dependency>
     </dependencies>

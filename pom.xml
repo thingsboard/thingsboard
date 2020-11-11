@@ -106,7 +106,7 @@
         <commons-collections.version>3.2.2</commons-collections.version>
         <java-websocket.version>1.5.0</java-websocket.version>
         <micrometer.version>1.5.2</micrometer.version>
-        <protobuf-dynamic.version>1.0.2</protobuf-dynamic.version>
+        <protobuf-dynamic.version>1.0.2TB</protobuf-dynamic.version>
         <wire-schema.version>3.4.0</wire-schema.version>
     </properties>
 
@@ -1372,7 +1372,7 @@
                 <version>${micrometer.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.github.os72</groupId>
+                <groupId>org.thingsboard</groupId>
                 <artifactId>protobuf-dynamic</artifactId>
                 <version>${protobuf-dynamic.version}</version>
             </dependency>
