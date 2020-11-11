@@ -131,10 +131,13 @@ export default abstract class LeafletMap {
                       tooltipAnchor: [16, -28],
                       shadowSize: [41, 41]
                     });
+                    const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
+                    mousePositionOnMap.lat = customLatLng[this.options.latKeyName];
+                    mousePositionOnMap.lng = customLatLng[this.options.lngKeyName];
+
                     const newMarker = L.marker(mousePositionOnMap, { icon }).addTo(this.map);
                     this.addMarkers.push(newMarker);
                     const datasourcesList = document.createElement('div');
-                    const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
                     const header = document.createElement('p');
                     header.appendChild(document.createTextNode('Select entity:'));
                     header.setAttribute('style', 'font-size: 14px; margin: 8px 0');
@@ -410,10 +413,15 @@ export default abstract class LeafletMap {
     }
 
     convertToCustomFormat(position: L.LatLng): object {
-        return {
-            [this.options.latKeyName]: position.lat % 90,
-            [this.options.lngKeyName]: position.lng % 180
-        };
+      if(position.lng > 180){
+        position.lng = 180;
+      }else if(position.lng < -180){
+        position.lng = -180;
+      };
+      return {
+        [this.options.latKeyName]: position.lat,
+        [this.options.lngKeyName]: position.lng
+      };
     }
 
     convertToPolygonFormat(points: Array<any>): Array<any> {

@@ -258,10 +258,29 @@ export class ImageMap extends LeafletMap {
     }
 
     convertToCustomFormat(position: L.LatLng, width = this.width, height = this.height): object {
-      const point = this.latLngToPoint(position);
+      let point = this.latLngToPoint(position);
+      const customX = calculateNewPointCoordinate(point.x, width);
+      const customY = calculateNewPointCoordinate(point.y, height);
+
+      if(customX === 0){
+        point.x = 0;
+      } else if(customX === 1){
+        point.x = width;
+      }
+
+      if(customY === 0){
+        point.y = 0;
+      } else if(customY === 1){
+        point.y = height;
+      }
+
+      const customLatLng = this.pointToLatLng(point.x,point.y)
+
       return {
-        [this.options.xPosKeyName]: calculateNewPointCoordinate(point.x, width),
-        [this.options.yPosKeyName]: calculateNewPointCoordinate(point.y, height)
+        [this.options.xPosKeyName]: customX,
+        [this.options.yPosKeyName]: customY,
+        [this.options.latKeyName]:customLatLng.lat,
+        [this.options.lngKeyName]:customLatLng.lng
       };
     }
 
