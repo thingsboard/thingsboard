@@ -80,7 +80,9 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
         return telemetryTopicFilter.filter(topicName);
     }
 
-    public boolean isDeviceAttributesTopic(String topicName) { return attributesTopicFilter.filter(topicName); }
+    public boolean isDeviceAttributesTopic(String topicName) {
+        return attributesTopicFilter.filter(topicName);
+    }
 
     public MqttTransportAdaptor getPayloadAdaptor() {
         return payloadType.equals(TransportPayloadType.JSON) ? context.getJsonMqttAdaptor() : context.getProtoMqttAdaptor();

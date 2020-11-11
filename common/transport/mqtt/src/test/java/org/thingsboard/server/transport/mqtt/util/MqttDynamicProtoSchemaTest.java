@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.mqtt.proto;
+package org.thingsboard.server.transport.mqtt.util;
 
 import com.github.os72.protobuf.dynamic.DynamicSchema;
 import com.google.protobuf.Descriptors;
@@ -22,7 +22,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import com.squareup.wire.schema.internal.parser.ProtoParser;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -38,9 +37,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.thingsboard.server.common.data.device.profile.MqttProtoDeviceProfileTransportConfiguration.LOCATION;
 
-@Slf4j
 @RunWith(MockitoJUnitRunner.class)
-public class DynamicProtoTest {
+public class MqttDynamicProtoSchemaTest {
 
     private static final String PROTO_SCHEMA_WITH_NESTED_MSG_TYPES = "syntax = \"proto3\";\n" +
             "\n" +
