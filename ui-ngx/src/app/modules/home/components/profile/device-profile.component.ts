@@ -38,6 +38,7 @@ import {
 } from '@shared/models/device.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
+import {ServiceType} from "@shared/models/queue.models";
 
 @Component({
   selector: 'tb-device-profile',
@@ -62,6 +63,8 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
   displayProfileConfiguration: boolean;
 
   displayTransportConfiguration: boolean;
+
+  serviceType = ServiceType.TB_RULE_ENGINE;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -101,6 +104,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
           provisionConfiguration: [deviceProvisionConfiguration, Validators.required]
         }),
         defaultRuleChainId: [entity && entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null, []],
+        defaultQueueName: [entity ? entity.defaultQueueName : '', []],
         description: [entity ? entity.description : '', []],
       }
     );
@@ -174,6 +178,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
       provisionConfiguration: deviceProvisionConfiguration
     }});
     this.entityForm.patchValue({defaultRuleChainId: entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null});
+    this.entityForm.patchValue({defaultQueueName: entity.defaultQueueName});
     this.entityForm.patchValue({description: entity.description});
   }
 

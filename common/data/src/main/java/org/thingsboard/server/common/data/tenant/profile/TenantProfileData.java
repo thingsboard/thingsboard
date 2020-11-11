@@ -13,30 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.common.data.tenant.profile;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Data
 public class TenantProfileData {
 
-    @JsonIgnore
-    private Map<String, Object> properties = new HashMap<>();
-
-    @JsonAnyGetter
-    public Map<String, Object> properties() {
-        return this.properties;
-    }
-
-    @JsonAnySetter
-    public void put(String name, Object value) {
-        this.properties.put(name, value);
-    }
+    private TenantProfileConfiguration configuration;
 
 }

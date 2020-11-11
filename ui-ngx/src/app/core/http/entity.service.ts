@@ -753,6 +753,9 @@ export class EntityService {
       case AliasFilterType.entityViewType:
         result.entityFilter = deepClone(filter);
         return of(result);
+      case AliasFilterType.apiUsageState:
+        result.entityFilter = deepClone(filter);
+        return of(result);
       case AliasFilterType.relationsQuery:
         result.stateEntity = filter.rootStateEntity;
         let rootEntityType;

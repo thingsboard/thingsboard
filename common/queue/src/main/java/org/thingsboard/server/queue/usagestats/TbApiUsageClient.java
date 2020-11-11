@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.profile;
+package org.thingsboard.server.queue.usagestats;
 
-import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.TenantProfileId;
 
-public interface TbTenantProfileCache {
+public interface TbApiUsageClient {
 
-    TenantProfile get(TenantId tenantId);
+    void report(TenantId tenantId, ApiUsageRecordKey key, long value);
 
-    TenantProfile get(TenantProfileId tenantProfileId);
-
-    void put(TenantProfile profile);
-
-    void evict(TenantProfileId id);
-
-    void evict(TenantId id);
+    void report(TenantId tenantId, ApiUsageRecordKey key);
 
 }

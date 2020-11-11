@@ -112,6 +112,8 @@ import { AlarmScheduleInfoComponent } from './profile/alarm/alarm-schedule-info.
 import { AlarmScheduleDialogComponent } from '@home/components/profile/alarm/alarm-schedule-dialog.component';
 import { EditAlarmDetailsDialogComponent } from './profile/alarm/edit-alarm-details-dialog.component';
 import { AlarmRuleConditionDialogComponent } from '@home/components/profile/alarm/alarm-rule-condition-dialog.component';
+import { DefaultTenantProfileConfigurationComponent } from './profile/tenant/default-tenant-profile-configuration.component';
+import { TenantProfileConfigurationComponent } from './profile/tenant/tenant-profile-configuration.component';
 import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/device/lwm2m/lwm2m-device-profile-transport-configuration.component';
 import { Lwm2mObjectListComponent } from './profile/device/lwm2m/lwm2m-object-list.component';
 import { Lwm2mObserveAttrTelemetryComponent } from './profile/device/lwm2m/lwm2m-observe-attr-telemetry.component';
@@ -186,6 +188,8 @@ import { Lwm2mDeviceConfigServerComponent } from './profile/device/lwm2m/lwm2m-d
       FilterUserInfoDialogComponent,
       FilterPredicateValueComponent,
       TenantProfileAutocompleteComponent,
+      DefaultTenantProfileConfigurationComponent,
+      TenantProfileConfigurationComponent,
       TenantProfileDataComponent,
       TenantProfileComponent,
       TenantProfileDialogComponent,
@@ -213,7 +217,6 @@ import { Lwm2mDeviceConfigServerComponent } from './profile/device/lwm2m/lwm2m-d
       DeviceCredentialsComponent,
       AlarmScheduleDialogComponent,
       EditAlarmDetailsDialogComponent,
-      RuleChainAutocompleteComponent,
       Lwm2mDeviceProfileTransportConfigurationComponent,
       Lwm2mObjectListComponent,
       Lwm2mObserveAttrTelemetryComponent,
@@ -304,7 +307,6 @@ import { Lwm2mDeviceConfigServerComponent } from './profile/device/lwm2m/lwm2m-d
     EditAlarmDetailsDialogComponent,
     DeviceProfileProvisionConfigurationComponent,
     AlarmScheduleComponent,
-    RuleChainAutocompleteComponent,
     Lwm2mDeviceProfileTransportConfigurationComponent,
     Lwm2mObjectListComponent,
     Lwm2mObserveAttrTelemetryComponent,

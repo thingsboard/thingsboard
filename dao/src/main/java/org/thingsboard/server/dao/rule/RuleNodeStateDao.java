@@ -35,4 +35,6 @@ public interface RuleNodeStateDao extends Dao<RuleNodeState> {
     RuleNodeState findByRuleNodeIdAndEntityId(UUID ruleNodeId, UUID entityId);
 
     void removeByRuleNodeId(UUID ruleNodeId);
+
+    void removeByRuleNodeIdAndEntityId(UUID ruleNodeId, UUID entityId);
 }

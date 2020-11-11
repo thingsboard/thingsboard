@@ -45,4 +45,5 @@ message TbMsgProto {
     string data = 14;
 
     int64 ts = 15;
+    int32 ruleNodeExecCounter = 16;
 }

@@ -26,6 +26,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
@@ -44,12 +45,14 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.ArrayList;
@@ -89,6 +92,10 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
 
     @Autowired
     private CacheManager cacheManager;
+
+    @Autowired
+    @Lazy
+    private TbTenantProfileCache tenantProfileCache;
 
     @Override
     public AssetInfo findAssetInfoById(TenantId tenantId, AssetId assetId) {
@@ -320,6 +327,15 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
 
                 @Override
                 protected void validateCreate(TenantId tenantId, Asset asset) {
+                    DefaultTenantProfileConfiguration profileConfiguration =
+                            (DefaultTenantProfileConfiguration)tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
+                    long maxAssets = profileConfiguration.getMaxAssets();
+                    if (maxAssets > 0) {
+                        long currentAssetsCount = assetDao.countAssetsByTenantId(tenantId);
+                        if (maxAssets >= currentAssetsCount) {
+                            throw new DataValidationException("Can't create assets more then " + maxAssets);
+                        }
+                    }
                 }
 
                 @Override

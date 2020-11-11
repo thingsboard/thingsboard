@@ -19,8 +19,9 @@ import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { forkJoin, Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EntityId } from '@shared/models/id/entity-id';
-import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { AttributeData, AttributeScope, DataSortOrder, TimeseriesData } from '@shared/models/telemetry/telemetry.models';
 import { isDefinedAndNotNull } from '@core/utils';
+import { AggregationType } from '@shared/models/time/time.models';
 
 @Injectable({
   providedIn: 'root'
@@ -109,5 +110,29 @@ export class AttributeService {
       saveEntityTimeseriesObservable = of(null);
     }
     return forkJoin([saveEntityTimeseriesObservable, deleteEntityTimeseriesObservable]);
+  }
+
+  public getEntityTimeseries(entityId: EntityId, keys: Array<string>, startTs: number, endTs: number,
+                             limit: number = 100, agg: AggregationType = AggregationType.NONE, interval?: number,
+                             orderBy: DataSortOrder = DataSortOrder.DESC, useStrictDataTypes: boolean = false,
+                             config?: RequestConfig): Observable<TimeseriesData> {
+    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/timeseries?keys=${keys.join(',')}&startTs=${startTs}&endTs=${endTs}`;
+    if (isDefinedAndNotNull(limit)) {
+      url += `&limit=${limit}`;
+    }
+    if (isDefinedAndNotNull(agg)) {
+      url += `&agg=${agg}`;
+    }
+    if (isDefinedAndNotNull(interval)) {
+      url += `&interval=${interval}`;
+    }
+    if (isDefinedAndNotNull(orderBy)) {
+      url += `&orderBy=${orderBy}`;
+    }
+    if (isDefinedAndNotNull(useStrictDataTypes)) {
+      url += `&useStrictDataTypes=${useStrictDataTypes}`;
+    }
+
+    return this.http.get<TimeseriesData>(url, defaultHttpOptionsFromConfig(config));
   }
 }
