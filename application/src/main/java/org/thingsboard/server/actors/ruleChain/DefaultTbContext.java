@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -73,6 +74,7 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -257,26 +259,26 @@ class DefaultTbContext implements TbContext {
     }
 
     public TbMsg customerCreatedMsg(Customer customer, RuleNodeId ruleNodeId) {
-        return entityCreatedMsg(customer, customer.getId(), ruleNodeId);
+        return entityActionMsg(customer, customer.getId(), ruleNodeId, DataConstants.ENTITY_CREATED);
     }
 
     public TbMsg deviceCreatedMsg(Device device, RuleNodeId ruleNodeId) {
-        return entityCreatedMsg(device, device.getId(), ruleNodeId);
+        return entityActionMsg(device, device.getId(), ruleNodeId, DataConstants.ENTITY_CREATED);
     }
 
     public TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId) {
-        return entityCreatedMsg(asset, asset.getId(), ruleNodeId);
+        return entityActionMsg(asset, asset.getId(), ruleNodeId, DataConstants.ENTITY_CREATED);
     }
 
-    public TbMsg alarmCreatedMsg(Alarm alarm, RuleNodeId ruleNodeId) {
-        return entityCreatedMsg(alarm, alarm.getId(), ruleNodeId);
+    public TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action) {
+        return entityActionMsg(alarm, alarm.getId(), ruleNodeId, action);
     }
 
-    public <E, I extends EntityId> TbMsg entityCreatedMsg(E entity, I id, RuleNodeId ruleNodeId) {
+    public <E, I extends EntityId> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, String action) {
         try {
-            return TbMsg.newMsg(DataConstants.ENTITY_CREATED, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)));
+            return TbMsg.newMsg(action, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)));
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " created msg: " + e);
+            throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " " + action + " msg: " + e);
         }
     }
 
@@ -312,7 +314,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public ScriptEngine createJsScriptEngine(String script, String... argNames) {
-        return new RuleNodeJsScriptEngine(mainCtx.getJsSandbox(), nodeCtx.getSelf().getId(), script, argNames);
+        return new RuleNodeJsScriptEngine(getTenantId(), mainCtx.getJsSandbox(), nodeCtx.getSelf().getId(), script, argNames);
     }
 
     @Override
@@ -479,8 +481,16 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void addProfileListener(Consumer<DeviceProfile> listener) {
-        mainCtx.getDeviceProfileCache().addListener(getTenantId(), getSelfId(), listener);
+    public void removeRuleNodeStateForEntity(EntityId entityId) {
+        if (log.isDebugEnabled()) {
+            log.debug("[{}][{}][{}] Remove Rule Node State for entity.", getTenantId(), getSelfId(), entityId);
+        }
+        mainCtx.getRuleNodeStateService().removeByRuleNodeIdAndEntityId(getTenantId(), getSelfId(), entityId);
+    }
+
+    @Override
+    public void addDeviceProfileListeners(Consumer<DeviceProfile> profileListener, BiConsumer<DeviceId, DeviceProfile> deviceListener) {
+        mainCtx.getDeviceProfileCache().addListener(getTenantId(), getSelfId(), profileListener, deviceListener);
     }
 
     @Override

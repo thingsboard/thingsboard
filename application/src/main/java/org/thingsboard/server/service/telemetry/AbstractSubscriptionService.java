@@ -105,10 +105,10 @@ public abstract class AbstractSubscriptionService implements ApplicationListener
         }
     }
 
-    protected void addWsCallback(ListenableFuture<List<Void>> saveFuture, Consumer<Void> callback) {
-        Futures.addCallback(saveFuture, new FutureCallback<List<Void>>() {
+    protected <T> void addWsCallback(ListenableFuture<T> saveFuture, Consumer<T> callback) {
+        Futures.addCallback(saveFuture, new FutureCallback<T>() {
             @Override
-            public void onSuccess(@Nullable List<Void> result) {
+            public void onSuccess(@Nullable T result) {
                 callback.accept(null);
             }
 

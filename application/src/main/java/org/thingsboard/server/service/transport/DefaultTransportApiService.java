@@ -25,6 +25,7 @@ import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -51,7 +52,6 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
@@ -68,9 +68,10 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509Ce
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.profile.TbTenantProfileCache;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
@@ -92,6 +93,7 @@ public class DefaultTransportApiService implements TransportApiService {
 
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbTenantProfileCache tenantProfileCache;
+    private final TbApiUsageStateService apiUsageStateService;
     private final DeviceService deviceService;
     private final RelationService relationService;
     private final DeviceCredentialsService deviceCredentialsService;
@@ -104,13 +106,14 @@ public class DefaultTransportApiService implements TransportApiService {
     private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentHashMap<>();
 
     public DefaultTransportApiService(TbDeviceProfileCache deviceProfileCache,
-                                      TbTenantProfileCache tenantProfileCache, DeviceService deviceService,
+                                      TbTenantProfileCache tenantProfileCache, TbApiUsageStateService apiUsageStateService, DeviceService deviceService,
                                       RelationService relationService, DeviceCredentialsService deviceCredentialsService,
                                       DeviceStateService deviceStateService, DbCallbackExecutorService dbCallbackExecutorService,
                                       TbClusterService tbClusterService, DataDecodingEncodingService dataDecodingEncodingService,
                                       DeviceProvisionService deviceProvisionService) {
         this.deviceProfileCache = deviceProfileCache;
         this.tenantProfileCache = tenantProfileCache;
+        this.apiUsageStateService = apiUsageStateService;
         this.deviceService = deviceService;
         this.relationService = relationService;
         this.deviceCredentialsService = deviceCredentialsService;
@@ -316,18 +319,21 @@ public class DefaultTransportApiService implements TransportApiService {
     private ListenableFuture<TransportApiResponseMsg> handle(GetEntityProfileRequestMsg requestMsg) {
         EntityType entityType = EntityType.valueOf(requestMsg.getEntityType());
         UUID entityUuid = new UUID(requestMsg.getEntityIdMSB(), requestMsg.getEntityIdLSB());
-        ByteString data;
+        GetEntityProfileResponseMsg.Builder builder = GetEntityProfileResponseMsg.newBuilder();
         if (entityType.equals(EntityType.DEVICE_PROFILE)) {
             DeviceProfileId deviceProfileId = new DeviceProfileId(entityUuid);
             DeviceProfile deviceProfile = deviceProfileCache.find(deviceProfileId);
-            data = ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile));
+            builder.setData(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
         } else if (entityType.equals(EntityType.TENANT)) {
-            TenantProfile tenantProfile = tenantProfileCache.get(new TenantId(entityUuid));
-            data = ByteString.copyFrom(dataDecodingEncodingService.encode(tenantProfile));
+            TenantId tenantId = new TenantId(entityUuid);
+            TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
+            ApiUsageState state = apiUsageStateService.getApiUsageState(tenantId);
+            builder.setData(ByteString.copyFrom(dataDecodingEncodingService.encode(tenantProfile)));
+            builder.setApiState(ByteString.copyFrom(dataDecodingEncodingService.encode(state)));
         } else {
             throw new RuntimeException("Invalid entity profile request: " + entityType);
         }
-        return Futures.immediateFuture(TransportApiResponseMsg.newBuilder().setEntityProfileResponseMsg(GetEntityProfileResponseMsg.newBuilder().setData(data).build()).build());
+        return Futures.immediateFuture(TransportApiResponseMsg.newBuilder().setEntityProfileResponseMsg(builder).build());
     }
 
     private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId, DeviceCredentials credentials) {

@@ -50,6 +50,10 @@ public class TopicPartitionInfo {
         this.fullTopicName = tmp;
     }
 
+    public TopicPartitionInfo newByTopic(String topic) {
+        return new TopicPartitionInfo(topic, this.tenantId, this.partition, this.myPartition);
+    }
+
     public String getTopic() {
         return topic;
     }

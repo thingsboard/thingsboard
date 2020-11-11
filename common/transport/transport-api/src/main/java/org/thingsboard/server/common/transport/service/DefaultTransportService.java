@@ -23,9 +23,10 @@ import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
@@ -53,10 +54,7 @@ import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
-import org.thingsboard.server.common.transport.limits.TransportRateLimit;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
-import org.thingsboard.server.common.transport.limits.TransportRateLimitType;
-import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -79,6 +77,8 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbTransportQueueFactory;
+import org.thingsboard.server.queue.scheduler.SchedulerComponent;
+import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import javax.annotation.PostConstruct;
@@ -94,7 +94,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -124,8 +123,10 @@ public class DefaultTransportService implements TransportService {
     private final StatsFactory statsFactory;
     private final TransportDeviceProfileCache deviceProfileCache;
     private final TransportTenantProfileCache tenantProfileCache;
+    private final TbApiUsageClient apiUsageClient;
     private final TransportRateLimitService rateLimitService;
     private final DataDecodingEncodingService dataDecodingEncodingService;
+    private final SchedulerComponent scheduler;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
@@ -136,7 +137,6 @@ public class DefaultTransportService implements TransportService {
     protected MessagesStats tbCoreProducerStats;
     protected MessagesStats transportApiStats;
 
-    protected ScheduledExecutorService schedulerExecutor;
     protected ExecutorService transportCallbackExecutor;
     private ExecutorService mainConsumerExecutor;
 
@@ -152,7 +152,8 @@ public class DefaultTransportService implements TransportService {
                                    StatsFactory statsFactory,
                                    TransportDeviceProfileCache deviceProfileCache,
                                    TransportTenantProfileCache tenantProfileCache,
-                                   TransportRateLimitService rateLimitService, DataDecodingEncodingService dataDecodingEncodingService) {
+                                   TbApiUsageClient apiUsageClient, TransportRateLimitService rateLimitService,
+                                   DataDecodingEncodingService dataDecodingEncodingService, SchedulerComponent scheduler) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.queueProvider = queueProvider;
         this.producerProvider = producerProvider;
@@ -160,8 +161,10 @@ public class DefaultTransportService implements TransportService {
         this.statsFactory = statsFactory;
         this.deviceProfileCache = deviceProfileCache;
         this.tenantProfileCache = tenantProfileCache;
+        this.apiUsageClient = apiUsageClient;
         this.rateLimitService = rateLimitService;
         this.dataDecodingEncodingService = dataDecodingEncodingService;
+        this.scheduler = scheduler;
     }
 
     @PostConstruct
@@ -169,9 +172,8 @@ public class DefaultTransportService implements TransportService {
         this.ruleEngineProducerStats = statsFactory.createMessagesStats(StatsType.RULE_ENGINE.getName() + ".producer");
         this.tbCoreProducerStats = statsFactory.createMessagesStats(StatsType.CORE.getName() + ".producer");
         this.transportApiStats = statsFactory.createMessagesStats(StatsType.TRANSPORT.getName() + ".producer");
-        this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("transport-scheduler"));
         this.transportCallbackExecutor = Executors.newWorkStealingPool(20);
-        this.schedulerExecutor.scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
         transportApiRequestTemplate = queueProvider.createTransportApiRequestTemplate();
         transportApiRequestTemplate.setMessagesStats(transportApiStats);
         ruleEngineMsgProducer = producerProvider.getRuleEngineMsgProducer();
@@ -217,9 +219,6 @@ public class DefaultTransportService implements TransportService {
         if (transportNotificationsConsumer != null) {
             transportNotificationsConsumer.unsubscribe();
         }
-        if (schedulerExecutor != null) {
-            schedulerExecutor.shutdownNow();
-        }
         if (transportCallbackExecutor != null) {
             transportCallbackExecutor.shutdownNow();
         }
@@ -232,17 +231,12 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public ScheduledExecutorService getSchedulerExecutor() {
-        return this.schedulerExecutor;
-    }
-
-    @Override
     public void registerAsyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener) {
         sessions.putIfAbsent(toSessionId(sessionInfo), new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, listener));
     }
 
     @Override
-    public TransportProtos.GetEntityProfileResponseMsg getRoutingInfo(TransportProtos.GetEntityProfileRequestMsg msg) {
+    public TransportProtos.GetEntityProfileResponseMsg getEntityProfile(TransportProtos.GetEntityProfileRequestMsg msg) {
         TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg> protoMsg =
                 new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setEntityProfileRequestMsg(msg).build());
         try {
@@ -368,28 +362,26 @@ public class DefaultTransportService implements TransportService {
         for (TransportProtos.TsKvListProto tsKv : msg.getTsKvListList()) {
             dataPoints += tsKv.getKvCount();
         }
-        if (checkLimits(sessionInfo, msg, callback, dataPoints, TELEMETRY)) {
+        if (checkLimits(sessionInfo, msg, callback, dataPoints)) {
             reportActivityInternal(sessionInfo);
             TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
             DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
-            MsgPackCallback packCallback = new MsgPackCallback(msg.getTsKvListCount(), callback);
+            MsgPackCallback packCallback = new MsgPackCallback(msg.getTsKvListCount(), new ApiStatsProxyCallback<>(tenantId, dataPoints, callback));
             for (TransportProtos.TsKvListProto tsKv : msg.getTsKvListList()) {
                 TbMsgMetaData metaData = new TbMsgMetaData();
                 metaData.putValue("deviceName", sessionInfo.getDeviceName());
                 metaData.putValue("deviceType", sessionInfo.getDeviceType());
                 metaData.putValue("ts", tsKv.getTs() + "");
                 JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
-                RuleChainId ruleChainId = resolveRuleChainId(sessionInfo);
-                TbMsg tbMsg = TbMsg.newMsg(ServiceQueue.MAIN, SessionMsgType.POST_TELEMETRY_REQUEST.name(),
-                        deviceId, metaData, gson.toJson(json), ruleChainId, null);
-                sendToRuleEngine(tenantId, tbMsg, packCallback);
+                sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData, SessionMsgType.POST_TELEMETRY_REQUEST, packCallback);
+
             }
         }
     }
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, msg, callback, msg.getKvCount(), TELEMETRY)) {
+        if (checkLimits(sessionInfo, msg, callback, msg.getKvCount())) {
             reportActivityInternal(sessionInfo);
             TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
             DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
@@ -398,10 +390,7 @@ public class DefaultTransportService implements TransportService {
             metaData.putValue("deviceName", sessionInfo.getDeviceName());
             metaData.putValue("deviceType", sessionInfo.getDeviceType());
             metaData.putValue("notifyDevice", "false");
-            RuleChainId ruleChainId = resolveRuleChainId(sessionInfo);
-            TbMsg tbMsg = TbMsg.newMsg(ServiceQueue.MAIN, SessionMsgType.POST_ATTRIBUTES_REQUEST.name(),
-                    deviceId, metaData, gson.toJson(json), ruleChainId, null);
-            sendToRuleEngine(tenantId, tbMsg, new TransportTbQueueCallback(callback));
+            sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData, SessionMsgType.POST_ATTRIBUTES_REQUEST, new TransportTbQueueCallback(callback));
         }
     }
 
@@ -482,13 +471,11 @@ public class DefaultTransportService implements TransportService {
             metaData.putValue("requestId", Integer.toString(msg.getRequestId()));
             metaData.putValue("serviceId", serviceInfoProvider.getServiceId());
             metaData.putValue("sessionId", sessionId.toString());
-            RuleChainId ruleChainId = resolveRuleChainId(sessionInfo);
-            TbMsg tbMsg = TbMsg.newMsg(ServiceQueue.MAIN, SessionMsgType.TO_SERVER_RPC_REQUEST.name(),
-                    deviceId, metaData, gson.toJson(json), ruleChainId, null);
-            sendToRuleEngine(tenantId, tbMsg, new TransportTbQueueCallback(callback));
+            sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData,
+                    SessionMsgType.TO_SERVER_RPC_REQUEST, new TransportTbQueueCallback(callback));
             String requestId = sessionId + "-" + msg.getRequestId();
             toServerRpcPendingMap.put(requestId, new RpcRequestMetadata(sessionId, msg.getRequestId()));
-            schedulerExecutor.schedule(() -> processTimeout(requestId), clientSideRpcTimeout, TimeUnit.MILLISECONDS);
+            scheduler.schedule(() -> processTimeout(requestId), clientSideRpcTimeout, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -561,7 +548,7 @@ public class DefaultTransportService implements TransportService {
         SessionMetaData currentSession = new SessionMetaData(sessionInfo, TransportProtos.SessionType.SYNC, listener);
         sessions.putIfAbsent(toSessionId(sessionInfo), currentSession);
 
-        ScheduledFuture executorFuture = schedulerExecutor.schedule(() -> {
+        ScheduledFuture executorFuture = scheduler.schedule(() -> {
             listener.onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto.getDefaultInstance());
             deregisterSession(sessionInfo);
         }, timeout, TimeUnit.MILLISECONDS);
@@ -579,31 +566,23 @@ public class DefaultTransportService implements TransportService {
         sessions.remove(toSessionId(sessionInfo));
     }
 
-    private TransportRateLimitType[] DEFAULT = new TransportRateLimitType[]{TransportRateLimitType.TENANT_MAX_MSGS, TransportRateLimitType.DEVICE_MAX_MSGS};
-    private TransportRateLimitType[] TELEMETRY = TransportRateLimitType.values();
-
-    @Override
-    public boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback) {
-        return checkLimits(sessionInfo, msg, callback, 0, DEFAULT);
+    private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback) {
+        return checkLimits(sessionInfo, msg, callback, 0);
     }
 
-    @Override
-    public boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback, int dataPoints, TransportRateLimitType... limits) {
+    private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback, int dataPoints) {
         if (log.isTraceEnabled()) {
             log.trace("[{}] Processing msg: {}", toSessionId(sessionInfo), msg);
         }
         TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
         DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
 
-        TransportRateLimitType limit = rateLimitService.checkLimits(tenantId, deviceId, 0, limits);
-        if (limit == null) {
+        EntityType rateLimitedEntityType = rateLimitService.checkLimits(tenantId, deviceId, dataPoints);
+        if (rateLimitedEntityType == null) {
             return true;
         } else {
             if (callback != null) {
-                callback.onError(new TbRateLimitsException(limit.isTenantLevel() ? EntityType.TENANT : EntityType.DEVICE));
-            }
-            if (log.isTraceEnabled()) {
-                log.trace("[{}][{}] {} rateLimit detected: {}", toSessionId(sessionInfo), tenantId, limit, msg);
+                callback.onError(new TbRateLimitsException(rateLimitedEntityType));
             }
             return false;
         }
@@ -646,8 +625,7 @@ public class DefaultTransportService implements TransportService {
                         onProfileUpdate(deviceProfile);
                     }
                 } else if (EntityType.TENANT_PROFILE.equals(entityType)) {
-                    TenantProfileUpdateResult update = tenantProfileCache.put(msg.getData());
-                    rateLimitService.update(update);
+                    rateLimitService.update(tenantProfileCache.put(msg.getData()));
                 } else if (EntityType.TENANT.equals(entityType)) {
                     Optional<Tenant> profileOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
                     if (profileOpt.isPresent()) {
@@ -656,6 +634,13 @@ public class DefaultTransportService implements TransportService {
                         if (updated) {
                             rateLimitService.update(tenant.getId());
                         }
+                    }
+                } else if (EntityType.API_USAGE_STATE.equals(entityType)) {
+                    Optional<ApiUsageState> stateOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
+                    if (stateOpt.isPresent()) {
+                        ApiUsageState apiUsageState = stateOpt.get();
+                        rateLimitService.update(apiUsageState.getTenantId(), apiUsageState.isTransportEnabled());
+                        //TODO: if transport is disabled, we should close all sessions and not to check credentials.
                     }
                 }
             } else if (toSessionMsg.hasEntityDeleteMsg()) {
@@ -678,8 +663,7 @@ public class DefaultTransportService implements TransportService {
         }
     }
 
-    @Override
-    public void onProfileUpdate(DeviceProfile deviceProfile) {
+    private void onProfileUpdate(DeviceProfile deviceProfile) {
         long deviceProfileIdMSB = deviceProfile.getId().getId().getMostSignificantBits();
         long deviceProfileIdLSB = deviceProfile.getId().getId().getLeastSignificantBits();
         sessions.forEach((id, md) -> {
@@ -740,17 +724,25 @@ public class DefaultTransportService implements TransportService {
         ruleEngineMsgProducer.send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), wrappedCallback);
     }
 
-    private RuleChainId resolveRuleChainId(TransportProtos.SessionInfoProto sessionInfo) {
+    protected void sendToRuleEngine(TenantId tenantId, DeviceId deviceId, TransportProtos.SessionInfoProto sessionInfo, JsonObject json,
+                                    TbMsgMetaData metaData, SessionMsgType sessionMsgType, TbQueueCallback callback) {
         DeviceProfileId deviceProfileId = new DeviceProfileId(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
         DeviceProfile deviceProfile = deviceProfileCache.get(deviceProfileId);
         RuleChainId ruleChainId;
+        String queueName;
+
         if (deviceProfile == null) {
             log.warn("[{}] Device profile is null!", deviceProfileId);
             ruleChainId = null;
+            queueName = ServiceQueue.MAIN;
         } else {
             ruleChainId = deviceProfile.getDefaultRuleChainId();
+            String defaultQueueName = deviceProfile.getDefaultQueueName();
+            queueName = defaultQueueName != null ? defaultQueueName : ServiceQueue.MAIN;
         }
-        return ruleChainId;
+
+        TbMsg tbMsg = TbMsg.newMsg(queueName, sessionMsgType.name(), deviceId, metaData, gson.toJson(json), ruleChainId, null);
+        sendToRuleEngine(tenantId, tbMsg, callback);
     }
 
     private class TransportTbQueueCallback implements TbQueueCallback {
@@ -814,6 +806,33 @@ public class DefaultTransportService implements TransportService {
         @Override
         public void onFailure(Throwable t) {
             callback.onError(t);
+        }
+    }
+
+    private class ApiStatsProxyCallback<T> implements TransportServiceCallback<T> {
+        private final TenantId tenantId;
+        private final int dataPoints;
+        private final TransportServiceCallback<T> callback;
+
+        public ApiStatsProxyCallback(TenantId tenantId, int dataPoints, TransportServiceCallback<T> callback) {
+            this.tenantId = tenantId;
+            this.dataPoints = dataPoints;
+            this.callback = callback;
+        }
+
+        @Override
+        public void onSuccess(T msg) {
+            try {
+                apiUsageClient.report(tenantId, ApiUsageRecordKey.TRANSPORT_MSG_COUNT, 1);
+                apiUsageClient.report(tenantId, ApiUsageRecordKey.TRANSPORT_DP_COUNT, dataPoints);
+            } finally {
+                callback.onSuccess(msg);
+            }
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            callback.onError(e);
         }
     }
 }

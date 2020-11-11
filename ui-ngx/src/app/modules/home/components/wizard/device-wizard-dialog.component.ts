@@ -25,8 +25,12 @@ import {
   createDeviceProfileConfiguration,
   createDeviceProfileTransportConfiguration,
   DeviceProfile,
-  DeviceProfileType, DeviceProvisionConfiguration, DeviceProvisionType,
-  DeviceTransportType, deviceTransportTypeConfigurationInfoMap, deviceTransportTypeHintMap,
+  DeviceProfileType,
+  DeviceProvisionConfiguration,
+  DeviceProvisionType,
+  DeviceTransportType,
+  deviceTransportTypeConfigurationInfoMap,
+  deviceTransportTypeHintMap,
   deviceTransportTypeTranslationMap
 } from '@shared/models/device.models';
 import { MatHorizontalStepper } from '@angular/material/stepper';
@@ -43,6 +47,8 @@ import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
+import { ServiceType } from '@shared/models/queue.models';
+import { deepTrim } from '@core/utils';
 
 @Component({
   selector: 'tb-device-wizard',
@@ -84,6 +90,8 @@ export class DeviceWizardDialogComponent extends
 
   labelPosition = 'end';
 
+  serviceType = ServiceType.TB_RULE_ENGINE;
+
   private subscriptions: Subscription[] = [];
 
   constructor(protected store: Store<AppState>,
@@ -105,6 +113,7 @@ export class DeviceWizardDialogComponent extends
         deviceProfileId: [null, Validators.required],
         newDeviceProfileTitle: [{value: null, disabled: true}],
         defaultRuleChainId: [{value: null, disabled: true}],
+        defaultQueueName: [{value: null, disabled: true}],
         description: ['']
       }
     );
@@ -117,6 +126,7 @@ export class DeviceWizardDialogComponent extends
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').setValidators(null);
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').disable();
           this.deviceWizardFormGroup.get('defaultRuleChainId').disable();
+          this.deviceWizardFormGroup.get('defaultQueueName').disable();
           this.deviceWizardFormGroup.updateValueAndValidity();
           this.createProfile = false;
           this.createTransportConfiguration = false;
@@ -126,6 +136,8 @@ export class DeviceWizardDialogComponent extends
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').setValidators([Validators.required]);
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').enable();
           this.deviceWizardFormGroup.get('defaultRuleChainId').enable();
+          this.deviceWizardFormGroup.get('defaultQueueName').enable();
+
           this.deviceWizardFormGroup.updateValueAndValidity();
           this.createProfile = true;
           this.createTransportConfiguration = this.deviceWizardFormGroup.get('transportType').value &&
@@ -281,7 +293,7 @@ export class DeviceWizardDialogComponent extends
       if (this.deviceWizardFormGroup.get('defaultRuleChainId').value) {
         deviceProfile.defaultRuleChainId = new RuleChainId(this.deviceWizardFormGroup.get('defaultRuleChainId').value);
       }
-      return this.deviceProfileService.saveDeviceProfile(deviceProfile).pipe(
+      return this.deviceProfileService.saveDeviceProfile(deepTrim(deviceProfile)).pipe(
         map(profile => profile.id),
         tap((profileId) => {
           this.deviceWizardFormGroup.patchValue({
@@ -312,7 +324,7 @@ export class DeviceWizardDialogComponent extends
         id: this.customerFormGroup.get('customerId').value
       };
     }
-    return this.data.entitiesTableConfig.saveEntity(device);
+    return this.data.entitiesTableConfig.saveEntity(deepTrim(device));
   }
 
   private saveCredentials(device: BaseData<HasId>): Observable<boolean> {

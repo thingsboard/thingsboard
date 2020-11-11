@@ -19,18 +19,40 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.mqtt.*;
+import io.netty.handler.codec.mqtt.MqttDecoder;
+import io.netty.handler.codec.mqtt.MqttEncoder;
+import io.netty.handler.codec.mqtt.MqttFixedHeader;
+import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader;
+import io.netty.handler.codec.mqtt.MqttMessageType;
+import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import io.netty.handler.codec.mqtt.MqttPublishVariableHeader;
+import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttSubscribeMessage;
+import io.netty.handler.codec.mqtt.MqttSubscribePayload;
+import io.netty.handler.codec.mqtt.MqttTopicSubscription;
+import io.netty.handler.codec.mqtt.MqttUnsubscribeMessage;
+import io.netty.handler.codec.mqtt.MqttUnsubscribePayload;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -41,11 +63,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 final class MqttClientImpl implements MqttClient {
 
     private final Set<String> serverSubscriptions = new HashSet<>();
-    private final IntObjectHashMap<MqttPendingUnsubscription> pendingServerUnsubscribes = new IntObjectHashMap<>();
-    private final IntObjectHashMap<MqttIncomingQos2Publish> qos2PendingIncomingPublishes = new IntObjectHashMap<>();
-    private final IntObjectHashMap<MqttPendingPublish> pendingPublishes = new IntObjectHashMap<>();
+    private final ConcurrentMap<Integer, MqttPendingUnsubscription> pendingServerUnsubscribes = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Integer, MqttIncomingQos2Publish> qos2PendingIncomingPublishes = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Integer, MqttPendingPublish> pendingPublishes = new ConcurrentHashMap<>();
     private final HashMultimap<String, MqttSubscription> subscriptions = HashMultimap.create();
-    private final IntObjectHashMap<MqttPendingSubscription> pendingSubscriptions = new IntObjectHashMap<>();
+    private final ConcurrentMap<Integer, MqttPendingSubscription> pendingSubscriptions = new ConcurrentHashMap<>();
     private final Set<String> pendingSubscribeTopics = new HashSet<>();
     private final HashMultimap<MqttHandler, MqttSubscription> handlerToSubscribtion = HashMultimap.create();
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
@@ -340,6 +362,7 @@ final class MqttClientImpl implements MqttClient {
         MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, getNewMessageId().messageId());
         MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
         MqttPendingPublish pendingPublish = new MqttPendingPublish(variableHeader.packetId(), future, payload.retain(), message, qos);
+        this.pendingPublishes.put(pendingPublish.getMessageId(), pendingPublish);
         ChannelFuture channelFuture = this.sendAndFlushPacket(message);
 
         if (channelFuture != null) {
@@ -350,10 +373,12 @@ final class MqttClientImpl implements MqttClient {
             }
         }
         if (pendingPublish.isSent() && pendingPublish.getQos() == MqttQoS.AT_MOST_ONCE) {
+            this.pendingPublishes.remove(pendingPublish.getMessageId());
             pendingPublish.getFuture().setSuccess(null); //We don't get an ACK for QOS 0
         } else if (pendingPublish.isSent()) {
-            this.pendingPublishes.put(pendingPublish.getMessageId(), pendingPublish);
             pendingPublish.startPublishRetransmissionTimer(this.eventLoop.next(), this::sendAndFlushPacket);
+        } else {
+            this.pendingPublishes.remove(pendingPublish.getMessageId());
         }
         return future;
     }
@@ -465,7 +490,7 @@ final class MqttClientImpl implements MqttClient {
         }
     }
 
-    IntObjectHashMap<MqttPendingSubscription> getPendingSubscriptions() {
+    ConcurrentMap<Integer, MqttPendingSubscription> getPendingSubscriptions() {
         return pendingSubscriptions;
     }
 
@@ -485,15 +510,15 @@ final class MqttClientImpl implements MqttClient {
         return serverSubscriptions;
     }
 
-    IntObjectHashMap<MqttPendingUnsubscription> getPendingServerUnsubscribes() {
+    ConcurrentMap<Integer, MqttPendingUnsubscription> getPendingServerUnsubscribes() {
         return pendingServerUnsubscribes;
     }
 
-    IntObjectHashMap<MqttPendingPublish> getPendingPublishes() {
+    ConcurrentMap<Integer, MqttPendingPublish> getPendingPublishes() {
         return pendingPublishes;
     }
 
-    IntObjectHashMap<MqttIncomingQos2Publish> getQos2PendingIncomingPublishes() {
+    ConcurrentMap<Integer, MqttIncomingQos2Publish> getQos2PendingIncomingPublishes() {
         return qos2PendingIncomingPublishes;
     }
 

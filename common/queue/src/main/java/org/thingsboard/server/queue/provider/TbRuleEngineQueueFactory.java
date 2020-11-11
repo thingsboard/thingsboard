@@ -32,7 +32,7 @@ import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
  * Responsible for initialization of various Producers and Consumers used by TB Core Node.
  * Implementation Depends on the queue queue.type from yml or TB_QUEUE_TYPE environment variable
  */
-public interface TbRuleEngineQueueFactory {
+public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory {
 
     /**
      * Used to push messages to instances of TB Transport Service

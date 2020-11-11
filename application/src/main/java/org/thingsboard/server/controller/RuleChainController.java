@@ -160,7 +160,7 @@ public class RuleChainController extends BaseController {
     public RuleChain saveRuleChain(@RequestBody DefaultRuleChainCreateRequest request) throws ThingsboardException {
         try {
             checkNotNull(request);
-            checkNotNull(request.getName());
+            checkParameter(request.getName(), "name");
 
             RuleChain savedRuleChain = installScripts.createDefaultRuleChain(getCurrentUser().getTenantId(), request.getName());
 
@@ -347,7 +347,7 @@ public class RuleChainController extends BaseController {
             String errorText = "";
             ScriptEngine engine = null;
             try {
-                engine = new RuleNodeJsScriptEngine(jsInvokeService, getCurrentUser().getId(), script, argNames);
+                engine = new RuleNodeJsScriptEngine(getTenantId(), jsInvokeService, getCurrentUser().getId(), script, argNames);
                 TbMsg inMsg = TbMsg.newMsg(msgType, null, new TbMsgMetaData(metadata), TbMsgDataType.JSON, data);
                 switch (scriptType) {
                     case "update":

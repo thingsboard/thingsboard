@@ -53,6 +53,10 @@
         labelText="device-profile.default-rule-chain"
         formControlName="defaultRuleChainId">
       </tb-rule-chain-autocomplete>
+      <tb-queue-type-list
+        [queueType]="serviceType"
+        formControlName="defaultQueueName">
+      </tb-queue-type-list>
       <mat-form-field fxHide class="mat-block">
         <mat-label translate>device-profile.type</mat-label>
         <mat-select formControlName="type" required>
