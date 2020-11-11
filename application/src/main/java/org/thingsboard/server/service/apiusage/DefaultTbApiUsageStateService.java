@@ -20,7 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ApiFeature;
@@ -129,8 +132,8 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
     public void init() {
         if (enabled) {
             log.info("Starting api usage service.");
-            initStatesFromDataBase();
             scheduler.scheduleAtFixedRate(this::checkStartOfNextCycle, nextCycleCheckInterval, nextCycleCheckInterval, TimeUnit.MILLISECONDS);
+            log.info("Started api usage service.");
         }
     }
 
@@ -340,12 +343,15 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
     private void initStatesFromDataBase() {
         try {
+            log.info("Initializing tenant states.");
             PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, 1024);
             for (Tenant tenant : tenantIterator) {
                 if (!myTenantStates.containsKey(tenant.getId()) && partitionService.resolve(ServiceType.TB_CORE, tenant.getId(), tenant.getId()).isMyPartition()) {
+                    log.debug("[{}] Initializing tenant state.", tenant.getId());
                     updateLock.lock();
                     try {
                         updateTenantState(getOrFetchState(tenant.getId()), tenantProfileCache.get(tenant.getTenantProfileId()));
+                        log.debug("[{}] Initialized tenant state.", tenant.getId());
                     } catch (Exception e) {
                         log.warn("[{}] Failed to initialize tenant API state", tenant.getId(), e);
                     } finally {
@@ -353,7 +359,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                     }
                 }
             }
-            log.info("Api usage service started.");
+            log.info("Initialized tenant states.");
         } catch (Exception e) {
             log.warn("Unknown failure", e);
         }
