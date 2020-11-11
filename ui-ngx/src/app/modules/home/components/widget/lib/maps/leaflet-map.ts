@@ -599,26 +599,32 @@ export default abstract class LeafletMap {
       return polygon;
     }
 
-    updatePoints(pointsData: FormattedData[], getTooltip: (point: FormattedData, setTooltip?: boolean) => string) {
-      if (this.points) {
+  updatePoints(pointsData: FormattedData[][], getTooltip: (point: FormattedData[], setTooltip?: boolean) => string) {
+    for(let i = 0; i < pointsData.length; i++) {
+      let pointsList = pointsData[i];
+      if(i === 0) {
+        if (this.points) {
           this.map.removeLayer(this.points);
+        }
+        this.points = new FeatureGroup();
       }
-      this.points = new FeatureGroup();
-      pointsData.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
-          const point = L.circleMarker(this.convertPosition(data), {
-              color: this.options.pointColor,
-              radius: this.options.pointSize
-          });
-          if (!this.options.pointTooltipOnRightPanel) {
-              point.on('click', () => getTooltip(data));
-          }
-          else {
-              createTooltip(point, this.options, data.$datasource, getTooltip(data, false));
-          }
-          this.points.addLayer(point);
+      pointsList.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
+        const point = L.circleMarker(this.convertPosition(data), {
+          color: this.options.pointColor,
+          radius: this.options.pointSize
+        });
+        if (!this.options.pointTooltipOnRightPanel) {
+          point.on('click', () => getTooltip([data]));
+        } else {
+          createTooltip(point, this.options, data.$datasource, getTooltip([data], false));
+        }
+        this.points.addLayer(point);
       });
-      this.map.addLayer(this.points);
+      if(i === 0) {
+        this.map.addLayer(this.points);
+      }
     }
+  }
 
     // Polyline
 
