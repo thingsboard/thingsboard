@@ -1668,6 +1668,7 @@
     "legend": {
         "direction": "Legend direction",
         "position": "Legend position",
+        "sort-legend": "Sort datakeys in legend",
         "show-max": "Show max value",
         "show-min": "Show min value",
         "show-avg": "Show average value",
