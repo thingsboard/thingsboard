@@ -404,7 +404,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
     private String defaultPermissionQuery(QueryContext ctx) {
         ctx.addUuidParameter("permissions_tenant_id", ctx.getTenantId().getId());
-        if (ctx.getCustomerId() != null && !ctx.getCustomerId().isNullUid()) {
+        if (ctx.getCustomerId() != null && !ctx.getCustomerId().isNullUid() && !ctx.getEntityType().equals(EntityType.API_USAGE_STATE)) {
             ctx.addUuidParameter("permissions_customer_id", ctx.getCustomerId().getId());
             if (ctx.getEntityType() == EntityType.CUSTOMER) {
                 return "e.tenant_id=:permissions_tenant_id and e.id=:permissions_customer_id";
