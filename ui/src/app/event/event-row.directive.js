@@ -169,11 +169,11 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
         scope.updateStatus = function(eventCreatedTime) {
             var status;
             if (eventCreatedTime < scope.queueStartTs) {
-                status = $translate.instant('edge.success');
-                scope.statusColor = '#000';
+                status = $translate.instant(types.edgeEventStatus.DEPLOYED.name);
+                scope.statusColor = types.edgeEventStatus.DEPLOYED.color;
             } else {
-                status = $translate.instant('edge.failed');
-                scope.statusColor = 'rgba(0, 0, 0, .38)';
+                status = $translate.instant(types.edgeEventStatus.PENDING.name);
+                scope.statusColor = types.edgeEventStatus.PENDING.color;
             }
             return status;
         }

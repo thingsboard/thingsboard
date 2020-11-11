@@ -19,7 +19,7 @@
 <div class="tb-cell" flex="20">{{ event.type }}</div>
 <div class="tb-cell" flex="40">{{ event.action }}</div>
 <div class="tb-cell" flex="20">{{ event.entityId }}</div>
-<div class="tb-cell" flex="15" ng-style="{'color': statusColor}">{{ updateStatus(event.createdTime) | translate }}</div>
+<div class="tb-cell" flex="15" ng-style="{'color': statusColor}">{{ updateStatus(event.createdTime) }}</div>
 <div class="tb-cell" flex="10">
     <md-button ng-if="checkEdgeEventType(event.type)" class="md-icon-button md-primary"
                ng-click="showEdgeEntityContent($event, 'edge.entity-info', 'JSON')"

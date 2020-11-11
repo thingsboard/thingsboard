@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { grey300, grey900 } from 'material-ui/styles/colors';
+
 export default angular.module('thingsboard.types', [])
     .constant('types',
         {
@@ -402,6 +404,16 @@ export default angular.module('thingsboard.types', [])
                 widgetsBundle: "WIDGETS_BUNDLE",
                 widgetType: "WIDGET_TYPE",
                 adminSettings: "ADMIN_SETTINGS"
+            },
+            edgeEventStatus: {
+                "DEPLOYED": {
+                    name: "edge.deployed",
+                    color: grey900
+                },
+                "PENDING": {
+                    name: "edge.pending",
+                    color: grey300
+                }
             },
             edgeAttributeKeys: {
                 active: "active",
