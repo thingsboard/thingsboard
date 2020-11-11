@@ -134,7 +134,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         TenantProfile isolatedTbCoreProfile = new TenantProfile();
         isolatedTbCoreProfile.setDefault(false);
         isolatedTbCoreProfile.setName("Isolated TB Core");
-        isolatedTbCoreProfile.setProfileData(new TenantProfileData());
         isolatedTbCoreProfile.setDescription("Isolated TB Core tenant profile");
         isolatedTbCoreProfile.setIsolatedTbCore(true);
         isolatedTbCoreProfile.setIsolatedTbRuleEngine(false);
@@ -148,7 +147,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         TenantProfile isolatedTbRuleEngineProfile = new TenantProfile();
         isolatedTbRuleEngineProfile.setDefault(false);
         isolatedTbRuleEngineProfile.setName("Isolated TB Rule Engine");
-        isolatedTbRuleEngineProfile.setProfileData(new TenantProfileData());
         isolatedTbRuleEngineProfile.setDescription("Isolated TB Rule Engine tenant profile");
         isolatedTbRuleEngineProfile.setIsolatedTbCore(false);
         isolatedTbRuleEngineProfile.setIsolatedTbRuleEngine(true);
@@ -163,7 +161,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         TenantProfile isolatedTbCoreAndTbRuleEngineProfile = new TenantProfile();
         isolatedTbCoreAndTbRuleEngineProfile.setDefault(false);
         isolatedTbCoreAndTbRuleEngineProfile.setName("Isolated TB Core and TB Rule Engine");
-        isolatedTbCoreAndTbRuleEngineProfile.setProfileData(new TenantProfileData());
         isolatedTbCoreAndTbRuleEngineProfile.setDescription("Isolated TB Core and TB Rule Engine tenant profile");
         isolatedTbCoreAndTbRuleEngineProfile.setIsolatedTbCore(true);
         isolatedTbCoreAndTbRuleEngineProfile.setIsolatedTbRuleEngine(true);
