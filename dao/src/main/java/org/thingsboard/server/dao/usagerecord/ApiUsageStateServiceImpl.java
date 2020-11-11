@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.usagerecord;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -84,6 +86,17 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
         TenantProfileConfiguration configuration = tenantProfile.getProfileData().getConfiguration();
         List<TsKvEntry> profileThresholds = new ArrayList<>();
+        List<TsKvEntry> apiUsageStates = new ArrayList<>();
+        apiUsageStates.add(new BasicTsKvEntry(apiUsageState.getCreatedTime(),
+                new StringDataEntry(ApiFeature.TRANSPORT.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        apiUsageStates.add(new BasicTsKvEntry(apiUsageState.getCreatedTime(),
+                new StringDataEntry(ApiFeature.DB.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        apiUsageStates.add(new BasicTsKvEntry(apiUsageState.getCreatedTime(),
+                new StringDataEntry(ApiFeature.RE.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        apiUsageStates.add(new BasicTsKvEntry(apiUsageState.getCreatedTime(),
+                new StringDataEntry(ApiFeature.JS.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        tsService.save(tenantId, saved.getId(), apiUsageStates, 0L);
+
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
             profileThresholds.add(new BasicTsKvEntry(saved.getCreatedTime(), new LongDataEntry(key.getApiLimitKey(), configuration.getProfileThreshold(key))));
         }

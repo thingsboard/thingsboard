@@ -1099,7 +1099,8 @@
         "details": "Entity details",
         "no-entities-prompt": "No entities found",
         "no-data": "No data to display",
-        "columns-to-display": "Columns to Display"
+        "columns-to-display": "Columns to Display",
+        "type-api-usage-state": "Api Usage State"
     },
     "entity-field": {
         "created-time": "Created time",
