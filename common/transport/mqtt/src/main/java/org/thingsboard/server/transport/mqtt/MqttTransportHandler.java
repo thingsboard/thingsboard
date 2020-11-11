@@ -122,7 +122,13 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         log.trace("[{}] Processing msg: {}", sessionId, msg);
         try {
             if (msg instanceof MqttMessage) {
-                processMqttMsg(ctx, (MqttMessage) msg);
+                MqttMessage message = (MqttMessage) msg;
+                if (message.decoderResult().isSuccess()) {
+                    processMqttMsg(ctx, message);
+                } else {
+                    log.error("[{}] Message processing failed: {}", sessionId, message.decoderResult().cause().getMessage());
+                    ctx.close();
+                }
             } else {
                 ctx.close();
             }

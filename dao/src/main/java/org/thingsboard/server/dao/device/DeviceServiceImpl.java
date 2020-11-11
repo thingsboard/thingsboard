@@ -548,7 +548,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
                 @Override
                 protected void validateDataImpl(TenantId tenantId, Device device) {
-                    if (StringUtils.isEmpty(device.getName())) {
+                    if (StringUtils.isEmpty(device.getName()) || device.getName().trim().length() == 0) {
                         throw new DataValidationException("Device name should be specified!");
                     }
                     if (device.getTenantId() == null) {
