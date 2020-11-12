@@ -67,6 +67,7 @@ class AlarmState {
         initCurrentAlarm(ctx);
         lastMsgMetaData = msg.getMetaData();
         lastMsgQueueName = msg.getQueueName();
+        this.dataSnapshot = data;
         return createOrClearAlarms(ctx, data, update, AlarmRuleState::eval);
     }
 
@@ -193,7 +194,7 @@ class AlarmState {
         }
     }
 
-    private <T> TbAlarmResult calculateAlarmResult(TbContext ctx, AlarmRuleState ruleState) {
+    private TbAlarmResult calculateAlarmResult(TbContext ctx, AlarmRuleState ruleState) {
         AlarmSeverity severity = ruleState.getSeverity();
         if (currentAlarm != null) {
             // TODO: In some extremely rare cases, we might miss the event of alarm clear (If one use in-mem queue and restarted the server) or (if one manipulated the rule chain).
@@ -233,7 +234,7 @@ class AlarmState {
         }
     }
 
-    private <T> JsonNode createDetails(AlarmRuleState ruleState) {
+    private JsonNode createDetails(AlarmRuleState ruleState) {
         ObjectNode details = JacksonUtil.OBJECT_MAPPER.createObjectNode();
         String alarmDetails = ruleState.getAlarmRule().getAlarmDetails();
 

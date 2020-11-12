@@ -202,16 +202,19 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Override
     public String getBaseUrl(TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest) {
-        String baseUrl;
+        String baseUrl = null;
         AdminSettings generalSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "general");
 
         JsonNode prohibitDifferentUrl = generalSettings.getJsonValue().get("prohibitDifferentUrl");
 
         if (prohibitDifferentUrl != null && prohibitDifferentUrl.asBoolean()) {
             baseUrl = generalSettings.getJsonValue().get("baseUrl").asText();
-        } else {
+        }
+
+        if (StringUtils.isEmpty(baseUrl)) {
             baseUrl = MiscUtils.constructBaseUrl(httpServletRequest);
         }
+
         return baseUrl;
     }
 
