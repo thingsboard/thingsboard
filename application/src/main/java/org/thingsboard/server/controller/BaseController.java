@@ -771,10 +771,13 @@ public abstract class BaseController {
                         }
                     } else if (actionType == ActionType.TIMESERIES_UPDATED) {
                         List<TsKvEntry> telemetry = extractParameter(List.class, 0, additionalInfo);
-                        if (telemetry != null) {
+                        if (telemetry != null && !telemetry.isEmpty()) {
+                            ObjectNode values = json.createObjectNode();
                             for (TsKvEntry tsKvEntry : telemetry) {
-                                addKvEntry(entityNode, tsKvEntry);
+                                addKvEntry(values, tsKvEntry);
                             }
+                            entityNode.put("ts", telemetry.get(0).getTs());
+                            entityNode.set("values", values);
                         }
                     }
                 }
