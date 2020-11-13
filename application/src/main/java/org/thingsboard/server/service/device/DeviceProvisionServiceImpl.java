@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -188,6 +189,11 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         Device device = deviceService.findDeviceByTenantIdAndName(profile.getTenantId(), provisionRequest.getDeviceName());
         try {
             if (device == null) {
+                if (StringUtils.isEmpty(provisionRequest.getDeviceName())) {
+                    String newDeviceName = RandomStringUtils.randomAlphanumeric(20);
+                    log.info("Device name not found in provision request. Generated name is: {}", newDeviceName);
+                    provisionRequest.setDeviceName(newDeviceName);
+                }
                 Device savedDevice = deviceService.saveDevice(provisionRequest, profile);
 
                 deviceStateService.onDeviceAdded(savedDevice);
