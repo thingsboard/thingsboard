@@ -15,16 +15,11 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.github.os72.protobuf.dynamic.DynamicSchema;
 import com.github.os72.protobuf.dynamic.EnumDefinition;
 import com.github.os72.protobuf.dynamic.MessageDefinition;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
-import com.squareup.wire.Syntax;
-import com.squareup.wire.schema.Field;
 import com.squareup.wire.schema.Location;
 import com.squareup.wire.schema.internal.parser.EnumConstantElement;
 import com.squareup.wire.schema.internal.parser.EnumElement;
@@ -35,10 +30,8 @@ import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import com.squareup.wire.schema.internal.parser.ProtoParser;
 import com.squareup.wire.schema.internal.parser.TypeElement;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.TransportPayloadType;
-
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,18 +39,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
-@EqualsAndHashCode(callSuper = true)
 @Data
-@JsonDeserialize(as = MqttProtoDeviceProfileTransportConfiguration.class)
-public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProfileTransportConfiguration {
+public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeConfiguration {
 
     public static final Location LOCATION = new Location("", "", -1, -1);
     public static final String ATTRIBUTES_PROTO_SCHEMA = "attributes proto schema";
     public static final String TELEMETRY_PROTO_SCHEMA = "telemetry proto schema";
-
-    public static String invalidSchemaProvidedMessage(String schemaName) {
-        return "[Transport Configuration] invalid " + schemaName + " schema provided!";
-    }
 
     private String deviceTelemetryProtoSchema;
     private String deviceAttributesProtoSchema;
@@ -67,23 +54,15 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
         return TransportPayloadType.PROTOBUF;
     }
 
-    public void validateTransportProtoSchema(String schema, String schemaName) throws IllegalArgumentException {
-        ProtoParser schemaParser = new ProtoParser(LOCATION, schema.toCharArray());
-        ProtoFileElement protoFileElement;
-        try {
-            protoFileElement = schemaParser.readProtoFile();
-        } catch (Exception e) {
-            throw new IllegalArgumentException("[Transport Configuration] failed to parse " + schemaName + " due to: " + e.getMessage());
-        }
-        checkProtoFileSyntax(schemaName, protoFileElement);
-        checkProtoFileCommonSettings(schemaName, protoFileElement.getOptions().isEmpty(), " Schema options don't support!");
-        checkProtoFileCommonSettings(schemaName, protoFileElement.getPublicImports().isEmpty(), " Schema public imports don't support!");
-        checkProtoFileCommonSettings(schemaName, protoFileElement.getImports().isEmpty(), " Schema imports don't support!");
-        checkProtoFileCommonSettings(schemaName, protoFileElement.getExtendDeclarations().isEmpty(), " Schema extend declarations don't support!");
-        checkTypeElements(schemaName, protoFileElement);
+    public Descriptors.Descriptor getTelemetryDynamicMessageDescriptor(String deviceTelemetryProtoSchema) {
+        return getDescriptor(deviceTelemetryProtoSchema, TELEMETRY_PROTO_SCHEMA);
     }
 
-    public Descriptors.Descriptor getDynamicMessageDescriptor(String protoSchema, String schemaName) {
+    public Descriptors.Descriptor getAttributesDynamicMessageDescriptor(String deviceAttributesProtoSchema) {
+        return getDescriptor(deviceAttributesProtoSchema, ATTRIBUTES_PROTO_SCHEMA);
+    }
+
+    private Descriptors.Descriptor getDescriptor(String protoSchema, String schemaName) {
         try {
             ProtoFileElement protoFileElement = getTransportProtoSchema(protoSchema);
             DynamicSchema dynamicSchema = getDynamicSchema(protoFileElement, schemaName);
@@ -122,91 +101,6 @@ public class MqttProtoDeviceProfileTransportConfiguration extends MqttDeviceProf
             }
         } else {
             throw new RuntimeException("Failed to get Dynamic Schema! Message types is empty for schema:" + schemaName);
-        }
-    }
-
-    private void checkProtoFileSyntax(String schemaName, ProtoFileElement protoFileElement) {
-        if (protoFileElement.getSyntax() == null || !protoFileElement.getSyntax().equals(Syntax.PROTO_3)) {
-            throw new IllegalArgumentException("[Transport Configuration] invalid schema syntax: " + protoFileElement.getSyntax() +
-                    " for: " + schemaName + " provided! Only " + Syntax.PROTO_3 + " allowed!");
-        }
-    }
-
-    private void checkProtoFileCommonSettings(String schemaName, boolean isEmptySettings, String invalidSettingsMessage) {
-        if (!isEmptySettings) {
-            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + invalidSettingsMessage);
-        }
-    }
-
-    private void checkTypeElements(String schemaName, ProtoFileElement protoFileElement) {
-        List<TypeElement> types = protoFileElement.getTypes();
-        if (!types.isEmpty()) {
-            if (types.stream().noneMatch(typeElement -> typeElement instanceof MessageElement)) {
-                throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " At least one Message definition should exists!");
-            } else {
-                checkEnumElements(schemaName, getEnumElements(types));
-                checkMessageElements(schemaName, getMessageTypes(types));
-            }
-        } else {
-            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Type elements is empty!");
-        }
-    }
-
-    private void checkFieldElements(String schemaName, List<FieldElement> fieldElements) {
-        if (!fieldElements.isEmpty()) {
-            boolean hasRequiredLabel = fieldElements.stream().anyMatch(fieldElement -> {
-                Field.Label label = fieldElement.getLabel();
-                return label != null && label.equals(Field.Label.REQUIRED);
-            });
-            if (hasRequiredLabel) {
-                throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Required labels are not supported!");
-            }
-            boolean hasDefaultValue = fieldElements.stream().anyMatch(fieldElement -> fieldElement.getDefaultValue() != null);
-            if (hasDefaultValue) {
-                throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Default values are not supported!");
-            }
-        }
-    }
-
-    private void checkEnumElements(String schemaName, List<EnumElement> enumTypes) {
-        if (enumTypes.stream().anyMatch(enumElement -> !enumElement.getNestedTypes().isEmpty())) {
-            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Nested types in Enum definitions are not supported!");
-        }
-        if (enumTypes.stream().anyMatch(enumElement -> !enumElement.getOptions().isEmpty())) {
-            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Enum definitions options are not supported!");
-        }
-    }
-
-    private void checkMessageElements(String schemaName, List<MessageElement> messageElementsList) {
-        if (!messageElementsList.isEmpty()) {
-            messageElementsList.forEach(messageElement -> {
-                checkProtoFileCommonSettings(schemaName, messageElement.getGroups().isEmpty(),
-                        " Message definition groups don't support!");
-                checkProtoFileCommonSettings(schemaName, messageElement.getOptions().isEmpty(),
-                        " Message definition options don't support!");
-                checkProtoFileCommonSettings(schemaName, messageElement.getExtensions().isEmpty(),
-                        " Message definition extensions don't support!");
-                checkProtoFileCommonSettings(schemaName, messageElement.getReserveds().isEmpty(),
-                        " Message definition reserved elements don't support!");
-                checkFieldElements(schemaName, messageElement.getFields());
-                List<OneOfElement> oneOfs = messageElement.getOneOfs();
-                if (!oneOfs.isEmpty()) {
-                    oneOfs.forEach(oneOfElement -> {
-                        checkProtoFileCommonSettings(schemaName, oneOfElement.getGroups().isEmpty(),
-                                " OneOf definition groups don't support!");
-                        checkFieldElements(schemaName, oneOfElement.getFields());
-                    });
-                }
-                List<TypeElement> nestedTypes = messageElement.getNestedTypes();
-                if (!nestedTypes.isEmpty()) {
-                    List<EnumElement> nestedEnumTypes = getEnumElements(nestedTypes);
-                    if (!nestedEnumTypes.isEmpty()) {
-                        checkEnumElements(schemaName, nestedEnumTypes);
-                    }
-                    List<MessageElement> nestedMessageTypes = getMessageTypes(nestedTypes);
-                    checkMessageElements(schemaName, nestedMessageTypes);
-                }
-            });
         }
     }
 

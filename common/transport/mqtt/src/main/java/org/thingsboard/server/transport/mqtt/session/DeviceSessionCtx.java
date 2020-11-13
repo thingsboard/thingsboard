@@ -25,7 +25,8 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.MqttProtoDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
+import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.util.MqttTopicFilter;
@@ -118,11 +119,12 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
         if (transportConfiguration.getType().equals(DeviceTransportType.MQTT) &&
                 transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
             MqttDeviceProfileTransportConfiguration mqttConfig = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
-            payloadType = mqttConfig.getTransportPayloadType();
+            TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = mqttConfig.getTransportPayloadTypeConfiguration();
+            payloadType = transportPayloadTypeConfiguration.getTransportPayloadType();
             telemetryTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceTelemetryTopic());
             attributesTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceAttributesTopic());
-            if (mqttConfig instanceof MqttProtoDeviceProfileTransportConfiguration) {
-                updateDynamicMessageDescriptors(mqttConfig);
+            if (transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration) {
+                updateDynamicMessageDescriptors(transportPayloadTypeConfiguration);
             }
         } else {
             telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
@@ -130,9 +132,9 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
         }
     }
 
-    private void updateDynamicMessageDescriptors(MqttDeviceProfileTransportConfiguration mqttConfig) {
-        MqttProtoDeviceProfileTransportConfiguration protoMqttConfig = (MqttProtoDeviceProfileTransportConfiguration) mqttConfig;
-        telemetryDynamicMessageDescriptor = protoMqttConfig.getDynamicMessageDescriptor(protoMqttConfig.getDeviceTelemetryProtoSchema(), "telemetrySchema");
-        attributesDynamicMessageDescriptor = protoMqttConfig.getDynamicMessageDescriptor(protoMqttConfig.getDeviceAttributesProtoSchema(), "attributesSchema");
+    private void updateDynamicMessageDescriptors(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration) {
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfig = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+        telemetryDynamicMessageDescriptor = protoTransportPayloadConfig.getTelemetryDynamicMessageDescriptor(protoTransportPayloadConfig.getDeviceTelemetryProtoSchema());
+        attributesDynamicMessageDescriptor = protoTransportPayloadConfig.getAttributesDynamicMessageDescriptor(protoTransportPayloadConfig.getDeviceAttributesProtoSchema());
     }
 }

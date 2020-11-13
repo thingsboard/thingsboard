@@ -15,24 +15,23 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.DeviceTransportType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.TransportPayloadType;
 
-@Slf4j
-@EqualsAndHashCode(callSuper = true)
-@Data
-@JsonDeserialize(as = MqttJsonDeviceProfileTransportConfiguration.class)
-public class MqttJsonDeviceProfileTransportConfiguration extends MqttDeviceProfileTransportConfiguration{
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "transportPayloadType")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = JsonTransportPayloadConfiguration.class, name = "JSON"),
+        @JsonSubTypes.Type(value = ProtoTransportPayloadConfiguration.class, name = "PROTOBUF")})
+public interface TransportPayloadTypeConfiguration {
 
-    @Override
-    public TransportPayloadType getTransportPayloadType() {
-        return TransportPayloadType.JSON;
-    }
+    @JsonIgnore
+    TransportPayloadType getTransportPayloadType();
 
 }

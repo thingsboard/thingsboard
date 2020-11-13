@@ -26,8 +26,11 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.TransportPayloadType;
-import org.thingsboard.server.common.data.device.profile.MqttProtoDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
@@ -51,10 +54,14 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
     public void testPushMqttTelemetry() throws Exception {
         super.processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null);
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        assertTrue(transportConfiguration instanceof MqttProtoDeviceProfileTransportConfiguration);
-        MqttProtoDeviceProfileTransportConfiguration configuration = (MqttProtoDeviceProfileTransportConfiguration) transportConfiguration;
-        ProtoFileElement transportProtoSchema = configuration.getTransportProtoSchema(DEVICE_TELEMETRY_PROTO_SCHEMA);
-        DynamicSchema telemetrySchema = configuration.getDynamicSchema(transportProtoSchema, "telemetrySchema");
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        assertTrue(transportConfiguration instanceof MqttDeviceProfileTransportConfiguration);
+        MqttDeviceProfileTransportConfiguration mqttTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
+        TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = mqttTransportConfiguration.getTransportPayloadTypeConfiguration();
+        assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+        ProtoFileElement transportProtoSchema = protoTransportPayloadConfiguration.getTransportProtoSchema(DEVICE_TELEMETRY_PROTO_SCHEMA);
+        DynamicSchema telemetrySchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchema, "telemetrySchema");
         DynamicMessage.Builder postTelemetryBuilder = telemetrySchema.newMessageBuilder("PostTelemetry");
         Descriptors.Descriptor postTelemetryMsgDescriptor = postTelemetryBuilder.getDescriptorForType();
         assertNotNull(postTelemetryMsgDescriptor);
@@ -88,10 +95,14 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
                 "}";
         super.processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null, schemaStr, null, DeviceProfileProvisionType.DISABLED, null, null);
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        assertTrue(transportConfiguration instanceof MqttProtoDeviceProfileTransportConfiguration);
-        MqttProtoDeviceProfileTransportConfiguration configuration = (MqttProtoDeviceProfileTransportConfiguration) transportConfiguration;
-        ProtoFileElement transportProtoSchema = configuration.getTransportProtoSchema(schemaStr);
-        DynamicSchema telemetrySchema = configuration.getDynamicSchema(transportProtoSchema, "telemetrySchema");
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        assertTrue(transportConfiguration instanceof MqttDeviceProfileTransportConfiguration);
+        MqttDeviceProfileTransportConfiguration mqttTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
+        TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = mqttTransportConfiguration.getTransportPayloadTypeConfiguration();
+        assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+        ProtoFileElement transportProtoSchema = protoTransportPayloadConfiguration.getTransportProtoSchema(schemaStr);
+        DynamicSchema telemetrySchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchema, "telemetrySchema");
 
         DynamicMessage.Builder valuesBuilder = telemetrySchema.newMessageBuilder("Values");
         Descriptors.Descriptor valuesDescriptor = valuesBuilder.getDescriptorForType();

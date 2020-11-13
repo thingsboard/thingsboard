@@ -30,8 +30,11 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.TransportPayloadType;
-import org.thingsboard.server.common.data.device.profile.MqttProtoDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
@@ -82,11 +85,15 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
 
     protected void postAttributesAndSubscribeToTopic(Device savedDevice, MqttAsyncClient client) throws Exception {
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
-        assertTrue(transportConfiguration instanceof MqttProtoDeviceProfileTransportConfiguration);
-        MqttProtoDeviceProfileTransportConfiguration configuration = (MqttProtoDeviceProfileTransportConfiguration) transportConfiguration;
-        ProtoFileElement transportProtoSchema = configuration.getTransportProtoSchema(ATTRIBUTES_SCHEMA_STR);
-        DynamicSchema telemetrySchema = configuration.getDynamicSchema(transportProtoSchema, "attributesSchema");
-        DynamicMessage.Builder postAttributesBuilder = telemetrySchema.newMessageBuilder("PostAttributes");
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        assertTrue(transportConfiguration instanceof MqttDeviceProfileTransportConfiguration);
+        MqttDeviceProfileTransportConfiguration mqttTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
+        TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = mqttTransportConfiguration.getTransportPayloadTypeConfiguration();
+        assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+        ProtoFileElement transportProtoSchema = protoTransportPayloadConfiguration.getTransportProtoSchema(ATTRIBUTES_SCHEMA_STR);
+        DynamicSchema attributesSchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchema, ProtoTransportPayloadConfiguration.ATTRIBUTES_PROTO_SCHEMA);
+        DynamicMessage.Builder postAttributesBuilder = attributesSchema.newMessageBuilder("PostAttributes");
         Descriptors.Descriptor postAttributesMsgDescriptor = postAttributesBuilder.getDescriptorForType();
         assertNotNull(postAttributesMsgDescriptor);
         DynamicMessage postAttributesMsg = postAttributesBuilder

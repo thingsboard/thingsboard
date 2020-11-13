@@ -23,7 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
-import org.thingsboard.server.common.data.device.profile.MqttProtoDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
+import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
@@ -47,11 +50,15 @@ public abstract class AbstractMqttAttributesProtoIntegrationTest extends Abstrac
     public void testPushMqttAttributes() throws Exception {
         super.processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, POST_DATA_ATTRIBUTES_TOPIC);
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        assertTrue(transportConfiguration instanceof MqttProtoDeviceProfileTransportConfiguration);
-        MqttProtoDeviceProfileTransportConfiguration configuration = (MqttProtoDeviceProfileTransportConfiguration) transportConfiguration;
-        ProtoFileElement transportProtoSchema = configuration.getTransportProtoSchema(DEVICE_ATTRIBUTES_PROTO_SCHEMA);
-        DynamicSchema telemetrySchema = configuration.getDynamicSchema(transportProtoSchema, "attributesSchema");
-        DynamicMessage.Builder postAttributesBuilder = telemetrySchema.newMessageBuilder("PostAttributes");
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        assertTrue(transportConfiguration instanceof MqttDeviceProfileTransportConfiguration);
+        MqttDeviceProfileTransportConfiguration mqttTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
+        TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = mqttTransportConfiguration.getTransportPayloadTypeConfiguration();
+        assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+        ProtoFileElement transportProtoSchemaFile = protoTransportPayloadConfiguration.getTransportProtoSchema(DEVICE_ATTRIBUTES_PROTO_SCHEMA);
+        DynamicSchema attributesSchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchemaFile, ProtoTransportPayloadConfiguration.ATTRIBUTES_PROTO_SCHEMA);
+        DynamicMessage.Builder postAttributesBuilder = attributesSchema.newMessageBuilder("PostAttributes");
         Descriptors.Descriptor postAttributesMsgDescriptor = postAttributesBuilder.getDescriptorForType();
         assertNotNull(postAttributesMsgDescriptor);
         DynamicMessage postAttributesMsg = postAttributesBuilder

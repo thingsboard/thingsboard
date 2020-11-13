@@ -38,9 +38,10 @@ import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileCon
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.MqttJsonDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.MqttProtoDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
+import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
@@ -94,7 +95,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
     protected Device savedGateway;
     protected String gatewayAccessToken;
 
-    protected MqttDeviceProfileTransportConfiguration transportConfiguration;
+    protected DeviceProfile deviceProfile;
 
     protected void processBeforeTest (String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic) throws Exception {
         this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, null, null, DeviceProfileProvisionType.DISABLED, null, null);
@@ -139,11 +140,11 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
 
         if (payloadType != null) {
             DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType, telemetryTopic, attributesTopic, telemetryProtoSchema, attributesProtoSchema, provisionType, provisionKey, provisionSecret);
-            DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", mqttDeviceProfile, DeviceProfile.class);
-            device.setType(savedDeviceProfile.getName());
-            device.setDeviceProfileId(savedDeviceProfile.getId());
-            gateway.setType(savedDeviceProfile.getName());
-            gateway.setDeviceProfileId(savedDeviceProfile.getId());
+            deviceProfile = doPost("/api/deviceProfile", mqttDeviceProfile, DeviceProfile.class);
+            device.setType(deviceProfile.getName());
+            device.setDeviceProfileId(deviceProfile.getId());
+            gateway.setType(deviceProfile.getName());
+            gateway.setDeviceProfileId(deviceProfile.getId());
         }
 
         savedDevice = doPost("/api/device", device, Device.class);
@@ -242,27 +243,30 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
         deviceProfile.setDescription(transportPayloadType.name() + " Test");
         DeviceProfileData deviceProfileData = new DeviceProfileData();
         DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
+        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = new MqttDeviceProfileTransportConfiguration();
+        if (!StringUtils.isEmpty(telemetryTopic)) {
+            mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(telemetryTopic);
+        }
+        if (!StringUtils.isEmpty(attributesTopic)) {
+            mqttDeviceProfileTransportConfiguration.setDeviceAttributesTopic(attributesTopic);
+        }
+        TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;
         if (TransportPayloadType.JSON.equals(transportPayloadType)) {
-            transportConfiguration = new MqttJsonDeviceProfileTransportConfiguration();
+            transportPayloadTypeConfiguration = new JsonTransportPayloadConfiguration();
         } else {
-            MqttProtoDeviceProfileTransportConfiguration protoTransportConfiguration = new MqttProtoDeviceProfileTransportConfiguration();
+            ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = new ProtoTransportPayloadConfiguration();
             if (StringUtils.isEmpty(telemetryProtoSchema)) {
                 telemetryProtoSchema = DEVICE_TELEMETRY_PROTO_SCHEMA;
             }
             if (StringUtils.isEmpty(attributesProtoSchema)) {
                 attributesProtoSchema = DEVICE_ATTRIBUTES_PROTO_SCHEMA;
             }
-            protoTransportConfiguration.setDeviceTelemetryProtoSchema(telemetryProtoSchema);
-            protoTransportConfiguration.setDeviceAttributesProtoSchema(attributesProtoSchema);
-            transportConfiguration = protoTransportConfiguration;
+            protoTransportPayloadConfiguration.setDeviceTelemetryProtoSchema(telemetryProtoSchema);
+            protoTransportPayloadConfiguration.setDeviceAttributesProtoSchema(attributesProtoSchema);
+            transportPayloadTypeConfiguration = protoTransportPayloadConfiguration;
         }
-        if (!StringUtils.isEmpty(telemetryTopic)) {
-            transportConfiguration.setDeviceTelemetryTopic(telemetryTopic);
-        }
-        if (!StringUtils.isEmpty(attributesTopic)) {
-            transportConfiguration.setDeviceAttributesTopic(attributesTopic);
-        }
-        deviceProfileData.setTransportConfiguration(transportConfiguration);
+        mqttDeviceProfileTransportConfiguration.setTransportPayloadTypeConfiguration(transportPayloadTypeConfiguration);
+        deviceProfileData.setTransportConfiguration(mqttDeviceProfileTransportConfiguration);
         DeviceProfileProvisionConfiguration provisionConfiguration;
         switch (provisionType) {
             case ALLOW_CREATE_NEW_DEVICES:
@@ -274,6 +278,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
             case DISABLED:
             default:
                 provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(provisionSecret);
+                break;
         }
         deviceProfileData.setProvisionConfiguration(provisionConfiguration);
         deviceProfileData.setConfiguration(configuration);

@@ -87,13 +87,14 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       configuration: this.fb.group({
         deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]],
-        transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required]
+        transportPayloadTypeConfiguration: this.fb.group({
+          transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required]
+        })
       })
     });
-    let configurationFormGroup = this.mqttDeviceProfileTransportConfigurationFormGroup.controls.configuration as FormGroup;
-    configurationFormGroup.get('transportPayloadType').valueChanges.subscribe(payloadType => {
-        this.updateTransportPayloadBasedControls(payloadType, configurationFormGroup);
-        this.mqttDeviceProfileTransportConfigurationFormGroup.updateValueAndValidity();
+    this.mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.transportPayloadTypeConfiguration.transportPayloadType').valueChanges.subscribe(payloadType => {
+      this.updateTransportPayloadBasedControls(payloadType);
+      this.mqttDeviceProfileTransportConfigurationFormGroup.updateValueAndValidity();
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -109,15 +110,14 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     }
   }
 
-  protoPayloadType(): boolean {
-    let configuration = this.mqttDeviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
-    return configuration.transportPayloadType === MqttTransportPayloadType.PROTOBUF;
+  get protoPayloadType(): boolean {
+    let transportPayloadType = this.mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.transportPayloadTypeConfiguration.transportPayloadType').value;
+    return transportPayloadType === MqttTransportPayloadType.PROTOBUF;
   }
 
   writeValue(value: MqttDeviceProfileTransportConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
-      let configurationFormGroup = this.mqttDeviceProfileTransportConfigurationFormGroup.controls.configuration as FormGroup;
-      this.updateTransportPayloadBasedControls(value.transportPayloadType, configurationFormGroup);
+      this.updateTransportPayloadBasedControls(value.transportPayloadTypeConfiguration.transportPayloadType);
       this.mqttDeviceProfileTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
     }
   }
@@ -131,13 +131,14 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     this.propagateChange(configuration);
   }
 
-  private updateTransportPayloadBasedControls(type: MqttTransportPayloadType, configurationFormGroup: FormGroup) {
+  private updateTransportPayloadBasedControls(type: MqttTransportPayloadType) {
+    const transportPayloadTypeConfigurationFormGroup = this.mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.transportPayloadTypeConfiguration') as FormGroup;
     if (type === MqttTransportPayloadType.PROTOBUF) {
-      configurationFormGroup.registerControl('deviceTelemetryProtoSchema', this.fb.control(null, Validators.required));
-      configurationFormGroup.registerControl('deviceAttributesProtoSchema', this.fb.control(null, Validators.required));
+      transportPayloadTypeConfigurationFormGroup.registerControl('deviceTelemetryProtoSchema', this.fb.control(null, Validators.required));
+      transportPayloadTypeConfigurationFormGroup.registerControl('deviceAttributesProtoSchema', this.fb.control(null, Validators.required));
     } else {
-      configurationFormGroup.removeControl('deviceTelemetryProtoSchema');
-      configurationFormGroup.removeControl('deviceAttributesProtoSchema');
+      transportPayloadTypeConfigurationFormGroup.removeControl('deviceTelemetryProtoSchema');
+      transportPayloadTypeConfigurationFormGroup.removeControl('deviceAttributesProtoSchema');
     }
   }
 
