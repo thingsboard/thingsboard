@@ -13,23 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.dashboard;
+package org.thingsboard.server.dao;
 
-import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.TenantEntityDao;
 
-/**
- * The Interface DashboardDao.
- */
-public interface DashboardDao extends Dao<Dashboard>, TenantEntityDao {
+public interface TenantEntityDao {
 
-    /**
-     * Save or update dashboard object
-     *
-     * @param dashboard the dashboard object
-     * @return saved dashboard object
-     */
-    Dashboard save(TenantId tenantId, Dashboard dashboard);
+    Long countByTenantId(TenantId tenantId);
 }
