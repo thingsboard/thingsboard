@@ -108,7 +108,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
              * Since number of subscriptions is usually much less then number of devices that are pushing data.
              */
             subscriptionsBySessionId.values().forEach(map -> map.values()
-                    .forEach(sub -> pushSubscriptionToManagerService(sub, false)));
+                    .forEach(sub -> pushSubscriptionToManagerService(sub, true)));
         }
     }
 

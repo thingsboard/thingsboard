@@ -164,21 +164,24 @@ public class DefaultTransportApiService implements TransportApiService {
     }
 
     private ListenableFuture<TransportApiResponseMsg> validateCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg mqtt) {
-        DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(mqtt.getUserName());
-        if (credentials != null) {
-            if (credentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN) {
-                return getDeviceInfo(credentials.getDeviceId(), credentials);
-            } else if (credentials.getCredentialsType() == DeviceCredentialsType.MQTT_BASIC) {
-                if (!checkMqttCredentials(mqtt, credentials)) {
-                    credentials = null;
+        DeviceCredentials credentials = null;
+        if (!StringUtils.isEmpty(mqtt.getUserName())) {
+            credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(mqtt.getUserName());
+            if (credentials != null) {
+                if (credentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN) {
+                    return getDeviceInfo(credentials.getDeviceId(), credentials);
+                } else if (credentials.getCredentialsType() == DeviceCredentialsType.MQTT_BASIC) {
+                    if (!checkMqttCredentials(mqtt, credentials)) {
+                        credentials = null;
+                    }
                 }
+            }
+            if (credentials == null) {
+                credentials = checkMqttCredentials(mqtt, EncryptionUtil.getSha3Hash("|", mqtt.getClientId(), mqtt.getUserName()));
             }
         }
         if (credentials == null) {
-            credentials = checkMqttCredentials(mqtt, EncryptionUtil.getSha3Hash("|", mqtt.getClientId(), mqtt.getUserName()));
-            if (credentials == null) {
-                credentials = checkMqttCredentials(mqtt, EncryptionUtil.getSha3Hash(mqtt.getClientId()));
-            }
+            credentials = checkMqttCredentials(mqtt, EncryptionUtil.getSha3Hash(mqtt.getClientId()));
         }
         if (credentials != null) {
             return getDeviceInfo(credentials.getDeviceId(), credentials);

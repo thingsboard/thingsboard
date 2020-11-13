@@ -221,6 +221,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
     @Override
     public void onTenantProfileUpdate(TenantProfileId tenantProfileId) {
+        log.info("[{}] On Tenant Profile Update", tenantProfileId);
         TenantProfile tenantProfile = tenantProfileCache.get(tenantProfileId);
         updateLock.lock();
         try {
@@ -236,6 +237,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
     @Override
     public void onTenantUpdate(TenantId tenantId) {
+        log.info("[{}] On Tenant Update.", tenantId);
         TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
         updateLock.lock();
         try {
@@ -248,16 +250,16 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         }
     }
 
-    private void updateTenantState(TenantApiUsageState state, TenantProfile tenantProfile) {
+    private void updateTenantState(TenantApiUsageState state, TenantProfile profile) {
         TenantProfileData oldProfileData = state.getTenantProfileData();
-        state.setTenantProfileId(tenantProfile.getId());
-        state.setTenantProfileData(tenantProfile.getProfileData());
+        state.setTenantProfileId(profile.getId());
+        state.setTenantProfileData(profile.getProfileData());
         Map<ApiFeature, ApiUsageStateValue> result = state.checkStateUpdatedDueToThresholds();
         if (!result.isEmpty()) {
             persistAndNotify(state, result);
         }
         updateProfileThresholds(state.getTenantId(), state.getApiUsageState().getId(),
-                oldProfileData.getConfiguration(), tenantProfile.getProfileData().getConfiguration());
+                oldProfileData.getConfiguration(), profile.getProfileData().getConfiguration());
     }
 
     private void updateProfileThresholds(TenantId tenantId, ApiUsageStateId id,

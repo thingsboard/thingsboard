@@ -94,7 +94,9 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, tenantId).newByTopic(msgProducer.getDefaultTopic());
                 msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), builder.build()), null);
             }));
-            log.info("Report statistics for: {} tenants", report.size());
+            if (!report.isEmpty()) {
+                log.info("Report statistics for: {} tenants", report.size());
+            }
         } catch (Exception e) {
             log.warn("Failed to report statistics: ", e);
         }
