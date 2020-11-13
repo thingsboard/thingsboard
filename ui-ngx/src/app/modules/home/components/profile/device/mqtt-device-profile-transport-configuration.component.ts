@@ -52,7 +52,6 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   mqttTransportPayloadTypeTranslations = mqttTransportPayloadTypeTranslationMap;
 
-
   mqttDeviceProfileTransportConfigurationFormGroup: FormGroup;
 
   private requiredValue: boolean;
@@ -90,7 +89,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
         transportPayloadTypeConfiguration: this.fb.group({
           transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required]
         })
-      })
+      }, {validator: this.uniqueDeviceTopicValidator})
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.get('configuration.transportPayloadTypeConfiguration.transportPayloadType').valueChanges.subscribe(payloadType => {
       this.updateTransportPayloadBasedControls(payloadType);
@@ -170,5 +169,15 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       }
       return null;
     };
+  }
+
+  private uniqueDeviceTopicValidator(control: FormGroup): { [key: string]: boolean } | null {
+    if (control.value) {
+      const formValue = control.value as MqttDeviceProfileTransportConfiguration;
+      if (formValue.deviceAttributesTopic === formValue.deviceTelemetryTopic) {
+        return {unique: true};
+      }
+    }
+    return null;
   }
 }

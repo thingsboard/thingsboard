@@ -21,5 +21,5 @@ import java.io.Serializable;
  * @author Andrew Shvayka
  */
 public enum ComponentLifecycleEvent implements Serializable {
-    CREATED, STARTED, ACTIVATED, SUSPENDED, UPDATED, STOPPED, DELETED, ADDED_TO_ALLOW_LIST, ADDED_TO_DENY_LIST
+    CREATED, STARTED, ACTIVATED, SUSPENDED, UPDATED, STOPPED, DELETED
 }

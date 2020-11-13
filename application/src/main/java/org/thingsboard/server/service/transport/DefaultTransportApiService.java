@@ -165,7 +165,7 @@ public class DefaultTransportApiService implements TransportApiService {
 
     private ListenableFuture<TransportApiResponseMsg> validateCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg mqtt) {
         DeviceCredentials credentials = null;
-        if (mqtt.getUserName() != null) {
+        if (!StringUtils.isEmpty(mqtt.getUserName())) {
             credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(mqtt.getUserName());
             if (credentials != null) {
                 if (credentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN) {

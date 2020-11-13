@@ -55,6 +55,10 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
     this.defaultTenantProfileConfigurationFormGroup = this.fb.group({
       maxDevices: [null, [Validators.required, Validators.min(0)]],
       maxAssets: [null, [Validators.required, Validators.min(0)]],
+      maxCustomers: [null, [Validators.required, Validators.min(0)]],
+      maxUsers: [null, [Validators.required, Validators.min(0)]],
+      maxDashboards: [null, [Validators.required, Validators.min(0)]],
+      maxRuleChains: [null, [Validators.required, Validators.min(0)]],
       transportTenantMsgRateLimit: [null, []],
       transportTenantTelemetryMsgRateLimit: [null, []],
       transportTenantTelemetryDataPointsRateLimit: [null, []],

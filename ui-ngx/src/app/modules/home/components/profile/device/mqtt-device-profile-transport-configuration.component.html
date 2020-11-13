@@ -52,6 +52,9 @@
             </mat-error>
           </mat-form-field>
         </div>
+        <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('configuration').hasError('unique')">
+          {{ 'device-profile.mqtt-device-topic-filters-unique' | translate }}
+        </mat-error>
         <div class="tb-hint" innerHTML="{{ 'device-profile.support-level-wildcards' | translate }}"></div>
         <div class="tb-hint" innerHTML="{{ 'device-profile.single-level-wildcards-hint' | translate }}"></div>
         <div class="tb-hint" innerHTML="{{ 'device-profile.multi-level-wildcards-hint' | translate }}"></div>
