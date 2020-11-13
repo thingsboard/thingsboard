@@ -530,12 +530,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     DefaultTenantProfileConfiguration profileConfiguration =
                             (DefaultTenantProfileConfiguration)tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
                     long maxDevices = profileConfiguration.getMaxDevices();
-                    if (maxDevices > 0) {
-                        long currentDevicesCount = deviceDao.countDevicesByTenantId(tenantId);
-                        if (currentDevicesCount >= maxDevices) {
-                            throw new DataValidationException("Can't create devices more then " + maxDevices);
-                        }
-                    }
+                    validateNumberOfEntitiesPerTenant(tenantId, deviceDao, maxDevices, EntityType.DEVICE);
                 }
 
                 @Override

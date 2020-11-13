@@ -58,7 +58,7 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
     }
 
     @Override
-    public Long countRuleChainsByTenantId(TenantId tenantId) {
+    public Long countByTenantId(TenantId tenantId) {
         return ruleChainRepository.countByTenantId(tenantId.getId());
     }
 }

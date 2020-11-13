@@ -46,7 +46,7 @@ public class JpaDashboardDao extends JpaAbstractSearchTextDao<DashboardEntity, D
     }
 
     @Override
-    public Long countDashboardsByTenantId(TenantId tenantId) {
+    public Long countByTenantId(TenantId tenantId) {
         return dashboardRepository.countByTenantId(tenantId.getId());
     }
 }

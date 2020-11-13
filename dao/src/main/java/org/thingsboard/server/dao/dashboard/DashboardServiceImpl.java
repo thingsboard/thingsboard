@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -226,12 +227,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                     DefaultTenantProfileConfiguration profileConfiguration =
                             (DefaultTenantProfileConfiguration)tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
                     long maxDashboards = profileConfiguration.getMaxDashboards();
-                    if (maxDashboards > 0) {
-                        long currentDashboardsCount = dashboardDao.countDashboardsByTenantId(tenantId);
-                        if (currentDashboardsCount >= maxDashboards) {
-                            throw new DataValidationException("Can't create dashboards more then " + maxDashboards);
-                        }
-                    }
+                    validateNumberOfEntitiesPerTenant(tenantId, dashboardDao, maxDashboards, EntityType.DASHBOARD);
                 }
 
                 @Override

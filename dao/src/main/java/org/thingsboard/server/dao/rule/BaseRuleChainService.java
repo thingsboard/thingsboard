@@ -592,12 +592,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     DefaultTenantProfileConfiguration profileConfiguration =
                             (DefaultTenantProfileConfiguration)tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
                     long maxRuleChains = profileConfiguration.getMaxRuleChains();
-                    if (maxRuleChains > 0) {
-                        long currentRuleChainsCount = ruleChainDao.countRuleChainsByTenantId(tenantId);
-                        if (currentRuleChainsCount >= maxRuleChains) {
-                            throw new DataValidationException("Can't create rule chains more then " + maxRuleChains);
-                        }
-                    }
+                    validateNumberOfEntitiesPerTenant(tenantId, ruleChainDao, maxRuleChains, EntityType.RULE_CHAIN);
                 }
 
                 @Override

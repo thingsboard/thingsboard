@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -377,12 +378,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
                         DefaultTenantProfileConfiguration profileConfiguration =
                                 (DefaultTenantProfileConfiguration) tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
                         long maxUsers = profileConfiguration.getMaxUsers();
-                        if (maxUsers > 0) {
-                            long currentUsersCount = userDao.countUsersByTenantId(tenantId);
-                            if (currentUsersCount >= maxUsers) {
-                                throw new DataValidationException("Can't create users more then " + maxUsers);
-                            }
-                        }
+                        validateNumberOfEntitiesPerTenant(tenantId, userDao, maxUsers, EntityType.USER);
                     }
                 }
 

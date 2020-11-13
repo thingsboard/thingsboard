@@ -93,7 +93,7 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
     }
 
     @Override
-    public Long countUsersByTenantId(TenantId tenantId) {
+    public Long countByTenantId(TenantId tenantId) {
         return userRepository.countByTenantId(tenantId.getId());
     }
 }

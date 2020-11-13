@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -172,12 +173,8 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
                     DefaultTenantProfileConfiguration profileConfiguration =
                             (DefaultTenantProfileConfiguration)tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
                     long maxCustomers = profileConfiguration.getMaxCustomers();
-                    if (maxCustomers > 0) {
-                        long currentCustomersCount = customerDao.countCustomersByTenantId(tenantId);
-                        if (currentCustomersCount >= maxCustomers) {
-                            throw new DataValidationException("Can't create customers more then " + maxCustomers);
-                        }
-                    }
+
+                    validateNumberOfEntitiesPerTenant(tenantId, customerDao, maxCustomers, EntityType.CUSTOMER);
                     customerDao.findCustomersByTenantIdAndTitle(customer.getTenantId().getId(), customer.getTitle()).ifPresent(
                             c -> {
                                 throw new DataValidationException("Customer with such title already exists!");
