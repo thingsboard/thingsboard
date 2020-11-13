@@ -132,7 +132,7 @@ public abstract class AbstractMqttProvisionJsonDeviceTest extends AbstractMqttIn
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), "ACCESS_TOKEN");
-        Assert.assertEquals(deviceCredentials.getCredentialsValue(), "test_token");
+        Assert.assertEquals(deviceCredentials.getCredentialsId(), "test_token");
         Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").getAsString());
     }
 
