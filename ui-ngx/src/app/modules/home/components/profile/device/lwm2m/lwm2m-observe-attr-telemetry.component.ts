@@ -37,6 +37,8 @@ import {
   ResourceLwM2M,
   TELEMETRY
 } from "./profile-config.models";
+import { isNotNullOrUndefined } from 'codelyzer/util/isNotNullOrUndefined';
+import { isUndefined } from '@core/utils';
 
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry',
@@ -80,15 +82,13 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   @Input()
   disabled: boolean;
 
-  @Output() valueKeyNameChange = new EventEmitter<{}>();
-
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
     this.observeAttrTelemetryFormGroup = this.fb.group({
       clientLwM2M: this.fb.array([], this.required ? [Validators.required] : [])
     });
     this.observeAttrTelemetryFormGroup.valueChanges.subscribe(value => {
-      if (this.disabled !== undefined &&!this.disabled) {
+      if (isUndefined(this.disabled)  || !this.disabled) {
         this.propagateChangeState(value);
       }
     });
@@ -115,6 +115,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         this.valuePrev = value;
         if (this.observeAttrTelemetryFormGroup.valid) {
           this.propagateChange(value);
+
         } else {
           this.propagateChange(null);
         }
@@ -142,21 +143,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
 
   writeValue(value: any): void {
     this.buildClientObjectsLwM2M(value.clientLwM2M);
-    // this.initInstancesCheckBoxes();
-  }
-
-  initInstancesCheckBoxes(): void {
-    (this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls.forEach((object, objInd) => (
-      (object.get('instances') as FormArray).controls.forEach((instance, instInd) => ({
-          function: this.initInstancesCheckBox(objInd, instInd)
-        })
-      )));
-  }
-
-  initInstancesCheckBox(objInd?: number, instInd?: number): void {
-    this.changeInstanceCheckBox(objInd, instInd, this.observe);
-    this.changeInstanceCheckBox(objInd, instInd, this.attribute);
-    this.changeInstanceCheckBox(objInd, instInd, this.telemetry);
   }
 
   private buildClientObjectsLwM2M(objectsLwM2M: ObjectLwM2M []): void {
@@ -185,22 +171,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
       })
     }))
   }
-  //
-  // createInstanceLwM2MCheckBox(instanceLwM2MJson: Instance []): InstanceCheckBox [] {
-  //   let instanceCheckBoxs = [] as InstanceCheckBox[];
-  //   instanceLwM2MJson.map((instanceLwM2M, index) => {
-  //     console.warn(instanceLwM2M.id);
-  //     let instanceChk = {} as InstanceCheckBox;
-  //     instanceChk.id = instanceLwM2M.id;
-  //     instanceChk.observe = false;
-  //     instanceChk.attribute = false;
-  //     instanceChk.telemetry = false;
-  //     instanceChk.resources = instanceLwM2M.resources;
-  //     instanceCheckBoxs.push(instanceChk);
-  //   });
-  //   return instanceCheckBoxs;
-  //   // return instanceCheckBoxs;
-  // }
 
   createInstanceLwM2M(instanceLwM2MJson: Instance [], parentIndex?: number): FormArray {
     return this.fb.array(instanceLwM2MJson.map((instanceLwM2M, index) => {
@@ -229,31 +199,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     let resources = instance.get('resources').value as ResourceLwM2M []
     resources.forEach(resource => resource[type] = value);
     instance.get('resources').patchValue(resources);
-  }
-
-  changeInstanceCheckBox(objInd?: number, instInd?: number, nameParameter?: string): void {
-    let instance = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).at(objInd).get('instances') as FormArray).at(instInd);
-    let indeterm = (instance.get('resources') as FormArray).controls.some(resource => {
-      return resource.get(nameParameter).value === true;
-    });
-    let isAllObserve = (instance.get('resources') as FormArray).controls.some(resource => {
-      return resource.get(nameParameter).value === false;
-    });
-    if (!isAllObserve && indeterm) {
-      instance.patchValue({[nameParameter]: true});
-      indeterm = false;
-    } else if (isAllObserve) {
-      instance.patchValue({[nameParameter]: false});
-    }
-    this.indeterminate[nameParameter][objInd][instInd] = indeterm;
-  }
-
-  changeResourceCheckBox($event: unknown): void {
-    this.changeInstanceCheckBox($event['objInd'], $event['instInd'], $event['nameFrom']);
-  }
-
-  changeResourceKeyName($event: unknown): void {
-    this.valueKeyNameChange.emit($event);
+    this.propagateChange(this.observeAttrTelemetryFormGroup.value);
   }
 
   updateValidators() {
@@ -267,13 +213,25 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
 
   getIndeterminate(instance: AbstractControl, type: string) {
     const resources = instance.get('resources').value as ResourceLwM2M [];
-    const checkedResource = resources.filter(resource => resource[type]);
-    return checkedResource.length > 0 && checkedResource.length < resources.length;
+    if (isNotNullOrUndefined(resources)) {
+      const isType = (element) => element[type] === true;
+      let checkedResource = resources.filter(isType);
+      if (checkedResource.length === 0) return false;
+      else if (checkedResource.length === resources.length) {
+        instance.patchValue({[type]: true});
+        return false;
+      } else return true;
+    }
+    return false;
   }
+
 
   getChecked(instance: AbstractControl, type: string) {
     const resources = instance.get('resources').value as ResourceLwM2M [];
-    return resources.some(resource => resource[type]);
+    if (isNotNullOrUndefined(resources)) {
+      return resources.some(resource => resource[type]);
+    }
+    return false;
   }
 
   getExpended(objectLwM2M: AbstractControl) {

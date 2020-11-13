@@ -70,7 +70,12 @@
         <mat-form-field fxFlex="25">
           <input matInput type="text" formControlName="keyName" required
                  matTooltip="{{'device-profile.lwm2m.key-name-tip' | translate}}"
-                 (input)="updateValueKeyName($event, resourceLwM2M.get('id').value)">
+                 (input)="updateValueKeyName($event, z)"
+                 matTooltipPosition="above">
+          <mat-error *ngIf="resourceLwM2M.get('keyName').hasError('required')">
+            {{ 'device-profile.lwm2m.key-name' | translate }}
+            <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+          </mat-error>
         </mat-form-field>
       </div>
     </div>

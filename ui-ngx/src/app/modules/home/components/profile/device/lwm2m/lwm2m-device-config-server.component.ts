@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, forwardRef, Inject, Input, OnInit, Output, ViewChild } from "@angular/core";
+import { Component, forwardRef, Inject, Input, OnInit } from "@angular/core";
 
 import {
   ControlValueAccessor,
@@ -151,8 +151,6 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
         host: this.serverFormGroup.get('host').value,
         port: this.serverFormGroup.get('port').value,
         bootstrapServerIs: this.serverFormGroup.get('bootstrapServerIs').value,
-        // clientPublicKeyOrId: this.serverFormGroup.get('clientPublicKeyOrId').value,
-        // clientSecretKey: this.serverFormGroup.get('clientSecretKey').value,
         serverPublicKey: this.serverFormGroup.get('serverPublicKey').value,
         clientHoldOffTime: this.serverFormGroup.get('clientHoldOffTime').value,
         serverId: this.serverFormGroup.get('serverId').value,
@@ -212,8 +210,6 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
       port: [port, this.required ? [Validators.required] : []],
       bootstrapServerIs: [this.bootstrapServerIs, []],
       securityMode: [this.fb.control(SECURITY_CONFIG_MODE.NO_SEC), []],
-      // clientPublicKeyOrId: ['', this.required ? [Validators.required] : []],
-      // clientSecretKey: ['', this.required ? [Validators.required] : []],
       serverPublicKey: ['', this.required ? [Validators.required] : []],
       clientHoldOffTime: [DEFAULT_CLIENT_HOLD_OFF_TIME, this.required ? [Validators.required] : []],
       serverId: [DEFAULT_ID_SERVER, this.required ? [Validators.required] : []],
@@ -236,5 +232,4 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
       }
     );
   }
-
 }

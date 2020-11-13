@@ -18,7 +18,6 @@ import {
   DeviceProfileTransportConfiguration,
   DeviceTransportType
 } from '@shared/models/device.models';
-import { MatTabChangeEvent } from "@angular/material/tabs";
 import {
   Component,
   forwardRef, Inject,
@@ -37,10 +36,9 @@ import {
   ObjectLwM2M, getDefaultProfileConfig, KEY_NAME
 } from "./profile-config.models";
 import { DeviceProfileService } from "../../../../../../core/http/device-profile.service";
-import { deepClone } from "../../../../../../core/utils";
+import { deepClone, isUndefined } from "../../../../../../core/utils";
 import { WINDOW } from "../../../../../../core/services/window.service";
 import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
-import { number } from 'prop-types';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-transport-configuration',
@@ -109,7 +107,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       configurationJson: [null, Validators.required],
     });
     this.lwm2mDeviceProfileTransportConfFormGroup.valueChanges.subscribe(() => {
-      if (this.disabled !== undefined && !this.disabled) {
+      if (isUndefined(this.disabled) || !this.disabled) {
         this.updateModel();
       }
     });
@@ -341,11 +339,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
                 if (key === 'id') {
                   pathInst = value;
                 }
-                let pathInstObserve;
-                if (key === 'observe' && value) {
-                  pathInstObserve = '/' + pathObj + '/' + pathInst;
-                  observeArray.push(pathInstObserve)
-                }
                 if (key === 'resources') {
                   let resourcesJson = JSON.parse(JSON.stringify(value)) as [];
                   if (resourcesJson.length > 0) {
@@ -382,10 +375,10 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       this.configurationValue[this.observeAttr][this.attribute] = attributeArray;
       this.configurationValue[this.observeAttr][this.telemetry] = telemetryArray;
     }
-    this.updateNameThinsboard();
+    this.updateKeyName();
   }
 
-  updateNameThinsboard(): void {
+  updateKeyName(): void {
     let paths = new Set<string>();
     if (this.configurationValue[this.observeAttr][this.attribute]) {
       this.configurationValue[this.observeAttr][this.attribute].forEach(path => {
@@ -500,18 +493,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     });
   }
 
-  changeResourceKeyNameToJson($event: unknown): void {
-    let path = $event["path"];
-    let valueName = $event["value"];
-    if (path && this.isPathInJson(path)) {
-      this.configurationValue[this.observeAttr][this.keyName][path] = valueName;
-      this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").markAsPristine({
-        onlySelf: true
-      });
-      this.upDateJsonAllConfig();
-    }
-  }
-
   isPathInJson(path: string): boolean {
     let isPath = this.findPathInJson(path, this.attribute);
     if (!isPath) {
@@ -525,23 +506,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       if (this.configurationValue[this.observeAttr][side]) {
         return this.configurationValue[this.observeAttr][side].find(
           pathJs => pathJs === path);
-      }
-    }
-  }
-
-  updateKeyName(path: string, value: string) {
-    let pathParameter = Array.from(path.substring(1).split('/'), Number);
-    let objectsOld = deepClone(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value.clientLwM2M) as ObjectLwM2M[];
-    let isIdIndex = (element) => element.id === pathParameter[0];
-    let objIndex = objectsOld.findIndex(isIdIndex);
-    if (objIndex >= 0) {
-      isIdIndex = (element) => element.id === pathParameter[1];
-      let instIndex = objectsOld[objIndex].instances.findIndex(isIdIndex);
-      if (instIndex >= 0) {
-        isIdIndex = (element) => element.id === pathParameter[2];
-        let resIndex = objectsOld[objIndex].instances[instIndex].resources.findIndex(isIdIndex);
-        objectsOld[objIndex].instances[instIndex].resources[resIndex][this.keyName] = value;
-        this.updateObserveAttrTelemetryObjectFormGroup(objectsOld);
       }
     }
   }

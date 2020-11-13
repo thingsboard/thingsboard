@@ -27,7 +27,7 @@ import {
 } from '@home/components/profile/device/lwm2m/profile-config.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { deepClone } from '@core/utils';
+import { deepClone, isUndefined } from '@core/utils';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({
@@ -51,8 +51,6 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
   @Input() y: number;
   @Input() objId: number;
   @Input() disabled: boolean;
-  @Output() changeValueCheckBox = new EventEmitter<{}>()
-  @Output() changeValueKeyName = new EventEmitter<{}>()
   private requiredValue: boolean;
 
   get required(): boolean {
@@ -64,22 +62,20 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
     const newVal = coerceBooleanProperty(value);
     if (this.requiredValue !== newVal) {
       this.requiredValue = newVal;
-      console.warn("required: " + value);
     }
   }
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
     this.resourceFormGroup = this.fb.group({'resources': this.fb.array([])});
     this.resourceFormGroup.valueChanges.subscribe(value => {
-      // if (this.disabled) {
+      if (isUndefined(this.disabled)  || !this.disabled) {
         this.propagateChangeState(value.resources);
-      // }
+      }
     });
   }
 
   ngOnInit(): void {
   }
-
 
   registerOnTouched(fn: any): void {
   }
@@ -96,16 +92,6 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
     return instance.get('resources') as FormArray;
   }
 
-  changeInstanceResourcesCheckBox(value: boolean, restInd: number, nameFrom?: string): void {
-    this.changeValueCheckBox.emit({
-      value: value,
-      objInd: this.i,
-      instInd: this.y,
-      resInd: restInd,
-      nameFrom: nameFrom
-    });
-  }
-
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
@@ -120,15 +106,7 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
   }
 
   updateValueKeyName (event: any, z: number): void {
-    debugger
-    let newVal = this.keysToCamel(deepClone(event.target.value));
-    let insId = this.resourceFormGroup.value.id;
-    let path = "/"+ this.objId + "/" + insId + "/" + z;
-    this.changeValueKeyName.emit({
-      path: path,
-      value: newVal
-    });
-    event.target.value =  newVal;
+    this.resourceFormArray.at(z).patchValue( {keyName:  this.keysToCamel(deepClone(event.target.value))} );
   }
 
   keysToCamel(o: any): string {
@@ -154,7 +132,7 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
           observe: resourceLwM2M.observe,
           attribute: resourceLwM2M.attribute,
           telemetry: resourceLwM2M.telemetry,
-          keyName: resourceLwM2M.keyName
+          keyName: [resourceLwM2M.keyName, Validators.required]
         }));
       })
     }
@@ -163,13 +141,12 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
   private propagateChange = (v: any) => {
   };
 
-
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }
 
   private propagateChangeState(value: any): void {
-    if (value) {
+    if (value && this.resourceFormGroup.valid) {
       this.propagateChange(value);
     } else {
       this.propagateChange(null);

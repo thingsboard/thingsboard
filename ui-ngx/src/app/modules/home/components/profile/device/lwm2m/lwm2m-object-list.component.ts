@@ -37,7 +37,7 @@ import {AppState} from "../../../../../../core/core.state";
 import {MatChipList} from '@angular/material/chips';
 import {MatAutocomplete} from "@angular/material/autocomplete";
 import {Observable} from "rxjs";
-import {filter, map, mergeMap, share, startWith, tap} from 'rxjs/operators';
+import {filter, map, mergeMap, share, tap} from 'rxjs/operators';
 import {ObjectLwM2M} from "./profile-config.models";
 import {TranslateService} from "@ngx-translate/core";
 import {DeviceProfileService} from "../../../../../../core/http/device-profile.service";
