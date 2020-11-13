@@ -38,7 +38,7 @@ import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.profile.TbTenantProfileCache;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
 
@@ -153,6 +153,8 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             TbActorMsg actorMsg = actorMsgOpt.get();
             if (actorMsg instanceof ComponentLifecycleMsg) {
                 ComponentLifecycleMsg componentLifecycleMsg = (ComponentLifecycleMsg) actorMsg;
+                log.info("[{}][{}][{}] Received Lifecycle event: {}", componentLifecycleMsg.getTenantId(), componentLifecycleMsg.getEntityId().getEntityType(),
+                        componentLifecycleMsg.getEntityId(), componentLifecycleMsg.getEvent());
                 if (EntityType.TENANT_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     TenantProfileId tenantProfileId = new TenantProfileId(componentLifecycleMsg.getEntityId().getId());
                     tenantProfileCache.evict(tenantProfileId);

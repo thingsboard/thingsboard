@@ -21,6 +21,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
@@ -77,6 +78,7 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
 
     @Override
     public void update(TenantProfileUpdateResult update) {
+        log.info("Received tenant profile update: {}", update.getProfile());
         EntityTransportRateLimits tenantRateLimitPrototype = createRateLimits(update.getProfile(), true);
         EntityTransportRateLimits deviceRateLimitPrototype = createRateLimits(update.getProfile(), false);
         for (TenantId tenantId : update.getAffectedTenants()) {
@@ -114,16 +116,26 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         tenantAllowed.put(tenantId, allowed);
     }
 
-    private <T> void mergeLimits(T deviceId, EntityTransportRateLimits newRateLimits,
-                                 Function<T, EntityTransportRateLimits> getFunction,
-                                 BiConsumer<T, EntityTransportRateLimits> putFunction) {
-        EntityTransportRateLimits oldRateLimits = getFunction.apply(deviceId);
+    private <T extends EntityId> void mergeLimits(T entityId, EntityTransportRateLimits newRateLimits,
+                                                  Function<T, EntityTransportRateLimits> getFunction,
+                                                  BiConsumer<T, EntityTransportRateLimits> putFunction) {
+        EntityTransportRateLimits oldRateLimits = getFunction.apply(entityId);
         if (oldRateLimits == null) {
-            putFunction.accept(deviceId, newRateLimits);
+            if (EntityType.TENANT.equals(entityId.getEntityType())) {
+                log.info("[{}] New rate limits: {}", entityId, newRateLimits);
+            } else {
+                log.debug("[{}] New rate limits: {}", entityId, newRateLimits);
+            }
+            putFunction.accept(entityId, newRateLimits);
         } else {
             EntityTransportRateLimits updated = merge(oldRateLimits, newRateLimits);
             if (updated != null) {
-                putFunction.accept(deviceId, updated);
+                if (EntityType.TENANT.equals(entityId.getEntityType())) {
+                    log.info("[{}] Updated rate limits: {}", entityId, updated);
+                } else {
+                    log.debug("[{}] Updated rate limits: {}", entityId, updated);
+                }
+                putFunction.accept(entityId, updated);
             }
         }
     }
