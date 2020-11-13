@@ -408,22 +408,20 @@ public class JsonConverter {
 
     private static JsonObject toJson(ProvisionDeviceResponseMsg payload, boolean toGateway, int requestId) {
         JsonObject result = new JsonObject();
-        if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.NOT_FOUND) {
+        if (payload.getStatus() == TransportProtos.ProvisionResponseStatus.NOT_FOUND) {
             result.addProperty("errorMsg", "Provision data was not found!");
-            result.addProperty("provisionDeviceStatus", ProvisionResponseStatus.NOT_FOUND.name());
-        } else if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.FAILURE) {
+            result.addProperty("status", ProvisionResponseStatus.NOT_FOUND.name());
+        } else if (payload.getStatus() == TransportProtos.ProvisionResponseStatus.FAILURE) {
             result.addProperty("errorMsg", "Failed to provision device!");
-            result.addProperty("provisionDeviceStatus", ProvisionResponseStatus.FAILURE.name());
+            result.addProperty("status", ProvisionResponseStatus.FAILURE.name());
         } else {
             if (toGateway) {
                 result.addProperty("id", requestId);
             }
-            result.addProperty("deviceId", new UUID(payload.getDeviceCredentials().getDeviceIdMSB(), payload.getDeviceCredentials().getDeviceIdLSB()).toString());
-            result.addProperty("credentialsType", payload.getDeviceCredentials().getCredentialsType().name());
-            result.addProperty("credentialsId", payload.getDeviceCredentials().getCredentialsId());
+            result.addProperty("credentialsType", payload.getCredentialsType().name());
             result.addProperty("credentialsValue",
-                    StringUtils.isEmpty(payload.getDeviceCredentials().getCredentialsValue()) ? null : payload.getDeviceCredentials().getCredentialsValue());
-            result.addProperty("provisionDeviceStatus", ProvisionResponseStatus.SUCCESS.name());
+                    StringUtils.isEmpty(payload.getCredentialsValue()) ? null : payload.getCredentialsValue());
+            result.addProperty("status", ProvisionResponseStatus.SUCCESS.name());
         }
         return result;
     }
@@ -551,7 +549,7 @@ public class JsonConverter {
 
     private static TransportProtos.ProvisionDeviceRequestMsg buildProvisionRequestMsg(JsonObject jo) {
         return TransportProtos.ProvisionDeviceRequestMsg.newBuilder()
-                .setDeviceName(getStrValue(jo, DataConstants.DEVICE_NAME, true))
+                .setDeviceName(getStrValue(jo, DataConstants.DEVICE_NAME, false))
                 .setCredentialsType(jo.get(DataConstants.CREDENTIALS_TYPE) != null ? TransportProtos.CredentialsType.valueOf(getStrValue(jo, DataConstants.CREDENTIALS_TYPE, false)) : CredentialsType.ACCESS_TOKEN)
                 .setCredentialsDataProto(TransportProtos.CredentialsDataProto.newBuilder()
                         .setValidateDeviceTokenRequestMsg(ValidateDeviceTokenRequestMsg.newBuilder().setToken(getStrValue(jo, DataConstants.TOKEN, false)).build())
