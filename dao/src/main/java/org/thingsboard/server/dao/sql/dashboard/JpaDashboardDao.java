@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.dashboard.DashboardDao;
 import org.thingsboard.server.dao.model.sql.DashboardEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
@@ -42,5 +43,10 @@ public class JpaDashboardDao extends JpaAbstractSearchTextDao<DashboardEntity, D
     @Override
     protected CrudRepository<DashboardEntity, UUID> getCrudRepository() {
         return dashboardRepository;
+    }
+
+    @Override
+    public Long countDashboardsByTenantId(TenantId tenantId) {
+        return dashboardRepository.countByTenantId(tenantId.getId());
     }
 }

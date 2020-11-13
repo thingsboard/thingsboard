@@ -332,7 +332,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                     long maxAssets = profileConfiguration.getMaxAssets();
                     if (maxAssets > 0) {
                         long currentAssetsCount = assetDao.countAssetsByTenantId(tenantId);
-                        if (maxAssets >= currentAssetsCount) {
+                        if (currentAssetsCount >=  maxAssets) {
                             throw new DataValidationException("Can't create assets more then " + maxAssets);
                         }
                     }

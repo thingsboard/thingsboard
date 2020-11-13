@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.rule;
 
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -36,4 +37,5 @@ public interface RuleChainDao extends Dao<RuleChain> {
      */
     PageData<RuleChain> findRuleChainsByTenantId(UUID tenantId, PageLink pageLink);
 
+    Long countRuleChainsByTenantId(TenantId tenantId);
 }

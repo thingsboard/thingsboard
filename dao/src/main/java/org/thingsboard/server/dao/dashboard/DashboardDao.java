@@ -32,4 +32,5 @@ public interface DashboardDao extends Dao<Dashboard> {
      */
     Dashboard save(TenantId tenantId, Dashboard dashboard);
 
+    Long countDashboardsByTenantId(TenantId tenantId);
 }

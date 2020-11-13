@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -38,6 +40,7 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.user.UserService;
 
@@ -74,6 +77,10 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
 
     @Autowired
     private DashboardService dashboardService;
+
+    @Autowired
+    @Lazy
+    private TbTenantProfileCache tenantProfileCache;
 
     @Override
     public Customer findCustomerById(TenantId tenantId, CustomerId customerId) {
@@ -162,6 +169,15 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
 
                 @Override
                 protected void validateCreate(TenantId tenantId, Customer customer) {
+                    DefaultTenantProfileConfiguration profileConfiguration =
+                            (DefaultTenantProfileConfiguration)tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
+                    long maxCustomers = profileConfiguration.getMaxCustomers();
+                    if (maxCustomers > 0) {
+                        long currentCustomersCount = customerDao.countCustomersByTenantId(tenantId);
+                        if (currentCustomersCount >= maxCustomers) {
+                            throw new DataValidationException("Can't create customers more then " + maxCustomers);
+                        }
+                    }
                     customerDao.findCustomersByTenantIdAndTitle(customer.getTenantId().getId(), customer.getTitle()).ifPresent(
                             c -> {
                                 throw new DataValidationException("Customer with such title already exists!");

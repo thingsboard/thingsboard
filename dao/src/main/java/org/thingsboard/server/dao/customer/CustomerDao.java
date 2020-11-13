@@ -54,5 +54,7 @@ public interface CustomerDao extends Dao<Customer> {
      * @return the optional customer object
      */
     Optional<Customer> findCustomersByTenantIdAndTitle(UUID tenantId, String title);
+
+    Long countCustomersByTenantId(TenantId tenantId);
     
 }

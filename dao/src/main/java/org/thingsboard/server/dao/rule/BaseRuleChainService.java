@@ -24,6 +24,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
@@ -44,11 +45,13 @@ import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.ArrayList;
@@ -80,6 +83,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Autowired
     private TenantDao tenantDao;
+
+    @Autowired
+    @Lazy
+    private TbTenantProfileCache tenantProfileCache;
 
     @Override
     public RuleChain saveRuleChain(RuleChain ruleChain) {
@@ -580,6 +587,19 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     private DataValidator<RuleChain> ruleChainValidator =
             new DataValidator<RuleChain>() {
+                @Override
+                protected void validateCreate(TenantId tenantId, RuleChain data) {
+                    DefaultTenantProfileConfiguration profileConfiguration =
+                            (DefaultTenantProfileConfiguration)tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
+                    long maxRuleChains = profileConfiguration.getMaxRuleChains();
+                    if (maxRuleChains > 0) {
+                        long currentRuleChainsCount = ruleChainDao.countRuleChainsByTenantId(tenantId);
+                        if (currentRuleChainsCount >= maxRuleChains) {
+                            throw new DataValidationException("Can't create rule chains more then " + maxRuleChains);
+                        }
+                    }
+                }
+
                 @Override
                 protected void validateDataImpl(TenantId tenantId, RuleChain ruleChain) {
                     if (StringUtils.isEmpty(ruleChain.getName())) {

@@ -24,6 +24,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
@@ -36,6 +37,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -43,6 +45,7 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.HashMap;
@@ -83,6 +86,10 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     @Autowired
     private CustomerDao customerDao;
+
+    @Autowired
+    @Lazy
+    private TbTenantProfileCache tenantProfileCache;
 
     @Override
     public User findUserByEmail(TenantId tenantId, String email) {
@@ -364,6 +371,19 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     private DataValidator<User> userValidator =
             new DataValidator<User>() {
+                @Override
+                protected void validateCreate(TenantId tenantId, User data) {
+                    DefaultTenantProfileConfiguration profileConfiguration =
+                            (DefaultTenantProfileConfiguration)tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
+                    long maxUsers = profileConfiguration.getMaxUsers();
+                    if (maxUsers > 0) {
+                        long currentUsersCount = userDao.countUsersByTenantId(tenantId);
+                        if (currentUsersCount >= maxUsers) {
+                            throw new DataValidationException("Can't create users more then " + maxUsers);
+                        }
+                    }
+                }
+
                 @Override
                 protected void validateDataImpl(TenantId requestTenantId, User user) {
                     if (StringUtils.isEmpty(user.getEmail())) {
