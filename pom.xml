@@ -37,7 +37,7 @@
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <spring-boot.version>2.3.5.RELEASE</spring-boot.version>
-        <spring.version>5.3.1</spring.version>
+        <spring.version>5.2.10.RELEASE</spring.version>
         <spring-security.version>5.4.1</spring-security.version>
         <spring-data-redis.version>2.4.1</spring-data-redis.version>
         <jedis.version>3.3.0</jedis.version>
