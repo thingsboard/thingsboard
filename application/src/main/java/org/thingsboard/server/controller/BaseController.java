@@ -108,9 +108,11 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -770,15 +772,8 @@ public abstract class BaseController {
                             keys.forEach(attrsArrayNode::add);
                         }
                     } else if (actionType == ActionType.TIMESERIES_UPDATED) {
-                        List<TsKvEntry> telemetry = extractParameter(List.class, 0, additionalInfo);
-                        if (telemetry != null && !telemetry.isEmpty()) {
-                            ObjectNode values = json.createObjectNode();
-                            for (TsKvEntry tsKvEntry : telemetry) {
-                                addKvEntry(values, tsKvEntry);
-                            }
-                            entityNode.put("ts", telemetry.get(0).getTs());
-                            entityNode.set("values", values);
-                        }
+                        List<TsKvEntry> timeseries = extractParameter(List.class, 0, additionalInfo);
+                        addTimeseries(entityNode, timeseries);
                     }
                 }
                 TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
@@ -831,4 +826,20 @@ public abstract class BaseController {
         return null;
     }
 
+    private void addTimeseries(ObjectNode entityNode, List<TsKvEntry> timeseries) throws Exception {
+        if (timeseries != null && !timeseries.isEmpty()) {
+            ArrayNode result = entityNode.putArray("timeseries");
+            Map<Long, List<TsKvEntry>> groupedTelemetry = timeseries.stream()
+                    .collect(Collectors.groupingBy(TsKvEntry::getTs));
+            for (Map.Entry<Long, List<TsKvEntry>> entry : groupedTelemetry.entrySet()) {
+                ObjectNode element = json.createObjectNode();
+                element.put("ts", entry.getKey());
+                ObjectNode values = element.putObject("values");
+                for (TsKvEntry tsKvEntry : entry.getValue()) {
+                    addKvEntry(values, tsKvEntry);
+                }
+                result.add(element);
+            }
+        }
+    }
 }
