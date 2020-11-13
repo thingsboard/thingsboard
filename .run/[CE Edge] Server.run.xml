@@ -6,10 +6,10 @@
       <env name="COAP_ENABLED" value="true" />
       <env name="EDGES_RPC_ENABLED" value="true" />
       <env name="MQTT_BIND_PORT" value="1884" />
+      <env name="HTTP_BIND_PORT" value="8080" />
     </envs>
     <option name="MAIN_CLASS_NAME" value="org.thingsboard.server.ThingsboardServerApplication" />
     <module name="application" />
-    <option name="PROGRAM_PARAMETERS" value="$ContentRoot$" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="org.thingsboard.server.*" />

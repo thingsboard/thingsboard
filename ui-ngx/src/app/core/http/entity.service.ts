@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import {Inject, Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 import { EMPTY, forkJoin, Observable, of, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
