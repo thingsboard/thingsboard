@@ -372,14 +372,16 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     private DataValidator<User> userValidator =
             new DataValidator<User>() {
                 @Override
-                protected void validateCreate(TenantId tenantId, User data) {
-                    DefaultTenantProfileConfiguration profileConfiguration =
-                            (DefaultTenantProfileConfiguration)tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
-                    long maxUsers = profileConfiguration.getMaxUsers();
-                    if (maxUsers > 0) {
-                        long currentUsersCount = userDao.countUsersByTenantId(tenantId);
-                        if (currentUsersCount >= maxUsers) {
-                            throw new DataValidationException("Can't create users more then " + maxUsers);
+                protected void validateCreate(TenantId tenantId, User user) {
+                    if (!user.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
+                        DefaultTenantProfileConfiguration profileConfiguration =
+                                (DefaultTenantProfileConfiguration) tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
+                        long maxUsers = profileConfiguration.getMaxUsers();
+                        if (maxUsers > 0) {
+                            long currentUsersCount = userDao.countUsersByTenantId(tenantId);
+                            if (currentUsersCount >= maxUsers) {
+                                throw new DataValidationException("Can't create users more then " + maxUsers);
+                            }
                         }
                     }
                 }
