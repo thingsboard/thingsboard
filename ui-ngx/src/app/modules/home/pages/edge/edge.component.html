@@ -79,6 +79,23 @@
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>edge.copy-id</span>
     </button>
+    <button mat-raised-button
+            ngxClipboard
+            (cbOnSuccess)="onEdgeKeyCopied($event)"
+            [cbContent]="entity?.routingKey"
+            [fxShow]="!isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>edge.copy-edge-key</span>
+    </button>
+    <button mat-raised-button
+            ngxClipboard
+            (cbOnSuccess)="onEdgeSecretCopied($event)"
+            [cbContent]="entity?.secret"
+            [fxShow]="!isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>edge.copy-edge-secret</span>
+    </button>
+
   </div>
 </div>
 <div class="mat-padding" fxLayout="column">
@@ -147,14 +164,6 @@
             <input matInput formControlName="routingKey">
           </mat-form-field>
           </fieldset>
-        <button mat-button mat-icon-button
-                style="margin-top: 14px"
-                ngxClipboard
-                (cbOnSuccess)="onEdgeKeyCopied($event)"
-                [cbContent]="entity?.routingKey"
-                [fxShow]="!isEdit">
-          <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-        </button>
       </div>
       <div fxLayout="row">
         <fieldset fxFlex disabled>
@@ -163,14 +172,6 @@
             <input matInput formControlName="secret">
           </mat-form-field>
         </fieldset>
-        <button mat-button mat-icon-button
-                style="margin-top: 14px"
-                ngxClipboard
-                (cbOnSuccess)="onEdgeSecretCopied($event)"
-                [cbContent]="entity?.secret"
-                [fxShow]="!isEdit">
-          <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-        </button>
       </div>
   </form>
 </div>

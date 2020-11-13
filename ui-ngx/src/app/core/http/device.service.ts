@@ -155,11 +155,14 @@ export class DeviceService {
     return this.http.delete(`/api/customer/device/${deviceName}/claim`, defaultHttpOptionsFromConfig(config));
   }
 
-  public assignDeviceToEdge(edgeId: string, deviceId: string, config?: RequestConfig): Observable<Device> {
-    return this.http.post<Device>(`/api/edge/${edgeId}/device/${deviceId}`, defaultHttpOptionsFromConfig(config));
+  public assignDeviceToEdge(edgeId: string, deviceId: string,
+                            config?: RequestConfig): Observable<Device> {
+    return this.http.post<Device>(`/api/edge/${edgeId}/device/${deviceId}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public unassignDeviceFromEdge(edgeId: string, deviceId: string, config?: RequestConfig) {
+  public unassignDeviceFromEdge(edgeId: string, deviceId: string,
+                                config?: RequestConfig) {
     return this.http.delete(`/api/edge/${edgeId}/device/${deviceId}`,
       defaultHttpOptionsFromConfig(config));
   }

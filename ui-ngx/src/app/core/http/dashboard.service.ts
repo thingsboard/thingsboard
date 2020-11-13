@@ -165,12 +165,14 @@ export class DashboardService {
 
   public assignDashboardToEdge(edgeId: string, dashboardId: string,
                                config?: RequestConfig): Observable<Dashboard> {
-    return this.http.post<Dashboard>(`/api/edge/${edgeId}/dashboard/${dashboardId}`,
-      null, defaultHttpOptionsFromConfig(config));
+    return this.http.post<Dashboard>(`/api/edge/${edgeId}/dashboard/${dashboardId}`, null,
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public unassignDashboardFromEdge(edgeId: string, dashboardId: string, config?: RequestConfig) {
-    return this.http.delete(`/api/edge/${edgeId}/dashboard/${dashboardId}`, defaultHttpOptionsFromConfig(config));
+  public unassignDashboardFromEdge(edgeId: string, dashboardId: string,
+                                   config?: RequestConfig) {
+    return this.http.delete(`/api/edge/${edgeId}/dashboard/${dashboardId}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
 }

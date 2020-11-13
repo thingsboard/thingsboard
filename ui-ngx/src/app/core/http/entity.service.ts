@@ -68,7 +68,6 @@ import {
   StringOperation
 } from '@shared/models/query/query.models';
 import { alarmFields } from '@shared/models/alarm.models';
-
 import { EdgeService } from "@core/http/edge.service";
 import { ruleChainType } from "@shared/models/rule-chain.models";
 import { Router } from "@angular/router";
@@ -93,7 +92,7 @@ export class EntityService {
     private entityRelationService: EntityRelationService,
     private attributeService: AttributeService,
     private utils: UtilsService,
-    private route: Router
+    private router: Router
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -323,7 +322,7 @@ export class EntityService {
         break;
       case EntityType.RULE_CHAIN:
         pageLink.sortOrder.property = 'name';
-        if (this.route.url.includes('edge')) {
+        if (this.router.url.includes('edge')) {
           entitiesObservable = this.ruleChainService.getRuleChains(pageLink, ruleChainType.edge, config);
         } else {
           entitiesObservable = this.ruleChainService.getRuleChains(pageLink, ruleChainType.core, config);

@@ -50,8 +50,8 @@ const routes: Routes = [
         path: ':edgeId/ruleChains',
         component: EntitiesTableComponent,
         data: {
-          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          ruleChainScope: 'edge',
+          auth: [Authority.TENANT_ADMIN],
+          ruleChainsType: 'edge',
           breadcrumb: {
             label: 'edge.rulechains',
             icon: 'settings_ethernet'

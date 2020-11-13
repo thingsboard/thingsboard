@@ -54,38 +54,32 @@ export class EdgeService {
     return this.http.get<Array<EntitySubtype>>('/api/edge/types', defaultHttpOptionsFromConfig(config));
   }
 
-  public getTenantEdges(pageLink: PageLink, type: string = '',
-                        config?: RequestConfig): Observable<PageData<EdgeInfo>> {
-    return this.http.get<PageData<EdgeInfo>>(`/api/tenant/edges${pageLink.toQuery()}&type=${type}`,
-      defaultHttpOptionsFromConfig(config));
-  }
-
-  public getCustomerEdges(customerId: string, pageLink: PageLink, type: string = '',
-                          config?: RequestConfig): Observable<PageData<EdgeInfo>> {
-    return this.http.get<PageData<EdgeInfo>>(`/api/customer/${customerId}/edges${pageLink.toQuery()}&type=${type}`,
-      defaultHttpOptionsFromConfig(config));
-  }
-
   public getCustomerEdgeInfos(customerId: string, pageLink: PageLink, type: string = '',
                                config?: RequestConfig): Observable<PageData<EdgeInfo>> {
     return this.http.get<PageData<EdgeInfo>>(`/api/customer/${customerId}/edgeInfos${pageLink.toQuery()}&type=${type}`,
       defaultHttpOptionsFromConfig(config));
   }
 
-  public assignEdgeToCustomer(customerId: string, edgeId: string, config?: RequestConfig): Observable<Edge> {
-    return this.http.post<Edge>(`/api/customer/${customerId}/edge/${edgeId}`, defaultHttpOptionsFromConfig(config));
+  public assignEdgeToCustomer(customerId: string, edgeId: string,
+                              config?: RequestConfig): Observable<Edge> {
+    return this.http.post<Edge>(`/api/customer/${customerId}/edge/${edgeId}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public unassignEdgeFromCustomer(edgeId: string, config?: RequestConfig) {
-    return this.http.delete(`/api/customer/edge/${edgeId}`, defaultHttpOptionsFromConfig(config));
+    return this.http.delete(`/api/customer/edge/${edgeId}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public makeEdgePublic(edgeId: string, config?: RequestConfig): Observable<Edge> {
-    return this.http.post<Edge>(`/api/customer/public/edge/${edgeId}`, defaultHttpOptionsFromConfig(config));
+    return this.http.post<Edge>(`/api/customer/public/edge/${edgeId}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public setRootRuleChain(edgeId: string, ruleChainId: string, config?: RequestConfig): Observable<Edge> {
-    return this.http.post<Edge>(`/api/edge/${edgeId}/${ruleChainId}/root`, defaultHttpOptionsFromConfig(config));
+  public setRootRuleChain(edgeId: string, ruleChainId: string,
+                          config?: RequestConfig): Observable<Edge> {
+    return this.http.post<Edge>(`/api/edge/${edgeId}/${ruleChainId}/root`,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getTenantEdgeInfos(pageLink: PageLink, type: string = '',
@@ -95,10 +89,12 @@ export class EdgeService {
   }
 
   public findByQuery(query: EdgeSearchQuery, config?: RequestConfig): Observable<Array<Edge>> {
-    return this.http.post<Array<Edge>>('/api/edges', query, defaultHttpOptionsFromConfig(config));
+    return this.http.post<Array<Edge>>('/api/edges', query,
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getEdgeEvents(entityId: EntityId, pageLink: TimePageLink, config?: RequestConfig): Observable<PageData<Event>> {
+  public getEdgeEvents(entityId: EntityId, pageLink: TimePageLink,
+                       config?: RequestConfig): Observable<PageData<Event>> {
     return this.http.get<PageData<Event>>(`/api/edge/${entityId.id}/events` + `${pageLink.toQuery()}`,
       defaultHttpOptionsFromConfig(config));
   }

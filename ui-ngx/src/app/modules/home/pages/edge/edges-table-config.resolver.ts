@@ -51,7 +51,6 @@ import {
   AddEntitiesToCustomerDialogData
 } from '../../dialogs/add-entities-to-customer-dialog.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
-
 import { Edge, EdgeInfo } from "@shared/models/edge.models";
 import { EdgeService } from "@core/http/edge.service";
 import { EdgeComponent } from "@home/pages/edge/edge.component";
@@ -96,19 +95,15 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
         mergeMap((savedEdge) => this.edgeService.getEdge(savedEdge.id.id)
         ));
     };
-
     this.config.onEntityAction = action => this.onEdgeAction(action);
     this.config.detailsReadonly = () => this.config.componentsData.edgeScope === 'customer_user';
-
     this.config.headerComponent = EdgeTableHeaderComponent;
-
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<EdgeInfo>> {
     const routeParams = route.params;
     this.config.componentsData = {
-      edgeScope: route.data.edgesType,
-      edgeType: ''
+      edgeScope: route.data.edgesType
     };
     this.customerId = routeParams.customerId;
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
@@ -166,12 +161,12 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
   configureEntityFunctions(edgeScope: string): void {
     if (edgeScope === 'tenant') {
       this.config.entitiesFetchFunction = pageLink =>
-        this.edgeService.getTenantEdgeInfos(pageLink, this.config.componentsData.edgeType);
+        this.edgeService.getTenantEdgeInfos(pageLink);
       this.config.deleteEntity = id => this.edgeService.deleteEdge(id.id);
     }
     if (edgeScope === 'customer') {
       this.config.entitiesFetchFunction = pageLink =>
-        this.edgeService.getCustomerEdgeInfos(this.customerId, pageLink, this.config.componentsData.edgeType);
+        this.edgeService.getCustomerEdgeInfos(this.customerId, pageLink);
       this.config.deleteEntity = id => this.edgeService.unassignEdgeFromCustomer(id.id);
     }
   }

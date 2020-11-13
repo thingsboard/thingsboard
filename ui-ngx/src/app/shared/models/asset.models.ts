@@ -19,7 +19,6 @@ import { AssetId } from './id/asset-id';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { EntitySearchQuery } from '@shared/models/relation.models';
-import { EdgeId } from "@shared/models/id/edge-id";
 
 export interface Asset extends BaseData<AssetId> {
   tenantId?: TenantId;
