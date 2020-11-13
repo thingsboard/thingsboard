@@ -20,6 +20,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -40,6 +41,7 @@ public class DummyDiscoveryService implements DiscoveryService {
     }
 
     @EventListener(ApplicationReadyEvent.class)
+    @Order(value = 1)
     public void onApplicationEvent(ApplicationReadyEvent event) {
         partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), Collections.emptyList());
     }

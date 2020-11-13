@@ -630,6 +630,9 @@ export class EntityService {
       case EntityType.DASHBOARD:
         entityFieldKeys.push(entityFields.title.keyName);
         break;
+      case EntityType.API_USAGE_STATE:
+        entityFieldKeys.push(entityFields.name.keyName);
+        break;
     }
     return query ? entityFieldKeys.filter((entityField) => entityField.toLowerCase().indexOf(query) === 0) : entityFieldKeys;
   }
@@ -751,6 +754,9 @@ export class EntityService {
         result.entityFilter = deepClone(filter);
         return of(result);
       case AliasFilterType.entityViewType:
+        result.entityFilter = deepClone(filter);
+        return of(result);
+      case AliasFilterType.apiUsageState:
         result.entityFilter = deepClone(filter);
         return of(result);
       case AliasFilterType.relationsQuery:

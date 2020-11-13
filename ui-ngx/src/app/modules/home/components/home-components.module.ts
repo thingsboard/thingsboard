@@ -113,6 +113,8 @@ import { AlarmScheduleInfoComponent } from './profile/alarm/alarm-schedule-info.
 import { AlarmScheduleDialogComponent } from '@home/components/profile/alarm/alarm-schedule-dialog.component';
 import { EditAlarmDetailsDialogComponent } from './profile/alarm/edit-alarm-details-dialog.component';
 import { AlarmRuleConditionDialogComponent } from '@home/components/profile/alarm/alarm-rule-condition-dialog.component';
+import { DefaultTenantProfileConfigurationComponent } from './profile/tenant/default-tenant-profile-configuration.component';
+import { TenantProfileConfigurationComponent } from './profile/tenant/tenant-profile-configuration.component';
 
 @NgModule({
   declarations:
@@ -182,6 +184,8 @@ import { AlarmRuleConditionDialogComponent } from '@home/components/profile/alar
       FilterUserInfoDialogComponent,
       FilterPredicateValueComponent,
       TenantProfileAutocompleteComponent,
+      DefaultTenantProfileConfigurationComponent,
+      TenantProfileConfigurationComponent,
       TenantProfileDataComponent,
       TenantProfileComponent,
       TenantProfileDialogComponent,

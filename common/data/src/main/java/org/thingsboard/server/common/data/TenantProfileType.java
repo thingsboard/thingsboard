@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.limits;
+package org.thingsboard.server.common.data;
 
-public interface TransportRateLimitFactory {
-
-    TransportRateLimit create(TransportRateLimitType type, Object config);
-
-    TransportRateLimit createDefault(TransportRateLimitType type);
-
+public enum TenantProfileType {
+    DEFAULT
 }

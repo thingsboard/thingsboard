@@ -440,6 +440,18 @@ public class ModelConstants {
     public static final String OAUTH2_TEMPLATE_HELP_LINK_PROPERTY = "help_link";
 
     /**
+     * Usage Record constants.
+     */
+    public static final String API_USAGE_STATE_TABLE_NAME = "api_usage_state";
+    public static final String API_USAGE_STATE_TENANT_ID_COLUMN = TENANT_ID_PROPERTY;
+    public static final String API_USAGE_STATE_ENTITY_TYPE_COLUMN = ENTITY_TYPE_COLUMN;
+    public static final String API_USAGE_STATE_ENTITY_ID_COLUMN = ENTITY_ID_COLUMN;
+    public static final String API_USAGE_STATE_TRANSPORT_COLUMN = "transport";
+    public static final String API_USAGE_STATE_DB_STORAGE_COLUMN = "db_storage";
+    public static final String API_USAGE_STATE_RE_EXEC_COLUMN = "re_exec";
+    public static final String API_USAGE_STATE_JS_EXEC_COLUMN = "js_exec";
+
+    /**
      * Cassandra attributes and timeseries constants.
      */
     public static final String ATTRIBUTES_KV_CF = "attributes_kv_cf";

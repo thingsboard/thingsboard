@@ -21,6 +21,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -78,13 +80,19 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
                     profileData = mapper.readValue(new ByteArrayInputStream(profileDataBytes), TenantProfileData.class);
                 } catch (IOException e) {
                     log.warn("Can't deserialize tenant profile data: ", e);
-                    return null;
+                    return createDefaultTenantProfileData();
                 }
                 return profileData;
             } else {
-                return null;
+                return createDefaultTenantProfileData();
             }
         }
+    }
+
+    public TenantProfileData createDefaultTenantProfileData() {
+        TenantProfileData tpd = new TenantProfileData();
+        tpd.setConfiguration(new DefaultTenantProfileConfiguration());
+        return tpd;
     }
 
     public void setProfileData(TenantProfileData data) {

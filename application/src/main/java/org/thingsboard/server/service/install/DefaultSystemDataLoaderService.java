@@ -30,7 +30,8 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.TenantProfileData;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -127,13 +128,16 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     public void createDefaultTenantProfiles() throws Exception {
         tenantProfileService.findOrCreateDefaultTenantProfile(TenantId.SYS_TENANT_ID);
 
+        TenantProfileData tenantProfileData = new TenantProfileData();
+        tenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
+
         TenantProfile isolatedTbCoreProfile = new TenantProfile();
         isolatedTbCoreProfile.setDefault(false);
         isolatedTbCoreProfile.setName("Isolated TB Core");
-        isolatedTbCoreProfile.setProfileData(new TenantProfileData());
         isolatedTbCoreProfile.setDescription("Isolated TB Core tenant profile");
         isolatedTbCoreProfile.setIsolatedTbCore(true);
         isolatedTbCoreProfile.setIsolatedTbRuleEngine(false);
+        isolatedTbCoreProfile.setProfileData(tenantProfileData);
         try {
             tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, isolatedTbCoreProfile);
         } catch (DataValidationException e) {
@@ -143,10 +147,11 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         TenantProfile isolatedTbRuleEngineProfile = new TenantProfile();
         isolatedTbRuleEngineProfile.setDefault(false);
         isolatedTbRuleEngineProfile.setName("Isolated TB Rule Engine");
-        isolatedTbRuleEngineProfile.setProfileData(new TenantProfileData());
         isolatedTbRuleEngineProfile.setDescription("Isolated TB Rule Engine tenant profile");
         isolatedTbRuleEngineProfile.setIsolatedTbCore(false);
         isolatedTbRuleEngineProfile.setIsolatedTbRuleEngine(true);
+        isolatedTbRuleEngineProfile.setProfileData(tenantProfileData);
+
         try {
             tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, isolatedTbRuleEngineProfile);
         } catch (DataValidationException e) {
@@ -156,10 +161,11 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         TenantProfile isolatedTbCoreAndTbRuleEngineProfile = new TenantProfile();
         isolatedTbCoreAndTbRuleEngineProfile.setDefault(false);
         isolatedTbCoreAndTbRuleEngineProfile.setName("Isolated TB Core and TB Rule Engine");
-        isolatedTbCoreAndTbRuleEngineProfile.setProfileData(new TenantProfileData());
         isolatedTbCoreAndTbRuleEngineProfile.setDescription("Isolated TB Core and TB Rule Engine tenant profile");
         isolatedTbCoreAndTbRuleEngineProfile.setIsolatedTbCore(true);
         isolatedTbCoreAndTbRuleEngineProfile.setIsolatedTbRuleEngine(true);
+        isolatedTbCoreAndTbRuleEngineProfile.setProfileData(tenantProfileData);
+
         try {
             tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, isolatedTbCoreAndTbRuleEngineProfile);
         } catch (DataValidationException e) {

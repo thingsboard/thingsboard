@@ -186,6 +186,7 @@ message GetEntityProfileRequestMsg {
 message GetEntityProfileResponseMsg {
   string entityType = 1;
   bytes data = 2;
+  bytes apiState = 3;
 }
 
 message EntityUpdateMsg {
@@ -531,4 +532,17 @@ message ToTransportMsg {
   EntityUpdateMsg entityUpdateMsg = 8;
   EntityDeleteMsg entityDeleteMsg = 9;
   ProvisionDeviceResponseMsg provisionResponse = 10;
+}
+
+message UsageStatsKVProto{
+  string key = 1;
+  int64 value = 2;
+}
+
+message ToUsageStatsServiceMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+  repeated UsageStatsKVProto values = 5;
 }

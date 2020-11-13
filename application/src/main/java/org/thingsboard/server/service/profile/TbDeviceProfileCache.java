@@ -23,11 +23,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 public interface TbDeviceProfileCache extends RuleEngineDeviceProfileCache {
 
-    void put(DeviceProfile profile);
-
     void evict(TenantId tenantId, DeviceProfileId id);
 
-    void evict(DeviceId id);
+    void evict(TenantId tenantId, DeviceId id);
 
     DeviceProfile find(DeviceProfileId deviceProfileId);
 
