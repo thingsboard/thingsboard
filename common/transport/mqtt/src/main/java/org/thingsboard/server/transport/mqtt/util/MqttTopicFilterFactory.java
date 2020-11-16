@@ -33,16 +33,13 @@ public class MqttTopicFilterFactory {
             throw new IllegalArgumentException("Topic filter can't be empty!");
         }
         return filters.computeIfAbsent(topicFilter, filter -> {
-            if (filter.contains("+") || filter.contains("#")) {
-                String regex;
-                if (filter.equals("#")) {
-                    return new AlwaysTrueTopicFilter();
-                } else {
-                    regex = filter
-                            .replace("\\", "\\\\")
-                            .replace("+", "[^/]+")
-                            .replace("/#", "($|/.*)");
-                }
+            if (filter.equals("#")) {
+                return new AlwaysTrueTopicFilter();
+            } else if (filter.contains("+") || filter.contains("#")) {
+                String regex = filter
+                        .replace("\\", "\\\\")
+                        .replace("+", "[^/]+")
+                        .replace("/#", "($|/.*)");
                 log.debug("Converting [{}] to [{}]", filter, regex);
                 return new RegexTopicFilter(regex);
             } else {
