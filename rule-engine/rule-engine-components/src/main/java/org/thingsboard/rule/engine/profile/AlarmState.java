@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
@@ -239,18 +240,18 @@ class AlarmState {
         JsonNode alarmDetails;
         String alarmDetailsStr = ruleState.getAlarmRule().getAlarmDetails();
 
-        if (alarmDetailsStr != null) {
+        if (StringUtils.isNotEmpty(alarmDetailsStr)) {
             for (KeyFilter keyFilter : ruleState.getAlarmRule().getCondition().getCondition()) {
                 EntityKeyValue entityKeyValue = dataSnapshot.getValue(keyFilter.getKey());
                 alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey().getKey()), getValueAsString(entityKeyValue));
             }
-            ObjectNode newDetails = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+            ObjectNode newDetails = JacksonUtil.newObjectNode();
             newDetails.put("data", alarmDetailsStr);
             alarmDetails = newDetails;
         } else if (currentAlarm != null) {
             alarmDetails = currentAlarm.getDetails();
         } else {
-            alarmDetails = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+            alarmDetails = JacksonUtil.newObjectNode();
         }
 
         return alarmDetails;
