@@ -111,7 +111,7 @@ class AlarmState {
                 for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
                     stateUpdate = clearAlarmState(stateUpdate, state);
                 }
-                ctx.getAlarmService().clearAlarm(ctx.getTenantId(), currentAlarm.getId(), JacksonUtil.OBJECT_MAPPER.createObjectNode(), System.currentTimeMillis());
+                ctx.getAlarmService().clearAlarm(ctx.getTenantId(), currentAlarm.getId(), createDetails(clearState), System.currentTimeMillis());
                 pushMsg(ctx, new TbAlarmResult(false, false, true, currentAlarm));
                 currentAlarm = null;
             } else if (AlarmEvalResult.FALSE.equals(evalResult)) {
@@ -203,6 +203,7 @@ class AlarmState {
             AlarmSeverity oldSeverity = currentAlarm.getSeverity();
             // Skip update if severity is decreased.
             if (severity.ordinal() <= oldSeverity.ordinal()) {
+                currentAlarm.setDetails(createDetails(ruleState));
                 if (!oldSeverity.equals(severity)) {
                     currentAlarm.setSeverity(severity);
                     currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
@@ -235,19 +236,24 @@ class AlarmState {
     }
 
     private JsonNode createDetails(AlarmRuleState ruleState) {
-        ObjectNode details = JacksonUtil.OBJECT_MAPPER.createObjectNode();
-        String alarmDetails = ruleState.getAlarmRule().getAlarmDetails();
+        JsonNode alarmDetails;
+        String alarmDetailsStr = ruleState.getAlarmRule().getAlarmDetails();
 
-        if (alarmDetails != null) {
+        if (alarmDetailsStr != null) {
             for (KeyFilter keyFilter : ruleState.getAlarmRule().getCondition().getCondition()) {
                 EntityKeyValue entityKeyValue = dataSnapshot.getValue(keyFilter.getKey());
-                alarmDetails = alarmDetails.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey().getKey()), getValueAsString(entityKeyValue));
+                alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey().getKey()), getValueAsString(entityKeyValue));
             }
-
-            details.put("data", alarmDetails);
+            ObjectNode newDetails = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+            newDetails.put("data", alarmDetailsStr);
+            alarmDetails = newDetails;
+        } else if (currentAlarm != null) {
+            alarmDetails = currentAlarm.getDetails();
+        } else {
+            alarmDetails = JacksonUtil.OBJECT_MAPPER.createObjectNode();
         }
 
-        return details;
+        return alarmDetails;
     }
 
     private static String getValueAsString(EntityKeyValue entityKeyValue) {
