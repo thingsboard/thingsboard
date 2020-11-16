@@ -41,6 +41,9 @@
       <mat-error *ngIf="alarmFormGroup.get('alarmType').hasError('required')">
         {{ 'device-profile.alarm-type-required' | translate }}
       </mat-error>
+      <mat-error *ngIf="alarmFormGroup.get('alarmType').hasError('unique')">
+        {{ 'device-profile.alarm-type-unique' | translate }}
+      </mat-error>
       <mat-hint *ngIf="!disabled"
                 innerHTML="{{ 'device-profile.alarm-type-pattern-hint' | translate }}"></mat-hint>
     </mat-form-field>
