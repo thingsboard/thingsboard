@@ -331,18 +331,19 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                         if (defaultDeviceProfile != null && !defaultDeviceProfile.getId().equals(deviceProfile.getId())) {
                             throw new DataValidationException("Another default device profile is present in scope of current tenant!");
                         }
-                    } else {
-                        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
-                        if (transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
-                            MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
-                            if (mqttDeviceProfileTransportConfiguration.getTransportPayloadTypeConfiguration() instanceof ProtoTransportPayloadConfiguration) {
-                                ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration = (ProtoTransportPayloadConfiguration) mqttDeviceProfileTransportConfiguration.getTransportPayloadTypeConfiguration();
-                                try {
-                                    validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceAttributesProtoSchema(), ATTRIBUTES_PROTO_SCHEMA);
-                                    validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema(), TELEMETRY_PROTO_SCHEMA);
-                                } catch (Exception exception) {
-                                    throw new DataValidationException(exception.getMessage());
-                                }
+                    }
+
+                    DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+                    if (transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
+                        MqttDeviceProfileTransportConfiguration mqttTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
+                        if (mqttTransportConfiguration.getTransportPayloadTypeConfiguration() instanceof ProtoTransportPayloadConfiguration) {
+                            ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration =
+                                    (ProtoTransportPayloadConfiguration) mqttTransportConfiguration.getTransportPayloadTypeConfiguration();
+                            try {
+                                validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceAttributesProtoSchema(), ATTRIBUTES_PROTO_SCHEMA);
+                                validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema(), TELEMETRY_PROTO_SCHEMA);
+                            } catch (Exception exception) {
+                                throw new DataValidationException(exception.getMessage());
                             }
                         }
                     }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.os72.protobuf.dynamic.DynamicSchema;
 import com.github.os72.protobuf.dynamic.EnumDefinition;
 import com.github.os72.protobuf.dynamic.MessageDefinition;
@@ -135,7 +136,7 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
                     addMessageFieldsToTheMessageDefinition(messageElementFields, messageDefinitionBuilder);
                 }
                 if (!oneOfs.isEmpty()) {
-                    for (OneOfElement oneOfelement: oneOfs) {
+                    for (OneOfElement oneOfelement : oneOfs) {
                         MessageDefinition.OneofBuilder oneofBuilder = messageDefinitionBuilder.addOneof(oneOfelement.getName());
                         addMessageFieldsToTheOneOfDefinition(oneOfelement.getFields(), oneofBuilder);
                     }

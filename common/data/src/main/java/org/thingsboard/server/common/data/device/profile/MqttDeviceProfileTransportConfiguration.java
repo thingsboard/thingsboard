@@ -30,4 +30,13 @@ public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTra
         return DeviceTransportType.MQTT;
     }
 
+    public TransportPayloadTypeConfiguration getTransportPayloadTypeConfiguration() {
+        if (transportPayloadTypeConfiguration != null) {
+            return transportPayloadTypeConfiguration;
+        } else {
+            return new JsonTransportPayloadConfiguration();
+        }
+    }
+
+
 }

@@ -72,10 +72,10 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
 
     @Test
     public void testRequestAttributesValuesFromTheServer() throws Exception {
-        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto", TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, DeviceProfileProvisionType.DISABLED, null, null);
+        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
+                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, DeviceProfileProvisionType.DISABLED, null, null);
         processTestRequestAttributesValuesFromTheServer();
     }
-
 
     @Test
     public void testRequestAttributesValuesFromTheServerGateway() throws Exception {

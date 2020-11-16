@@ -123,7 +123,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
             payloadType = transportPayloadTypeConfiguration.getTransportPayloadType();
             telemetryTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceTelemetryTopic());
             attributesTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceAttributesTopic());
-            if (transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration) {
+            if (TransportPayloadType.PROTOBUF.equals(payloadType)) {
                 updateDynamicMessageDescriptors(transportPayloadTypeConfiguration);
             }
         } else {

@@ -153,7 +153,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       const defaultAttributesSchema = "syntax =\"proto3\";\n" +
         "package attributes;\n" +
         "\n" +
-        "message SensorDataReading {\n" +
+        "message SensorConfiguration {\n" +
         "  string firmwareVersion = 1;\n" +
         "  string serialNumber = 2;\n" +
         "}";
