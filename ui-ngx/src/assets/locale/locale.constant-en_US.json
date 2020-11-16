@@ -909,6 +909,7 @@
         "edit-alarm-rule": "Edit alarm rule",
         "alarm-type": "Alarm type",
         "alarm-type-required": "Alarm type is required.",
+        "alarm-type-unique": "Alarm type needs to be unique.",
         "alarm-type-pattern-hint": "Alarm type pattern, use <code>${metaKeyName}</code> to substitute variables from metadata",
         "create-alarm-pattern": "Create <b>{{alarmType}}</b> alarm",
         "create-alarm-rules": "Create alarm rules",
