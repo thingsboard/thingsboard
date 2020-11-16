@@ -80,16 +80,17 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         String schemaStr = "syntax =\"proto3\";\n" +
                 "\n" +
                 "package test;\n" +
-                "\n" +
-                "message Values {\n" +
-                "  string key1 = 1;\n" +
-                "  bool key2 = 2;\n" +
-                "  double key3 = 3;\n" +
-                "  int32 key4 = 4;\n" +
-                "  string key5 = 5;\n" +
-                "}\n" +
                 "        \n" +
                 "message PostTelemetry {\n" +
+                "\n" +
+                "  message Values {\n" +
+                "    string key1 = 1;\n" +
+                "    bool key2 = 2;\n" +
+                "    double key3 = 3;\n" +
+                "    int32 key4 = 4;\n" +
+                "    string key5 = 5;\n" +
+                "  }\n" +
+                "\n" +
                 "  int64 ts = 1;\n" +
                 "  Values values = 2;\n" +
                 "}";
@@ -104,7 +105,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         ProtoFileElement transportProtoSchema = protoTransportPayloadConfiguration.getTransportProtoSchema(schemaStr);
         DynamicSchema telemetrySchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchema, "telemetrySchema");
 
-        DynamicMessage.Builder valuesBuilder = telemetrySchema.newMessageBuilder("Values");
+        DynamicMessage.Builder valuesBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.Values");
         Descriptors.Descriptor valuesDescriptor = valuesBuilder.getDescriptorForType();
         assertNotNull(valuesDescriptor);
 
