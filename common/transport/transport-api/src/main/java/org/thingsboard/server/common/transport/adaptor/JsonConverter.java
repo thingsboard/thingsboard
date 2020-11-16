@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
@@ -193,38 +194,60 @@ public class JsonConverter {
                         String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", value.getAsString().length(), valueEntry.getKey(), maxStringValueLength);
                         throw new JsonSyntaxException(message);
                     }
-                    if (isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
-                        try {
-                            result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
-                        } catch (RuntimeException th) {
-                            result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.STRING_V)
-                                    .setStringV(value.getAsString()).build());
+                    if (isTypeCastEnabled) {
+                        if (NumberUtils.isParsable(value.getAsString())) {
+                            try {
+                                result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
+                            } catch (RuntimeException th) {
+                                result.add(buildStringKVProto(valueEntry, value));
+                            }
+                        } else {
+                            try {
+                                JsonElement jsonElement = JSON_PARSER.parse(value.getAsString());
+                                if (jsonElement.isJsonObject() || jsonElement.isJsonArray()) {
+                                    result.add(buildJsonKVProto(valueEntry, jsonElement));
+                                } else {
+                                    result.add(buildStringKVProto(valueEntry, value));
+                                }
+                            } catch (JsonParseException e) {
+                                result.add(buildStringKVProto(valueEntry, value));
+                            }
                         }
                     } else {
-                        result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.STRING_V)
-                                .setStringV(value.getAsString()).build());
+                        result.add(buildStringKVProto(valueEntry, value));
                     }
                 } else if (value.isBoolean()) {
                     result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.BOOLEAN_V)
                             .setBoolV(value.getAsBoolean()).build());
                 } else if (value.isNumber()) {
                     result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
-                } else if (!value.isJsonNull()) {
+                } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
             } else if (element.isJsonObject() || element.isJsonArray()) {
-                result.add(KeyValueProto
-                        .newBuilder()
-                        .setKey(valueEntry
-                                .getKey())
-                        .setType(KeyValueType.JSON_V)
-                        .setJsonV(element.toString())
-                        .build());
-            } else if (!element.isJsonNull()) {
+                result.add(buildJsonKVProto(valueEntry, element));
+            } else {
                 throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
             }
         }
         return result;
+    }
+
+    private static KeyValueProto buildStringKVProto(Entry<String, JsonElement> valueEntry, JsonPrimitive value) {
+        return KeyValueProto.newBuilder()
+                .setKey(valueEntry.getKey())
+                .setType(KeyValueType.STRING_V)
+                .setStringV(value.getAsString())
+                .build();
+    }
+
+    private static KeyValueProto buildJsonKVProto(Entry<String, JsonElement> valueEntry, JsonElement jsonElement) {
+        return KeyValueProto
+                .newBuilder()
+                .setKey(valueEntry.getKey())
+                .setType(KeyValueType.JSON_V)
+                .setJsonV(jsonElement.toString())
+                .build();
     }
 
     private static KeyValueProto buildNumericKeyValueProto(JsonPrimitive value, String key) {

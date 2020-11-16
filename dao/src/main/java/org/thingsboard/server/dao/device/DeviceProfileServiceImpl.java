@@ -15,6 +15,16 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.squareup.wire.Syntax;
+import com.squareup.wire.schema.Field;
+import com.squareup.wire.schema.Location;
+import com.squareup.wire.schema.internal.parser.EnumElement;
+import com.squareup.wire.schema.internal.parser.FieldElement;
+import com.squareup.wire.schema.internal.parser.MessageElement;
+import com.squareup.wire.schema.internal.parser.OneOfElement;
+import com.squareup.wire.schema.internal.parser.ProtoFileElement;
+import com.squareup.wire.schema.internal.parser.ProtoParser;
+import com.squareup.wire.schema.internal.parser.TypeElement;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
@@ -29,12 +39,14 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -49,6 +61,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_PROFILE_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -60,6 +73,14 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String INCORRECT_DEVICE_PROFILE_ID = "Incorrect deviceProfileId ";
     private static final String INCORRECT_DEVICE_PROFILE_NAME = "Incorrect deviceProfileName ";
+
+    private static final Location LOCATION = new Location("", "", -1, -1);
+    private static final String ATTRIBUTES_PROTO_SCHEMA = "attributes proto schema";
+    private static final String TELEMETRY_PROTO_SCHEMA = "telemetry proto schema";
+
+    private static String invalidSchemaProvidedMessage(String schemaName) {
+        return "[Transport Configuration] invalid " + schemaName + " provided!";
+    }
 
     @Autowired
     private DeviceProfileDao deviceProfileDao;
@@ -310,6 +331,20 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                         if (defaultDeviceProfile != null && !defaultDeviceProfile.getId().equals(deviceProfile.getId())) {
                             throw new DataValidationException("Another default device profile is present in scope of current tenant!");
                         }
+                    } else {
+                        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+                        if (transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
+                            MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
+                            if (mqttDeviceProfileTransportConfiguration.getTransportPayloadTypeConfiguration() instanceof ProtoTransportPayloadConfiguration) {
+                                ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration = (ProtoTransportPayloadConfiguration) mqttDeviceProfileTransportConfiguration.getTransportPayloadTypeConfiguration();
+                                try {
+                                    validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceAttributesProtoSchema(), ATTRIBUTES_PROTO_SCHEMA);
+                                    validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema(), TELEMETRY_PROTO_SCHEMA);
+                                } catch (Exception exception) {
+                                    throw new DataValidationException(exception.getMessage());
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -334,6 +369,121 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                         }
                     }
                 }
+
+                private void validateTransportProtoSchema(String schema, String schemaName) throws IllegalArgumentException {
+                    ProtoParser schemaParser = new ProtoParser(LOCATION, schema.toCharArray());
+                    ProtoFileElement protoFileElement;
+                    try {
+                        protoFileElement = schemaParser.readProtoFile();
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException("[Transport Configuration] failed to parse " + schemaName + " due to: " + e.getMessage());
+                    }
+                    checkProtoFileSyntax(schemaName, protoFileElement);
+                    checkProtoFileCommonSettings(schemaName, protoFileElement.getOptions().isEmpty(), " Schema options don't support!");
+                    checkProtoFileCommonSettings(schemaName, protoFileElement.getPublicImports().isEmpty(), " Schema public imports don't support!");
+                    checkProtoFileCommonSettings(schemaName, protoFileElement.getImports().isEmpty(), " Schema imports don't support!");
+                    checkProtoFileCommonSettings(schemaName, protoFileElement.getExtendDeclarations().isEmpty(), " Schema extend declarations don't support!");
+                    checkTypeElements(schemaName, protoFileElement);
+                }
+
+                private void checkProtoFileSyntax(String schemaName, ProtoFileElement protoFileElement) {
+                    if (protoFileElement.getSyntax() == null || !protoFileElement.getSyntax().equals(Syntax.PROTO_3)) {
+                        throw new IllegalArgumentException("[Transport Configuration] invalid schema syntax: " + protoFileElement.getSyntax() +
+                                " for " + schemaName + " provided! Only " + Syntax.PROTO_3 + " allowed!");
+                    }
+                }
+                private void checkProtoFileCommonSettings(String schemaName, boolean isEmptySettings, String invalidSettingsMessage) {
+                    if (!isEmptySettings) {
+                        throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + invalidSettingsMessage);
+                    }
+                }
+
+                private void checkTypeElements(String schemaName, ProtoFileElement protoFileElement) {
+                    List<TypeElement> types = protoFileElement.getTypes();
+                    if (!types.isEmpty()) {
+                        if (types.stream().noneMatch(typeElement -> typeElement instanceof MessageElement)) {
+                            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " At least one Message definition should exists!");
+                        } else {
+                            checkEnumElements(schemaName, getEnumElements(types));
+                            checkMessageElements(schemaName, getMessageTypes(types));
+                        }
+                    } else {
+                        throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Type elements is empty!");
+                    }
+                }
+
+                private void checkFieldElements(String schemaName, List<FieldElement> fieldElements) {
+                    if (!fieldElements.isEmpty()) {
+                        boolean hasRequiredLabel = fieldElements.stream().anyMatch(fieldElement -> {
+                            Field.Label label = fieldElement.getLabel();
+                            return label != null && label.equals(Field.Label.REQUIRED);
+                        });
+                        if (hasRequiredLabel) {
+                            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Required labels are not supported!");
+                        }
+                        boolean hasDefaultValue = fieldElements.stream().anyMatch(fieldElement -> fieldElement.getDefaultValue() != null);
+                        if (hasDefaultValue) {
+                            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Default values are not supported!");
+                        }
+                    }
+                }
+
+                private void checkEnumElements(String schemaName, List<EnumElement> enumTypes) {
+                    if (enumTypes.stream().anyMatch(enumElement -> !enumElement.getNestedTypes().isEmpty())) {
+                        throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Nested types in Enum definitions are not supported!");
+                    }
+                    if (enumTypes.stream().anyMatch(enumElement -> !enumElement.getOptions().isEmpty())) {
+                        throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Enum definitions options are not supported!");
+                    }
+                }
+
+                private void checkMessageElements(String schemaName, List<MessageElement> messageElementsList) {
+                    if (!messageElementsList.isEmpty()) {
+                        messageElementsList.forEach(messageElement -> {
+                            checkProtoFileCommonSettings(schemaName, messageElement.getGroups().isEmpty(),
+                                    " Message definition groups don't support!");
+                            checkProtoFileCommonSettings(schemaName, messageElement.getOptions().isEmpty(),
+                                    " Message definition options don't support!");
+                            checkProtoFileCommonSettings(schemaName, messageElement.getExtensions().isEmpty(),
+                                    " Message definition extensions don't support!");
+                            checkProtoFileCommonSettings(schemaName, messageElement.getReserveds().isEmpty(),
+                                    " Message definition reserved elements don't support!");
+                            checkFieldElements(schemaName, messageElement.getFields());
+                            List<OneOfElement> oneOfs = messageElement.getOneOfs();
+                            if (!oneOfs.isEmpty()) {
+                                oneOfs.forEach(oneOfElement -> {
+                                    checkProtoFileCommonSettings(schemaName, oneOfElement.getGroups().isEmpty(),
+                                            " OneOf definition groups don't support!");
+                                    checkFieldElements(schemaName, oneOfElement.getFields());
+                                });
+                            }
+                            List<TypeElement> nestedTypes = messageElement.getNestedTypes();
+                            if (!nestedTypes.isEmpty()) {
+                                List<EnumElement> nestedEnumTypes = getEnumElements(nestedTypes);
+                                if (!nestedEnumTypes.isEmpty()) {
+                                    checkEnumElements(schemaName, nestedEnumTypes);
+                                }
+                                List<MessageElement> nestedMessageTypes = getMessageTypes(nestedTypes);
+                                checkMessageElements(schemaName, nestedMessageTypes);
+                            }
+                        });
+                    }
+                }
+
+                private List<MessageElement> getMessageTypes(List<TypeElement> types) {
+                    return types.stream()
+                            .filter(typeElement -> typeElement instanceof MessageElement)
+                            .map(typeElement -> (MessageElement) typeElement)
+                            .collect(Collectors.toList());
+                }
+
+                private List<EnumElement> getEnumElements(List<TypeElement> types) {
+                    return types.stream()
+                            .filter(typeElement -> typeElement instanceof EnumElement)
+                            .map(typeElement -> (EnumElement) typeElement)
+                            .collect(Collectors.toList());
+                }
+
             };
 
     private PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =

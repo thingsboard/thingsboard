@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.mqtt.telemetry.attributes;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.junit.After;
@@ -142,7 +143,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
 
     }
 
-    protected void assertAttributesValues(List<Map<String, Object>> deviceValues, Set<String> expectedKeySet) {
+    protected void assertAttributesValues(List<Map<String, Object>> deviceValues, Set<String> expectedKeySet) throws JsonProcessingException {
         for (Map<String, Object> map : deviceValues) {
             String key = (String) map.get("key");
             Object value = map.get("value");
@@ -162,10 +163,16 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
                     break;
                 case "key5":
                     assertNotNull(value);
-                    assertEquals(3, ((LinkedHashMap) value).size());
-                    assertEquals(42, ((LinkedHashMap) value).get("someNumber"));
-                    assertEquals(Arrays.asList(1, 2, 3), ((LinkedHashMap) value).get("someArray"));
-                    LinkedHashMap<String, String> someNestedObject = (LinkedHashMap) ((LinkedHashMap) value).get("someNestedObject");
+                    LinkedHashMap valueMap;
+                    if (value instanceof String) {
+                        valueMap = mapper.readValue((String) value, LinkedHashMap.class);
+                    } else {
+                        valueMap = (LinkedHashMap) value;
+                    }
+                    assertEquals(3, valueMap.size());
+                    assertEquals(42, valueMap.get("someNumber"));
+                    assertEquals(Arrays.asList(1, 2, 3), valueMap.get("someArray"));
+                    LinkedHashMap<String, String> someNestedObject = (LinkedHashMap) valueMap.get("someNestedObject");
                     assertEquals("value", someNestedObject.get("key"));
                     break;
             }
