@@ -41,6 +41,54 @@
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.maximum-customers</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxCustomers"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCustomers').hasError('required')">
+      {{ 'tenant-profile.maximum-customers-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCustomers').hasError('min')">
+      {{ 'tenant-profile.maximum-customers-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.maximum-users</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxUsers"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxUsers').hasError('required')">
+      {{ 'tenant-profile.maximum-users-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxUsers').hasError('min')">
+      {{ 'tenant-profile.maximum-users-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.maximum-dashboards</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxDashboards"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDashboards').hasError('required')">
+      {{ 'tenant-profile.maximum-dashboards-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDashboards').hasError('min')">
+      {{ 'tenant-profile.maximum-dashboards-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.maximum-rule-chains</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxRuleChains"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleChains').hasError('required')">
+      {{ 'tenant-profile.maximum-rule-chains-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleChains').hasError('min')">
+      {{ 'tenant-profile.maximum-rule-chains-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
     <mat-label translate>tenant-profile.max-transport-messages</mat-label>
     <input matInput required min="0" step="1"
            formControlName="maxTransportMessages"

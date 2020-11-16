@@ -487,7 +487,8 @@ export default abstract class LeafletMap {
     }
 
     const mapBounds = this.map.getBounds();
-    if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || !this.bounds.equals(bounds) && !mapBounds.contains(bounds))) {
+    if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || !this.bounds.equals(bounds)
+        && this.options.fitMapBounds ? !mapBounds.contains(bounds) : false)) {
       this.bounds = bounds;
       this.fitBounds(bounds);
     }
