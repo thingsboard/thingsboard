@@ -36,7 +36,7 @@ public class MqttTopicFilterFactory {
             if (filter.contains("+") || filter.contains("#")) {
                 String regex;
                 if (filter.equals("#")) {
-                    regex = filter.replace("#", "\\S+");
+                    return new AlwaysTrueTopicFilter();
                 } else {
                     regex = filter
                             .replace("\\", "\\\\")
