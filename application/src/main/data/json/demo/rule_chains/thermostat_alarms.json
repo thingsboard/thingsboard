@@ -1,6 +1,8 @@
 {
   "ruleChain": {
-    "additionalInfo": null,
+    "additionalInfo": {
+      "description": ""
+    },
     "name": "Thermostat Alarms",
     "firstRuleNodeId": null,
     "root": false,
@@ -8,131 +10,126 @@
     "configuration": null
   },
   "metadata": {
-    "firstNodeIndex": 5,
+    "firstNodeIndex": 6,
     "nodes": [
       {
         "additionalInfo": {
-          "layoutX": 929,
-          "layoutY": 67
+          "layoutX": 822,
+          "layoutY": 294
         },
-        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
-        "name": "Create Temp Alarm",
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
+        "name": "Save Timeseries",
         "debugMode": false,
         "configuration": {
-          "alarmType": "High Temperature",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\ndetails.triggerValue = msg.temperature;\nreturn details;",
-          "severity": "MAJOR",
-          "propagate": true,
-          "useMessageAlarmData": false,
-          "relationTypes": [
-            "ToAlarmPropagationAsset"
-          ]
+          "defaultTTL": 0
         }
       },
       {
         "additionalInfo": {
-          "layoutX": 930,
-          "layoutY": 201
+          "description": null,
+          "layoutX": 824,
+          "layoutY": 221
         },
-        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
-        "name": "Clear Temp Alarm",
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "Save Client Attributes",
         "debugMode": false,
         "configuration": {
-          "alarmType": "High Temperature",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nreturn details;"
+          "scope": "SERVER_SCOPE",
+          "notifyDevice": null
         }
       },
       {
         "additionalInfo": {
-          "layoutX": 930,
-          "layoutY": 131
+          "layoutX": 494,
+          "layoutY": 309
         },
-        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
-        "name": "Create Humidity Alarm",
+        "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
+        "name": "Message Type Switch",
         "debugMode": false,
         "configuration": {
-          "alarmType": "Low Humidity",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\ndetails.triggerValue = msg.humidity;\nreturn details;",
-          "severity": "MINOR",
-          "propagate": true,
-          "useMessageAlarmData": false,
-          "relationTypes": [
-            "ToAlarmPropagationAsset"
-          ]
+          "version": 0
         }
       },
       {
         "additionalInfo": {
-          "layoutX": 929,
-          "layoutY": 275
+          "layoutX": 824,
+          "layoutY": 383
         },
-        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
-        "name": "Clear Humidity Alarm",
+        "type": "org.thingsboard.rule.engine.action.TbLogNode",
+        "name": "Log RPC from Device",
         "debugMode": false,
         "configuration": {
-          "alarmType": "Low Humidity",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nreturn details;"
+          "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
         }
       },
       {
         "additionalInfo": {
-          "layoutX": 586,
-          "layoutY": 148
+          "layoutX": 823,
+          "layoutY": 444
         },
-        "type": "org.thingsboard.rule.engine.filter.TbJsSwitchNode",
-        "name": "Check Alarms",
+        "type": "org.thingsboard.rule.engine.action.TbLogNode",
+        "name": "Log Other",
         "debugMode": false,
         "configuration": {
-          "jsScript": "var relations = [];\nif(metadata[\"ss_alarmTemperature\"] === \"true\"){\n    if(msg.temperature > metadata[\"ss_thresholdTemperature\"]){\n        relations.push(\"NewTempAlarm\");\n    } else {\n        relations.push(\"ClearTempAlarm\");\n    }\n}\nif(metadata[\"ss_alarmHumidity\"] === \"true\"){\n    if(msg.humidity < metadata[\"ss_thresholdHumidity\"]){\n        relations.push(\"NewHumidityAlarm\");\n    } else {\n        relations.push(\"ClearHumidityAlarm\");\n    }\n}\n\nreturn relations;"
+          "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
         }
       },
       {
         "additionalInfo": {
-          "layoutX": 321,
-          "layoutY": 149
+          "layoutX": 822,
+          "layoutY": 507
         },
-        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
-        "name": "Fetch Configuration",
+        "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
+        "name": "RPC Call Request",
         "debugMode": false,
         "configuration": {
-          "clientAttributeNames": [],
-          "sharedAttributeNames": [],
-          "serverAttributeNames": [
-            "alarmTemperature",
-            "thresholdTemperature",
-            "alarmHumidity",
-            "thresholdHumidity"
-          ],
-          "latestTsKeyNames": [],
-          "tellFailureIfAbsent": false,
-          "getLatestValueWithTs": false
+          "timeoutInSeconds": 60
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 209,
+          "layoutY": 307
+        },
+        "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
+        "name": "Device Profile Node",
+        "debugMode": false,
+        "configuration": {
+          "persistAlarmRulesState": false,
+          "fetchAlarmRulesStateOnStart": false
         }
       }
     ],
     "connections": [
       {
-        "fromIndex": 4,
-        "toIndex": 0,
-        "type": "NewTempAlarm"
-      },
-      {
-        "fromIndex": 4,
-        "toIndex": 1,
-        "type": "ClearTempAlarm"
-      },
-      {
-        "fromIndex": 4,
-        "toIndex": 2,
-        "type": "NewHumidityAlarm"
-      },
-      {
-        "fromIndex": 4,
-        "toIndex": 3,
-        "type": "ClearHumidityAlarm"
-      },
-      {
-        "fromIndex": 5,
+        "fromIndex": 2,
         "toIndex": 4,
+        "type": "Other"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 1,
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 0,
+        "type": "Post telemetry"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 3,
+        "type": "RPC Request from Device"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 5,
+        "type": "RPC Request to Device"
+      },
+      {
+        "fromIndex": 6,
+        "toIndex": 2,
         "type": "Success"
       }
     ],
