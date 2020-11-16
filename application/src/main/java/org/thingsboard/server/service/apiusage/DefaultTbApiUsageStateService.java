@@ -20,7 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ApiFeature;
@@ -52,7 +55,7 @@ import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.profile.TbTenantProfileCache;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.InternalTelemetryService;
 
@@ -129,8 +132,8 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
     public void init() {
         if (enabled) {
             log.info("Starting api usage service.");
-            initStatesFromDataBase();
             scheduler.scheduleAtFixedRate(this::checkStartOfNextCycle, nextCycleCheckInterval, nextCycleCheckInterval, TimeUnit.MILLISECONDS);
+            log.info("Started api usage service.");
         }
     }
 
@@ -218,6 +221,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
     @Override
     public void onTenantProfileUpdate(TenantProfileId tenantProfileId) {
+        log.info("[{}] On Tenant Profile Update", tenantProfileId);
         TenantProfile tenantProfile = tenantProfileCache.get(tenantProfileId);
         updateLock.lock();
         try {
@@ -233,6 +237,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
     @Override
     public void onTenantUpdate(TenantId tenantId) {
+        log.info("[{}] On Tenant Update.", tenantId);
         TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
         updateLock.lock();
         try {
@@ -245,16 +250,16 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         }
     }
 
-    private void updateTenantState(TenantApiUsageState state, TenantProfile tenantProfile) {
+    private void updateTenantState(TenantApiUsageState state, TenantProfile profile) {
         TenantProfileData oldProfileData = state.getTenantProfileData();
-        state.setTenantProfileId(tenantProfile.getId());
-        state.setTenantProfileData(tenantProfile.getProfileData());
+        state.setTenantProfileId(profile.getId());
+        state.setTenantProfileData(profile.getProfileData());
         Map<ApiFeature, ApiUsageStateValue> result = state.checkStateUpdatedDueToThresholds();
         if (!result.isEmpty()) {
             persistAndNotify(state, result);
         }
         updateProfileThresholds(state.getTenantId(), state.getApiUsageState().getId(),
-                oldProfileData.getConfiguration(), tenantProfile.getProfileData().getConfiguration());
+                oldProfileData.getConfiguration(), profile.getProfileData().getConfiguration());
     }
 
     private void updateProfileThresholds(TenantId tenantId, ApiUsageStateId id,
@@ -340,12 +345,15 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
     private void initStatesFromDataBase() {
         try {
+            log.info("Initializing tenant states.");
             PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, 1024);
             for (Tenant tenant : tenantIterator) {
                 if (!myTenantStates.containsKey(tenant.getId()) && partitionService.resolve(ServiceType.TB_CORE, tenant.getId(), tenant.getId()).isMyPartition()) {
+                    log.debug("[{}] Initializing tenant state.", tenant.getId());
                     updateLock.lock();
                     try {
                         updateTenantState(getOrFetchState(tenant.getId()), tenantProfileCache.get(tenant.getTenantProfileId()));
+                        log.debug("[{}] Initialized tenant state.", tenant.getId());
                     } catch (Exception e) {
                         log.warn("[{}] Failed to initialize tenant API state", tenant.getId(), e);
                     } finally {
@@ -353,7 +361,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                     }
                 }
             }
-            log.info("Api usage service started.");
+            log.info("Initialized tenant states.");
         } catch (Exception e) {
             log.warn("Unknown failure", e);
         }

@@ -17,7 +17,7 @@
 
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { UnitedMapSettings } from '../map-models';
+import { DEFAULT_ZOOM_LEVEL, UnitedMapSettings } from '../map-models';
 import { WidgetContext } from '@home/models/widget-component.models';
 
 export class TencentMap extends LeafletMap {
@@ -26,7 +26,7 @@ export class TencentMap extends LeafletMap {
     const txUrl = 'http://rt{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0';
     const map = L.map($container, {
       editable: !!options.editablePolygon
-    }).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
+    }).setView(options?.defaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
     const txLayer = L.tileLayer(txUrl, {
       subdomains: '0123',
       tms: true,
