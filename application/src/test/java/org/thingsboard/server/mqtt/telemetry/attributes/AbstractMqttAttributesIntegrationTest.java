@@ -163,16 +163,10 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
                     break;
                 case "key5":
                     assertNotNull(value);
-                    LinkedHashMap valueMap;
-                    if (value instanceof String) {
-                        valueMap = mapper.readValue((String) value, LinkedHashMap.class);
-                    } else {
-                        valueMap = (LinkedHashMap) value;
-                    }
-                    assertEquals(3, valueMap.size());
-                    assertEquals(42, valueMap.get("someNumber"));
-                    assertEquals(Arrays.asList(1, 2, 3), valueMap.get("someArray"));
-                    LinkedHashMap<String, String> someNestedObject = (LinkedHashMap) valueMap.get("someNestedObject");
+                    assertEquals(3, ((LinkedHashMap) value).size());
+                    assertEquals(42, ((LinkedHashMap) value).get("someNumber"));
+                    assertEquals(Arrays.asList(1, 2, 3), ((LinkedHashMap) value).get("someArray"));
+                    LinkedHashMap<String, String> someNestedObject = (LinkedHashMap) ((LinkedHashMap) value).get("someNestedObject");
                     assertEquals("value", someNestedObject.get("key"));
                     break;
             }

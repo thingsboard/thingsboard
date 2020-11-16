@@ -58,6 +58,23 @@ public abstract class AbstractMqttAttributesProtoIntegrationTest extends Abstrac
         ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
         ProtoFileElement transportProtoSchemaFile = protoTransportPayloadConfiguration.getTransportProtoSchema(DEVICE_ATTRIBUTES_PROTO_SCHEMA);
         DynamicSchema attributesSchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchemaFile, ProtoTransportPayloadConfiguration.ATTRIBUTES_PROTO_SCHEMA);
+
+        DynamicMessage.Builder nestedJsonObjectBuilder = attributesSchema.newMessageBuilder("PostAttributes.JsonObject.NestedJsonObject");
+        Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();
+        assertNotNull(nestedJsonObjectBuilderDescriptor);
+        DynamicMessage nestedJsonObject = nestedJsonObjectBuilder.setField(nestedJsonObjectBuilderDescriptor.findFieldByName("key"), "value").build();
+
+        DynamicMessage.Builder jsonObjectBuilder = attributesSchema.newMessageBuilder("PostAttributes.JsonObject");
+        Descriptors.Descriptor jsonObjectBuilderDescriptor = jsonObjectBuilder.getDescriptorForType();
+        assertNotNull(jsonObjectBuilderDescriptor);
+        DynamicMessage jsonObject = jsonObjectBuilder
+                .setField(jsonObjectBuilderDescriptor.findFieldByName("someNumber"), 42)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 1)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 2)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 3)
+                .setField(jsonObjectBuilderDescriptor.findFieldByName("someNestedObject"), nestedJsonObject)
+                .build();
+
         DynamicMessage.Builder postAttributesBuilder = attributesSchema.newMessageBuilder("PostAttributes");
         Descriptors.Descriptor postAttributesMsgDescriptor = postAttributesBuilder.getDescriptorForType();
         assertNotNull(postAttributesMsgDescriptor);
@@ -66,7 +83,7 @@ public abstract class AbstractMqttAttributesProtoIntegrationTest extends Abstrac
                 .setField(postAttributesMsgDescriptor.findFieldByName("key2"), true)
                 .setField(postAttributesMsgDescriptor.findFieldByName("key3"), 3.0)
                 .setField(postAttributesMsgDescriptor.findFieldByName("key4"), 4)
-                .setField(postAttributesMsgDescriptor.findFieldByName("key5"), "{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}")
+                .setField(postAttributesMsgDescriptor.findFieldByName("key5"), jsonObject)
                 .build();
         processAttributesTest(POST_DATA_ATTRIBUTES_TOPIC, expectedKeys, postAttributesMsg.toByteArray());
     }

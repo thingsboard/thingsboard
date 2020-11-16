@@ -62,7 +62,16 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
             "  bool attribute2 = 2;\n" +
             "  double attribute3 = 3;\n" +
             "  int32 attribute4 = 4;\n" +
-            "  string attribute5 = 5;\n" +
+            "  JsonObject attribute5 = 5;\n" +
+            "\n" +
+            "  message JsonObject {\n" +
+            "    int32 someNumber = 6;\n" +
+            "    repeated int32 someArray = 7;\n" +
+            "    NestedJsonObject someNestedObject = 8;\n" +
+            "    message NestedJsonObject {\n" +
+            "       string key = 9;\n" +
+            "    }\n" +
+            "  }\n" +
             "}";
 
     @After
@@ -93,6 +102,23 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
         ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
         ProtoFileElement transportProtoSchema = protoTransportPayloadConfiguration.getTransportProtoSchema(ATTRIBUTES_SCHEMA_STR);
         DynamicSchema attributesSchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchema, ProtoTransportPayloadConfiguration.ATTRIBUTES_PROTO_SCHEMA);
+
+        DynamicMessage.Builder nestedJsonObjectBuilder = attributesSchema.newMessageBuilder("PostAttributes.JsonObject.NestedJsonObject");
+        Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();
+        assertNotNull(nestedJsonObjectBuilderDescriptor);
+        DynamicMessage nestedJsonObject = nestedJsonObjectBuilder.setField(nestedJsonObjectBuilderDescriptor.findFieldByName("key"), "value").build();
+
+        DynamicMessage.Builder jsonObjectBuilder = attributesSchema.newMessageBuilder("PostAttributes.JsonObject");
+        Descriptors.Descriptor jsonObjectBuilderDescriptor = jsonObjectBuilder.getDescriptorForType();
+        assertNotNull(jsonObjectBuilderDescriptor);
+        DynamicMessage jsonObject = jsonObjectBuilder
+                .setField(jsonObjectBuilderDescriptor.findFieldByName("someNumber"), 42)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 1)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 2)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 3)
+                .setField(jsonObjectBuilderDescriptor.findFieldByName("someNestedObject"), nestedJsonObject)
+                .build();
+
         DynamicMessage.Builder postAttributesBuilder = attributesSchema.newMessageBuilder("PostAttributes");
         Descriptors.Descriptor postAttributesMsgDescriptor = postAttributesBuilder.getDescriptorForType();
         assertNotNull(postAttributesMsgDescriptor);
@@ -101,7 +127,7 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
                 .setField(postAttributesMsgDescriptor.findFieldByName("attribute2"), true)
                 .setField(postAttributesMsgDescriptor.findFieldByName("attribute3"), 42.0)
                 .setField(postAttributesMsgDescriptor.findFieldByName("attribute4"), 73)
-                .setField(postAttributesMsgDescriptor.findFieldByName("attribute5"), "{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}")
+                .setField(postAttributesMsgDescriptor.findFieldByName("attribute5"), jsonObject)
                 .build();
         byte[] payload = postAttributesMsg.toByteArray();
         client.publish(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, new MqttMessage(payload));

@@ -62,6 +62,23 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
         ProtoFileElement transportProtoSchema = protoTransportPayloadConfiguration.getTransportProtoSchema(DEVICE_TELEMETRY_PROTO_SCHEMA);
         DynamicSchema telemetrySchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchema, "telemetrySchema");
+
+        DynamicMessage.Builder nestedJsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject.NestedJsonObject");
+        Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();
+        assertNotNull(nestedJsonObjectBuilderDescriptor);
+        DynamicMessage nestedJsonObject = nestedJsonObjectBuilder.setField(nestedJsonObjectBuilderDescriptor.findFieldByName("key"), "value").build();
+
+        DynamicMessage.Builder jsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject");
+        Descriptors.Descriptor jsonObjectBuilderDescriptor = jsonObjectBuilder.getDescriptorForType();
+        assertNotNull(jsonObjectBuilderDescriptor);
+        DynamicMessage jsonObject = jsonObjectBuilder
+                .setField(jsonObjectBuilderDescriptor.findFieldByName("someNumber"), 42)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 1)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 2)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 3)
+                .setField(jsonObjectBuilderDescriptor.findFieldByName("someNestedObject"), nestedJsonObject)
+                .build();
+
         DynamicMessage.Builder postTelemetryBuilder = telemetrySchema.newMessageBuilder("PostTelemetry");
         Descriptors.Descriptor postTelemetryMsgDescriptor = postTelemetryBuilder.getDescriptorForType();
         assertNotNull(postTelemetryMsgDescriptor);
@@ -70,7 +87,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
                 .setField(postTelemetryMsgDescriptor.findFieldByName("key2"), true)
                 .setField(postTelemetryMsgDescriptor.findFieldByName("key3"), 3.0)
                 .setField(postTelemetryMsgDescriptor.findFieldByName("key4"), 4)
-                .setField(postTelemetryMsgDescriptor.findFieldByName("key5"), "{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}")
+                .setField(postTelemetryMsgDescriptor.findFieldByName("key5"), jsonObject)
                 .build();
         processTelemetryTest(POST_DATA_TELEMETRY_TOPIC, expectedKeys, postTelemetryMsg.toByteArray(), false);
     }
@@ -80,19 +97,27 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         String schemaStr = "syntax =\"proto3\";\n" +
                 "\n" +
                 "package test;\n" +
-                "        \n" +
+                "\n" +
                 "message PostTelemetry {\n" +
-                "\n" +
-                "  message Values {\n" +
-                "    string key1 = 1;\n" +
-                "    bool key2 = 2;\n" +
-                "    double key3 = 3;\n" +
-                "    int32 key4 = 4;\n" +
-                "    string key5 = 5;\n" +
-                "  }\n" +
-                "\n" +
                 "  int64 ts = 1;\n" +
                 "  Values values = 2;\n" +
+                "  \n" +
+                "  message Values {\n" +
+                "    string key1 = 3;\n" +
+                "    bool key2 = 4;\n" +
+                "    double key3 = 5;\n" +
+                "    int32 key4 = 6;\n" +
+                "    JsonObject key5 = 7;\n" +
+                "  }\n" +
+                "  \n" +
+                "  message JsonObject {\n" +
+                "    int32 someNumber = 8;\n" +
+                "    repeated int32 someArray = 9;\n" +
+                "    NestedJsonObject someNestedObject = 10;\n" +
+                "    message NestedJsonObject {\n" +
+                "       string key = 11;\n" +
+                "    }\n" +
+                "  }\n" +
                 "}";
         super.processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null, schemaStr, null, DeviceProfileProvisionType.DISABLED, null, null);
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
@@ -105,6 +130,23 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         ProtoFileElement transportProtoSchema = protoTransportPayloadConfiguration.getTransportProtoSchema(schemaStr);
         DynamicSchema telemetrySchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchema, "telemetrySchema");
 
+        DynamicMessage.Builder nestedJsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject.NestedJsonObject");
+        Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();
+        assertNotNull(nestedJsonObjectBuilderDescriptor);
+        DynamicMessage nestedJsonObject = nestedJsonObjectBuilder.setField(nestedJsonObjectBuilderDescriptor.findFieldByName("key"), "value").build();
+
+        DynamicMessage.Builder jsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject");
+        Descriptors.Descriptor jsonObjectBuilderDescriptor = jsonObjectBuilder.getDescriptorForType();
+        assertNotNull(jsonObjectBuilderDescriptor);
+        DynamicMessage jsonObject = jsonObjectBuilder
+                .setField(jsonObjectBuilderDescriptor.findFieldByName("someNumber"), 42)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 1)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 2)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 3)
+                .setField(jsonObjectBuilderDescriptor.findFieldByName("someNestedObject"), nestedJsonObject)
+                .build();
+
+
         DynamicMessage.Builder valuesBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.Values");
         Descriptors.Descriptor valuesDescriptor = valuesBuilder.getDescriptorForType();
         assertNotNull(valuesDescriptor);
@@ -114,7 +156,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
                 .setField(valuesDescriptor.findFieldByName("key2"), true)
                 .setField(valuesDescriptor.findFieldByName("key3"), 3.0)
                 .setField(valuesDescriptor.findFieldByName("key4"), 4)
-                .setField(valuesDescriptor.findFieldByName("key5"), "{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}")
+                .setField(valuesDescriptor.findFieldByName("key5"), jsonObject)
                 .build();
 
         DynamicMessage.Builder postTelemetryBuilder = telemetrySchema.newMessageBuilder("PostTelemetry");
