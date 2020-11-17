@@ -29,6 +29,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.ApiFeature;
+import org.thingsboard.server.common.data.ApiUsageStateMailMessage;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -243,6 +246,32 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("account.lockout.ftl", model);
 
+        sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
+    @Override
+    public void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageStateMailMessage[] stateMailMessages) throws ThingsboardException {
+        String subject = messages.getMessage("api.usage.state", null, Locale.US);
+
+        Map<String, Object> model = new HashMap<>();
+        model.put("apiFeature", apiFeature.getApiStateKey());
+        model.put("apiUsageStateMailMessages", stateMailMessages);
+
+        model.put(TARGET_EMAIL, email);
+
+        String message = null;
+
+        switch (stateValue) {
+            case ENABLED:
+                message = mergeTemplateIntoString("state.enabled.ftl", model);
+                break;
+            case WARNING:
+                message = mergeTemplateIntoString("state.warning.ftl", model);
+                break;
+            case DISABLED:
+                message = mergeTemplateIntoString("state.disabled.ftl", model);
+                break;
+        }
         sendMail(mailSender, mailFrom, email, subject, message);
     }
 
