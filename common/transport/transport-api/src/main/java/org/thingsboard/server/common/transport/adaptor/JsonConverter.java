@@ -428,8 +428,10 @@ public class JsonConverter {
                 case ACCESS_TOKEN:
                 case X509_CERTIFICATE:
                     result.addProperty("credentialsValue", payload.getCredentialsValue());
+                    break;
                 case MQTT_BASIC:
                     result.add("credentialsValue", JSON_PARSER.parse(payload.getCredentialsValue()).getAsJsonObject());
+                    break;
             }
             result.addProperty("credentialsType", payload.getCredentialsType().name());
             result.addProperty("status", ProvisionResponseStatus.SUCCESS.name());
