@@ -59,6 +59,7 @@ import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.InternalTelemetryService;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -67,6 +68,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -111,6 +114,8 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
     private final Lock updateLock = new ReentrantLock();
 
+    private final ExecutorService mailExecutor;
+
     public DefaultTbApiUsageStateService(TbClusterService clusterService,
                                          PartitionService partitionService,
                                          TenantService tenantService,
@@ -126,6 +131,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         this.scheduler = scheduler;
         this.tenantProfileCache = tenantProfileCache;
         this.mailService = mailService;
+        this.mailExecutor = Executors.newSingleThreadExecutor();
     }
 
     @PostConstruct
@@ -297,11 +303,13 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                     ApiUsageRecordKey key = keys[i];
                     msgs[i] = new ApiUsageStateMailMessage(key, state.getProfileThreshold(key), state.get(key));
                 }
-                try {
-                    mailService.sendApiFeatureStateEmail(apiFeature, stateValue, email, msgs);
-                } catch (ThingsboardException e) {
-                    log.warn("[{}] Can't send update of the API state to tenant with provided email [{}]", state.getTenantId(), email, e);
-                }
+                mailExecutor.submit(() -> {
+                    try {
+                        mailService.sendApiFeatureStateEmail(apiFeature, stateValue, email, msgs);
+                    } catch (ThingsboardException e) {
+                        log.warn("[{}] Can't send update of the API state to tenant with provided email [{}]", state.getTenantId(), email, e);
+                    }
+                });
             });
         } else {
             log.warn("[{}] Can't send update of the API state to tenant with empty email!", state.getTenantId());
@@ -386,4 +394,10 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         }
     }
 
+    @PreDestroy
+    private void destroy() {
+        if (mailExecutor != null) {
+            mailExecutor.shutdownNow();
+        }
+    }
 }
