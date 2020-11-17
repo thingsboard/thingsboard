@@ -179,6 +179,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
     private Device doSaveDevice(Device device, String accessToken) {
         log.trace("Executing saveDevice [{}]", device);
+        device.setName(device.getName().trim().replaceAll(" +", " "));
         deviceValidator.validate(device, Device::getTenantId);
         Device savedDevice;
         try {
@@ -543,7 +544,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
                 @Override
                 protected void validateDataImpl(TenantId tenantId, Device device) {
-                    if (StringUtils.isEmpty(device.getName()) || device.getName().trim().length() == 0) {
+                    if (StringUtils.isEmpty(device.getName())) {
                         throw new DataValidationException("Device name should be specified!");
                     }
                     if (device.getTenantId() == null) {
