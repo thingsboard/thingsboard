@@ -250,13 +250,11 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageStateMailMessage[] stateMailMessages) throws ThingsboardException {
+    public void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageStateMailMessage msg) throws ThingsboardException {
         String subject = messages.getMessage("api.usage.state", null, Locale.US);
 
         Map<String, Object> model = new HashMap<>();
-        model.put("apiFeature", apiFeature.getApiStateKey());
-        model.put("apiUsageStateMailMessages", stateMailMessages);
-
+        model.put("apiFeature", apiFeature.getLabel());
         model.put(TARGET_EMAIL, email);
 
         String message = null;
@@ -269,10 +267,41 @@ public class DefaultMailService implements MailService {
                 message = mergeTemplateIntoString("state.warning.ftl", model);
                 break;
             case DISABLED:
+                model.put("apiLimitValueLabel", toDisabledValueLabel(apiFeature) + " " + toDisabledValueLabel(msg));
                 message = mergeTemplateIntoString("state.disabled.ftl", model);
                 break;
         }
         sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
+    private String toDisabledValueLabel(ApiFeature apiFeature) {
+        switch (apiFeature) {
+            case DB:
+                return "saved";
+            case TRANSPORT:
+                return "received";
+            case JS:
+            case RE:
+                return "invoked";
+            default:
+                throw new RuntimeException("Not implemented!");
+        }
+    }
+
+    private String toDisabledValueLabel(ApiUsageStateMailMessage msg) {
+        switch (msg.getKey()) {
+            case STORAGE_DP_COUNT:
+            case TRANSPORT_DP_COUNT:
+                return (msg.getThreshold() / 1000000) + "M data points";
+            case TRANSPORT_MSG_COUNT:
+                return (msg.getThreshold() / 1000000) + "M messages";
+            case JS_EXEC_COUNT:
+                return (msg.getThreshold() / 1000000) + "M JavaScript functions";
+            case RE_EXEC_COUNT:
+                return (msg.getThreshold() / 1000000) + "M Rule Engine nodes";
+            default:
+                throw new RuntimeException("Not implemented!");
+        }
     }
 
     private void sendMail(JavaMailSenderImpl mailSender,

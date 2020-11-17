@@ -305,7 +305,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                 }
                 mailExecutor.submit(() -> {
                     try {
-                        mailService.sendApiFeatureStateEmail(apiFeature, stateValue, email, msgs);
+                        mailService.sendApiFeatureStateEmail(apiFeature, stateValue, email, msgs[0]);
                     } catch (ThingsboardException e) {
                         log.warn("[{}] Can't send update of the API state to tenant with provided email [{}]", state.getTenantId(), email, e);
                     }

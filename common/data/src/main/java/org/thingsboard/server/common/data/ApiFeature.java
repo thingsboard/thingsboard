@@ -18,16 +18,19 @@ package org.thingsboard.server.common.data;
 import lombok.Getter;
 
 public enum ApiFeature {
-    TRANSPORT("transportApiState"),
-    DB("dbApiState"),
-    RE("ruleEngineApiState"),
-    JS("jsExecutionApiState");
+    TRANSPORT("transportApiState", "Device API"),
+    DB("dbApiState", "Telemetry persistence"),
+    RE("ruleEngineApiState", "Rule engine execution"),
+    JS("jsExecutionApiState", "JavaScript functions execution");
 
     @Getter
     private final String apiStateKey;
+    @Getter
+    private final String label;
 
-    ApiFeature(String apiStateKey) {
+    ApiFeature(String apiStateKey, String label) {
         this.apiStateKey = apiStateKey;
+        this.label = label;
     }
 
 }
