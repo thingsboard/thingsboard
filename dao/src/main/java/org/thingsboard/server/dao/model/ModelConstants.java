@@ -174,6 +174,7 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_DESCRIPTION_PROPERTY = "description";
     public static final String DEVICE_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
     public static final String DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
+    public static final String DEVICE_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY = "default_queue_name";
     public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
 
     /**
@@ -445,10 +446,10 @@ public class ModelConstants {
     public static final String API_USAGE_STATE_TENANT_ID_COLUMN = TENANT_ID_PROPERTY;
     public static final String API_USAGE_STATE_ENTITY_TYPE_COLUMN = ENTITY_TYPE_COLUMN;
     public static final String API_USAGE_STATE_ENTITY_ID_COLUMN = ENTITY_ID_COLUMN;
-    public static final String API_USAGE_STATE_TRANSPORT_ENABLED_COLUMN = "transport_enabled";
-    public static final String API_USAGE_STATE_DB_STORAGE_ENABLED_COLUMN = "db_storage_enabled";
-    public static final String API_USAGE_STATE_RE_EXEC_ENABLED_COLUMN = "re_exec_enabled";
-    public static final String API_USAGE_STATE_JS_EXEC_ENABLED_COLUMN = "js_exec_enabled";
+    public static final String API_USAGE_STATE_TRANSPORT_COLUMN = "transport";
+    public static final String API_USAGE_STATE_DB_STORAGE_COLUMN = "db_storage";
+    public static final String API_USAGE_STATE_RE_EXEC_COLUMN = "re_exec";
+    public static final String API_USAGE_STATE_JS_EXEC_COLUMN = "js_exec";
 
     /**
      * Cassandra attributes and timeseries constants.

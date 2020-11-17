@@ -19,11 +19,7 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Valida
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import {
-  DefaultTenantProfileConfiguration,
-  TenantProfileConfiguration,
-  TenantProfileType
-} from '@shared/models/tenant.model';
+import { DefaultTenantProfileConfiguration, TenantProfileConfiguration } from '@shared/models/tenant.model';
 import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
@@ -56,6 +52,29 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
 
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
+    this.defaultTenantProfileConfigurationFormGroup = this.fb.group({
+      maxDevices: [null, [Validators.required, Validators.min(0)]],
+      maxAssets: [null, [Validators.required, Validators.min(0)]],
+      maxCustomers: [null, [Validators.required, Validators.min(0)]],
+      maxUsers: [null, [Validators.required, Validators.min(0)]],
+      maxDashboards: [null, [Validators.required, Validators.min(0)]],
+      maxRuleChains: [null, [Validators.required, Validators.min(0)]],
+      transportTenantMsgRateLimit: [null, []],
+      transportTenantTelemetryMsgRateLimit: [null, []],
+      transportTenantTelemetryDataPointsRateLimit: [null, []],
+      transportDeviceMsgRateLimit: [null, []],
+      transportDeviceTelemetryMsgRateLimit: [null, []],
+      transportDeviceTelemetryDataPointsRateLimit: [null, []],
+      maxTransportMessages: [null, [Validators.required, Validators.min(0)]],
+      maxTransportDataPoints: [null, [Validators.required, Validators.min(0)]],
+      maxREExecutions: [null, [Validators.required, Validators.min(0)]],
+      maxJSExecutions: [null, [Validators.required, Validators.min(0)]],
+      maxDPStorageDays: [null, [Validators.required, Validators.min(0)]],
+      maxRuleNodeExecutionsPerMessage: [null, [Validators.required, Validators.min(0)]]
+    });
+    this.defaultTenantProfileConfigurationFormGroup.valueChanges.subscribe(() => {
+      this.updateModel();
+    });
   }
 
   registerOnChange(fn: any): void {
@@ -66,27 +85,6 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
   }
 
   ngOnInit() {
-    this.defaultTenantProfileConfigurationFormGroup = this.fb.group({
-      configuration: this.fb.group({
-        maxDevices: [null, [Validators.required, Validators.min(0)]],
-        maxAssets: [null, [Validators.required, Validators.min(0)]],
-        transportTenantMsgRateLimit: [null, []],
-        transportTenantTelemetryMsgRateLimit: [null, []],
-        transportTenantTelemetryDataPointsRateLimit: [null, []],
-        transportDeviceMsgRateLimit: [null, []],
-        transportDeviceTelemetryMsgRateLimit: [null, []],
-        transportDeviceTelemetryDataPointsRateLimit: [null, []],
-        maxTransportMessages: [null, [Validators.required, Validators.min(0)]],
-        maxTransportDataPoints: [null, [Validators.required, Validators.min(0)]],
-        maxREExecutions: [null, [Validators.required, Validators.min(0)]],
-        maxJSExecutions: [null, [Validators.required, Validators.min(0)]],
-        maxDPStorageDays: [null, [Validators.required, Validators.min(0)]],
-        maxRuleNodeExecutionsPerMessage: [null, [Validators.required, Validators.min(0)]]
-      })
-    });
-    this.defaultTenantProfileConfigurationFormGroup.valueChanges.subscribe(() => {
-      this.updateModel();
-    });
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -100,15 +98,14 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
 
   writeValue(value: DefaultTenantProfileConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
-      this.defaultTenantProfileConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
+      this.defaultTenantProfileConfigurationFormGroup.patchValue(value, {emitEvent: false});
     }
   }
 
   private updateModel() {
     let configuration: TenantProfileConfiguration = null;
     if (this.defaultTenantProfileConfigurationFormGroup.valid) {
-      configuration = this.defaultTenantProfileConfigurationFormGroup.getRawValue().configuration;
-      configuration.type = TenantProfileType.DEFAULT;
+      configuration = this.defaultTenantProfileConfigurationFormGroup.getRawValue();
     }
     this.propagateChange(configuration);
   }

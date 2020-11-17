@@ -122,7 +122,13 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         log.trace("[{}] Processing msg: {}", sessionId, msg);
         try {
             if (msg instanceof MqttMessage) {
-                processMqttMsg(ctx, (MqttMessage) msg);
+                MqttMessage message = (MqttMessage) msg;
+                if (message.decoderResult().isSuccess()) {
+                    processMqttMsg(ctx, message);
+                } else {
+                    log.error("[{}] Message processing failed: {}", sessionId, message.decoderResult().cause().getMessage());
+                    ctx.close();
+                }
             } else {
                 ctx.close();
             }
@@ -465,8 +471,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         String userName = msg.payload().userName();
         log.info("[{}] Processing connect msg for client with user name: {}!", sessionId, userName);
         TransportProtos.ValidateBasicMqttCredRequestMsg.Builder request = TransportProtos.ValidateBasicMqttCredRequestMsg.newBuilder()
-                .setClientId(msg.payload().clientIdentifier())
-                .setUserName(userName);
+                .setClientId(msg.payload().clientIdentifier());
+        if (userName != null) {
+            request.setUserName(userName);
+        }
         String password = msg.payload().password();
         if (password != null) {
             request.setPassword(password);

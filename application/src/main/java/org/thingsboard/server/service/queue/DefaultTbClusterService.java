@@ -158,8 +158,16 @@ public class DefaultTbClusterService implements TbClusterService {
     private TbMsg transformMsg(TbMsg tbMsg, DeviceProfile deviceProfile) {
         if (deviceProfile != null) {
             RuleChainId targetRuleChainId = deviceProfile.getDefaultRuleChainId();
-            if (targetRuleChainId != null && !targetRuleChainId.equals(tbMsg.getRuleChainId())) {
+            String targetQueueName = deviceProfile.getDefaultQueueName();
+            boolean isRuleChainTransform = targetRuleChainId != null && !targetRuleChainId.equals(tbMsg.getRuleChainId());
+            boolean isQueueTransform = targetQueueName != null && !targetQueueName.equals(tbMsg.getQueueName());
+
+            if (isRuleChainTransform && isQueueTransform) {
+                tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId, targetQueueName);
+            } else if (isRuleChainTransform) {
                 tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId);
+            } else if (isQueueTransform) {
+                tbMsg = TbMsg.transformMsg(tbMsg, targetQueueName);
             }
         }
         return tbMsg;
@@ -271,6 +279,7 @@ public class DefaultTbClusterService implements TbClusterService {
         TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineProducer = producerProvider.getRuleEngineNotificationsMsgProducer();
         Set<String> tbRuleEngineServices = new HashSet<>(partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE));
         if (msg.getEntityId().getEntityType().equals(EntityType.TENANT)
+                || msg.getEntityId().getEntityType().equals(EntityType.TENANT_PROFILE)
                 || msg.getEntityId().getEntityType().equals(EntityType.DEVICE_PROFILE)
                 || msg.getEntityId().getEntityType().equals(EntityType.API_USAGE_STATE)) {
             TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();

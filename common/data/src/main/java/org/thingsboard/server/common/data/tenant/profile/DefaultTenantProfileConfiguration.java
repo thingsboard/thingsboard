@@ -24,6 +24,10 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
 
     private long maxDevices;
     private long maxAssets;
+    private long maxCustomers;
+    private long maxUsers;
+    private long maxDashboards;
+    private long maxRuleChains;
 
     private String transportTenantMsgRateLimit;
     private String transportTenantTelemetryMsgRateLimit;
@@ -38,6 +42,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxJSExecutions;
     private long maxDPStorageDays;
     private int maxRuleNodeExecutionsPerMessage;
+
+    private double warnThreshold;
 
     @Override
     public long getProfileThreshold(ApiUsageRecordKey key) {
@@ -56,6 +62,10 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
         return 0L;
     }
 
+    @Override
+    public long getWarnThreshold(ApiUsageRecordKey key) {
+        return (long) (getProfileThreshold(key) * (warnThreshold > 0.0 ? warnThreshold : 0.8));
+    }
 
     @Override
     public TenantProfileType getType() {

@@ -26,7 +26,7 @@ import { EntityInfoData } from '@shared/models/entity.models';
 import { KeyFilter } from '@shared/models/query/query.models';
 import { TimeUnit } from '@shared/models/time/time.models';
 import * as _moment from 'moment-timezone';
-import { AbstractControl, FormGroup, ValidationErrors } from '@angular/forms';
+import { AbstractControl, ValidationErrors } from '@angular/forms';
 
 export enum DeviceProfileType {
   DEFAULT = 'DEFAULT'
@@ -148,6 +148,9 @@ export interface DefaultDeviceProfileTransportConfiguration {
 export interface MqttDeviceProfileTransportConfiguration {
   deviceTelemetryTopic?: string;
   deviceAttributesTopic?: string;
+  transportPayloadTypeConfiguration?: {
+    transportPayloadType?: MqttTransportPayloadType;
+  };
   [key: string]: any;
 }
 
@@ -207,7 +210,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {
           deviceTelemetryTopic: 'v1/devices/me/telemetry',
           deviceAttributesTopic: 'v1/devices/me/attributes',
-          transportPayloadType: MqttTransportPayloadType.JSON
+          transportPayloadTypeConfiguration: {transportPayloadType: MqttTransportPayloadType.JSON}
         };
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
@@ -369,6 +372,7 @@ export interface DeviceProfile extends BaseData<DeviceProfileId> {
   provisionType: DeviceProvisionType;
   provisionDeviceKey?: string;
   defaultRuleChainId?: RuleChainId;
+  defaultQueueName?: string;
   profileData: DeviceProfileData;
 }
 
@@ -512,7 +516,7 @@ export function timeOfDayToUTCTimestamp(date: Date | number): number {
 }
 
 export function utcTimestampToTimeOfDay(time = 0): Date {
-  return new Date(time + new Date().getTimezoneOffset() * 60 * 1000);
+  return new Date(time + new Date(time).getTimezoneOffset() * 60 * 1000);
 }
 
 function timeOfDayToMoment(date: Date | number): _moment.Moment {

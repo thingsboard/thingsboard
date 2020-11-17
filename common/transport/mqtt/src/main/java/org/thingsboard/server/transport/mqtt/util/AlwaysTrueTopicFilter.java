@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.apiusage;
+package org.thingsboard.server.transport.mqtt.util;
 
-import lombok.Getter;
+import lombok.Data;
 
-public enum ApiFeature {
-    TRANSPORT("transportApiState"), DB("dbApiState"), RE("ruleEngineApiState"), JS("jsExecutionApiState");
+@Data
+public class AlwaysTrueTopicFilter implements MqttTopicFilter {
 
-    @Getter
-    private final String apiStateKey;
-
-    ApiFeature(String apiStateKey) {
-        this.apiStateKey = apiStateKey;
+    @Override
+    public boolean filter(String topic) {
+        return true;
     }
 }

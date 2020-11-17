@@ -63,6 +63,10 @@ public class TbKafkaSettings {
     @Getter
     private int maxPollRecords;
 
+    @Value("${queue.kafka.max_poll_interval_ms:0}")
+    @Getter
+    private int maxPollIntervalMs;
+
     @Value("${queue.kafka.max_partition_fetch_bytes:16777216}")
     @Getter
     private int maxPartitionFetchBytes;
@@ -111,4 +115,5 @@ public class TbKafkaSettings {
         }
         return props;
     }
+
 }

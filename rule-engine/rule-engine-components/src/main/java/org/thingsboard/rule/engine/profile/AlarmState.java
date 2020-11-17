@@ -16,8 +16,10 @@
 package org.thingsboard.rule.engine.profile;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
@@ -29,6 +31,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
@@ -53,6 +56,7 @@ class AlarmState {
     private volatile boolean initialFetchDone;
     private volatile TbMsgMetaData lastMsgMetaData;
     private volatile String lastMsgQueueName;
+    private volatile DataSnapshot dataSnapshot;
 
     AlarmState(ProfileState deviceProfile, EntityId originator, DeviceProfileAlarm alarmDefinition, PersistedAlarmState alarmState) {
         this.deviceProfile = deviceProfile;
@@ -64,6 +68,7 @@ class AlarmState {
         initCurrentAlarm(ctx);
         lastMsgMetaData = msg.getMetaData();
         lastMsgQueueName = msg.getQueueName();
+        this.dataSnapshot = data;
         return createOrClearAlarms(ctx, data, update, AlarmRuleState::eval);
     }
 
@@ -74,7 +79,7 @@ class AlarmState {
 
     public <T> boolean createOrClearAlarms(TbContext ctx, T data, SnapshotUpdate update, BiFunction<AlarmRuleState, T, AlarmEvalResult> evalFunction) {
         boolean stateUpdate = false;
-        AlarmSeverity resultSeverity = null;
+        AlarmRuleState resultState = null;
         log.debug("[{}] processing update: {}", alarmDefinition.getId(), data);
         for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
             if (!validateUpdate(update, state)) {
@@ -84,18 +89,18 @@ class AlarmState {
             AlarmEvalResult evalResult = evalFunction.apply(state, data);
             stateUpdate |= state.checkUpdate();
             if (AlarmEvalResult.TRUE.equals(evalResult)) {
-                resultSeverity = state.getSeverity();
+                resultState = state;
                 break;
             } else if (AlarmEvalResult.FALSE.equals(evalResult)) {
-                state.clear();
-                stateUpdate |= state.checkUpdate();
+                stateUpdate = clearAlarmState(stateUpdate, state);
             }
         }
-        if (resultSeverity != null) {
-            TbAlarmResult result = calculateAlarmResult(ctx, resultSeverity);
+        if (resultState != null) {
+            TbAlarmResult result = calculateAlarmResult(ctx, resultState);
             if (result != null) {
                 pushMsg(ctx, result);
             }
+            stateUpdate = clearAlarmState(stateUpdate, clearState);
         } else if (currentAlarm != null && clearState != null) {
             if (!validateUpdate(update, clearState)) {
                 log.debug("[{}] Update is not valid for current clear state", alarmDefinition.getId());
@@ -103,20 +108,23 @@ class AlarmState {
             }
             AlarmEvalResult evalResult = evalFunction.apply(clearState, data);
             if (AlarmEvalResult.TRUE.equals(evalResult)) {
-                clearState.clear();
-                stateUpdate |= clearState.checkUpdate();
+                stateUpdate = clearAlarmState(stateUpdate, clearState);
                 for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
-                    state.clear();
-                    stateUpdate |= state.checkUpdate();
+                    stateUpdate = clearAlarmState(stateUpdate, state);
                 }
-                ctx.getAlarmService().clearAlarm(ctx.getTenantId(), currentAlarm.getId(), JacksonUtil.OBJECT_MAPPER.createObjectNode(), System.currentTimeMillis());
+                ctx.getAlarmService().clearAlarm(ctx.getTenantId(), currentAlarm.getId(), createDetails(clearState), System.currentTimeMillis());
                 pushMsg(ctx, new TbAlarmResult(false, false, true, currentAlarm));
                 currentAlarm = null;
             } else if (AlarmEvalResult.FALSE.equals(evalResult)) {
-                clearState.clear();
-                stateUpdate |= clearState.checkUpdate();
+                stateUpdate = clearAlarmState(stateUpdate, clearState);
             }
         }
+        return stateUpdate;
+    }
+
+    public boolean clearAlarmState(boolean stateUpdate, AlarmRuleState state) {
+        state.clear();
+        stateUpdate |= state.checkUpdate();
         return stateUpdate;
     }
 
@@ -187,7 +195,8 @@ class AlarmState {
         }
     }
 
-    private TbAlarmResult calculateAlarmResult(TbContext ctx, AlarmSeverity severity) {
+    private TbAlarmResult calculateAlarmResult(TbContext ctx, AlarmRuleState ruleState) {
+        AlarmSeverity severity = ruleState.getSeverity();
         if (currentAlarm != null) {
             // TODO: In some extremely rare cases, we might miss the event of alarm clear (If one use in-mem queue and restarted the server) or (if one manipulated the rule chain).
             // Maybe we should fetch alarm every time?
@@ -195,6 +204,7 @@ class AlarmState {
             AlarmSeverity oldSeverity = currentAlarm.getSeverity();
             // Skip update if severity is decreased.
             if (severity.ordinal() <= oldSeverity.ordinal()) {
+                currentAlarm.setDetails(createDetails(ruleState));
                 if (!oldSeverity.equals(severity)) {
                     currentAlarm.setSeverity(severity);
                     currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
@@ -213,7 +223,7 @@ class AlarmState {
             currentAlarm.setSeverity(severity);
             currentAlarm.setStartTs(System.currentTimeMillis());
             currentAlarm.setEndTs(currentAlarm.getStartTs());
-            currentAlarm.setDetails(JacksonUtil.OBJECT_MAPPER.createObjectNode());
+            currentAlarm.setDetails(createDetails(ruleState));
             currentAlarm.setOriginator(originator);
             currentAlarm.setTenantId(ctx.getTenantId());
             currentAlarm.setPropagate(alarmDefinition.isPropagate());
@@ -226,13 +236,55 @@ class AlarmState {
         }
     }
 
+    private JsonNode createDetails(AlarmRuleState ruleState) {
+        JsonNode alarmDetails;
+        String alarmDetailsStr = ruleState.getAlarmRule().getAlarmDetails();
+
+        if (StringUtils.isNotEmpty(alarmDetailsStr)) {
+            for (KeyFilter keyFilter : ruleState.getAlarmRule().getCondition().getCondition()) {
+                EntityKeyValue entityKeyValue = dataSnapshot.getValue(keyFilter.getKey());
+                alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey().getKey()), getValueAsString(entityKeyValue));
+            }
+            ObjectNode newDetails = JacksonUtil.newObjectNode();
+            newDetails.put("data", alarmDetailsStr);
+            alarmDetails = newDetails;
+        } else if (currentAlarm != null) {
+            alarmDetails = currentAlarm.getDetails();
+        } else {
+            alarmDetails = JacksonUtil.newObjectNode();
+        }
+
+        return alarmDetails;
+    }
+
+    private static String getValueAsString(EntityKeyValue entityKeyValue) {
+        Object result = null;
+        switch (entityKeyValue.getDataType()) {
+            case STRING:
+                result = entityKeyValue.getStrValue();
+                break;
+            case JSON:
+                result = entityKeyValue.getJsonValue();
+                break;
+            case LONG:
+                result = entityKeyValue.getLngValue();
+                break;
+            case DOUBLE:
+                result = entityKeyValue.getDblValue();
+                break;
+            case BOOLEAN:
+                result = entityKeyValue.getBoolValue();
+                break;
+        }
+        return String.valueOf(result);
+    }
+
     public boolean processAlarmClear(TbContext ctx, Alarm alarmNf) {
         boolean updated = false;
         if (currentAlarm != null && currentAlarm.getId().equals(alarmNf.getId())) {
             currentAlarm = null;
             for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
-                state.clear();
-                updated |= state.checkUpdate();
+                updated = clearAlarmState(updated, state);
             }
         }
         return updated;
