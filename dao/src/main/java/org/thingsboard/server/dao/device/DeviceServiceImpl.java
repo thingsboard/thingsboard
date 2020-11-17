@@ -179,7 +179,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
     private Device doSaveDevice(Device device, String accessToken) {
         log.trace("Executing saveDevice [{}]", device);
-        device.setName(device.getName().trim().replaceAll(" +", " "));
+        if (device.getName() != null) {
+            device.setName(device.getName().trim().replaceAll(" +", " "));
+        }
         deviceValidator.validate(device, Device::getTenantId);
         Device savedDevice;
         try {
