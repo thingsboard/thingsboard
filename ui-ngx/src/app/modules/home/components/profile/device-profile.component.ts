@@ -38,7 +38,7 @@ import {
 } from '@shared/models/device.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
-import {ServiceType} from "@shared/models/queue.models";
+import { ServiceType } from '@shared/models/queue.models';
 
 @Component({
   selector: 'tb-device-profile',
@@ -176,10 +176,10 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
       transportConfiguration: entity.profileData?.transportConfiguration,
       alarms: entity.profileData?.alarms,
       provisionConfiguration: deviceProvisionConfiguration
-    }});
-    this.entityForm.patchValue({defaultRuleChainId: entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null});
-    this.entityForm.patchValue({defaultQueueName: entity.defaultQueueName});
-    this.entityForm.patchValue({description: entity.description});
+    }}, {emitEvent: false});
+    this.entityForm.patchValue({defaultRuleChainId: entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null}, {emitEvent: false});
+    this.entityForm.patchValue({defaultQueueName: entity.defaultQueueName}, {emitEvent: false});
+    this.entityForm.patchValue({description: entity.description}, {emitEvent: false});
   }
 
   prepareFormValue(formValue: any): any {

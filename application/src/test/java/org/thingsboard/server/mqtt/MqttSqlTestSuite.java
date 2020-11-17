@@ -26,13 +26,13 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({
-//        "org.thingsboard.server.mqtt.rpc.sql.*Test",
-//        "org.thingsboard.server.mqtt.telemetry.timeseries.sql.*Test",
-//        "org.thingsboard.server.mqtt.telemetry.attributes.sql.*Test",
-//        "org.thingsboard.server.mqtt.attributes.updates.sql.*Test",
+        "org.thingsboard.server.mqtt.rpc.sql.*Test",
+        "org.thingsboard.server.mqtt.telemetry.timeseries.sql.*Test",
+        "org.thingsboard.server.mqtt.telemetry.attributes.sql.*Test",
+        "org.thingsboard.server.mqtt.attributes.updates.sql.*Test",
         "org.thingsboard.server.mqtt.attributes.request.sql.*Test",
-//        "org.thingsboard.server.mqtt.claim.sql.*Test",
-//        "org.thingsboard.server.mqtt.provision.sql.*Test"
+        "org.thingsboard.server.mqtt.claim.sql.*Test",
+        "org.thingsboard.server.mqtt.provision.sql.*Test"
 })
 public class MqttSqlTestSuite {
 

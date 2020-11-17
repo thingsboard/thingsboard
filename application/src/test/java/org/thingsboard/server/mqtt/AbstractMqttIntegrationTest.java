@@ -62,19 +62,28 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
 
     private static final AtomicInteger atomicInteger = new AtomicInteger(2);
 
-    protected static final String DEVICE_TELEMETRY_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
+    public static final String DEVICE_TELEMETRY_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
             "\n" +
             "package test;\n" +
-            "        \n" +
+            "\n" +
             "message PostTelemetry {\n" +
             "  string key1 = 1;\n" +
             "  bool key2 = 2;\n" +
             "  double key3 = 3;\n" +
             "  int32 key4 = 4;\n" +
-            "  string key5 = 5;\n" +
+            "  JsonObject key5 = 5;\n" +
+            "\n" +
+            "  message JsonObject {\n" +
+            "    int32 someNumber = 6;\n" +
+            "    repeated int32 someArray = 7;\n" +
+            "    NestedJsonObject someNestedObject = 8;\n" +
+            "    message NestedJsonObject {\n" +
+            "       string key = 9;\n" +
+            "    }\n" +
+            "  }\n" +
             "}";
 
-    protected static final String DEVICE_ATTRIBUTES_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
+    public static final String DEVICE_ATTRIBUTES_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
             "\n" +
             "package test;\n" +
             "\n" +
@@ -83,7 +92,16 @@ public abstract class AbstractMqttIntegrationTest extends AbstractControllerTest
             "  bool key2 = 2;\n" +
             "  double key3 = 3;\n" +
             "  int32 key4 = 4;\n" +
-            "  string key5 = 5;\n" +
+            "  JsonObject key5 = 5;\n" +
+            "\n" +
+            "  message JsonObject {\n" +
+            "    int32 someNumber = 6;\n" +
+            "    repeated int32 someArray = 7;\n" +
+            "    NestedJsonObject someNestedObject = 8;\n" +
+            "    message NestedJsonObject {\n" +
+            "       string key = 9;\n" +
+            "    }\n" +
+            "  }\n" +
             "}";
 
     protected Tenant savedTenant;

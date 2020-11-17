@@ -128,19 +128,8 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
             List<MessageDefinition> messageDefinitions = new ArrayList<>();
             messageElementsList.forEach(messageElement -> {
                 MessageDefinition.Builder messageDefinitionBuilder = MessageDefinition.newBuilder(messageElement.getName());
-                List<FieldElement> messageElementFields = messageElement.getFields();
-                List<OneOfElement> oneOfs = messageElement.getOneOfs();
 
                 List<TypeElement> nestedTypes = messageElement.getNestedTypes();
-                if (!messageElementFields.isEmpty()) {
-                    addMessageFieldsToTheMessageDefinition(messageElementFields, messageDefinitionBuilder);
-                }
-                if (!oneOfs.isEmpty()) {
-                    for (OneOfElement oneOfelement : oneOfs) {
-                        MessageDefinition.OneofBuilder oneofBuilder = messageDefinitionBuilder.addOneof(oneOfelement.getName());
-                        addMessageFieldsToTheOneOfDefinition(oneOfelement.getFields(), oneofBuilder);
-                    }
-                }
                 if (!nestedTypes.isEmpty()) {
                     List<EnumElement> nestedEnumTypes = getEnumElements(nestedTypes);
                     if (!nestedEnumTypes.isEmpty()) {
@@ -152,6 +141,17 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
                     List<MessageElement> nestedMessageTypes = getMessageTypes(nestedTypes);
                     List<MessageDefinition> nestedMessageDefinitions = getMessageDefinitions(nestedMessageTypes);
                     nestedMessageDefinitions.forEach(messageDefinitionBuilder::addMessageDefinition);
+                }
+                List<FieldElement> messageElementFields = messageElement.getFields();
+                List<OneOfElement> oneOfs = messageElement.getOneOfs();
+                if (!oneOfs.isEmpty()) {
+                    for (OneOfElement oneOfelement : oneOfs) {
+                        MessageDefinition.OneofBuilder oneofBuilder = messageDefinitionBuilder.addOneof(oneOfelement.getName());
+                        addMessageFieldsToTheOneOfDefinition(oneOfelement.getFields(), oneofBuilder);
+                    }
+                }
+                if (!messageElementFields.isEmpty()) {
+                    addMessageFieldsToTheMessageDefinition(messageElementFields, messageDefinitionBuilder);
                 }
                 messageDefinitions.add(messageDefinitionBuilder.build());
             });

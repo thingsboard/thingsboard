@@ -33,6 +33,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
@@ -42,6 +43,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
@@ -60,8 +62,10 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Set;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_PROFILE_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -136,7 +140,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_profile_name_unq_key")) {
                 throw new DataValidationException("Device profile with such name already exists!");
             } else if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_provision_key_unq_key")) {
-                    throw new DataValidationException("Device profile with such provision device key already exists!");
+                throw new DataValidationException("Device profile with such provision device key already exists!");
             } else {
                 throw t;
             }
@@ -347,6 +351,22 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             }
                         }
                     }
+
+                    List<DeviceProfileAlarm> profileAlarms = deviceProfile.getProfileData().getAlarms();
+
+                    if (!CollectionUtils.isEmpty(profileAlarms)) {
+                        Set<String> alarmTypes = new HashSet<>();
+                        for (DeviceProfileAlarm alarm : profileAlarms) {
+                            String alarmType = alarm.getAlarmType();
+                            if (StringUtils.isEmpty(alarmType)) {
+                                throw new DataValidationException("Alarm rule type should be specified!");
+                            }
+                            if (!alarmTypes.add(alarmType)) {
+                                throw new DataValidationException(String.format("Can't create device profile with the same alarm rule types: \"%s\"!", alarmType));
+                            }
+                        }
+                    }
+
                 }
 
                 @Override
@@ -393,6 +413,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                                 " for " + schemaName + " provided! Only " + Syntax.PROTO_3 + " allowed!");
                     }
                 }
+
                 private void checkProtoFileCommonSettings(String schemaName, boolean isEmptySettings, String invalidSettingsMessage) {
                     if (!isEmptySettings) {
                         throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + invalidSettingsMessage);
