@@ -17,21 +17,21 @@ package org.thingsboard.server.service.apiusage;
 
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.ApiUsageStateMailMessage;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
@@ -54,14 +55,11 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
-import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.InternalTelemetryService;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +92,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
     private final ApiUsageStateService apiUsageStateService;
     private final SchedulerComponent scheduler;
     private final TbTenantProfileCache tenantProfileCache;
+    private final MailService mailService;
 
     @Lazy
     @Autowired
@@ -118,7 +117,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                                          TimeseriesService tsService,
                                          ApiUsageStateService apiUsageStateService,
                                          SchedulerComponent scheduler,
-                                         TbTenantProfileCache tenantProfileCache) {
+                                         TbTenantProfileCache tenantProfileCache, MailService mailService) {
         this.clusterService = clusterService;
         this.partitionService = partitionService;
         this.tenantService = tenantService;
@@ -126,6 +125,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         this.apiUsageStateService = apiUsageStateService;
         this.scheduler = scheduler;
         this.tenantProfileCache = tenantProfileCache;
+        this.mailService = mailService;
     }
 
     @PostConstruct
@@ -286,7 +286,26 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         List<TsKvEntry> stateTelemetry = new ArrayList<>();
         result.forEach(((apiFeature, aState) -> stateTelemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(apiFeature.getApiStateKey(), aState.name())))));
         tsWsService.saveAndNotifyInternal(state.getTenantId(), state.getApiUsageState().getId(), stateTelemetry, VOID_CALLBACK);
-        //TODO: notify tenant admin via email!
+
+        String email = tenantService.findTenantById(state.getTenantId()).getEmail();
+
+        if (StringUtils.isNotEmpty(email)) {
+            result.forEach((apiFeature, stateValue) -> {
+                ApiUsageRecordKey[] keys = ApiUsageRecordKey.getKeys(apiFeature);
+                ApiUsageStateMailMessage[] msgs = new ApiUsageStateMailMessage[keys.length];
+                for (int i = 0; i < keys.length; i++) {
+                    ApiUsageRecordKey key = keys[i];
+                    msgs[i] = new ApiUsageStateMailMessage(key, state.getProfileThreshold(key), state.get(key));
+                }
+                try {
+                    mailService.sendApiFeatureStateEmail(apiFeature, stateValue, email, msgs);
+                } catch (ThingsboardException e) {
+                    log.warn("[{}] Can't send update of the API state to tenant with provided email [{}]", state.getTenantId(), email, e);
+                }
+            });
+        } else {
+            log.warn("[{}] Can't send update of the API state to tenant with empty email!", state.getTenantId());
+        }
     }
 
     private void checkStartOfNextCycle() {
