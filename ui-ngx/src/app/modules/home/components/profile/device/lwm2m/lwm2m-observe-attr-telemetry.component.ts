@@ -15,7 +15,7 @@
 ///
 
 
-import { Component, EventEmitter, forwardRef, Inject, Input, OnInit, Output } from "@angular/core";
+import { Component, forwardRef, Input, OnInit, Output } from "@angular/core";
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -59,16 +59,14 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   observe = OBSERVE as string;
   attribute = ATTR as string;
   telemetry = TELEMETRY as string;
-  keyName = KEY_NAME as string;
-  indeterminateObserve: boolean[][];
-  indeterminateAttr: boolean[][];
-  indeterminateTelemetry: boolean[][];
-  indeterminate: {};
   private requiredValue: boolean;
 
   get required(): boolean {
     return this.requiredValue;
   }
+
+  @Input()
+  disabled: boolean;
 
   @Input()
   set required(value: boolean) {
@@ -79,16 +77,13 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     }
   }
 
-  @Input()
-  disabled: boolean;
-
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
     this.observeAttrTelemetryFormGroup = this.fb.group({
       clientLwM2M: this.fb.array([], this.required ? [Validators.required] : [])
     });
     this.observeAttrTelemetryFormGroup.valueChanges.subscribe(value => {
-      if (isUndefined(this.disabled)  || !this.disabled) {
+      if (isUndefined(this.disabled) || !this.disabled) {
         this.propagateChangeState(value);
       }
     });
@@ -115,13 +110,11 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         this.valuePrev = value;
         if (this.observeAttrTelemetryFormGroup.valid) {
           this.propagateChange(value);
-
         } else {
           this.propagateChange(null);
         }
       }
     }
-
   }
 
   registerOnTouched(fn: any): void {
@@ -152,31 +145,18 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   }
 
   createObjectsLwM2M(objectsLwM2MJson: ObjectLwM2M []): FormArray {
-    this.indeterminateObserve = [];
-    this.indeterminateAttr = [];
-    this.indeterminateTelemetry = [];
-    this.indeterminate = {
-      [this.observe]: this.indeterminateObserve,
-      [this.attribute]: this.indeterminateAttr,
-      [this.telemetry]: this.indeterminateTelemetry
-    }
-    return this.fb.array(objectsLwM2MJson.map((objectLwM2M, index) => {
-      this.indeterminateObserve[index] = [];
-      this.indeterminateAttr[index] = [];
-      this.indeterminateTelemetry[index] = [];
+    return this.fb.array(objectsLwM2MJson.map((objectLwM2M) => {
       return this.fb.group({
         id: objectLwM2M.id,
         name: objectLwM2M.name,
-        instances: this.createInstanceLwM2M(objectLwM2M.instances, index)
+        instances: (objectLwM2M.instances.length) ? this.createInstanceLwM2M(this.sortInstancesInObject(objectLwM2M.instances))
+                                                  : this.createInstanceLwM2M(objectLwM2M.instances)
       })
     }))
   }
 
-  createInstanceLwM2M(instanceLwM2MJson: Instance [], parentIndex?: number): FormArray {
+  createInstanceLwM2M(instanceLwM2MJson: Instance []): FormArray {
     return this.fb.array(instanceLwM2MJson.map((instanceLwM2M, index) => {
-      this.indeterminateObserve[parentIndex][index] = false;
-      this.indeterminateAttr[parentIndex][index] = false;
-      this.indeterminateTelemetry[parentIndex][index] = true;
       return this.fb.group({
         id: instanceLwM2M.id,
         [this.observe]: {value: false, disabled: this.disabled},
@@ -185,6 +165,14 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         resources: {value: instanceLwM2M.resources, disabled: this.disabled}
       })
     }))
+  }
+
+  sortInstancesInObject(instances: Instance[]): Instance[] {
+    return instances.sort((a, b) => {
+      let aLC: number = a.id;
+      let bLC: number = b.id;
+      return aLC < bLC ? -1 : (aLC > bLC ? 1 : 0);
+    });
   }
 
   clientLwM2MFormArray(formGroup: FormGroup): FormArray {

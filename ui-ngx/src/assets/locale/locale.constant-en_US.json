@@ -1011,6 +1011,7 @@
             "is-telemetry-tip": "Is Telemetry",
             "key-name-tip": "Key Name",
             "key-name": "Key Name",
+            "key-name_label": "Key Name in Camel format",
             "required": " value is required.",
             "mode": "Security config mode",
             "pattern_hex_dec_64": "must be hex decimal format and 64 characters",

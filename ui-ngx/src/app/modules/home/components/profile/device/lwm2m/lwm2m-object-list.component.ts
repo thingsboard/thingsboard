@@ -21,7 +21,6 @@ import {
   OnInit,
   ViewChild,
   ElementRef,
-  SimpleChanges,
   Output,
   EventEmitter
 } from "@angular/core";
@@ -76,9 +75,6 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     }
   }
 
-  @Input()
-  disabled: boolean;
-
   @Output()
   addList = new EventEmitter<any>();
 
@@ -90,7 +86,6 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   @ViewChild('chipList', {static: true}) chipList: MatChipList;
 
   searchText = '';
-
   private dirty = false;
 
   private propagateChange = (v: any) => {
@@ -135,20 +130,10 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
       );
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    for (const propName of Object.keys(changes)) {
-      const change = changes[propName];
-      if (!change.firstChange && change.currentValue !== change.previousValue) {
-
-      }
-    }
-  }
-
   ngAfterViewInit(): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
     if (isDisabled) {
       this.lwm2mObjectListFormGroup.disable({emitEvent: false});
     } else {

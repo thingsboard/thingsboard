@@ -68,11 +68,14 @@
           </mat-checkbox>
         </div>
         <mat-form-field fxFlex="25">
+          <mat-label  *ngIf="resourceLwM2M.get('keyName').hasError('required')">
+            {{ 'device-profile.lwm2m.key-name_label' | translate }}</mat-label>
           <input matInput type="text" formControlName="keyName" required
                  matTooltip="{{'device-profile.lwm2m.key-name-tip' | translate}}"
                  (input)="updateValueKeyName($event, z)"
                  matTooltipPosition="above">
           <mat-error *ngIf="resourceLwM2M.get('keyName').hasError('required')">
+
             {{ 'device-profile.lwm2m.key-name' | translate }}
             <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
           </mat-error>

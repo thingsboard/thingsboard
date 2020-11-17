@@ -129,6 +129,7 @@
         <div class="mat-padding">
           <tb-json-object-edit
             [required]="required"
+            [sort] = "sortFunction"
             label="{{ 'device-profile.transport-type-lwm2m' | translate }}"
             formControlName="configurationJson">
           </tb-json-object-edit>

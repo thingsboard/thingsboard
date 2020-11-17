@@ -47,10 +47,7 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
 
   resourceFormGroup : FormGroup;
 
-  @Input() i: number;
-  @Input() y: number;
-  @Input() objId: number;
-  @Input() disabled: boolean;
+  disabled = false as boolean;
   private requiredValue: boolean;
 
   get required(): boolean {
@@ -68,7 +65,7 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
               private fb: FormBuilder) {
     this.resourceFormGroup = this.fb.group({'resources': this.fb.array([])});
     this.resourceFormGroup.valueChanges.subscribe(value => {
-      if (isUndefined(this.disabled)  || !this.disabled) {
+      if (!this.disabled) {
         this.propagateChangeState(value.resources);
       }
     });

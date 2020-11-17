@@ -46,10 +46,31 @@ public class LwM2MTransportConfigServer {
 
 
     @Getter
-    private String MODEL_PATH_DEFAULT = "/models";
+    private String MODEL_PATH_DEFAULT = "models";
 
     @Getter
-    private String KEY_STORE_DEFAULT_RESOURCE_PATH = "/credentials/serverKeyStore.jks";
+    private String KEY_STORE_DEFAULT_RESOURCE_PATH = "credentials";
+
+    @Getter
+    private String KEY_STORE_DEFAULT_FILE = "serverKeyStore.jks";
+
+    @Getter
+    private String APP_DIR = "common";
+
+    @Getter
+    private String TRANSPORT_DIR = "transport";
+
+    @Getter
+    private String LWM2M_DIR = "lwm2m";
+
+    @Getter
+    private String SRC_DIR = "src";
+
+    @Getter
+    private String MAIN_DIR = "main";
+
+    @Getter
+    private String RESOURCES_DIR = "resources";
 
     @Getter
     private String BASE_DIR_PATH = System.getProperty("user.dir");
@@ -158,20 +179,21 @@ public class LwM2MTransportConfigServer {
             try {
                 modelsValue.addAll(ObjectLoader.loadObjectsFromDir(path));
                 log.info(" [{}] Models directory is a directory", path.getAbsoluteFile());
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 log.error(" [{}] Could not parse the resource definition file", e.toString());
             }
-        }
-        else {
-            log.error("[{}] Models folder is not a directory", path.getAbsoluteFile());
+        } else {
+            log.error(" [{}] Read Models", path.getAbsoluteFile());
         }
         getInKeyStore();
     }
 
     private File getPathModels() {
-        return (modelPathFile != null && !modelPathFile.isEmpty()) ? new File(modelPathFile) :
-                new File(getBaseDirPath() + PATH_DATA + MODEL_PATH_DEFAULT);
+        Path pathModels = (modelPathFile != null && !modelPathFile.isEmpty()) ? Paths.get(modelPathFile) :
+                (new File(Paths.get(getBaseDirPath(), PATH_DATA, MODEL_PATH_DEFAULT).toUri()).isDirectory()) ?
+                        Paths.get(getBaseDirPath(), PATH_DATA, MODEL_PATH_DEFAULT) :
+                        Paths.get(getBaseDirPath(), APP_DIR, TRANSPORT_DIR, LWM2M_DIR, SRC_DIR, MAIN_DIR, RESOURCES_DIR, MODEL_PATH_DEFAULT);
+        return (pathModels != null) ? new File(pathModels.toUri()) : null;
     }
 
     private KeyStore getInKeyStore() {
@@ -181,20 +203,22 @@ public class LwM2MTransportConfigServer {
         } catch (KeyStoreException e) {
             log.error("Uninitialized keystore [{}]", keyStoreValue.toString());
         }
-        keyStorePathFile = (keyStorePathFile != null && !keyStorePathFile.isEmpty()) ? keyStorePathFile : getBaseDirPath() + PATH_DATA + KEY_STORE_DEFAULT_RESOURCE_PATH;
-        File keyStoreFile = new File(keyStorePathFile);
+        Path keyStorePath = (keyStorePathFile != null && !keyStorePathFile.isEmpty()) ? Paths.get(keyStorePathFile) :
+                (new File(Paths.get(getBaseDirPath(), PATH_DATA, KEY_STORE_DEFAULT_RESOURCE_PATH, KEY_STORE_DEFAULT_FILE).toUri()).isFile()) ?
+                        Paths.get(getBaseDirPath(), PATH_DATA, KEY_STORE_DEFAULT_RESOURCE_PATH, KEY_STORE_DEFAULT_FILE) :
+                        Paths.get(getBaseDirPath(), APP_DIR, TRANSPORT_DIR, LWM2M_DIR, SRC_DIR, MAIN_DIR, RESOURCES_DIR, KEY_STORE_DEFAULT_RESOURCE_PATH, KEY_STORE_DEFAULT_FILE);
+        File keyStoreFile = new File(keyStorePath.toUri());
         if (keyStoreFile.isFile()) {
             try {
                 InputStream inKeyStore = new FileInputStream(keyStoreFile);
                 keyStoreValue = KeyStore.getInstance(keyStoreType);
                 keyStoreValue.load(inKeyStore, keyStorePasswordServer == null ? null : keyStorePasswordServer.toCharArray());
-            } catch (CertificateException  | NoSuchAlgorithmException | IOException | KeyStoreException  e) {
+            } catch (CertificateException | NoSuchAlgorithmException | IOException | KeyStoreException e) {
                 log.error("[{}] Unable to load KeyStore  files server, folder is not a directory", e.getMessage());
                 keyStoreValue = null;
             }
             log.info("[{}] Load KeyStore  files server, folder is a directory", keyStoreFile.getAbsoluteFile());
-        }
-        else {
+        } else {
             log.error("[{}] Unable to load KeyStore  files server, is not a file", keyStoreFile.getAbsoluteFile());
             keyStoreValue = null;
         }
