@@ -213,13 +213,7 @@ public class JsonConverter {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
             } else if (element.isJsonObject() || element.isJsonArray()) {
-                result.add(KeyValueProto
-                        .newBuilder()
-                        .setKey(valueEntry
-                                .getKey())
-                        .setType(KeyValueType.JSON_V)
-                        .setJsonV(element.toString())
-                        .build());
+                result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.JSON_V).setJsonV(element.toString()).build());
             } else if (!element.isJsonNull()) {
                 throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
             }
