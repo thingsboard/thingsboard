@@ -269,8 +269,9 @@ message ProvisionDeviceCredentialsMsg {
 }
 
 message ProvisionDeviceResponseMsg {
-  DeviceCredentialsProto deviceCredentials = 1;
-  ProvisionResponseStatus provisionResponseStatus = 2;
+  ProvisionResponseStatus status = 1;
+  CredentialsType credentialsType = 2;
+  string credentialsValue = 3;
 }
 
 enum ProvisionResponseStatus {

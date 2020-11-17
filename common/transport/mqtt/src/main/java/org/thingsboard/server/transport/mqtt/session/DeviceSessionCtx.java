@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
+import com.google.protobuf.Descriptors;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +25,8 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
+import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.util.MqttTopicFilter;
@@ -57,6 +60,8 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     @Getter
     @Setter
     private volatile TransportPayloadType payloadType = TransportPayloadType.JSON;
+    private volatile Descriptors.Descriptor attributesDynamicMessageDescriptor;
+    private volatile Descriptors.Descriptor telemetryDynamicMessageDescriptor;
 
     @Getter
     @Setter
@@ -75,7 +80,9 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
         return msgIdSeq.incrementAndGet();
     }
 
-    public boolean isDeviceTelemetryTopic(String topicName) { return telemetryTopicFilter.filter(topicName); }
+    public boolean isDeviceTelemetryTopic(String topicName) {
+        return telemetryTopicFilter.filter(topicName);
+    }
 
     public boolean isDeviceAttributesTopic(String topicName) {
         return attributesTopicFilter.filter(topicName);
@@ -87,6 +94,14 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     public boolean isJsonPayloadType() {
         return payloadType.equals(TransportPayloadType.JSON);
+    }
+
+    public Descriptors.Descriptor getTelemetryDynamicMsgDescriptor() {
+        return telemetryDynamicMessageDescriptor;
+    }
+
+    public Descriptors.Descriptor getAttributesDynamicMessageDescriptor() {
+        return attributesDynamicMessageDescriptor;
     }
 
     @Override
@@ -107,13 +122,22 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
         if (transportConfiguration.getType().equals(DeviceTransportType.MQTT) &&
                 transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
             MqttDeviceProfileTransportConfiguration mqttConfig = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
-            payloadType = mqttConfig.getTransportPayloadType();
+            TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = mqttConfig.getTransportPayloadTypeConfiguration();
+            payloadType = transportPayloadTypeConfiguration.getTransportPayloadType();
             telemetryTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceTelemetryTopic());
             attributesTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceAttributesTopic());
+            if (TransportPayloadType.PROTOBUF.equals(payloadType)) {
+                updateDynamicMessageDescriptors(transportPayloadTypeConfiguration);
+            }
         } else {
             telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
             attributesTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
         }
     }
 
+    private void updateDynamicMessageDescriptors(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration) {
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfig = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+        telemetryDynamicMessageDescriptor = protoTransportPayloadConfig.getTelemetryDynamicMessageDescriptor(protoTransportPayloadConfig.getDeviceTelemetryProtoSchema());
+        attributesDynamicMessageDescriptor = protoTransportPayloadConfig.getAttributesDynamicMessageDescriptor(protoTransportPayloadConfig.getDeviceAttributesProtoSchema());
+    }
 }
