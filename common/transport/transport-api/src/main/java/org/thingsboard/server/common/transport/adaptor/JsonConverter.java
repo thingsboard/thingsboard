@@ -418,9 +418,14 @@ public class JsonConverter {
             if (toGateway) {
                 result.addProperty("id", requestId);
             }
+            switch (payload.getCredentialsType()) {
+                case ACCESS_TOKEN:
+                case X509_CERTIFICATE:
+                    result.addProperty("credentialsValue", payload.getCredentialsValue());
+                case MQTT_BASIC:
+                    result.add("credentialsValue", JSON_PARSER.parse(payload.getCredentialsValue()).getAsJsonObject());
+            }
             result.addProperty("credentialsType", payload.getCredentialsType().name());
-            result.addProperty("credentialsValue",
-                    StringUtils.isEmpty(payload.getCredentialsValue()) ? null : payload.getCredentialsValue());
             result.addProperty("status", ProvisionResponseStatus.SUCCESS.name());
         }
         return result;
