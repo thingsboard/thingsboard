@@ -88,7 +88,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     this.displayTransportConfiguration = entity && entity.transportType &&
       deviceTransportTypeConfigurationInfoMap.get(entity.transportType).hasProfileConfiguration;
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = {
-      type: entity?.provisionType ? entity?.provisionType : DeviceProvisionType.DISABLED,
+      type: entity?.provisionType ? entity.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,
       provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret
     };
@@ -162,7 +162,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     this.displayTransportConfiguration = entity.transportType &&
       deviceTransportTypeConfigurationInfoMap.get(entity.transportType).hasProfileConfiguration;
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = {
-      type: entity?.provisionType ? entity?.provisionType : DeviceProvisionType.DISABLED,
+      type: entity?.provisionType ? entity.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,
       provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret
     };
