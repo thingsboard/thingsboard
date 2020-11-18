@@ -36,6 +36,7 @@ export enum DeviceTransportType {
   DEFAULT = 'DEFAULT',
   MQTT = 'MQTT',
   // LWM2M = 'LWM2M'
+  SNMP = 'SNMP'
 }
 
 export enum MqttTransportPayloadType {
@@ -77,6 +78,7 @@ export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, st
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt'],
     // [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
+    [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp'],
   ]
 );
 
@@ -94,6 +96,7 @@ export const deviceTransportTypeHintMap = new Map<DeviceTransportType, string>(
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default-hint'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt-hint'],
     // [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint']
+    [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp-hint'],
   ]
 );
 
@@ -128,6 +131,13 @@ export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportTy
         hasDeviceConfiguration: false,
       }
     ]*/
+    [
+      DeviceTransportType.SNMP,
+      {
+        hasProfileConfiguration: true,
+        hasDeviceConfiguration: true
+      }
+    ]
   ]
 );
 
@@ -155,9 +165,14 @@ export interface Lwm2mDeviceProfileTransportConfiguration {
   [key: string]: any;
 }
 
+export interface SnmpDeviceProfileTransportConfiguration {
+  [key: string]: any;
+}
+
 export type DeviceProfileTransportConfigurations = DefaultDeviceProfileTransportConfiguration &
                                                    MqttDeviceProfileTransportConfiguration &
-                                                   Lwm2mDeviceProfileTransportConfiguration;
+                                                   Lwm2mDeviceProfileTransportConfiguration &
+                                                   SnmpDeviceProfileTransportConfiguration;
 
 export interface DeviceProfileTransportConfiguration extends DeviceProfileTransportConfigurations {
   type: DeviceTransportType;
@@ -215,6 +230,10 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         const lwm2mTransportConfiguration: Lwm2mDeviceProfileTransportConfiguration = {};
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;*/
+      case DeviceTransportType.SNMP:
+        const snmpTransportConfiguration: SnmpDeviceProfileTransportConfiguration = {};
+        transportConfiguration = {...snmpTransportConfiguration, type: DeviceTransportType.SNMP};
+        break;
     }
   }
   return transportConfiguration;

@@ -97,6 +97,7 @@ import { DeviceProfileDialogComponent } from './profile/device-profile-dialog.co
 import { DeviceProfileAutocompleteComponent } from './profile/device-profile-autocomplete.component';
 import { MqttDeviceProfileTransportConfigurationComponent } from './profile/device/mqtt-device-profile-transport-configuration.component';
 import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/device/lwm2m-device-profile-transport-configuration.component';
+import { SnmpDeviceProfileTransportConfigurationComponent } from './profile/device/snmp-device-profile-transport-configuration.component';
 import { DeviceProfileAlarmsComponent } from './profile/alarm/device-profile-alarms.component';
 import { DeviceProfileAlarmComponent } from './profile/alarm/device-profile-alarm.component';
 import { CreateAlarmRulesComponent } from './profile/alarm/create-alarm-rules.component';
@@ -195,6 +196,7 @@ import { TenantProfileConfigurationComponent } from './profile/tenant/tenant-pro
       DefaultDeviceProfileTransportConfigurationComponent,
       MqttDeviceProfileTransportConfigurationComponent,
       Lwm2mDeviceProfileTransportConfigurationComponent,
+      SnmpDeviceProfileTransportConfigurationComponent,
       DeviceProfileTransportConfigurationComponent,
       CreateAlarmRulesComponent,
       AlarmRuleComponent,
@@ -280,6 +282,7 @@ import { TenantProfileConfigurationComponent } from './profile/tenant/tenant-pro
     DefaultDeviceProfileTransportConfigurationComponent,
     MqttDeviceProfileTransportConfigurationComponent,
     Lwm2mDeviceProfileTransportConfigurationComponent,
+    SnmpDeviceProfileTransportConfigurationComponent,
     DeviceProfileTransportConfigurationComponent,
     CreateAlarmRulesComponent,
     AlarmRuleComponent,
