@@ -27,4 +27,5 @@ import org.springframework.context.annotation.Configuration;
 public class AttributesCacheConfiguration {
     private int maxSizePerTenant;
     private int expireAfterAccessInMinutes;
+    private boolean recordStats;
 }
