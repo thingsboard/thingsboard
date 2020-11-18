@@ -297,15 +297,9 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
 
         if (StringUtils.isNotEmpty(email)) {
             result.forEach((apiFeature, stateValue) -> {
-                ApiUsageRecordKey[] keys = ApiUsageRecordKey.getKeys(apiFeature);
-                ApiUsageStateMailMessage[] msgs = new ApiUsageStateMailMessage[keys.length];
-                for (int i = 0; i < keys.length; i++) {
-                    ApiUsageRecordKey key = keys[i];
-                    msgs[i] = new ApiUsageStateMailMessage(key, state.getProfileThreshold(key), state.get(key));
-                }
                 mailExecutor.submit(() -> {
                     try {
-                        mailService.sendApiFeatureStateEmail(apiFeature, stateValue, email, msgs[0]);
+                        mailService.sendApiFeatureStateEmail(apiFeature, stateValue, email, createStateMailMessage(state, apiFeature, stateValue));
                     } catch (ThingsboardException e) {
                         log.warn("[{}] Can't send update of the API state to tenant with provided email [{}]", state.getTenantId(), email, e);
                     }
@@ -314,6 +308,33 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
         } else {
             log.warn("[{}] Can't send update of the API state to tenant with empty email!", state.getTenantId());
         }
+    }
+
+    private ApiUsageStateMailMessage createStateMailMessage(TenantApiUsageState state, ApiFeature apiFeature, ApiUsageStateValue stateValue) {
+        StateChecker checker = getStateChecker(stateValue);
+        for (ApiUsageRecordKey apiUsageRecordKey : ApiUsageRecordKey.getKeys(apiFeature)) {
+            long threshold = state.getProfileThreshold(apiUsageRecordKey);
+            long warnThreshold = state.getProfileWarnThreshold(apiUsageRecordKey);
+            long value = state.get(apiUsageRecordKey);
+            if (checker.check(threshold, warnThreshold, value)) {
+                return new ApiUsageStateMailMessage(apiUsageRecordKey, threshold, value);
+            }
+        }
+        return null;
+    }
+
+    private StateChecker getStateChecker(ApiUsageStateValue stateValue) {
+        if (ApiUsageStateValue.ENABLED.equals(stateValue)) {
+            return (t, wt, v) -> true;
+        } else if (ApiUsageStateValue.WARNING.equals(stateValue)) {
+            return (t, wt, v) -> v < t && v >= wt;
+        } else {
+            return (t, wt, v) -> v >= t;
+        }
+    }
+
+    private interface StateChecker {
+        boolean check(long threshold, long warnThreshold, long value);
     }
 
     private void checkStartOfNextCycle() {
