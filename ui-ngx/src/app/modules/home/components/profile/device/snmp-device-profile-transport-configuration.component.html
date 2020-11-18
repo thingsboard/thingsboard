@@ -17,36 +17,8 @@
 -->
 
 <form [formGroup]="snmpDeviceProfileTransportConfigurationFormGroup" style="padding-bottom: 16px;">
-  <section formGroupName="configuration">
-
-    <div fxFlex fxLayout="row" style="max-height: 40px;"
-         fxLayoutAlign="start center"
-         *ngFor="let resource of getOidMapping(); let i = index" >
-      <mat-checkbox style="margin-bottom: 0;">
-        {{ resource.isAttribute }}
-      </mat-checkbox>
-      <input matInput placeholder="{{ resource.key }}" type="text">
-      <input matInput placeholder="{{ resource.type }}" type="text">
-      <input matInput placeholder="{{ resource.method }}" type="text">
-      <input matInput placeholder="{{ resource.oid }}" type="text">
-      <button mat-icon-button color="primary"
-              type="button"
-              (click)="removeOidMapping(i)">
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-
-
-    <div *ngIf="!getOidMapping().length">
-      <span translate fxLayoutAlign="center center"
-            class="tb-prompt">device-profile.snmp-mapping-not-configured</span>
-    </div>
-    <div *ngIf="!disabled" fxFlex fxLayout="row" fxLayoutAlign="start center" style="padding-top: 16px;">
-      <button mat-raised-button color="primary"
-              type="button"
-              (click)="addOid()">
-        {{ 'device-profile.snmp-add-mapping' | translate }}
-      </button>
-    </div>
-  </section>
+    <tb-json-object-edit
+      required
+      formControlName="configuration">
+    </tb-json-object-edit>
 </form>

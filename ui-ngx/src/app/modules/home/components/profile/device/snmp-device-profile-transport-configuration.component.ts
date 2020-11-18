@@ -19,7 +19,12 @@ import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validat
 import {Store} from '@ngrx/store';
 import {AppState} from '@app/core/core.state';
 import {coerceBooleanProperty} from '@angular/cdk/coercion';
-import {DeviceProfileTransportConfiguration, DeviceTransportType} from '@shared/models/device.models';
+import {
+  DeviceProfileTransportConfiguration,
+  DeviceTransportType,
+  SnmpDeviceProfileTransportConfiguration
+} from '@shared/models/device.models';
+import {isDefinedAndNotNull} from "@core/utils";
 
 export interface OidMappingConfiguration {
   isAttribute: boolean;
@@ -42,7 +47,7 @@ export interface OidMappingConfiguration {
 export class SnmpDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit {
   snmpDeviceProfileTransportConfigurationFormGroup: FormGroup;
   private requiredValue: boolean;
-  mapping: Array<OidMappingConfiguration> = [];
+  private configuration = [];
 
   get required(): boolean {
     return this.requiredValue;
@@ -57,24 +62,9 @@ export class SnmpDeviceProfileTransportConfigurationComponent implements Control
   disabled: boolean;
 
   private propagateChange = (v: any) => {
-  };
+  }
 
   constructor(private store: Store<AppState>, private fb: FormBuilder) {
-    this.mapping.push(
-      {
-        isAttribute: true,
-        key: 'snmpNodeManagerEmail',
-        type: 'STRING',
-        method: 'get',
-        oid: '.1.3.6.1.2.1.1.4.0',
-      },
-      {
-        isAttribute: false,
-        key: 'snmpNodeSysUpTime',
-        type: 'LONG',
-        method: 'get',
-        oid: '.1.3.6.1.2.1.1.3.0',
-      });
   }
 
   ngOnInit(): void {
@@ -87,15 +77,16 @@ export class SnmpDeviceProfileTransportConfigurationComponent implements Control
   }
 
   registerOnChange(fn: any): void {
+    this.propagateChange = fn;
   }
 
   registerOnTouched(fn: any): void {
   }
 
-  writeValue(obj: any): void {
-  }
-
-  addOid(): void {
+  writeValue(value: SnmpDeviceProfileTransportConfiguration | null): void {
+    if (isDefinedAndNotNull(value)) {
+      this.snmpDeviceProfileTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
+    }
   }
 
   private updateModel() {
@@ -105,13 +96,5 @@ export class SnmpDeviceProfileTransportConfigurationComponent implements Control
       configuration.type = DeviceTransportType.SNMP;
     }
     this.propagateChange(configuration);
-  }
-
-  getOidMapping(): Array<OidMappingConfiguration> {
-    return this.mapping;
-  }
-
-  removeOidMapping(mappingIndex: number): void {
-    this.mapping.splice(mappingIndex, 1);
   }
 }
