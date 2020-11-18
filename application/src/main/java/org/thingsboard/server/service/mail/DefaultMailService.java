@@ -30,6 +30,7 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiFeature;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageStateMailMessage;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -261,17 +262,34 @@ public class DefaultMailService implements MailService {
 
         switch (stateValue) {
             case ENABLED:
+                model.put("apiLabel", toEnabledValueLabel(apiFeature));
                 message = mergeTemplateIntoString("state.enabled.ftl", model);
                 break;
             case WARNING:
+                model.put("apiLimitValueLabel", toDisabledValueLabel(msg.getKey(), msg.getThreshold()));
+                model.put("apiValueLabel", toDisabledValueLabel(apiFeature) + " " + toDisabledValueLabel(msg.getKey(), msg.getValue()));
                 message = mergeTemplateIntoString("state.warning.ftl", model);
                 break;
             case DISABLED:
-                model.put("apiLimitValueLabel", toDisabledValueLabel(apiFeature) + " " + toDisabledValueLabel(msg));
+                model.put("apiLimitValueLabel", toDisabledValueLabel(apiFeature) + " " + toDisabledValueLabel(msg.getKey(), msg.getThreshold()));
                 message = mergeTemplateIntoString("state.disabled.ftl", model);
                 break;
         }
         sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
+    private String toEnabledValueLabel(ApiFeature apiFeature) {
+        switch (apiFeature) {
+            case DB:
+                return "save";
+            case TRANSPORT:
+                return "receive";
+            case JS:
+            case RE:
+                return "invoke";
+            default:
+                throw new RuntimeException("Not implemented!");
+        }
     }
 
     private String toDisabledValueLabel(ApiFeature apiFeature) {
@@ -288,17 +306,17 @@ public class DefaultMailService implements MailService {
         }
     }
 
-    private String toDisabledValueLabel(ApiUsageStateMailMessage msg) {
-        switch (msg.getKey()) {
+    private String toDisabledValueLabel(ApiUsageRecordKey key, long value) {
+        switch (key) {
             case STORAGE_DP_COUNT:
             case TRANSPORT_DP_COUNT:
-                return (msg.getThreshold() / 1000000) + "M data points";
+                return (value / 1000000) + "M data points";
             case TRANSPORT_MSG_COUNT:
-                return (msg.getThreshold() / 1000000) + "M messages";
+                return (value / 1000000) + "M messages";
             case JS_EXEC_COUNT:
-                return (msg.getThreshold() / 1000000) + "M JavaScript functions";
+                return (value / 1000000) + "M JavaScript functions";
             case RE_EXEC_COUNT:
-                return (msg.getThreshold() / 1000000) + "M Rule Engine nodes";
+                return (value / 1000000) + "M Rule Engine nodes";
             default:
                 throw new RuntimeException("Not implemented!");
         }
