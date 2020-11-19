@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +67,7 @@ public class SnmpTransportService {
 
     //TODO: PDU list should be updated on every device profile event
     private Map<DeviceProfileId, List<PDU>> pduPerProfile;
-    private List<DeviceSessionCtx> deviceSessionCtxList;
+    private Map<DeviceId, DeviceSessionCtx> deviceSessions;
 
     @PostConstruct
     public void init() {
@@ -107,11 +108,10 @@ public class SnmpTransportService {
     }
 
     private void initSessionCtxList() {
-
         DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.fromString("c06dff20-2824-11eb-a349-3d1dfabc5680"));
         snmpTransportContext.getDeviceProfileTransportConfig().putAll(Collections.singletonMap(deviceProfileId, SnmpDeviceProfileTransportConfigFactory.getDeviceProfileTransportConfig()));
 
-        deviceSessionCtxList = snmpTransportContext.getDeviceProfileTransportConfig().keySet().stream()
+        deviceSessions = snmpTransportContext.getDeviceProfileTransportConfig().keySet().stream()
                 .map(id -> {
                     DeviceProfile deviceProfile = new DeviceProfile(id);
                     DeviceSessionCtx deviceSessionCtx = new DeviceSessionCtx(UUID.randomUUID(), snmpTransportContext, "A2_TEST_TOKEN");
@@ -123,9 +123,9 @@ public class SnmpTransportService {
                     deviceSessionCtx.createSessionInfo(ctx -> transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), deviceSessionCtx));
                     return deviceSessionCtx;
                 })
-                .collect(Collectors.toList());
+                .collect(Collectors.toConcurrentMap(DeviceSessionCtx::getDeviceId, ctx -> ctx));
 
-        pduPerProfile = new HashMap<>();
+        pduPerProfile = new ConcurrentHashMap<>();
         snmpTransportContext.getDeviceProfileTransportConfig().forEach((id, config) -> pduPerProfile.put(id, getPduList(config)));
 
 
@@ -134,19 +134,18 @@ public class SnmpTransportService {
     }
 
     private void executeSnmp() {
-        deviceSessionCtxList.forEach(deviceSessionCtx ->
-                pduPerProfile.get(deviceSessionCtx.getDeviceProfile().getId())
-                        .forEach(pdu -> {
-                            try {
-                                log.info("[{}] Sending SNMP message...", pdu.getRequestID());
-                                this.snmp.send(pdu,
-                                        deviceSessionCtx.getTarget(),
-                                        deviceSessionCtx.getDeviceProfile().getId(),
-                                        deviceSessionCtx.getSnmpSessionListener());
-                            } catch (IOException e) {
-                                log.error(e.getMessage(), e);
-                            }
-                        }));
+        deviceSessions.forEach((deviceId, deviceSessionCtx) ->
+                pduPerProfile.get(deviceSessionCtx.getDeviceProfile().getId()).forEach(pdu -> {
+                    try {
+                        log.info("[{}] Sending SNMP message...", pdu.getRequestID());
+                        this.snmp.send(pdu,
+                                deviceSessionCtx.getTarget(),
+                                deviceSessionCtx.getDeviceProfile().getId(),
+                                deviceSessionCtx.getSnmpSessionListener());
+                    } catch (IOException e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }));
     }
 
     private List<PDU> getPduList(SnmpDeviceProfileTransportConfiguration deviceProfileConfig) {
