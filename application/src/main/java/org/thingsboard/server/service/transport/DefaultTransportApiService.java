@@ -174,6 +174,8 @@ public class DefaultTransportApiService implements TransportApiService {
                     if (!checkMqttCredentials(mqtt, credentials)) {
                         credentials = null;
                     }
+                } else {
+                    return getEmptyTransportApiResponseFuture();
                 }
             }
             if (credentials == null) {
