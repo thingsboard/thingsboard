@@ -18,11 +18,7 @@ package org.thingsboard.server.mqtt.attributes.updates;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,12 +29,10 @@ import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
 
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j

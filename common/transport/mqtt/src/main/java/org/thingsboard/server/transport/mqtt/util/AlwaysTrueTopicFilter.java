@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.mqtt.telemetry.timeseries.sql;
+package org.thingsboard.server.transport.mqtt.util;
 
-import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.mqtt.telemetry.timeseries.AbstractMqttTimeseriesJsonIntegrationTest;
+import lombok.Data;
 
-/**
- * Created by Valerii Sosliuk on 8/22/2017.
- */
-@DaoSqlTest
-public class MqttTimeseriesSqlJsonIntegrationTest extends AbstractMqttTimeseriesJsonIntegrationTest {
+@Data
+public class AlwaysTrueTopicFilter implements MqttTopicFilter {
+
+    @Override
+    public boolean filter(String topic) {
+        return true;
+    }
 }

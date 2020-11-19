@@ -158,6 +158,9 @@ export interface DefaultDeviceProfileTransportConfiguration {
 export interface MqttDeviceProfileTransportConfiguration {
   deviceTelemetryTopic?: string;
   deviceAttributesTopic?: string;
+  transportPayloadTypeConfiguration?: {
+    transportPayloadType?: MqttTransportPayloadType;
+  };
   [key: string]: any;
 }
 
@@ -222,7 +225,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {
           deviceTelemetryTopic: 'v1/devices/me/telemetry',
           deviceAttributesTopic: 'v1/devices/me/attributes',
-          transportPayloadType: MqttTransportPayloadType.JSON
+          transportPayloadTypeConfiguration: {transportPayloadType: MqttTransportPayloadType.JSON}
         };
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
