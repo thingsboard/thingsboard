@@ -32,9 +32,9 @@ public class DefaultQueryLogComponent implements QueryLogComponent {
 
     @Override
     public void logQuery(QueryContext ctx, String query, long duration) {
-//        if (logSqlQueries && duration > logQueriesThreshold) {
+        if (logSqlQueries && duration > logQueriesThreshold) {
             log.info("QUERY: {} took {}ms", query, duration);
             Arrays.asList(ctx.getParameterNames()).forEach(param -> log.info("QUERY PARAM: {} -> {}", param, ctx.getValue(param)));
-//        }
+        }
     }
 }
