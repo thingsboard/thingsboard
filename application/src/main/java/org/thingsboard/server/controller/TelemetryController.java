@@ -393,6 +393,11 @@ public class TelemetryController extends BaseController {
             if (attributes.isEmpty()) {
                 return getImmediateDeferredResult("No attributes data found in request body!", HttpStatus.BAD_REQUEST);
             }
+            for (AttributeKvEntry attributeKvEntry: attributes) {
+                if (attributeKvEntry.getKey().isEmpty() || attributeKvEntry.getKey().trim().length() == 0) {
+                    return getImmediateDeferredResult("Key cannot be empty or contains only spaces", HttpStatus.BAD_REQUEST);
+                }
+            }
             SecurityUser user = getCurrentUser();
             return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.WRITE_ATTRIBUTES, entityIdSrc, (result, tenantId, entityId) -> {
                 tsSubService.saveAndNotify(tenantId, entityId, scope, attributes, new FutureCallback<Void>() {

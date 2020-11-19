@@ -445,7 +445,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     if (StringUtils.isEmpty(device.getType())) {
                         throw new DataValidationException("Device type should be specified!");
                     }
-                    if (StringUtils.isEmpty(device.getName())) {
+                    if (StringUtils.isEmpty(device.getName()) || device.getName().trim().length() == 0) {
                         throw new DataValidationException("Device name should be specified!");
                     }
                     if (device.getTenantId() == null) {
