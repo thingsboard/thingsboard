@@ -819,7 +819,7 @@
         "make-private-edge-text": "After the confirmation the edge and all its data will be made private and won't be accessible by others.",
         "import": "Import edge",
         "label": "Label",
-        "load-entity-error": "Entity not found. Failed to load info",
+        "load-entity-error": "Failed to load data. Entity not found or has been deleted.",
         "assign-new-edge": "Assign new edge",
         "manage-edge-dashboards": "Manage edge dashboards",
         "unassign-from-edge": "Unassign from edge",
@@ -843,8 +843,8 @@
         "set-root-rule-chain-to-edges": "Set root rule chain for Edge(s)",
         "set-root-rule-chain-to-edges-text": "Set root rule chain for { count, plural, 1 {1 edge} other {# edges} }",
         "status": "Received by edge",
-        "success": "Deployed",
-        "failed": "Pending"
+        "deployed": "Deployed",
+        "pending": "Pending"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",
