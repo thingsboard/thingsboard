@@ -29,7 +29,8 @@ import * as _moment from 'moment-timezone';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 
 export enum DeviceProfileType {
-  DEFAULT = 'DEFAULT'
+  DEFAULT = 'DEFAULT',
+  SNMP = 'SNMP'
 }
 
 export enum DeviceTransportType {
@@ -68,6 +69,13 @@ export const deviceProfileTypeConfigurationInfoMap = new Map<DeviceProfileType, 
       {
         hasProfileConfiguration: false,
         hasDeviceConfiguration: false,
+      }
+    ],
+    [
+      DeviceProfileType.SNMP,
+      {
+        hasProfileConfiguration: true,
+        hasDeviceConfiguration: true,
       }
     ]
   ]
@@ -258,6 +266,10 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
         const lwm2mTransportConfiguration: Lwm2mDeviceTransportConfiguration = {};
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;*/
+      case DeviceTransportType.SNMP:
+        const snmpTransportConfiguration: SnmpDeviceTransportConfiguration = {};
+        transportConfiguration = {...snmpTransportConfiguration, type: DeviceTransportType.SNMP};
+        break;
     }
   }
   return transportConfiguration;
@@ -422,9 +434,14 @@ export interface Lwm2mDeviceTransportConfiguration {
   [key: string]: any;
 }
 
+export interface SnmpDeviceTransportConfiguration {
+  [key: string]: any;
+}
+
 export type DeviceTransportConfigurations = DefaultDeviceTransportConfiguration &
   MqttDeviceTransportConfiguration &
-  Lwm2mDeviceTransportConfiguration;
+  Lwm2mDeviceTransportConfiguration &
+  SnmpDeviceTransportConfiguration;
 
 export interface DeviceTransportConfiguration extends DeviceTransportConfigurations {
   type: DeviceTransportType;
