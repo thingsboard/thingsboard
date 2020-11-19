@@ -24,16 +24,28 @@ import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.smi.GenericAddress;
 import org.snmp4j.smi.OctetString;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.transport.SessionMsgListener;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
 
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 @Slf4j
-public class DeviceSessionCtx extends DeviceAwareSessionContext {
+public class DeviceSessionCtx extends DeviceAwareSessionContext implements SessionMsgListener {
 
     private final AtomicInteger msgIdSeq = new AtomicInteger(0);
 
@@ -48,6 +60,10 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext {
     @Setter
     private Target target;
 
+    @Getter
+    @Setter
+    private volatile TransportProtos.SessionInfoProto sessionInfo;
+
     public DeviceSessionCtx(UUID sessionId, SnmpTransportContext transportContext, String token) {
         super(sessionId);
         snmpSessionListener = new SnmpSessionListener(transportContext, token);
@@ -59,9 +75,34 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext {
     }
 
     @Override
+    public void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse) {
+
+    }
+
+    @Override
+    public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
+
+    }
+
+    @Override
+    public void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification) {
+
+    }
+
+    @Override
+    public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
+
+    }
+
+    @Override
+    public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
+
+    }
+
+    @Override
     public void onProfileUpdate(DeviceProfile deviceProfile) {
         super.onProfileUpdate(deviceProfile);
-        //TODO: Cancel futures, update profile and start new features.
+        //TODO: Cancel futures, update PDUs and start new features.
     }
 
     public void initTarget(SnmpDeviceProfileTransportConfiguration config) {
@@ -71,8 +112,26 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext {
         communityTarget.setCommunity(new OctetString(transportConfiguration.getCommunity()));
         communityTarget.setTimeout(config.getTimeoutMs());
         communityTarget.setRetries(config.getRetries());
-
         this.target = communityTarget;
+    }
+
+    public void createSessionInfo(Consumer<TransportProtos.SessionInfoProto> registerSession) {
+        getSnmpSessionListener().getSnmpTransportContext().getTransportService().process(DeviceTransportType.DEFAULT, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(getSnmpSessionListener().getToken()).build(),
+                new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
+                    @Override
+                    public void onSuccess(ValidateDeviceCredentialsResponse msg) {
+                        if (msg.hasDeviceInfo()) {
+                            sessionInfo = SessionInfoCreator.create(msg, getSnmpSessionListener().getSnmpTransportContext(), UUID.randomUUID());
+                            registerSession.accept(sessionInfo);
+                        } else {
+                            log.warn("Failed to process device auth");
+                        }
+                    }
+                    @Override
+                    public void onError(Throwable e) {
+                        log.warn("Failed to process device auth", e);
+                    }
+                });
     }
 
     //TODO: replace with enum, wtih preliminary discussion of type version in config (string or integer)

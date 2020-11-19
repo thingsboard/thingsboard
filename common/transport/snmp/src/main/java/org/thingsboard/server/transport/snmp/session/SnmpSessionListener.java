@@ -20,6 +20,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
 import org.snmp4j.event.ResponseEvent;
@@ -50,9 +51,11 @@ import java.util.function.Consumer;
 @AllArgsConstructor
 public class SnmpSessionListener implements ResponseListener {
 
+    @Getter
     private SnmpTransportContext snmpTransportContext;
 
     //TODO: temp implementation
+    @Getter
     private final String token;
 
     @Override
@@ -90,7 +93,6 @@ public class SnmpSessionListener implements ResponseListener {
                                         convertToPostAttributes(kvMapping.getKey(), kvMapping.getType(), vb.toValueString()),
                                         TransportServiceCallback.EMPTY);
                                 reportActivity(sessionInfo);
-
                             } catch (Exception e) {
                                 log.error("Failed to process SNMP response: {}", e.getMessage(), e);
                             }
@@ -111,7 +113,7 @@ public class SnmpSessionListener implements ResponseListener {
                         })));
             }
         } else {
-            log.warn("No SNMP response, event: {}", event);
+            log.warn("No SNMP response, requestId: {}", event.getRequest().getRequestID());
         }
     }
 

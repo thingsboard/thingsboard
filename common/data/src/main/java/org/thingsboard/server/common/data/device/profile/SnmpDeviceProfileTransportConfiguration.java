@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
 
@@ -31,13 +32,12 @@ public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTra
     private List<SnmpDeviceProfileKvMapping> attributes;
     private List<SnmpDeviceProfileKvMapping> telemetry;
 
-    private List<SnmpDeviceProfileKvMapping> kvMappings;
-
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.SNMP;
     }
 
+    @JsonIgnore
     public List<SnmpDeviceProfileKvMapping> getKvMappings() {
         return Stream.concat(attributes.stream(), telemetry.stream()).collect(Collectors.toList());
     }

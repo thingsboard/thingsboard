@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileKvMapp
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.transport.snmp.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.snmp.temp.SnmpDeviceProfileTransportConfigFactory;
 import org.thingsboard.server.transport.snmp.temp.SnmpDeviceTransportConfigFactory;
@@ -57,6 +58,9 @@ public class SnmpTransportService {
     @Autowired
     private SnmpTransportContext snmpTransportContext;
 
+    @Autowired
+    TransportService transportService;
+
     private Snmp snmp;
     private ScheduledExecutorService schedulerExecutor;
 
@@ -70,27 +74,9 @@ public class SnmpTransportService {
 
         initializeSnmp();
 
-        DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.fromString("7876dea0-1dbe-11eb-99f0-0719747fb6f9"));
-        snmpTransportContext.getDeviceProfileTransportConfig().putAll(Collections.singletonMap(deviceProfileId, SnmpDeviceProfileTransportConfigFactory.getDeviceProfileTransportConfig()));
-
-        deviceSessionCtxList = snmpTransportContext.getDeviceProfileTransportConfig().keySet().stream()
-                .map(id -> {
-                    DeviceProfile deviceProfile = new DeviceProfile(id);
-                    DeviceSessionCtx deviceSessionCtx = new DeviceSessionCtx(UUID.randomUUID(), snmpTransportContext, "A2_TEST_TOKEN");
-                    deviceSessionCtx.setDeviceId(new DeviceId(UUID.randomUUID()));
-                    deviceSessionCtx.setDeviceProfile(deviceProfile);
-                    deviceSessionCtx.setTransportConfiguration(SnmpDeviceTransportConfigFactory.getSnmpTransportConfig());
-                    //TODO: re-init target on device transport configuration event
-                    deviceSessionCtx.initTarget(snmpTransportContext.getDeviceProfileTransportConfig().get(id));
-                    return deviceSessionCtx;
-                })
-                .collect(Collectors.toList());
-
-        pduPerProfile = new HashMap<>();
-        snmpTransportContext.getDeviceProfileTransportConfig().forEach((id, config) -> pduPerProfile.put(id, getPduList(config)));
-
-        this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("snmp-pooling-scheduler"));
-        this.schedulerExecutor.scheduleAtFixedRate(this::executeSnmp, 5000, 5000, TimeUnit.MILLISECONDS);
+        //TODO: temp implementation
+        this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor();
+        this.schedulerExecutor.schedule(this::initSessionCtxList, 10000, TimeUnit.MILLISECONDS);
 
         log.info("SNMP transport started!");
     }
@@ -118,6 +104,33 @@ public class SnmpTransportService {
         } catch (IOException e) {
             log.error(e.getMessage(), e);
         }
+    }
+
+    private void initSessionCtxList() {
+
+        DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.fromString("c06dff20-2824-11eb-a349-3d1dfabc5680"));
+        snmpTransportContext.getDeviceProfileTransportConfig().putAll(Collections.singletonMap(deviceProfileId, SnmpDeviceProfileTransportConfigFactory.getDeviceProfileTransportConfig()));
+
+        deviceSessionCtxList = snmpTransportContext.getDeviceProfileTransportConfig().keySet().stream()
+                .map(id -> {
+                    DeviceProfile deviceProfile = new DeviceProfile(id);
+                    DeviceSessionCtx deviceSessionCtx = new DeviceSessionCtx(UUID.randomUUID(), snmpTransportContext, "A2_TEST_TOKEN");
+                    deviceSessionCtx.setDeviceId(new DeviceId(UUID.fromString("17b484f0-d8b8-11ea-a986-d38793b0b824")));
+                    deviceSessionCtx.setDeviceProfile(deviceProfile);
+                    deviceSessionCtx.setTransportConfiguration(SnmpDeviceTransportConfigFactory.getSnmpTransportConfig());
+                    //TODO: re-init target on device transport configuration event
+                    deviceSessionCtx.initTarget(snmpTransportContext.getDeviceProfileTransportConfig().get(id));
+                    deviceSessionCtx.createSessionInfo(ctx -> transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), deviceSessionCtx));
+                    return deviceSessionCtx;
+                })
+                .collect(Collectors.toList());
+
+        pduPerProfile = new HashMap<>();
+        snmpTransportContext.getDeviceProfileTransportConfig().forEach((id, config) -> pduPerProfile.put(id, getPduList(config)));
+
+
+        this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("snmp-pooling-scheduler"));
+        this.schedulerExecutor.scheduleAtFixedRate(this::executeSnmp, 1000, 5000, TimeUnit.MILLISECONDS);
     }
 
     private void executeSnmp() {
