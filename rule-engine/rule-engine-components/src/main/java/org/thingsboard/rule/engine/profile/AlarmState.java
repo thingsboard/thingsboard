@@ -123,8 +123,10 @@ class AlarmState {
     }
 
     public boolean clearAlarmState(boolean stateUpdate, AlarmRuleState state) {
-        state.clear();
-        stateUpdate |= state.checkUpdate();
+        if (state != null) {
+            state.clear();
+            stateUpdate |= state.checkUpdate();
+        }
         return stateUpdate;
     }
 
