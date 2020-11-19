@@ -176,7 +176,7 @@ public class TbMsgPushToEdgeNode implements TbNode {
     private String getScope(Map<String, String> metadata) {
         String scope = metadata.get(SCOPE);
         if (StringUtils.isEmpty(scope)) {
-            // TODO: voba - move this to configuration of the node or some other place
+            // TODO: voba - move this to configuration of the node UI or some other place
             scope = DataConstants.SERVER_SCOPE;
         }
         return scope;
