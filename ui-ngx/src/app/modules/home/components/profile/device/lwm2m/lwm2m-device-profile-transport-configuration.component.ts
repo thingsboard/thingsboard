@@ -39,8 +39,6 @@ import { DeviceProfileService } from "../../../../../../core/http/device-profile
 import { deepClone, isUndefined } from "../../../../../../core/utils";
 import { WINDOW } from "../../../../../../core/services/window.service";
 import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
-import { isEqualCheck } from '@ngrx/store/src/selector';
-import { number } from 'prop-types';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-transport-configuration',

@@ -31,7 +31,6 @@ import { coerceBooleanProperty } from "@angular/cdk/coercion";
 import {
   ATTR,
   Instance,
-  KEY_NAME,
   ObjectLwM2M,
   OBSERVE,
   ResourceLwM2M,
@@ -39,6 +38,12 @@ import {
 } from "./profile-config.models";
 import { isNotNullOrUndefined } from 'codelyzer/util/isNotNullOrUndefined';
 import { isUndefined } from '@core/utils';
+import { MatDialog } from '@angular/material/dialog';
+import { TranslateService } from '@ngx-translate/core';
+import {
+  Lwm2mObjectAddInstancesComponent,
+  Lwm2mObjectAddInstancesData
+} from '@home/components/profile/device/lwm2m/lwm2m-object-add-instances.component';
 
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry',
@@ -78,7 +83,9 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   }
 
   constructor(private store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private dialog: MatDialog,
+              private translate: TranslateService) {
     this.observeAttrTelemetryFormGroup = this.fb.group({
       clientLwM2M: this.fb.array([], this.required ? [Validators.required] : [])
     });
@@ -149,6 +156,8 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
       return this.fb.group({
         id: objectLwM2M.id,
         name: objectLwM2M.name,
+        multiple: objectLwM2M.multiple,
+        mandatory: objectLwM2M.mandatory,
         instances: (objectLwM2M.instances.length) ? this.createInstanceLwM2M(this.sortInstancesInObject(objectLwM2M.instances))
                                                   : this.createInstanceLwM2M(objectLwM2M.instances)
       })
@@ -225,4 +234,46 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   getExpended(objectLwM2M: AbstractControl) {
     return this.instancesLwm2mFormArray(objectLwM2M).length === 1;
   }
+
+  /**
+   * Instances: indicates whether this Object supports multiple Object Instances or not.
+   * 1) Field in object: <MultipleInstances> == Multiple/Single
+   * 2) Field in object: <Mandatory> == Mandatory/Optional
+   * If this field is “Multiple” then the number of Object Instance can be from 0 to many (Object Instance ID MAX_ID=65535).
+   * If this field is “Single” then the number of Object Instance can be from 0 to 1. (max count == 1)
+   * If the Object field “Mandatory” is “Mandatory” and the Object field “Instances” is “Single” then, the number of Object Instance MUST be 1.
+   * 1. <MultipleInstances> == Multiple (true), <Mandatory>  == Optional  (false) => Object Instance ID MIN_ID=0 MAX_ID=65535 (может ни одного не быть)
+   * 2. <MultipleInstances> == Multiple (true), <Mandatory>  == Mandatory (true)  => Object Instance ID MIN_ID=0 MAX_ID=65535 (min один обязательный)
+   * 3. <MultipleInstances> == Single   (false), <Mandatory> == Optional  (false) => Object Instance ID cnt_max = 1 cnt_min = 0 (может ни одного не быть)
+   * 4. <MultipleInstances> == Single   (false), <Mandatory> == Mandatory (true)  => Object Instance ID cnt_max = cnt_min = 1 (всегда есть один)
+   * @param $event
+   * @param objectId
+   * @param objectName
+   */
+  addInstances($event: Event, objectId: number, objectName: string): void {
+    if ($event) {
+      $event.stopPropagation();
+      // $event.preventDefault();
+    }
+    let mandatory = this.observeAttrTelemetryFormGroup.get('clientLwM2M').value.find(e => e.id == objectId).mandatory;
+    let multiple = this.observeAttrTelemetryFormGroup.get('clientLwM2M').value.find(e => e.id == objectId).multiple;
+      console.warn(mandatory,multiple );
+
+    this.dialog.open<Lwm2mObjectAddInstancesComponent, Lwm2mObjectAddInstancesData, object>(Lwm2mObjectAddInstancesComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        listInstances: {test: "valueTest"},
+        objectName: objectName,
+        objectId: objectId
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        if (res) {
+          console.warn(res);
+        }
+      }
+    );
+  }
+
 }

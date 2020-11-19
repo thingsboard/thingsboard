@@ -182,9 +182,18 @@ export interface Instance {
   id: number,
   resources: ResourceLwM2M[]
 }
-//ok
+
+/**
+ * multiple  == true  => Multiple
+ * multiple  == false => Single
+ * mandatory == true  => Mandatory
+ * mandatory == false => Optional
+ */
 export interface ObjectLwM2M {
   id: number,
   name: string,
+  multiple?: boolean,
+  mandatory?: boolean,
   instances?: Instance []
 }
+

@@ -20,6 +20,8 @@ import { Lwm2mObjectListComponent } from './lwm2m-object-list.component';
 import { Lwm2mObserveAttrTelemetryComponent } from './lwm2m-observe-attr-telemetry.component';
 import { Lwm2mObserveAttrTelemetryResourceComponent } from './lwm2m-observe-attr-telemetry-resource.component';
 import { Lwm2mDeviceConfigServerComponent } from './lwm2m-device-config-server.component';
+import { Lwm2mObjectAddInstancesComponent } from './lwm2m-object-add-instances.component';
+import { Lwm2mObjectAddInstancesListComponent } from './lwm2m-object-add-instances-list.component';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
 
@@ -30,7 +32,9 @@ import { SharedModule } from '@app/shared/shared.module';
       Lwm2mObjectListComponent,
       Lwm2mObserveAttrTelemetryComponent,
       Lwm2mObserveAttrTelemetryResourceComponent,
-      Lwm2mDeviceConfigServerComponent
+      Lwm2mDeviceConfigServerComponent,
+      Lwm2mObjectAddInstancesComponent,
+      Lwm2mObjectAddInstancesListComponent
     ],
   imports: [
     CommonModule,
@@ -41,7 +45,9 @@ import { SharedModule } from '@app/shared/shared.module';
     Lwm2mObjectListComponent,
     Lwm2mObserveAttrTelemetryComponent,
     Lwm2mObserveAttrTelemetryResourceComponent,
-    Lwm2mDeviceConfigServerComponent
+    Lwm2mDeviceConfigServerComponent,
+    Lwm2mObjectAddInstancesComponent,
+    Lwm2mObjectAddInstancesListComponent
   ],
   providers: [
   ]

@@ -44,7 +44,7 @@ import {PageLink} from "../../../../../../shared/models/page/page-link";
 import {Direction} from "../../../../../../shared/models/page/sort-order";
 
 @Component({
-  selector: 'tb--profile-lwm2m-object-list',
+  selector: 'tb-profile-lwm2m-object-list',
   templateUrl: './lwm2m-object-list.component.html',
   styleUrls: [],
   providers: [
@@ -61,6 +61,9 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   modelValue: Array<number> | null;
   objectsList: Array<ObjectLwM2M> = [];
   filteredObjectsList: Observable<Array<ObjectLwM2M>>;
+  private disabled = false as boolean;
+  searchText = '' as string;
+  private dirty = false as boolean;
 
   get required(): boolean {
     return this.requiredValue;
@@ -84,9 +87,6 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   @ViewChild('objectInput') objectInput: ElementRef<HTMLInputElement>;
   @ViewChild('objectAutocomplete') matAutocomplete: MatAutocomplete;
   @ViewChild('chipList', {static: true}) chipList: MatChipList;
-
-  searchText = '';
-  private dirty = false;
 
   private propagateChange = (v: any) => {
   };
@@ -134,6 +134,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   }
 
   setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
     if (isDisabled) {
       this.lwm2mObjectListFormGroup.disable({emitEvent: false});
     } else {

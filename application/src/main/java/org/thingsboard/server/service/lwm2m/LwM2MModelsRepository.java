@@ -90,6 +90,8 @@ public class LwM2MModelsRepository {
             LwM2mObject lwM2mObject = new LwM2mObject();
             lwM2mObject.setId(obj.id);
             lwM2mObject.setName(obj.name);
+            lwM2mObject.setMultiple(obj.multiple);
+            lwM2mObject.setMandatory(obj.mandatory);
             LwM2mInstance instance = new LwM2mInstance();
             instance.setId(0);
             List<LwM2mResource> resources = new ArrayList<>();

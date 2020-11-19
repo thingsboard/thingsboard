@@ -21,5 +21,7 @@ import lombok.Data;
 public class LwM2mObject {
     int id;
     String name;
+    boolean multiple;
+    boolean mandatory;
     LwM2mInstance [] instances;
 }

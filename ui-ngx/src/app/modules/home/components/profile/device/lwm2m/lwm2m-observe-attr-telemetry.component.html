@@ -22,70 +22,79 @@
       *ngFor="let objectLwM2M of clientLwM2MFormArray(observeAttrTelemetryFormGroup).controls; let i = index; trackBy: trackByParams"
       [formGroupName]="i">
       <mat-expansion-panel-header>
-        <mat-panel-title>
+        <mat-panel-title fxLayoutAlign="space-between">
           <div class="tb-panel-title">Object [<b>{{ objectLwM2M.get('id').value}}</b>]
             name: <b><i>{{ objectLwM2M.get('name').value}}</i></b></div>
+            <button type="button"
+                    mat-button *ngIf="!disabled"
+                    mat-button mat-icon-button (click)="addInstances($event, objectLwM2M.get('id').value, objectLwM2M.get('name').value)"
+                    matTooltip="{{'device-profile.lwm2m.add-instances-tip' | translate}}"
+                    matTooltipPosition="above">
+<!--              <mat-icon class="material-icons">{{'add_circle_outline'}}</mat-icon>-->
+              <mat-icon class="material-icons">{{'add'}}</mat-icon>
+            </button>
         </mat-panel-title>
       </mat-expansion-panel-header>
       <div fxLayout="column" fxLayoutGap="8px" formArrayName="instances">
         <ng-template matExpansionPanelContent>
-          <mat-expansion-panel *ngFor="let instances of instancesLwm2mFormArray(objectLwM2M).controls; let y = index; trackBy: trackByParams"
-                               [formGroupName]="y"
-                               [expanded]="getExpended(objectLwM2M)"
-                               [disabled]="getExpended(objectLwM2M)">
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  <div class="tb-panel-title-height" fxFlex="100">
-                    <div fxLayout="row" fxFill>
-                      <div fxFlex="44">
-                        Instance [<b>{{instances.get('id').value}}</b>]
-                      </div>
-                      <div class="checkbox-padding" fxFlex="10">
-                        <mat-checkbox color="primary"
-                                      [formControlName]="observe"
-                                      [checked] = "getChecked(instances, 'observe')"
-                                      (click)="$event.stopPropagation()"
-                                      (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'observe')"
-                                      (keydown)="$event.stopPropagation()"
-                                      [indeterminate]="getIndeterminate(instances, 'observe')"
-                                      matTooltip="{{'device-profile.lwm2m.is-observe-tip' | translate}}"
-                                      matTooltipPosition="above">
-                        </mat-checkbox>
-                      </div>
-                      <div class="checkbox-padding" fxFlex="10">
-                        <mat-checkbox [formControlName]="attribute" color="warn"
-                                      [checked] = "getChecked(instances, 'attribute')"
-                                      (click)="$event.stopPropagation()"
-                                      (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'attribute')"
-                                      (keydown)="$event.stopPropagation()"
-                                      [indeterminate]="getIndeterminate(instances, 'attribute')"
-                                      matTooltip="{{'device-profile.lwm2m.is-attr-tip' | translate}}"
-                                      matTooltipPosition="above">
-                        </mat-checkbox>
-                      </div>
-                      <div class="checkbox-padding" fxFlex="10">
-                        <mat-checkbox [formControlName]="telemetry" color="primary"
-                                      [checked] = "getChecked(instances, 'telemetry')"
-                                      (click)="$event.stopPropagation()"
-                                      (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'telemetry')"
-                                      (keydown)="$event.stopPropagation()"
-                                      [indeterminate]="getIndeterminate(instances, 'telemetry')"
-                                      matTooltip="{{'device-profile.lwm2m.is-telemetry-tip' | translate}}"
-                                      matTooltipPosition="above">
-                        </mat-checkbox>
-                      </div>
-                      <div class="checkbox-padding" fxFlex="25">
-                      </div>
+          <mat-expansion-panel
+            *ngFor="let instances of instancesLwm2mFormArray(objectLwM2M).controls; let y = index; trackBy: trackByParams"
+            [formGroupName]="y"
+            [expanded]="getExpended(objectLwM2M)"
+            [disabled]="getExpended(objectLwM2M)">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div class="tb-panel-title-height" fxFlex="100">
+                  <div fxLayout="row" fxFill>
+                    <div fxFlex="44">
+                      Instance [<b>{{instances.get('id').value}}</b>]
+                    </div>
+                    <div class="checkbox-padding" fxFlex="10">
+                      <mat-checkbox color="primary"
+                                    [formControlName]="observe"
+                                    [checked]="getChecked(instances, 'observe')"
+                                    (click)="$event.stopPropagation()"
+                                    (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'observe')"
+                                    (keydown)="$event.stopPropagation()"
+                                    [indeterminate]="getIndeterminate(instances, 'observe')"
+                                    matTooltip="{{'device-profile.lwm2m.is-observe-tip' | translate}}"
+                                    matTooltipPosition="above">
+                      </mat-checkbox>
+                    </div>
+                    <div class="checkbox-padding" fxFlex="10">
+                      <mat-checkbox [formControlName]="attribute" color="warn"
+                                    [checked]="getChecked(instances, 'attribute')"
+                                    (click)="$event.stopPropagation()"
+                                    (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'attribute')"
+                                    (keydown)="$event.stopPropagation()"
+                                    [indeterminate]="getIndeterminate(instances, 'attribute')"
+                                    matTooltip="{{'device-profile.lwm2m.is-attr-tip' | translate}}"
+                                    matTooltipPosition="above">
+                      </mat-checkbox>
+                    </div>
+                    <div class="checkbox-padding" fxFlex="10">
+                      <mat-checkbox [formControlName]="telemetry" color="primary"
+                                    [checked]="getChecked(instances, 'telemetry')"
+                                    (click)="$event.stopPropagation()"
+                                    (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'telemetry')"
+                                    (keydown)="$event.stopPropagation()"
+                                    [indeterminate]="getIndeterminate(instances, 'telemetry')"
+                                    matTooltip="{{'device-profile.lwm2m.is-telemetry-tip' | translate}}"
+                                    matTooltipPosition="above">
+                      </mat-checkbox>
+                    </div>
+                    <div class="checkbox-padding" fxFlex="25">
                     </div>
                   </div>
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-              <ng-template matExpansionPanelContent>
-                <tb-profile-lwm2m-observe-attr-telemetry-resource
-                  formControlName = "resources"
-                  [required]="required">
-                </tb-profile-lwm2m-observe-attr-telemetry-resource>
-              </ng-template>
+                </div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <tb-profile-lwm2m-observe-attr-telemetry-resource
+                formControlName="resources"
+                [required]="required">
+              </tb-profile-lwm2m-observe-attr-telemetry-resource>
+            </ng-template>
           </mat-expansion-panel>
         </ng-template>
       </div>
