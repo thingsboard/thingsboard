@@ -20,6 +20,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.core.NestedRuntimeException;
@@ -55,6 +56,8 @@ public class DefaultMailService implements MailService {
     public static final String MAIL_PROP = "mail.";
     public static final String TARGET_EMAIL = "targetEmail";
     public static final String UTF_8 = "UTF-8";
+    public static final int _10K = 10000;
+    public static final int _1M = 1000000;
     @Autowired
     private MessageSource messages;
 
@@ -266,8 +269,7 @@ public class DefaultMailService implements MailService {
                 message = mergeTemplateIntoString("state.enabled.ftl", model);
                 break;
             case WARNING:
-                model.put("apiLimitValueLabel", toDisabledValueLabel(msg.getKey(), msg.getThreshold()));
-                model.put("apiValueLabel", toDisabledValueLabel(apiFeature) + " " + toDisabledValueLabel(msg.getKey(), msg.getValue()));
+                model.put("apiValueLabel", toDisabledValueLabel(apiFeature) + " " + toWarningValueLabel(msg.getKey(), msg.getValue(), msg.getThreshold()));
                 message = mergeTemplateIntoString("state.warning.ftl", model);
                 break;
             case DISABLED:
@@ -285,8 +287,9 @@ public class DefaultMailService implements MailService {
             case TRANSPORT:
                 return "receive";
             case JS:
-            case RE:
                 return "invoke";
+            case RE:
+                return "process";
             default:
                 throw new RuntimeException("Not implemented!");
         }
@@ -299,8 +302,27 @@ public class DefaultMailService implements MailService {
             case TRANSPORT:
                 return "received";
             case JS:
-            case RE:
                 return "invoked";
+            case RE:
+                return "processed";
+            default:
+                throw new RuntimeException("Not implemented!");
+        }
+    }
+
+    private String toWarningValueLabel(ApiUsageRecordKey key, long value, long threshold) {
+        String valueInM = getValueAsString(value);
+        String thresholdInM = getValueAsString(threshold);
+        switch (key) {
+            case STORAGE_DP_COUNT:
+            case TRANSPORT_DP_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed data points";
+            case TRANSPORT_MSG_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed messages";
+            case JS_EXEC_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed JavaScript functions";
+            case RE_EXEC_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed Rule Engine messages";
             default:
                 throw new RuntimeException("Not implemented!");
         }
@@ -310,15 +332,26 @@ public class DefaultMailService implements MailService {
         switch (key) {
             case STORAGE_DP_COUNT:
             case TRANSPORT_DP_COUNT:
-                return (value / 1000000) + "M data points";
+                return getValueAsString(value) + " data points";
             case TRANSPORT_MSG_COUNT:
-                return (value / 1000000) + "M messages";
+                return getValueAsString(value) + " messages";
             case JS_EXEC_COUNT:
-                return (value / 1000000) + "M JavaScript functions";
+                return "JavaScript functions " + getValueAsString(value) + " times";
             case RE_EXEC_COUNT:
-                return (value / 1000000) + "M Rule Engine nodes";
+                return getValueAsString(value) + " Rule Engine messages";
             default:
                 throw new RuntimeException("Not implemented!");
+        }
+    }
+
+    @NotNull
+    private String getValueAsString(long value) {
+        if (value > _1M && value % _1M < _10K) {
+            return value / _1M + "M";
+        } else if (value > _10K) {
+            return String.format("%.2fM", ((double) value) / 1000000);
+        } else {
+            return value + "";
         }
     }
 

@@ -20,7 +20,7 @@ import lombok.Getter;
 public enum ApiFeature {
     TRANSPORT("transportApiState", "Device API"),
     DB("dbApiState", "Telemetry persistence"),
-    RE("ruleEngineApiState", "Rule engine execution"),
+    RE("ruleEngineApiState", "Rule Engine execution"),
     JS("jsExecutionApiState", "JavaScript functions execution");
 
     @Getter
