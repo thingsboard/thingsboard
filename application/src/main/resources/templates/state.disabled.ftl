@@ -123,8 +123,7 @@
                 <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
                     <td class="content-block"
                         style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0px; padding: 0px 0px 20px; height: 40px;"
-                        valign="top">We have disabled the ${apiFeature} for your account because ThingsBoard has already&nbsp; ${apiLimitValueLabel}
-                        .
+                        valign="top">We have disabled the ${apiFeature} for your account because ThingsBoard has already ${apiLimitValueLabel}.
                     </td>
                 </tr>
                 <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">

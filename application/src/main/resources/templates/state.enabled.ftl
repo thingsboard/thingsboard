@@ -123,7 +123,7 @@
 				<tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
 					<td class="content-block"
 						style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0px; padding: 0px 0px 20px; height: 40px;"
-						valign="top">We have enabled the ${apiFeature} for your account and ThingsBoard already able to ${apiLabel} messages.
+						valign="top">We have enabled the ${apiFeature} for your account and ThingsBoard is already able to ${apiLabel} messages.
 					</td>
 				</tr>
 				<tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">

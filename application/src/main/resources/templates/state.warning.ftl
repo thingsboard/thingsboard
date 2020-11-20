@@ -117,14 +117,14 @@
 					<td class="content-block"
 						style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #348eda; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0px; padding: 0px 0px 20px; height: 84px;"
 						valign="top">
-						<h2>Your ThingsBoard account feature may be disabled</h2>
+						<h2>Your ThingsBoard account feature may be disabled soon</h2>
 					</td>
 				</tr>
 				<tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
 					<td class="content-block"
 						style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0px; padding: 0px 0px 20px; height: 40px;"
 						valign="top">
-						Your ${apiFeature} limit (${apiLimitValueLabel}) is almost exhausted. <br>ThingsBoard has already&nbsp;${apiValueLabel}.<br> ${apiFeature} will be disabled for your account when limit will be reached.
+						ThingsBoard has already&nbsp;${apiValueLabel}.<br> ${apiFeature} will be disabled for your account once the limit will be reached.
 					</td>
 				</tr>
 				<tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
