@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.api;
 import io.netty.channel.EventLoopGroup;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -194,11 +195,17 @@ public interface TbContext {
 
     ListeningExecutor getMailExecutor();
 
+    ListeningExecutor getSmsExecutor();
+
     ListeningExecutor getDbCallbackExecutor();
 
     ListeningExecutor getExternalCallExecutor();
 
     MailService getMailService();
+
+    SmsService getSmsService();
+
+    SmsSenderFactory getSmsSenderFactory();
 
     ScriptEngine createJsScriptEngine(String script, String... argNames);
 
