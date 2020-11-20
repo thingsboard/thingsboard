@@ -682,15 +682,14 @@ public class DefaultTransportService implements TransportService {
     private void onDeviceUpdate(Device device) {
         long deviceIdMSB = device.getId().getId().getMostSignificantBits();
         long deviceIdLSB = device.getId().getId().getLeastSignificantBits();
+        long deviceProfileIdMSB = device.getDeviceProfileId().getId().getMostSignificantBits();
+        long deviceProfileIdLSB = device.getDeviceProfileId().getId().getLeastSignificantBits();
         sessions.forEach((id, md) -> {
-            if (md.getSessionInfo().getDeviceIdMSB() == deviceIdMSB
-                    && md.getSessionInfo().getDeviceIdLSB() == deviceIdLSB) {
-                long deviceProfileIdMSB = device.getDeviceProfileId().getId().getMostSignificantBits();
-                long deviceProfileIdLSB = device.getDeviceProfileId().getId().getLeastSignificantBits();
-                if (md.getSessionInfo().getDeviceProfileIdMSB() != deviceProfileIdMSB
-                        && md.getSessionInfo().getDeviceProfileIdLSB() != deviceProfileIdLSB) {
-                    transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(device));
-                }
+            if ((md.getSessionInfo().getDeviceIdMSB() == deviceIdMSB
+                    && md.getSessionInfo().getDeviceIdLSB() == deviceIdLSB)
+                    && (md.getSessionInfo().getDeviceProfileIdMSB() != deviceProfileIdMSB
+                    && md.getSessionInfo().getDeviceProfileIdLSB() != deviceProfileIdLSB)) {
+                transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(device));
             }
         });
     }
