@@ -21,7 +21,9 @@ import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -63,18 +65,20 @@ public class DefaultMailService implements MailService {
     private final MessageSource messages;
     private final Configuration freemarkerConfig;
     private final AdminSettingsService adminSettingsService;
-    private final TbApiUsageStateService apiUsageStateService;
     private final TbApiUsageClient apiUsageClient;
+
+    @Lazy
+    @Autowired
+    private TbApiUsageStateService apiUsageStateService;
 
     private JavaMailSenderImpl mailSender;
 
     private String mailFrom;
 
-    public DefaultMailService(MessageSource messages, Configuration freemarkerConfig, AdminSettingsService adminSettingsService, TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient) {
+    public DefaultMailService(MessageSource messages, Configuration freemarkerConfig, AdminSettingsService adminSettingsService, TbApiUsageClient apiUsageClient) {
         this.messages = messages;
         this.freemarkerConfig = freemarkerConfig;
         this.adminSettingsService = adminSettingsService;
-        this.apiUsageStateService = apiUsageStateService;
         this.apiUsageClient = apiUsageClient;
     }
 
