@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.transport;
 
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
@@ -40,4 +41,6 @@ public interface SessionMsgListener {
     default void onProfileUpdate(DeviceProfile deviceProfile) {
     }
 
+    default void onDeviceUpdate(Device device) {
+    }
 }

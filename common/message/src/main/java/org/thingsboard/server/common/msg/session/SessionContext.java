@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.msg.session;
 
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 
 import java.util.UUID;
@@ -26,4 +27,6 @@ public interface SessionContext {
     int nextMsgId();
 
     void onProfileUpdate(DeviceProfile deviceProfile);
+
+    void onDeviceUpdate(Device device);
 }
