@@ -26,7 +26,7 @@ export class LogoComponent {
   logo = require('../../../assets/logo_title_white.svg').default;
 
   gotoThingsboard(): void {
-    window.open('https://thingsboard.io', '_blank');
+    window.open('https://www.vtcenerji.com', '_blank');
   }
 
 }
