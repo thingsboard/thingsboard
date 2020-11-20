@@ -18,7 +18,6 @@ package org.thingsboard.server.service.sms;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.sms.SmsSender;
 import org.thingsboard.rule.engine.api.sms.exception.SmsParseException;
-import sun.misc.Regexp;
 
 import java.util.regex.Pattern;
 
