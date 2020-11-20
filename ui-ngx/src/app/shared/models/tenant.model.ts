@@ -44,6 +44,8 @@ export interface DefaultTenantProfileConfiguration {
   maxJSExecutions: number;
   maxDPStorageDays: number;
   maxRuleNodeExecutionsPerMessage: number;
+  maxEmails: number;
+  maxSms: number;
 }
 
 export type TenantProfileConfigurations = DefaultTenantProfileConfiguration;
@@ -69,7 +71,9 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxREExecutions: 0,
           maxJSExecutions: 0,
           maxDPStorageDays: 0,
-          maxRuleNodeExecutionsPerMessage: 0
+          maxRuleNodeExecutionsPerMessage: 0,
+          maxEmails: 0,
+          maxSms: 0
         };
         configuration = {...defaultConfiguration, type: TenantProfileType.DEFAULT};
         break;
