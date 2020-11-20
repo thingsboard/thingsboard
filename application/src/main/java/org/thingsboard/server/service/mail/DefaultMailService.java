@@ -20,6 +20,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.core.NestedRuntimeException;
@@ -29,6 +30,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.ApiFeature;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageStateMailMessage;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -51,6 +56,8 @@ public class DefaultMailService implements MailService {
     public static final String MAIL_PROP = "mail.";
     public static final String TARGET_EMAIL = "targetEmail";
     public static final String UTF_8 = "UTF-8";
+    public static final int _10K = 10000;
+    public static final int _1M = 1000000;
     @Autowired
     private MessageSource messages;
 
@@ -244,6 +251,108 @@ public class DefaultMailService implements MailService {
         String message = mergeTemplateIntoString("account.lockout.ftl", model);
 
         sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
+    @Override
+    public void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageStateMailMessage msg) throws ThingsboardException {
+        String subject = messages.getMessage("api.usage.state", null, Locale.US);
+
+        Map<String, Object> model = new HashMap<>();
+        model.put("apiFeature", apiFeature.getLabel());
+        model.put(TARGET_EMAIL, email);
+
+        String message = null;
+
+        switch (stateValue) {
+            case ENABLED:
+                model.put("apiLabel", toEnabledValueLabel(apiFeature));
+                message = mergeTemplateIntoString("state.enabled.ftl", model);
+                break;
+            case WARNING:
+                model.put("apiValueLabel", toDisabledValueLabel(apiFeature) + " " + toWarningValueLabel(msg.getKey(), msg.getValue(), msg.getThreshold()));
+                message = mergeTemplateIntoString("state.warning.ftl", model);
+                break;
+            case DISABLED:
+                model.put("apiLimitValueLabel", toDisabledValueLabel(apiFeature) + " " + toDisabledValueLabel(msg.getKey(), msg.getThreshold()));
+                message = mergeTemplateIntoString("state.disabled.ftl", model);
+                break;
+        }
+        sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
+    private String toEnabledValueLabel(ApiFeature apiFeature) {
+        switch (apiFeature) {
+            case DB:
+                return "save";
+            case TRANSPORT:
+                return "receive";
+            case JS:
+                return "invoke";
+            case RE:
+                return "process";
+            default:
+                throw new RuntimeException("Not implemented!");
+        }
+    }
+
+    private String toDisabledValueLabel(ApiFeature apiFeature) {
+        switch (apiFeature) {
+            case DB:
+                return "saved";
+            case TRANSPORT:
+                return "received";
+            case JS:
+                return "invoked";
+            case RE:
+                return "processed";
+            default:
+                throw new RuntimeException("Not implemented!");
+        }
+    }
+
+    private String toWarningValueLabel(ApiUsageRecordKey key, long value, long threshold) {
+        String valueInM = getValueAsString(value);
+        String thresholdInM = getValueAsString(threshold);
+        switch (key) {
+            case STORAGE_DP_COUNT:
+            case TRANSPORT_DP_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed data points";
+            case TRANSPORT_MSG_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed messages";
+            case JS_EXEC_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed JavaScript functions";
+            case RE_EXEC_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed Rule Engine messages";
+            default:
+                throw new RuntimeException("Not implemented!");
+        }
+    }
+
+    private String toDisabledValueLabel(ApiUsageRecordKey key, long value) {
+        switch (key) {
+            case STORAGE_DP_COUNT:
+            case TRANSPORT_DP_COUNT:
+                return getValueAsString(value) + " data points";
+            case TRANSPORT_MSG_COUNT:
+                return getValueAsString(value) + " messages";
+            case JS_EXEC_COUNT:
+                return "JavaScript functions " + getValueAsString(value) + " times";
+            case RE_EXEC_COUNT:
+                return getValueAsString(value) + " Rule Engine messages";
+            default:
+                throw new RuntimeException("Not implemented!");
+        }
+    }
+
+    @NotNull
+    private String getValueAsString(long value) {
+        if (value > _1M && value % _1M < _10K) {
+            return value / _1M + "M";
+        } else if (value > _10K) {
+            return String.format("%.2fM", ((double) value) / 1000000);
+        } else {
+            return value + "";
+        }
     }
 
     private void sendMail(JavaMailSenderImpl mailSender,
