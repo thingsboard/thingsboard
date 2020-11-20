@@ -21,7 +21,9 @@ public enum ApiFeature {
     TRANSPORT("transportApiState", "Device API"),
     DB("dbApiState", "Telemetry persistence"),
     RE("ruleEngineApiState", "Rule Engine execution"),
-    JS("jsExecutionApiState", "JavaScript functions execution");
+    JS("jsExecutionApiState", "JavaScript functions execution"),
+    EMAIL("emailApiState", "Email messages"),
+    SMS("smsApiState", "SMS messages");
 
     @Getter
     private final String apiStateKey;

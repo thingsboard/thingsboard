@@ -21,7 +21,6 @@ import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -40,6 +39,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.PostConstruct;
 import javax.mail.MessagingException;
@@ -58,18 +59,24 @@ public class DefaultMailService implements MailService {
     public static final String UTF_8 = "UTF-8";
     public static final int _10K = 10000;
     public static final int _1M = 1000000;
-    @Autowired
-    private MessageSource messages;
 
-    @Autowired
-    private Configuration freemarkerConfig;
+    private final MessageSource messages;
+    private final Configuration freemarkerConfig;
+    private final AdminSettingsService adminSettingsService;
+    private final TbApiUsageStateService apiUsageStateService;
+    private final TbApiUsageClient apiUsageClient;
 
     private JavaMailSenderImpl mailSender;
 
     private String mailFrom;
 
-    @Autowired
-    private AdminSettingsService adminSettingsService;
+    public DefaultMailService(MessageSource messages, Configuration freemarkerConfig, AdminSettingsService adminSettingsService, TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient) {
+        this.messages = messages;
+        this.freemarkerConfig = freemarkerConfig;
+        this.adminSettingsService = adminSettingsService;
+        this.apiUsageStateService = apiUsageStateService;
+        this.apiUsageClient = apiUsageClient;
+    }
 
     @PostConstruct
     private void init() {
@@ -148,8 +155,11 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendEmail(String email, String subject, String message) throws ThingsboardException {
-        sendMail(mailSender, mailFrom, email, subject, message);
+    public void sendEmail(TenantId tenantId, String email, String subject, String message) throws ThingsboardException {
+        if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
+            sendMail(mailSender, mailFrom, email, subject, message);
+            apiUsageClient.report(tenantId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
+        }
     }
 
     @Override
@@ -223,20 +233,23 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void send(String from, String to, String cc, String bcc, String subject, String body) throws MessagingException {
-        MimeMessage mailMsg = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mailMsg, "UTF-8");
-        helper.setFrom(StringUtils.isBlank(from) ? mailFrom : from);
-        helper.setTo(to.split("\\s*,\\s*"));
-        if (!StringUtils.isBlank(cc)) {
-            helper.setCc(cc.split("\\s*,\\s*"));
+    public void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body) throws MessagingException {
+        if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
+            MimeMessage mailMsg = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mailMsg, "UTF-8");
+            helper.setFrom(StringUtils.isBlank(from) ? mailFrom : from);
+            helper.setTo(to.split("\\s*,\\s*"));
+            if (!StringUtils.isBlank(cc)) {
+                helper.setCc(cc.split("\\s*,\\s*"));
+            }
+            if (!StringUtils.isBlank(bcc)) {
+                helper.setBcc(bcc.split("\\s*,\\s*"));
+            }
+            helper.setSubject(subject);
+            helper.setText(body);
+            mailSender.send(helper.getMimeMessage());
+            apiUsageClient.report(tenantId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
         }
-        if (!StringUtils.isBlank(bcc)) {
-            helper.setBcc(bcc.split("\\s*,\\s*"));
-        }
-        helper.setSubject(subject);
-        helper.setText(body);
-        mailSender.send(helper.getMimeMessage());
     }
 
     @Override
