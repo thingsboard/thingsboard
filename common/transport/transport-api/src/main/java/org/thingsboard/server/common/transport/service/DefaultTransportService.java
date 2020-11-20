@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
@@ -643,6 +644,9 @@ public class DefaultTransportService implements TransportService {
                         rateLimitService.update(apiUsageState.getTenantId(), apiUsageState.isTransportEnabled());
                         //TODO: if transport is disabled, we should close all sessions and not to check credentials.
                     }
+                } else if (EntityType.DEVICE.equals(entityType)) {
+                    Optional<Device> deviceOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
+                    deviceOpt.ifPresent(this::onDeviceUpdate);
                 }
             } else if (toSessionMsg.hasEntityDeleteMsg()) {
                 TransportProtos.EntityDeleteMsg msg = toSessionMsg.getEntityDeleteMsg();
@@ -671,6 +675,22 @@ public class DefaultTransportService implements TransportService {
             if (md.getSessionInfo().getDeviceProfileIdMSB() == deviceProfileIdMSB
                     && md.getSessionInfo().getDeviceProfileIdLSB() == deviceProfileIdLSB) {
                 transportCallbackExecutor.submit(() -> md.getListener().onProfileUpdate(deviceProfile));
+            }
+        });
+    }
+
+    private void onDeviceUpdate(Device device) {
+        long deviceIdMSB = device.getId().getId().getMostSignificantBits();
+        long deviceIdLSB = device.getId().getId().getLeastSignificantBits();
+        sessions.forEach((id, md) -> {
+            if (md.getSessionInfo().getDeviceIdMSB() == deviceIdMSB
+                    && md.getSessionInfo().getDeviceIdLSB() == deviceIdLSB) {
+                long deviceProfileIdMSB = device.getDeviceProfileId().getId().getMostSignificantBits();
+                long deviceProfileIdLSB = device.getDeviceProfileId().getId().getLeastSignificantBits();
+                if (md.getSessionInfo().getDeviceProfileIdMSB() != deviceProfileIdMSB
+                        && md.getSessionInfo().getDeviceProfileIdLSB() != deviceProfileIdLSB) {
+                    transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(device));
+                }
             }
         });
     }
