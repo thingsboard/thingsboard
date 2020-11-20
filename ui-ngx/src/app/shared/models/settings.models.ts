@@ -14,7 +14,6 @@
 /// limitations under the License.
 ///
 
-import { DeviceTransportType } from '@shared/models/device.models';
 import { ValidatorFn } from '@angular/forms';
 import { isNotEmptyStr } from '@core/utils';
 
