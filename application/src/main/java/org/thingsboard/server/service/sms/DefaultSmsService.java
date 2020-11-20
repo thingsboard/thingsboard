@@ -17,7 +17,6 @@ package org.thingsboard.server.service.sms;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.SmsService;
@@ -26,12 +25,15 @@ import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.rule.engine.api.sms.config.SmsProviderConfiguration;
 import org.thingsboard.rule.engine.api.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -40,13 +42,19 @@ import javax.annotation.PreDestroy;
 @Slf4j
 public class DefaultSmsService implements SmsService {
 
-    @Autowired
-    private SmsSenderFactory smsSenderFactory;
-
-    @Autowired
-    private AdminSettingsService adminSettingsService;
+    private final SmsSenderFactory smsSenderFactory;
+    private final AdminSettingsService adminSettingsService;
+    private final TbApiUsageStateService apiUsageStateService;
+    private final TbApiUsageClient apiUsageClient;
 
     private SmsSender smsSender;
+
+    public DefaultSmsService(SmsSenderFactory smsSenderFactory, AdminSettingsService adminSettingsService, TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient) {
+        this.smsSenderFactory = smsSenderFactory;
+        this.adminSettingsService = adminSettingsService;
+        this.apiUsageStateService = apiUsageStateService;
+        this.apiUsageClient = apiUsageClient;
+    }
 
     @PostConstruct
     private void init() {
@@ -78,18 +86,26 @@ public class DefaultSmsService implements SmsService {
         }
     }
 
-    @Override
-    public void sendSms(String numberTo, String message) throws ThingsboardException {
+    private int sendSms(String numberTo, String message) throws ThingsboardException {
         if (this.smsSender == null) {
             throw new ThingsboardException("Unable to send SMS: no SMS provider configured!", ThingsboardErrorCode.GENERAL);
         }
-        this.sendSms(this.smsSender, numberTo, message);
+        return this.sendSms(this.smsSender, numberTo, message);
     }
 
     @Override
-    public void sendSms(String[] numbersTo, String message) throws ThingsboardException {
-        for (String numberTo : numbersTo) {
-            this.sendSms(numberTo, message);
+    public void sendSms(TenantId tenantId, String[] numbersTo, String message) throws ThingsboardException {
+        if (apiUsageStateService.getApiUsageState(tenantId).isSmsSendEnabled()) {
+            int smsCount = 0;
+            try {
+                for (String numberTo : numbersTo) {
+                    smsCount += this.sendSms(numberTo, message);
+                }
+            } finally {
+                if (smsCount > 0) {
+                    apiUsageClient.report(tenantId, ApiUsageRecordKey.SMS_EXEC_COUNT, smsCount);
+                }
+            }
         }
     }
 

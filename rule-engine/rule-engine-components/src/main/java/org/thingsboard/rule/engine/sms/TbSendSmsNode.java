@@ -23,6 +23,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.sms.SmsSender;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -75,7 +76,7 @@ public class TbSendSmsNode implements TbNode {
         String message = TbNodeUtils.processPattern(this.config.getSmsMessageTemplate(), msg.getMetaData());
         String[] numbersToList = numbersTo.split(",");
         if (this.config.isUseSystemSmsSettings()) {
-            ctx.getSmsService().sendSms(numbersToList, message);
+            ctx.getSmsService().sendSms(ctx.getTenantId(), numbersToList, message);
         } else {
             for (String numberTo : numbersToList) {
                 this.smsSender.sendSms(numberTo, message);

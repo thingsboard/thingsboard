@@ -2017,7 +2017,13 @@
         "max-d-p-storage-days-range": "Minimum number of data points storage days can't be negative",
         "max-rule-node-executions-per-message": "Maximum number of rule node executions per message (0 - unlimited)",
         "max-rule-node-executions-per-message-required": "Maximum number of rule node executions per message is required.",
-        "max-rule-node-executions-per-message-range": "Minimum number of rule node executions per message can't be negative"
+        "max-rule-node-executions-per-message-range": "Minimum number of rule node executions per message can't be negative",
+        "max-emails": "Maximum number of emails sent (0 - unlimited)",
+        "max-emails-required": "Maximum number of emails sent is required.",
+        "max-emails-range": "Maximum number of emails sent can't be negative",
+        "max-sms": "Maximum number of SMS sent (0 - unlimited)",
+        "max-sms-required": "Maximum number of SMS sent is required.",
+        "max-sms-range": "Maximum number of SMS sent can't be negative"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",
