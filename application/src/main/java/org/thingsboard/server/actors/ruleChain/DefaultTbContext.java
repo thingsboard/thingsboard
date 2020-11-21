@@ -28,10 +28,13 @@ import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
+import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -303,6 +306,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public ListeningExecutor getSmsExecutor() {
+        return mainCtx.getSmsExecutor();
+    }
+
+    @Override
     public ListeningExecutor getDbCallbackExecutor() {
         return mainCtx.getDbCallbackExecutor();
     }
@@ -425,6 +433,20 @@ class DefaultTbContext implements TbContext {
         } else {
             throw new RuntimeException("Access to System Mail Service is forbidden!");
         }
+    }
+
+    @Override
+    public SmsService getSmsService() {
+        if (mainCtx.isAllowSystemSmsService()) {
+            return mainCtx.getSmsService();
+        } else {
+            throw new RuntimeException("Access to System SMS Service is forbidden!");
+        }
+    }
+
+    @Override
+    public SmsSenderFactory getSmsSenderFactory() {
+        return mainCtx.getSmsSenderFactory();
     }
 
     @Override

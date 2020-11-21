@@ -97,7 +97,7 @@
         <fst.version>2.57</fst.version>
         <antlr.version>2.7.7</antlr.version>
         <snakeyaml.version>1.27</snakeyaml.version>
-        <amazonaws.sqs.version>1.11.747</amazonaws.sqs.version>
+        <aws.sdk.version>1.11.747</aws.sdk.version>
         <pubsub.client.version>1.105.0</pubsub.client.version>
         <azure-servicebus.version>3.2.0</azure-servicebus.version>
         <passay.version>1.5.0</passay.version>
@@ -108,6 +108,7 @@
         <micrometer.version>1.5.2</micrometer.version>
         <protobuf-dynamic.version>1.0.2TB</protobuf-dynamic.version>
         <wire-schema.version>3.4.0</wire-schema.version>
+        <twilio.version>7.54.2</twilio.version>
         <snmp4j.version>2.8.5</snmp4j.version>
     </properties>
 
@@ -1324,7 +1325,12 @@
             <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-java-sdk-sqs</artifactId>
-                <version>${amazonaws.sqs.version}</version>
+                <version>${aws.sdk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-java-sdk-sns</artifactId>
+                <version>${aws.sdk.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.cloud</groupId>
@@ -1386,6 +1392,25 @@
                 <groupId>com.squareup.wire</groupId>
                 <artifactId>wire-schema</artifactId>
                 <version>${wire-schema.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.twilio.sdk</groupId>
+                <artifactId>twilio</artifactId>
+                <version>${twilio.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.jsonwebtoken</groupId>
+                        <artifactId>jjwt-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.jsonwebtoken</groupId>
+                        <artifactId>jjwt-jackson</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.jsonwebtoken</groupId>
+                        <artifactId>jjwt-impl</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.snmp4j</groupId>

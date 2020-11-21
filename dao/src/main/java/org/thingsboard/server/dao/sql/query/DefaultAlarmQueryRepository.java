@@ -156,7 +156,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                     wherePart.append(" a.originator_id in (:entity_ids)");
                 }
             } else {
-                fromPart.append(" left join (select * from (VALUES");
+                fromPart.append(" inner join (select * from (VALUES");
                 int entityIdIdx = 0;
                 int lastEntityIdIdx = orderedEntityIds.size() - 1;
                 for (EntityId entityId : orderedEntityIds) {
