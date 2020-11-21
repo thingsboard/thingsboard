@@ -92,6 +92,10 @@ export function isEmptyStr(value: any): boolean {
   return value === '';
 }
 
+export function isNotEmptyStr(value: any): boolean {
+  return value !== null && typeof value === 'string' && value.trim().length > 0;
+}
+
 export function isFunction(value: any): boolean {
   return typeof value === 'function';
 }

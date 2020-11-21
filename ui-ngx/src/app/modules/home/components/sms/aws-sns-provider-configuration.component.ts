@@ -20,7 +20,11 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { isDefinedAndNotNull } from '@core/utils';
-import { AwsSnsSmsProviderConfiguration } from '@shared/models/settings.models';
+import {
+  AwsSnsSmsProviderConfiguration,
+  SmsProviderConfiguration,
+  SmsProviderType
+} from '@shared/models/settings.models';
 
 @Component({
   selector: 'tb-aws-sns-provider-configuration',
@@ -93,6 +97,7 @@ export class AwsSnsProviderConfigurationComponent implements ControlValueAccesso
     let configuration: AwsSnsSmsProviderConfiguration = null;
     if (this.awsSnsProviderConfigurationFormGroup.valid) {
       configuration = this.awsSnsProviderConfigurationFormGroup.value;
+      (configuration as SmsProviderConfiguration).type = SmsProviderType.AWS_SNS;
     }
     this.propagateChange(configuration);
   }
