@@ -28,5 +28,5 @@ public interface SessionContext {
 
     void onProfileUpdate(DeviceProfile deviceProfile);
 
-    void onDeviceUpdate(Device device);
+    void onDeviceProfileUpdate(Device device);
 }
