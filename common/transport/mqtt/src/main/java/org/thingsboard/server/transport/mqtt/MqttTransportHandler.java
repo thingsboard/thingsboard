@@ -40,6 +40,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportPayloadType;
@@ -698,5 +699,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     @Override
     public void onProfileUpdate(DeviceProfile deviceProfile) {
         deviceSessionCtx.onProfileUpdate(deviceProfile);
+    }
+
+    @Override
+    public void onDeviceUpdate(Device device) {
+        deviceSessionCtx.onDeviceUpdate(device);
     }
 }
