@@ -23,6 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
+import org.snmp4j.Snmp;
 import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.event.ResponseListener;
 import org.snmp4j.smi.OID;
@@ -60,6 +61,8 @@ public class SnmpSessionListener implements ResponseListener {
 
     @Override
     public void onResponse(ResponseEvent event) {
+        ((Snmp) event.getSource()).cancel(event.getRequest(), this);
+
         //TODO: Make data processing in another thread pool - parse and save attributes and telemetry
         PDU response = event.getResponse();
         if (event.getError() != null) {
