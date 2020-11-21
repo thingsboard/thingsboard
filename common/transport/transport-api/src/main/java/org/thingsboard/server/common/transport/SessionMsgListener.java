@@ -41,6 +41,6 @@ public interface SessionMsgListener {
     default void onProfileUpdate(DeviceProfile deviceProfile) {
     }
 
-    default void onDeviceUpdate(Device device) {
+    default void onDeviceProfileUpdate(Device device) {
     }
 }

@@ -689,7 +689,7 @@ public class DefaultTransportService implements TransportService {
                     && md.getSessionInfo().getDeviceIdLSB() == deviceIdLSB)
                     && (md.getSessionInfo().getDeviceProfileIdMSB() != deviceProfileIdMSB
                     && md.getSessionInfo().getDeviceProfileIdLSB() != deviceProfileIdLSB)) {
-                transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(device));
+                transportCallbackExecutor.submit(() -> md.getListener().onDeviceProfileUpdate(device));
             }
         });
     }
