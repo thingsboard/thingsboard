@@ -161,7 +161,6 @@ public class DefaultMailService implements MailService {
     @Override
     public void sendEmail(TenantId tenantId, String email, String subject, String message) throws ThingsboardException {
         sendMail(mailSender, mailFrom, email, subject, message);
-        apiUsageClient.report(tenantId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
     }
 
     @Override
