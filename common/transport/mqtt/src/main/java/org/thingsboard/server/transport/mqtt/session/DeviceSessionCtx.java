@@ -20,7 +20,6 @@ import io.netty.channel.ChannelHandlerContext;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportPayloadType;
@@ -112,11 +111,6 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     public void onProfileUpdate(DeviceProfile deviceProfile) {
         super.onProfileUpdate(deviceProfile);
         updateTopicFilters(deviceProfile);
-    }
-
-    @Override
-    public void onDeviceProfileUpdate(Device device) {
-        super.onDeviceProfileUpdate(device);
     }
 
     private void updateTopicFilters(DeviceProfile deviceProfile) {

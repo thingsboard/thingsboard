@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.session;
+package org.thingsboard.server.common.transport.session;
 
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.UUID;
 
@@ -28,5 +29,5 @@ public interface SessionContext {
 
     void onProfileUpdate(DeviceProfile deviceProfile);
 
-    void onDeviceProfileUpdate(Device device);
+    void onDeviceProfileUpdate(Device device, TransportProtos.SessionInfoProto sessionInfo);
 }

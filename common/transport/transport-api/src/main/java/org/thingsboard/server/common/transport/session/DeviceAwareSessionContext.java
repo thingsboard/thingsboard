@@ -21,7 +21,6 @@ import lombok.Setter;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.msg.session.SessionContext;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
@@ -65,14 +64,10 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
         this.sessionInfo = TransportProtos.SessionInfoProto.newBuilder().mergeFrom(sessionInfo).setDeviceType(deviceProfile.getName()).build();
     }
 
-    public void onDeviceProfileUpdate(Device device) {
+    public void onDeviceProfileUpdate(Device device, TransportProtos.SessionInfoProto sessionInfo) {
         this.deviceInfo.setDeviceProfileId(device.getDeviceProfileId());
         this.deviceInfo.setDeviceType(device.getType());
-        this.sessionInfo = TransportProtos.SessionInfoProto.newBuilder().mergeFrom(sessionInfo)
-                .setDeviceProfileIdMSB(device.getDeviceProfileId().getId().getMostSignificantBits())
-                .setDeviceProfileIdLSB(device.getDeviceProfileId().getId().getLeastSignificantBits())
-                .setDeviceType(device.getType())
-                .build();
+        this.sessionInfo = sessionInfo;
     }
 
     public boolean isConnected() {
