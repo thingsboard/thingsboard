@@ -483,7 +483,6 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       }
     }).afterClosed().subscribe(deviceCredential => {
       if (isDefinedAndNotNull(deviceCredential)) {
-        this.config.table.onEntityUpdated(device);
         this.config.componentsData.deviceCredential = deviceCredential;
       }
     });
