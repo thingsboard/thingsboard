@@ -23,6 +23,9 @@ import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -72,13 +75,7 @@ public class SnmpTransportService {
     @PostConstruct
     public void init() {
         log.info("Starting SNMP transport...");
-
         initializeSnmp();
-
-        //TODO: temp implementation
-        this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor();
-        this.schedulerExecutor.schedule(this::initSessionCtxList, 10000, TimeUnit.MILLISECONDS);
-
         log.info("SNMP transport started!");
     }
 
@@ -96,6 +93,13 @@ public class SnmpTransportService {
             }
         }
         log.info("SNMP transport stopped!");
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    @Order(value = 2)
+    public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
+        log.info("Received application ready event. Starting SNMP polling.");
+        initSessionCtxList();
     }
 
     private void initializeSnmp() {

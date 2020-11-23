@@ -23,6 +23,7 @@ import org.snmp4j.Target;
 import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.smi.GenericAddress;
 import org.snmp4j.smi.OctetString;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
@@ -103,6 +104,11 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
     public void onProfileUpdate(DeviceProfile deviceProfile) {
         super.onProfileUpdate(deviceProfile);
         //TODO: Cancel futures, update PDUs and start new features.
+    }
+
+    public void onDeviceProfileUpdate(Device device) {
+//        super.onDeviceProfileUpdate(device);
+        //TODO: cancel future for a specific device
     }
 
     public void initTarget(SnmpDeviceProfileTransportConfiguration config) {
