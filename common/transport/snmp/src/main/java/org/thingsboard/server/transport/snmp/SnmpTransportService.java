@@ -132,7 +132,6 @@ public class SnmpTransportService {
         pduPerProfile = new ConcurrentHashMap<>();
         snmpTransportContext.getDeviceProfileTransportConfig().forEach((id, config) -> pduPerProfile.put(id, getPduList(config)));
 
-
         this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("snmp-pooling-scheduler"));
         this.schedulerExecutor.scheduleAtFixedRate(this::executeSnmp, 1000, 5000, TimeUnit.MILLISECONDS);
     }

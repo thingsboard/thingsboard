@@ -77,37 +77,38 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
 
     @Override
     public void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse) {
-
     }
 
     @Override
     public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
-
     }
 
     @Override
     public void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification) {
-
     }
 
     @Override
     public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
-
     }
 
     @Override
     public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
-
     }
 
     @Override
     public void onProfileUpdate(DeviceProfile deviceProfile) {
         super.onProfileUpdate(deviceProfile);
-        //TODO: Cancel futures, update PDUs and start new features.
+        //TODO: Is this check needed. What should be done if profile type was changed to not SNMP?
+        if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
+            snmpSessionListener.getSnmpTransportContext().getDeviceProfileTransportConfig().put(
+                    deviceProfile.getId(),
+                    (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration());
+            //TODO: Cancel futures, update PDUs and start new features.
+        }
     }
 
     public void onDeviceProfileUpdate(Device device) {
-//        super.onDeviceProfileUpdate(device);
+        //super.onDeviceProfileUpdate(device);
         //TODO: cancel future for a specific device
     }
 

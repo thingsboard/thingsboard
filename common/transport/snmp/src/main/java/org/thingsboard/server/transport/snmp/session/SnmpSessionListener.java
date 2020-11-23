@@ -26,11 +26,8 @@ import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
 import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.event.ResponseListener;
-import org.snmp4j.smi.OID;
 import org.snmp4j.smi.VariableBinding;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileKvMapping;
-import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.transport.TransportContext;
@@ -43,8 +40,6 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -72,23 +67,10 @@ public class SnmpSessionListener implements ResponseListener {
 
         if (response != null) {
             DeviceProfileId deviceProfileId = (DeviceProfileId) event.getUserObject();
-            SnmpDeviceProfileTransportConfiguration profileTransportConfiguration = snmpTransportContext.getDeviceProfileTransportConfig().get(deviceProfileId);
-
-            List<SnmpDeviceProfileKvMapping> attributesMappingList = profileTransportConfiguration.getAttributes();
-            List<SnmpDeviceProfileKvMapping> telemetryMappingList = profileTransportConfiguration.getTelemetry();
-
             TransportService transportService = snmpTransportContext.getTransportService();
-
             for (int i = 0; i < response.size(); i++) {
                 VariableBinding vb = response.get(i);
-
-                log.info("[{}] SNMP response [{}] received: {} - {}",
-                        event.getPeerAddress(),
-                        event.getRequest().getRequestID(),
-                        vb.getOid(),
-                        vb.toValueString());
-
-                findMapping(vb.getOid(), attributesMappingList).ifPresent(kvMapping -> transportService.process(DeviceTransportType.DEFAULT,
+                snmpTransportContext.findAttributesMapping(deviceProfileId, vb.getOid()).ifPresent(kvMapping -> transportService.process(DeviceTransportType.DEFAULT,
                         TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
                         new DeviceAuthCallback(snmpTransportContext, sessionInfo -> {
                             try {
@@ -100,8 +82,7 @@ public class SnmpSessionListener implements ResponseListener {
                                 log.error("Failed to process SNMP response: {}", e.getMessage(), e);
                             }
                         })));
-
-                findMapping(vb.getOid(), telemetryMappingList).ifPresent(kvMapping -> transportService.process(DeviceTransportType.DEFAULT,
+                snmpTransportContext.findTelemetryMapping(deviceProfileId, vb.getOid()).ifPresent(kvMapping -> transportService.process(DeviceTransportType.DEFAULT,
                         TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
                         new DeviceAuthCallback(snmpTransportContext, sessionInfo -> {
                             try {
@@ -118,12 +99,6 @@ public class SnmpSessionListener implements ResponseListener {
         } else {
             log.warn("No SNMP response, requestId: {}", event.getRequest().getRequestID());
         }
-    }
-
-    private Optional<SnmpDeviceProfileKvMapping> findMapping(OID responseOid, List<SnmpDeviceProfileKvMapping> mappings) {
-        return mappings.stream()
-                .filter(kvMapping -> new OID(kvMapping.getOid()).equals(responseOid))
-                .findFirst();
     }
 
     private TransportProtos.PostAttributeMsg convertToPostAttributes(String keyName, DataType dataType, String payload) throws AdaptorException {

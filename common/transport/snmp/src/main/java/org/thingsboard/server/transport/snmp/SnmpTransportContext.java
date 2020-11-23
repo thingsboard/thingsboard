@@ -17,13 +17,17 @@ package org.thingsboard.server.transport.snmp;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.snmp4j.smi.OID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileKvMapping;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.TransportContext;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service("SnmpTransportContext")
@@ -33,4 +37,24 @@ public class SnmpTransportContext extends TransportContext {
     @Getter
     private final Map<DeviceProfileId, SnmpDeviceProfileTransportConfiguration> deviceProfileTransportConfig = new ConcurrentHashMap<>();
 
+    public Optional<SnmpDeviceProfileKvMapping> findAttributesMapping(DeviceProfileId deviceProfileId, OID responseOid) {
+        if (deviceProfileTransportConfig.containsKey(deviceProfileId)) {
+            return findMapping(responseOid, deviceProfileTransportConfig.get(deviceProfileId).getAttributes());
+        }
+        return Optional.empty();
+    }
+
+    public Optional<SnmpDeviceProfileKvMapping> findTelemetryMapping(DeviceProfileId deviceProfileId, OID responseOid) {
+        if (deviceProfileTransportConfig.containsKey(deviceProfileId)) {
+            return findMapping(responseOid, deviceProfileTransportConfig.get(deviceProfileId).getTelemetry());
+        }
+        return Optional.empty();
+    }
+
+    private Optional<SnmpDeviceProfileKvMapping> findMapping(OID responseOid, List<SnmpDeviceProfileKvMapping> mappings) {
+        return mappings.stream()
+                .filter(kvMapping -> new OID(kvMapping.getOid()).equals(responseOid))
+                //TODO: OID shouldn't be duplicated in the config, add verification
+                .findFirst();
+    }
 }
