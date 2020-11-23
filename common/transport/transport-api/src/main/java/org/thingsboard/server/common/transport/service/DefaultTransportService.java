@@ -418,8 +418,8 @@ public class DefaultTransportService implements TransportService {
         sessions.forEach((uuid, sessionMD) -> {
             long lastActivityTime = sessionMD.getLastActivityTime();
             TransportProtos.SessionInfoProto sessionInfo = sessionMD.getSessionInfo();
-            if (sessionInfo.getGwSessionIdMSB() > 0 &&
-                    sessionInfo.getGwSessionIdLSB() > 0) {
+            if (sessionInfo.getGwSessionIdMSB() != 0 &&
+                    sessionInfo.getGwSessionIdLSB() != 0) {
                 SessionMetaData gwMetaData = sessions.get(new UUID(sessionInfo.getGwSessionIdMSB(), sessionInfo.getGwSessionIdLSB()));
                 if (gwMetaData != null) {
                     lastActivityTime = Math.max(gwMetaData.getLastActivityTime(), lastActivityTime);
