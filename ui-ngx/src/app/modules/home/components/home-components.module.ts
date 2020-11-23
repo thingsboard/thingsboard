@@ -77,7 +77,7 @@ import { ComplexFilterPredicateDialogComponent } from '@home/components/filter/c
 import { KeyFilterDialogComponent } from '@home/components/filter/key-filter-dialog.component';
 import { FiltersDialogComponent } from '@home/components/filter/filters-dialog.component';
 import { FilterDialogComponent } from '@home/components/filter/filter-dialog.component';
-import { FilterSelectComponent } from './filter/filter-select.component';
+import { FilterSelectComponent } from '@home/components/filter/filter-select.component';
 import { FiltersEditComponent } from '@home/components/filter/filters-edit.component';
 import { FiltersEditPanelComponent } from '@home/components/filter/filters-edit-panel.component';
 import { UserFilterDialogComponent } from '@home/components/filter/user-filter-dialog.component';
@@ -111,11 +111,14 @@ import { DeviceWizardDialogComponent } from './wizard/device-wizard-dialog.compo
 import { DeviceCredentialsComponent } from './device/device-credentials.component';
 import { AlarmScheduleInfoComponent } from './profile/alarm/alarm-schedule-info.component';
 import { AlarmScheduleDialogComponent } from '@home/components/profile/alarm/alarm-schedule-dialog.component';
-import { EditAlarmDetailsDialogComponent } from './profile/alarm/edit-alarm-details-dialog.component';
+import { EditAlarmDetailsDialogComponent } from '@home/components/profile/alarm/edit-alarm-details-dialog.component';
 import { AlarmRuleConditionDialogComponent } from '@home/components/profile/alarm/alarm-rule-condition-dialog.component';
-import { DefaultTenantProfileConfigurationComponent } from './profile/tenant/default-tenant-profile-configuration.component';
-import { TenantProfileConfigurationComponent } from './profile/tenant/tenant-profile-configuration.component';
-import { CopyDeviceCredentialsComponent } from './device/copy-device-credentials.component';
+import { DefaultTenantProfileConfigurationComponent } from '@home/components/profile/tenant/default-tenant-profile-configuration.component';
+import { TenantProfileConfigurationComponent } from '@home/components/profile/tenant/tenant-profile-configuration.component';
+import { SmsProviderConfigurationComponent } from '@home/components/sms/sms-provider-configuration.component';
+import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-sns-provider-configuration.component';
+import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
+import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
 
 @NgModule({
   declarations:
@@ -214,7 +217,10 @@ import { CopyDeviceCredentialsComponent } from './device/copy-device-credentials
       DeviceCredentialsComponent,
       CopyDeviceCredentialsComponent,
       AlarmScheduleDialogComponent,
-      EditAlarmDetailsDialogComponent
+      EditAlarmDetailsDialogComponent,
+      SmsProviderConfigurationComponent,
+      AwsSnsProviderConfigurationComponent,
+      TwilioSmsProviderConfigurationComponent
     ],
   imports: [
     CommonModule,
@@ -301,7 +307,9 @@ import { CopyDeviceCredentialsComponent } from './device/copy-device-credentials
     AlarmScheduleDialogComponent,
     EditAlarmDetailsDialogComponent,
     DeviceProfileProvisionConfigurationComponent,
-    AlarmScheduleComponent
+    SmsProviderConfigurationComponent,
+    AwsSnsProviderConfigurationComponent,
+    TwilioSmsProviderConfigurationComponent
   ],
   providers: [
     WidgetComponentService,

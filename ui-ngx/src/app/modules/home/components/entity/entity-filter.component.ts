@@ -147,6 +147,9 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit {
           entityViewNameFilter: [filter ? filter.entityViewNameFilter : '', []],
         });
         break;
+      case AliasFilterType.apiUsageState:
+        this.filterFormGroup = this.fb.group({});
+        break;
       case AliasFilterType.relationsQuery:
       case AliasFilterType.assetSearchQuery:
       case AliasFilterType.deviceSearchQuery:
@@ -190,7 +193,7 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit {
 
   private filterTypeChanged(type: AliasFilterType) {
     let resolveMultiple = true;
-    if (type === AliasFilterType.singleEntity || type === AliasFilterType.stateEntity) {
+    if (type === AliasFilterType.singleEntity || type === AliasFilterType.stateEntity || type === AliasFilterType.apiUsageState) {
       resolveMultiple = false;
     }
     if (this.resolveMultiple !== resolveMultiple) {
