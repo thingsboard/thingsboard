@@ -43,7 +43,6 @@ import { Observable, of } from 'rxjs';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
 import {
-  calculateNewPointCoordinate,
   createLoadingDiv,
   createTooltip,
   parseArray,
@@ -78,8 +77,6 @@ export default abstract class LeafletMap {
     updatePending = false;
     addMarkers: L.Marker[] = [];
     addPolygons: L.Polygon[] = [];
-    testA:number;
-    testB:number;
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
@@ -215,28 +212,12 @@ export default abstract class LeafletMap {
       return point;
     }
 
-
-    // checkСoordinate(coordinate,maxCoordinate){
-  //     //     if(coordinate > maxCoordinate){
-  //     //       coordinate = maxCoordinate;
-  //     //     }else if(coordinate < -maxCoordinate){
-  //     //       coordinate = -maxCoordinate;
-  //     //     }
-  //     //     return coordinate;
-  //     // }
-
   addPolygonControl() {
     if (this.options.showPolygon && this.options.editablePolygon) {
       let mousePositionOnMap: L.LatLng[];
       let addPolygon: L.Control;
       this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
         const polygonOffset = this.options.provider === MapProviders.image ? 10 : 0.01;
-
-        if(this.map['_lastCenter'] === null){
-          this.testA = this.map.options.center['lat']*2;
-          this.testB = this.map.options.center['lng']*2;
-        }
-
         if(this.options.provider !== MapProviders.image) {
           if (e.latlng.lng > 180 - polygonOffset) {
             e.latlng.lng = 180 - polygonOffset;
@@ -358,7 +339,6 @@ export default abstract class LeafletMap {
     }
 
     public setMap(map: L.Map) {
-
         this.map = map;
         if (this.options.useDefaultCenterPosition) {
           this.map.panTo(this.options.defaultCenterPosition);
