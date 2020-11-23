@@ -684,14 +684,28 @@ public class DefaultTransportService implements TransportService {
         long deviceIdLSB = device.getId().getId().getLeastSignificantBits();
         long deviceProfileIdMSB = device.getDeviceProfileId().getId().getMostSignificantBits();
         long deviceProfileIdLSB = device.getDeviceProfileId().getId().getLeastSignificantBits();
-        sessions.forEach((id, md) -> {
+        for (Map.Entry<UUID, SessionMetaData> entry : sessions.entrySet()) {
+            SessionMetaData md = entry.getValue();
             if ((md.getSessionInfo().getDeviceIdMSB() == deviceIdMSB
                     && md.getSessionInfo().getDeviceIdLSB() == deviceIdLSB)
                     && (md.getSessionInfo().getDeviceProfileIdMSB() != deviceProfileIdMSB
                     && md.getSessionInfo().getDeviceProfileIdLSB() != deviceProfileIdLSB)) {
-                transportCallbackExecutor.submit(() -> md.getListener().onDeviceProfileUpdate(device));
+                updateSessionMetadata(device, entry, md);
             }
-        });
+        }
+    }
+
+    private void updateSessionMetadata(Device device, Map.Entry<UUID, SessionMetaData> entry, SessionMetaData md) {
+        TransportProtos.SessionInfoProto newSessionInfo = TransportProtos.SessionInfoProto.newBuilder()
+                .mergeFrom(md.getSessionInfo())
+                .setDeviceProfileIdMSB(device.getDeviceProfileId().getId().getMostSignificantBits())
+                .setDeviceProfileIdLSB(device.getDeviceProfileId().getId().getLeastSignificantBits())
+                .setDeviceType(device.getType())
+                .build();
+        SessionMetaData newSessionMetaData = new SessionMetaData(newSessionInfo, md.getSessionType(), md.getListener());
+        entry.setValue(newSessionMetaData);
+        transportCallbackExecutor.submit(() -> newSessionMetaData.getListener().onDeviceProfileUpdate(device,
+                newSessionMetaData.getSessionInfo()));
     }
 
     protected UUID toSessionId(TransportProtos.SessionInfoProto sessionInfo) {

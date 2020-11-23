@@ -702,7 +702,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     @Override
-    public void onDeviceProfileUpdate(Device device) {
-        deviceSessionCtx.onDeviceProfileUpdate(device);
+    public void onDeviceProfileUpdate(Device device, TransportProtos.SessionInfoProto sessionInfo) {
+        deviceSessionCtx.onDeviceProfileUpdate(device, sessionInfo);
     }
 }
