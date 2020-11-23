@@ -105,7 +105,7 @@ import { AlarmRuleConditionComponent } from './profile/alarm/alarm-rule-conditio
 import { FilterTextComponent } from './filter/filter-text.component';
 import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
 import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
-import { DeviceProfileProvisionConfigurationComponent } from "./profile/device-profile-provision-configuration.component";
+import { DeviceProfileProvisionConfigurationComponent } from './profile/device-profile-provision-configuration.component';
 import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component';
 import { DeviceWizardDialogComponent } from './wizard/device-wizard-dialog.component';
 import { DeviceCredentialsComponent } from './device/device-credentials.component';
@@ -115,6 +115,7 @@ import { EditAlarmDetailsDialogComponent } from './profile/alarm/edit-alarm-deta
 import { AlarmRuleConditionDialogComponent } from '@home/components/profile/alarm/alarm-rule-condition-dialog.component';
 import { DefaultTenantProfileConfigurationComponent } from './profile/tenant/default-tenant-profile-configuration.component';
 import { TenantProfileConfigurationComponent } from './profile/tenant/tenant-profile-configuration.component';
+import { CopyDeviceCredentialsComponent } from './device/copy-device-credentials.component';
 
 @NgModule({
   declarations:
@@ -211,6 +212,7 @@ import { TenantProfileConfigurationComponent } from './profile/tenant/tenant-pro
       AlarmScheduleComponent,
       DeviceWizardDialogComponent,
       DeviceCredentialsComponent,
+      CopyDeviceCredentialsComponent,
       AlarmScheduleDialogComponent,
       EditAlarmDetailsDialogComponent
     ],
@@ -293,6 +295,7 @@ import { TenantProfileConfigurationComponent } from './profile/tenant/tenant-pro
     RuleChainAutocompleteComponent,
     DeviceWizardDialogComponent,
     DeviceCredentialsComponent,
+    CopyDeviceCredentialsComponent,
     AlarmScheduleInfoComponent,
     AlarmScheduleComponent,
     AlarmScheduleDialogComponent,
