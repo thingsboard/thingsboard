@@ -43,6 +43,7 @@ import { Observable, of } from 'rxjs';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
 import {
+  calculateNewPointCoordinate,
   createLoadingDiv,
   createTooltip,
   parseArray,
@@ -77,6 +78,8 @@ export default abstract class LeafletMap {
     updatePending = false;
     addMarkers: L.Marker[] = [];
     addPolygons: L.Polygon[] = [];
+    testA:number;
+    testB:number;
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
@@ -202,18 +205,75 @@ export default abstract class LeafletMap {
         }
     }
 
+
+    checkPointPosition(point, maxPointPosition){
+      if(point > maxPointPosition){
+        point = maxPointPosition
+      } else if(point < 0){
+        point = 0
+      }
+      return point;
+    }
+
+
+    // checkСoordinate(coordinate,maxCoordinate){
+  //     //     if(coordinate > maxCoordinate){
+  //     //       coordinate = maxCoordinate;
+  //     //     }else if(coordinate < -maxCoordinate){
+  //     //       coordinate = -maxCoordinate;
+  //     //     }
+  //     //     return coordinate;
+  //     // }
+
   addPolygonControl() {
     if (this.options.showPolygon && this.options.editablePolygon) {
       let mousePositionOnMap: L.LatLng[];
       let addPolygon: L.Control;
       this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
         const polygonOffset = this.options.provider === MapProviders.image ? 10 : 0.01;
+
+        if(this.map['_lastCenter'] === null){
+          this.testA = this.map.options.center['lat']*2;
+          this.testB = this.map.options.center['lng']*2;
+        }
+
+        if(this.options.provider !== MapProviders.image) {
+          if (e.latlng.lng > 180-polygonOffset) {
+            e.latlng.lng = 180-polygonOffset;
+          } else if (e.latlng.lng < -180) {
+            e.latlng.lng = -180;
+          }
+          if(e.latlng.lat > 85.05112882609004){
+            e.latlng.lat = 85.05112882609004;
+          }else if(e.latlng.lat < -85.05112882609004 + polygonOffset){
+            e.latlng.lat = -85.05112882609004 + polygonOffset;
+          }
+        }
         const latlng1 = e.latlng;
         const latlng2 = L.latLng(e.latlng.lat, e.latlng.lng + polygonOffset);
         const latlng3 = L.latLng(e.latlng.lat - polygonOffset, e.latlng.lng);
         mousePositionOnMap = [latlng1, latlng2, latlng3];
       });
       const dragListener = (e: L.DragEndEvent) => {
+        debugger;
+        if(this.options.provider === MapProviders.image) {
+          for (let i = 0; i < mousePositionOnMap.length; i++) {
+            let convert = L.CRS.Simple.latLngToPoint(mousePositionOnMap[i], 3);
+            convert.x = this.checkPointPosition(convert.x, this['width']);
+            convert.y = this.checkPointPosition(convert.y, this['height']);
+            mousePositionOnMap[i] = L.CRS.Simple.pointToLatLng(convert, 3);
+            if (convert.x == this['width'] && (i == 0 || i == 2)) {
+              mousePositionOnMap[i].lng -= 10;
+            } else if (convert.x == 0 && i == 1) {
+              mousePositionOnMap[i].lng += 10;
+            }
+            if (convert.y == 0 && i == 2) {
+              mousePositionOnMap[i].lat -= 10;
+            } else if (convert.y == this['height'] && (i == 0 || i == 1)) {
+              mousePositionOnMap[i].lat += 10;
+            }
+          }
+        }
         if (e.type === 'dragend' && mousePositionOnMap) {
           const newPolygon = L.polygon(mousePositionOnMap).addTo(this.map);
           this.addPolygons.push(newPolygon);
@@ -299,6 +359,7 @@ export default abstract class LeafletMap {
     }
 
     public setMap(map: L.Map) {
+
         this.map = map;
         if (this.options.useDefaultCenterPosition) {
           this.map.panTo(this.options.defaultCenterPosition);
