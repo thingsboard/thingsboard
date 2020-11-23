@@ -232,7 +232,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
         if (topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC)) {
             if (gatewaySessionHandler != null) {
-                handleGatewayPublishMsg(topicName, msgId, mqttMsg);
+                handleGatewayPublishMsg(ctx, topicName, msgId, mqttMsg);
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
             }
         } else {
@@ -240,7 +240,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void handleGatewayPublishMsg(String topicName, int msgId, MqttPublishMessage mqttMsg) {
+    private void handleGatewayPublishMsg(ChannelHandlerContext ctx, String topicName, int msgId, MqttPublishMessage mqttMsg) {
         try {
             switch (topicName) {
                 case MqttTopics.GATEWAY_TELEMETRY_TOPIC:
@@ -264,6 +264,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 case MqttTopics.GATEWAY_DISCONNECT_TOPIC:
                     gatewaySessionHandler.onDeviceDisconnect(mqttMsg);
                     break;
+                default:
+                    ack(ctx, msgId);
             }
         } catch (RuntimeException | AdaptorException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
@@ -293,6 +295,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 transportService.process(deviceSessionCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(ctx, msgId, claimDeviceMsg));
             } else {
                 transportService.reportActivity(deviceSessionCtx.getSessionInfo());
+                ack(ctx, msgId);
             }
         } catch (AdaptorException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
@@ -301,15 +304,18 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
+    private void ack(ChannelHandlerContext ctx, int msgId) {
+        if (msgId > 0) {
+            ctx.writeAndFlush(createMqttPubAckMsg(msgId));
+        }
+    }
 
     private <T> TransportServiceCallback<Void> getPubAckCallback(final ChannelHandlerContext ctx, final int msgId, final T msg) {
         return new TransportServiceCallback<Void>() {
             @Override
             public void onSuccess(Void dummy) {
                 log.trace("[{}] Published msg: {}", sessionId, msg);
-                if (msgId > 0) {
-                    ctx.writeAndFlush(createMqttPubAckMsg(msgId));
-                }
+                ack(ctx, msgId);
             }
 
             @Override
@@ -334,9 +340,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         @Override
         public void onSuccess(TransportProtos.ProvisionDeviceResponseMsg provisionResponseMsg) {
             log.trace("[{}] Published msg: {}", sessionId, msg);
-            if (msgId > 0) {
-                ctx.writeAndFlush(createMqttPubAckMsg(msgId));
-            }
+            ack(ctx, msgId);
             try {
                 if (deviceSessionCtx.getProvisionPayloadType().equals(TransportPayloadType.JSON)) {
                     deviceSessionCtx.getContext().getJsonMqttAdaptor().convertToPublish(deviceSessionCtx, provisionResponseMsg).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
