@@ -37,13 +37,14 @@ import {
   TELEMETRY
 } from "./profile-config.models";
 import { isNotNullOrUndefined } from 'codelyzer/util/isNotNullOrUndefined';
-import { isUndefined } from '@core/utils';
+import { deepClone, isUndefined } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import {
   Lwm2mObjectAddInstancesComponent,
   Lwm2mObjectAddInstancesData
 } from '@home/components/profile/device/lwm2m/lwm2m-object-add-instances.component';
+import { Control } from 'leaflet';
 
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry',
@@ -57,6 +58,7 @@ import {
     }
   ]
 })
+
 export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor, OnInit, Validators {
 
   valuePrev = null as any;
@@ -116,6 +118,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
       } else if (JSON.stringify(value) !== JSON.stringify(this.valuePrev)) {
         this.valuePrev = value;
         if (this.observeAttrTelemetryFormGroup.valid) {
+          console.warn(value, "attr")
           this.propagateChange(value);
         } else {
           this.propagateChange(null);
@@ -158,8 +161,8 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         name: objectLwM2M.name,
         multiple: objectLwM2M.multiple,
         mandatory: objectLwM2M.mandatory,
-        instances: (objectLwM2M.instances.length) ? this.createInstanceLwM2M(this.sortInstancesInObject(objectLwM2M.instances))
-                                                  : this.createInstanceLwM2M(objectLwM2M.instances)
+        instances: (objectLwM2M.instances.length) ? this.createInstanceLwM2M(this.sortInstancesValue(objectLwM2M.instances))
+          : this.createInstanceLwM2M(objectLwM2M.instances)
       })
     }))
   }
@@ -174,14 +177,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         resources: {value: instanceLwM2M.resources, disabled: this.disabled}
       })
     }))
-  }
-
-  sortInstancesInObject(instances: Instance[]): Instance[] {
-    return instances.sort((a, b) => {
-      let aLC: number = a.id;
-      let bLC: number = b.id;
-      return aLC < bLC ? -1 : (aLC > bLC ? 1 : 0);
-    });
   }
 
   clientLwM2MFormArray(formGroup: FormGroup): FormArray {
@@ -250,30 +245,146 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
    * @param objectId
    * @param objectName
    */
-  addInstances($event: Event, objectId: number, objectName: string): void {
+  //
+  // getMultiple(objectId: number): boolean{
+  //   return this.observeAttrTelemetryFormGroup.get('clientLwM2M').value.find(e => e.id == objectId).mandatory;
+  // }
+
+  addInstances($event: Event, object: ObjectLwM2M): void {
     if ($event) {
       $event.stopPropagation();
-      // $event.preventDefault();
+      $event.preventDefault();
     }
-    let mandatory = this.observeAttrTelemetryFormGroup.get('clientLwM2M').value.find(e => e.id == objectId).mandatory;
-    let multiple = this.observeAttrTelemetryFormGroup.get('clientLwM2M').value.find(e => e.id == objectId).multiple;
-      console.warn(mandatory,multiple );
-
+    let instancesIds = new Set<number>();
+    object.instances.forEach(inst => {
+      instancesIds.add(inst.id);
+    });
     this.dialog.open<Lwm2mObjectAddInstancesComponent, Lwm2mObjectAddInstancesData, object>(Lwm2mObjectAddInstancesComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        listInstances: {test: "valueTest"},
-        objectName: objectName,
-        objectId: objectId
+        instancesIds: this.setInstancesIds(object.instances),
+        objectName: object.name,
+        objectId: object.id
       }
     }).afterClosed().subscribe(
-      (res) => {
-        if (res) {
-          console.warn(res);
+      (res: Lwm2mObjectAddInstancesData | undefined) => {
+        if (isNotNullOrUndefined(res)) {
+          this.updateInstancesIds(res);
         }
       }
     );
+  }
+
+  updateInstancesIds(data: Lwm2mObjectAddInstancesData) {
+    let valueNew = new Set<number>();
+    let valueOld = new Set<number>();
+    data.instancesIds.forEach(value => {
+      valueNew.add(value);
+    })
+    let oldInstances = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).find(e => e.id == data.objectId).instances;
+    oldInstances.forEach(inst => {
+      valueOld.add(inst.id);
+    });
+    if (JSON.stringify(Array.from(valueOld)) != JSON.stringify(Array.from(valueNew))) {
+      let idsDel = this.diffBetweenSet(valueNew, this.deepCloneSet(valueOld));
+      let idsAdd = this.diffBetweenSet(valueOld, this.deepCloneSet(valueNew));
+      if (idsDel.size) {
+        this.delInstances(data.objectId, idsDel);
+      }
+      if (idsAdd.size) {
+        this.addInstancesNew(data.objectId, idsAdd)
+      }
+      if (idsDel.size || idsAdd.size) {
+        // sort
+        let instancesValue = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).find(e => e.id == data.objectId).instances;
+        let instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls.find(e => e.value.id == data.objectId).get("instances") as FormArray).controls as FormGroup[];
+        this.sortInstancesValue(instancesValue);
+        this.sortInstancesFormGrp(instancesFormArray);
+        this.propagateChange(this.observeAttrTelemetryFormGroup.value);
+      }
+    }
+  }
+
+  sortInstancesValue(instances: Instance[]): Instance[]{
+    return instances.sort((a, b) => {
+      let aLC: number = a.id;
+      let bLC: number = b.id;
+      return aLC < bLC ? -1 : (aLC > bLC ? 1 : 0);
+    });
+  }
+
+  sortInstancesFormGrp(instances: FormGroup[]): void {
+    instances.sort((a, b) => {
+      let aLC: number = a.value.id;
+      let bLC: number = b.value.id;
+      return aLC < bLC ? -1 : (aLC > bLC ? 1 : 0);
+    });
+  }
+
+  delInstances(objectId: number, idsDel: Set<number>): void {
+    let isIdIndex = (element) => element.id == objectId;
+    let objectIndex = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).findIndex(isIdIndex);
+    idsDel.forEach(x => {
+      isIdIndex = (element) => element.value.id == x;
+      let instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls[objectIndex].get("instances") as FormArray).controls;
+      let instanceIndex = instancesFormArray.findIndex(isIdIndex);
+      instancesFormArray.splice(instanceIndex, 1);
+      let instancesValue = this.observeAttrTelemetryFormGroup.get('clientLwM2M').value[objectIndex].instances;
+      instancesValue.splice(instanceIndex, 1);
+    })
+  }
+
+  addInstancesNew(objectId: number, idsAdd: Set<number>): void {
+    let instancesValue = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).find(e => e.id == objectId).instances;
+    let instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls.find(e => e.value.id == objectId).get("instances") as FormArray).controls;
+    idsAdd.forEach(x => {
+      let instanceNew = deepClone(instancesValue[0]) as Instance;
+      instanceNew.id = x;
+      instanceNew.resources.forEach(r => {
+        r.attribute = false;
+        r.telemetry = false;
+        r.observe = false;
+      });
+      instancesValue.push(instanceNew);
+      instancesFormArray.push(this.fb.group({
+        id: x,
+        [this.observe]: {value: false, disabled: this.disabled},
+        [this.attribute]: {value: false, disabled: this.disabled},
+        [this.telemetry]: {value: false, disabled: this.disabled},
+        resources: {value: instanceNew.resources, disabled: this.disabled}
+      }));
+    })
+  }
+
+  deepCloneSet(oldSet: Set<any>): Set<any> {
+    let newSet = new Set<number>();
+    oldSet.forEach(p => {
+      newSet.add(p);
+    })
+    return newSet;
+  }
+
+  diffBetweenSet(firstSet: Set<any>, secondSet: Set<any>): Set<any> {
+    firstSet.forEach(p => {
+      secondSet.delete(p);
+    })
+    return secondSet
+  }
+
+
+  getFilterPredicate(nn: number) {
+    console.warn(nn, "nn");
+  }
+
+  setInstancesIds(instances: Instance []): Set<number> {
+    let instancesIds = new Set<number>();
+    if (instances && instances.length) {
+      instances.forEach(inst => {
+        instancesIds.add(inst.id);
+      });
+    }
+    return instancesIds;
   }
 
 }

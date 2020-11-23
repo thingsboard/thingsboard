@@ -15,43 +15,43 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="standard" [formGroup]="lwm2mObjectListFormGroup" class="mat-block">
+<mat-form-field appearance="standard" [formGroup]="lwm2mObjectListFormGroup" class="lwm2m-instances-list mat-block">
   <mat-label>{{ 'device-profile.lwm2m.instances-list' | translate }}</mat-label>
   <mat-chip-list #chipList formControlName="instancesIdsList">
     <mat-chip
-      *ngFor="let objectLwm2m of instancesIdsList"
+      *ngFor="let instanceIdInputFor of instancesIdsList"
       [selectable]="true"
       [removable]="true"
-      (removed)="remove(objectLwm2m)">
-      {{objectLwm2m}}
+      (removed)="remove(instanceIdInputFor)">
+      {{instanceIdInputFor}}
       <mat-icon matChipRemove>close</mat-icon>
     </mat-chip>
     <mat-form-field class="mat-block" fxFlexFill style="width: auto">
       <mat-label>{{ 'device-profile.lwm2m.instances-input' | translate }}</mat-label>
-      <input fxFlexFill matInput type="number" placeholder="{{'device-profile.lwm2m.instances-input-holder' | translate}}"
-             #objectInput
+      <input fxFlexFill matInput type="number"
+             placeholder="{{'device-profile.lwm2m.instances-input-holder' | translate}}"
+             formControlName="instanceIdInput"
+             #instanceIdInput
              (focusin)="onFocus()"
-             (click)="add(objectInput.valueAsNumber)"
-             formControlName="objectLwm2m"
-             matAutocompleteOrigin
-             #origin="matAutocompleteOrigin"
-             [matAutocompleteConnectedTo]="origin"
-             [matAutocomplete]="objectAutocomplete"
+             (click)="add(instanceIdInput.valueAsNumber)"
+             (keydown)="onkeydown($event)"
              [matChipInputFor]="chipList">
-<!--      fxFlexFill-->
-      <mat-error *ngIf="lwm2mObjectListFormGroup.get('objectLwm2m').hasError('min')">
+      <mat-error *ngIf="lwm2mObjectListFormGroup.get('instanceIdInput').hasError('min')">
         {{ translate.get('device-profile.lwm2m.valid-id-instance-no-min', {
-        instance: objectInput.value.toString(), min: minInstanceIdValue.toString()}) | async }}
+        instance: instanceIdInput.value.toString(), min: instanceIdValueMin.toString()
+      }) | async }}
       </mat-error>
-      <mat-error *ngIf="lwm2mObjectListFormGroup.get('objectLwm2m').hasError('max')">
+      <mat-error *ngIf="lwm2mObjectListFormGroup.get('instanceIdInput').hasError('max')">
         {{ translate.get('device-profile.lwm2m.valid-id-instance-no-max', {
-        instance: objectInput.value.toString(), max: maxInstanceIdValue.toString()}) | async }}
+        instance: instanceIdInput.value.toString(), max: instanceIdValueMax.toString()
+      }) | async }}
+      </mat-error>
+      <mat-error *ngIf="lwm2mObjectListFormGroup.get('instanceIdInput').errors?.notIsNaNValid">
+        {{ translate.get('device-profile.lwm2m.instances-input-holder', {
+        instance: instanceIdInput.value.toString(), max: instanceIdValueMax.toString()
+      }) | async }}
       </mat-error>
     </mat-form-field>
   </mat-chip-list>
-  <mat-autocomplete #objectAutocomplete="matAutocomplete"
-                    class="tb-autocomplete"
-                    [displayWith]="displayFn">
-  </mat-autocomplete>
 </mat-form-field>
 

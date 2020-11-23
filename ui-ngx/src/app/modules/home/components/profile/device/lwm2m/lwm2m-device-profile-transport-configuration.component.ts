@@ -94,8 +94,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       lwm2mServer: [null, Validators.required],
       configurationJson: [null, Validators.required],
     });
-    this.lwm2mDeviceProfileTransportConfFormGroup.valueChanges.subscribe(() => {
+    this.lwm2mDeviceProfileTransportConfFormGroup.valueChanges.subscribe(value => {
       if (!this.disabled) {
+        console.warn(value, "main")
         this.updateModel();
       }
     });
@@ -188,6 +189,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   upDateValueToJsonTab_0(): void {
     if (!this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").pristine) {
+      console.warn(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value['clientLwM2M'])
       this.upDateObserveAttrTelemetryFromGroupToJson(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value['clientLwM2M']);
       this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").markAsPristine({
         onlySelf: true
@@ -477,11 +479,11 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     });
   }
 
-  addList(value: ObjectLwM2M[]): void {
+  addObjectsList(value: ObjectLwM2M[]): void {
     this.updateObserveAttrTelemetryObjectFormGroup(deepClone(value));
   }
 
-  removeList(value: ObjectLwM2M): void {
+  removeObjectsList(value: ObjectLwM2M): void {
     let objectsOld = deepClone(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value.clientLwM2M);
     const isIdIndex = (element) => element.id === value.id;
     let index = objectsOld.findIndex(isIdIndex);
@@ -532,5 +534,4 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       }
     }
   }
-
 }

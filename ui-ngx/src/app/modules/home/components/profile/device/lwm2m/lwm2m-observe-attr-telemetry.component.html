@@ -26,8 +26,9 @@
           <div class="tb-panel-title">Object [<b>{{ objectLwM2M.get('id').value}}</b>]
             name: <b><i>{{ objectLwM2M.get('name').value}}</i></b></div>
             <button type="button"
+                    [fxShow]="objectLwM2M.get('mandatory').value"
                     mat-button *ngIf="!disabled"
-                    mat-button mat-icon-button (click)="addInstances($event, objectLwM2M.get('id').value, objectLwM2M.get('name').value)"
+                    mat-button mat-icon-button (click)="addInstances($event, objectLwM2M.value)"
                     matTooltip="{{'device-profile.lwm2m.add-instances-tip' | translate}}"
                     matTooltipPosition="above">
 <!--              <mat-icon class="material-icons">{{'add_circle_outline'}}</mat-icon>-->

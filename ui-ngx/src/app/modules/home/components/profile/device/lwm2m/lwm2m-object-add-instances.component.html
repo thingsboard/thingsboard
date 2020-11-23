@@ -33,18 +33,9 @@
     <fieldset [disabled]="isLoading$ | async">
       <div class="mat-padding">
         <tb-profile-lwm2m-object-add-instances-list
-          (addList)="addList($event)"
-          (removeList)="removeList($event)"
           formControlName="instancesIds">
         </tb-profile-lwm2m-object-add-instances-list>
       </div>
-<!--      <tb-json-object-edit-->
-<!--        formControlName="json"-->
-<!--        label="{{ 'value.json-value' | translate }}"-->
-<!--        validateContent="true"-->
-<!--        [required]="true"-->
-<!--        [fillHeight]="false">-->
-<!--      </tb-json-object-edit>-->
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">

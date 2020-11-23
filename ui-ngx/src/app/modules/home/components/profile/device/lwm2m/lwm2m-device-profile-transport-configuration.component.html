@@ -20,12 +20,12 @@
     <mat-tab-group dynamicHeight>
       <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
         <div class="mat-padding">
-          <tb--profile-lwm2m-object-list
-            (addList)="addList($event)"
-            (removeList)="removeList($event)"
+          <tb-profile-lwm2m-object-list
+            (addList)="addObjectsList($event)"
+            (removeList)="removeObjectsList($event)"
             [required]="required"
             formControlName="objectIds">
-          </tb--profile-lwm2m-object-list>
+          </tb-profile-lwm2m-object-list>
         </div>
         <div class="mat-padding">
           <tb-profile-lwm2m-observe-attr-telemetry

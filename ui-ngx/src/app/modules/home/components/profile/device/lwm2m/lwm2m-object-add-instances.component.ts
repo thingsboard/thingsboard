@@ -16,15 +16,16 @@
 
 import { Component, Inject, OnInit } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { ControlValueAccessor, FormBuilder, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
+import { nodeDebugInfo } from '@angular/compiler-cli/src/ngtsc/util/src/typescript';
 
 export interface Lwm2mObjectAddInstancesData {
-  listInstances: object;
+  instancesIds: Set<number>;
   objectName?: string;
   objectId?: number;
 }
@@ -45,22 +46,15 @@ export class Lwm2mObjectAddInstancesComponent extends DialogComponent<Lwm2mObjec
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: Lwm2mObjectAddInstancesData,
               public dialogRef: MatDialogRef<Lwm2mObjectAddInstancesComponent, object>,
-              public fb: FormBuilder,
-              private translate: TranslateService) {
+              public fb: FormBuilder) {
     super(store, router, dialogRef);
   }
 
 
   ngOnInit(): void {
-    // this.title = this.data.objectName || this.data.objectId ? this.translate.instant('details.edit-json') : null;
-  let dataList = [] as Array<number>;
-    dataList.push(1);
-    dataList.push(14);
-
     this.jsonFormGroup = this.fb.group({
-      instancesIds: [dataList, []],
-      json: [this.data.listInstances, []]
-    });
+      instancesIds: this.data.instancesIds
+    })
   }
 
   cancel(): void {
@@ -68,14 +62,7 @@ export class Lwm2mObjectAddInstancesComponent extends DialogComponent<Lwm2mObjec
   }
 
   add(): void {
-    this.dialogRef.close(this.jsonFormGroup.get('json').value);
-  }
-
-  addList($event: any) {
-
-  }
-
-  removeList($event: any) {
-
+    this.data.instancesIds = this.jsonFormGroup.get('instancesIds').value
+    this.dialogRef.close(this.data);
   }
 }

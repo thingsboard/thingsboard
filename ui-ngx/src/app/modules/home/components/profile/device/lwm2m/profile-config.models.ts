@@ -14,6 +14,8 @@
 /// limitations under the License.
 ///
 
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+
 export const OBSERVE_ATTR = 'observeAttr';
 export const OBSERVE = 'observe';
 export const ATTR = 'attribute';
@@ -43,6 +45,8 @@ export const KEY_PRIVATE_REGEXP = /^[0-9a-fA-F]{134,134}$/;
 export const KEY_PUBLIC_REGEXP_PSK = /^[0-9a-fA-F]{182,182}$/;
 export const KEY_PUBLIC_REGEXP_X509 = /^[0-9a-fA-F]{0,3000}$/;
 export const CAMEL_CASE_REGEXP = /[-_&@.,*+!?^${}()|[\]\\]/g;
+export const INSTANCES_ID_VALUE_MIN = 0;
+export const INSTANCES_ID_VALUE_MAX = 65535;
 
 //ok
 export enum SECURITY_CONFIG_MODE {
@@ -195,5 +199,18 @@ export interface ObjectLwM2M {
   multiple?: boolean,
   mandatory?: boolean,
   instances?: Instance []
+}
+
+export function getChangeInstancesIds (): ChangeInstancesIds {
+  let changeInstancesIds: ChangeInstancesIds;
+  changeInstancesIds.add = new Set<number>();
+  changeInstancesIds.del = new Set<number>();
+  return changeInstancesIds;
+
+}
+
+export interface ChangeInstancesIds {
+  add: Set<number>,
+  del: Set<number>
 }
 
