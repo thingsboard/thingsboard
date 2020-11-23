@@ -238,14 +238,14 @@ export default abstract class LeafletMap {
         }
 
         if(this.options.provider !== MapProviders.image) {
-          if (e.latlng.lng > 180-polygonOffset) {
-            e.latlng.lng = 180-polygonOffset;
+          if (e.latlng.lng > 180 - polygonOffset) {
+            e.latlng.lng = 180 - polygonOffset;
           } else if (e.latlng.lng < -180) {
             e.latlng.lng = -180;
           }
           if(e.latlng.lat > 85.05112882609004){
             e.latlng.lat = 85.05112882609004;
-          }else if(e.latlng.lat < -85.05112882609004 + polygonOffset){
+          } else if (e.latlng.lat < -85.05112882609004 + polygonOffset){
             e.latlng.lat = -85.05112882609004 + polygonOffset;
           }
         }
@@ -255,7 +255,6 @@ export default abstract class LeafletMap {
         mousePositionOnMap = [latlng1, latlng2, latlng3];
       });
       const dragListener = (e: L.DragEndEvent) => {
-        debugger;
         if(this.options.provider === MapProviders.image) {
           for (let i = 0; i < mousePositionOnMap.length; i++) {
             let convert = L.CRS.Simple.latLngToPoint(mousePositionOnMap[i], 3);
