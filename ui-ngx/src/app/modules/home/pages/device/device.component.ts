@@ -21,10 +21,9 @@ import { EntityComponent } from '../../components/entity/entity.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   createDeviceConfiguration,
-  createDeviceProfileConfiguration, createDeviceTransportConfiguration,
+  createDeviceTransportConfiguration,
   DeviceData,
   DeviceInfo,
-  DeviceProfileData,
   DeviceProfileInfo,
   DeviceProfileType,
   DeviceTransportType
@@ -33,8 +32,6 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
-import { DeviceService } from '@core/http/device.service';
-import { ClipboardService } from 'ngx-clipboard';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
@@ -46,12 +43,12 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
 
   entityType = EntityType;
 
+  componentsData: any;
+
   deviceScope: 'tenant' | 'customer' | 'customer_user';
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              private deviceService: DeviceService,
-              private clipboardService: ClipboardService,
               @Inject('entity') protected entityValue: DeviceInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<DeviceInfo>,
               public fb: FormBuilder) {
@@ -60,6 +57,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
 
   ngOnInit() {
     this.deviceScope = this.entitiesTableConfig.componentsData.deviceScope;
+    this.componentsData = this.entitiesTableConfigValue.componentsData;
     super.ngOnInit();
   }
 
@@ -112,26 +110,6 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
-  }
-
-  copyAccessToken($event) {
-    if (this.entity.id) {
-      this.deviceService.getDeviceCredentials(this.entity.id.id, true).subscribe(
-        (deviceCredentials) => {
-          const credentialsId = deviceCredentials.credentialsId;
-          if (this.clipboardService.copyFromContent(credentialsId)) {
-            this.store.dispatch(new ActionNotificationShow(
-              {
-                message: this.translate.instant('device.accessTokenCopiedMessage'),
-                type: 'success',
-                duration: 750,
-                verticalPosition: 'bottom',
-                horizontalPosition: 'right'
-              }));
-          }
-        }
-      );
-    }
   }
 
   onDeviceProfileUpdated() {

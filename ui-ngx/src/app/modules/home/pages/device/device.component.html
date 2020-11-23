@@ -51,16 +51,17 @@
             ngxClipboard
             (cbOnSuccess)="onDeviceIdCopied($event)"
             [cbContent]="entity?.id?.id"
+            [disabled]="(isLoading$ | async)"
             [fxShow]="!isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>device.copyId</span>
     </button>
-    <button mat-raised-button
-            (click)="copyAccessToken($event)"
-            [fxShow]="!isEdit">
-      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      <span translate>device.copyAccessToken</span>
-    </button>
+    <tb-copy-device-credentials
+      [fxShow]="!isEdit"
+      [disabled]="(isLoading$ | async)"
+      [credentials]="componentsData.deviceCredential"
+      [deviceId]="entity?.id">
+    </tb-copy-device-credentials>
   </div>
 </div>
 <div class="mat-padding" fxLayout="column">
