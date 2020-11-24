@@ -72,6 +72,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -701,12 +702,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     @Override
-    public void onProfileUpdate(DeviceProfile deviceProfile) {
-        deviceSessionCtx.onProfileUpdate(deviceProfile);
+    public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
+        deviceSessionCtx.onDeviceProfileUpdate(sessionInfo, deviceProfile);
     }
 
     @Override
-    public void onDeviceProfileUpdate(Device device, TransportProtos.SessionInfoProto sessionInfo) {
-        deviceSessionCtx.onDeviceProfileUpdate(device, sessionInfo);
+    public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
+        deviceSessionCtx.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
     }
 }

@@ -24,6 +24,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponse
 import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
 
+import java.util.Optional;
+
 /**
  * Created by ashvayka on 04.10.18.
  */
@@ -39,9 +41,9 @@ public interface SessionMsgListener {
 
     void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse);
 
-    default void onProfileUpdate(DeviceProfile deviceProfile) {
+    default void onDeviceProfileUpdate(TransportProtos.SessionInfoProto newSessionInfo, DeviceProfile deviceProfile) {
     }
 
-    default void onDeviceProfileUpdate(Device device, TransportProtos.SessionInfoProto sessionInfo) {
+    default void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
     }
 }

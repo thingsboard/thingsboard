@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface SessionContext {
@@ -27,7 +28,7 @@ public interface SessionContext {
 
     int nextMsgId();
 
-    void onProfileUpdate(DeviceProfile deviceProfile);
+    void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile);
 
-    void onDeviceProfileUpdate(Device device, TransportProtos.SessionInfoProto sessionInfo);
+    void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt);
 }
