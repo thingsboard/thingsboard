@@ -450,6 +450,8 @@ public class ModelConstants {
     public static final String API_USAGE_STATE_DB_STORAGE_COLUMN = "db_storage";
     public static final String API_USAGE_STATE_RE_EXEC_COLUMN = "re_exec";
     public static final String API_USAGE_STATE_JS_EXEC_COLUMN = "js_exec";
+    public static final String API_USAGE_STATE_EMAIL_EXEC_COLUMN = "email_exec";
+    public static final String API_USAGE_STATE_SMS_EXEC_COLUMN = "sms_exec";
 
     /**
      * Cassandra attributes and timeseries constants.

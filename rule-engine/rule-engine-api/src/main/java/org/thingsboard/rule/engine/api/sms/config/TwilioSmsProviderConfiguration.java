@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.session;
+package org.thingsboard.rule.engine.api.sms.config;
 
-import org.thingsboard.server.common.data.DeviceProfile;
+import lombok.Data;
 
-import java.util.UUID;
+@Data
+public class TwilioSmsProviderConfiguration implements SmsProviderConfiguration {
 
-public interface SessionContext {
+    private String accountSid;
+    private String accountToken;
+    private String numberFrom;
 
-    UUID getSessionId();
+    @Override
+    public SmsProviderType getType() {
+        return SmsProviderType.TWILIO;
+    }
 
-    int nextMsgId();
-
-    void onProfileUpdate(DeviceProfile deviceProfile);
 }
