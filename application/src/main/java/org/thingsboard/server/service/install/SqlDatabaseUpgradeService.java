@@ -367,6 +367,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                     " db_storage varchar(32)," +
                                     " re_exec varchar(32)," +
                                     " js_exec varchar(32)," +
+                                    " email_exec varchar(32)," +
+                                    " sms_exec varchar(32)," +
                                     " CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)\n" +
                                     ");");
                         } catch (Exception e) {

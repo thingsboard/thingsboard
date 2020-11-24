@@ -108,6 +108,7 @@ export interface EntitySearchQueryFilter {
   fetchLastLevelOnly?: boolean;
 }
 
+// tslint:disable-next-line:no-empty-interface
 export interface ApiUsageStateFilter {
 
 }

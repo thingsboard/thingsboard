@@ -63,6 +63,12 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.API_USAGE_STATE_JS_EXEC_COLUMN)
     private ApiUsageStateValue jsExecState = ApiUsageStateValue.ENABLED;
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_EMAIL_EXEC_COLUMN)
+    private ApiUsageStateValue emailExecState = ApiUsageStateValue.ENABLED;
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_SMS_EXEC_COLUMN)
+    private ApiUsageStateValue smsExecState = ApiUsageStateValue.ENABLED;
 
     public ApiUsageStateEntity() {
     }
@@ -83,6 +89,8 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
         this.dbStorageState = ur.getDbStorageState();
         this.reExecState = ur.getReExecState();
         this.jsExecState = ur.getJsExecState();
+        this.emailExecState = ur.getEmailExecState();
+        this.smsExecState = ur.getSmsExecState();
     }
 
     @Override
@@ -99,6 +107,8 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
         ur.setDbStorageState(dbStorageState);
         ur.setReExecState(reExecState);
         ur.setJsExecState(jsExecState);
+        ur.setEmailExecState(emailExecState);
+        ur.setSmsExecState(smsExecState);
         return ur;
     }
 

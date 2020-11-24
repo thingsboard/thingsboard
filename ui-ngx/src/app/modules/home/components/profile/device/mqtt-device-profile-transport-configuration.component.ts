@@ -28,10 +28,11 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
-  MqttTransportPayloadType,
   DeviceProfileTransportConfiguration,
   DeviceTransportType,
-  MqttDeviceProfileTransportConfiguration, mqttTransportPayloadTypeTranslationMap
+  MqttDeviceProfileTransportConfiguration,
+  MqttTransportPayloadType,
+  mqttTransportPayloadTypeTranslationMap
 } from '@shared/models/device.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
@@ -51,8 +52,35 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   mqttTransportPayloadTypeTranslations = mqttTransportPayloadTypeTranslationMap;
 
-
   mqttDeviceProfileTransportConfigurationFormGroup: FormGroup;
+
+  private defaultTelemetrySchema =
+    'syntax ="proto3";\n' +
+    'package telemetry;\n' +
+    '\n' +
+    'message SensorDataReading {\n' +
+    '\n' +
+    '  double temperature = 1;\n' +
+    '  double humidity = 2;\n' +
+    '  InnerObject innerObject = 3;\n' +
+    '\n' +
+    '  message InnerObject {\n' +
+    '    string key1 = 1;\n' +
+    '    bool key2 = 2;\n' +
+    '    double key3 = 3;\n' +
+    '    int32 key4 = 4;\n' +
+    '    string key5 = 5;\n' +
+    '  }\n' +
+    '}\n';
+
+  private defaultAttributesSchema =
+    'syntax ="proto3";\n' +
+    'package attributes;\n' +
+    '\n' +
+    'message SensorConfiguration {\n' +
+    '  string firmwareVersion = 1;\n' +
+    '  string serialNumber = 2;\n' +
+    '}';
 
   private requiredValue: boolean;
 
@@ -83,11 +111,18 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   ngOnInit() {
     this.mqttDeviceProfileTransportConfigurationFormGroup = this.fb.group({
-      configuration: this.fb.group({
         deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]],
-        transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required]
-      })
+        transportPayloadTypeConfiguration: this.fb.group({
+          transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required],
+          deviceTelemetryProtoSchema: [this.defaultTelemetrySchema, Validators.required],
+          deviceAttributesProtoSchema: [this.defaultAttributesSchema, Validators.required]
+        })
+      }, {validator: this.uniqueDeviceTopicValidator}
+    );
+    this.mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.transportPayloadType')
+      .valueChanges.subscribe(payloadType => {
+      this.updateTransportPayloadBasedControls(payloadType, true);
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -103,19 +138,43 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     }
   }
 
+  get protoPayloadType(): boolean {
+    const transportPayloadType = this.mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.transportPayloadType').value;
+    return transportPayloadType === MqttTransportPayloadType.PROTOBUF;
+  }
+
   writeValue(value: MqttDeviceProfileTransportConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
-      this.mqttDeviceProfileTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
+      this.mqttDeviceProfileTransportConfigurationFormGroup.patchValue(value, {emitEvent: false});
+      this.updateTransportPayloadBasedControls(value.transportPayloadTypeConfiguration?.transportPayloadType);
     }
   }
 
   private updateModel() {
     let configuration: DeviceProfileTransportConfiguration = null;
     if (this.mqttDeviceProfileTransportConfigurationFormGroup.valid) {
-      configuration = this.mqttDeviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
+      configuration = this.mqttDeviceProfileTransportConfigurationFormGroup.value;
       configuration.type = DeviceTransportType.MQTT;
     }
     this.propagateChange(configuration);
+  }
+
+  private updateTransportPayloadBasedControls(type: MqttTransportPayloadType, forceUpdated = false) {
+    const transportPayloadTypeForm = this.mqttDeviceProfileTransportConfigurationFormGroup
+      .get('transportPayloadTypeConfiguration') as FormGroup;
+    if (forceUpdated) {
+      transportPayloadTypeForm.patchValue({
+        deviceTelemetryProtoSchema: this.defaultTelemetrySchema,
+        deviceAttributesProtoSchema: this.defaultAttributesSchema
+      }, {emitEvent: false});
+    }
+    if (type === MqttTransportPayloadType.PROTOBUF && !this.disabled) {
+      transportPayloadTypeForm.get('deviceTelemetryProtoSchema').enable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceAttributesProtoSchema').enable({emitEvent: false});
+    } else {
+      transportPayloadTypeForm.get('deviceTelemetryProtoSchema').disable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceAttributesProtoSchema').disable({emitEvent: false});
+    }
   }
 
   private validationMQTTTopic(): ValidatorFn {
@@ -146,5 +205,15 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       }
       return null;
     };
+  }
+
+  private uniqueDeviceTopicValidator(control: FormGroup): { [key: string]: boolean } | null {
+    if (control.value) {
+      const formValue = control.value as MqttDeviceProfileTransportConfiguration;
+      if (formValue.deviceAttributesTopic === formValue.deviceTelemetryTopic) {
+        return {unique: true};
+      }
+    }
+    return null;
   }
 }

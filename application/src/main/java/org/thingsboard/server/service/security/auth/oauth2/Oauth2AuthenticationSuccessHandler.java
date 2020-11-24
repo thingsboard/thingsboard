@@ -22,12 +22,16 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationInfo;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.utils.MiscUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -45,25 +49,27 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final OAuth2ClientMapperProvider oauth2ClientMapperProvider;
     private final OAuth2Service oAuth2Service;
     private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
+    private final SystemSecurityService systemSecurityService;
 
     @Autowired
     public Oauth2AuthenticationSuccessHandler(final JwtTokenFactory tokenFactory,
                                               final RefreshTokenRepository refreshTokenRepository,
                                               final OAuth2ClientMapperProvider oauth2ClientMapperProvider,
                                               final OAuth2Service oAuth2Service,
-                                              final OAuth2AuthorizedClientService oAuth2AuthorizedClientService) {
+                                              final OAuth2AuthorizedClientService oAuth2AuthorizedClientService, final SystemSecurityService systemSecurityService) {
         this.tokenFactory = tokenFactory;
         this.refreshTokenRepository = refreshTokenRepository;
         this.oauth2ClientMapperProvider = oauth2ClientMapperProvider;
         this.oAuth2Service = oAuth2Service;
         this.oAuth2AuthorizedClientService = oAuth2AuthorizedClientService;
+        this.systemSecurityService = systemSecurityService;
     }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        String baseUrl = MiscUtils.constructBaseUrl(request);
+        String baseUrl = this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
 
