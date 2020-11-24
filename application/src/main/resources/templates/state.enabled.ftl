@@ -103,34 +103,27 @@
 	  style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 100% !important; height: 100%; line-height: 1.6em; background-color: #f6f6f6; margin: 0;"
 	  bgcolor="#f6f6f6">
 
-<table class="main"
-	   style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; box-sizing: border-box; border-radius: 3px; width: 100%; background-color: #f6f6f6; margin: 0px auto;"
-	   cellspacing="0" cellpadding="0" bgcolor="#f6f6f6">
+<table class="main" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; box-sizing: border-box; border-radius: 3px; width: 100%; background-color: #f6f6f6; margin: 0px auto;" cellspacing="0" cellpadding="0" bgcolor="#f6f6f6">
 	<tbody>
 	<tr style="box-sizing: border-box; margin: 0px;">
-		<td class="content-wrap" style="box-sizing: border-box; vertical-align: top; margin: 0px; padding: 20px;"
-			align="center" valign="top">
-			<table style="box-sizing: border-box; border: 1px solid #e9e9e9; border-radius: 3px; margin: 0px; height: 223px; padding: 20px; background-color: #ffffff; width: 600px; max-width: 600px !important;"
-				   width="600" cellspacing="0" cellpadding="0">
+		<td class="content-wrap" style="box-sizing: border-box; vertical-align: top; margin: 0px; padding: 20px;" align="center" valign="top">
+			<table style="box-sizing: border-box; border: 1px solid #e9e9e9; border-radius: 3px; margin: 0px; height: 310px; padding: 20px; background-color: #ffffff; width: 600px; max-width: 600px !important;" width="600" cellspacing="0" cellpadding="0">
 				<tbody>
 				<tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
-					<td class="content-block"
-						style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #348eda; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0px; padding: 0px 0px 20px; height: 84px;"
-						valign="top">
-						<h2>Your ThingsBoard account feature was enabled</h2>
+					<td class="content-block" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #348eda; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0px; padding: 0px; height: 110px;" valign="top"><img src="https://media.thingsboard.io/email/head.png" alt="" width="598" height="91" /></td>
+				</tr>
+				<tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 16px; margin: 0;">
+					<td class="content-block" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #000000; box-sizing: border-box; font-size: 16px; margin: 0px; padding: 0px 32px; height: 66px; vertical-align: middle;" valign="middle">Your ThingsBoard account feature was <strong>enabled</strong></td>
+				</tr>
+				<tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; line-height: 24px; margin: 0;">
+					<td class="content-block" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0px; padding: 0px 32px; height: 93px; vertical-align: top;" valign="top">
+						<div style="padding: 16px; margin-bottom: 24px; border: solid 2px #27AE60; border-radius: 6px; background: rgba(39, 174, 96, 0.05);"><img style="vertical-align: middle; padding-right: 6px;" src="https://media.thingsboard.io/email/confirm.png" alt="" width="20" height="20" />
+							<div style="display: inline; vertical-align: middle;">We have enabled the ${apiFeature} for your account and ThingsBoard is already able to ${apiLabel} messages.</div>
+						</div>
 					</td>
 				</tr>
 				<tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
-					<td class="content-block"
-						style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0px; padding: 0px 0px 20px; height: 40px;"
-						valign="top">We have enabled the ${apiFeature} for your account and ThingsBoard is already able to ${apiLabel} messages.
-					</td>
-				</tr>
-				<tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
-					<td class="content-block"
-						style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0px; padding: 0px 0px 20px; height: 40px;"
-						valign="top">&mdash; The ThingsBoard
-					</td>
+					<td class="content-block" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0px; padding: 0px 32px; height: 40px;" valign="top">&mdash; The ThingsBoard</td>
 				</tr>
 				</tbody>
 			</table>
@@ -138,16 +131,10 @@
 	</tr>
 	</tbody>
 </table>
-<table style="color: #999999; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; box-sizing: border-box; margin: 0px auto; height: 64px; background-color: #f6f6f6; width: 100%;"
-	   cellpadding="0px 0px 20px">
+<table style="color: #999999; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; box-sizing: border-box; margin: 0px auto; height: 64px; background-color: #f6f6f6; width: 100%;" cellpadding="0px 0px 20px">
 	<tbody>
 	<tr style="box-sizing: border-box; margin: 0px;">
-		<td class="aligncenter content-block"
-			style="box-sizing: border-box; font-size: 12px; margin: 0px; padding: 0px 0px 20px; width: 600px; text-align: center; vertical-align: middle;"
-			align="center" valign="top">This email was sent to&nbsp;<a
-					style="box-sizing: border-box; color: #999999; margin: 0px;"
-					href="mailto:${targetEmail}">${targetEmail}</a>&nbsp;by ThingsBoard.
-		</td>
+		<td class="aligncenter content-block" style="box-sizing: border-box; font-size: 12px; margin: 0px; padding: 0px 0px 20px; width: 600px; text-align: center; vertical-align: middle;" align="center" valign="top">This email was sent to&nbsp;<a style="box-sizing: border-box; color: #999999; margin: 0px;" href="mailto:${targetEmail}">${targetEmail}</a>&nbsp;by ThingsBoard.</td>
 	</tr>
 	</tbody>
 </table>
