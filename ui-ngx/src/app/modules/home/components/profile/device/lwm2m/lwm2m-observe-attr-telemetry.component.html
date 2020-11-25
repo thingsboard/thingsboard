@@ -31,7 +31,6 @@
                     mat-button mat-icon-button (click)="addInstances($event, objectLwM2M.value)"
                     matTooltip="{{'device-profile.lwm2m.add-instances-tip' | translate}}"
                     matTooltipPosition="above">
-<!--              <mat-icon class="material-icons">{{'add_circle_outline'}}</mat-icon>-->
               <mat-icon class="material-icons">{{'add'}}</mat-icon>
             </button>
         </mat-panel-title>
@@ -39,7 +38,7 @@
       <div fxLayout="column" fxLayoutGap="8px" formArrayName="instances">
         <ng-template matExpansionPanelContent>
           <mat-expansion-panel
-            *ngFor="let instances of instancesLwm2mFormArray(objectLwM2M).controls; let y = index; trackBy: trackByParams"
+            *ngFor="let instances of instancesLwm2mFormArray(objectLwM2M).controls; let y = index;"
             [formGroupName]="y"
             [expanded]="getExpended(objectLwM2M)"
             [disabled]="getExpended(objectLwM2M)">

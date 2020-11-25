@@ -97,7 +97,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     });
     this.lwm2mDeviceProfileTransportConfFormGroup.valueChanges.subscribe(value => {
       if (!this.disabled) {
-        console.warn(value, "main")
         this.updateModel();
       }
     });
@@ -190,7 +189,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   upDateValueToJsonTab_0(): void {
     if (!this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").pristine) {
-      console.warn(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value['clientLwM2M'])
       this.upDateObserveAttrTelemetryFromGroupToJson(this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").value['clientLwM2M']);
       this.lwm2mDeviceProfileTransportConfFormGroup.get("observeAttrTelemetry").markAsPristine({
         onlySelf: true
@@ -270,7 +268,18 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       if (telemetryArray) this.updateObserveAttrTelemetryObjects(telemetryArray, clientObserveAttr, "telemetry");
       if (keyNameJson) this.updateKeyNameObjects(deepClone(keyNameJson), clientObserveAttr);
     }
+    clientObserveAttr.forEach(obj => {
+      this.sortInstancesValue(obj.instances);
+    })
     return clientObserveAttr;
+  }
+
+  sortInstancesValue(instances: Instance[]): Instance[]{
+    return instances.sort((a, b) => {
+      let aLC: number = a.id;
+      let bLC: number = b.id;
+      return aLC < bLC ? -1 : (aLC > bLC ? 1 : 0);
+    });
   }
 
   includesInstancesNo(attributeArray: Array<string>, telemetryArray: Array<string>, clientObserveAttr: ObjectLwM2M[]): boolean {

@@ -89,7 +89,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
               private dialog: MatDialog,
               private translate: TranslateService) {
     this.observeAttrTelemetryFormGroup = this.fb.group({
-      clientLwM2M: this.fb.array([], this.required ? [Validators.required] : [])
+      clientLwM2M: this.fb.array([])
     });
     this.observeAttrTelemetryFormGroup.valueChanges.subscribe(value => {
       if (isUndefined(this.disabled) || !this.disabled) {
@@ -161,8 +161,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         name: objectLwM2M.name,
         multiple: objectLwM2M.multiple,
         mandatory: objectLwM2M.mandatory,
-        instances: (objectLwM2M.instances.length) ? this.createInstanceLwM2M(this.sortInstancesValue(objectLwM2M.instances))
-          : this.createInstanceLwM2M(objectLwM2M.instances)
+        instances: this.createInstanceLwM2M(objectLwM2M.instances)
       })
     }))
   }
@@ -295,16 +294,13 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
       if (idsAdd.size) {
         this.addInstancesNew(data.objectId, idsAdd)
       }
-      if (idsDel.size || idsAdd.size) {
-        this.propagateChange(this.observeAttrTelemetryFormGroup.value);
-      }
     }
   }
 
-  sortInstancesValue(instances: Instance[]): Instance[]{
-    return instances.sort((a, b) => {
-      let aLC: number = a.id;
-      let bLC: number = b.id;
+  sortInstancesFormGroup(instances: FormGroup[]): void{
+    instances.sort((a, b) => {
+      let aLC: number = a.value.id;
+      let bLC: number = b.value.id;
       return aLC < bLC ? -1 : (aLC > bLC ? 1 : 0);
     });
   }
@@ -314,17 +310,15 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     let objectIndex = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).findIndex(isIdIndex);
     idsDel.forEach(x => {
       isIdIndex = (element) => element.value.id == x;
-      let instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls[objectIndex].get("instances") as FormArray).controls;
-      let instanceIndex = instancesFormArray.findIndex(isIdIndex);
-      instancesFormArray.splice(instanceIndex, 1);
-      let instancesValue = this.observeAttrTelemetryFormGroup.get('clientLwM2M').value[objectIndex].instances;
-      instancesValue.splice(instanceIndex, 1);
+      let instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls[objectIndex].get("instances") as FormArray);
+      let instanceIndex = instancesFormArray.controls.findIndex(isIdIndex);
+      instancesFormArray.removeAt(instanceIndex);
     })
   }
 
   addInstancesNew(objectId: number, idsAdd: Set<number>): void {
     let instancesValue = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).find(e => e.id == objectId).instances;
-    let instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls.find(e => e.value.id == objectId).get("instances") as FormArray).controls;
+    let instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls.find(e => e.value.id == objectId).get("instances") as FormArray) as FormArray;
     idsAdd.forEach(x => {
       let instanceNew = deepClone(instancesValue[0]) as Instance;
       instanceNew.id = x;
@@ -333,7 +327,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         r.telemetry = false;
         r.observe = false;
       });
-      instancesValue.push(instanceNew);
       instancesFormArray.push(this.fb.group({
         id: x,
         [this.observe]: {value: false, disabled: this.disabled},
@@ -341,7 +334,8 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         [this.telemetry]: {value: false, disabled: this.disabled},
         resources: {value: instanceNew.resources, disabled: this.disabled}
       }));
-    })
+    });
+    this.sortInstancesFormGroup(instancesFormArray.controls as FormGroup[]);
   }
 
   deepCloneSet(oldSet: Set<any>): Set<any> {
@@ -359,11 +353,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     return secondSet
   }
 
-
-  getFilterPredicate(nn: number) {
-    console.warn(nn, "nn");
-  }
-
   setInstancesIds(instances: Instance []): Set<number> {
     let instancesIds = new Set<number>();
     if (instances && instances.length) {
@@ -373,5 +362,4 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     }
     return instancesIds;
   }
-
 }
