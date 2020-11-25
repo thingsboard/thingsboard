@@ -44,6 +44,7 @@ import java.util.UUID;
  */
 @Component
 public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> implements AssetDao {
+    public static final String TB_SERVICE_QUEUE = "TbServiceQueue";
 
     @Autowired
     private AssetRepository assetRepository;
@@ -179,6 +180,6 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
 
     @Override
     public Long countByTenantId(TenantId tenantId) {
-        return assetRepository.countByTenantId(tenantId.getId());
+        return assetRepository.countByTenantIdAndTypeIsNot(tenantId.getId(), TB_SERVICE_QUEUE);
     }
 }
