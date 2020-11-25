@@ -23,17 +23,13 @@ import org.junit.runner.RunWith;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
-import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
@@ -52,11 +48,10 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
-import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import static org.mockito.Mockito.verify;
@@ -140,7 +135,7 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileAlarm dpa = new DeviceProfileAlarm();
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
-        dpa.setCreateRules(new LinkedHashMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
         KeyFilter lowTempFilter = new KeyFilter();
         lowTempFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
