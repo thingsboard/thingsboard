@@ -179,6 +179,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                             }
                         }
                     } else {
+                        ctx.close();
                         throw new RuntimeException("Unsupported topic for provisioning requests!");
                     }
                 } catch (RuntimeException | AdaptorException e) {
