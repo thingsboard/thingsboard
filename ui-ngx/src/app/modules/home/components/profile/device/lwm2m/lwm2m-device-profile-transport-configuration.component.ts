@@ -39,6 +39,7 @@ import { DeviceProfileService } from "../../../../../../core/http/device-profile
 import { deepClone, isUndefined } from "../../../../../../core/utils";
 import { WINDOW } from "../../../../../../core/services/window.service";
 import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
+import { isNotNullOrUndefined } from 'codelyzer/util/isNotNullOrUndefined';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-transport-configuration',
@@ -310,8 +311,10 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       clientObserveAttr
         .forEach(e => {
           if (e.id == idKeys[0]) {
-            e.instances.find(e => e.id == idKeys[1]).resources
-              .find(e => e.id == idKeys[2])[nameParameter] = true;
+            let instance = e.instances.find(e => e.id == idKeys[1]);
+            if (isNotNullOrUndefined(instance)) {
+              instance.resources.find(e => e.id == idKeys[2])[nameParameter] = true;
+            }
           }
         });
     });

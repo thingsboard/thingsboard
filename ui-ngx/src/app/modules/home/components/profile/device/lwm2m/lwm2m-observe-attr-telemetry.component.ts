@@ -296,11 +296,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         this.addInstancesNew(data.objectId, idsAdd)
       }
       if (idsDel.size || idsAdd.size) {
-        // sort
-        let instancesValue = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).find(e => e.id == data.objectId).instances;
-        let instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls.find(e => e.value.id == data.objectId).get("instances") as FormArray).controls as FormGroup[];
-        this.sortInstancesValue(instancesValue);
-        this.sortInstancesFormGrp(instancesFormArray);
         this.propagateChange(this.observeAttrTelemetryFormGroup.value);
       }
     }
@@ -310,14 +305,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     return instances.sort((a, b) => {
       let aLC: number = a.id;
       let bLC: number = b.id;
-      return aLC < bLC ? -1 : (aLC > bLC ? 1 : 0);
-    });
-  }
-
-  sortInstancesFormGrp(instances: FormGroup[]): void {
-    instances.sort((a, b) => {
-      let aLC: number = a.value.id;
-      let bLC: number = b.value.id;
       return aLC < bLC ? -1 : (aLC > bLC ? 1 : 0);
     });
   }
