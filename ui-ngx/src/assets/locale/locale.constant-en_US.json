@@ -472,7 +472,9 @@
         "search": "Search audit logs",
         "clear-search": "Clear search",
         "type-assigned-from-tenant": "Assigned from Tenant",
-        "type-assigned-to-tenant": "Assigned to Tenant"
+        "type-assigned-to-tenant": "Assigned to Tenant",
+        "type-provision-success": "Device provisioned",
+        "type-provision-failure": "Device provisioning was failed"
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
@@ -960,7 +962,6 @@
         "alarm-type": "Alarm type",
         "alarm-type-required": "Alarm type is required.",
         "alarm-type-unique": "Alarm type must be unique within the device profile alarm rules.",
-        "alarm-type-pattern-hint": "Alarm type pattern, use <code>${metaKeyName}</code> to substitute variables from metadata",
         "create-alarm-pattern": "Create <b>{{alarmType}}</b> alarm",
         "create-alarm-rules": "Create alarm rules",
         "no-create-alarm-rules": "No create conditions configured",

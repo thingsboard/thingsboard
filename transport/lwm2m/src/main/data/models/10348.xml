@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+  <Object ObjectType="MODefinition">
+    <Name>Wheel</Name>
+    <Description1><![CDATA[This LWM2M Object includes wheel information.]]></Description1>
+    <ObjectID>10348</ObjectID>
+    <ObjectURN>urn:oma:lwm2m:x:10348</ObjectURN>
+    <LWM2MVersion>1.0</LWM2MVersion>
+    <ObjectVersion>1.0</ObjectVersion>
+    <MultipleInstances>Multiple</MultipleInstances>
+    <Mandatory>Optional</Mandatory>
+    <Resources>
+		<Item ID="1">
+			<Name>Wheel Name</Name>
+			<Operations>R</Operations>
+			<MultipleInstances>Single</MultipleInstances>
+			<Mandatory>Mandatory</Mandatory>
+			<Type>String</Type>
+			<RangeEnumeration/>
+			<Units/>
+			<Description>
+				<![CDATA[ The display name of the wheel.]]>
+			</Description>
+		</Item>
+		<Item ID="5907">
+			<Name>Host Device Unique ID</Name>
+			<Operations>R</Operations>
+			<MultipleInstances>Single</MultipleInstances>
+			<Mandatory>Optional</Mandatory>
+			<Type>String</Type>
+			<RangeEnumeration/>
+			<Units/>
+			<Description>
+				<![CDATA[ The host device unique ID as assigned by an OEM, MNO, 
+				or other as the Device ID in the onboarding or manufacturing process. ]]>
+			</Description>
+		</Item>
+		<Item ID="5905">
+			<Name>Host Device Manufacturer</Name>
+			<Operations>R</Operations>
+			<MultipleInstances>Single</MultipleInstances>
+			<Mandatory>Optional</Mandatory>
+			<Type>String</Type>
+			<RangeEnumeration/>
+			<Units/>
+			<Description>
+			<![CDATA[ Human readable host device manufacturer name ]]>
+			</Description>
+		</Item>
+		<Item ID="5906">
+			<Name>Host Device Model Number</Name>
+			<Operations>R</Operations>
+			<MultipleInstances>Single</MultipleInstances>
+			<Mandatory>Optional</Mandatory>
+			<Type>String</Type>
+			<RangeEnumeration/>
+			<Units/>
+			<Description>
+				<![CDATA[A host device model identifier (manufacturer specified string)]]>
+			</Description>
+		</Item>	
+    </Resources>
+    <Description2 />
+  </Object>
+</LWM2M>

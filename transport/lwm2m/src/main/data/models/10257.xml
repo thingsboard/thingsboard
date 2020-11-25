@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+  <Object ObjectType="MODefinition">
+    <Name>Heat / Cooling meter</Name>
+    <Description1><![CDATA[
+This Object provides the information to represent a generic (district) heat or cooling meter
+    ]]></Description1>
+    <ObjectID>10257</ObjectID>
+    <ObjectURN>urn:oma:lwm2m:x:10257</ObjectURN>
+    <LWM2MVersion>1.0</LWM2MVersion>
+    <ObjectVersion>1.0</ObjectVersion>
+    <MultipleInstances>Multiple</MultipleInstances>
+    <Mandatory>Optional</Mandatory>
+    <Resources>
+      <Item ID="0">
+        <Name>Manufacturer</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration />
+        <Units />
+        <Description><![CDATA[Human readable manufacturer name]]></Description>
+      </Item>
+      <Item ID="1">
+        <Name>Model Number</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration />
+        <Units />
+        <Description><![CDATA[A model identifier (manufacturer specified string)]]></Description>
+      </Item>
+      <Item ID="2">
+        <Name>Serial Number</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration />
+        <Units />
+        <Description><![CDATA[Serial number of the meter]]></Description>
+      </Item>
+      <Item ID="3">
+        <Name>Description</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration />
+        <Units />
+        <Description><![CDATA[Description of the meter]]></Description>
+      </Item>
+      <Item ID="11">
+        <Name>Error code</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration>
+        </RangeEnumeration>
+        <Units></Units>
+        <Description><![CDATA[Error code reported by the meter]]></Description>
+      </Item>
+      <Item ID="5800">
+        <Name>Instantaneous active power</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>W</Units>
+        <Description><![CDATA[The current active power]]></Description>
+      </Item>
+      <Item ID="5802">
+        <Name>Max Measured active power</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>W</Units>
+        <Description><![CDATA[The maximum active power measured by the sensor since it is ON]]></Description>
+      </Item>
+      <Item ID="5805">
+        <Name>Cumulative active power</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>Wh</Units>
+        <Description><![CDATA[The cumulative active power since the last cumulative energy reset or device start]]></Description>
+      </Item>
+      <Item ID="12">
+        <Name>Flow temperature</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>Cel</Units>
+        <Description><![CDATA[Flow temperature]]></Description>
+      </Item>
+      <Item ID="13">
+        <Name>Max Measured flow temperature</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>Cel</Units>
+        <Description><![CDATA[The maximum flow temperature measured by the meter]]></Description>
+      </Item>
+      <Item ID="14">
+        <Name>Return temperature</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>Cel</Units>
+        <Description><![CDATA[Return temperature]]></Description>
+      </Item>
+      <Item ID="15">
+        <Name>Max Measured return temperature</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>Cel</Units>
+        <Description><![CDATA[The maximum return temperature measured by the meter ]]></Description>
+      </Item>
+      <Item ID="16">
+        <Name>Temperature difference</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>K</Units>
+        <Description><![CDATA[Temperature difference]]></Description>
+      </Item>
+      <Item ID="17">
+        <Name>Flow rate</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>m3/s</Units>
+        <Description><![CDATA[The flow rate]]></Description>
+      </Item>
+      <Item ID="18">
+        <Name>Max Measured flow</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>m3/s</Units>
+        <Description><![CDATA[The maximum flow measured by the meter ]]></Description>
+      </Item>
+      <Item ID="20">
+        <Name>Flow volume</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>m3</Units>
+        <Description><![CDATA[The cumulative flow volume measured on the flow pipe]]></Description>
+      </Item>
+      <Item ID="21">
+        <Name>Return volume</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>m3</Units>
+        <Description><![CDATA[The cumulative flow volume measured on the return pipe]]></Description>
+      </Item>
+      <Item ID="5506">
+        <Name>Current Time</Name>
+        <Operations>RW</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Time</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units></Units>
+        <Description><![CDATA[Unix Time. A signed integer representing the number of seconds since Jan 1st, 1970 in the UTC time zone.]]></Description>
+      </Item>
+    </Resources>
+    <Description2 />
+  </Object>
+</LWM2M>

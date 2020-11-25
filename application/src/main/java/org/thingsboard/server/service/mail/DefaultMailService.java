@@ -250,6 +250,8 @@ public class DefaultMailService implements MailService {
             helper.setText(body);
             mailSender.send(helper.getMimeMessage());
             apiUsageClient.report(tenantId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
+        } else {
+            throw new RuntimeException("Email sending is disabled due to API limits!");
         }
     }
 
