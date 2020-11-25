@@ -210,23 +210,9 @@ public class InstallScripts {
 
 
     public void loadDemoRuleChains(TenantId tenantId) throws Exception {
-        Path ruleChainsDir = Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, RULE_CHAINS_DIR);
         try {
-            JsonNode thermostatRuleChainJson = objectMapper.readTree(ruleChainsDir.resolve("thermostat_rule_chain.json").toFile());
-            RuleChain thermostatRuleChain = objectMapper.treeToValue(thermostatRuleChainJson.get("ruleChain"), RuleChain.class);
-            RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(thermostatRuleChainJson.get("metadata"), RuleChainMetaData.class);
-            thermostatRuleChain.setTenantId(tenantId);
-            thermostatRuleChain = ruleChainService.saveRuleChain(thermostatRuleChain);
-            ruleChainMetaData.setRuleChainId(thermostatRuleChain.getId());
-            ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), ruleChainMetaData);
-
-            JsonNode rootChainJson = objectMapper.readTree(ruleChainsDir.resolve("root_rule_chain.json").toFile());
-            RuleChain rootChain = objectMapper.treeToValue(rootChainJson.get("ruleChain"), RuleChain.class);
-            RuleChainMetaData rootChainMetaData = objectMapper.treeToValue(rootChainJson.get("metadata"), RuleChainMetaData.class);
-            rootChain.setTenantId(tenantId);
-            rootChain = ruleChainService.saveRuleChain(rootChain);
-            rootChainMetaData.setRuleChainId(rootChain.getId());
-            ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), rootChainMetaData);
+            createDefaultRuleChains(tenantId);
+            createDefaultRuleChain(tenantId, "Thermostat");
         } catch (Exception e) {
             log.error("Unable to load dashboard from json", e);
             throw new RuntimeException("Unable to load dashboard from json", e);
