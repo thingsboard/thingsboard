@@ -23,7 +23,8 @@ $tb-primary-color: #305680;
 $tb-secondary-color: #527dad;
 $tb-hue3-color: #a7c1de;
 
-$tb-dark-primary-color: #9fa8da;
+// $tb-dark-primary-color: #9fa8da;
+$tb-dark-primary-color: #151516;
 
 $tb-mat-indigo: (
   50: #e8eaf6,
@@ -107,6 +108,7 @@ $tb-dark-mat-indigo: (
     A700: $dark-primary-text,
   )
 );
+
 
 $tb-dark-primary: mat-palette($tb-dark-mat-indigo);
 

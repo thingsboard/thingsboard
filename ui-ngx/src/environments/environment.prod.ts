@@ -15,7 +15,7 @@
 ///
 
 export const environment = {
-  appTitle: 'ThingsBoard',
+  appTitle: 'Qmax Effi.AI',
   production: true,
 // @ts-ignore
   tbVersion: TB_VERSION,

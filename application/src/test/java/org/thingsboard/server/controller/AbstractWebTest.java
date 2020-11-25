@@ -105,14 +105,14 @@ public abstract class AbstractWebTest {
 
     protected static final String TEST_TENANT_NAME = "TEST TENANT";
 
-    protected static final String SYS_ADMIN_EMAIL = "sysadmin@thingsboard.org";
-    private static final String SYS_ADMIN_PASSWORD = "sysadmin";
+    protected static final String SYS_ADMIN_EMAIL = "sysadmin@effi.ai";
+    private static final String SYS_ADMIN_PASSWORD = "Gregor10";
 
-    protected static final String TENANT_ADMIN_EMAIL = "testtenant@thingsboard.org";
-    private static final String TENANT_ADMIN_PASSWORD = "tenant";
+    protected static final String TENANT_ADMIN_EMAIL = "testtenan@effi.ai";
+    private static final String TENANT_ADMIN_PASSWORD = "Gregor10";
 
-    protected static final String CUSTOMER_USER_EMAIL = "testcustomer@thingsboard.org";
-    private static final String CUSTOMER_USER_PASSWORD = "customer";
+    protected static final String CUSTOMER_USER_EMAIL = "testcustomer@effi.ai";
+    private static final String CUSTOMER_USER_PASSWORD = "Gregor10";
 
     /** See {@link org.springframework.test.web.servlet.DefaultMvcResult#getAsyncResult(long)}
      *  and {@link org.springframework.mock.web.MockAsyncContext#getTimeout()}
@@ -242,7 +242,7 @@ public abstract class AbstractWebTest {
         User differentTenantAdmin = new User();
         differentTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
-        differentTenantAdmin.setEmail("different_tenant@thingsboard.org");
+        differentTenantAdmin.setEmail("different_tena@effi.ai");
 
         createUserAndLogin(differentTenantAdmin, "testPassword");
     }

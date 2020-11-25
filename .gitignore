@@ -33,3 +33,6 @@ pom.xml.versionsBackup
 **/.env
 .instance_id
 rebuild-docker.sh
+build.sh
+ui-ngx/report.20201121.180249.3320.0.001.json
+ui-ngx/report.20201121.185048.4593.0.001.json

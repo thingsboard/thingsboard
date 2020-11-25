@@ -19,7 +19,7 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  appTitle: 'ThingsBoard',
+  appTitle: 'Qmax Effi.AI',
   production: false,
 // @ts-ignore
   tbVersion: TB_VERSION,
