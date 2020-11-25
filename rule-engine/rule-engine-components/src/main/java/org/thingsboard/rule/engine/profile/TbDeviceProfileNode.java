@@ -54,7 +54,8 @@ import java.util.concurrent.TimeUnit;
         relationTypes = {"Alarm Created", "Alarm Updated", "Alarm Severity Updated", "Alarm Cleared", "Success", "Failure"},
         configClazz = TbDeviceProfileNodeConfiguration.class,
         nodeDescription = "Process device messages based on device profile settings",
-        nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. Generates ",
+        nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. The output relation type is either " +
+                "'Alarm Created', 'Alarm Updated', 'Alarm Severity Updated' and 'Alarm Cleared' or simply 'Success' if no alarms were affected.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbDeviceProfileConfig"
 )
@@ -119,7 +120,6 @@ public class TbDeviceProfileNode implements TbNode {
             } else {
                 removeDeviceState(deviceId);
             }
-
         } else {
             if (EntityType.DEVICE.equals(originatorType)) {
                 DeviceId deviceId = new DeviceId(msg.getOriginator().getId());

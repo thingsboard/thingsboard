@@ -8,20 +8,8 @@
     "configuration": null
   },
   "metadata": {
-    "firstNodeIndex": 3,
+    "firstNodeIndex": 6,
     "nodes": [
-      {
-        "additionalInfo": {
-          "layoutX": 1069,
-          "layoutY": 267
-        },
-        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
-        "name": "Is Thermostat?",
-        "debugMode": false,
-        "configuration": {
-          "jsScript": "return msg.id.entityType === \"DEVICE\" && msg.type === \"thermostat\";"
-        }
-      },
       {
         "additionalInfo": {
           "layoutX": 824,
@@ -61,8 +49,8 @@
       },
       {
         "additionalInfo": {
-          "layoutX": 839,
-          "layoutY": 345
+          "layoutX": 825,
+          "layoutY": 266
         },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log RPC from Device",
@@ -73,8 +61,8 @@
       },
       {
         "additionalInfo": {
-          "layoutX": 832,
-          "layoutY": 407
+          "layoutX": 825,
+          "layoutY": 379
         },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log Other",
@@ -97,93 +85,51 @@
       },
       {
         "additionalInfo": {
-          "layoutX": 1069,
-          "layoutY": 90
+          "description": "Process incoming messages from devices with the alarm rules defined in the device profile. Dispatch all incoming messages with \"Success\" relation type.",
+          "layoutX": 204,
+          "layoutY": 240
         },
-        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
-        "name": "Is Thermostat?",
+        "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
+        "name": "Device Profile Node",
         "debugMode": false,
         "configuration": {
-          "jsScript": "return metadata[\"deviceType\"] === \"thermostat\";"
-        }
-      },
-      {
-        "additionalInfo": {
-          "layoutX": 1090,
-          "layoutY": 360
-        },
-        "type": "org.thingsboard.rule.engine.action.TbCreateRelationNode",
-        "name": "Relate to Asset",
-        "debugMode": false,
-        "configuration": {
-          "direction": "FROM",
-          "relationType": "ToAlarmPropagationAsset",
-          "entityType": "ASSET",
-          "entityNamePattern": "Thermostat Alarms",
-          "entityTypePattern": "AlarmPropagationAsset",
-          "entityCacheExpiration": 300,
-          "createEntityIfNotExists": true,
-          "changeOriginatorToRelatedEntity": false,
-          "removeCurrentRelations": false
+          "persistAlarmRulesState": false,
+          "fetchAlarmRulesStateOnStart": false
         }
       }
     ],
     "connections": [
       {
-        "fromIndex": 0,
-        "toIndex": 8,
-        "type": "True"
-      },
-      {
-        "fromIndex": 1,
-        "toIndex": 7,
+        "fromIndex": 6,
+        "toIndex": 2,
         "type": "Success"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 5,
+        "fromIndex": 2,
+        "toIndex": 4,
         "type": "Other"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 2,
+        "fromIndex": 2,
+        "toIndex": 1,
         "type": "Post attributes"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 1,
+        "fromIndex": 2,
+        "toIndex": 0,
         "type": "Post telemetry"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 4,
+        "fromIndex": 2,
+        "toIndex": 3,
         "type": "RPC Request from Device"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 6,
+        "fromIndex": 2,
+        "toIndex": 5,
         "type": "RPC Request to Device"
-      },
-      {
-        "fromIndex": 3,
-        "toIndex": 0,
-        "type": "Entity Created"
       }
     ],
-    "ruleChainConnections": [
-      {
-        "fromIndex": 7,
-        "targetRuleChainId": {
-          "entityType": "RULE_CHAIN",
-          "id": "25e26570-89ed-11ea-a650-cd6e14e633bd"
-        },
-        "additionalInfo": {
-          "layoutX": 1109,
-          "layoutY": 182,
-          "ruleChainNodeId": "rule-chain-node-10"
-        },
-        "type": "True"
-      }
-    ]
+    "ruleChainConnections": null
   }
 }
