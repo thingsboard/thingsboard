@@ -288,16 +288,16 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     if (JSON.stringify(Array.from(valueOld)) != JSON.stringify(Array.from(valueNew))) {
       let idsDel = this.diffBetweenSet(valueNew, this.deepCloneSet(valueOld));
       let idsAdd = this.diffBetweenSet(valueOld, this.deepCloneSet(valueNew));
-      if (idsDel.size) {
-        this.delInstances(data.objectId, idsDel);
-      }
       if (idsAdd.size) {
         this.addInstancesNew(data.objectId, idsAdd)
+      }
+      if (idsDel.size) {
+        this.delInstances(data.objectId, idsDel);
       }
     }
   }
 
-  sortInstancesFormGroup(instances: FormGroup[]): void{
+  sortInstancesFormGroup(instances: FormGroup[]): void {
     instances.sort((a, b) => {
       let aLC: number = a.value.id;
       let bLC: number = b.value.id;
