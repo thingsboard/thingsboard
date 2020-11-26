@@ -52,10 +52,11 @@ public class ModelClient  implements Cloneable {
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
-    public ModelClient(String endPoint, String identity, SecurityInfo info, ValidateDeviceCredentialsResponseMsg credentialsResponse, Map<String, String> attributes, Map<Integer, ModelObject> modelObjects) {
+    public ModelClient(String endPoint, String identity, SecurityInfo info, DeviceProfile deviceProfile, ValidateDeviceCredentialsResponseMsg credentialsResponse, Map<String, String> attributes, Map<Integer, ModelObject> modelObjects) {
         this.endPoint = endPoint;
         this.identity = identity;
         this.info = info;
+        this.deviceProfile = deviceProfile;
         this.credentialsResponse = credentialsResponse;
         this.attributes = (attributes != null && attributes.size()>0) ? attributes : new ConcurrentHashMap<String, String>();
         this.modelObjects =  (modelObjects != null && modelObjects.size()>0) ? modelObjects : new ConcurrentHashMap<Integer, ModelObject>();
