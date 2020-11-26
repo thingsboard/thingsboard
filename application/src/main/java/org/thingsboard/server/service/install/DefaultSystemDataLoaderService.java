@@ -82,7 +82,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.TreeMap;
 
 @Service
 @Profile("install")
@@ -311,7 +311,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         temperatureCondition.setCondition(Arrays.asList(temperatureAlarmFlagAttributeFilter, temperatureTimeseriesFilter));
         temperatureRule.setAlarmDetails("Current temperature = ${temperature}");
         temperatureRule.setCondition(temperatureCondition);
-        highTemperature.setCreateRules(new LinkedHashMap<>(Collections.singletonMap(AlarmSeverity.MAJOR, temperatureRule)));
+        highTemperature.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.MAJOR, temperatureRule)));
 
         AlarmRule clearTemperatureRule = new AlarmRule();
         AlarmCondition clearTemperatureCondition = new AlarmCondition();
@@ -362,7 +362,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         humidityRule.setCondition(humidityCondition);
         humidityRule.setAlarmDetails("Current humidity = ${humidity}");
-        lowHumidity.setCreateRules(new LinkedHashMap<>(Collections.singletonMap(AlarmSeverity.MINOR, humidityRule)));
+        lowHumidity.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.MINOR, humidityRule)));
 
         AlarmRule clearHumidityRule = new AlarmRule();
         AlarmCondition clearHumidityCondition = new AlarmCondition();
