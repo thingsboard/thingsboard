@@ -137,6 +137,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     if (modelValue.objectIds !== null) {
       this.deviceProfileService.getLwm2mObjects(modelValue.objectIds).subscribe(
         (objectsList) => {
+          debugger
           modelValue.objectsList = objectsList;
           this.updateWriteValue(modelValue);
         }
@@ -269,17 +270,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       if (keyNameJson) this.updateKeyNameObjects(deepClone(keyNameJson), clientObserveAttr);
     }
     clientObserveAttr.forEach(obj => {
-      this.sortInstancesValue(obj.instances);
+      obj.instances.sort((a,b) => a.id - b.id);;
     })
     return clientObserveAttr;
-  }
-
-  sortInstancesValue(instances: Instance[]): Instance[]{
-    return instances.sort((a, b) => {
-      let aLC: number = a.id;
-      let bLC: number = b.id;
-      return aLC < bLC ? -1 : (aLC > bLC ? 1 : 0);
-    });
   }
 
   includesInstancesNo(attributeArray: Array<string>, telemetryArray: Array<string>, clientObserveAttr: ObjectLwM2M[]): boolean {

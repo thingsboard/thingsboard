@@ -20,11 +20,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
+import org.nustaq.serialization.FSTConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
+
+import java.util.Optional;
 
 @Slf4j
 @Component("LwM2MJsonAdaptor")
@@ -64,5 +67,17 @@ public class LwM2MJsonAdaptor implements LwM2MTransportAdaptor  {
             }
         }
         return object;
+    }
+
+
+    public <T> Optional<T> decode(byte[] byteArray) {
+        try {
+            FSTConfiguration config = FSTConfiguration.createDefaultConfiguration();;
+            T msg = (T) config.asObject(byteArray);
+            return Optional.ofNullable(msg);
+        } catch (IllegalArgumentException e) {
+            log.error("Error during deserialization message, [{}]", e.getMessage());
+            return Optional.empty();
+        }
     }
 }

@@ -61,7 +61,6 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         if (store.getBootstrapJson() != null) {
             /** add value to store  from BootstrapJson */
             setBootstrapConfigScurityInfo(store);
-
             BootstrapConfig bsConfigNew = store.getBootstrapConfig();
             if (bsConfigNew != null) {
                 try {

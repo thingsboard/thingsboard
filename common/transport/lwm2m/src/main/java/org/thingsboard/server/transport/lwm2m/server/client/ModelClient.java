@@ -24,6 +24,7 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportService;
 import org.thingsboard.server.transport.lwm2m.server.ResultIds;
@@ -37,6 +38,7 @@ public class ModelClient  implements Cloneable {
     private String endPoint;
     private String identity;
     private SecurityInfo info;
+    private DeviceProfile deviceProfile;
     private ValidateDeviceCredentialsResponseMsg credentialsResponse;
     private Map<String, String> attributes;
     private Map<Integer, ModelObject> modelObjects;

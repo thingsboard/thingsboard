@@ -17,8 +17,7 @@
 -->
 <form [formGroup]="jsonFormGroup" (ngSubmit)="add()" style="min-width: 400px;">
   <mat-toolbar fxLayout="row" color="primary">
-    Object [<b>{{ data.objectId}}</b>]
-      name: <b><i>{{ data.objectName}}</i></b>
+    <b><i>{{data.objectName}}</i></b> &nbsp;&nbsp; (object&nbsp;[<b>{{data.objectId}}</b>])
     <span fxFlex></span>
     <button mat-button mat-icon-button
             (click)="cancel()"

@@ -78,6 +78,9 @@ There are several methods to create instance to indicate the message direction b
 		<Resources>
 			<Item ID="0"><Name>Data</Name>
 				<Operations>RW</Operations>
+<!--				<MultipleInstances>Single</MultipleInstances>-->
+<!--				<Mandatory>Optional</Mandatory>-->
+<!--				<Type>String</Type>-->
 				<MultipleInstances>Multiple</MultipleInstances>
 				<Mandatory>Mandatory</Mandatory>
 				<Type>Opaque</Type>

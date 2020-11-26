@@ -31,10 +31,12 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
+import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
@@ -183,6 +185,10 @@ public class LwM2MTransportService {
         if (msg == null || msg.getDeviceInfo() == null) {
             log.warn("[{}] [{}]", modelClient.getEndPoint(), CONNECTION_REFUSED_NOT_AUTHORIZED.toString());
         } else {
+            Optional<DeviceProfile> deviceProfile = adaptor.decode(msg.getProfileBody().toByteArray());
+            if (deviceProfile.isPresent()) {
+                modelClient.setDeviceProfile(deviceProfile.get());
+            }
             sessionInfo = SessionInfoProto.newBuilder()
                     .setNodeId(this.context.getNodeId())
                     .setSessionIdMSB(sessionId.getMostSignificantBits())

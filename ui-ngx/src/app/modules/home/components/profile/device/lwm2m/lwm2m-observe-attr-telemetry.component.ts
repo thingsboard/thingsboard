@@ -244,10 +244,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
    * @param objectId
    * @param objectName
    */
-  //
-  // getMultiple(objectId: number): boolean{
-  //   return this.observeAttrTelemetryFormGroup.get('clientLwM2M').value.find(e => e.id == objectId).mandatory;
-  // }
 
   addInstances($event: Event, object: ObjectLwM2M): void {
     if ($event) {
@@ -297,14 +293,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     }
   }
 
-  sortInstancesFormGroup(instances: FormGroup[]): void {
-    instances.sort((a, b) => {
-      let aLC: number = a.value.id;
-      let bLC: number = b.value.id;
-      return aLC < bLC ? -1 : (aLC > bLC ? 1 : 0);
-    });
-  }
-
   delInstances(objectId: number, idsDel: Set<number>): void {
     let isIdIndex = (element) => element.id == objectId;
     let objectIndex = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).findIndex(isIdIndex);
@@ -335,7 +323,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         resources: {value: instanceNew.resources, disabled: this.disabled}
       }));
     });
-    this.sortInstancesFormGroup(instancesFormArray.controls as FormGroup[]);
+    (instancesFormArray.controls as FormGroup[]).sort((a,b) => a.value.id - b.value.id);
   }
 
   deepCloneSet(oldSet: Set<any>): Set<any> {
