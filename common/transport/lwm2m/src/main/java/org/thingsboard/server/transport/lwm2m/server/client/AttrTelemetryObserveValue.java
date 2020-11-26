@@ -16,10 +16,16 @@
 package org.thingsboard.server.transport.lwm2m.server.client;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import lombok.Data;
 
 @Data
 public class AttrTelemetryObserveValue {
+    /**
+     * [ "/2/0/0", "/2/0/1"]
+     */
+    JsonObject postKeyNameProfile;
+
     /**
      * [ "/2/0/0", "/2/0/1"]
      */

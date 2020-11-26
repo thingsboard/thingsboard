@@ -161,11 +161,11 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         if (store.getSecurityInfo() != null) {
             if (store.getSecurityMode() < DEFAULT_MODE.code) {
                 String endpoint = store.getSecurityInfo().getEndpoint();
-                sessions.put(endpoint, new ModelClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getMsg(), null, null));
+                sessions.put(endpoint, new ModelClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getDeviceProfile(), store.getMsg(), null, null));
             }
         } else {
             if (store.getSecurityMode() == NO_SEC.code)
-                sessions.put(identity, new ModelClient(identity, null, null, store.getMsg(), null, null));
+                sessions.put(identity, new ModelClient(identity, null, null, store.getDeviceProfile(), store.getMsg(), null, null));
             else log.error("Registration failed: FORBIDDEN, endpointId: [{}]", identity);
         }
         return store.getSecurityInfo();

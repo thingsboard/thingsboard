@@ -51,6 +51,7 @@ public class LwM2MTransportHandler{
     public static final long DEFAULT_TIMEOUT = 2 * 60 * 1000l; // 2min in ms
     public static final String EVENT_DEREGISTRATION = "DEREGISTRATION";
     public static final String OBSERVE_ATTRIBUTE_TELEMETRY = "observeAttr";
+    public static final String KEYNAME = "keyName";
     public static final String ATTRIBUTE = "attribute";
     public static final String TELEMETRY = "telemetry";
     public static final String OBSERVE = "observe";

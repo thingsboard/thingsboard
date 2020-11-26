@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.secure;
 
 import com.google.gson.JsonObject;
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.SecurityUtil;
@@ -66,10 +67,10 @@ public class LwM2MGetSecurityInfo {
                         String ingfosStr = msg.getCredentialsBody();
                         resultSecurityStore[0] = putSecurityInfo(endPoint, msg.getDeviceInfo().getDeviceName(), ingfosStr, keyValue);
                         resultSecurityStore[0].setMsg(msg);
-//                        Optional<DeviceProfile> deviceProfile = adaptor.decode(msg.getProfileBody().toByteArray());
-//                        if (deviceProfile.isPresent()) {
-//                            resultSecurityStore[0].setDeviceProfile(deviceProfile.get());
-//                        }
+                        Optional<DeviceProfile> deviceProfile = adaptor.decode(msg.getProfileBody().toByteArray());
+                        if (deviceProfile.isPresent()) {
+                            resultSecurityStore[0].setDeviceProfile(deviceProfile.get());
+                        }
                         latch.countDown();
                     }
 
