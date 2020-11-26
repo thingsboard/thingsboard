@@ -18,9 +18,9 @@ package org.thingsboard.server.service.sms;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.sms.SmsSender;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
-import org.thingsboard.rule.engine.api.sms.config.AwsSnsSmsProviderConfiguration;
-import org.thingsboard.rule.engine.api.sms.config.SmsProviderConfiguration;
-import org.thingsboard.rule.engine.api.sms.config.TwilioSmsProviderConfiguration;
+import org.thingsboard.server.common.data.sms.config.AwsSnsSmsProviderConfiguration;
+import org.thingsboard.server.common.data.sms.config.SmsProviderConfiguration;
+import org.thingsboard.server.common.data.sms.config.TwilioSmsProviderConfiguration;
 import org.thingsboard.server.service.sms.aws.AwsSmsSender;
 import org.thingsboard.server.service.sms.twilio.TwilioSmsSender;
 

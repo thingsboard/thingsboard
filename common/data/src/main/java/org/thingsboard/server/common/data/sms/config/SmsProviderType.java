@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api.sms.config;
+package org.thingsboard.server.common.data.sms.config;
 
 public enum SmsProviderType {
     AWS_SNS,

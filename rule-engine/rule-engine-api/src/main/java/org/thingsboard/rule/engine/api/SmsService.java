@@ -15,7 +15,7 @@
  */
 package org.thingsboard.rule.engine.api;
 
-import org.thingsboard.rule.engine.api.sms.config.TestSmsRequest;
+import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 

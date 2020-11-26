@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api.sms.config;
+package org.thingsboard.server.common.data.sms.config;
 
 import lombok.Data;
 
 @Data
-public class AwsSnsSmsProviderConfiguration implements SmsProviderConfiguration {
+public class TwilioSmsProviderConfiguration implements SmsProviderConfiguration {
 
-    private String accessKeyId;
-    private String secretAccessKey;
-    private String region;
+    private String accountSid;
+    private String accountToken;
+    private String numberFrom;
 
     @Override
     public SmsProviderType getType() {
-        return SmsProviderType.AWS_SNS;
+        return SmsProviderType.TWILIO;
     }
 
 }
