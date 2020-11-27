@@ -166,7 +166,7 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
                 long newValue = tenantState.add(recordKey, kvProto.getValue());
                 updatedEntries.add(new BasicTsKvEntry(ts, new LongDataEntry(recordKey.getApiCountKey(), newValue)));
                 long newHourlyValue = tenantState.addToHourly(recordKey, kvProto.getValue());
-                updatedEntries.add(new BasicTsKvEntry(hourTs, new LongDataEntry(recordKey.getApiCountKey() + HOURLY, newHourlyValue)));
+                updatedEntries.add(new BasicTsKvEntry(newHourTs, new LongDataEntry(recordKey.getApiCountKey() + HOURLY, newHourlyValue)));
                 apiFeatures.add(recordKey.getApiFeature());
             }
             result = tenantState.checkStateUpdatedDueToThreshold(apiFeatures);
