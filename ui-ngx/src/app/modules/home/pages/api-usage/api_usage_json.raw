@@ -1,0 +1,4343 @@
+{
+  "title": "Api Usage",
+  "configuration": {
+    "description": "",
+    "widgets": {
+      "fd6df872-2ddf-0921-3929-2e7f55062fad": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "html_value_card",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "jsExecutionApiState",
+                  "type": "timeseries",
+                  "label": "apiState",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8830669138660703,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "jsExecutionLimit",
+                  "type": "timeseries",
+                  "label": "limit",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5463603803546802,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "jsExecutionCount",
+                  "type": "timeseries",
+                  "label": "count",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.5564241862015964,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "jsExecutionApiState",
+                  "type": "timeseries",
+                  "label": "apiStateClass",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8737107059960671,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return value ? value.toLowerCase() : '';"
+                },
+                {
+                  "name": "jsExecutionApiState",
+                  "type": "timeseries",
+                  "label": "cardId",
+                  "color": "#607d8b",
+                  "settings": {},
+                  "_hash": 0.051659774305067296,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return (Math.random()*100000).toFixed(0);"
+                },
+                {
+                  "name": "jsExecutionApiState",
+                  "type": "timeseries",
+                  "label": "title",
+                  "color": "#9c27b0",
+                  "settings": {},
+                  "_hash": 0.7673280949238444,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return \"JavaScript functions\";"
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "#666666",
+          "padding": "0",
+          "settings": {
+            "cardCss": ".card {\n   width: 100%;\n   height: 100%;\n   box-sizing: border-box;\n   display: flex;\n   flex-direction: column;\n}\n\n.card .content {\n   flex: 1;    \n   padding: 13px 13px 0;\n   display: flex;\n   box-sizing: border-box;\n}\n\n.card .content .column {\n   display: flex;\n   flex-direction: column;    \n   justify-content: space-around;\n   flex: 1;\n}\n\n.card .content .title-row {\n    display: flex;\n    flex-direction: row;\n    padding-bottom: 10px;\n}\n\n.card .title {\n    flex: 1;\n    font-size: 20px;\n    font-weight: 400;\n    color: #666666;\n}\n\n.card .state {\n    text-transform: uppercase;\n    font-size: 20px;\n    font-weight: bold;\n}\n\n.card.enabled .state {\n    color: #00B260;\n}\n\n.card.warning .state {\n    color: #FFAD6F;\n}\n\n.card.disabled .state {\n    color: #F73243;\n}\n\n.card .bar-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.card .bar {\n    flex: 1;\n    max-height: 30px;\n    margin-top: 3.5px;\n    margin-bottom: 4px;\n    background-color: #F0F0F0;\n    border: 1px solid #DADCDB;\n    border-radius: 2px;\n    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);\n}\n\n.card.enabled .bar {\n    border-color: #00B260;\n    background-color: #F0FBF7;\n}\n\n.card.warning .bar {\n    border-color: #FFAD6F;\n    background-color: #FFFAF6;\n}\n\n.card.disabled .bar {\n    border-color: #F73243;\n    background-color: #FFF0F0;\n}\n\n.card .bar .bar-fill {\n    background-color: #F0F0F0;\n    border-radius: 2px;\n    height: 100%;\n    width: 0%;\n}\n\n.card.enabled .bar-fill {\n    background-color: #00C46C;\n}\n\n.card.warning .bar-fill {\n    background-color: #FFD099;\n}\n\n.card.disabled .bar-fill {\n    background-color: #FF9494;\n}\n\n.card .bar-labels {\n    height: 24px;\n    font-size: 20px;\n    color: #666;\n    display: flex;\n    flex-direction: row;\n}\n\n\n.card .mat-button {\n    text-transform: uppercase;\n}\n\n.card .mat-button-wrapper {\n    pointer-events: none;\n}\n\n.card .action-row {\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-end;\n    padding: 8px 0;\n}\n",
+            "cardHtml": "<div class='card ${apiStateClass}'>\n    <img src=\"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\" onload=\"initializeCard_${cardId:0}(event);\">\n    <script type=\"text/javascript\">\n        function initializeCard_${cardId:0}(e) {\n            \n            function toShortNumber(number) {\n                var rounder = Math.pow(10, 1);\n                var powers = [\n                  {key: 'Q', value: Math.pow(10, 15)},\n                  {key: 'T', value: Math.pow(10, 12)},\n                  {key: 'B', value: Math.pow(10, 9)},\n                  {key: 'M', value: Math.pow(10, 6)},\n                  {key: 'K', value: 1000}\n                ];\n                \n                var key = '';\n                \n                for (var i = 0; i < powers.length; i++) {\n                    var reduced = number / powers[i].value;\n                    reduced = Math.round(reduced * rounder) / rounder;\n                    if (reduced >= 1) {\n                        number = reduced;\n                        key = powers[i].key;\n                        break;\n                    }\n                }\n                return number + key;\n            }\n            \n            var imgTag = e.target;\n            var parentTag = imgTag.parentNode;\n            var count = \"${count:0}\";\n            var limit = \"${limit:0}\";\n            count = count.length > 0 ? parseInt(count, 10) : 0;\n            limit = limit.length > 0 ? parseInt(limit, 10) : 0;\n            var percentElement = $('#api-usage-percent', parentTag);\n            var valueElement = $('#api-usage-value', parentTag);\n            var barElement = $('#api-usage-bar', parentTag);\n            if (Number.isFinite(limit) && limit > 0) {\n                var percent = Math.min(100, ((count / limit) * 100));\n                barElement.width(percent + '%');\n                percent = percent.toFixed(2);\n                percentElement.text(percent + '%');\n                valueElement.text(toShortNumber(count) + ' / ' + toShortNumber(limit));\n            } else {\n                barElement.width('0%');\n                percentElement.text('');\n                valueElement.text(toShortNumber(count) + ' / unlimited');\n            }\n        }\n    </script>\n    <div class='content'>\n        <div class='column'>\n            <div class='title-row'>\n                <div class='title'>${title}</div>\n                <div class='state'>${apiState}</div>\n            </div>    \n            <div class='bar-container'>\n                <div class='bar'>\n                    <div class=\"bar-fill\" id=\"api-usage-bar\"></div>\n                </div>    \n                <div class='bar-labels'>\n                    <div id=\"api-usage-percent\"></div>\n                    <div style=\"flex: 1;\"></div>\n                    <div id=\"api-usage-value\"></div>\n                </div>\n            </div>    \n        </div>\n    </div>\n    <div role=\"separator\" class=\"mat-divider mat-divider-horizontal\" aria-orientation=\"horizontal\"></div>\n    <div class='action-row'>\n        <button id=\"javascript_functions_details\" class=\"mat-focus-indicator mat-button mat-button-base mat-primary\">\n            <span class=\"mat-button-wrapper\">View details</span>\n            <span class=\"mat-ripple mat-button-ripple\"></span>\n            <span class=\"mat-button-focus-overlay\"></span>\n        </button>\n    </div> \n</div>"
+          },
+          "title": "JavaScript functions",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {
+            "cursor": "default"
+          },
+          "titleStyle": {
+            "fontSize": "20px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {
+            "elementClick": [
+              {
+                "name": "javascript_functions_details",
+                "icon": "insert_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "javascript_functions",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "d4961bea-84de-e1af-e50f-666b98d34cd5"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "fd6df872-2ddf-0921-3929-2e7f55062fad"
+      },
+      "7e235874-461b-e7c2-2fdd-d8762a020773": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "html_value_card",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "dbApiState",
+                  "type": "timeseries",
+                  "label": "apiState",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8830669138660703,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "storageDataPointsLimit",
+                  "type": "timeseries",
+                  "label": "limit",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5463603803546802,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "storageDataPointsCount",
+                  "type": "timeseries",
+                  "label": "count",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.5564241862015964,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "dbApiState",
+                  "type": "timeseries",
+                  "label": "apiStateClass",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8737107059960671,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return value ? value.toLowerCase() : '';"
+                },
+                {
+                  "name": "dbApiState",
+                  "type": "timeseries",
+                  "label": "cardId",
+                  "color": "#607d8b",
+                  "settings": {},
+                  "_hash": 0.051659774305067296,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return (Math.random()*100000).toFixed(0);"
+                },
+                {
+                  "name": "dbApiState",
+                  "type": "timeseries",
+                  "label": "title",
+                  "color": "#9c27b0",
+                  "settings": {},
+                  "_hash": 0.6301889725474652,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return \"Telemetry persistence\";"
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "#666666",
+          "padding": "0",
+          "settings": {
+            "cardHtml": "<div class='card ${apiStateClass}'>\n    <img src=\"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\" onload=\"initializeCard_${cardId:0}(event);\">\n    <script type=\"text/javascript\">\n        function initializeCard_${cardId:0}(e) {\n            \n            function toShortNumber(number) {\n                var rounder = Math.pow(10, 1);\n                var powers = [\n                  {key: 'Q', value: Math.pow(10, 15)},\n                  {key: 'T', value: Math.pow(10, 12)},\n                  {key: 'B', value: Math.pow(10, 9)},\n                  {key: 'M', value: Math.pow(10, 6)},\n                  {key: 'K', value: 1000}\n                ];\n                \n                var key = '';\n                \n                for (var i = 0; i < powers.length; i++) {\n                    var reduced = number / powers[i].value;\n                    reduced = Math.round(reduced * rounder) / rounder;\n                    if (reduced >= 1) {\n                        number = reduced;\n                        key = powers[i].key;\n                        break;\n                    }\n                }\n                return number + key;\n            }\n            \n            var imgTag = e.target;\n            var parentTag = imgTag.parentNode;\n            var count = \"${count:0}\";\n            var limit = \"${limit:0}\";\n            count = count.length > 0 ? parseInt(count, 10) : 0;\n            limit = limit.length > 0 ? parseInt(limit, 10) : 0;\n            var percentElement = $('#api-usage-percent', parentTag);\n            var valueElement = $('#api-usage-value', parentTag);\n            var barElement = $('#api-usage-bar', parentTag);\n            if (Number.isFinite(limit) && limit > 0) {\n                var percent = Math.min(100, ((count / limit) * 100));\n                barElement.width(percent + '%');\n                percent = percent.toFixed(2);\n                percentElement.text(percent + '%');\n                valueElement.text(toShortNumber(count) + ' / ' + toShortNumber(limit));\n            } else {\n                barElement.width('0%');\n                percentElement.text('');\n                valueElement.text(toShortNumber(count) + ' / unlimited');\n            }\n        }\n    </script>\n    <div class='content'>\n        <div class='column'>\n            <div class='title-row'>\n                <div class='title'>${title}</div>\n                <div class='state'>${apiState}</div>\n            </div>    \n            <div class='bar-container'>\n                <div class='bar'>\n                    <div class=\"bar-fill\" id=\"api-usage-bar\"></div>\n                </div>    \n                <div class='bar-labels'>\n                    <div id=\"api-usage-percent\"></div>\n                    <div style=\"flex: 1;\"></div>\n                    <div id=\"api-usage-value\"></div>\n                </div>\n            </div>    \n        </div>\n    </div>\n    <div role=\"separator\" class=\"mat-divider mat-divider-horizontal\" aria-orientation=\"horizontal\"></div>\n    <div class='action-row'>\n        <button id=\"telemetry_persistence_details\" class=\"mat-focus-indicator mat-button mat-button-base mat-primary\">\n            <span class=\"mat-button-wrapper\">View details</span>\n            <span class=\"mat-ripple mat-button-ripple\"></span>\n            <span class=\"mat-button-focus-overlay\"></span>\n        </button>\n    </div> \n</div>",
+            "cardCss": ".card {\n   width: 100%;\n   height: 100%;\n   box-sizing: border-box;\n   display: flex;\n   flex-direction: column;\n}\n\n.card .content {\n   flex: 1;    \n   padding: 13px 13px 0;\n   display: flex;\n   box-sizing: border-box;\n}\n\n.card .content .column {\n   display: flex;\n   flex-direction: column;    \n   justify-content: space-around;\n   flex: 1;\n}\n\n.card .content .title-row {\n    display: flex;\n    flex-direction: row;\n    padding-bottom: 10px;\n}\n\n.card .title {\n    flex: 1;\n    font-size: 20px;\n    font-weight: 400;\n    color: #666666;\n}\n\n.card .state {\n    text-transform: uppercase;\n    font-size: 20px;\n    font-weight: bold;\n}\n\n.card.enabled .state {\n    color: #00B260;\n}\n\n.card.warning .state {\n    color: #FFAD6F;\n}\n\n.card.disabled .state {\n    color: #F73243;\n}\n\n.card .bar-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.card .bar {\n    flex: 1;\n    max-height: 30px;\n    margin-top: 3.5px;\n    margin-bottom: 4px;\n    background-color: #F0F0F0;\n    border: 1px solid #DADCDB;\n    border-radius: 2px;\n    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);\n}\n\n.card.enabled .bar {\n    border-color: #00B260;\n    background-color: #F0FBF7;\n}\n\n.card.warning .bar {\n    border-color: #FFAD6F;\n    background-color: #FFFAF6;\n}\n\n.card.disabled .bar {\n    border-color: #F73243;\n    background-color: #FFF0F0;\n}\n\n.card .bar .bar-fill {\n    background-color: #F0F0F0;\n    border-radius: 2px;\n    height: 100%;\n    width: 0%;\n}\n\n.card.enabled .bar-fill {\n    background-color: #00C46C;\n}\n\n.card.warning .bar-fill {\n    background-color: #FFD099;\n}\n\n.card.disabled .bar-fill {\n    background-color: #FF9494;\n}\n\n.card .bar-labels {\n    height: 24px;\n    font-size: 20px;\n    color: #666;\n    display: flex;\n    flex-direction: row;\n}\n\n\n.card .mat-button {\n    text-transform: uppercase;\n}\n\n.card .mat-button-wrapper {\n    pointer-events: none;\n}\n\n.card .action-row {\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-end;\n    padding: 8px 0;\n}\n"
+          },
+          "title": "Telemetry persistence",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {
+            "cursor": "default"
+          },
+          "titleStyle": {
+            "fontSize": "20px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {
+            "elementClick": [
+              {
+                "name": "telemetry_persistence_details",
+                "icon": "insert_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "telemetry_persistence",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "6248831c-5b3f-8879-8548-afcf43f10610"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "7e235874-461b-e7c2-2fdd-d8762a020773"
+      },
+      "08545554-a0e8-05c7-66df-6000cfeff8a4": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "html_value_card",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "ruleEngineApiState",
+                  "type": "timeseries",
+                  "label": "apiState",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8830669138660703,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "ruleEngineExecutionLimit",
+                  "type": "timeseries",
+                  "label": "limit",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5463603803546802,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "ruleEngineExecutionCount",
+                  "type": "timeseries",
+                  "label": "count",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.5564241862015964,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "ruleEngineApiState",
+                  "type": "timeseries",
+                  "label": "apiStateClass",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8737107059960671,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return value ? value.toLowerCase() : '';"
+                },
+                {
+                  "name": "ruleEngineApiState",
+                  "type": "timeseries",
+                  "label": "cardId",
+                  "color": "#607d8b",
+                  "settings": {},
+                  "_hash": 0.051659774305067296,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return (Math.random()*100000).toFixed(0);"
+                },
+                {
+                  "name": "ruleEngineApiState",
+                  "type": "timeseries",
+                  "label": "title",
+                  "color": "#9c27b0",
+                  "settings": {},
+                  "_hash": 0.3551317421302518,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return \"Rule Engine execution\";"
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "#666666",
+          "padding": "0",
+          "settings": {
+            "cardCss": ".card {\n   width: 100%;\n   height: 100%;\n   box-sizing: border-box;\n   display: flex;\n   flex-direction: column;\n}\n\n.card .content {\n   flex: 1;    \n   padding: 13px 13px 0;\n   display: flex;\n   box-sizing: border-box;\n}\n\n.card .content .column {\n   display: flex;\n   flex-direction: column;    \n   justify-content: space-around;\n   flex: 1;\n}\n\n.card .content .title-row {\n    display: flex;\n    flex-direction: row;\n    padding-bottom: 10px;\n}\n\n.card .title {\n    flex: 1;\n    font-size: 20px;\n    font-weight: 400;\n    color: #666666;\n}\n\n.card .state {\n    text-transform: uppercase;\n    font-size: 20px;\n    font-weight: bold;\n}\n\n.card.enabled .state {\n    color: #00B260;\n}\n\n.card.warning .state {\n    color: #FFAD6F;\n}\n\n.card.disabled .state {\n    color: #F73243;\n}\n\n.card .bar-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.card .bar {\n    flex: 1;\n    max-height: 30px;\n    margin-top: 3.5px;\n    margin-bottom: 4px;\n    background-color: #F0F0F0;\n    border: 1px solid #DADCDB;\n    border-radius: 2px;\n    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);\n}\n\n.card.enabled .bar {\n    border-color: #00B260;\n    background-color: #F0FBF7;\n}\n\n.card.warning .bar {\n    border-color: #FFAD6F;\n    background-color: #FFFAF6;\n}\n\n.card.disabled .bar {\n    border-color: #F73243;\n    background-color: #FFF0F0;\n}\n\n.card .bar .bar-fill {\n    background-color: #F0F0F0;\n    border-radius: 2px;\n    height: 100%;\n    width: 0%;\n}\n\n.card.enabled .bar-fill {\n    background-color: #00C46C;\n}\n\n.card.warning .bar-fill {\n    background-color: #FFD099;\n}\n\n.card.disabled .bar-fill {\n    background-color: #FF9494;\n}\n\n.card .bar-labels {\n    height: 24px;\n    font-size: 20px;\n    color: #666;\n    display: flex;\n    flex-direction: row;\n}\n\n\n.card .mat-button {\n    text-transform: uppercase;\n}\n\n.card .mat-button-wrapper {\n    pointer-events: none;\n}\n\n.card .action-row {\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-end;\n    padding: 8px 0;\n}\n",
+            "cardHtml": "<div class='card ${apiStateClass}'>\n    <img src=\"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\" onload=\"initializeCard_${cardId:0}(event);\">\n    <script type=\"text/javascript\">\n        function initializeCard_${cardId:0}(e) {\n            \n            function toShortNumber(number) {\n                var rounder = Math.pow(10, 1);\n                var powers = [\n                  {key: 'Q', value: Math.pow(10, 15)},\n                  {key: 'T', value: Math.pow(10, 12)},\n                  {key: 'B', value: Math.pow(10, 9)},\n                  {key: 'M', value: Math.pow(10, 6)},\n                  {key: 'K', value: 1000}\n                ];\n                \n                var key = '';\n                \n                for (var i = 0; i < powers.length; i++) {\n                    var reduced = number / powers[i].value;\n                    reduced = Math.round(reduced * rounder) / rounder;\n                    if (reduced >= 1) {\n                        number = reduced;\n                        key = powers[i].key;\n                        break;\n                    }\n                }\n                return number + key;\n            }\n            \n            var imgTag = e.target;\n            var parentTag = imgTag.parentNode;\n            var count = \"${count:0}\";\n            var limit = \"${limit:0}\";\n            count = count.length > 0 ? parseInt(count, 10) : 0;\n            limit = limit.length > 0 ? parseInt(limit, 10) : 0;\n            var percentElement = $('#api-usage-percent', parentTag);\n            var valueElement = $('#api-usage-value', parentTag);\n            var barElement = $('#api-usage-bar', parentTag);\n            if (Number.isFinite(limit) && limit > 0) {\n                var percent = Math.min(100, ((count / limit) * 100));\n                barElement.width(percent + '%');\n                percent = percent.toFixed(2);\n                percentElement.text(percent + '%');\n                valueElement.text(toShortNumber(count) + ' / ' + toShortNumber(limit));\n            } else {\n                barElement.width('0%');\n                percentElement.text('');\n                valueElement.text(toShortNumber(count) + ' / unlimited');\n            }\n        }\n    </script>\n    <div class='content'>\n        <div class='column'>\n            <div class='title-row'>\n                <div class='title'>${title}</div>\n                <div class='state'>${apiState}</div>\n            </div>    \n            <div class='bar-container'>\n                <div class='bar'>\n                    <div class=\"bar-fill\" id=\"api-usage-bar\"></div>\n                </div>    \n                <div class='bar-labels'>\n                    <div id=\"api-usage-percent\"></div>\n                    <div style=\"flex: 1;\"></div>\n                    <div id=\"api-usage-value\"></div>\n                </div>\n            </div>    \n        </div>\n    </div>\n    <div role=\"separator\" class=\"mat-divider mat-divider-horizontal\" aria-orientation=\"horizontal\"></div>\n    <div class='action-row'>\n        <button id=\"rule_engine_statistics_details\" class=\"mat-focus-indicator mat-button mat-button-base mat-primary\">\n            <span class=\"mat-button-wrapper\">View statistics</span>\n            <span class=\"mat-ripple mat-button-ripple\"></span>\n            <span class=\"mat-button-focus-overlay\"></span>\n        </button>\n        <button id=\"rule_engine_execution_details\" class=\"mat-focus-indicator mat-button mat-button-base mat-primary\">\n            <span class=\"mat-button-wrapper\">View details</span>\n            <span class=\"mat-ripple mat-button-ripple\"></span>\n            <span class=\"mat-button-focus-overlay\"></span>\n        </button>\n    </div> \n</div>"
+          },
+          "title": "Rule Engine execution",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {
+            "cursor": "default"
+          },
+          "titleStyle": {
+            "fontSize": "20px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {
+            "elementClick": [
+              {
+                "name": "rule_engine_execution_details",
+                "icon": "insert_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "rule_engine_execution",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "3c30248f-0cd8-fb97-a917-bc1e09984a79"
+              },
+              {
+                "name": "rule_engine_statistics_details",
+                "icon": "show_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "rule_engine_statistics",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "04e4565a-9e24-23df-f376-f2ec70a8165f"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "08545554-a0e8-05c7-66df-6000cfeff8a4"
+      },
+      "a245c67e-53ec-d299-fa89-69fe2062ccb2": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "html_value_card",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "transportApiState",
+                  "type": "timeseries",
+                  "label": "apiState",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8830669138660703,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "transportMsgLimit",
+                  "type": "timeseries",
+                  "label": "limit",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5463603803546802,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "transportMsgCount",
+                  "type": "timeseries",
+                  "label": "count",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.5564241862015964,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "transportApiState",
+                  "type": "timeseries",
+                  "label": "apiStateClass",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8737107059960671,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return value ? value.toLowerCase() : '';"
+                },
+                {
+                  "name": "transportApiState",
+                  "type": "timeseries",
+                  "label": "cardId",
+                  "color": "#607d8b",
+                  "settings": {},
+                  "_hash": 0.051659774305067296,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return (Math.random()*100000).toFixed(0);"
+                },
+                {
+                  "name": "transportDataPointsLimit",
+                  "type": "timeseries",
+                  "label": "pointsLimit",
+                  "color": "#9c27b0",
+                  "settings": {},
+                  "_hash": 0.22082255831864894,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "transportDataPointsCount",
+                  "type": "timeseries",
+                  "label": "pointsCount",
+                  "color": "#8bc34a",
+                  "settings": {},
+                  "_hash": 0.6340356364819146,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "transportApiState",
+                  "type": "timeseries",
+                  "label": "title",
+                  "color": "#3f51b5",
+                  "settings": {},
+                  "_hash": 0.6894070537030252,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return \"Transport\";"
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "#666666",
+          "padding": "0",
+          "settings": {
+            "cardHtml": "<div class='card ${apiStateClass}'>\n    <img src=\"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\" onload=\"initializeCard_${cardId:0}(event);\">\n    <script type=\"text/javascript\">\n        function initializeCard_${cardId:0}(e) {\n            \n            function toShortNumber(number) {\n                var rounder = Math.pow(10, 1);\n                var powers = [\n                  {key: 'Q', value: Math.pow(10, 15)},\n                  {key: 'T', value: Math.pow(10, 12)},\n                  {key: 'B', value: Math.pow(10, 9)},\n                  {key: 'M', value: Math.pow(10, 6)},\n                  {key: 'K', value: 1000}\n                ];\n                \n                var key = '';\n                \n                for (var i = 0; i < powers.length; i++) {\n                    var reduced = number / powers[i].value;\n                    reduced = Math.round(reduced * rounder) / rounder;\n                    if (reduced >= 1) {\n                        number = reduced;\n                        key = powers[i].key;\n                        break;\n                    }\n                }\n                return number + key;\n            }\n            \n            var imgTag = e.target;\n            var parentTag = imgTag.parentNode;\n            var count = \"${count:0}\";\n            var limit = \"${limit:0}\";\n            count = count.length > 0 ? parseInt(count, 10) : 0;\n            limit = limit.length > 0 ? parseInt(limit, 10) : 0;\n            var percentElement = $('#api-usage-percent', parentTag);\n            var valueElement = $('#api-usage-value', parentTag);\n            var barElement = $('#api-usage-bar', parentTag);\n            if (Number.isFinite(limit) && limit > 0) {\n                var percent = Math.min(100, ((count / limit) * 100));\n                barElement.width(percent + '%');\n                percent = percent.toFixed(2);\n                percentElement.text(percent + '%');\n                valueElement.text(toShortNumber(count) + ' / ' + toShortNumber(limit));\n            } else {\n                barElement.width('0%');\n                percentElement.text('');\n                valueElement.text(toShortNumber(count) + ' / unlimited');\n            }\n            var pointsCount = \"${pointsCount:0}\";\n            var pointsLimit = \"${pointsLimit:0}\";\n            pointsCount = pointsCount.length > 0 ? parseInt(pointsCount, 10) : 0;\n            pointsLimit = pointsLimit.length > 0 ? parseInt(pointsLimit, 10) : 0;\n            var pointsPercentElement = $('#api-usage-percent2', parentTag);\n            var pointsValueElement = $('#api-usage-value2', parentTag);\n            var pointsBarElement = $('#api-usage-bar2', parentTag);\n            if (Number.isFinite(pointsLimit) && pointsLimit > 0) {\n                var percent = Math.min(100, ((pointsCount / pointsLimit) * 100));\n                pointsBarElement.width(percent + '%');\n                percent = percent.toFixed(2);\n                pointsPercentElement.text(percent + '%');\n                pointsValueElement.text(toShortNumber(pointsCount) + ' / ' + toShortNumber(pointsLimit));\n            } else {\n                pointsBarElement.width('0%');\n                pointsPercentElement.text('');\n                pointsValueElement.text(toShortNumber(pointsCount) + ' / unlimited');\n            }\n        }\n    </script>\n    <div class='content'>\n        <div class='column'>\n            <div class='title-row'>\n                <div class='title'>\n                    <span>${title}</span>\n                </div>\n                <div class='state'>${apiState}</div>\n            </div>\n            <div class=\"bars-row\">\n                <div class=\"bar-column\" style=\"margin-right: 10px;\">\n                    <div class='bar-container'>\n                        <div>Messages</div>\n                        <div class='bar'>\n                            <div class=\"bar-fill\" id=\"api-usage-bar\"></div>\n                        </div>\n                        <div class='bar-labels'>\n                            <div id=\"api-usage-percent\"></div>\n                            <div style=\"flex: 1;\"></div>\n                            <div id=\"api-usage-value\"></div>\n                        </div>\n                    </div>    \n                </div>\n                <div class=\"bar-column\" style=\"margin-left: 10px;\">\n                    <div class='bar-container'>\n                        <div>Data points</div>\n                        <div class='bar'>\n                            <div class=\"bar-fill\" id=\"api-usage-bar2\"></div>\n                        </div>    \n                        <div class='bar-labels'>\n                            <div id=\"api-usage-percent2\"></div>\n                            <div style=\"flex: 1;\"></div>\n                            <div id=\"api-usage-value2\"></div>\n                        </div>\n                    </div>    \n                </div>\n            </div>\n        </div>\n    </div>\n    <div role=\"separator\" class=\"mat-divider mat-divider-horizontal\" aria-orientation=\"horizontal\"></div>\n    <div class='action-row'>\n        <button id=\"transport_details\" class=\"mat-focus-indicator mat-button mat-button-base mat-primary\">\n            <span class=\"mat-button-wrapper\">View details</span>\n            <span class=\"mat-ripple mat-button-ripple\"></span>\n            <span class=\"mat-button-focus-overlay\"></span>\n        </button>\n    </div>    \n</div>",
+            "cardCss": ".card {\n   width: 100%;\n   height: 100%;\n   box-sizing: border-box;\n   display: flex;\n   flex-direction: column;\n}\n\n.card .content {\n   flex: 1;    \n   padding: 13px 13px 0;\n   display: flex;\n   box-sizing: border-box;\n}\n\n.card .content .column {\n   display: flex;\n   flex-direction: column;    \n   justify-content: space-around;\n   flex: 1;\n}\n\n.card .content .title-row {\n    display: flex;\n    flex-direction: row;\n    padding-bottom: 10px;\n}\n\n.card .title {\n    flex: 1;\n    font-size: 20px;\n    font-weight: 400;\n    color: #666666;\n}\n\n.card .state {\n    text-transform: uppercase;\n    font-size: 20px;\n    font-weight: bold;\n}\n\n.card.enabled .state {\n    color: #00B260;\n}\n\n.card.warning .state {\n    color: #FFAD6F;\n}\n\n.card.disabled .state {\n    color: #F73243;\n}\n\n.card .bars-row {\n    flex: 1;\n    display: flex;\n    flex-direction: row;\n}\n\n.card .bar-column {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n}\n\n.card .bar-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.card .bar {\n    flex: 1;\n    max-height: 30px;\n    margin-top: 3.5px;\n    margin-bottom: 4px;\n    background-color: #F0F0F0;\n    border: 1px solid #DADCDB;\n    border-radius: 2px;\n    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);\n}\n\n.card.enabled .bar {\n    border-color: #00B260;\n    background-color: #F0FBF7;\n}\n\n.card.warning .bar {\n    border-color: #FFAD6F;\n    background-color: #FFFAF6;\n}\n\n.card.disabled .bar {\n    border-color: #F73243;\n    background-color: #FFF0F0;\n}\n\n.card .bar .bar-fill {\n    background-color: #F0F0F0;\n    border-radius: 2px;\n    height: 100%;\n    width: 0%;\n}\n\n.card.enabled .bar-fill {\n    background-color: #00C46C;\n}\n\n.card.warning .bar-fill {\n    background-color: #FFD099;\n}\n\n.card.disabled .bar-fill {\n    background-color: #FF9494;\n}\n\n.card .bar-labels {\n    height: 16px;\n    font-size: 14px;\n    color: #666;\n    display: flex;\n    flex-direction: row;\n}\n\n.card .mat-button {\n    text-transform: uppercase;\n}\n\n.card .mat-button-wrapper {\n    pointer-events: none;\n}\n\n.card .action-row {\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-end;\n    padding: 8px 0;\n}\n"
+          },
+          "title": "Transport",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {
+            "cursor": "default"
+          },
+          "titleStyle": {
+            "fontSize": "20px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {
+            "elementClick": [
+              {
+                "name": "transport_details",
+                "icon": "insert_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "transport",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "46b7cefe-e1f2-67c1-4055-3a214520f869"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "a245c67e-53ec-d299-fa89-69fe2062ccb2"
+      },
+      "a151ae60-0326-6116-d818-9070dda8e9c7": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "html_value_card",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "emailApiState",
+                  "type": "timeseries",
+                  "label": "apiState",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8830669138660703,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "emailLimit",
+                  "type": "timeseries",
+                  "label": "limit",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5463603803546802,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "emailCount",
+                  "type": "timeseries",
+                  "label": "count",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.5564241862015964,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "emailApiState",
+                  "type": "timeseries",
+                  "label": "apiStateClass",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8737107059960671,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return value ? value.toLowerCase() : '';"
+                },
+                {
+                  "name": "emailApiState",
+                  "type": "timeseries",
+                  "label": "cardId",
+                  "color": "#607d8b",
+                  "settings": {},
+                  "_hash": 0.051659774305067296,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return (Math.random()*100000).toFixed(0);"
+                },
+                {
+                  "name": "emailApiState",
+                  "type": "timeseries",
+                  "label": "title",
+                  "color": "#9c27b0",
+                  "settings": {},
+                  "_hash": 0.43439375716502227,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return \"Email messages\";"
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "#666666",
+          "padding": "0",
+          "settings": {
+            "cardCss": ".card {\n   width: 100%;\n   height: 100%;\n   box-sizing: border-box;\n   display: flex;\n   flex-direction: column;\n}\n\n.card .content {\n   flex: 1;    \n   padding: 13px 13px 0;\n   display: flex;\n   box-sizing: border-box;\n}\n\n.card .content .column {\n   display: flex;\n   flex-direction: column;    \n   justify-content: space-around;\n   flex: 1;\n}\n\n.card .content .title-row {\n    display: flex;\n    flex-direction: row;\n    padding-bottom: 10px;\n}\n\n.card .title {\n    flex: 1;\n    font-size: 20px;\n    font-weight: 400;\n    color: #666666;\n}\n\n.card .state {\n    text-transform: uppercase;\n    font-size: 20px;\n    font-weight: bold;\n}\n\n.card.enabled .state {\n    color: #00B260;\n}\n\n.card.warning .state {\n    color: #FFAD6F;\n}\n\n.card.disabled .state {\n    color: #F73243;\n}\n\n.card .bar-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.card .bar {\n    flex: 1;\n    max-height: 30px;\n    margin-top: 3.5px;\n    margin-bottom: 4px;\n    background-color: #F0F0F0;\n    border: 1px solid #DADCDB;\n    border-radius: 2px;\n    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);\n}\n\n.card.enabled .bar {\n    border-color: #00B260;\n    background-color: #F0FBF7;\n}\n\n.card.warning .bar {\n    border-color: #FFAD6F;\n    background-color: #FFFAF6;\n}\n\n.card.disabled .bar {\n    border-color: #F73243;\n    background-color: #FFF0F0;\n}\n\n.card .bar .bar-fill {\n    background-color: #F0F0F0;\n    border-radius: 2px;\n    height: 100%;\n    width: 0%;\n}\n\n.card.enabled .bar-fill {\n    background-color: #00C46C;\n}\n\n.card.warning .bar-fill {\n    background-color: #FFD099;\n}\n\n.card.disabled .bar-fill {\n    background-color: #FF9494;\n}\n\n.card .bar-labels {\n    height: 24px;\n    font-size: 20px;\n    color: #666;\n    display: flex;\n    flex-direction: row;\n}\n\n\n.card .mat-button {\n    text-transform: uppercase;\n}\n\n.card .mat-button-wrapper {\n    pointer-events: none;\n}\n\n.card .action-row {\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-end;\n    padding: 8px 0;\n}\n",
+            "cardHtml": "<div class='card ${apiStateClass}'>\n    <img src=\"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\" onload=\"initializeCard_${cardId:0}(event);\">\n    <script type=\"text/javascript\">\n        function initializeCard_${cardId:0}(e) {\n            \n            function toShortNumber(number) {\n                var rounder = Math.pow(10, 1);\n                var powers = [\n                  {key: 'Q', value: Math.pow(10, 15)},\n                  {key: 'T', value: Math.pow(10, 12)},\n                  {key: 'B', value: Math.pow(10, 9)},\n                  {key: 'M', value: Math.pow(10, 6)},\n                  {key: 'K', value: 1000}\n                ];\n                \n                var key = '';\n                \n                for (var i = 0; i < powers.length; i++) {\n                    var reduced = number / powers[i].value;\n                    reduced = Math.round(reduced * rounder) / rounder;\n                    if (reduced >= 1) {\n                        number = reduced;\n                        key = powers[i].key;\n                        break;\n                    }\n                }\n                return number + key;\n            }\n            \n            var imgTag = e.target;\n            var parentTag = imgTag.parentNode;\n            var count = \"${count:0}\";\n            var limit = \"${limit:0}\";\n            count = count.length > 0 ? parseInt(count, 10) : 0;\n            limit = limit.length > 0 ? parseInt(limit, 10) : 0;\n            var percentElement = $('#api-usage-percent', parentTag);\n            var valueElement = $('#api-usage-value', parentTag);\n            var barElement = $('#api-usage-bar', parentTag);\n            if (Number.isFinite(limit) && limit > 0) {\n                var percent = Math.min(100, ((count / limit) * 100));\n                barElement.width(percent + '%');\n                percent = percent.toFixed(2);\n                percentElement.text(percent + '%');\n                valueElement.text(toShortNumber(count) + ' / ' + toShortNumber(limit));\n            } else {\n                barElement.width('0%');\n                percentElement.text('');\n                valueElement.text(toShortNumber(count) + ' / unlimited');\n            }\n        }\n    </script>\n    <div class='content'>\n        <div class='column'>\n            <div class='title-row'>\n                <div class='title'>${title}</div>\n                <div class='state'>${apiState}</div>\n            </div>    \n            <div class='bar-container'>\n                <div class='bar'>\n                    <div class=\"bar-fill\" id=\"api-usage-bar\"></div>\n                </div>    \n                <div class='bar-labels'>\n                    <div id=\"api-usage-percent\"></div>\n                    <div style=\"flex: 1;\"></div>\n                    <div id=\"api-usage-value\"></div>\n                </div>\n            </div>    \n        </div>\n    </div>\n    <div role=\"separator\" class=\"mat-divider mat-divider-horizontal\" aria-orientation=\"horizontal\"></div>\n    <div class='action-row'>\n        <button id=\"email_messages_details\" class=\"mat-focus-indicator mat-button mat-button-base mat-primary\">\n            <span class=\"mat-button-wrapper\">View details</span>\n            <span class=\"mat-ripple mat-button-ripple\"></span>\n            <span class=\"mat-button-focus-overlay\"></span>\n        </button>\n    </div> \n</div>"
+          },
+          "title": "Email messages",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {
+            "cursor": "default"
+          },
+          "titleStyle": {
+            "fontSize": "20px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {
+            "elementClick": [
+              {
+                "name": "email_messages_details",
+                "icon": "insert_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "email_messages",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "946ba769-84ac-1507-6baa-94701de8967b"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "a151ae60-0326-6116-d818-9070dda8e9c7"
+      },
+      "2503a391-5692-0614-85e6-f179c5ee0dc9": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "html_value_card",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "smsApiState",
+                  "type": "timeseries",
+                  "label": "apiState",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8830669138660703,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "smsLimit",
+                  "type": "timeseries",
+                  "label": "limit",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5463603803546802,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "smsCount",
+                  "type": "timeseries",
+                  "label": "count",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.5564241862015964,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "smsApiState",
+                  "type": "timeseries",
+                  "label": "apiStateClass",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8737107059960671,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return value ? value.toLowerCase() : '';"
+                },
+                {
+                  "name": "smsApiState",
+                  "type": "timeseries",
+                  "label": "cardId",
+                  "color": "#607d8b",
+                  "settings": {},
+                  "_hash": 0.051659774305067296,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return (Math.random()*100000).toFixed(0);"
+                },
+                {
+                  "name": "smsApiState",
+                  "type": "timeseries",
+                  "label": "title",
+                  "color": "#9c27b0",
+                  "settings": {},
+                  "_hash": 0.286155312985084,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return \"SMS messages\";"
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "#666666",
+          "padding": "0",
+          "settings": {
+            "cardCss": ".card {\n   width: 100%;\n   height: 100%;\n   box-sizing: border-box;\n   display: flex;\n   flex-direction: column;\n}\n\n.card .content {\n   flex: 1;    \n   padding: 13px 13px 0;\n   display: flex;\n   box-sizing: border-box;\n}\n\n.card .content .column {\n   display: flex;\n   flex-direction: column;    \n   justify-content: space-around;\n   flex: 1;\n}\n\n.card .content .title-row {\n    display: flex;\n    flex-direction: row;\n    padding-bottom: 10px;\n}\n\n.card .title {\n    flex: 1;\n    font-size: 20px;\n    font-weight: 400;\n    color: #666666;\n}\n\n.card .state {\n    text-transform: uppercase;\n    font-size: 20px;\n    font-weight: bold;\n}\n\n.card.enabled .state {\n    color: #00B260;\n}\n\n.card.warning .state {\n    color: #FFAD6F;\n}\n\n.card.disabled .state {\n    color: #F73243;\n}\n\n.card .bar-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.card .bar {\n    flex: 1;\n    max-height: 30px;\n    margin-top: 3.5px;\n    margin-bottom: 4px;\n    background-color: #F0F0F0;\n    border: 1px solid #DADCDB;\n    border-radius: 2px;\n    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);\n}\n\n.card.enabled .bar {\n    border-color: #00B260;\n    background-color: #F0FBF7;\n}\n\n.card.warning .bar {\n    border-color: #FFAD6F;\n    background-color: #FFFAF6;\n}\n\n.card.disabled .bar {\n    border-color: #F73243;\n    background-color: #FFF0F0;\n}\n\n.card .bar .bar-fill {\n    background-color: #F0F0F0;\n    border-radius: 2px;\n    height: 100%;\n    width: 0%;\n}\n\n.card.enabled .bar-fill {\n    background-color: #00C46C;\n}\n\n.card.warning .bar-fill {\n    background-color: #FFD099;\n}\n\n.card.disabled .bar-fill {\n    background-color: #FF9494;\n}\n\n.card .bar-labels {\n    height: 24px;\n    font-size: 20px;\n    color: #666;\n    display: flex;\n    flex-direction: row;\n}\n\n\n.card .mat-button {\n    text-transform: uppercase;\n}\n\n.card .mat-button-wrapper {\n    pointer-events: none;\n}\n\n.card .action-row {\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-end;\n    padding: 8px 0;\n}\n",
+            "cardHtml": "<div class='card ${apiStateClass}'>\n    <img src=\"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\" onload=\"initializeCard_${cardId:0}(event);\">\n    <script type=\"text/javascript\">\n        function initializeCard_${cardId:0}(e) {\n            \n            function toShortNumber(number) {\n                var rounder = Math.pow(10, 1);\n                var powers = [\n                  {key: 'Q', value: Math.pow(10, 15)},\n                  {key: 'T', value: Math.pow(10, 12)},\n                  {key: 'B', value: Math.pow(10, 9)},\n                  {key: 'M', value: Math.pow(10, 6)},\n                  {key: 'K', value: 1000}\n                ];\n                \n                var key = '';\n                \n                for (var i = 0; i < powers.length; i++) {\n                    var reduced = number / powers[i].value;\n                    reduced = Math.round(reduced * rounder) / rounder;\n                    if (reduced >= 1) {\n                        number = reduced;\n                        key = powers[i].key;\n                        break;\n                    }\n                }\n                return number + key;\n            }\n            \n            var imgTag = e.target;\n            var parentTag = imgTag.parentNode;\n            var count = \"${count:0}\";\n            var limit = \"${limit:0}\";\n            count = count.length > 0 ? parseInt(count, 10) : 0;\n            limit = limit.length > 0 ? parseInt(limit, 10) : 0;\n            var percentElement = $('#api-usage-percent', parentTag);\n            var valueElement = $('#api-usage-value', parentTag);\n            var barElement = $('#api-usage-bar', parentTag);\n            if (Number.isFinite(limit) && limit > 0) {\n                var percent = Math.min(100, ((count / limit) * 100));\n                barElement.width(percent + '%');\n                percent = percent.toFixed(2);\n                percentElement.text(percent + '%');\n                valueElement.text(toShortNumber(count) + ' / ' + toShortNumber(limit));\n            } else {\n                barElement.width('0%');\n                percentElement.text('');\n                valueElement.text(toShortNumber(count) + ' / unlimited');\n            }\n        }\n    </script>\n    <div class='content'>\n        <div class='column'>\n            <div class='title-row'>\n                <div class='title'>${title}</div>\n                <div class='state'>${apiState}</div>\n            </div>    \n            <div class='bar-container'>\n                <div class='bar'>\n                    <div class=\"bar-fill\" id=\"api-usage-bar\"></div>\n                </div>    \n                <div class='bar-labels'>\n                    <div id=\"api-usage-percent\"></div>\n                    <div style=\"flex: 1;\"></div>\n                    <div id=\"api-usage-value\"></div>\n                </div>\n            </div>    \n        </div>\n    </div>\n    <div role=\"separator\" class=\"mat-divider mat-divider-horizontal\" aria-orientation=\"horizontal\"></div>\n    <div class='action-row'>\n        <button id=\"sms_messages_details\" class=\"mat-focus-indicator mat-button mat-button-base mat-primary\">\n            <span class=\"mat-button-wrapper\">View details</span>\n            <span class=\"mat-ripple mat-button-ripple\"></span>\n            <span class=\"mat-button-focus-overlay\"></span>\n        </button>\n    </div> \n</div>"
+          },
+          "title": "SMS messages",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {
+            "cursor": "default"
+          },
+          "titleStyle": {
+            "fontSize": "20px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {
+            "elementClick": [
+              {
+                "name": "sms_messages_details",
+                "icon": "insert_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "sms_messages",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "73a35536-96a3-47dd-95bb-b1d9119d0ea2"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "2503a391-5692-0614-85e6-f179c5ee0dc9"
+      },
+      "68e16e98-0420-f72c-4848-41dedffd3904": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "ruleEngineExecutionCountHourly",
+                  "type": "timeseries",
+                  "label": "Rule Engine executions",
+                  "color": "#ab00ff",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 86400000,
+              "interval": 3600000
+            },
+            "aggregation": {
+              "type": "SUM",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;",
+              "min": 0,
+              "tickDecimals": 0
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 1800000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "Rule Engine hourly activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {
+            "headerButton": [
+              {
+                "name": "View statistics",
+                "icon": "show_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "rule_engine_statistics",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "f9f08190-9ed9-d802-5b7a-c57ff84b5648"
+              },
+              {
+                "name": "View details",
+                "icon": "insert_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "rule_engine_execution",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "1aec196b-44ba-ddf4-c4dc-c3f60c1eb6fc"
+              }
+            ]
+          },
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "68e16e98-0420-f72c-4848-41dedffd3904"
+      },
+      "2aa6b499-6e27-b315-6833-89c4d58485ce": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "transportMsgCountHourly",
+                  "type": "timeseries",
+                  "label": "Transport messages",
+                  "color": "#2196f3",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "transportDataPointsCountHourly",
+                  "type": "timeseries",
+                  "label": "Transport data points",
+                  "color": "#4caf50",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.46849996721308895,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 86400000,
+              "interval": 3600000
+            },
+            "aggregation": {
+              "type": "SUM",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;",
+              "min": 0,
+              "tickDecimals": 0
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": true,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 1800000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            },
+            "tooltipCumulative": false
+          },
+          "title": "Transport hourly activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {
+            "headerButton": [
+              {
+                "name": "View details",
+                "icon": "insert_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "transport",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "6ef12f6a-0266-25cf-6ca5-5dcb772252c6"
+              }
+            ]
+          },
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "2aa6b499-6e27-b315-6833-89c4d58485ce"
+      },
+      "d890cea3-fba0-6474-9a21-fa780230dc62": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "jsExecutionCountHourly",
+                  "type": "timeseries",
+                  "label": "JavaScript executions",
+                  "color": "#ff9900",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 86400000,
+              "interval": 3600000
+            },
+            "aggregation": {
+              "type": "SUM",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;",
+              "min": 0,
+              "tickDecimals": 0
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 1800000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "JavaScript functions hourly activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {
+            "headerButton": [
+              {
+                "name": "View details",
+                "icon": "insert_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "javascript_functions",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "4687d3f6-8800-a3b6-26e5-0d33f3b828a9"
+              }
+            ]
+          },
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "d890cea3-fba0-6474-9a21-fa780230dc62"
+      },
+      "84b6cfa5-1449-e0f2-3560-f810d2dd7ead": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "storageDataPointsCountHourly",
+                  "type": "timeseries",
+                  "label": "Storage data points",
+                  "color": "#1039ee",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 86400000,
+              "interval": 3600000
+            },
+            "aggregation": {
+              "type": "SUM",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;",
+              "min": 0,
+              "tickDecimals": 0
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 1800000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "Telemetry persistence hourly activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {
+            "headerButton": [
+              {
+                "name": "View details",
+                "icon": "insert_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "telemetry_persistence",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "16707efb-e572-bd02-c219-55fc1b0f672a"
+              }
+            ]
+          },
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "84b6cfa5-1449-e0f2-3560-f810d2dd7ead"
+      },
+      "d296b566-a000-7402-ae9d-c815381c5435": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "emailCountHourly",
+                  "type": "timeseries",
+                  "label": "Email messages",
+                  "color": "#d35a00",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 86400000,
+              "interval": 3600000
+            },
+            "aggregation": {
+              "type": "SUM",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;",
+              "min": 0,
+              "tickDecimals": 0
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 1800000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "Email messages hourly activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {
+            "headerButton": [
+              {
+                "name": "View details",
+                "icon": "insert_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "email_messages",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "371882f9-ea23-3abc-fca8-9449c5dfdd6b"
+              }
+            ]
+          },
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "d296b566-a000-7402-ae9d-c815381c5435"
+      },
+      "00a02464-9509-911b-3b5e-21fb37629822": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "smsCountHourly",
+                  "type": "timeseries",
+                  "label": "SMS messages",
+                  "color": "#f36021",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 86400000,
+              "interval": 3600000
+            },
+            "aggregation": {
+              "type": "SUM",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;",
+              "min": 0,
+              "tickDecimals": 0
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 1800000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "SMS messages hourly activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {
+            "headerButton": [
+              {
+                "name": "View details",
+                "icon": "insert_chart",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "sms_messages",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "id": "49aefac0-ec5e-d6f3-f39c-8744759f4b19"
+              }
+            ]
+          },
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "00a02464-9509-911b-3b5e-21fb37629822"
+      },
+      "74199074-7873-6c6a-2a51-3fc614769f03": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "ruleEngineExecutionCountHourly",
+                  "type": "timeseries",
+                  "label": "Rule Engine executions",
+                  "color": "#ab00ff",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 2592000000,
+              "interval": 86400000
+            },
+            "aggregation": {
+              "type": "SUM",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;",
+              "min": 0,
+              "tickDecimals": 0
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 1800000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "Rule Engine daily activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {},
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "74199074-7873-6c6a-2a51-3fc614769f03"
+      },
+      "00006bc3-8a8d-b55e-ed39-e318f1bcd090": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "ruleEngineExecutionCount",
+                  "type": "timeseries",
+                  "label": "Rule Engine executions",
+                  "color": "#ab00ff",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 31536000000,
+              "interval": 86400000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;",
+              "min": 0,
+              "tickDecimals": 0
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 900000000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "Rule Engine monthly activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {},
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "00006bc3-8a8d-b55e-ed39-e318f1bcd090"
+      },
+      "5f5ca59c-e507-5301-5910-7ad8cd34df40": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "jsExecutionCountHourly",
+                  "type": "timeseries",
+                  "label": "JavaScript executions",
+                  "color": "#ff9900",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 2592000000,
+              "interval": 86400000
+            },
+            "aggregation": {
+              "type": "SUM",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "min": 0,
+              "tickDecimals": 0,
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 1800000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "JavaScript functions daily activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {},
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "5f5ca59c-e507-5301-5910-7ad8cd34df40"
+      },
+      "ada32ee9-44ed-48d1-c368-fd0c94b7607f": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "jsExecutionCount",
+                  "type": "timeseries",
+                  "label": "JavaScript executions",
+                  "color": "#ff9900",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 31536000000,
+              "interval": 86400000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "min": 0,
+              "tickDecimals": 0,
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 900000000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "JavaScript functions monthly activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {},
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "ada32ee9-44ed-48d1-c368-fd0c94b7607f"
+      },
+      "98bae68b-0f35-72f2-a428-9b06889f1554": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "transportMsgCountHourly",
+                  "type": "timeseries",
+                  "label": "Transport messages",
+                  "color": "#2196f3",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "transportDataPointsCountHourly",
+                  "type": "timeseries",
+                  "label": "Transport data points",
+                  "color": "#4caf50",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.46849996721308895,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 2592000000,
+              "interval": 86400000
+            },
+            "aggregation": {
+              "type": "SUM",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;",
+              "min": 0,
+              "tickDecimals": 0
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": true,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 1800000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            },
+            "tooltipCumulative": false
+          },
+          "title": "Transport daily activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {},
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "98bae68b-0f35-72f2-a428-9b06889f1554"
+      },
+      "e61e5477-5a09-cc25-966b-f613d81da833": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "transportMsgCount",
+                  "type": "timeseries",
+                  "label": "Transport messages",
+                  "color": "#2196f3",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "transportDataPointsCount",
+                  "type": "timeseries",
+                  "label": "Transport data points",
+                  "color": "#4caf50",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.46849996721308895,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 31536000000,
+              "interval": 2592000000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;",
+              "min": 0,
+              "tickDecimals": 0
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": true,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 900000000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            },
+            "tooltipCumulative": false
+          },
+          "title": "Transport monthly activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {},
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "e61e5477-5a09-cc25-966b-f613d81da833"
+      },
+      "85fe0738-5326-f069-ab3f-30594bde5fed": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "storageDataPointsCountHourly",
+                  "type": "timeseries",
+                  "label": "Storage data points",
+                  "color": "#1039ee",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 2592000000,
+              "interval": 86400000
+            },
+            "aggregation": {
+              "type": "SUM",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "min": 0,
+              "tickDecimals": 0,
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 1800000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "Telemetry persistence daily activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {},
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "85fe0738-5326-f069-ab3f-30594bde5fed"
+      },
+      "eaeb381a-437e-f6e9-60c9-6bc8826fdd44": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "storageDataPointsCount",
+                  "type": "timeseries",
+                  "label": "Storage data points",
+                  "color": "#1039ee",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 31536000000,
+              "interval": 86400000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "min": 0,
+              "tickDecimals": 0,
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 900000000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "Telemetry persistence monthly activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {},
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "eaeb381a-437e-f6e9-60c9-6bc8826fdd44"
+      },
+      "4b798823-b97d-9d6a-59dc-fcafd897fc23": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "emailCountHourly",
+                  "type": "timeseries",
+                  "label": "Email messages",
+                  "color": "#d35a00",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 2592000000,
+              "interval": 86400000
+            },
+            "aggregation": {
+              "type": "SUM",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "min": 0,
+              "tickDecimals": 0,
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 1800000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "Email messages daily activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {},
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "4b798823-b97d-9d6a-59dc-fcafd897fc23"
+      },
+      "6a981580-7490-19dd-f937-b64cbf67a982": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "emailCount",
+                  "type": "timeseries",
+                  "label": "Email messages",
+                  "color": "#d35a00",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 31536000000,
+              "interval": 86400000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "min": 0,
+              "tickDecimals": 0,
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 900000000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "Email messages monthly activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {},
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "6a981580-7490-19dd-f937-b64cbf67a982"
+      },
+      "7302df65-1b0c-579e-bbdb-145126ae3392": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "smsCountHourly",
+                  "type": "timeseries",
+                  "label": "SMS messages",
+                  "color": "#f36021",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 2592000000,
+              "interval": 86400000
+            },
+            "aggregation": {
+              "type": "SUM",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "min": 0,
+              "tickDecimals": 0,
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 1800000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "SMS messages daily activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {},
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "7302df65-1b0c-579e-bbdb-145126ae3392"
+      },
+      "fdb385e7-14fe-fc9f-ebdc-b400f26fc66b": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "40193437-33ac-3172-eefd-0b08eb849062",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "smsCount",
+                  "type": "timeseries",
+                  "label": "SMS messages",
+                  "color": "#f36021",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": false,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 31536000000,
+              "interval": 86400000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "min": 0,
+              "tickDecimals": 0,
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "defaultBarWidth": 900000000,
+            "barAlignment": "center",
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "SMS messages monthly activity",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "showLegend": true,
+          "actions": {},
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "fdb385e7-14fe-fc9f-ebdc-b400f26fc66b"
+      },
+      "2408ad30-163e-8221-08e1-a82b638be564": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "basic_timeseries",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 12,
+        "sizeY": 7,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "successfulMsgs",
+                  "type": "timeseries",
+                  "label": "${entityName} Successful",
+                  "color": "#4caf50",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": true,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.15490750967648736
+                },
+                {
+                  "name": "failedMsgs",
+                  "type": "timeseries",
+                  "label": "${entityName} Permanent Failures",
+                  "color": "#ef5350",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": true,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.4186621166514697
+                },
+                {
+                  "name": "tmpFailed",
+                  "type": "timeseries",
+                  "label": "${entityName} Processing Failures",
+                  "color": "#ffc107",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": true,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.49891007198715376
+                }
+              ],
+              "entityAliasId": "2e4c97b0-257a-a1b9-690c-141d9bf2ec6f"
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 3600000,
+              "interval": 1000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 10000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "min": 0,
+              "tickDecimals": 0,
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "Queue Stats",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "mobileHeight": null,
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "displayTimewindow": true,
+          "showLegend": true,
+          "actions": {},
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "showMin": true,
+            "showMax": true,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "id": "2408ad30-163e-8221-08e1-a82b638be564"
+      },
+      "e43dcfe1-b970-6a11-ce0e-5769f3eb5e88": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "basic_timeseries",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 12,
+        "sizeY": 7,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "timeoutMsgs",
+                  "type": "timeseries",
+                  "label": "${entityName} Permanent Timeouts",
+                  "color": "#4caf50",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": true,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.565222981550328
+                },
+                {
+                  "name": "tmpTimeout",
+                  "type": "timeseries",
+                  "label": "${entityName} Processing Timeouts",
+                  "color": "#9c27b0",
+                  "settings": {
+                    "excludeFromStacking": false,
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "showLines": true,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "",
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "thresholds": [
+                      {
+                        "thresholdValueSource": "predefinedValue"
+                      }
+                    ],
+                    "comparisonSettings": {
+                      "showValuesForComparison": true
+                    }
+                  },
+                  "_hash": 0.2679547062508352
+                }
+              ],
+              "entityAliasId": "2e4c97b0-257a-a1b9-690c-141d9bf2ec6f"
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 3600000,
+              "interval": 1000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 10000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454",
+              "min": 0,
+              "tickDecimals": 0,
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "stack": false,
+            "tooltipIndividual": false,
+            "timeForComparison": "months",
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "showLabels": true
+            }
+          },
+          "title": "Processing Failures and Timeouts",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "mobileHeight": null,
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "widgetStyle": {},
+          "useDashboardTimewindow": false,
+          "displayTimewindow": true,
+          "showLegend": true,
+          "actions": {},
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "showMin": true,
+            "showMax": true,
+            "showAvg": false,
+            "showTotal": true
+          }
+        },
+        "id": "e43dcfe1-b970-6a11-ce0e-5769f3eb5e88"
+      },
+      "a669cf86-e715-efa4-dd9a-b839abf499e9": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "timeseries_table",
+        "type": "timeseries",
+        "title": "New widget",
+        "sizeX": 24,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "ruleEngineException",
+                  "type": "timeseries",
+                  "label": "Rule Chain",
+                  "color": "#2196f3",
+                  "settings": {
+                    "useCellStyleFunction": false,
+                    "useCellContentFunction": true,
+                    "cellContentFunction": "return JSON.parse(value).ruleChainName;"
+                  },
+                  "_hash": 0.9954481282345906
+                },
+                {
+                  "name": "ruleEngineException",
+                  "type": "timeseries",
+                  "label": "Rule Node",
+                  "color": "#4caf50",
+                  "settings": {
+                    "useCellStyleFunction": false,
+                    "useCellContentFunction": true,
+                    "cellContentFunction": "return JSON.parse(value).ruleNodeName;"
+                  },
+                  "_hash": 0.18580357036589978
+                },
+                {
+                  "name": "ruleEngineException",
+                  "type": "timeseries",
+                  "label": "Latest Error",
+                  "color": "#f44336",
+                  "settings": {
+                    "useCellStyleFunction": false,
+                    "useCellContentFunction": true,
+                    "cellContentFunction": "return JSON.parse(value).message;"
+                  },
+                  "_hash": 0.7255162989552142
+                }
+              ],
+              "entityAliasId": "2e4c97b0-257a-a1b9-690c-141d9bf2ec6f"
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "selectedTab": 0,
+            "realtime": {
+              "timewindowMs": 2592000000,
+              "interval": 1000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 1000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "showTimestamp": true,
+            "displayPagination": true,
+            "defaultPageSize": 10
+          },
+          "title": "Exceptions",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": false,
+          "showLegend": false,
+          "widgetStyle": {},
+          "actions": {},
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "displayTimewindow": true
+        },
+        "id": "a669cf86-e715-efa4-dd9a-b839abf499e9"
+      }
+    },
+    "states": {
+      "default": {
+        "name": "Api Usage",
+        "root": true,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "fd6df872-2ddf-0921-3929-2e7f55062fad": {
+                "sizeX": 4,
+                "sizeY": 2,
+                "row": 0,
+                "col": 8,
+                "mobileHeight": 3
+              },
+              "7e235874-461b-e7c2-2fdd-d8762a020773": {
+                "sizeX": 4,
+                "sizeY": 2,
+                "row": 0,
+                "col": 12,
+                "mobileHeight": 3
+              },
+              "08545554-a0e8-05c7-66df-6000cfeff8a4": {
+                "sizeX": 4,
+                "sizeY": 2,
+                "row": 0,
+                "col": 4,
+                "mobileHeight": 3
+              },
+              "a245c67e-53ec-d299-fa89-69fe2062ccb2": {
+                "sizeX": 4,
+                "sizeY": 2,
+                "row": 0,
+                "col": 0,
+                "mobileHeight": 3
+              },
+              "a151ae60-0326-6116-d818-9070dda8e9c7": {
+                "sizeX": 4,
+                "sizeY": 2,
+                "row": 0,
+                "col": 16,
+                "mobileHeight": 3
+              },
+              "2503a391-5692-0614-85e6-f179c5ee0dc9": {
+                "sizeX": 4,
+                "sizeY": 2,
+                "row": 0,
+                "col": 20,
+                "mobileHeight": 3
+              },
+              "68e16e98-0420-f72c-4848-41dedffd3904": {
+                "sizeX": 8,
+                "sizeY": 4,
+                "row": 2,
+                "col": 8
+              },
+              "2aa6b499-6e27-b315-6833-89c4d58485ce": {
+                "sizeX": 8,
+                "sizeY": 4,
+                "row": 2,
+                "col": 0
+              },
+              "d890cea3-fba0-6474-9a21-fa780230dc62": {
+                "sizeX": 8,
+                "sizeY": 4,
+                "row": 2,
+                "col": 16
+              },
+              "84b6cfa5-1449-e0f2-3560-f810d2dd7ead": {
+                "sizeX": 8,
+                "sizeY": 4,
+                "row": 6,
+                "col": 0
+              },
+              "d296b566-a000-7402-ae9d-c815381c5435": {
+                "sizeX": 8,
+                "sizeY": 4,
+                "row": 6,
+                "col": 8
+              },
+              "00a02464-9509-911b-3b5e-21fb37629822": {
+                "sizeX": 8,
+                "sizeY": 4,
+                "row": 6,
+                "col": 16
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 5,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      },
+      "transport": {
+        "name": "Transport",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "98bae68b-0f35-72f2-a428-9b06889f1554": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 0,
+                "col": 0
+              },
+              "e61e5477-5a09-cc25-966b-f613d81da833": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 6,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      },
+      "rule_engine_execution": {
+        "name": "Rule Engine execution",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "74199074-7873-6c6a-2a51-3fc614769f03": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 0,
+                "col": 0
+              },
+              "00006bc3-8a8d-b55e-ed39-e318f1bcd090": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 6,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      },
+      "javascript_functions": {
+        "name": "JavaScript functions",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "5f5ca59c-e507-5301-5910-7ad8cd34df40": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 0,
+                "col": 0
+              },
+              "ada32ee9-44ed-48d1-c368-fd0c94b7607f": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 6,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      },
+      "telemetry_persistence": {
+        "name": "Telemetry persistence",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "85fe0738-5326-f069-ab3f-30594bde5fed": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 0,
+                "col": 0
+              },
+              "eaeb381a-437e-f6e9-60c9-6bc8826fdd44": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 6,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      },
+      "email_messages": {
+        "name": "Email messages",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "4b798823-b97d-9d6a-59dc-fcafd897fc23": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 0,
+                "col": 0
+              },
+              "6a981580-7490-19dd-f937-b64cbf67a982": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 6,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      },
+      "sms_messages": {
+        "name": "SMS messages",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "7302df65-1b0c-579e-bbdb-145126ae3392": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 0,
+                "col": 0
+              },
+              "fdb385e7-14fe-fc9f-ebdc-b400f26fc66b": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 6,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      },
+      "rule_engine_statistics": {
+        "name": "Rule Engine Statistics",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "2408ad30-163e-8221-08e1-a82b638be564": {
+                "sizeX": 12,
+                "sizeY": 7,
+                "mobileHeight": null,
+                "row": 0,
+                "col": 0
+              },
+              "e43dcfe1-b970-6a11-ce0e-5769f3eb5e88": {
+                "sizeX": 12,
+                "sizeY": 7,
+                "mobileHeight": null,
+                "row": 0,
+                "col": 12
+              },
+              "a669cf86-e715-efa4-dd9a-b839abf499e9": {
+                "sizeX": 24,
+                "sizeY": 5,
+                "row": 7,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      }
+    },
+    "entityAliases": {
+      "40193437-33ac-3172-eefd-0b08eb849062": {
+        "id": "40193437-33ac-3172-eefd-0b08eb849062",
+        "alias": "Api usage state",
+        "filter": {
+          "type": "apiUsageState",
+          "resolveMultiple": false
+        }
+      },
+      "2e4c97b0-257a-a1b9-690c-141d9bf2ec6f": {
+        "id": "2e4c97b0-257a-a1b9-690c-141d9bf2ec6f",
+        "alias": "TbServiceQueues",
+        "filter": {
+          "type": "assetType",
+          "resolveMultiple": true,
+          "assetType": "TbServiceQueue",
+          "assetNameFilter": ""
+        }
+      }
+    },
+    "filters": {},
+    "timewindow": {
+      "hideInterval": false,
+      "hideAggregation": false,
+      "hideAggInterval": false,
+      "selectedTab": 0,
+      "realtime": {
+        "timewindowMs": 86400000,
+        "interval": 3600000
+      },
+      "aggregation": {
+        "type": "NONE",
+        "limit": 50000
+      }
+    },
+    "settings": {
+      "stateControllerId": "entity",
+      "showTitle": false,
+      "showDashboardsSelect": false,
+      "showEntitiesSelect": false,
+      "showDashboardTimewindow": false,
+      "showDashboardExport": false,
+      "toolbarAlwaysOpen": true,
+      "titleColor": "rgba(0,0,0,0.870588)",
+      "showFilters": false
+    }
+  },
+  "name": "Api Usage"
+}

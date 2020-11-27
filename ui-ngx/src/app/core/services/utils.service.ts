@@ -26,12 +26,12 @@ import {
   deleteNullProperties,
   guid,
   isDefined,
-  isDefinedAndNotNull,
+  isDefinedAndNotNull, isString,
   isUndefined
 } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
-import { customTranslationsPrefix } from '@app/shared/models/constants';
+import { customTranslationsPrefix, i18nPrefix } from '@app/shared/models/constants';
 import { DataKey, Datasource, DatasourceType, KeyInfo } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
@@ -41,6 +41,8 @@ import { WidgetInfo } from '@home/models/widget-component.models';
 import jsonSchemaDefaults from 'json-schema-defaults';
 import materialIconsCodepoints from '!raw-loader!material-design-icons/iconfont/codepoints';
 import { Observable, of, ReplaySubject } from 'rxjs';
+
+const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
 
 const predefinedFunctions: { [func: string]: string } = {
   Sin: 'return Math.round(1000*Math.sin(time/5000));',
@@ -107,8 +109,8 @@ export class UtilsService {
   materialIcons: Array<string> = [];
 
   constructor(@Inject(WINDOW) private window: Window,
-    private zone: NgZone,
-    private translate: TranslateService) {
+              private zone: NgZone,
+              private translate: TranslateService) {
     let frame: Element = null;
     try {
       frame = window.frameElement;
@@ -221,8 +223,31 @@ export class UtilsService {
   }
 
   public customTranslation(translationValue: string, defaultValue: string): string {
+    if (translationValue && isString(translationValue)) {
+      if (translationValue.includes(`{${i18nPrefix}`)) {
+        const matches = translationValue.match(i18nRegExp);
+        let result = translationValue;
+        for (const match of matches) {
+          const translationId = match.substring(6, match.length - 1);
+          result = result.replace(match, this.doTranslate(translationId, match));
+        }
+        return result;
+      } else {
+        return this.doTranslate(translationValue, defaultValue, customTranslationsPrefix);
+      }
+    } else {
+      return translationValue;
+    }
+  }
+
+  private doTranslate(translationValue: string, defaultValue: string, prefix?: string): string {
     let result: string;
-    const translationId = customTranslationsPrefix + translationValue;
+    let translationId;
+    if (prefix) {
+      translationId = prefix + translationValue;
+    } else {
+      translationId = translationValue;
+    }
     const translation = this.translate.instant(translationId);
     if (translation !== translationId) {
       result = translation + '';
