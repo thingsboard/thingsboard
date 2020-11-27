@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.sms;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.rule.engine.api.sms.config.SmsProviderConfiguration;
+import org.thingsboard.server.common.data.sms.config.SmsProviderConfiguration;
 
 @Data
 public class TbSendSmsNodeConfiguration implements NodeConfiguration {

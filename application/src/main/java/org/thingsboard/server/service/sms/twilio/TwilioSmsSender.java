@@ -19,7 +19,7 @@ import com.twilio.http.TwilioRestClient;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import org.apache.commons.lang3.StringUtils;
-import org.thingsboard.rule.engine.api.sms.config.TwilioSmsProviderConfiguration;
+import org.thingsboard.server.common.data.sms.config.TwilioSmsProviderConfiguration;
 import org.thingsboard.rule.engine.api.sms.exception.SmsException;
 import org.thingsboard.rule.engine.api.sms.exception.SmsSendException;
 import org.thingsboard.server.service.sms.AbstractSmsSender;

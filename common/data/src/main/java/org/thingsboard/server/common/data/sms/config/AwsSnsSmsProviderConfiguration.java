@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api.sms.config;
+package org.thingsboard.server.common.data.sms.config;
 
 import lombok.Data;
 
 @Data
-public class TestSmsRequest {
+public class AwsSnsSmsProviderConfiguration implements SmsProviderConfiguration {
 
-    private SmsProviderConfiguration providerConfiguration;
-    private String numberTo;
-    private String message;
+    private String accessKeyId;
+    private String secretAccessKey;
+    private String region;
+
+    @Override
+    public SmsProviderType getType() {
+        return SmsProviderType.AWS_SNS;
+    }
 
 }
