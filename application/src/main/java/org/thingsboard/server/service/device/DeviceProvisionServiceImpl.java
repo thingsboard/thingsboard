@@ -112,7 +112,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     public ProvisionResponse provisionDevice(ProvisionRequest provisionRequest) {
         String provisionRequestKey = provisionRequest.getCredentials().getProvisionDeviceKey();
         String provisionRequestSecret = provisionRequest.getCredentials().getProvisionDeviceSecret();
-        if (provisionRequest.getDeviceName() != null) {
+        if (!StringUtils.isEmpty(provisionRequest.getDeviceName())) {
             provisionRequest.setDeviceName(provisionRequest.getDeviceName().trim());
             if (StringUtils.isEmpty(provisionRequest.getDeviceName())) {
                 log.warn("Provision request contains empty device name!");
