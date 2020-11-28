@@ -1415,7 +1415,7 @@
                 {
                   "name": "storageDataPointsCountHourly",
                   "type": "timeseries",
-                  "label": "Storage data points",
+                  "label": "Data points storage days",
                   "color": "#1039ee",
                   "settings": {
                     "excludeFromStacking": false,
@@ -2738,7 +2738,7 @@
                 {
                   "name": "storageDataPointsCountHourly",
                   "type": "timeseries",
-                  "label": "Storage data points",
+                  "label": "Data points storage days",
                   "color": "#1039ee",
                   "settings": {
                     "excludeFromStacking": false,
@@ -2873,7 +2873,7 @@
                 {
                   "name": "storageDataPointsCount",
                   "type": "timeseries",
-                  "label": "Storage data points",
+                  "label": "Data points storage days",
                   "color": "#1039ee",
                   "settings": {
                     "excludeFromStacking": false,
