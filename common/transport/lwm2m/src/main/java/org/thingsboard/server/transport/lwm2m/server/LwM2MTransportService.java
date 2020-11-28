@@ -366,20 +366,16 @@ public class LwM2MTransportService {
         attrTelemetryObserveValue.getPostAttributeProfile().forEach(p -> {
             ResultIds pathIds = new ResultIds(p.getAsString().toString());
             if (pathIds.getResourceId() > -1) {
-                if (path == null) {
-                    this.addParameters(pathIds, attributes, registration);
-                } else if (path.equals(p.getAsString().toString())) {
-                    this.addParameters(pathIds, attributes, registration);
+                if (path == null || path.equals(p.getAsString().toString())) {
+                    this.addParameters(pathIds, p.getAsString().toString(), attributes, registration);
                 }
             }
         });
         attrTelemetryObserveValue.getPostTelemetryProfile().forEach(p -> {
             ResultIds pathIds = new ResultIds(p.getAsString().toString());
             if (pathIds.getResourceId() > -1) {
-                if (path == null) {
-                    this.addParameters(pathIds, telemetry, registration);
-                } else if (path.equals(p.getAsString().toString())) {
-                    this.addParameters(pathIds, telemetry, registration);
+                if (path == null || path.equals(p.getAsString().toString())) {
+                    this.addParameters(pathIds, p.getAsString().toString(), telemetry, registration);
                 }
             }
         });
@@ -390,13 +386,14 @@ public class LwM2MTransportService {
      * @param parameters   - JsonObject attributes/telemetry
      * @param registration - Registration LwM2M Client
      */
-
-    private void addParameters(ResultIds pathIds, JsonObject parameters, Registration registration) {
+    private void addParameters(ResultIds pathIds, String path, JsonObject parameters, Registration registration) {
         ModelObject modelObject = lwM2mInMemorySecurityStore.getSessions().get(registration.getId()).getModelObjects().get(pathIds.getObjectId());
-        if (modelObject != null) {
+        JsonObject names = lwM2mInMemorySecurityStore.getSessions().get(registration.getId()).getAttrTelemetryObserveValue().getPostKeyNameProfile().getAsJsonObject();
+        String resName = String.valueOf(names.get(path));
+        if (modelObject != null && resName != null && !resName.isEmpty()) {
             String resValue = this.getResourceValue(modelObject, pathIds);
             if (resValue != null) {
-                String resName = modelObject.getObjectModel().resources.get(pathIds.getResourceId()).name;
+//                String resName = modelObject.getObjectModel().resources.get(pathIds.getResourceId()).name;
                 parameters.addProperty(resName, resValue);
             }
         }
