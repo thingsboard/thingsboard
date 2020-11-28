@@ -973,7 +973,7 @@
               "interval": 3600000
             },
             "aggregation": {
-              "type": "SUM",
+              "type": "NONE",
               "limit": 1000
             }
           },
@@ -1005,8 +1005,8 @@
             },
             "stack": false,
             "tooltipIndividual": false,
-            "defaultBarWidth": 1800000,
-            "barAlignment": "center",
+            "defaultBarWidth": 2400000,
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -1165,7 +1165,7 @@
               "interval": 3600000
             },
             "aggregation": {
-              "type": "SUM",
+              "type": "NONE",
               "limit": 1000
             }
           },
@@ -1197,8 +1197,8 @@
             },
             "stack": true,
             "tooltipIndividual": false,
-            "defaultBarWidth": 1800000,
-            "barAlignment": "center",
+            "defaultBarWidth": 2400000,
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -1313,7 +1313,7 @@
               "interval": 3600000
             },
             "aggregation": {
-              "type": "SUM",
+              "type": "NONE",
               "limit": 1000
             }
           },
@@ -1345,8 +1345,8 @@
             },
             "stack": false,
             "tooltipIndividual": false,
-            "defaultBarWidth": 1800000,
-            "barAlignment": "center",
+            "defaultBarWidth": 2400000,
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -1460,7 +1460,7 @@
               "interval": 3600000
             },
             "aggregation": {
-              "type": "SUM",
+              "type": "NONE",
               "limit": 1000
             }
           },
@@ -1492,8 +1492,8 @@
             },
             "stack": false,
             "tooltipIndividual": false,
-            "defaultBarWidth": 1800000,
-            "barAlignment": "center",
+            "defaultBarWidth": 2400000,
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -1607,7 +1607,7 @@
               "interval": 3600000
             },
             "aggregation": {
-              "type": "SUM",
+              "type": "NONE",
               "limit": 1000
             }
           },
@@ -1639,8 +1639,8 @@
             },
             "stack": false,
             "tooltipIndividual": false,
-            "defaultBarWidth": 1800000,
-            "barAlignment": "center",
+            "defaultBarWidth": 2400000,
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -1754,7 +1754,7 @@
               "interval": 3600000
             },
             "aggregation": {
-              "type": "SUM",
+              "type": "NONE",
               "limit": 1000
             }
           },
@@ -1786,8 +1786,8 @@
             },
             "stack": false,
             "tooltipIndividual": false,
-            "defaultBarWidth": 1800000,
-            "barAlignment": "center",
+            "defaultBarWidth": 2400000,
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -1895,8 +1895,9 @@
             "hideInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
-            "selectedTab": 0,
-            "realtime": {
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
               "timewindowMs": 2592000000,
               "interval": 86400000
             },
@@ -1934,7 +1935,7 @@
             "stack": false,
             "tooltipIndividual": false,
             "defaultBarWidth": 1800000,
-            "barAlignment": "center",
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -2029,10 +2030,11 @@
             "hideInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
-            "selectedTab": 0,
-            "realtime": {
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
               "timewindowMs": 31536000000,
-              "interval": 86400000
+              "interval": 1000
             },
             "aggregation": {
               "type": "NONE",
@@ -2068,7 +2070,7 @@
             "stack": false,
             "tooltipIndividual": false,
             "defaultBarWidth": 900000000,
-            "barAlignment": "center",
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -2163,8 +2165,9 @@
             "hideInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
-            "selectedTab": 0,
-            "realtime": {
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
               "timewindowMs": 2592000000,
               "interval": 86400000
             },
@@ -2202,7 +2205,7 @@
             "stack": false,
             "tooltipIndividual": false,
             "defaultBarWidth": 1800000,
-            "barAlignment": "center",
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -2297,10 +2300,11 @@
             "hideInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
-            "selectedTab": 0,
-            "realtime": {
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
               "timewindowMs": 31536000000,
-              "interval": 86400000
+              "interval": 1000
             },
             "aggregation": {
               "type": "NONE",
@@ -2336,7 +2340,7 @@
             "stack": false,
             "tooltipIndividual": false,
             "defaultBarWidth": 900000000,
-            "barAlignment": "center",
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -2466,8 +2470,9 @@
             "hideInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
-            "selectedTab": 0,
-            "realtime": {
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
               "timewindowMs": 2592000000,
               "interval": 86400000
             },
@@ -2505,7 +2510,7 @@
             "stack": true,
             "tooltipIndividual": false,
             "defaultBarWidth": 1800000,
-            "barAlignment": "center",
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -2636,8 +2641,9 @@
             "hideInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
-            "selectedTab": 0,
-            "realtime": {
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
               "timewindowMs": 31536000000,
               "interval": 2592000000
             },
@@ -2675,7 +2681,7 @@
             "stack": true,
             "tooltipIndividual": false,
             "defaultBarWidth": 900000000,
-            "barAlignment": "center",
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -2771,8 +2777,9 @@
             "hideInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
-            "selectedTab": 0,
-            "realtime": {
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
               "timewindowMs": 2592000000,
               "interval": 86400000
             },
@@ -2810,7 +2817,7 @@
             "stack": false,
             "tooltipIndividual": false,
             "defaultBarWidth": 1800000,
-            "barAlignment": "center",
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -2905,10 +2912,11 @@
             "hideInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
-            "selectedTab": 0,
-            "realtime": {
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
               "timewindowMs": 31536000000,
-              "interval": 86400000
+              "interval": 1000
             },
             "aggregation": {
               "type": "NONE",
@@ -2944,7 +2952,7 @@
             "stack": false,
             "tooltipIndividual": false,
             "defaultBarWidth": 900000000,
-            "barAlignment": "center",
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -3039,8 +3047,9 @@
             "hideInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
-            "selectedTab": 0,
-            "realtime": {
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
               "timewindowMs": 2592000000,
               "interval": 86400000
             },
@@ -3078,7 +3087,7 @@
             "stack": false,
             "tooltipIndividual": false,
             "defaultBarWidth": 1800000,
-            "barAlignment": "center",
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -3173,10 +3182,11 @@
             "hideInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
-            "selectedTab": 0,
-            "realtime": {
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
               "timewindowMs": 31536000000,
-              "interval": 86400000
+              "interval": 1000
             },
             "aggregation": {
               "type": "NONE",
@@ -3212,7 +3222,7 @@
             "stack": false,
             "tooltipIndividual": false,
             "defaultBarWidth": 900000000,
-            "barAlignment": "center",
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -3307,8 +3317,9 @@
             "hideInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
-            "selectedTab": 0,
-            "realtime": {
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
               "timewindowMs": 2592000000,
               "interval": 86400000
             },
@@ -3346,7 +3357,7 @@
             "stack": false,
             "tooltipIndividual": false,
             "defaultBarWidth": 1800000,
-            "barAlignment": "center",
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
@@ -3441,10 +3452,11 @@
             "hideInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
-            "selectedTab": 0,
-            "realtime": {
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
               "timewindowMs": 31536000000,
-              "interval": 86400000
+              "interval": 1000
             },
             "aggregation": {
               "type": "NONE",
@@ -3480,7 +3492,7 @@
             "stack": false,
             "tooltipIndividual": false,
             "defaultBarWidth": 900000000,
-            "barAlignment": "center",
+            "barAlignment": "left",
             "timeForComparison": "months",
             "xaxisSecond": {
               "axisPosition": "top",
