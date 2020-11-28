@@ -50,10 +50,12 @@ import java.util.Map;
 public class TbMsgTimeseriesNode implements TbNode {
 
     private TbMsgTimeseriesNodeConfiguration config;
+    private long tenantProfileDefaultStorageTtl;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgTimeseriesNodeConfiguration.class);
+
     }
 
     @Override
@@ -77,6 +79,9 @@ public class TbMsgTimeseriesNode implements TbNode {
         }
         String ttlValue = msg.getMetaData().getValue("TTL");
         long ttl = !StringUtils.isEmpty(ttlValue) ? Long.parseLong(ttlValue) : config.getDefaultTTL();
+        if (ttl == 0L) {
+            ttl = tenantProfileDefaultStorageTtl;
+        }
         ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
     }
 
