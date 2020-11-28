@@ -432,6 +432,9 @@
         "no-attributes-text": "No attributes found",
         "no-telemetry-text": "No telemetry found"
     },
+    "api-usage": {
+        "api-usage": "Api Usage"
+    },
     "audit-log": {
         "audit": "Audit",
         "audit-logs": "Audit Logs",

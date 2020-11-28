@@ -13,18 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.common.data.sms.config;
 
-import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.TenantId;
-
-public interface SmsService {
-
-    void updateSmsConfiguration();
-
-    void sendSms(TenantId tenantId, String[] numbersTo, String message) throws ThingsboardException;;
-
-    void sendTestSms(TestSmsRequest testSmsRequest) throws ThingsboardException;
-
+public enum SmsProviderType {
+    AWS_SNS,
+    TWILIO
 }
