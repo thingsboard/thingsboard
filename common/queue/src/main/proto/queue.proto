@@ -186,8 +186,6 @@ message GetEntityProfileRequestMsg {
 message LwM2MRegistrationRequestMsg {
   string tenantId = 1;
   string endpoint = 2;
-  string smsNumber = 3;
-  string lwM2MVersion = 4;
 }
 
 message LwM2MRegistrationResponseMsg {

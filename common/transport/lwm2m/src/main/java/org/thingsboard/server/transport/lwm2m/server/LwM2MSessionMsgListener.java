@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.SessionMsgListener;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
@@ -25,13 +26,11 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMs
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 
-import java.util.UUID;
-
 @Slf4j
 public class LwM2MSessionMsgListener implements SessionMsgListener {
     private LwM2MTransportService service;
 
-    LwM2MSessionMsgListener(UUID sessionId, LwM2MTransportService service) {
+    LwM2MSessionMsgListener(LwM2MTransportService service) {
         this.service = service;
     }
 
@@ -47,12 +46,17 @@ public class LwM2MSessionMsgListener implements SessionMsgListener {
 
     @Override
     public void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification) {
-        log.info("6.3) onAttributeUpdate nRemoteSessionCloseCommand");
+        log.info("6.3) onAttributeUpdate nRemoteSessionCloseCommand [{}]]", sessionCloseNotification);
     }
 
     @Override
     public void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto updateCredentials) {
-        this.service.onGetChangeCredentials(updateCredentials);
+        this.service.onToTransportUpdateCredentials(updateCredentials);
+    }
+
+    @Override
+    public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
+        this.service.onDeviceProfileUpdate(sessionInfo, deviceProfile);
     }
 
     @Override
@@ -65,8 +69,4 @@ public class LwM2MSessionMsgListener implements SessionMsgListener {
         log.info("6.6)  onToServerRpcResponse");
     }
 
-
-    public void onProfileUpdate(DeviceProfile deviceProfile) {
-        log.info("6.7)  onProfileUpdate {}", deviceProfile);
-    }
 }

@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
@@ -61,6 +62,8 @@ public interface TransportService {
 
     void process(ValidateDeviceLwM2MCredentialsRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback);
+
+    void onDeviceProfileCacheUpdate(TransportProtos.EntityUpdateMsg msg);
 
     void process(GetOrCreateDeviceFromGatewayRequestMsg msg,
                  TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse> callback);

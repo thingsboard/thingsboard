@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.*;
-import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
@@ -44,6 +43,9 @@ public class LwM2MTransportConfigServer {
     @Value("${transport.lwm2m.timeout:}")
     private Long timeout;
 
+    @Getter
+    @Value("${transport.sessions.report_timeout}")
+    private long sessionReportTimeout;
 
     @Getter
     private String MODEL_PATH_DEFAULT = "models";

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,11 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import lombok.SneakyThrows;
@@ -35,12 +30,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
-import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
@@ -55,7 +48,7 @@ import org.thingsboard.server.transport.lwm2m.server.client.ModelObject;
 import org.thingsboard.server.transport.lwm2m.server.client.ResultsAnalyzerParameters;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
 
-import java.io.IOException;
+import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -71,8 +64,6 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' ) || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportService {
 
-    private final UUID sessionId = UUID.randomUUID();
-
     @Autowired
     private LwM2MJsonAdaptor adaptor;
 
@@ -87,6 +78,12 @@ public class LwM2MTransportService {
 
     @Autowired
     LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
+
+
+    @PostConstruct
+    public void init() {
+        context.getScheduler().scheduleAtFixedRate(() -> checkInactivityAndReportActivity(), new Random().nextInt((int) context.getCtxServer().getSessionReportTimeout()), context.getCtxServer().getSessionReportTimeout(), TimeUnit.MILLISECONDS);
+    }
 
     /**
      * Start registration device
@@ -104,14 +101,23 @@ public class LwM2MTransportService {
      * @param previousObsersations - may be null
      */
     public void onRegistered(LeshanServer lwServer, Registration registration, Collection<Observation> previousObsersations) {
-        log.info("Received endpoint registration version event: \nendPoint: {}\nregistration.getId(): {}\npreviousObsersations {}", registration.getEndpoint(), registration.getId(), previousObsersations);
-        ModelClient modelClient = lwM2mInMemorySecurityStore.replaceNewRegistration(lwServer, registration, this);
+        ModelClient modelClient = lwM2mInMemorySecurityStore.getModel(lwServer, registration, this);
         if (modelClient != null) {
             modelClient.setLwM2MTransportService(this);
+            modelClient.setSessionUuid(UUID.randomUUID());
             this.setModelClient(lwServer, registration, modelClient);
+            log.warn("[{}] endpoint [{}] UUID ValidateSessionInfo", modelClient.getEndPoint(), modelClient.getSessionUuid());
             SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration.getId());
-            transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), null);
-            transportService.registerAsyncSession(sessionInfo, new LwM2MSessionMsgListener(sessionId, this));
+            if (sessionInfo != null) {
+                log.info("Client: [{}] onRegistered [{}] name  [{}] profile, [{}] SessionIdMSB, [{}] SessionIdLSB, [{}] session UUID", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType(), sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB(), LwM2MTransportHandler.toSessionId(sessionInfo));
+                transportService.registerAsyncSession(sessionInfo, new LwM2MSessionMsgListener(this));
+                transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), null);
+            } else {
+                log.error("Client: [{}] onRegistered [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), sessionInfo);
+            }
+        }
+        else {
+            log.error("Client: [{}] onRegistered [{}] name  [{}] modelClient ", registration.getId(), registration.getEndpoint(), modelClient);
         }
     }
 
@@ -119,9 +125,13 @@ public class LwM2MTransportService {
      * @param lwServer     - LeshanServer
      * @param registration - Registration LwM2M Client
      */
-
     public void updatedReg(LeshanServer lwServer, Registration registration) {
-        log.info("[{}] endpoint updateReg, registration.getId(): {}", registration.getEndpoint(), registration.getId());
+        SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration.getId());
+        if (sessionInfo != null) {
+            log.info("Client: [{}] updatedReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
+        } else {
+            log.error("Client: [{}] updatedReg [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), sessionInfo);
+        }
     }
 
     /**
@@ -131,12 +141,19 @@ public class LwM2MTransportService {
      */
     public void unReg(Registration registration, Collection<Observation> observations) {
         SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration.getId());
-        doCloseSession(sessionInfo);
-        this.doDisconnect(sessionInfo);
-        lwM2mInMemorySecurityStore.setRemoveSessions(registration.getId());
-        lwM2mInMemorySecurityStore.remove();
-        log.info("[{}] Received endpoint un registration version event, registration.getId(): {}", registration.getEndpoint(), registration.getId());
+        if (sessionInfo != null) {
+            transportService.deregisterSession(sessionInfo);
+            this.doCloseSession(sessionInfo);
+            lwM2mInMemorySecurityStore.addRemoveSessions(registration.getId());
+            lwM2mInMemorySecurityStore.delRemoveSessions();
+            // TODO if (not profile in session)
+            if (lwM2mInMemorySecurityStore.getProfiles().size() > 0) {
 
+            }
+            log.info("Client: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
+        } else {
+            log.error("Client: [{}] unReg [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), sessionInfo);
+        }
     }
 
     public void onSleepingDev(Registration registration) {
@@ -188,23 +205,25 @@ public class LwM2MTransportService {
     private SessionInfoProto getValidateSessionInfo(String registrationId) {
         SessionInfoProto sessionInfo = null;
         ModelClient modelClient = lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registrationId);
-        ValidateDeviceCredentialsResponseMsg msg = modelClient.getCredentialsResponse();
-        if (msg == null || msg.getDeviceInfo() == null) {
-            log.warn("[{}] [{}]", modelClient.getEndPoint(), CONNECTION_REFUSED_NOT_AUTHORIZED.toString());
-        } else {
-            sessionInfo = SessionInfoProto.newBuilder()
-                    .setNodeId(this.context.getNodeId())
-                    .setSessionIdMSB(sessionId.getMostSignificantBits())
-                    .setSessionIdLSB(sessionId.getLeastSignificantBits())
-                    .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
-                    .setDeviceIdLSB(msg.getDeviceInfo().getDeviceIdLSB())
-                    .setTenantIdMSB(msg.getDeviceInfo().getTenantIdMSB())
-                    .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
-                    .setDeviceName(msg.getDeviceInfo().getDeviceName())
-                    .setDeviceType(msg.getDeviceInfo().getDeviceType())
-                    .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileIdLSB())
-                    .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileIdMSB())
-                    .build();
+        if (modelClient != null) {
+            ValidateDeviceCredentialsResponseMsg msg = modelClient.getCredentialsResponse();
+            if (msg == null || msg.getDeviceInfo() == null) {
+                log.warn("[{}] [{}]", modelClient.getEndPoint(), CONNECTION_REFUSED_NOT_AUTHORIZED.toString());
+            } else {
+                sessionInfo = SessionInfoProto.newBuilder()
+                        .setNodeId(this.context.getNodeId())
+                        .setSessionIdMSB(modelClient.getSessionUuid().getMostSignificantBits())
+                        .setSessionIdLSB(modelClient.getSessionUuid().getLeastSignificantBits())
+                        .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
+                        .setDeviceIdLSB(msg.getDeviceInfo().getDeviceIdLSB())
+                        .setTenantIdMSB(msg.getDeviceInfo().getTenantIdMSB())
+                        .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
+                        .setDeviceName(msg.getDeviceInfo().getDeviceName())
+                        .setDeviceType(msg.getDeviceInfo().getDeviceType())
+                        .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileIdLSB())
+                        .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileIdMSB())
+                        .build();
+            }
         }
         return sessionInfo;
     }
@@ -221,84 +240,15 @@ public class LwM2MTransportService {
      * @param modelClient  - object with All parameters off client
      */
     @SneakyThrows
-    public void getAttrTelemetryObserveFromModel(LeshanServer lwServer, Registration registration, ModelClient modelClient) {
+    public void updatesAndSentModelParameter(LeshanServer lwServer, Registration registration, ModelClient modelClient, DeviceProfile deviceProfile) {
         // #1
-        this.setParametersToModelClient(registration, modelClient);
+//        this.setParametersToModelClient(registration, modelClient, deviceProfile);
         // #2
         this.updateAttrTelemetry(registration, true, null);
         // #3
         this.onSentObserveToClient(lwServer, registration);
     }
 
-    /**
-     * To Model Client: Attribute, Telemetry, Observe (update ) == parameters from from credentials/Profile
-     * #1 Add parameters in format: [path1, path2]
-     *
-     * @param modelClient - object with All parameters off client
-     */
-    @SneakyThrows
-    public void setParametersToModelClient(Registration registration, ModelClient modelClient) {
-        JsonObject profilesConfigData = this.getObserveAttrTelemetryFromThingsboard(registration);
-        if (profilesConfigData != null) {
-            modelClient.getAttrTelemetryObserveValue().setPostKeyNameProfile(profilesConfigData.get(KEYNAME).getAsJsonObject());
-            modelClient.getAttrTelemetryObserveValue().setPostAttributeProfile(profilesConfigData.get(ATTRIBUTE).getAsJsonArray());
-            modelClient.getAttrTelemetryObserveValue().setPostTelemetryProfile(profilesConfigData.get(TELEMETRY).getAsJsonArray());
-            modelClient.getAttrTelemetryObserveValue().setPostObserveProfile(profilesConfigData.get(OBSERVE).getAsJsonArray());
-        }
-    }
-
-
-    /**
-     * @param registration - Registration LwM2M Client
-     * @return deviceProfileBody with Observe&Attribute&Telemetry From Thingsboard
-     * Example: with pathResource (use only pathResource)
-     * property: "observeAttr"
-     * {"keyName": {
-     *       "/3/0/1": "modelNumber",
-     *       "/3/0/0": "manufacturer",
-     *       "/3/0/2": "serialNumber"
-     *       },
-     * "attribute":["/2/0/1","/3/0/9"],
-     * "telemetry":["/1/0/1","/2/0/1","/6/0/1"],
-     * "observe":["/2/0","/2/0/0","/4/0/2"]}
-     */
-    private JsonObject getObserveAttrTelemetryFromThingsboard(Registration registration) {
-        DeviceProfile deviceProfile = (lwM2mInMemorySecurityStore.getSessions() != null && lwM2mInMemorySecurityStore.getSessions().size() > 0
-                && lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registration.getId()).getDeviceProfile() != null) ?
-                lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registration.getId()).getDeviceProfile() : null;
-        if (deviceProfile != null && ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
-            Lwm2mDeviceProfileTransportConfiguration lwm2mDeviceProfileTransportConfiguration = (Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-            Object observeAttr = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
-            try {
-                ObjectMapper mapper = new ObjectMapper();
-                String observeAttrStr = mapper.writeValueAsString(observeAttr);
-                JsonObject objectMsg = (observeAttrStr != null) ? adaptor.validateJson(observeAttrStr) : null;
-                return (getValidateCredentialsBodyFromThingsboard(objectMsg)) ? objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject() : null;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return null;
-    }
-
-    private boolean getValidateCredentialsBodyFromThingsboard(JsonObject objectMsg) {
-        return (objectMsg != null &&
-                !objectMsg.isJsonNull() &&
-                objectMsg.has(OBSERVE_ATTRIBUTE_TELEMETRY) &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonObject() &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(KEYNAME) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEYNAME).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(ATTRIBUTE) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).isJsonArray() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(TELEMETRY) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).isJsonArray() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(OBSERVE) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE).isJsonArray());
-    }
 
     /**
      * Sent Attribute and Telemetry to Thingsboard
@@ -332,9 +282,9 @@ public class LwM2MTransportService {
         } catch (InterruptedException e) {
         }
         if (attributes.getAsJsonObject().entrySet().size() > 0)
-            this.updateParametersOnThingsboard(attributes, DEVICE_ATTRIBUTES_TOPIC, -1, registration.getId());
+            this.updateParametersOnThingsboard(attributes, DEVICE_ATTRIBUTES_TOPIC, registration.getId());
         if (telemetry.getAsJsonObject().entrySet().size() > 0)
-            this.updateParametersOnThingsboard(telemetry, DEVICE_TELEMETRY_TOPIC, -1, registration.getId());
+            this.updateParametersOnThingsboard(telemetry, DEVICE_TELEMETRY_TOPIC, registration.getId());
     }
 
     /**
@@ -362,7 +312,8 @@ public class LwM2MTransportService {
      *                     (attributes/telemetry): new {name(Attr/Telemetry):value}
      */
     private void getParametersFromModelClient(JsonObject attributes, JsonObject telemetry, Registration registration, String path) {
-        AttrTelemetryObserveValue attrTelemetryObserveValue = lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registration.getId()).getAttrTelemetryObserveValue();
+        UUID profileUUid = lwM2mInMemorySecurityStore.getSessions().get(registration.getId()).getProfileUuid();
+        AttrTelemetryObserveValue attrTelemetryObserveValue = lwM2mInMemorySecurityStore.getProfiles().get(profileUUid);
         attrTelemetryObserveValue.getPostAttributeProfile().forEach(p -> {
             ResultIds pathIds = new ResultIds(p.getAsString().toString());
             if (pathIds.getResourceId() > -1) {
@@ -388,7 +339,8 @@ public class LwM2MTransportService {
      */
     private void addParameters(ResultIds pathIds, String path, JsonObject parameters, Registration registration) {
         ModelObject modelObject = lwM2mInMemorySecurityStore.getSessions().get(registration.getId()).getModelObjects().get(pathIds.getObjectId());
-        JsonObject names = lwM2mInMemorySecurityStore.getSessions().get(registration.getId()).getAttrTelemetryObserveValue().getPostKeyNameProfile().getAsJsonObject();
+        UUID profileUUid = lwM2mInMemorySecurityStore.getSessions().get(registration.getId()).getProfileUuid();
+        JsonObject names = lwM2mInMemorySecurityStore.getProfiles().get(profileUUid).getPostKeyNameProfile();
         String resName = String.valueOf(names.get(path));
         if (modelObject != null && resName != null && !resName.isEmpty()) {
             String resValue = this.getResourceValue(modelObject, pathIds);
@@ -424,25 +376,27 @@ public class LwM2MTransportService {
      *
      * @param msg            - JsonArray: [{name: value}]
      * @param topicName      - Api Attribute or Telemetry
-     * @param msgId          - always == -1
      * @param registrationId - Id of Registration LwM2M Client
      */
-    public void updateParametersOnThingsboard(JsonElement msg, String topicName, int msgId, String registrationId) {
-        SessionInfoProto sessionInfo = getValidateSessionInfo(registrationId);
+    public void updateParametersOnThingsboard(JsonElement msg, String topicName, String registrationId) {
+        SessionInfoProto sessionInfo = this.getValidateSessionInfo(registrationId);
         if (sessionInfo != null) {
             try {
                 if (topicName.equals(LwM2MTransportHandler.DEVICE_ATTRIBUTES_TOPIC)) {
                     PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
-                    transportService.process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSentAttrTelemetry(msgId, postAttributeMsg));
+                    TransportServiceCallback call = this.getPubAckCallbackSentAttrTelemetry(-1, postAttributeMsg);
+                    transportService.process(sessionInfo, postAttributeMsg, call);
                 } else if (topicName.equals(LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC)) {
                     PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
-                    transportService.process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSentAttrTelemetry(msgId, postTelemetryMsg));
+                    TransportServiceCallback call = this.getPubAckCallbackSentAttrTelemetry(-1, postTelemetryMsg);
+                    transportService.process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSentAttrTelemetry(-1, call));
                 }
             } catch (AdaptorException e) {
-                log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-                log.info("[{}] Closing current session due to invalid publish msg [{}][{}]", sessionId, topicName, msgId);
-
+                log.error("[{}] Failed to process publish msg [{}]", topicName, e);
+                log.info("[{}] Closing current session due to invalid publish", topicName);
             }
+        } else {
+            log.error("Client: [{}] updateParametersOnThingsboard [{}] sessionInfo ", registrationId, sessionInfo);
         }
     }
 
@@ -457,12 +411,12 @@ public class LwM2MTransportService {
         return new TransportServiceCallback<Void>() {
             @Override
             public void onSuccess(Void dummy) {
-                log.trace("[{}] Success to publish msg: {}, dummy: {}", sessionId, msg, dummy);
+                log.trace("Success to publish msg: {}, dummy: {}", msg, dummy);
             }
 
             @Override
             public void onError(Throwable e) {
-                log.trace("[{}] Failed to publish msg: {}", sessionId, msg, e);
+                log.trace("[{}] Failed to publish msg: {}", msg, e);
             }
         };
     }
@@ -483,8 +437,9 @@ public class LwM2MTransportService {
         if (lwServer.getObservationService().getObservations(registration).size() > 0) {
             this.setCancelObservations(lwServer, registration);
         }
-        AttrTelemetryObserveValue attrTelemetryObserveValue = lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registration.getId()).getAttrTelemetryObserveValue();
-        lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registration.getId()).getAttrTelemetryObserveValue().getPostObserveProfile().forEach(p -> {
+        UUID profileUUid = lwM2mInMemorySecurityStore.getSessions().get(registration.getId()).getProfileUuid();
+        AttrTelemetryObserveValue attrTelemetryObserveValue = lwM2mInMemorySecurityStore.getProfiles().get(profileUUid);
+        attrTelemetryObserveValue.getPostObserveProfile().forEach(p -> {
             // #1.1
             String target = (getValidateObserve(attrTelemetryObserveValue.getPostAttributeProfile(), p.getAsString().toString())) ?
                     p.getAsString().toString() : (getValidateObserve(attrTelemetryObserveValue.getPostTelemetryProfile(), p.getAsString().toString())) ?
@@ -652,176 +607,379 @@ public class LwM2MTransportService {
      * @param updateCredentials - Credentials include info about Attr/Telemetry/Observe (Profile)
      */
 
-    public void onGetChangeCredentials(ToTransportUpdateCredentialsProto updateCredentials) {
-        String credentialsId = (updateCredentials.getCredentialsIdCount() > 0) ? updateCredentials.getCredentialsId(0) : null;
-        JsonObject credentialsValue = (updateCredentials.getCredentialsValueCount() > 0) ? adaptor.validateJson(updateCredentials.getCredentialsValue(0)) : null;
-        if (credentialsValue != null && !credentialsValue.isJsonNull() && credentialsId != null && !credentialsId.isEmpty()) {
-            String registrationId = lwM2mInMemorySecurityStore.getByRegistrationId(credentialsId);
-            Registration registration = lwM2mInMemorySecurityStore.getByRegistration(registrationId);
-            ModelClient modelClient = lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registrationId);
-            LeshanServer lwServer = modelClient.getLwServer();
-            log.info("updateCredentials -> registration: {}", registration);
+    public void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto updateCredentials) {
+//        String credentialsId = (updateCredentials.getCredentialsIdCount() > 0) ? updateCredentials.getCredentialsId(0) : null;
+//        JsonObject credentialsValue = (updateCredentials.getCredentialsValueCount() > 0) ? LwM2MTransportHandler.validateJson(updateCredentials.getCredentialsValue(0)) : null;
+//        if (credentialsValue != null && !credentialsValue.isJsonNull() && credentialsId != null && !credentialsId.isEmpty()) {
+//            String registrationId = lwM2mInMemorySecurityStore.getByRegistrationId(credentialsId);
+//            Registration registration = lwM2mInMemorySecurityStore.getByRegistration(registrationId);
+//            ModelClient modelClient = lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registrationId);
+//            LeshanServer lwServer = modelClient.getLwServer();
+//            log.info("updateCredentials -> registration: {}", registration);
+//
+//            // #1
+//            JsonObject observeAttrNewJson = (credentialsValue.has("observeAttr") && !credentialsValue.get("observeAttr").isJsonNull()) ? credentialsValue.get("observeAttr").getAsJsonObject() : null;
+//            log.info("updateCredentials -> observeAttr: {}", observeAttrNewJson);
+//            JsonArray attributeNew = (observeAttrNewJson.has("attribute") && !observeAttrNewJson.get("attribute").isJsonNull()) ? observeAttrNewJson.get("attribute").getAsJsonArray() : null;
+//            JsonArray telemetryNew = (observeAttrNewJson.has("telemetry") && !observeAttrNewJson.get("telemetry").isJsonNull()) ? observeAttrNewJson.get("telemetry").getAsJsonArray() : null;
+//            JsonArray observeNew = (observeAttrNewJson.has("observe") && !observeAttrNewJson.get("observe").isJsonNull()) ? observeAttrNewJson.get("observe").getAsJsonArray() : null;
+//            if (!modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile().equals(attributeNew) ||
+//                    !modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile().equals(telemetryNew) ||
+//                    !modelClient.getAttrTelemetryObserveValue().getPostObserveProfile().equals(observeNew)) {
+//                if (!modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile().equals(attributeNew) ||
+//                        !modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile().equals(telemetryNew)) {
+//                    // #1.1
+//                    ResultsAnalyzerParameters postAttributeAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), Set.class),
+//                            new Gson().fromJson(attributeNew, Set.class));
+//                    // #1.2
+//                    ResultsAnalyzerParameters postTelemetryAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile(), Set.class),
+//                            new Gson().fromJson(telemetryNew, Set.class));
+//
+//                    // #2 add
+//                    // #2.1 add
+//                    ResultsAnalyzerParameters postAttrTelemetryOldAnalyzer = null;
+//                    if (postAttributeAnalyzer != null && postAttributeAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                        // analyze new Attr with old Telemetry
+//                        postAttrTelemetryOldAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile(), Set.class),
+//                                postAttributeAnalyzer.getPathPostParametersAdd());
+//                        // sent GET_TYPE_OPER_READ if need
+//                        ResultsAnalyzerParameters sentAttrToThingsboard = null;
+//                        if (postAttrTelemetryOldAnalyzer != null && postAttrTelemetryOldAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                            this.updateResourceValueObserve(lwServer, registration, modelClient, postAttrTelemetryOldAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_READ);
+//                            // prepare sent attr to tingsboard only not GET_TYPE_OPER_READ
+//                            sentAttrToThingsboard = getAnalyzerParameters(postAttributeAnalyzer.getPathPostParametersAdd(),
+//                                    postAttrTelemetryOldAnalyzer.getPathPostParametersAdd());
+//                        } else {
+//                            sentAttrToThingsboard = new ResultsAnalyzerParameters();
+//                            sentAttrToThingsboard.getPathPostParametersAdd().addAll(new Gson().fromJson(attributeNew, Set.class));
+//                        }
+//                        // sent attr to tingsboard only not GET_TYPE_OPER_READ
+//                        if (sentAttrToThingsboard != null && sentAttrToThingsboard.getPathPostParametersAdd().size() > 0) {
+//                            sentAttrToThingsboard.getPathPostParametersAdd().forEach(p -> {
+//                                updateAttrTelemetry(registration, false, p);
+//                            });
+//
+//                        }
+//                        // analyze on observe
+//                        ResultsAnalyzerParameters postObserveNewAttrAnalyzer = getAnalyzerParametersIn(new Gson().fromJson(observeNew, Set.class),
+//                                postAttributeAnalyzer.getPathPostParametersAdd());
+//                        if (postObserveNewAttrAnalyzer != null && postObserveNewAttrAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                            this.updateResourceValueObserve(lwServer, registration, modelClient, postObserveNewAttrAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_OBSERVE);
+//                        }
+//                    }
+//                    // #2.2 add
+//                    if (postTelemetryAnalyzer != null && postTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                        // analyze new Telemetry with old Attribute
+//                        ResultsAnalyzerParameters postAttrOldTelemetryAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), Set.class),
+//                                postTelemetryAnalyzer.getPathPostParametersAdd());
+//                        // analyze new Telemetry with new Attribute
+//                        ResultsAnalyzerParameters postAttrNewTelemetryAnalyzer = null;
+//                        if (postAttrTelemetryOldAnalyzer != null && postAttrTelemetryOldAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                            postAttrNewTelemetryAnalyzer = getAnalyzerParameters(postAttrTelemetryOldAnalyzer.getPathPostParametersAdd(),
+//                                    postTelemetryAnalyzer.getPathPostParametersAdd());
+//                        }
+//                        if (postAttrNewTelemetryAnalyzer != null && postAttrNewTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                            if (postAttrOldTelemetryAnalyzer != null && postAttrOldTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                                postAttrNewTelemetryAnalyzer.getPathPostParametersAdd().addAll(postAttrOldTelemetryAnalyzer.getPathPostParametersAdd());
+//                            }
+//                        } else {
+//                            if (postAttrOldTelemetryAnalyzer != null && postAttrOldTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                                postAttrNewTelemetryAnalyzer = new ResultsAnalyzerParameters();
+//                                postAttrNewTelemetryAnalyzer.getPathPostParametersAdd().addAll(postAttrOldTelemetryAnalyzer.getPathPostParametersAdd());
+//                            }
+//                        }
+//                        ResultsAnalyzerParameters sentTelemetryToThingsboard = null;
+//                        if (postAttrNewTelemetryAnalyzer != null && postAttrNewTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                            this.updateResourceValueObserve(lwServer, registration, modelClient, postAttrNewTelemetryAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_READ);
+//                            // prepare sent telemetry to tingsboard only not GET_TYPE_OPER_READ
+//                            sentTelemetryToThingsboard = getAnalyzerParameters(postTelemetryAnalyzer.getPathPostParametersAdd(),
+//                                    postAttrNewTelemetryAnalyzer.getPathPostParametersAdd());
+//                        } else {
+//                            sentTelemetryToThingsboard = new ResultsAnalyzerParameters();
+//                            sentTelemetryToThingsboard.getPathPostParametersAdd().addAll(new Gson().fromJson(telemetryNew, Set.class));
+//                        }
+//                        // sent telemetry to tingsboard only not GET_TYPE_OPER_READ
+//                        if (sentTelemetryToThingsboard != null && sentTelemetryToThingsboard.getPathPostParametersAdd().size() > 0) {
+//                            sentTelemetryToThingsboard.getPathPostParametersAdd().forEach(p -> {
+//                                updateAttrTelemetry(registration, false, p);
+//                            });
+//                        }
+//                        // analyze on observe
+//                        ResultsAnalyzerParameters postObserveNewTelemetryAnalyzer = getAnalyzerParametersIn(new Gson().fromJson(observeNew, Set.class),
+//                                postTelemetryAnalyzer.getPathPostParametersAdd());
+//                        if (postObserveNewTelemetryAnalyzer != null && postObserveNewTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                            this.updateResourceValueObserve(lwServer, registration, modelClient, postObserveNewTelemetryAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_OBSERVE);
+//                        }
+//                    }
+//
+//                    // #2.4 del
+//                    if (postAttributeAnalyzer != null && postAttributeAnalyzer.getPathPostParametersDel().size() > 0) {
+//                        // Analyzer attr and Observe
+//                        // Params Attr in Telemetry for  may be not cancel observe
+//                        ResultsAnalyzerParameters postAttrTelemetryAnalyzerDel = getAnalyzerParameters(new Gson().fromJson(telemetryNew, Set.class), postAttributeAnalyzer.getPathPostParametersDel());
+//                        if (postAttrTelemetryAnalyzerDel != null && postAttrTelemetryAnalyzerDel.getPathPostParametersAdd().size() > 0) {
+//                            // Attr dell and cancel observe
+//                            ResultsAnalyzerParameters postObserveAtrAnalyzerOldDel = getAnalyzerParametersIn(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostObserveProfile(), Set.class),
+//                                    postAttrTelemetryAnalyzerDel.getPathPostParametersAdd());
+//                            if (postObserveAtrAnalyzerOldDel != null && postObserveAtrAnalyzerOldDel.getPathPostParametersAdd().size() > 0) {
+//                                this.cancelObserveIsValue(lwServer, registration, postObserveAtrAnalyzerOldDel.getPathPostParametersAdd());
+//                            }
+//                        }
+//                    }
+//                    if (postTelemetryAnalyzer != null && postTelemetryAnalyzer.getPathPostParametersDel().size() > 0) {
+//                        // Analyzer Telemetry and Observe
+//                        // Params Telemetry in Attr for  may be not cancel observe
+//                        ResultsAnalyzerParameters postTelemetryAttrAnalyzerDel = getAnalyzerParameters(new Gson().fromJson(attributeNew, Set.class),
+//                                postTelemetryAnalyzer.getPathPostParametersDel());
+//                        if (postTelemetryAttrAnalyzerDel != null && postTelemetryAttrAnalyzerDel.getPathPostParametersAdd().size() > 0) {
+//                            // Telemetry dell and cancel observe
+//                            ResultsAnalyzerParameters postObserveTelemetryAnalyzerOldDel = getAnalyzerParametersIn(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostObserveProfile(), Set.class),
+//                                    postTelemetryAttrAnalyzerDel.getPathPostParametersAdd());
+//                            if (postObserveTelemetryAnalyzerOldDel != null && postObserveTelemetryAnalyzerOldDel.getPathPostParametersAdd().size() > 0) {
+//                                this.cancelObserveIsValue(lwServer, registration, postObserveTelemetryAnalyzerOldDel.getPathPostParametersAdd());
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//
+//            if (!modelClient.getAttrTelemetryObserveValue().getPostObserveProfile().equals(observeNew)) {
+//                // #1.3
+//                ResultsAnalyzerParameters postObserveAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostObserveProfile(), Set.class),
+//                        new Gson().fromJson(observeNew, Set.class));
+//                if (postObserveAnalyzer != null) {
+//                    // #2.3 add
+//                    if (postObserveAnalyzer.getPathPostParametersAdd().size() > 0)
+//                        this.updateResourceValueObserve(lwServer, registration, modelClient, postObserveAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_OBSERVE);
+//                    // #2.5 del
+//                    if (postObserveAnalyzer.getPathPostParametersDel().size() > 0) {
+//                        // ObserveDel in AttrOld
+//                        ResultsAnalyzerParameters observeDelInParameterOld = getAnalyzerParametersIn(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), Set.class),
+//                                postObserveAnalyzer.getPathPostParametersDel());
+//                        // ObserveDel in TelemetryOld
+//                        ResultsAnalyzerParameters observeDelInTelemetry = getAnalyzerParametersIn(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile(), Set.class),
+//                                postObserveAnalyzer.getPathPostParametersDel());
+//                        if (observeDelInTelemetry != null && observeDelInTelemetry.getPathPostParametersAdd().size() > 0) {
+//                            if (observeDelInParameterOld == null) {
+//                                observeDelInParameterOld = new ResultsAnalyzerParameters();
+//                            }
+//                            observeDelInParameterOld.getPathPostParametersAdd().addAll(observeDelInTelemetry.getPathPostParametersAdd());
+//                        }
+//                        if (observeDelInParameterOld != null && observeDelInParameterOld.getPathPostParametersAdd().size() > 0) {
+//                            this.cancelObserveIsValue(lwServer, registration, postObserveAnalyzer.getPathPostParametersDel());
+//                        }
+//                    }
+//                }
+//
+//            }
+//            // #3
+//            modelClient.getAttrTelemetryObserveValue().setPostAttributeProfile(attributeNew);
+//            modelClient.getAttrTelemetryObserveValue().setPostTelemetryProfile(telemetryNew);
+//            modelClient.getAttrTelemetryObserveValue().setPostObserveProfile(observeNew);
+//        }
 
-            // #1
-            JsonObject observeAttrNewJson = (credentialsValue.has("observeAttr") && !credentialsValue.get("observeAttr").isJsonNull()) ? credentialsValue.get("observeAttr").getAsJsonObject() : null;
-            log.info("updateCredentials -> observeAttr: {}", observeAttrNewJson);
-            JsonArray attributeNew = (observeAttrNewJson.has("attribute") && !observeAttrNewJson.get("attribute").isJsonNull()) ? observeAttrNewJson.get("attribute").getAsJsonArray() : null;
-            JsonArray telemetryNew = (observeAttrNewJson.has("telemetry") && !observeAttrNewJson.get("telemetry").isJsonNull()) ? observeAttrNewJson.get("telemetry").getAsJsonArray() : null;
-            JsonArray observeNew = (observeAttrNewJson.has("observe") && !observeAttrNewJson.get("observe").isJsonNull()) ? observeAttrNewJson.get("observe").getAsJsonArray() : null;
-            if (!modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile().equals(attributeNew) ||
-                    !modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile().equals(telemetryNew) ||
-                    !modelClient.getAttrTelemetryObserveValue().getPostObserveProfile().equals(observeNew)) {
-                if (!modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile().equals(attributeNew) ||
-                        !modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile().equals(telemetryNew)) {
-                    // #1.1
-                    ResultsAnalyzerParameters postAttributeAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), Set.class),
-                            new Gson().fromJson(attributeNew, Set.class));
-                    // #1.2
-                    ResultsAnalyzerParameters postTelemetryAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile(), Set.class),
-                            new Gson().fromJson(telemetryNew, Set.class));
+    }
 
-                    // #2 add
-                    // #2.1 add
-                    ResultsAnalyzerParameters postAttrTelemetryOldAnalyzer = null;
-                    if (postAttributeAnalyzer != null && postAttributeAnalyzer.getPathPostParametersAdd().size() > 0) {
-                        // analyze new Attr with old Telemetry
-                        postAttrTelemetryOldAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile(), Set.class),
-                                postAttributeAnalyzer.getPathPostParametersAdd());
-                        // sent GET_TYPE_OPER_READ if need
-                        ResultsAnalyzerParameters sentAttrToThingsboard = null;
-                        if (postAttrTelemetryOldAnalyzer != null && postAttrTelemetryOldAnalyzer.getPathPostParametersAdd().size() > 0) {
-                            this.updateResourceValueObserve(lwServer, registration, modelClient, postAttrTelemetryOldAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_READ);
-                            // prepare sent attr to tingsboard only not GET_TYPE_OPER_READ
-                            sentAttrToThingsboard = getAnalyzerParameters(postAttributeAnalyzer.getPathPostParametersAdd(),
-                                    postAttrTelemetryOldAnalyzer.getPathPostParametersAdd());
-                        } else {
-                            sentAttrToThingsboard = new ResultsAnalyzerParameters();
-                            sentAttrToThingsboard.getPathPostParametersAdd().addAll(new Gson().fromJson(attributeNew, Set.class));
-                        }
-                        // sent attr to tingsboard only not GET_TYPE_OPER_READ
-                        if (sentAttrToThingsboard != null && sentAttrToThingsboard.getPathPostParametersAdd().size() > 0) {
-                            sentAttrToThingsboard.getPathPostParametersAdd().forEach(p -> {
-                                updateAttrTelemetry(registration, false, p);
-                            });
+    /**
+     * Get info about deviceProfile from Thingsboard
+     * #1 Equivalence test: old <> new Value (Only Attribute, Telemetry, Observe)
+     * #1.1 KeyName
+     * #1.2 Attribute
+     * #1.3 Telemetry
+     * #1.4 Observe
+     *
+     *
+     * #2 If #1 == change, then analyze and update Value in Transport
+     * #2.1 Attribute.add:
+     * -- if is value in modelClient: add modelClient.getAttrTelemetryObserveValue().getPostAttribute and Get Thingsboard (Attr)
+     * -- if is not value in modelClient: nothing
+     * #2.2 Telemetry.add:
+     * -- if is value in modelClient: add modelClient.getAttrTelemetryObserveValue().getPostTelemetry and Get Thingsboard (Telemetry)
+     * -- if is not value in modelClient: nothing
+     * #2.3 Observe.add
+     * --- if path is in Attr/Telemetry and value not null: =>add to modelClient.getAttrTelemetryObserveValue().getPostObserve() and Request observe to Client
+     * # 2.4 del (Attribute, Telemetry)
+     * --  #2.5.
+     * #2.5 Observe.del
+     * -- if value not null: Request cancel observe to client
+     * #3 Update in modelClient.getAttrTelemetryObserveValue(): ...Profile
+     *
+     * @param sessionInfo
+     * @param deviceProfile
+     */
+    public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
+        log.error("[{}]", sessionInfo);
+//        this.updatesAndSentModelParameter(lwServer, registration, modelClient, deviceProfile);
 
-                        }
-                        // analyze on observe
-                        ResultsAnalyzerParameters postObserveNewAttrAnalyzer = getAnalyzerParametersIn(new Gson().fromJson(observeNew, Set.class),
-                                postAttributeAnalyzer.getPathPostParametersAdd());
-                        if (postObserveNewAttrAnalyzer != null && postObserveNewAttrAnalyzer.getPathPostParametersAdd().size() > 0) {
-                            this.updateResourceValueObserve(lwServer, registration, modelClient, postObserveNewAttrAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_OBSERVE);
-                        }
-                    }
-                    // #2.2 add
-                    if (postTelemetryAnalyzer != null && postTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
-                        // analyze new Telemetry with old Attribute
-                        ResultsAnalyzerParameters postAttrOldTelemetryAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), Set.class),
-                                postTelemetryAnalyzer.getPathPostParametersAdd());
-                        // analyze new Telemetry with new Attribute
-                        ResultsAnalyzerParameters postAttrNewTelemetryAnalyzer = null;
-                        if (postAttrTelemetryOldAnalyzer != null && postAttrTelemetryOldAnalyzer.getPathPostParametersAdd().size() > 0) {
-                            postAttrNewTelemetryAnalyzer = getAnalyzerParameters(postAttrTelemetryOldAnalyzer.getPathPostParametersAdd(),
-                                    postTelemetryAnalyzer.getPathPostParametersAdd());
-                        }
-                        if (postAttrNewTelemetryAnalyzer != null && postAttrNewTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
-                            if (postAttrOldTelemetryAnalyzer != null && postAttrOldTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
-                                postAttrNewTelemetryAnalyzer.getPathPostParametersAdd().addAll(postAttrOldTelemetryAnalyzer.getPathPostParametersAdd());
-                            }
-                        } else {
-                            if (postAttrOldTelemetryAnalyzer != null && postAttrOldTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
-                                postAttrNewTelemetryAnalyzer = new ResultsAnalyzerParameters();
-                                postAttrNewTelemetryAnalyzer.getPathPostParametersAdd().addAll(postAttrOldTelemetryAnalyzer.getPathPostParametersAdd());
-                            }
-                        }
-                        ResultsAnalyzerParameters sentTelemetryToThingsboard = null;
-                        if (postAttrNewTelemetryAnalyzer != null && postAttrNewTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
-                            this.updateResourceValueObserve(lwServer, registration, modelClient, postAttrNewTelemetryAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_READ);
-                            // prepare sent telemetry to tingsboard only not GET_TYPE_OPER_READ
-                            sentTelemetryToThingsboard = getAnalyzerParameters(postTelemetryAnalyzer.getPathPostParametersAdd(),
-                                    postAttrNewTelemetryAnalyzer.getPathPostParametersAdd());
-                        } else {
-                            sentTelemetryToThingsboard = new ResultsAnalyzerParameters();
-                            sentTelemetryToThingsboard.getPathPostParametersAdd().addAll(new Gson().fromJson(telemetryNew, Set.class));
-                        }
-                        // sent telemetry to tingsboard only not GET_TYPE_OPER_READ
-                        if (sentTelemetryToThingsboard != null && sentTelemetryToThingsboard.getPathPostParametersAdd().size() > 0) {
-                            sentTelemetryToThingsboard.getPathPostParametersAdd().forEach(p -> {
-                                updateAttrTelemetry(registration, false, p);
-                            });
-                        }
-                        // analyze on observe
-                        ResultsAnalyzerParameters postObserveNewTelemetryAnalyzer = getAnalyzerParametersIn(new Gson().fromJson(observeNew, Set.class),
-                                postTelemetryAnalyzer.getPathPostParametersAdd());
-                        if (postObserveNewTelemetryAnalyzer != null && postObserveNewTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
-                            this.updateResourceValueObserve(lwServer, registration, modelClient, postObserveNewTelemetryAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_OBSERVE);
-                        }
-                    }
-
-                    // #2.4 del
-                    if (postAttributeAnalyzer != null && postAttributeAnalyzer.getPathPostParametersDel().size() > 0) {
-                        // Analyzer attr and Observe
-                        // Params Attr in Telemetry for  may be not cancel observe
-                        ResultsAnalyzerParameters postAttrTelemetryAnalyzerDel = getAnalyzerParameters(new Gson().fromJson(telemetryNew, Set.class), postAttributeAnalyzer.getPathPostParametersDel());
-                        if (postAttrTelemetryAnalyzerDel != null && postAttrTelemetryAnalyzerDel.getPathPostParametersAdd().size() > 0) {
-                            // Attr dell and cancel observe
-                            ResultsAnalyzerParameters postObserveAtrAnalyzerOldDel = getAnalyzerParametersIn(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostObserveProfile(), Set.class),
-                                    postAttrTelemetryAnalyzerDel.getPathPostParametersAdd());
-                            if (postObserveAtrAnalyzerOldDel != null && postObserveAtrAnalyzerOldDel.getPathPostParametersAdd().size() > 0) {
-                                this.cancelObserveIsValue(lwServer, registration, postObserveAtrAnalyzerOldDel.getPathPostParametersAdd());
-                            }
-                        }
-                    }
-                    if (postTelemetryAnalyzer != null && postTelemetryAnalyzer.getPathPostParametersDel().size() > 0) {
-                        // Analyzer Telemetry and Observe
-                        // Params Telemetry in Attr for  may be not cancel observe
-                        ResultsAnalyzerParameters postTelemetryAttrAnalyzerDel = getAnalyzerParameters(new Gson().fromJson(attributeNew, Set.class),
-                                postTelemetryAnalyzer.getPathPostParametersDel());
-                        if (postTelemetryAttrAnalyzerDel != null && postTelemetryAttrAnalyzerDel.getPathPostParametersAdd().size() > 0) {
-                            // Telemetry dell and cancel observe
-                            ResultsAnalyzerParameters postObserveTelemetryAnalyzerOldDel = getAnalyzerParametersIn(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostObserveProfile(), Set.class),
-                                    postTelemetryAttrAnalyzerDel.getPathPostParametersAdd());
-                            if (postObserveTelemetryAnalyzerOldDel != null && postObserveTelemetryAnalyzerOldDel.getPathPostParametersAdd().size() > 0) {
-                                this.cancelObserveIsValue(lwServer, registration, postObserveTelemetryAnalyzerOldDel.getPathPostParametersAdd());
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (!modelClient.getAttrTelemetryObserveValue().getPostObserveProfile().equals(observeNew)) {
-                // #1.3
-                ResultsAnalyzerParameters postObserveAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostObserveProfile(), Set.class),
-                        new Gson().fromJson(observeNew, Set.class));
-                if (postObserveAnalyzer != null) {
-                    // #2.3 add
-                    if (postObserveAnalyzer.getPathPostParametersAdd().size() > 0)
-                        this.updateResourceValueObserve(lwServer, registration, modelClient, postObserveAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_OBSERVE);
-                    // #2.5 del
-                    if (postObserveAnalyzer.getPathPostParametersDel().size() > 0) {
-                        // ObserveDel in AttrOld
-                        ResultsAnalyzerParameters observeDelInParameterOld = getAnalyzerParametersIn(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), Set.class),
-                                postObserveAnalyzer.getPathPostParametersDel());
-                        // ObserveDel in TelemetryOld
-                        ResultsAnalyzerParameters observeDelInTelemetry = getAnalyzerParametersIn(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile(), Set.class),
-                                postObserveAnalyzer.getPathPostParametersDel());
-                        if (observeDelInTelemetry != null && observeDelInTelemetry.getPathPostParametersAdd().size() > 0) {
-                            if (observeDelInParameterOld == null) {
-                                observeDelInParameterOld = new ResultsAnalyzerParameters();
-                            }
-                            observeDelInParameterOld.getPathPostParametersAdd().addAll(observeDelInTelemetry.getPathPostParametersAdd());
-                        }
-                        if (observeDelInParameterOld != null && observeDelInParameterOld.getPathPostParametersAdd().size() > 0) {
-                            this.cancelObserveIsValue(lwServer, registration, postObserveAnalyzer.getPathPostParametersDel());
-                        }
-                    }
-                }
-
-            }
-            // #3
-            modelClient.getAttrTelemetryObserveValue().setPostAttributeProfile(attributeNew);
-            modelClient.getAttrTelemetryObserveValue().setPostTelemetryProfile(telemetryNew);
-            modelClient.getAttrTelemetryObserveValue().setPostObserveProfile(observeNew);
-        }
+//        String credentialsId = (updateCredentials.getCredentialsIdCount() > 0) ? updateCredentials.getCredentialsId(0) : null;
+//        JsonObject credentialsValue = (updateCredentials.getCredentialsValueCount() > 0) ? adaptor.validateJson(updateCredentials.getCredentialsValue(0)) : null;
+//        if (credentialsValue != null && !credentialsValue.isJsonNull() && credentialsId != null && !credentialsId.isEmpty()) {
+//            String registrationId = lwM2mInMemorySecurityStore.getByRegistrationId(credentialsId);
+//            Registration registration = lwM2mInMemorySecurityStore.getByRegistration(registrationId);
+//            ModelClient modelClient = lwM2mInMemorySecurityStore.getByRegistrationIdModelClient(registrationId);
+//            LeshanServer lwServer = modelClient.getLwServer();
+//            log.info("updateDeviceProfile -> registration: {}", registration);
+//
+//            // #1
+//            JsonObject observeAttrNewJson = (credentialsValue.has("observeAttr") && !credentialsValue.get("observeAttr").isJsonNull()) ? credentialsValue.get("observeAttr").getAsJsonObject() : null;
+//            log.info("updateCredentials -> observeAttr: {}", observeAttrNewJson);
+//            JsonArray attributeNew = (observeAttrNewJson.has("attribute") && !observeAttrNewJson.get("attribute").isJsonNull()) ? observeAttrNewJson.get("attribute").getAsJsonArray() : null;
+//            JsonArray telemetryNew = (observeAttrNewJson.has("telemetry") && !observeAttrNewJson.get("telemetry").isJsonNull()) ? observeAttrNewJson.get("telemetry").getAsJsonArray() : null;
+//            JsonArray observeNew = (observeAttrNewJson.has("observe") && !observeAttrNewJson.get("observe").isJsonNull()) ? observeAttrNewJson.get("observe").getAsJsonArray() : null;
+//            if (!modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile().equals(attributeNew) ||
+//                    !modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile().equals(telemetryNew) ||
+//                    !modelClient.getAttrTelemetryObserveValue().getPostObserveProfile().equals(observeNew)) {
+//                if (!modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile().equals(attributeNew) ||
+//                        !modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile().equals(telemetryNew)) {
+//                    // #1.1
+//                    ResultsAnalyzerParameters postAttributeAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), Set.class),
+//                            new Gson().fromJson(attributeNew, Set.class));
+//                    // #1.2
+//                    ResultsAnalyzerParameters postTelemetryAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile(), Set.class),
+//                            new Gson().fromJson(telemetryNew, Set.class));
+//
+//                    // #2 add
+//                    // #2.1 add
+//                    ResultsAnalyzerParameters postAttrTelemetryOldAnalyzer = null;
+//                    if (postAttributeAnalyzer != null && postAttributeAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                        // analyze new Attr with old Telemetry
+//                        postAttrTelemetryOldAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile(), Set.class),
+//                                postAttributeAnalyzer.getPathPostParametersAdd());
+//                        // sent GET_TYPE_OPER_READ if need
+//                        ResultsAnalyzerParameters sentAttrToThingsboard = null;
+//                        if (postAttrTelemetryOldAnalyzer != null && postAttrTelemetryOldAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                            this.updateResourceValueObserve(lwServer, registration, modelClient, postAttrTelemetryOldAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_READ);
+//                            // prepare sent attr to tingsboard only not GET_TYPE_OPER_READ
+//                            sentAttrToThingsboard = getAnalyzerParameters(postAttributeAnalyzer.getPathPostParametersAdd(),
+//                                    postAttrTelemetryOldAnalyzer.getPathPostParametersAdd());
+//                        } else {
+//                            sentAttrToThingsboard = new ResultsAnalyzerParameters();
+//                            sentAttrToThingsboard.getPathPostParametersAdd().addAll(new Gson().fromJson(attributeNew, Set.class));
+//                        }
+//                        // sent attr to tingsboard only not GET_TYPE_OPER_READ
+//                        if (sentAttrToThingsboard != null && sentAttrToThingsboard.getPathPostParametersAdd().size() > 0) {
+//                            sentAttrToThingsboard.getPathPostParametersAdd().forEach(p -> {
+//                                updateAttrTelemetry(registration, false, p);
+//                            });
+//
+//                        }
+//                        // analyze on observe
+//                        ResultsAnalyzerParameters postObserveNewAttrAnalyzer = getAnalyzerParametersIn(new Gson().fromJson(observeNew, Set.class),
+//                                postAttributeAnalyzer.getPathPostParametersAdd());
+//                        if (postObserveNewAttrAnalyzer != null && postObserveNewAttrAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                            this.updateResourceValueObserve(lwServer, registration, modelClient, postObserveNewAttrAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_OBSERVE);
+//                        }
+//                    }
+//                    // #2.2 add
+//                    if (postTelemetryAnalyzer != null && postTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                        // analyze new Telemetry with old Attribute
+//                        ResultsAnalyzerParameters postAttrOldTelemetryAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), Set.class),
+//                                postTelemetryAnalyzer.getPathPostParametersAdd());
+//                        // analyze new Telemetry with new Attribute
+//                        ResultsAnalyzerParameters postAttrNewTelemetryAnalyzer = null;
+//                        if (postAttrTelemetryOldAnalyzer != null && postAttrTelemetryOldAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                            postAttrNewTelemetryAnalyzer = getAnalyzerParameters(postAttrTelemetryOldAnalyzer.getPathPostParametersAdd(),
+//                                    postTelemetryAnalyzer.getPathPostParametersAdd());
+//                        }
+//                        if (postAttrNewTelemetryAnalyzer != null && postAttrNewTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                            if (postAttrOldTelemetryAnalyzer != null && postAttrOldTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                                postAttrNewTelemetryAnalyzer.getPathPostParametersAdd().addAll(postAttrOldTelemetryAnalyzer.getPathPostParametersAdd());
+//                            }
+//                        } else {
+//                            if (postAttrOldTelemetryAnalyzer != null && postAttrOldTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                                postAttrNewTelemetryAnalyzer = new ResultsAnalyzerParameters();
+//                                postAttrNewTelemetryAnalyzer.getPathPostParametersAdd().addAll(postAttrOldTelemetryAnalyzer.getPathPostParametersAdd());
+//                            }
+//                        }
+//                        ResultsAnalyzerParameters sentTelemetryToThingsboard = null;
+//                        if (postAttrNewTelemetryAnalyzer != null && postAttrNewTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                            this.updateResourceValueObserve(lwServer, registration, modelClient, postAttrNewTelemetryAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_READ);
+//                            // prepare sent telemetry to tingsboard only not GET_TYPE_OPER_READ
+//                            sentTelemetryToThingsboard = getAnalyzerParameters(postTelemetryAnalyzer.getPathPostParametersAdd(),
+//                                    postAttrNewTelemetryAnalyzer.getPathPostParametersAdd());
+//                        } else {
+//                            sentTelemetryToThingsboard = new ResultsAnalyzerParameters();
+//                            sentTelemetryToThingsboard.getPathPostParametersAdd().addAll(new Gson().fromJson(telemetryNew, Set.class));
+//                        }
+//                        // sent telemetry to tingsboard only not GET_TYPE_OPER_READ
+//                        if (sentTelemetryToThingsboard != null && sentTelemetryToThingsboard.getPathPostParametersAdd().size() > 0) {
+//                            sentTelemetryToThingsboard.getPathPostParametersAdd().forEach(p -> {
+//                                updateAttrTelemetry(registration, false, p);
+//                            });
+//                        }
+//                        // analyze on observe
+//                        ResultsAnalyzerParameters postObserveNewTelemetryAnalyzer = getAnalyzerParametersIn(new Gson().fromJson(observeNew, Set.class),
+//                                postTelemetryAnalyzer.getPathPostParametersAdd());
+//                        if (postObserveNewTelemetryAnalyzer != null && postObserveNewTelemetryAnalyzer.getPathPostParametersAdd().size() > 0) {
+//                            this.updateResourceValueObserve(lwServer, registration, modelClient, postObserveNewTelemetryAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_OBSERVE);
+//                        }
+//                    }
+//
+//                    // #2.4 del
+//                    if (postAttributeAnalyzer != null && postAttributeAnalyzer.getPathPostParametersDel().size() > 0) {
+//                        // Analyzer attr and Observe
+//                        // Params Attr in Telemetry for  may be not cancel observe
+//                        ResultsAnalyzerParameters postAttrTelemetryAnalyzerDel = getAnalyzerParameters(new Gson().fromJson(telemetryNew, Set.class), postAttributeAnalyzer.getPathPostParametersDel());
+//                        if (postAttrTelemetryAnalyzerDel != null && postAttrTelemetryAnalyzerDel.getPathPostParametersAdd().size() > 0) {
+//                            // Attr dell and cancel observe
+//                            ResultsAnalyzerParameters postObserveAtrAnalyzerOldDel = getAnalyzerParametersIn(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostObserveProfile(), Set.class),
+//                                    postAttrTelemetryAnalyzerDel.getPathPostParametersAdd());
+//                            if (postObserveAtrAnalyzerOldDel != null && postObserveAtrAnalyzerOldDel.getPathPostParametersAdd().size() > 0) {
+//                                this.cancelObserveIsValue(lwServer, registration, postObserveAtrAnalyzerOldDel.getPathPostParametersAdd());
+//                            }
+//                        }
+//                    }
+//                    if (postTelemetryAnalyzer != null && postTelemetryAnalyzer.getPathPostParametersDel().size() > 0) {
+//                        // Analyzer Telemetry and Observe
+//                        // Params Telemetry in Attr for  may be not cancel observe
+//                        ResultsAnalyzerParameters postTelemetryAttrAnalyzerDel = getAnalyzerParameters(new Gson().fromJson(attributeNew, Set.class),
+//                                postTelemetryAnalyzer.getPathPostParametersDel());
+//                        if (postTelemetryAttrAnalyzerDel != null && postTelemetryAttrAnalyzerDel.getPathPostParametersAdd().size() > 0) {
+//                            // Telemetry dell and cancel observe
+//                            ResultsAnalyzerParameters postObserveTelemetryAnalyzerOldDel = getAnalyzerParametersIn(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostObserveProfile(), Set.class),
+//                                    postTelemetryAttrAnalyzerDel.getPathPostParametersAdd());
+//                            if (postObserveTelemetryAnalyzerOldDel != null && postObserveTelemetryAnalyzerOldDel.getPathPostParametersAdd().size() > 0) {
+//                                this.cancelObserveIsValue(lwServer, registration, postObserveTelemetryAnalyzerOldDel.getPathPostParametersAdd());
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//
+//            if (!modelClient.getAttrTelemetryObserveValue().getPostObserveProfile().equals(observeNew)) {
+//                // #1.3
+//                ResultsAnalyzerParameters postObserveAnalyzer = getAnalyzerParameters(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostObserveProfile(), Set.class),
+//                        new Gson().fromJson(observeNew, Set.class));
+//                if (postObserveAnalyzer != null) {
+//                    // #2.3 add
+//                    if (postObserveAnalyzer.getPathPostParametersAdd().size() > 0)
+//                        this.updateResourceValueObserve(lwServer, registration, modelClient, postObserveAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_OBSERVE);
+//                    // #2.5 del
+//                    if (postObserveAnalyzer.getPathPostParametersDel().size() > 0) {
+//                        // ObserveDel in AttrOld
+//                        ResultsAnalyzerParameters observeDelInParameterOld = getAnalyzerParametersIn(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostAttributeProfile(), Set.class),
+//                                postObserveAnalyzer.getPathPostParametersDel());
+//                        // ObserveDel in TelemetryOld
+//                        ResultsAnalyzerParameters observeDelInTelemetry = getAnalyzerParametersIn(new Gson().fromJson(modelClient.getAttrTelemetryObserveValue().getPostTelemetryProfile(), Set.class),
+//                                postObserveAnalyzer.getPathPostParametersDel());
+//                        if (observeDelInTelemetry != null && observeDelInTelemetry.getPathPostParametersAdd().size() > 0) {
+//                            if (observeDelInParameterOld == null) {
+//                                observeDelInParameterOld = new ResultsAnalyzerParameters();
+//                            }
+//                            observeDelInParameterOld.getPathPostParametersAdd().addAll(observeDelInTelemetry.getPathPostParametersAdd());
+//                        }
+//                        if (observeDelInParameterOld != null && observeDelInParameterOld.getPathPostParametersAdd().size() > 0) {
+//                            this.cancelObserveIsValue(lwServer, registration, postObserveAnalyzer.getPathPostParametersDel());
+//                        }
+//                    }
+//                }
+//
+//            }
+//            // #3
+//            modelClient.getAttrTelemetryObserveValue().setPostAttributeProfile(attributeNew);
+//            modelClient.getAttrTelemetryObserveValue().setPostTelemetryProfile(telemetryNew);
+//            modelClient.getAttrTelemetryObserveValue().setPostObserveProfile(observeNew);
+//        }
 
     }
 
@@ -896,6 +1054,7 @@ public class LwM2MTransportService {
 
     /**
      * Session device in thingsboard is closed
+     *
      * @param sessionInfo - lwm2m client
      */
     private void doCloseSession(SessionInfoProto sessionInfo) {
@@ -915,4 +1074,9 @@ public class LwM2MTransportService {
         transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
         transportService.deregisterSession(sessionInfo);
     }
+
+    private void checkInactivityAndReportActivity() {
+        lwM2mInMemorySecurityStore.getSessions().forEach((key, value) -> transportService.reportActivity(this.getValidateSessionInfo(key)));
+    }
+
 }

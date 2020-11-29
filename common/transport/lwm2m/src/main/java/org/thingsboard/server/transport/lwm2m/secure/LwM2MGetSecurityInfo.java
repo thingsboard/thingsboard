@@ -16,22 +16,21 @@
 package org.thingsboard.server.transport.lwm2m.secure;
 
 import com.google.gson.JsonObject;
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.eclipse.leshan.server.security.SecurityInfo;
-import org.nustaq.serialization.FSTConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBootstrap;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
-import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
 import java.io.IOException;
@@ -54,8 +53,6 @@ public class LwM2MGetSecurityInfo {
     @Autowired
     public LwM2MTransportContextBootstrap contextBS;
 
-    @Autowired
-    private LwM2MJsonAdaptor adaptor;
 
     public ReadResultSecurityStore getSecurityInfo(String endPoint, TypeServer keyValue) {
         CountDownLatch latch = new CountDownLatch(1);
@@ -67,8 +64,11 @@ public class LwM2MGetSecurityInfo {
                         String ingfosStr = msg.getCredentialsBody();
                         resultSecurityStore[0] = putSecurityInfo(endPoint, msg.getDeviceInfo().getDeviceName(), ingfosStr, keyValue);
                         resultSecurityStore[0].setMsg(msg);
-                        Optional<DeviceProfile> deviceProfile = adaptor.decode(msg.getProfileBody().toByteArray());
+                        Optional<DeviceProfile> deviceProfile = LwM2MTransportHandler.decode(msg.getProfileBody().toByteArray());
                         if (deviceProfile.isPresent()) {
+                            TransportProtos.EntityUpdateMsg msgProfile = TransportProtos.EntityUpdateMsg.newBuilder()
+                                     .setData(msg.getProfileBody()).build();
+                            contextS.getTransportService().onDeviceProfileCacheUpdate(msgProfile);
                             resultSecurityStore[0].setDeviceProfile(deviceProfile.get());
                         }
                         latch.countDown();
@@ -91,7 +91,7 @@ public class LwM2MGetSecurityInfo {
 
     private ReadResultSecurityStore putSecurityInfo(String endPoint, String deviceName, String jsonStr, TypeServer keyValue) {
         ReadResultSecurityStore result = new ReadResultSecurityStore();
-        JsonObject objectMsg = adaptor.validateJson(jsonStr);
+        JsonObject objectMsg = LwM2MTransportHandler.validateJson(jsonStr);
         if (objectMsg != null && !objectMsg.isJsonNull()) {
             JsonObject object = (objectMsg.has(keyValue.type) && !objectMsg.get(keyValue.type).isJsonNull()) ? objectMsg.get(keyValue.type).getAsJsonObject() : null;
             /**
@@ -123,7 +123,6 @@ public class LwM2MGetSecurityInfo {
                         default:
                             break;
                     }
-
                 }
             }
         }

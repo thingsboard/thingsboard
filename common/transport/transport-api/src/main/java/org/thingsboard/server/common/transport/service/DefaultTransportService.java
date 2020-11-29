@@ -193,6 +193,7 @@ public class DefaultTransportService implements TransportService {
                     }
                     records.forEach(record -> {
                         try {
+                            log.info("[{}] SessionIdMSB, [{}] SessionIdLSB, records", record.getValue().getSessionIdMSB(), record.getValue().getSessionIdLSB());
                             processToTransportMsg(record.getValue());
                         } catch (Throwable e) {
                             log.warn("Failed to process the notification.", e);
@@ -272,6 +273,11 @@ public class DefaultTransportService implements TransportService {
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateDeviceLwM2MCredentialsRequestMsg(msg).build());
         AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg),
                 response -> callback.onSuccess(response.getValue().getValidateCredResponseMsg()), callback::onError, transportCallbackExecutor);
+    }
+
+    @Override
+    public void onDeviceProfileCacheUpdate(TransportProtos.EntityUpdateMsg msg) {
+        deviceProfileCache.put(msg.getData());
     }
 
     public void process(DeviceTransportType transportType, TransportProtos.ValidateDeviceX509CertRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
@@ -354,6 +360,7 @@ public class DefaultTransportService implements TransportService {
                 , MoreExecutors.directExecutor());
         AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
     }
+
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscriptionInfoProto msg, TransportServiceCallback<Void> callback) {
