@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,6 +50,7 @@ import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurit
 
 import javax.annotation.PostConstruct;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -115,8 +116,7 @@ public class LwM2MTransportService {
             } else {
                 log.error("Client: [{}] onRegistered [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), sessionInfo);
             }
-        }
-        else {
+        } else {
             log.error("Client: [{}] onRegistered [{}] name  [{}] modelClient ", registration.getId(), registration.getEndpoint(), modelClient);
         }
     }
@@ -146,13 +146,26 @@ public class LwM2MTransportService {
             this.doCloseSession(sessionInfo);
             lwM2mInMemorySecurityStore.addRemoveSessions(registration.getId());
             lwM2mInMemorySecurityStore.delRemoveSessions();
-            // TODO if (not profile in session)
             if (lwM2mInMemorySecurityStore.getProfiles().size() > 0) {
-
+                this.updateProfiles();
             }
             log.info("Client: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
         } else {
             log.error("Client: [{}] unReg [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), sessionInfo);
+        }
+    }
+
+    private void updateProfiles() {
+        if (lwM2mInMemorySecurityStore.getSessions().size() == 0)
+            lwM2mInMemorySecurityStore.setProfiles(new ConcurrentHashMap<>());
+        else {
+            Map<UUID, AttrTelemetryObserveValue> profilesClone = lwM2mInMemorySecurityStore.getProfiles().entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey,
+                            Map.Entry::getValue));
+            profilesClone.forEach((k, v) -> {
+                log.warn("[{}] UUId, [{}] sessions", k, lwM2mInMemorySecurityStore.getSessions());
+            });
         }
     }
 
