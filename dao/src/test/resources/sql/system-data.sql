@@ -18,8 +18,8 @@
 
 /** System admin **/
 INSERT INTO tb_user ( id, created_time, tenant_id, customer_id, email, search_text, authority )
-VALUES ( '5a797660-4612-11e7-a919-92ebcb67fe33', 1592576748000, '13814000-1dd2-11b2-8080-808080808080', '13814000-1dd2-11b2-8080-808080808080', 'sysadmin@effi.ai',
-         'sysadmin@effi.ai', 'SYS_ADMIN' );
+VALUES ( '5a797660-4612-11e7-a919-92ebcb67fe33', 1592576748000, '13814000-1dd2-11b2-8080-808080808080', '13814000-1dd2-11b2-8080-808080808080', 'sysadmin@thingsboard.org',
+         'sysadmin@thingsboard.org', 'SYS_ADMIN' );
 
 INSERT INTO user_credentials ( id, created_time, user_id, enabled, password )
 VALUES ( '61441950-4612-11e7-a919-92ebcb67fe33', 1592576748000, '5a797660-4612-11e7-a919-92ebcb67fe33', true,
@@ -33,7 +33,7 @@ VALUES ( '6a2266e4-4612-11e7-a919-92ebcb67fe33', 1592576748000, 'general', '{
 
 INSERT INTO admin_settings ( id, created_time, key, json_value )
 VALUES ( '6eaaefa6-4612-11e7-a919-92ebcb67fe33', 1592576748000, 'mail', '{
-	"mailFrom": "Qmax Effi.AI <sysadmin@localhost.localdomain>",
+	"mailFrom": "Thingsboard <sysadmin@localhost.localdomain>",
 	"smtpProtocol": "smtp",
 	"smtpHost": "localhost",
 	"smtpPort": "25",
