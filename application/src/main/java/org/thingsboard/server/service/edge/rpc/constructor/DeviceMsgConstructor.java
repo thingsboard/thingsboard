@@ -18,7 +18,6 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
-import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -30,6 +29,8 @@ import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.RpcRequestMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+
+import java.util.UUID;
 
 @Component
 @TbCoreComponent
@@ -78,22 +79,26 @@ public class DeviceMsgConstructor {
                 .setIdLSB(deviceId.getId().getLeastSignificantBits()).build();
     }
 
-    public DeviceRpcCallMsg constructDeviceRpcCallMsg(JsonNode body) {
-        RuleEngineDeviceRpcRequest request = mapper.convertValue(body, RuleEngineDeviceRpcRequest.class);
+    public DeviceRpcCallMsg constructDeviceRpcCallMsg(UUID deviceId, JsonNode body) {
+        int requestId = body.get("requestId").asInt();
+        boolean oneway = body.get("oneway").asBoolean();
+        UUID requestUUID = UUID.fromString(body.get("requestUUID").asText());
+        long expirationTime = body.get("expirationTime").asLong();
+        String method = body.get("method").asText();
+        String params = body.get("params").asText();
+
         RpcRequestMsg.Builder requestBuilder = RpcRequestMsg.newBuilder();
-        requestBuilder.setMethod(request.getMethod());
-        requestBuilder.setParams(request.getBody());
+        requestBuilder.setMethod(method);
+        requestBuilder.setParams(params);
         DeviceRpcCallMsg.Builder builder = DeviceRpcCallMsg.newBuilder()
-                .setDeviceIdMSB(request.getDeviceId().getId().getMostSignificantBits())
-                .setDeviceIdLSB(request.getDeviceId().getId().getLeastSignificantBits())
-                .setRequestIdMSB(request.getRequestUUID().getMostSignificantBits())
-                .setRequestIdLSB(request.getRequestUUID().getLeastSignificantBits())
-                .setExpirationTime(request.getExpirationTime())
-                .setOneway(request.isOneway())
+                .setDeviceIdMSB(deviceId.getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getLeastSignificantBits())
+                .setRequestUuidMSB(requestUUID.getMostSignificantBits())
+                .setRequestUuidLSB(requestUUID.getLeastSignificantBits())
+                .setRequestId(requestId)
+                .setExpirationTime(expirationTime)
+                .setOneway(oneway)
                 .setRequestMsg(requestBuilder.build());
-        if (request.getOriginServiceId() != null) {
-            builder.setOriginServiceId(request.getOriginServiceId());
-        }
         return builder.build();
     }
 }

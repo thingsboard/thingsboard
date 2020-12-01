@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,6 +50,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
 
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
@@ -223,12 +224,14 @@ public class DeviceProcessor extends BaseProcessor {
     public ListenableFuture<Void> processDeviceRpcCallResponseMsg(TenantId tenantId, DeviceRpcCallMsg deviceRpcCallMsg) {
         log.trace("[{}] processDeviceRpcCallResponseMsg [{}]", tenantId, deviceRpcCallMsg);
         SettableFuture<Void> futureToSet = SettableFuture.create();
-        UUID uuid = new UUID(deviceRpcCallMsg.getRequestIdMSB(), deviceRpcCallMsg.getRequestIdLSB());
+        UUID requestUuid = new UUID(deviceRpcCallMsg.getRequestUuidMSB(), deviceRpcCallMsg.getRequestUuidLSB());
+        DeviceId deviceId = new DeviceId(new UUID(deviceRpcCallMsg.getDeviceIdMSB(), deviceRpcCallMsg.getDeviceIdLSB()));
+
         FromDeviceRpcResponse response;
         if (!StringUtils.isEmpty(deviceRpcCallMsg.getResponseMsg().getError())) {
-            response = new FromDeviceRpcResponse(uuid, null, RpcError.valueOf(deviceRpcCallMsg.getResponseMsg().getError()));
+            response = new FromDeviceRpcResponse(requestUuid, null, RpcError.valueOf(deviceRpcCallMsg.getResponseMsg().getError()));
         } else {
-            response = new FromDeviceRpcResponse(uuid, deviceRpcCallMsg.getResponseMsg().getResponse(), null);
+            response = new FromDeviceRpcResponse(requestUuid, deviceRpcCallMsg.getResponseMsg().getResponse(), null);
         }
         TbQueueCallback callback = new TbQueueCallback() {
             @Override
@@ -242,7 +245,11 @@ public class DeviceProcessor extends BaseProcessor {
                 futureToSet.setException(t);
             }
         };
-        tbClusterService.pushNotificationToCore(deviceRpcCallMsg.getOriginServiceId(), response, callback);
+        FromDeviceRpcResponseActorMsg msg =
+                new FromDeviceRpcResponseActorMsg(deviceRpcCallMsg.getRequestId(),
+                        tenantId,
+                        deviceId, response);
+        tbClusterService.pushMsgToCore(msg, callback);
         return futureToSet;
     }
 

@@ -377,7 +377,7 @@ public final class EdgeGrpcSession implements Closeable {
     private DownlinkMsg processRpcCallMsg(EdgeEvent edgeEvent) {
         log.trace("Executing processRpcCall, edgeEvent [{}]", edgeEvent);
         DeviceRpcCallMsg deviceRpcCallMsg =
-                ctx.getDeviceMsgConstructor().constructDeviceRpcCallMsg(edgeEvent.getBody());
+                ctx.getDeviceMsgConstructor().constructDeviceRpcCallMsg(edgeEvent.getEntityId(), edgeEvent.getBody());
         return DownlinkMsg.newBuilder()
                 .addAllDeviceRpcCallMsg(Collections.singletonList(deviceRpcCallMsg))
                 .build();
@@ -397,7 +397,6 @@ public final class EdgeGrpcSession implements Closeable {
         }
         return downlinkMsg;
     }
-
 
     private ListenableFuture<Long> getQueueStartTs() {
         ListenableFuture<Optional<AttributeKvEntry>> future =

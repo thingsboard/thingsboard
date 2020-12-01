@@ -416,7 +416,7 @@ public class EdgeController extends BaseController {
     public void syncEdge(@RequestBody EdgeId edgeId) throws ThingsboardException {
         try {
             edgeId = checkNotNull(edgeId);
-            if (isEdgesSupportEnabled()) {
+            if (isEdgesRpcEnabled()) {
                 EdgeGrpcSession session = edgeGrpcService.getEdgeGrpcSessionById(edgeId);
                 Edge edge = session.getEdge();
                 syncEdgeService.sync(edge);

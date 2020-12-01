@@ -291,6 +291,9 @@ public class ActorSystemContext {
     @Getter
     private long statisticsPersistFrequency;
 
+    @Value("${edges.rpc.enabled}")
+    @Getter
+    private boolean edgesRpcEnabled;
 
     @Scheduled(fixedDelayString = "${actors.statistics.js_print_interval_ms}")
     public void printStats() {

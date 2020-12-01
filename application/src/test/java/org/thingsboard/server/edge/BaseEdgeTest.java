@@ -1281,7 +1281,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         deviceRpcCallResponseBuilder.setDeviceIdMSB(device.getUuidId().getMostSignificantBits());
         deviceRpcCallResponseBuilder.setDeviceIdLSB(device.getUuidId().getLeastSignificantBits());
         deviceRpcCallResponseBuilder.setOneway(true);
-        deviceRpcCallResponseBuilder.setOriginServiceId("originServiceId");
+        deviceRpcCallResponseBuilder.setRequestId(0);
         deviceRpcCallResponseBuilder.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10));
         RpcResponseMsg.Builder responseBuilder =
                 RpcResponseMsg.newBuilder().setResponse("{}");

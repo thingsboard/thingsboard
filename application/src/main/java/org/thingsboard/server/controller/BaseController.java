@@ -223,7 +223,7 @@ public abstract class BaseController {
 
     @Value("${edges.rpc.enabled}")
     @Getter
-    private boolean edgesSupportEnabled;
+    private boolean edgesRpcEnabled;
 
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {
@@ -761,7 +761,7 @@ public abstract class BaseController {
     }
 
     protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, CustomerId customerId, EdgeEventActionType action) {
-        if (!edgesSupportEnabled) {
+        if (!edgesRpcEnabled) {
             return;
         }
         try {
@@ -772,7 +772,7 @@ public abstract class BaseController {
     }
 
     protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, CustomerId customerId, EdgeEventActionType action) {
-        if (!edgesSupportEnabled) {
+        if (!edgesRpcEnabled) {
             return;
         }
         EdgeEventType type = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());
@@ -786,7 +786,7 @@ public abstract class BaseController {
     }
 
     protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityRelation relation, EdgeEventActionType action) {
-        if (!edgesSupportEnabled) {
+        if (!edgesRpcEnabled) {
             return;
         }
         try {
@@ -804,7 +804,7 @@ public abstract class BaseController {
     }
 
     protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
-        if (!edgesSupportEnabled) {
+        if (!edgesRpcEnabled) {
             return;
         }
         EdgeEventType type = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());

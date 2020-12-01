@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.gen.edge.EdgeRpcServiceGrpc;
 import org.thingsboard.server.gen.edge.RequestMsg;
 import org.thingsboard.server.gen.edge.ResponseMsg;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
@@ -55,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 @ConditionalOnProperty(prefix = "edges.rpc", value = "enabled", havingValue = "true")
+@TbCoreComponent
 public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase implements EdgeRpcService {
 
     private final Map<EdgeId, EdgeGrpcSession> sessions = new ConcurrentHashMap<>();
@@ -176,13 +178,15 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                         log.trace("No sessions available, sleep for the next run");
                         try {
                             Thread.sleep(1000);
-                        } catch (InterruptedException ignore) {}
+                        } catch (InterruptedException ignore) {
+                        }
                     }
                 } catch (Exception e) {
                     log.warn("Failed to process messages handling!", e);
                     try {
                         Thread.sleep(1000);
-                    } catch (InterruptedException ignore) {}
+                    } catch (InterruptedException ignore) {
+                    }
                 }
             }
         });
