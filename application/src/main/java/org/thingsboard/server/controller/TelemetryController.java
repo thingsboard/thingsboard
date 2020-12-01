@@ -197,19 +197,21 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/values/timeseries", method = RequestMethod.GET, params = {"keys", "startTs", "endTs"})
     @ResponseBody
     public DeferredResult<ResponseEntity> getTimeseries(
-            @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
+            @PathVariable("entityType") String entityType,
+            @PathVariable("entityId") String entityIdStr,
             @RequestParam(name = "keys") String keys,
             @RequestParam(name = "startTs") Long startTs,
             @RequestParam(name = "endTs") Long endTs,
             @RequestParam(name = "interval", defaultValue = "0") Long interval,
             @RequestParam(name = "limit", defaultValue = "100") Integer limit,
             @RequestParam(name = "agg", defaultValue = "NONE") String aggStr,
+            @RequestParam(name= "orderBy", defaultValue = "DESC") String orderBy,
             @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
                 (result, tenantId, entityId) -> {
                     // If interval is 0, convert this to a NONE aggregation, which is probably what the user really wanted
                     Aggregation agg = interval == 0L ? Aggregation.valueOf(Aggregation.NONE.name()) : Aggregation.valueOf(aggStr);
-                    List<ReadTsKvQuery> queries = toKeysList(keys).stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, interval, limit, agg))
+                    List<ReadTsKvQuery> queries = toKeysList(keys).stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, interval, limit, agg, orderBy))
                             .collect(Collectors.toList());
 
                     Futures.addCallback(tsService.findAll(tenantId, entityId, queries), getTsKvListCallback(result, useStrictDataTypes), MoreExecutors.directExecutor());
@@ -390,6 +392,11 @@ public class TelemetryController extends BaseController {
             List<AttributeKvEntry> attributes = extractRequestAttributes(json);
             if (attributes.isEmpty()) {
                 return getImmediateDeferredResult("No attributes data found in request body!", HttpStatus.BAD_REQUEST);
+            }
+            for (AttributeKvEntry attributeKvEntry: attributes) {
+                if (attributeKvEntry.getKey().isEmpty() || attributeKvEntry.getKey().trim().length() == 0) {
+                    return getImmediateDeferredResult("Key cannot be empty or contains only spaces", HttpStatus.BAD_REQUEST);
+                }
             }
             SecurityUser user = getCurrentUser();
             return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.WRITE_ATTRIBUTES, entityIdSrc, (result, tenantId, entityId) -> {

@@ -17,15 +17,13 @@ package org.thingsboard.rule.engine.telemetry;
 
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -53,6 +51,9 @@ public class TbMsgAttributesNode implements TbNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgAttributesNodeConfiguration.class);
+        if (config.getNotifyDevice() == null) {
+            config.setNotifyDevice(true);
+        }
     }
 
     @Override
@@ -63,7 +64,15 @@ public class TbMsgAttributesNode implements TbNode {
         }
         String src = msg.getData();
         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(src));
-        ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getOriginator(), config.getScope(), new ArrayList<>(attributes), new TelemetryNodeCallback(ctx, msg));
+        String notifyDeviceStr = msg.getMetaData().getValue("notifyDevice");
+        ctx.getTelemetryService().saveAndNotify(
+                ctx.getTenantId(),
+                msg.getOriginator(),
+                config.getScope(),
+                new ArrayList<>(attributes),
+                new TelemetryNodeCallback(ctx, msg),
+                config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceStr) || Boolean.parseBoolean(notifyDeviceStr)
+        );
     }
 
     @Override

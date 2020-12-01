@@ -74,6 +74,8 @@
         "test-mail-sent": "Test mail was successfully sent!",
         "base-url": "Base URL",
         "base-url-required": "Base URL is required.",
+        "prohibit-different-url": "Prohibit to use hostname from the client request headers",
+        "prohibit-different-url-hint": "This setting should be enabled for production environments. May cause security issues when disabled",
         "mail-from": "Mail From",
         "mail-from-required": "Mail From is required.",
         "smtp-protocol": "SMTP protocol",
