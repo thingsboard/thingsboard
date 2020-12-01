@@ -366,8 +366,16 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     return header.index;
   }
 
-  public trackByRowIndex(index: number) {
-    return index;
+  public trackByRowTimestamp(index: number, row: TimeseriesRow) {
+    return row[0];
+  }
+
+  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
+    return action.id;
+  }
+
+  public trackBySourcesIndex(index: number, source: TimeseriesTableSource) {
+    return source.datasource.entityId;
   }
 
   public cellStyle(source: TimeseriesTableSource, index: number, value: any): any {
