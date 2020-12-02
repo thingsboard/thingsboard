@@ -86,7 +86,8 @@ export default abstract class LeafletMap {
 
     public initSettings(options: MapSettings) {
         this.options.tinyColor = tinycolor(this.options.color || defaultSettings.color);
-        const { useClusterMarkers,
+        const { disableScrollZooming,
+            useClusterMarkers,
             zoomOnClick,
             showCoverageOnHover,
             removeOutsideVisibleBounds,
@@ -94,6 +95,9 @@ export default abstract class LeafletMap {
             chunkedLoading,
             maxClusterRadius,
             maxZoom }: MapSettings = options;
+        if (disableScrollZooming) {
+            this.map.scrollWheelZoom.disable();
+        }
         if (useClusterMarkers) {
             const clusteringSettings: MarkerClusterGroupOptions = {
                 zoomToBoundsOnClick: zoomOnClick,
@@ -131,13 +135,10 @@ export default abstract class LeafletMap {
                       tooltipAnchor: [16, -28],
                       shadowSize: [41, 41]
                     });
-                    const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
-                    mousePositionOnMap.lat = customLatLng[this.options.latKeyName];
-                    mousePositionOnMap.lng = customLatLng[this.options.lngKeyName];
-
                     const newMarker = L.marker(mousePositionOnMap, { icon }).addTo(this.map);
                     this.addMarkers.push(newMarker);
                     const datasourcesList = document.createElement('div');
+                    const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
                     const header = document.createElement('p');
                     header.appendChild(document.createTextNode('Select entity:'));
                     header.setAttribute('style', 'font-size: 14px; margin: 8px 0');
@@ -306,11 +307,8 @@ export default abstract class LeafletMap {
         } else {
           this.bounds = new L.LatLngBounds(null, null);
         }
-        if (this.options.disableScrollZooming) {
-          this.map.scrollWheelZoom.disable();
-        }
         if (this.options.draggableMarker) {
-          this.addMarkerControl();
+            this.addMarkerControl();
         }
         if (this.options.editablePolygon) {
           this.addPolygonControl();
@@ -413,15 +411,10 @@ export default abstract class LeafletMap {
     }
 
     convertToCustomFormat(position: L.LatLng): object {
-      if (position.lng > 180) {
-        position.lng = 180;
-      } else if (position.lng < -180) {
-        position.lng = -180;
-      }
-      return {
-        [this.options.latKeyName]: position.lat,
-        [this.options.lngKeyName]: position.lng
-      };
+        return {
+            [this.options.latKeyName]: position.lat % 90,
+            [this.options.lngKeyName]: position.lng % 180
+        };
     }
 
     convertToPolygonFormat(points: Array<any>): Array<any> {
@@ -487,8 +480,7 @@ export default abstract class LeafletMap {
     }
 
     const mapBounds = this.map.getBounds();
-    if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || !this.bounds.equals(bounds)
-        && this.options.fitMapBounds ? !mapBounds.contains(bounds) : false)) {
+    if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || !this.bounds.equals(bounds) && !mapBounds.contains(bounds))) {
       this.bounds = bounds;
       this.fitBounds(bounds);
     }
@@ -614,10 +606,20 @@ export default abstract class LeafletMap {
       }
       this.points = new FeatureGroup();
       pointsData.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
-          const point = L.circleMarker(this.convertPosition(data), {
-              color: this.options.pointColor,
-              radius: this.options.pointSize
-          });
+          const computedPoint = null;
+          if (this.options.useColorPointFunction) {
+  	          const pointColorNew = safeExecute(this.options.colorPointFunction,[data, pointsData, data.dsIndex]);
+              computedPoint = L.circleMarker(this.convertPosition(data), {
+                color: pointColorNew,
+                radius: this.options.pointSize
+            });
+          } else{
+              computedPoint = L.circleMarker(this.convertPosition(data), {
+                color: this.options.pointColor,
+                radius: this.options.pointSize
+              });
+		  }			
+          const point = computedPoint;
           if (!this.options.pointTooltipOnRightPanel) {
               point.on('click', () => getTooltip(data));
           }
@@ -631,10 +633,10 @@ export default abstract class LeafletMap {
 
     // Polyline
 
-    updatePolylines(polyData: FormattedData[][], updateBounds = true, activePolyline?: FormattedData) {
+    updatePolylines(polyData: FormattedData[][], updateBounds = true, data?: FormattedData) {
         const keys: string[] = [];
         polyData.forEach((dataSource: FormattedData[]) => {
-            const data = activePolyline || dataSource[0];
+            data = data || dataSource[0];
             if (dataSource.length && data.entityName === dataSource[0].entityName) {
                 if (this.polylines.get(data.entityName)) {
                     this.updatePolyline(data, dataSource, this.options, updateBounds);

@@ -308,6 +308,7 @@ export class MapWidgetController implements MapWidgetInterface {
             labelFunction: parseFunction(settings.labelFunction, functionParams),
             tooltipFunction: parseFunction(settings.tooltipFunction, functionParams),
             colorFunction: parseFunction(settings.colorFunction, functionParams),
+            colorPointFunction: parseFunction(settings.colorPointFunction, functionParams),
             polygonColorFunction: parseFunction(settings.polygonColorFunction, functionParams),
             polygonTooltipFunction: parseFunction(settings.polygonTooltipFunction, functionParams),
             markerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),

@@ -1030,6 +1030,19 @@ export const tripAnimationSchema = {
                 type: 'boolean',
                 default: true
             },
+            color: {
+                title: 'Color',
+                type: 'string'
+            },
+            useColorPointFunction: {
+                title: 'Use color point function',
+                type: 'boolean',
+                default: false
+            },
+            colorPointFunction: {
+                title: 'Color point function: f(data, dsData, dsIndex)',
+                type: 'string'
+            },
             markerImage: {
                 title: 'Custom marker image',
                 type: 'string'
@@ -1079,7 +1092,12 @@ export const tripAnimationSchema = {
     }, 'useTooltipFunction', {
         key: 'tooltipFunction',
         type: 'javascript'
-    }, 'autocloseTooltip', {
+    }, 'autocloseTooltip', 'useColorPointFunction',
+    {
+       key: 'colorPointFunction',
+       type: 'javascript'
+    },
+    {
         key: 'markerImage',
         type: 'image'
     }, 'markerImageSize', 'rotationAngle', 'useMarkerImageFunction',

@@ -20,7 +20,6 @@ import { EntityType } from '@shared/models/entity-type.models';
 import tinycolor from 'tinycolor2';
 
 export const DEFAULT_MAP_PAGE_SIZE = 16384;
-export const DEFAULT_ZOOM_LEVEL = 8;
 
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
@@ -197,6 +196,8 @@ export type TripAnimationSettings = {
     pointAsAnchorFunction: GenericFunction;
     tooltipFunction: GenericFunction;
     labelFunction: GenericFunction;
+    useColorPointFunction: boolean;
+    colorPointFunction: GenericFunction;
 };
 
 export type actionsHandler = ($event: Event, datasource: Datasource) => void;
@@ -230,6 +231,7 @@ export const defaultSettings: any = {
     strokeWeight: 2,
     strokeOpacity: 1.0,
     initCallback: () => { },
+    defaultZoomLevel: 8,
     disableScrollZooming: false,
     minZoomLevel: 16,
     credentials: '',
