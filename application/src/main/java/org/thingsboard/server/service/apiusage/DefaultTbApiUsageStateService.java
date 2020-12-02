@@ -147,6 +147,11 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
     public void process(TbProtoQueueMsg<ToUsageStatsServiceMsg> msg, TbCallback callback) {
         ToUsageStatsServiceMsg statsMsg = msg.getValue();
         TenantId tenantId = new TenantId(new UUID(statsMsg.getTenantIdMSB(), statsMsg.getTenantIdLSB()));
+
+        if (tenantProfileCache.get(tenantId) == null) {
+            return;
+        }
+
         TenantApiUsageState tenantState;
         List<TsKvEntry> updatedEntries;
         Map<ApiFeature, ApiUsageStateValue> result;
