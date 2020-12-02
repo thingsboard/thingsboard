@@ -275,11 +275,6 @@ public class DefaultTransportService implements TransportService {
                 response -> callback.onSuccess(response.getValue().getValidateCredResponseMsg()), callback::onError, transportCallbackExecutor);
     }
 
-    @Override
-    public void onDeviceProfileCacheUpdate(TransportProtos.EntityUpdateMsg msg) {
-        deviceProfileCache.put(msg.getData());
-    }
-
     public void process(DeviceTransportType transportType, TransportProtos.ValidateDeviceX509CertRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         log.trace("Processing msg: {}", msg);
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateX509CertRequestMsg(msg).build());

@@ -63,8 +63,6 @@ public interface TransportService {
     void process(ValidateDeviceLwM2MCredentialsRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback);
 
-    void onDeviceProfileCacheUpdate(TransportProtos.EntityUpdateMsg msg);
-
     void process(GetOrCreateDeviceFromGatewayRequestMsg msg,
                  TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse> callback);
 

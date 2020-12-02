@@ -231,10 +231,6 @@ public class LwM2MTransportHandler{
         }
     }
 
-    public static UUID toSessionId(TransportProtos.SessionInfoProto sessionInfo) {
-        return new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
-    }
-
     /**
      * Equals to Map for values
      * @param map1

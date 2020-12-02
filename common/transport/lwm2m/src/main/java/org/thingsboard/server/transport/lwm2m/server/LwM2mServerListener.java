@@ -90,7 +90,11 @@ public class LwM2mServerListener {
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
-                service.onObservationResponse(registration, observation.getPath().toString(), response);
+                try {
+                    service.onObservationResponse(registration, observation.getPath().toString(), response);
+                } catch (java.lang.NullPointerException e) {
+                    log.error(e.toString());
+                }
             }
         }
 

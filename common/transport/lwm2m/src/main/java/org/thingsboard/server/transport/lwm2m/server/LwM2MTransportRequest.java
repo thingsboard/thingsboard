@@ -31,16 +31,26 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.transport.lwm2m.server.client.ModelClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-
-import static org.eclipse.leshan.core.attributes.Attribute.*;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
+import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEFAULT_TIMEOUT;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_READ;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_DISCOVER;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_OBSERVE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.POST_TYPE_OPER_OBSERVE_CANCEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.POST_TYPE_OPER_EXECUTE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_UPDATE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_WRITE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_WRITE_ATTRIBUTES;
 
 @Slf4j
 @Service("LwM2MTransportRequest")
@@ -81,12 +91,12 @@ public class LwM2MTransportRequest {
      * @param target
      * @param typeOper
      * @param contentFormatParam
-     * @param modelClient
+     * @param lwM2MClient
      * @param observation
      */
     @SneakyThrows
     public void sendAllRequest(LeshanServer lwServer, Registration registration, String target, String typeOper,
-                               String contentFormatParam, ModelClient modelClient, Observation observation, String params, long timeoutInMs) {
+                               String contentFormatParam, LwM2MClient lwM2MClient, Observation observation, String params, long timeoutInMs) {
         ResultIds resultIds = new ResultIds (target);
         if (registration != null && resultIds.getObjectId() >= 0) {
             DownlinkRequest request = null;
@@ -169,7 +179,7 @@ public class LwM2MTransportRequest {
                     break;
                 default:
             }
-            if (request != null) sendRequest(lwServer, registration, request, modelClient, timeoutInMs);
+            if (request != null) sendRequest(lwServer, registration, request, lwM2MClient, timeoutInMs);
         }
     }
 
@@ -178,15 +188,15 @@ public class LwM2MTransportRequest {
      * @param lwServer
      * @param registration
      * @param request
-     * @param modelClient
+     * @param lwM2MClient
      * @param timeoutInMs
      */
     @SneakyThrows
-    private void sendRequest(LeshanServer lwServer, Registration registration, DownlinkRequest request, ModelClient modelClient, long timeoutInMs) {
+    private void sendRequest(LeshanServer lwServer, Registration registration, DownlinkRequest request, LwM2MClient lwM2MClient, long timeoutInMs) {
         lwServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
-            handleResponse(registration, request.getPath().toString(), response, modelClient);
+            this.handleResponse(registration, request.getPath().toString(), response, lwM2MClient);
         }, e -> {
-            log.error("SendRequest: \nerror: {}", e.toString());
+            log.error("[{}] error SendRequest", e.toString());
 
         });
     }
@@ -213,17 +223,14 @@ public class LwM2MTransportRequest {
     }
 
     @SneakyThrows
-    private void handleResponse(Registration registration, final String path, LwM2mResponse response, ModelClient modelClient) {
+    private void handleResponse(Registration registration, final String path, LwM2mResponse response, LwM2MClient lwM2MClient) {
         executorService.submit(new Runnable() {
             @Override
             public void run() {
                 try {
-                    if (path.equals("/3/0")) {
-                        log.info(path);
-                    }
-                    sendResponse(registration, path, response, modelClient);
+                    sendResponse(registration, path, response, lwM2MClient);
                 } catch (RuntimeException t) {
-                    log.error("Unable to send response. \n endpoint: {} \n path: {}\n error: {}", registration.getEndpoint(), path, t.toString());
+                    log.error("[{}] endpoint [{}] path [{}] error Unable to send response.", registration.getEndpoint(), path, t.toString());
                 }
             }
         });
@@ -231,43 +238,43 @@ public class LwM2MTransportRequest {
 
     /**
      * processing a response from a client
-     * @param registration
-     * @param path
-     * @param response
-     * @param modelClient
+     * @param registration -
+     * @param path -
+     * @param response -
+     * @param lwM2MClient -
      */
     @SneakyThrows
-    private void sendResponse(Registration registration, String path, LwM2mResponse response, ModelClient modelClient) {
+    private void sendResponse(Registration registration, String path, LwM2mResponse response, LwM2MClient lwM2MClient) {
         if (response instanceof ObserveResponse) {
             service.onObservationResponse(registration, path, (ReadResponse) response);
         } else if (response instanceof CancelObservationResponse) {
-            log.info("2_Send: Path: {}\n CancelObservationResponse: {} ", path, response);
+            log.info("[{}] Path [{}] CancelObservationResponse 3_Send", path, response);
         }
         else if (response instanceof ReadResponse) {
             /**
              * Use only at the first start after registration
              * Fill with data -> Model client
              */
-            if (modelClient != null) {
-                if (modelClient.getPendingRequests().size() > 0) {
-                    modelClient.onSuccessHandler(path, response);
+            if (lwM2MClient != null) {
+                if (lwM2MClient.getPendingRequests().size() > 0) {
+                    lwM2MClient.onSuccessHandler(path, response);
                 }
             }
             /**
              * Use after registration on request
              */
             else {
-                log.info("2_Send: Path: {}\n ReadResponse: {} ", path, response);
+                log.info(": [{}] Path [{} ReadResponse 4_Send", path, response);
                 service.onObservationResponse(registration, path, (ReadResponse)response);
             }
         } else if (response instanceof DeleteResponse) {
-            log.info("2_Send: Path: {}\n DeleteResponse: {} ", path, response);
+            log.info("[{}] Path [{}] DeleteResponse 5_Send", path, response);
         } else if (response instanceof DiscoverResponse) {
-            log.info("2_Send: Path: {}\n DiscoverResponse: {} ", path, response);
+            log.info("[{}] Path [{}] DiscoverResponse 6_Send", path, response);
         } else if (response instanceof ExecuteResponse) {
-            log.info("2_Send: Path: {}\n ExecuteResponse: {} ", path, response);
+            log.info("[{}] Path [{}] ExecuteResponse  7_Send", path, response);
         } else if (response instanceof WriteAttributesResponse) {
-            log.info("2_Send: Path: {}\n WriteAttributesResponse: {} ", path, response);
+            log.info("[{}] Path [{}] WriteAttributesResponse 8_Send", path, response);
         }
     }
 }

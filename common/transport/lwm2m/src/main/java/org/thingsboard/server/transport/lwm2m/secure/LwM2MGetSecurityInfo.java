@@ -64,13 +64,8 @@ public class LwM2MGetSecurityInfo {
                         String ingfosStr = msg.getCredentialsBody();
                         resultSecurityStore[0] = putSecurityInfo(endPoint, msg.getDeviceInfo().getDeviceName(), ingfosStr, keyValue);
                         resultSecurityStore[0].setMsg(msg);
-                        Optional<DeviceProfile> deviceProfile = LwM2MTransportHandler.decode(msg.getProfileBody().toByteArray());
-                        if (deviceProfile.isPresent()) {
-                            TransportProtos.EntityUpdateMsg msgProfile = TransportProtos.EntityUpdateMsg.newBuilder()
-                                     .setData(msg.getProfileBody()).build();
-                            contextS.getTransportService().onDeviceProfileCacheUpdate(msgProfile);
-                            resultSecurityStore[0].setDeviceProfile(deviceProfile.get());
-                        }
+                        Optional<DeviceProfile> deviceProfileOpt = LwM2MTransportHandler.decode(msg.getProfileBody().toByteArray());
+                        deviceProfileOpt.ifPresent(profile -> resultSecurityStore[0].setDeviceProfile(profile));
                         latch.countDown();
                     }
 

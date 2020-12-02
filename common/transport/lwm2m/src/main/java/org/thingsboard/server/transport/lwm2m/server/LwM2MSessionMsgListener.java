@@ -15,7 +15,10 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -26,8 +29,10 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMs
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 
+import java.util.Optional;
+
 @Slf4j
-public class LwM2MSessionMsgListener implements SessionMsgListener {
+public class LwM2MSessionMsgListener implements GenericFutureListener<Future<? super Void>>, SessionMsgListener {
     private LwM2MTransportService service;
 
     LwM2MSessionMsgListener(LwM2MTransportService service) {
@@ -36,22 +41,22 @@ public class LwM2MSessionMsgListener implements SessionMsgListener {
 
     @Override
     public void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse) {
-        log.info("6.1) onGetAttributesResponse listener");
+        log.info("[{}] attributesResponse", getAttributesResponse);
     }
 
     @Override
     public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
-        log.info("6.2) onAttributeUpdate listener");
+        log.info("[{}] attributeUpdateNotification", attributeUpdateNotification);
     }
 
     @Override
     public void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification) {
-        log.info("6.3) onAttributeUpdate nRemoteSessionCloseCommand [{}]]", sessionCloseNotification);
+        log.info("[{}] sessionCloseNotification", sessionCloseNotification);
     }
 
     @Override
     public void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto updateCredentials) {
-        this.service.onToTransportUpdateCredentials(updateCredentials);
+        this.service.updateParametersInClientFomProfile(updateCredentials);
     }
 
     @Override
@@ -60,13 +65,22 @@ public class LwM2MSessionMsgListener implements SessionMsgListener {
     }
 
     @Override
+    public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
+        this.service.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
+    }
+
+    @Override
     public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
-        log.info("6.5)  onToDeviceRpcRequest listener");
+        log.info("[{}] toDeviceRpcRequest", toDeviceRequest);
     }
 
     @Override
     public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
-        log.info("6.6)  onToServerRpcResponse");
+        log.info("[{}] toServerRpcResponse", toServerResponse);
     }
 
+    @Override
+    public void operationComplete(Future<? super Void> future) throws Exception {
+        log.info("[{}]  operationComplete", future);
+    }
 }

@@ -15,33 +15,12 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.client;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import lombok.Data;
 
+import java.util.Map;
 @Data
-public class AttrTelemetryObserveValue {
-    /**
-     * {"keyName": {
-     *       "/3/0/1": "modelNumber",
-     *       "/3/0/0": "manufacturer",
-     *       "/3/0/2": "serialNumber"
-     *       }
-    **/
-    JsonObject postKeyNameProfile;
-
-    /**
-     * [ "/2/0/0", "/2/0/1"]
-     */
-    JsonArray postAttributeProfile;
-
-    /**
-     * [ "/2/0/0", "/2/0/1"]
-     */
-    JsonArray postTelemetryProfile;
-
-    /**
-     * [ "/2/0/0", "/2/0/1"]
-     */
-    JsonArray postObserveProfile;
+public class ResourceValue {
+    Map<Integer, ?> values;
+    Object value;
+    boolean multiInstances;
 }

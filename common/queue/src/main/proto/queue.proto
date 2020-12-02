@@ -207,7 +207,6 @@ message ValidateDeviceLwM2MCredentialsRequestMsg {
 message ToTransportUpdateCredentialsProto {
   repeated string credentialsId = 1;
   repeated string credentialsValue = 2;
-//  repeated string message = 1;
 }
 
 message GetTenantRoutingInfoRequestMsg {

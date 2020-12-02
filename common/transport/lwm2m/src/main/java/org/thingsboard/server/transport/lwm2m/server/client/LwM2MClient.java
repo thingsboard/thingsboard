@@ -27,40 +27,44 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportService;
 import org.thingsboard.server.transport.lwm2m.server.ResultIds;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Data
-public class ModelClient  implements Cloneable {
+public class LwM2MClient implements Cloneable {
+    private String deviceName;
+    private String deviceProfileName;
     private String endPoint;
     private String identity;
     private SecurityInfo info;
+    private UUID deviceUuid;
     private UUID sessionUuid;
+    private UUID profileUuid;
+    private LeshanServer lwServer;
+    private LwM2MTransportService lwM2MTransportService;
+    private Registration registration;
     private ValidateDeviceCredentialsResponseMsg credentialsResponse;
     private Map<String, String> attributes;
     private Map<Integer, ModelObject> modelObjects;
     private Set<String> pendingRequests;
     private Map<String, LwM2mResponse> responses;
-    private LeshanServer lwServer;
-    private Registration registration;
-    private UUID profileUuid;
-    private LwM2MTransportService lwM2MTransportService;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
-    public ModelClient(String endPoint, String identity, SecurityInfo info, ValidateDeviceCredentialsResponseMsg credentialsResponse, Map<String, String> attributes, Map<Integer, ModelObject> modelObjects, UUID profileUuid) {
+
+    public LwM2MClient(String endPoint, String identity, SecurityInfo info, ValidateDeviceCredentialsResponseMsg credentialsResponse, Map<String, String> attributes, Map<Integer, ModelObject> modelObjects, UUID profileUuid) {
         this.endPoint = endPoint;
         this.identity = identity;
         this.info = info;
         this.credentialsResponse = credentialsResponse;
-        this.attributes = (attributes != null && attributes.size()>0) ? attributes : new ConcurrentHashMap<String, String>();
-        this.modelObjects =  (modelObjects != null && modelObjects.size()>0) ? modelObjects : new ConcurrentHashMap<Integer, ModelObject>();
+        this.attributes = (attributes != null && attributes.size() > 0) ? attributes : new ConcurrentHashMap<String, String>();
+        this.modelObjects = (modelObjects != null && modelObjects.size() > 0) ? modelObjects : new ConcurrentHashMap<Integer, ModelObject>();
         this.pendingRequests = ConcurrentHashMap.newKeySet();
-       this.profileUuid = profileUuid;
-//        this.attrTelemetryObserveValue = new AttrTelemetryObserveValue();
+        this.profileUuid = profileUuid;
         /**
          * Key <objectId>, response<Value -> instance -> resources: value...>
          */
@@ -72,25 +76,16 @@ public class ModelClient  implements Cloneable {
      * @param path
      * @param response
      */
-    public void onSuccessHandler (String path, LwM2mResponse response) {
+    public void onSuccessHandler(String path, LwM2mResponse response) {
         this.responses.put(path, response);
         this.pendingRequests.remove(path);
         if (this.pendingRequests.size() == 0) {
-            this.initValue ();
-            this.lwM2MTransportService.updatesAndSentModelParameter(this.lwServer, this.registration, this, null);
+            this.initValue();
+            this.lwM2MTransportService.updatesAndSentModelParameter(this.lwServer, this.registration);
         }
     }
 
-    public void setRegistrationParam(LeshanServer lwServer, Registration registration) {
-        this.lwServer = lwServer;
-        this.registration = registration;
-    }
-
-    public void addPendingRequests(String path) {
-        this.pendingRequests.add(path);
-    }
-
-    private void initValue () {
+    private void initValue() {
         this.responses.forEach((key, resp) -> {
             ResultIds pathIds = new ResultIds(key);
             if (pathIds.getObjectId() > -1) {
