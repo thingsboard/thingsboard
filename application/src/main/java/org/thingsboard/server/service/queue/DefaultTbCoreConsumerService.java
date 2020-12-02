@@ -297,7 +297,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                         try {
                             handleUsageStats(msg, callback);
                         } catch (Throwable e) {
-                            log.warn("[{}] Failed to process usge stats: {}", id, msg, e);
+                            log.warn("[{}] Failed to process usage stats: {}", id, msg, e);
                             callback.onFailure(e);
                         }
                     });
