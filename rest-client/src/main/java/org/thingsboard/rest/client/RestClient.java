@@ -109,6 +109,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
+import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
@@ -218,7 +219,11 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void sendTestMail(AdminSettings adminSettings) {
-        restTemplate.postForEntity(baseURL + "/api/admin/settings/testMail", adminSettings, AdminSettings.class);
+        restTemplate.postForLocation(baseURL + "/api/admin/settings/testMail", adminSettings);
+    }
+
+    public void sendTestSms(TestSmsRequest testSmsRequest) {
+        restTemplate.postForLocation(baseURL + "/api/admin/settings/testSms", testSmsRequest);
     }
 
     public Optional<SecuritySettings> getSecuritySettings() {
@@ -1712,6 +1717,10 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public OAuth2ClientsParams saveOAuth2Params(OAuth2ClientsParams oauth2Params) {
         return restTemplate.postForEntity(baseURL + "/api/oauth2/config", oauth2Params, OAuth2ClientsParams.class).getBody();
+    }
+
+    public String getLoginProcessingUrl() {
+        return restTemplate.getForEntity(baseURL + "/api/oauth2/loginProcessingUrl", String.class).getBody();
     }
 
     public void handleOneWayDeviceRPCRequest(DeviceId deviceId, JsonNode requestBody) {

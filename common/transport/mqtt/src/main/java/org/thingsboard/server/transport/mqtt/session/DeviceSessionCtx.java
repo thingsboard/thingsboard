@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportC
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.util.MqttTopicFilter;
@@ -108,11 +109,10 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     }
 
     @Override
-    public void onProfileUpdate(DeviceProfile deviceProfile) {
-        super.onProfileUpdate(deviceProfile);
+    public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
+        super.onDeviceProfileUpdate(sessionInfo, deviceProfile);
         updateTopicFilters(deviceProfile);
     }
-
 
     private void updateTopicFilters(DeviceProfile deviceProfile) {
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();

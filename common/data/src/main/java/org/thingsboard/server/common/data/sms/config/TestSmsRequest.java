@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api.sms.config;
+package org.thingsboard.server.common.data.sms.config;
 
 import lombok.Data;
 
 @Data
-public class TwilioSmsProviderConfiguration implements SmsProviderConfiguration {
+public class TestSmsRequest {
 
-    private String accountSid;
-    private String accountToken;
-    private String numberFrom;
-
-    @Override
-    public SmsProviderType getType() {
-        return SmsProviderType.TWILIO;
-    }
+    private SmsProviderConfiguration providerConfiguration;
+    private String numberTo;
+    private String message;
 
 }

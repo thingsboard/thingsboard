@@ -119,6 +119,7 @@ import { TenantProfileConfigurationComponent } from '@home/components/profile/te
 import { SmsProviderConfigurationComponent } from '@home/components/sms/sms-provider-configuration.component';
 import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-sns-provider-configuration.component';
 import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
+import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
 
 @NgModule({
   declarations:
@@ -216,6 +217,7 @@ import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/tw
       AlarmScheduleComponent,
       DeviceWizardDialogComponent,
       DeviceCredentialsComponent,
+      CopyDeviceCredentialsComponent,
       AlarmScheduleDialogComponent,
       EditAlarmDetailsDialogComponent,
       SmsProviderConfigurationComponent,
@@ -302,6 +304,7 @@ import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/tw
     RuleChainAutocompleteComponent,
     DeviceWizardDialogComponent,
     DeviceCredentialsComponent,
+    CopyDeviceCredentialsComponent,
     AlarmScheduleInfoComponent,
     AlarmScheduleComponent,
     AlarmScheduleDialogComponent,

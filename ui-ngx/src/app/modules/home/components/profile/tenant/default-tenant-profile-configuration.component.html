@@ -149,6 +149,18 @@
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.default-storage-ttl-days</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="defaultStorageTtlDays"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('defaultStorageTtlDays').hasError('required')">
+      {{ 'tenant-profile.default-storage-ttl-days-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('defaultStorageTtlDays').hasError('min')">
+      {{ 'tenant-profile.default-storage-ttl-days-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
     <mat-label translate>tenant-profile.max-rule-node-executions-per-message</mat-label>
     <input matInput required min="0" step="1"
            formControlName="maxRuleNodeExecutionsPerMessage"

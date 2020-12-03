@@ -385,6 +385,15 @@ export function padValue(val: any, dec: number): string {
   return strVal;
 }
 
+export function baseUrl(): string {
+  let url = window.location.protocol + '//' + window.location.hostname;
+  const port = window.location.port;
+  if (port && port.length > 0 && port !== '80' && port !== '443') {
+    url += ':' + port;
+  }
+  return url;
+}
+
 export function sortObjectKeys<T>(obj: T): T {
   return Object.keys(obj).sort().reduce((acc, key) => {
     acc[key] = obj[key];
