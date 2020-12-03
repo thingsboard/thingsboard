@@ -18,7 +18,12 @@
 :host {
  mat-card.settings-card {
    margin: 8px;
-   @media #{$mat-gt-sm} {
+
+   @media #{$mat-md} {
+     width: 80%;
+   }
+
+   @media #{$mat-gt-md} {
      width: 60%;
    }
   }
