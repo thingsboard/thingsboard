@@ -83,9 +83,9 @@
     <tb-create-alarm-rules formControlName="createRules" style="padding-bottom: 16px;">
     </tb-create-alarm-rules>
     <div translate class="tb-small" style="padding-bottom: 8px;">device-profile.clear-alarm-rule</div>
-    <div fxFlex fxLayout="row"
+    <div fxLayout="row" fxLayoutGap="8px;" fxLayoutAlign="start center"
          [fxShow]="alarmFormGroup.get('clearRule').value"
-         fxLayoutGap="8px;" fxLayoutAlign="start center" style="padding-bottom: 8px;">
+         style="padding-bottom: 8px;">
       <div class="clear-alarm-rule" fxFlex fxLayout="row">
         <tb-alarm-rule formControlName="clearRule" fxFlex>
         </tb-alarm-rule>
@@ -103,8 +103,7 @@
       <span translate fxLayoutAlign="center center" style="margin: 16px 0"
             class="tb-prompt">device-profile.no-clear-alarm-rule</span>
     </div>
-    <div fxLayout="row" *ngIf="!disabled"
-         [fxShow]="!alarmFormGroup.get('clearRule').value">
+    <div *ngIf="!disabled" [fxShow]="!alarmFormGroup.get('clearRule').value">
       <button mat-stroked-button color="primary"
               type="button"
               (click)="addClearAlarmRule()"
