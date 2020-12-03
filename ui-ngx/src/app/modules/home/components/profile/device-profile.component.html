@@ -39,7 +39,7 @@
     </button>
   </div>
 </div>
-<div class="mat-padding" fxLayout="column">
+<div [ngClass]="{'mat-padding': !standalone}" fxLayout="column">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-width: 0;">
       <mat-form-field class="mat-block">
