@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -511,13 +512,24 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public void addTenantProfileListener(Consumer<TenantProfile> listener) {
+        mainCtx.getTenantProfileCache().addListener(getTenantId(), getSelfId(), listener);
+    }
+
+    @Override
     public void addDeviceProfileListeners(Consumer<DeviceProfile> profileListener, BiConsumer<DeviceId, DeviceProfile> deviceListener) {
         mainCtx.getDeviceProfileCache().addListener(getTenantId(), getSelfId(), profileListener, deviceListener);
     }
 
     @Override
-    public void removeProfileListener() {
+    public void removeListeners() {
         mainCtx.getDeviceProfileCache().removeListener(getTenantId(), getSelfId());
+        mainCtx.getTenantProfileCache().removeListener(getTenantId(), getSelfId());
+    }
+
+    @Override
+    public TenantProfile getTenantProfile() {
+        return mainCtx.getTenantProfileCache().get(getTenantId());
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

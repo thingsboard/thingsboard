@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -237,7 +238,11 @@ public interface TbContext {
 
     void clearRuleNodeStates();
 
+    void addTenantProfileListener(Consumer<TenantProfile> listener);
+
     void addDeviceProfileListeners(Consumer<DeviceProfile> listener, BiConsumer<DeviceId, DeviceProfile> deviceListener);
 
-    void removeProfileListener();
+    void removeListeners();
+
+    TenantProfile getTenantProfile();
 }

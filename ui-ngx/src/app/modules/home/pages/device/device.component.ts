@@ -21,7 +21,7 @@ import { EntityComponent } from '../../components/entity/entity.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   createDeviceConfiguration,
-  createDeviceTransportConfiguration,
+  createDeviceTransportConfiguration, DeviceCredentials,
   DeviceData,
   DeviceInfo,
   DeviceProfileInfo,
@@ -33,6 +33,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'tb-device',
@@ -43,7 +44,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
 
   entityType = EntityType;
 
-  componentsData: any;
+  deviceCredentials$: Subject<DeviceCredentials>;
 
   deviceScope: 'tenant' | 'customer' | 'customer_user';
 
@@ -57,7 +58,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
 
   ngOnInit() {
     this.deviceScope = this.entitiesTableConfig.componentsData.deviceScope;
-    this.componentsData = this.entitiesTableConfigValue.componentsData;
+    this.deviceCredentials$ = this.entitiesTableConfigValue.componentsData.deviceCredentials$;
     super.ngOnInit();
   }
 

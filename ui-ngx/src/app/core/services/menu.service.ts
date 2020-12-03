@@ -288,6 +288,14 @@ export class MenuService {
         type: 'link',
         path: '/auditLogs',
         icon: 'track_changes'
+      },
+      {
+        id: guid(),
+        name: 'api-usage.api-usage',
+        type: 'link',
+        path: '/usage',
+        icon: 'insert_chart',
+        notExact: true
       }
     );
     return sections;
@@ -374,6 +382,11 @@ export class MenuService {
             name: 'audit-log.audit-logs',
             icon: 'track_changes',
             path: '/auditLogs'
+          },
+          {
+            name: 'api-usage.api-usage',
+            icon: 'insert_chart',
+            path: '/usage'
           }
         ]
       }

@@ -45,6 +45,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxEmails;
     private long maxSms;
 
+    private int defaultStorageTtlDays;
+
     private double warnThreshold;
 
     @Override

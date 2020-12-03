@@ -521,27 +521,27 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     private void save(DeviceId deviceId, String key, long value) {
         if (persistToTelemetry) {
-            tsSubService.saveAndNotify(
+            tsSubService.saveAndNotifyInternal(
                     TenantId.SYS_TENANT_ID, deviceId,
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value))),
-                    new AttributeSaveCallback(deviceId, key, value));
+                    new AttributeSaveCallback<>(deviceId, key, value));
         } else {
-            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(deviceId, key, value));
+            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback<>(deviceId, key, value));
         }
     }
 
     private void save(DeviceId deviceId, String key, boolean value) {
         if (persistToTelemetry) {
-            tsSubService.saveAndNotify(
+            tsSubService.saveAndNotifyInternal(
                     TenantId.SYS_TENANT_ID, deviceId,
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))),
-                    new AttributeSaveCallback(deviceId, key, value));
+                    new AttributeSaveCallback<>(deviceId, key, value));
         } else {
-            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(deviceId, key, value));
+            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback<>(deviceId, key, value));
         }
     }
 
-    private static class AttributeSaveCallback implements FutureCallback<Void> {
+    private static class AttributeSaveCallback<T> implements FutureCallback<T> {
         private final DeviceId deviceId;
         private final String key;
         private final Object value;
@@ -553,7 +553,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         }
 
         @Override
-        public void onSuccess(@Nullable Void result) {
+        public void onSuccess(@Nullable T result) {
             log.trace("[{}] Successfully updated attribute [{}] with value [{}]", deviceId, key, value);
         }
 
