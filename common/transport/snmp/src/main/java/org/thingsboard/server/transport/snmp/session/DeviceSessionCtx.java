@@ -41,6 +41,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMs
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -96,8 +97,8 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
     }
 
     @Override
-    public void onProfileUpdate(DeviceProfile deviceProfile) {
-        super.onProfileUpdate(deviceProfile);
+    public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto newSessionInfo, DeviceProfile deviceProfile) {
+        super.onDeviceProfileUpdate(sessionInfo, deviceProfile);
         //TODO: Is this check needed. What should be done if profile type was changed to not SNMP?
         if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
             snmpSessionListener.getSnmpTransportContext().getDeviceProfileTransportConfig().put(
@@ -107,8 +108,8 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
         }
     }
 
-    public void onDeviceProfileUpdate(Device device) {
-        //super.onDeviceProfileUpdate(device);
+    @Override
+    public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         //TODO: cancel future for a specific device
     }
 
