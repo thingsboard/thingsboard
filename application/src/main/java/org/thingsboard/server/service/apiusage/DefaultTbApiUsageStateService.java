@@ -147,6 +147,11 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
     public void process(TbProtoQueueMsg<ToUsageStatsServiceMsg> msg, TbCallback callback) {
         ToUsageStatsServiceMsg statsMsg = msg.getValue();
         TenantId tenantId = new TenantId(new UUID(statsMsg.getTenantIdMSB(), statsMsg.getTenantIdLSB()));
+
+        if (tenantProfileCache.get(tenantId) == null) {
+            return;
+        }
+
         TenantApiUsageState tenantState;
         List<TsKvEntry> updatedEntries;
         Map<ApiFeature, ApiUsageStateValue> result;
@@ -343,7 +348,15 @@ public class DefaultTbApiUsageStateService implements TbApiUsageStateService {
             long now = System.currentTimeMillis();
             myTenantStates.values().forEach(state -> {
                 if ((state.getNextCycleTs() > now) && (state.getNextCycleTs() - now < TimeUnit.HOURS.toMillis(1))) {
+                    TenantId tenantId = state.getTenantId();
                     state.setCycles(state.getNextCycleTs(), SchedulerUtils.getStartOfNextNextMonth());
+                    ToUsageStatsServiceMsg.Builder msg = ToUsageStatsServiceMsg.newBuilder();
+                    msg.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
+                    msg.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+                    for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+                        msg.addValues(UsageStatsKVProto.newBuilder().setKey(key.name()).setValue(0).build());
+                    }
+                    process(new TbProtoQueueMsg<>(UUID.randomUUID(), msg.build()), TbCallback.EMPTY);
                 }
             });
         } finally {
