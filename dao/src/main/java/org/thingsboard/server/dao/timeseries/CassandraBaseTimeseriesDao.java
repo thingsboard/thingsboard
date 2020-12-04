@@ -60,6 +60,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -78,6 +79,8 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     public static final long SECONDS_IN_DAY = TimeUnit.DAYS.toSeconds(1);
 
     protected static List<Long> FIXED_PARTITION = Arrays.asList(new Long[]{0L});
+
+    private CassandraTsPartitionsCache cassandraTsPartitionsCache;
 
     @Autowired
     private Environment environment;
@@ -115,6 +118,11 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         Optional<NoSqlTsPartitionDate> partition = NoSqlTsPartitionDate.parse(partitioning);
         if (partition.isPresent()) {
             tsFormat = partition.get();
+            // TODO: 03.12.20 add maxCacheSize parameter to .yml file
+            int maxCacheSize = 0;
+            if (!isFixedPartitioning() && maxCacheSize > 0) {
+                cassandraTsPartitionsCache = new CassandraTsPartitionsCache(maxCacheSize);
+            }
         } else {
             log.warn("Incorrect configuration of partitioning {}", partitioning);
             throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
@@ -170,11 +178,25 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
     @Override
     public ListenableFuture<Integer> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key, long ttl) {
+//        ConcurrentMap<CassandraPartitionCacheKey, Boolean> cassandraPartitionCacheKeyBooleanConcurrentMap = cassandraTsPartitionsCache.getPartitionsCache().asMap();
+//        log.info("Cache: {}", cassandraPartitionCacheKeyBooleanConcurrentMap.keySet());
+//        log.info("Cache Size: {}", cassandraPartitionCacheKeyBooleanConcurrentMap.size());
         if (isFixedPartitioning()) {
             return Futures.immediateFuture(null);
         }
         ttl = computeTtl(ttl);
         long partition = toPartitionTs(tsKvEntryTs);
+        CassandraPartitionCacheKey searchKey = new CassandraPartitionCacheKey(entityId, key, partition);
+        if (cassandraTsPartitionsCache != null && cassandraTsPartitionsCache.getIfPresent(searchKey)) {
+            log.info("Check for key in the cache: [{}]", searchKey);
+            // TODO: 03.12.20 why 0?
+            return Futures.immediateFuture(0);
+        } else {
+            return doSavePartition(tenantId, entityId, key, ttl, partition, searchKey);
+        }
+    }
+
+    private ListenableFuture<Integer> doSavePartition(TenantId tenantId, EntityId entityId, String key, long ttl, long partition, CassandraPartitionCacheKey searchKey) {
         log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
         BoundStatementBuilder stmtBuilder = new BoundStatementBuilder((ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt()).bind());
         stmtBuilder.setString(0, entityId.getEntityType().name())
@@ -185,7 +207,13 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
             stmtBuilder.setInt(4, (int) ttl);
         }
         BoundStatement stmt = stmtBuilder.build();
-        return getFuture(executeAsyncWrite(tenantId, stmt), rs -> 0);
+        return getFuture(executeAsyncWrite(tenantId, stmt), rs -> {
+            log.info("Put key to the cache: [{}]", searchKey);
+            if (cassandraTsPartitionsCache != null) {
+                cassandraTsPartitionsCache.put(searchKey);
+            }
+            return 0;
+        });
     }
 
     @Override
