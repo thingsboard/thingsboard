@@ -16,8 +16,8 @@
 
 -->
 <div fxLayout="column" class="mat-content mat-padding">
-  <div fxLayout="column" *ngFor="let filter of filtersInfo | keyvalue; let last = last">
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+  <div *ngFor="let filter of filtersInfo | keyvalue; let last = last">
+    <div fxLayout="row" fxLayoutAlign="start center">
       <mat-label fxFlex>{{filter.value.filter}}</mat-label>
       <button mat-icon-button color="primary"
               style="min-width: 40px;"
