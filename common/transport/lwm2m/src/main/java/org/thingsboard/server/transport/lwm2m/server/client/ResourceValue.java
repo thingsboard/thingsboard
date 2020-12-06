@@ -16,8 +16,8 @@
 package org.thingsboard.server.transport.lwm2m.server.client;
 
 import lombok.Data;
-
 import java.util.Map;
+
 @Data
 public class ResourceValue {
     Map<Integer, ?> values;

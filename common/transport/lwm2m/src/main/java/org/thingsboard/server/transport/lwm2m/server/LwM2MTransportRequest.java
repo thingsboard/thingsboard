@@ -15,15 +15,32 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.coap.Response;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.ResourceModel;
-import org.eclipse.leshan.core.node.*;
+import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.observation.Observation;
-import org.eclipse.leshan.core.request.*;
-import org.eclipse.leshan.core.response.*;
+import org.eclipse.leshan.core.request.ContentFormat;
+import org.eclipse.leshan.core.request.WriteRequest;
+import org.eclipse.leshan.core.request.DiscoverRequest;
+import org.eclipse.leshan.core.request.DownlinkRequest;
+import org.eclipse.leshan.core.request.ObserveRequest;
+import org.eclipse.leshan.core.request.CancelObservationRequest;
+import org.eclipse.leshan.core.request.ReadRequest;
+import org.eclipse.leshan.core.request.ExecuteRequest;
+import org.eclipse.leshan.core.request.WriteAttributesRequest;
+import org.eclipse.leshan.core.response.ResponseCallback;
+import org.eclipse.leshan.core.response.LwM2mResponse;
+import org.eclipse.leshan.core.response.ObserveResponse;
+import org.eclipse.leshan.core.response.ReadResponse;
+import org.eclipse.leshan.core.response.CancelObservationResponse;
+import org.eclipse.leshan.core.response.DeleteResponse;
+import org.eclipse.leshan.core.response.ExecuteResponse;
+import org.eclipse.leshan.core.response.DiscoverResponse;
+import org.eclipse.leshan.core.response.WriteAttributesResponse;
+import org.eclipse.leshan.core.response.WriteResponse;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.californium.LeshanServer;
@@ -41,16 +58,9 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static org.eclipse.californium.core.coap.CoAP.ResponseCode.isSuccess;
 import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEFAULT_TIMEOUT;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_READ;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_DISCOVER;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_OBSERVE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.POST_TYPE_OPER_OBSERVE_CANCEL;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.POST_TYPE_OPER_EXECUTE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_UPDATE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_WRITE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_WRITE_ATTRIBUTES;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
 
 @Slf4j
 @Service("LwM2MTransportRequest")
@@ -58,13 +68,11 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 public class LwM2MTransportRequest {
     private final ExecutorService executorService;
     private static final String RESPONSE_CHANNEL = "THINGSBOARD_RESP";
-//    private final TransportService transportService;
 
     @Autowired
     LwM2MTransportService service;
 
     public LwM2MTransportRequest() {
-//        this.transportService = service.context.getTransportService();
         executorService = Executors.newCachedThreadPool(
                 new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
     }
@@ -94,13 +102,16 @@ public class LwM2MTransportRequest {
      * @param lwM2MClient
      * @param observation
      */
-    @SneakyThrows
     public void sendAllRequest(LeshanServer lwServer, Registration registration, String target, String typeOper,
-                               String contentFormatParam, LwM2MClient lwM2MClient, Observation observation, String params, long timeoutInMs) {
-        ResultIds resultIds = new ResultIds (target);
+                               String contentFormatParam, LwM2MClient lwM2MClient, Observation observation, Object params, long timeoutInMs) {
+        ResultIds resultIds = new ResultIds(target);
         if (registration != null && resultIds.getObjectId() >= 0) {
             DownlinkRequest request = null;
             ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
+            ResourceModel resource = (resultIds.resourceId >= 0) ? (lwM2MClient != null) ?
+                    lwM2MClient.getModelObjects().get(resultIds.getObjectId()).getObjectModel().resources.get(resultIds.resourceId) : null : null;
+            ResourceModel.Type resType = (resource == null) ? null : resource.type;
+            boolean resMultiple = (resource == null) ? false : resource.multiple;
             timeoutInMs = timeoutInMs > 0 ? timeoutInMs : DEFAULT_TIMEOUT;
             switch (typeOper) {
                 case GET_TYPE_OPER_READ:
@@ -122,16 +133,27 @@ public class LwM2MTransportRequest {
                     request = new CancelObservationRequest(observation);
                     break;
                 case POST_TYPE_OPER_EXECUTE:
-                    request = new ExecuteRequest(target, params);
+                    if (params != null && !resMultiple) {
+                        request = new ExecuteRequest(target, LwM2MTransportHandler.getValueTypeToString(params, resType));
+                    } else {
+                        request = new ExecuteRequest(target);
+                    }
                     break;
-                case PUT_TYPE_OPER_UPDATE:
-                    request = new ExecuteRequest(target, params);
+                case POST_TYPE_OPER_WRITE_REPLACE:
+                    // Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
+                    if (contentFormat.equals(ContentFormat.TLV) && !resMultiple) {
+                        request = this.getWriteRequestSingleResource(null, resultIds.getObjectId(), resultIds.getInstanceId(), resultIds.getResourceId(), params, resType);
+                    }
+                    // Mode.REPLACE && Request to write a <b>String Single-Instance Resource</b> using the given content format (TEXT, TLV, JSON)
+                    else if (!contentFormat.equals(ContentFormat.TLV) && !resMultiple) {
+                        request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(), resultIds.getInstanceId(), resultIds.getResourceId(), params, resType);
+                    }
                     break;
-                case PUT_TYPE_OPER_WRITE:
+                case PUT_TYPE_OPER_WRITE_UPDATE:
                     if (resultIds.getResourceId() >= 0) {
                         ResourceModel resourceModel = lwServer.getModelProvider().getObjectModel(registration).getObjectModel(resultIds.getObjectId()).resources.get(resultIds.getResourceId());
                         ResourceModel.Type typeRes = resourceModel.type;
-                        request = getWriteRequestResource(resultIds.getObjectId(), resultIds.getInstanceId(), resultIds.getResourceId(), params, typeRes);
+//                        request = getWriteRequestResource(resultIds.getObjectId(), resultIds.getInstanceId(), resultIds.getResourceId(), params, typeRes);
                     }
                     break;
                 case PUT_TYPE_OPER_WRITE_ATTRIBUTES:
@@ -191,46 +213,49 @@ public class LwM2MTransportRequest {
      * @param lwM2MClient
      * @param timeoutInMs
      */
-    @SneakyThrows
     private void sendRequest(LeshanServer lwServer, Registration registration, DownlinkRequest request, LwM2MClient lwM2MClient, long timeoutInMs) {
         lwServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
-            this.handleResponse(registration, request.getPath().toString(), response, lwM2MClient);
+            if  (isSuccess(((Response)response.getCoapResponse()).getCode())) {
+                this.handleResponse(registration, request.getPath().toString(), response, request, lwM2MClient);
+            }
+            else {
+                log.error("[{}] - [{}] [{}] error SendRequest", ((Response)response.getCoapResponse()).getCode(), response.getCode(),  request.getPath().toString());
+            }
         }, e -> {
-            log.error("[{}] error SendRequest", e.toString());
-
+            log.error("[{}] - [{}] error SendRequest",  request.getPath().toString(), e.toString());
         });
     }
 
-    private WriteRequest getWriteRequestResource(Integer objectId, Integer instanceId, Integer resourceId, String value, ResourceModel.Type type) {
+    private WriteRequest getWriteRequestSingleResource(ContentFormat contentFormat, Integer objectId, Integer instanceId, Integer resourceId, Object value, ResourceModel.Type type) {
         switch (type) {
             case STRING:    // String
-                return new WriteRequest(objectId, instanceId, resourceId, value);
+                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, value.toString()) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, value.toString());
             case INTEGER:   // Long
-                return new WriteRequest(objectId, instanceId, resourceId, Integer.toUnsignedLong(Integer.valueOf(value)));
+                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Integer.toUnsignedLong(Integer.valueOf(value.toString()))) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Integer.toUnsignedLong(Integer.valueOf(value.toString())));
             case OBJLNK:    // ObjectLink
-                return new WriteRequest(objectId, instanceId, resourceId, ObjectLink.fromPath(value));
+                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString()));
             case BOOLEAN:   // Boolean
-                return new WriteRequest(objectId, instanceId, resourceId, Boolean.valueOf(value));
+                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Boolean.valueOf(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Boolean.valueOf(value.toString()));
             case FLOAT:     // Double
-                return new WriteRequest(objectId, instanceId, resourceId, Double.valueOf(value));
+                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Double.valueOf(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Double.valueOf(value.toString()));
             case TIME:      // Date
-                return new WriteRequest(objectId, instanceId, resourceId, new Date((Long) Integer.toUnsignedLong(Integer.valueOf(value))));
+                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, new Date((Long) Integer.toUnsignedLong(Integer.valueOf(value.toString())))) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, new Date((Long) Integer.toUnsignedLong(Integer.valueOf(value.toString()))));
             case OPAQUE:    // byte[] value, base64
-                return new WriteRequest(objectId, instanceId, resourceId, Hex.decodeHex(value.toCharArray()));
+                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray()));
             default:
         }
         return null;
     }
 
-    @SneakyThrows
-    private void handleResponse(Registration registration, final String path, LwM2mResponse response, LwM2MClient lwM2MClient) {
+    private void handleResponse(Registration registration, final String path, LwM2mResponse response, DownlinkRequest request, LwM2MClient lwM2MClient) {
         executorService.submit(new Runnable() {
             @Override
             public void run() {
+
                 try {
-                    sendResponse(registration, path, response, lwM2MClient);
+                    sendResponse(registration, path, response, request, lwM2MClient);
                 } catch (RuntimeException t) {
-                    log.error("[{}] endpoint [{}] path [{}] error Unable to send response.", registration.getEndpoint(), path, t.toString());
+                    log.error("[{}] endpoint [{}] path [{}] error Unable to after send response.", registration.getEndpoint(), path, t.toString());
                 }
             }
         });
@@ -243,14 +268,12 @@ public class LwM2MTransportRequest {
      * @param response -
      * @param lwM2MClient -
      */
-    @SneakyThrows
-    private void sendResponse(Registration registration, String path, LwM2mResponse response, LwM2MClient lwM2MClient) {
+    private void sendResponse(Registration registration, String path, LwM2mResponse response, DownlinkRequest request, LwM2MClient lwM2MClient) {
         if (response instanceof ObserveResponse) {
             service.onObservationResponse(registration, path, (ReadResponse) response);
         } else if (response instanceof CancelObservationResponse) {
             log.info("[{}] Path [{}] CancelObservationResponse 3_Send", path, response);
-        }
-        else if (response instanceof ReadResponse) {
+        } else if (response instanceof ReadResponse) {
             /**
              * Use only at the first start after registration
              * Fill with data -> Model client
@@ -264,8 +287,7 @@ public class LwM2MTransportRequest {
              * Use after registration on request
              */
             else {
-                log.info(": [{}] Path [{} ReadResponse 4_Send", path, response);
-                service.onObservationResponse(registration, path, (ReadResponse)response);
+                service.onObservationResponse(registration, path, (ReadResponse) response);
             }
         } else if (response instanceof DeleteResponse) {
             log.info("[{}] Path [{}] DeleteResponse 5_Send", path, response);
@@ -275,6 +297,9 @@ public class LwM2MTransportRequest {
             log.info("[{}] Path [{}] ExecuteResponse  7_Send", path, response);
         } else if (response instanceof WriteAttributesResponse) {
             log.info("[{}] Path [{}] WriteAttributesResponse 8_Send", path, response);
+        } else if (response instanceof WriteResponse) {
+            log.info("[{}] Path [{}] WriteAttributesResponse 9_Send", path, response);
+            service.onAttributeUpdateOk(registration, path, (WriteRequest) request);
         }
     }
 }

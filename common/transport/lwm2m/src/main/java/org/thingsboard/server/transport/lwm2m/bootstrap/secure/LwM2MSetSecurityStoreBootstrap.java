@@ -25,10 +25,21 @@ import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
 
 import java.math.BigInteger;
-import java.security.*;
+import java.security.AlgorithmParameters;
+import java.security.KeyStore;
+import java.security.PublicKey;
+import java.security.PrivateKey;
+import java.security.KeyFactory;
+import java.security.GeneralSecurityException;
+import java.security.KeyStoreException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
-import java.security.spec.*;
+import java.security.spec.ECGenParameterSpec;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.ECPublicKeySpec;
+import java.security.spec.ECPoint;
+import java.security.spec.KeySpec;
+import java.security.spec.ECPrivateKeySpec;
 import java.util.Arrays;
 
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;

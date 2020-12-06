@@ -34,9 +34,11 @@ import java.util.Optional;
 @Slf4j
 public class LwM2MSessionMsgListener implements GenericFutureListener<Future<? super Void>>, SessionMsgListener {
     private LwM2MTransportService service;
+    private TransportProtos.SessionInfoProto sessionInfo;
 
-    LwM2MSessionMsgListener(LwM2MTransportService service) {
+    LwM2MSessionMsgListener(LwM2MTransportService service, TransportProtos.SessionInfoProto sessionInfo) {
         this.service = service;
+        this.sessionInfo = sessionInfo;
     }
 
     @Override
@@ -46,8 +48,8 @@ public class LwM2MSessionMsgListener implements GenericFutureListener<Future<? s
 
     @Override
     public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
-        log.info("[{}] attributeUpdateNotification", attributeUpdateNotification);
-    }
+        this.service.onAttributeUpdate(attributeUpdateNotification, this.sessionInfo);
+     }
 
     @Override
     public void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification) {
@@ -56,7 +58,7 @@ public class LwM2MSessionMsgListener implements GenericFutureListener<Future<? s
 
     @Override
     public void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto updateCredentials) {
-        this.service.updateParametersInClientFomProfile(updateCredentials);
+        this.service.onToTransportUpdateCredentials(updateCredentials);
     }
 
     @Override

@@ -28,7 +28,10 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCreden
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportService;
 import org.thingsboard.server.transport.lwm2m.server.ResultIds;
 
-import java.util.*;
+import java.util.UUID;
+import java.util.Map;
+import java.util.Set;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -73,8 +76,8 @@ public class LwM2MClient implements Cloneable {
 
     /**
      *  Fill with data -> Model client
-     * @param path
-     * @param response
+     * @param path -
+     * @param response -
      */
     public void onSuccessHandler(String path, LwM2mResponse response) {
         this.responses.put(path, response);
@@ -89,7 +92,7 @@ public class LwM2MClient implements Cloneable {
         this.responses.forEach((key, resp) -> {
             ResultIds pathIds = new ResultIds(key);
             if (pathIds.getObjectId() > -1) {
-                ObjectModel objectModel = ((Collection<ObjectModel>) lwServer.getModelProvider().getObjectModel(registration).getObjectModels()).stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0);
+                ObjectModel objectModel = ((Collection<ObjectModel>) this.lwServer.getModelProvider().getObjectModel(registration).getObjectModels()).stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0);
                 if (this.modelObjects.get(pathIds.getObjectId()) != null) {
                     this.modelObjects.get(pathIds.getObjectId()).getInstances().put(((ReadResponse) resp).getContent().getId(), (LwM2mObjectInstance) ((ReadResponse) resp).getContent());
                 } else {

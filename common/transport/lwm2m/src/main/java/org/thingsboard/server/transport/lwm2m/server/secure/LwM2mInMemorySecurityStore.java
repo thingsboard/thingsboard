@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.lwm2m.server.secure;
 
 import com.google.gson.JsonObject;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
@@ -30,12 +29,15 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MGetSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportService;
 import org.thingsboard.server.transport.lwm2m.server.client.AttrTelemetryObserveValue;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -116,15 +118,33 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         this.listener = listener;
     }
 
-    public LwM2MClient getByModelClient(String endPoint, String identity) {
+    public LwM2MClient getlwM2MClient(String endPoint, String identity) {
         Map.Entry<String, LwM2MClient> modelClients = (endPoint != null) ?
                 this.sessions.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndPoint())).findAny().orElse(null) :
                 this.sessions.entrySet().stream().filter(model -> identity.equals(model.getValue().getIdentity())).findAny().orElse(null);
         return (modelClients != null) ? modelClients.getValue() : null;
     }
 
-    public LwM2MClient getByRegistrationIdModelClient(String registrationId) {
+    public LwM2MClient getlwM2MClient(String registrationId) {
         return this.sessions.get(registrationId);
+    }
+
+    public LwM2MClient getlwM2MClient(LeshanServer lwServer, Registration registration) {
+        writeLock.lock();
+        try {
+            if (this.sessions.get(registration.getEndpoint()) == null) {
+                this.add(registration.getEndpoint());
+            }
+            LwM2MClient lwM2MClient = this.sessions.get(registration.getEndpoint());
+            lwM2MClient.setLwServer(lwServer);
+            lwM2MClient.setRegistration(registration);
+            lwM2MClient.setAttributes(registration.getAdditionalRegistrationAttributes());
+            this.sessions.put(registration.getId(), lwM2MClient);
+            this.sessions.remove(registration.getEndpoint());
+            return lwM2MClient;
+        } finally {
+            writeLock.unlock();
+        }
     }
 
     private String getByRegistrationId(String endPoint, String identity) {
@@ -161,23 +181,8 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         return store.getSecurityInfo();
     }
 
-    @SneakyThrows
-    public LwM2MClient getlwM2MClient(LeshanServer lwServer, Registration registration, LwM2MTransportService transportService) {
-        writeLock.lock();
-        try {
-            if (this.sessions.get(registration.getEndpoint()) == null) {
-                this.add(registration.getEndpoint());
-            }
-            LwM2MClient lwM2MClient = this.sessions.get(registration.getEndpoint());
-            lwM2MClient.setLwServer(lwServer);
-            lwM2MClient.setRegistration(registration);
-            lwM2MClient.setAttributes(registration.getAdditionalRegistrationAttributes());
-            this.sessions.put(registration.getId(), lwM2MClient);
-            this.sessions.remove(registration.getEndpoint());
-            return lwM2MClient;
-        } finally {
-            writeLock.unlock();
-        }
+    public Map<String, LwM2MClient> getSession (UUID sessionUuId){
+       return this.sessions.entrySet().stream().filter(e -> e.getValue().getSessionUuid().equals(sessionUuId)).collect(Collectors.toMap(map -> map.getKey(), map -> map.getValue()));
     }
 
     public Map<String, LwM2MClient> getSessions() {

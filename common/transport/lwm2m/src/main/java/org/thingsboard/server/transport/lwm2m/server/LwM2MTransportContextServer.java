@@ -30,26 +30,14 @@ package org.thingsboard.server.transport.lwm2m.server;
  * limitations under the License.
  */
 
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.ObjectLoader;
-import org.eclipse.leshan.core.model.ObjectModel;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigServer;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.net.URL;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.util.List;
 
 @Slf4j
 @Component

@@ -17,7 +17,14 @@ package org.thingsboard.server.transport.lwm2m.secure;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.Hex;
-import java.security.*;
+import java.security.SecureRandom;
+import java.security.KeyPairGenerator;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;

@@ -16,13 +16,19 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.leshan.core.model.ResourceModel;
-import org.eclipse.leshan.core.node.*;
+import org.eclipse.leshan.core.node.LwM2mNode;
+import org.eclipse.leshan.core.node.LwM2mObject;
+import org.eclipse.leshan.core.node.LwM2mObjectInstance;
+import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
@@ -33,7 +39,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.client.AttrTelemetryObserveValue;
 
 import javax.annotation.PostConstruct;
@@ -41,7 +46,14 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.Optional;
+import java.util.Map;
+import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Collections;
 
 @Slf4j
 @Component("LwM2MTransportHandler")
@@ -61,16 +73,28 @@ public class LwM2MTransportHandler{
     public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + "/attributes";
     public static final String DEVICE_TELEMETRY_TOPIC = BASE_DEVICE_API_TOPIC + "/telemetry";
 
+    public static final String CLIENT_NOT_AUTHORIZED = "Client not authorized";
+
     public static final String GET_TYPE_OPER_READ = "read";
     public static final String GET_TYPE_OPER_DISCOVER = "discover";
     public static final String GET_TYPE_OPER_OBSERVE = "observe";
     public static final String POST_TYPE_OPER_OBSERVE_CANCEL = "observeCancel";
     public static final String POST_TYPE_OPER_EXECUTE = "execute";
-    public static final String PUT_TYPE_OPER_UPDATE = "update";
-    public static final String PUT_TYPE_OPER_WRITE = "write";
+    /**
+     * Replaces the Object Instance or the Resource(s) with the new value provided in the “Write” operation. (see
+     * section 5.3.3 of the LW M2M spec).
+     */
+    public static final String POST_TYPE_OPER_WRITE_REPLACE = "replace";
+    /**
+     * Adds or updates Resources provided in the new value and leaves other existing Resources unchanged. (see section
+     * 5.3.3 of the LW M2M spec).
+     */
+    public static final String PUT_TYPE_OPER_WRITE_UPDATE = "update";
     public static final String PUT_TYPE_OPER_WRITE_ATTRIBUTES = "wright-attributes";
 
     public static final String EVENT_AWAKE = "AWAKE";
+
+    private static Gson gson = null;
 
     @Autowired
     @Qualifier("LeshanServerCert")
@@ -244,5 +268,24 @@ public class LwM2MTransportHandler{
         Collections.sort(values1);
         Collections.sort(values2);
         return values1.equals(values2);
+    }
+
+    public static String convertCamelCase (String str) {
+        str = str.toLowerCase().replace("/[^a-z ]+/g", " ");
+        str = str.replace("/^(.)|\\s(.)/g", "$1");
+        str = str.replace("/[^a-zA-Z]+/g", "");
+        return str;
+    }
+
+    public static String splitCamelCaseString(String s){
+        LinkedList<String> linkedListOut = new LinkedList<String>();
+        LinkedList<String> linkedList = new LinkedList<String>((Arrays.asList(s.split(" "))));
+        linkedList.stream().forEach(str-> {
+            String strOut = str.replaceAll("\\W", "").replaceAll("_", "").toUpperCase();
+            if (strOut.length()>1) linkedListOut.add(strOut.substring(0, 1) + strOut.substring(1).toLowerCase());
+            else linkedListOut.add(strOut);
+        });
+        linkedListOut.set(0, (linkedListOut.get(0).substring(0, 1).toLowerCase() + linkedListOut.get(0).substring(1)));
+        return StringUtils.join(linkedListOut, "");
     }
 }
