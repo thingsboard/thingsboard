@@ -28,21 +28,30 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileKvMapping;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.transport.snmp.session.DeviceSessionCtx;
-import org.thingsboard.server.transport.snmp.temp.SnmpDeviceProfileTransportConfigFactory;
-import org.thingsboard.server.transport.snmp.temp.SnmpDeviceTransportConfigFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,11 +68,25 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SnmpTransportService {
 
+    private static final int ENTITY_PACK_LIMIT = 1024;
+
     @Autowired
     private SnmpTransportContext snmpTransportContext;
 
     @Autowired
     TransportService transportService;
+
+    @Autowired
+    DeviceProfileService deviceProfileService;
+
+    @Autowired
+    TenantService tenantService;
+
+    @Autowired
+    DeviceService deviceService;
+
+    @Autowired
+    DeviceCredentialsService deviceCredentialsService;
 
     private Snmp snmp;
     private ScheduledExecutorService schedulerExecutor;
@@ -112,32 +135,52 @@ public class SnmpTransportService {
     }
 
     private void initSessionCtxList() {
-        DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.fromString("c06dff20-2824-11eb-a349-3d1dfabc5680"));
-        snmpTransportContext.getDeviceProfileTransportConfig().putAll(Collections.singletonMap(deviceProfileId, SnmpDeviceProfileTransportConfigFactory.getDeviceProfileTransportConfig()));
 
-        deviceSessions = snmpTransportContext.getDeviceProfileTransportConfig().keySet().stream()
-                .map(id -> {
-                    DeviceProfile deviceProfile = new DeviceProfile(id);
-                    DeviceSessionCtx deviceSessionCtx = new DeviceSessionCtx(UUID.randomUUID(), snmpTransportContext, "A2_TEST_TOKEN");
-                    deviceSessionCtx.setDeviceId(new DeviceId(UUID.fromString("17b484f0-d8b8-11ea-a986-d38793b0b824")));
-                    deviceSessionCtx.setDeviceProfile(deviceProfile);
-                    deviceSessionCtx.setTransportConfiguration(SnmpDeviceTransportConfigFactory.getSnmpTransportConfig());
-                    //TODO: re-init target on device transport configuration event
-                    deviceSessionCtx.initTarget(snmpTransportContext.getDeviceProfileTransportConfig().get(id));
-                    deviceSessionCtx.createSessionInfo(ctx -> transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), deviceSessionCtx));
-                    return deviceSessionCtx;
-                })
-                .collect(Collectors.toConcurrentMap(DeviceSessionCtx::getDeviceId, ctx -> ctx));
+        deviceSessions = new ConcurrentHashMap<>();
+
+        for (Tenant tenant : new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT)) {
+            TenantId tenantId = tenant.getTenantId();
+            PageDataIterable<DeviceProfile> deviceProfilesIterator = new PageDataIterable<>(pageLink -> deviceProfileService.findDeviceProfiles(tenantId, pageLink), ENTITY_PACK_LIMIT);
+            for (DeviceProfile deviceProfile : deviceProfilesIterator) {
+                if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
+                    SnmpDeviceProfileTransportConfiguration snmpDeviceProfileTransportConfiguration = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+                    snmpTransportContext.getDeviceProfileTransportConfig().put(deviceProfile.getId(), snmpDeviceProfileTransportConfiguration);
+                    createDeviceSession(tenantId, deviceProfile, snmpDeviceProfileTransportConfiguration, deviceSessions);
+                }
+            }
+        }
 
         pduPerProfile = new ConcurrentHashMap<>();
         snmpTransportContext.getDeviceProfileTransportConfig().forEach((id, config) -> pduPerProfile.put(id, getPduList(config)));
 
         this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("snmp-pooling-scheduler"));
-        this.schedulerExecutor.scheduleAtFixedRate(this::executeSnmp, 1000, 5000, TimeUnit.MILLISECONDS);
+        this.schedulerExecutor.scheduleAtFixedRate(() -> executeSnmp(deviceSessions), 1000, 5000, TimeUnit.MILLISECONDS);
     }
 
-    private void executeSnmp() {
-        deviceSessions.forEach((deviceId, deviceSessionCtx) ->
+    private void createDeviceSession(TenantId tenantId, DeviceProfile deviceProfile, SnmpDeviceProfileTransportConfiguration snmpDeviceProfileTransportConfiguration, Map<DeviceId, DeviceSessionCtx> sessions) {
+        PageDataIterable<DeviceInfo> deviceInfosIterator = new PageDataIterable<>(pageLink -> deviceService.findDeviceInfosByTenantIdAndDeviceProfileId(tenantId, deviceProfile.getId(), pageLink), ENTITY_PACK_LIMIT);
+        for (DeviceInfo deviceInfo : deviceInfosIterator) {
+            DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, deviceInfo.getId());
+            if (DeviceCredentialsType.ACCESS_TOKEN.equals(credentials.getCredentialsType())) {
+                SnmpDeviceTransportConfiguration snmpDeviceTransportConfiguration = (SnmpDeviceTransportConfiguration) deviceInfo.getDeviceData().getTransportConfiguration();
+                if (snmpDeviceTransportConfiguration.isValid()) {
+                    DeviceSessionCtx deviceSessionCtx = new DeviceSessionCtx(UUID.randomUUID(), snmpTransportContext, credentials.getCredentialsId());
+                    deviceSessionCtx.setDeviceId(deviceInfo.getId());
+                    deviceSessionCtx.setTransportConfiguration(snmpDeviceTransportConfiguration);
+                    deviceSessionCtx.initTarget(snmpDeviceProfileTransportConfiguration);
+                    deviceSessionCtx.createSessionInfo(ctx -> transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), deviceSessionCtx));
+                    deviceSessionCtx.setDeviceProfile(deviceProfile);
+
+                    sessions.put(deviceInfo.getId(), deviceSessionCtx);
+                }
+            } else {
+                log.warn("[] Expected credentials type is {} but found {}", DeviceCredentialsType.ACCESS_TOKEN, credentials.getCredentialsType());
+            }
+        }
+    }
+
+    private void executeSnmp(Map<DeviceId, DeviceSessionCtx> sessions) {
+        sessions.forEach((deviceId, deviceSessionCtx) ->
                 pduPerProfile.get(deviceSessionCtx.getDeviceProfile().getId()).forEach(pdu -> {
                     try {
                         log.info("[{}] Sending SNMP message...", pdu.getRequestID());

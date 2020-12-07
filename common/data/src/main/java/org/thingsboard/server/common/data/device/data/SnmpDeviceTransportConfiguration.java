@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.common.data.device.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.DeviceTransportType;
 
 @Data
@@ -29,5 +31,13 @@ public class SnmpDeviceTransportConfiguration implements DeviceTransportConfigur
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.SNMP;
+    }
+
+    @JsonIgnore
+    public boolean isValid() {
+        return StringUtils.isNotEmpty(this.address)
+                && this.port > 0
+                && StringUtils.isNotEmpty(this.community)
+                && StringUtils.isNotEmpty(this.protocolVersion);
     }
 }
