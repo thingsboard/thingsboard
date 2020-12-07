@@ -211,7 +211,6 @@ public class InstallScripts {
         try {
             createDefaultRuleChains(tenantId);
             createDefaultRuleChain(tenantId, "Thermostat");
-            createDefaultEdgeRuleChains(tenantId);
         } catch (Exception e) {
             log.error("Unable to load dashboard from json", e);
             throw new RuntimeException("Unable to load dashboard from json", e);

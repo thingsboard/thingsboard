@@ -24,7 +24,6 @@ public enum ActionType {
     UPDATED(false), // log entity
     ATTRIBUTES_UPDATED(false), // log attributes/values
     ATTRIBUTES_DELETED(false), // log attributes
-    TIMESERIES_UPDATED(false), // log timeseries
     TIMESERIES_DELETED(false), // log timeseries
     RPC_CALL(false), // log method and params
     CREDENTIALS_UPDATED(false), // log new credentials
@@ -47,9 +46,7 @@ public enum ActionType {
     PROVISION_SUCCESS(false),
     PROVISION_FAILURE(false),
     ASSIGNED_TO_EDGE(false), // log edge name
-    UNASSIGNED_FROM_EDGE(false), // log edge name
-    CREDENTIALS_REQUEST(false),  // request credentials from edge
-    ENTITY_EXISTS_REQUEST(false);  // request to recreate entity on edge
+    UNASSIGNED_FROM_EDGE(false);
 
     private final boolean isRead;
 

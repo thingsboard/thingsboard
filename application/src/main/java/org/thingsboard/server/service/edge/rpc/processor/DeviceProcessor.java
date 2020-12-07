@@ -27,8 +27,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -50,6 +50,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
 
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
@@ -62,22 +63,28 @@ public class DeviceProcessor extends BaseProcessor {
     private static final ReentrantLock deviceCreationLock = new ReentrantLock();
 
     public ListenableFuture<Void> onDeviceUpdate(TenantId tenantId, Edge edge, DeviceUpdateMsg deviceUpdateMsg) {
+        log.trace("[{}] onDeviceUpdate [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getName());
         DeviceId edgeDeviceId = new DeviceId(new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB()));
         switch (deviceUpdateMsg.getMsgType()) {
             case ENTITY_CREATED_RPC_MESSAGE:
                 String deviceName = deviceUpdateMsg.getName();
                 Device device = deviceService.findDeviceByTenantIdAndName(tenantId, deviceName);
                 if (device != null) {
-                    // device with this name already exists on the cloud - update ID on the edge
+                    log.info("[{}] Device with name '{}' already exists on the cloud. Updating id of device entity on the edge", tenantId, deviceName);
                     if (!device.getId().equals(edgeDeviceId)) {
-                        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, ActionType.ENTITY_EXISTS_REQUEST, device.getId(), null);
+                        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_EXISTS_REQUEST, device.getId(), null);
                     }
                 } else {
-                    device = createDevice(tenantId, edge, deviceUpdateMsg);
-                    saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, ActionType.ENTITY_EXISTS_REQUEST, device.getId(), null);
+                    Device deviceById = deviceService.findDeviceById(edge.getTenantId(), edgeDeviceId);
+                    if (deviceById != null) {
+                        log.info("[{}] Device ID [{}] already used by other device on the cloud. Creating new device and replacing device entity on the edge", tenantId, edgeDeviceId.getId());
+                        device = createDevice(tenantId, edge, deviceUpdateMsg);
 
-                    // TODO: voba - properly handle device credentials from edge to cloud
-                    // saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, ActionType.CREDENTIALS_REQUEST, device.getId(), null);
+                        // TODO: voba - properly handle device credentials from edge to cloud
+                        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_EXISTS_REQUEST, device.getId(), null);
+                    } else {
+                        device = createDevice(tenantId, edge, deviceUpdateMsg);
+                    }
                 }
                 // TODO: voba - assign device only in case device is not assigned yet. Missing functionality to check this relation prior assignment
                 deviceService.assignDeviceToEdge(edge.getTenantId(), device.getId(), edge.getId());
@@ -132,13 +139,14 @@ public class DeviceProcessor extends BaseProcessor {
         device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo()));
         deviceService.saveDevice(device);
 
-        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, ActionType.CREDENTIALS_REQUEST, deviceId, null);
+        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, deviceId, null);
     }
 
     private Device createDevice(TenantId tenantId, Edge edge, DeviceUpdateMsg deviceUpdateMsg) {
         Device device;
         try {
             deviceCreationLock.lock();
+            log.debug("[{}] Creating device entity [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getName());
             device = new Device();
             device.setTenantId(edge.getTenantId());
             device.setCustomerId(edge.getCustomerId());
@@ -152,6 +160,8 @@ public class DeviceProcessor extends BaseProcessor {
             createRelationFromEdge(tenantId, edge.getId(), device.getId());
             deviceStateService.onDeviceAdded(device);
             pushDeviceCreatedEventToRuleEngine(tenantId, edge, device);
+
+            // saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, deviceId, null);
         } finally {
             deviceCreationLock.unlock();
         }
@@ -184,23 +194,18 @@ public class DeviceProcessor extends BaseProcessor {
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
-                    // TODO: voba - handle success
                     log.debug("Successfully send ENTITY_CREATED EVENT to rule engine [{}]", device);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    // TODO: voba - handle failure
                     log.debug("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", device, t);
                 }
-
-                ;
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
             log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), DataConstants.ENTITY_CREATED, e);
         }
     }
-
 
     private TbMsgMetaData getActionTbMsgMetaData(Edge edge, CustomerId customerId) {
         TbMsgMetaData metaData = getTbMsgMetaData(edge);
@@ -210,7 +215,6 @@ public class DeviceProcessor extends BaseProcessor {
         return metaData;
     }
 
-
     private TbMsgMetaData getTbMsgMetaData(Edge edge) {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("edgeId", edge.getId().toString());
@@ -219,13 +223,16 @@ public class DeviceProcessor extends BaseProcessor {
     }
 
     public ListenableFuture<Void> processDeviceRpcCallResponseMsg(TenantId tenantId, DeviceRpcCallMsg deviceRpcCallMsg) {
+        log.trace("[{}] processDeviceRpcCallResponseMsg [{}]", tenantId, deviceRpcCallMsg);
         SettableFuture<Void> futureToSet = SettableFuture.create();
-        UUID uuid = new UUID(deviceRpcCallMsg.getRequestIdMSB(), deviceRpcCallMsg.getRequestIdLSB());
+        UUID requestUuid = new UUID(deviceRpcCallMsg.getRequestUuidMSB(), deviceRpcCallMsg.getRequestUuidLSB());
+        DeviceId deviceId = new DeviceId(new UUID(deviceRpcCallMsg.getDeviceIdMSB(), deviceRpcCallMsg.getDeviceIdLSB()));
+
         FromDeviceRpcResponse response;
         if (!StringUtils.isEmpty(deviceRpcCallMsg.getResponseMsg().getError())) {
-            response = new FromDeviceRpcResponse(uuid, null, RpcError.valueOf(deviceRpcCallMsg.getResponseMsg().getError()));
+            response = new FromDeviceRpcResponse(requestUuid, null, RpcError.valueOf(deviceRpcCallMsg.getResponseMsg().getError()));
         } else {
-            response = new FromDeviceRpcResponse(uuid, deviceRpcCallMsg.getResponseMsg().getResponse(), null);
+            response = new FromDeviceRpcResponse(requestUuid, deviceRpcCallMsg.getResponseMsg().getResponse(), null);
         }
         TbQueueCallback callback = new TbQueueCallback() {
             @Override
@@ -239,7 +246,11 @@ public class DeviceProcessor extends BaseProcessor {
                 futureToSet.setException(t);
             }
         };
-        tbClusterService.pushNotificationToCore(deviceRpcCallMsg.getOriginServiceId(), response, callback);
+        FromDeviceRpcResponseActorMsg msg =
+                new FromDeviceRpcResponseActorMsg(deviceRpcCallMsg.getRequestId(),
+                        tenantId,
+                        deviceId, response);
+        tbClusterService.pushMsgToCore(msg, callback);
         return futureToSet;
     }
 

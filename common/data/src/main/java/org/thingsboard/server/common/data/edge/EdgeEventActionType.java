@@ -13,19 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.rpc;
+package org.thingsboard.server.common.data.edge;
 
-import org.thingsboard.rule.engine.api.RuleEngineRpcService;
-
-/**
- * Created by ashvayka on 16.04.18.
- */
-public interface TbRuleEngineDeviceRpcService extends RuleEngineRpcService {
-
-    /**
-     * Handles the RPC response from the Device Actor (Transport).
-     *
-     * @param response the RPC response
-     */
-    void processRpcResponseFromDevice(FromDeviceRpcResponse response);
+public enum EdgeEventActionType {
+    ADDED,
+    DELETED,
+    UPDATED,
+    POST_ATTRIBUTES,
+    ATTRIBUTES_UPDATED,
+    ATTRIBUTES_DELETED,
+    TIMESERIES_UPDATED,
+    CREDENTIALS_UPDATED,
+    ASSIGNED_TO_CUSTOMER,
+    UNASSIGNED_FROM_CUSTOMER,
+    RELATION_ADD_OR_UPDATE,
+    RELATION_DELETED,
+    RPC_CALL,
+    ALARM_ACK,
+    ALARM_CLEAR,
+    ASSIGNED_TO_EDGE,
+    UNASSIGNED_FROM_EDGE,
+    CREDENTIALS_REQUEST,
+    ENTITY_EXISTS_REQUEST
 }

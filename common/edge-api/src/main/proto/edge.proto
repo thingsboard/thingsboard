@@ -105,7 +105,6 @@ message EntityDataProto {
   transport.PostAttributeMsg attributesUpdatedMsg = 6;
   string postAttributeScope = 7;
   AttributeDeleteMsg attributeDeleteMsg = 8;
-  // transport.ToDeviceRpcRequestMsg ???
 }
 
 message AttributeDeleteMsg {
@@ -337,11 +336,11 @@ message DeviceCredentialsRequestMsg {
 message DeviceRpcCallMsg {
   int64 deviceIdMSB = 1;
   int64 deviceIdLSB = 2;
-  int64 requestIdMSB = 3;
-  int64 requestIdLSB = 4;
-  int64 expirationTime = 5;
-  bool oneway = 6;
-  string originServiceId = 7;
+  int64 requestUuidMSB = 3;
+  int64 requestUuidLSB = 4;
+  int32 requestId = 5;
+  int64 expirationTime = 6;
+  bool oneway = 7;
   RpcRequestMsg requestMsg = 8;
   RpcResponseMsg responseMsg = 9;
 }

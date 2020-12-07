@@ -40,7 +40,7 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -162,7 +162,7 @@ public class EntityViewController extends BaseController {
                     entityView.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
             if (entityView.getId() != null) {
-                sendNotificationMsgToEdgeService(savedEntityView.getTenantId(), savedEntityView.getId(), ActionType.UPDATED);
+                sendNotificationMsgToEdgeService(savedEntityView.getTenantId(), savedEntityView.getId(), EdgeEventActionType.UPDATED);
             }
 
             return savedEntityView;
@@ -364,7 +364,7 @@ public class EntityViewController extends BaseController {
             logEntityAction(entityViewId, entityView, entityView.getCustomerId(),
                     ActionType.DELETED, null, strEntityViewId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), entityViewId, ActionType.DELETED);
+            sendNotificationMsgToEdgeService(getTenantId(), entityViewId, EdgeEventActionType.DELETED);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ENTITY_VIEW),
                     null,
@@ -407,7 +407,7 @@ public class EntityViewController extends BaseController {
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strEntityViewId, strCustomerId, customer.getName());
 
             sendNotificationMsgToEdgeService(savedEntityView.getTenantId(), savedEntityView.getId(),
-                    customerId, ActionType.ASSIGNED_TO_CUSTOMER);
+                    customerId, EdgeEventActionType.ASSIGNED_TO_CUSTOMER);
 
             return savedEntityView;
         } catch (Exception e) {
@@ -436,7 +436,7 @@ public class EntityViewController extends BaseController {
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strEntityViewId, customer.getId().toString(), customer.getName());
 
             sendNotificationMsgToEdgeService(savedEntityView.getTenantId(), savedEntityView.getId(),
-                    customer.getId(), ActionType.UNASSIGNED_FROM_CUSTOMER);
+                    customer.getId(), EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
 
             return savedEntityView;
         } catch (Exception e) {
@@ -629,7 +629,7 @@ public class EntityViewController extends BaseController {
                     savedEntityView.getCustomerId(),
                     ActionType.ASSIGNED_TO_EDGE, null, strEntityViewId, strEdgeId, edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedEntityView.getId(), ActionType.ASSIGNED_TO_EDGE);
+            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedEntityView.getId(), EdgeEventActionType.ASSIGNED_TO_EDGE);
 
             return savedEntityView;
         } catch (Exception e) {
@@ -657,15 +657,15 @@ public class EntityViewController extends BaseController {
             EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromEdge(getTenantId(), entityViewId, edgeId));
             logEntityAction(entityViewId, entityView,
                     entityView.getCustomerId(),
-                    ActionType.UNASSIGNED_FROM_EDGE, null, strEntityViewId, edge.getId().toString(), edge.getName());
+                    ActionType.UNASSIGNED_FROM_EDGE, null, strEntityViewId, strEdgeId, edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedEntityView.getId(), ActionType.UNASSIGNED_FROM_EDGE);
+            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedEntityView.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
 
             return savedEntityView;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ENTITY_VIEW), null,
                     null,
-                    ActionType.UNASSIGNED_FROM_EDGE, e, strEntityViewId);
+                    ActionType.UNASSIGNED_FROM_EDGE, e, strEntityViewId, strEdgeId);
             throw handleException(e);
         }
     }

@@ -160,7 +160,9 @@ public class TenantActor extends RuleChainManagerActor {
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG:
+            case DEVICE_EDGE_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
+            case DEVICE_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
             case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((DeviceAwareMsg) msg, true);
                 break;
@@ -252,7 +254,7 @@ public class TenantActor extends RuleChainManagerActor {
                 if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
                     RuleChain ruleChain = systemContext.getRuleChainService().
                             findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
-                    if (ruleChain != null && ruleChain.getType().equals(RuleChainType.CORE)) {
+                    if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {
                         visit(ruleChain, target);
                     }
                 }

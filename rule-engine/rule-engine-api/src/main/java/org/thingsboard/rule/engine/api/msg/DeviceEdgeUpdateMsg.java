@@ -13,38 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edge;
+package org.thingsboard.rule.engine.api.msg;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.id.EdgeEventId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
-
-import java.util.UUID;
+import org.thingsboard.server.common.msg.MsgType;
 
 @Data
-public class EdgeEvent extends BaseData<EdgeEventId> {
+@AllArgsConstructor
+public class DeviceEdgeUpdateMsg implements ToDeviceActorNotificationMsg {
 
-    private TenantId tenantId;
-    private EdgeId edgeId;
-    private EdgeEventActionType action;
-    private UUID entityId;
-    private String uid;
-    private EdgeEventType type;
-    private transient JsonNode body;
+    private final TenantId tenantId;
+    private final DeviceId deviceId;
+    private final EdgeId edgeId;
 
-    public EdgeEvent() {
-        super();
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.DEVICE_EDGE_UPDATE_TO_DEVICE_ACTOR_MSG;
     }
-
-    public EdgeEvent(EdgeEventId id) {
-        super(id);
-    }
-
-    public EdgeEvent(EdgeEvent event) {
-        super(event);
-    }
-
 }

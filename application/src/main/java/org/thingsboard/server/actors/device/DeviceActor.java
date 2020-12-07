@@ -17,6 +17,7 @@ package org.thingsboard.server.actors.device;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.rule.engine.api.msg.DeviceEdgeUpdateMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
+import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
@@ -70,11 +72,17 @@ public class DeviceActor extends ContextAwareActor {
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
                 processor.processRpcRequest(ctx, (ToDeviceRpcRequestActorMsg) msg);
                 break;
+            case DEVICE_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
+                processor.processRpcResponsesFromEdge(ctx, (FromDeviceRpcResponseActorMsg) msg);
+                break;
             case DEVICE_ACTOR_SERVER_SIDE_RPC_TIMEOUT_MSG:
                 processor.processServerSideRpcTimeout(ctx, (DeviceActorServerSideRpcTimeoutMsg) msg);
                 break;
             case SESSION_TIMEOUT_MSG:
                 processor.checkSessionsTimeout();
+                break;
+            case DEVICE_EDGE_UPDATE_TO_DEVICE_ACTOR_MSG:
+                processor.processEdgeUpdate((DeviceEdgeUpdateMsg) msg);
                 break;
             default:
                 return false;

@@ -346,7 +346,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
     }
 
-
     @Override
     public List<RuleNode> getRuleChainNodes(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id for search request.");

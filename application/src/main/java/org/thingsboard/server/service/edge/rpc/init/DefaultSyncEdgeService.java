@@ -39,9 +39,9 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -139,6 +139,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     @Override
     public void sync(Edge edge) {
+        log.trace("[{}] staring sync process for edge [{}]", edge.getTenantId(), edge.getName());
         try {
             syncWidgetsBundleAndWidgetTypes(edge);
             syncAdminSettings(edge);
@@ -154,13 +155,14 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncRuleChains(Edge edge) {
+        log.trace("[{}] syncRuleChains [{}]", edge.getTenantId(), edge.getName());
         try {
             PageData<RuleChain> pageData =
                     ruleChainService.findRuleChainsByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), new TimePageLink(Integer.MAX_VALUE));
             if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                 log.trace("[{}] [{}] rule chains(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
                 for (RuleChain ruleChain : pageData.getData()) {
-                    saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.RULE_CHAIN, ActionType.ADDED, ruleChain.getId(), null);
+                    saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.RULE_CHAIN, EdgeEventActionType.ADDED, ruleChain.getId(), null);
                 }
             }
         } catch (Exception e) {
@@ -169,13 +171,14 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncDevices(Edge edge) {
+        log.trace("[{}] syncDevices [{}]", edge.getTenantId(), edge.getName());
         try {
             PageData<Device> pageData =
                     deviceService.findDevicesByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), new TimePageLink(Integer.MAX_VALUE));
             if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                 log.trace("[{}] [{}] device(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
                 for (Device device : pageData.getData()) {
-                    saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.DEVICE, ActionType.ADDED, device.getId(), null);
+                    saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ADDED, device.getId(), null);
                 }
             }
         } catch (Exception e) {
@@ -184,12 +187,13 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncAssets(Edge edge) {
+        log.trace("[{}] syncAssets [{}]", edge.getTenantId(), edge.getName());
         try {
             PageData<Asset> pageData = assetService.findAssetsByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), new TimePageLink(Integer.MAX_VALUE));
             if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                 log.trace("[{}] [{}] asset(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
                 for (Asset asset : pageData.getData()) {
-                    saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ASSET, ActionType.ADDED, asset.getId(), null);
+                    saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ASSET, EdgeEventActionType.ADDED, asset.getId(), null);
                 }
             }
         } catch (Exception e) {
@@ -198,12 +202,13 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncEntityViews(Edge edge) {
+        log.trace("[{}] syncEntityViews [{}]", edge.getTenantId(), edge.getName());
         try {
             PageData<EntityView> pageData = entityViewService.findEntityViewsByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), new TimePageLink(Integer.MAX_VALUE));
             if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                 log.trace("[{}] [{}] entity view(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
                 for (EntityView entityView : pageData.getData()) {
-                    saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ENTITY_VIEW, ActionType.ADDED, entityView.getId(), null);
+                    saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ENTITY_VIEW, EdgeEventActionType.ADDED, entityView.getId(), null);
                 }
             }
         } catch (Exception e) {
@@ -212,12 +217,13 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncDashboards(Edge edge) {
+        log.trace("[{}] syncDashboards [{}]", edge.getTenantId(), edge.getName());
         try {
             PageData<DashboardInfo> pageData = dashboardService.findDashboardsByTenantIdAndEdgeId(edge.getTenantId(), edge.getId(), new TimePageLink(Integer.MAX_VALUE));
             if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                 log.trace("[{}] [{}] dashboard(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
                 for (DashboardInfo dashboardInfo : pageData.getData()) {
-                    saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.DASHBOARD, ActionType.ADDED, dashboardInfo.getId(), null);
+                    saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.DASHBOARD, EdgeEventActionType.ADDED, dashboardInfo.getId(), null);
                 }
             }
         } catch (Exception e) {
@@ -226,11 +232,12 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncUsers(Edge edge) {
+        log.trace("[{}] syncUsers [{}]", edge.getTenantId(), edge.getName());
         try {
             PageData<User> pageData = userService.findTenantAdmins(edge.getTenantId(), new PageLink(Integer.MAX_VALUE));
             pushUsersToEdge(pageData, edge);
             if (edge.getCustomerId() != null && !EntityId.NULL_UUID.equals(edge.getCustomerId().getId())) {
-                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.CUSTOMER, ActionType.ADDED, edge.getCustomerId(), null);
+                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.CUSTOMER, EdgeEventActionType.ADDED, edge.getCustomerId(), null);
                 pageData = userService.findCustomerUsers(edge.getTenantId(), edge.getCustomerId(), new PageLink(Integer.MAX_VALUE));
                 pushUsersToEdge(pageData, edge);
             }
@@ -240,17 +247,18 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncWidgetsBundleAndWidgetTypes(Edge edge) {
+        log.trace("[{}] syncWidgetsBundleAndWidgetTypes [{}]", edge.getTenantId(), edge.getName());
         List<WidgetsBundle> widgetsBundlesToPush = new ArrayList<>();
         List<WidgetType> widgetTypesToPush = new ArrayList<>();
         widgetsBundlesToPush.addAll(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(edge.getTenantId()));
         widgetsBundlesToPush.addAll(widgetsBundleService.findSystemWidgetsBundles(edge.getTenantId()));
         try {
             for (WidgetsBundle widgetsBundle: widgetsBundlesToPush) {
-                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.WIDGETS_BUNDLE, ActionType.ADDED, widgetsBundle.getId(), null);
+                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.WIDGETS_BUNDLE, EdgeEventActionType.ADDED, widgetsBundle.getId(), null);
                 widgetTypesToPush.addAll(widgetTypeService.findWidgetTypesByTenantIdAndBundleAlias(widgetsBundle.getTenantId(), widgetsBundle.getAlias()));
             }
             for (WidgetType widgetType: widgetTypesToPush) {
-                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.WIDGET_TYPE, ActionType.ADDED, widgetType.getId(), null);
+                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.WIDGET_TYPE, EdgeEventActionType.ADDED, widgetType.getId(), null);
             }
         } catch (Exception e) {
             log.error("Exception during loading widgets bundle(s) and widget type(s) on sync!", e);
@@ -258,15 +266,16 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     }
 
     private void syncAdminSettings(Edge edge) {
+        log.trace("[{}] syncAdminSettings [{}]", edge.getTenantId(), edge.getName());
         try {
             AdminSettings systemMailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
-            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, ActionType.UPDATED, null, mapper.valueToTree(systemMailSettings));
+            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, EdgeEventActionType.UPDATED, null, mapper.valueToTree(systemMailSettings));
             AdminSettings tenantMailSettings = convertToTenantAdminSettings(systemMailSettings.getKey(), (ObjectNode) systemMailSettings.getJsonValue());
-            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, ActionType.UPDATED, null, mapper.valueToTree(tenantMailSettings));
+            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, EdgeEventActionType.UPDATED, null, mapper.valueToTree(tenantMailSettings));
             AdminSettings systemMailTemplates = loadMailTemplates();
-            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, ActionType.UPDATED, null, mapper.valueToTree(systemMailTemplates));
+            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, EdgeEventActionType.UPDATED, null, mapper.valueToTree(systemMailTemplates));
             AdminSettings tenantMailTemplates = convertToTenantAdminSettings(systemMailTemplates.getKey(), (ObjectNode) systemMailTemplates.getJsonValue());
-            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, ActionType.UPDATED, null, mapper.valueToTree(tenantMailTemplates));
+            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.ADMIN_SETTINGS, EdgeEventActionType.UPDATED, null, mapper.valueToTree(tenantMailTemplates));
         } catch (Exception e) {
             log.error("Can't load admin settings", e);
         }
@@ -328,18 +337,19 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
             log.trace("[{}] [{}] user(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
             for (User user : pageData.getData()) {
-                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, ActionType.ADDED, user.getId(), null);
+                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, EdgeEventActionType.ADDED, user.getId(), null);
             }
         }
     }
 
     @Override
     public ListenableFuture<Void> processRuleChainMetadataRequestMsg(Edge edge, RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg) {
+        log.trace("[{}] processRuleChainMetadataRequestMsg [{}][{}]", edge.getTenantId(), edge.getName(), ruleChainMetadataRequestMsg);
         SettableFuture<Void> futureToSet = SettableFuture.create();
         if (ruleChainMetadataRequestMsg.getRuleChainIdMSB() != 0 && ruleChainMetadataRequestMsg.getRuleChainIdLSB() != 0) {
             RuleChainId ruleChainId =
                     new RuleChainId(new UUID(ruleChainMetadataRequestMsg.getRuleChainIdMSB(), ruleChainMetadataRequestMsg.getRuleChainIdLSB()));
-            ListenableFuture<EdgeEvent> future = saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.RULE_CHAIN_METADATA, ActionType.ADDED, ruleChainId, null);
+            ListenableFuture<EdgeEvent> future = saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.RULE_CHAIN_METADATA, EdgeEventActionType.ADDED, ruleChainId, null);
             Futures.addCallback(future, new FutureCallback<EdgeEvent>() {
                 @Override
                 public void onSuccess(@Nullable EdgeEvent result) {
@@ -358,6 +368,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     @Override
     public ListenableFuture<Void> processAttributesRequestMsg(Edge edge, AttributesRequestMsg attributesRequestMsg) {
+        log.trace("[{}] processAttributesRequestMsg [{}][{}]", edge.getTenantId(), edge.getName(), attributesRequestMsg);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(
                 EntityType.valueOf(attributesRequestMsg.getEntityType()),
                 new UUID(attributesRequestMsg.getEntityIdMSB(), attributesRequestMsg.getEntityIdLSB()));
@@ -390,7 +401,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
                                     saveEdgeEvent(edge.getTenantId(),
                                             edge.getId(),
                                             type,
-                                            ActionType.ATTRIBUTES_UPDATED,
+                                            EdgeEventActionType.ATTRIBUTES_UPDATED,
                                             entityId,
                                             body);
                                 } catch (Exception e) {
@@ -431,6 +442,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     @Override
     public ListenableFuture<Void> processRelationRequestMsg(Edge edge, RelationRequestMsg relationRequestMsg) {
+        log.trace("[{}] processRelationRequestMsg [{}][{}]", edge.getTenantId(), edge.getName(), relationRequestMsg);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(
                 EntityType.valueOf(relationRequestMsg.getEntityType()),
                 new UUID(relationRequestMsg.getEntityIdMSB(), relationRequestMsg.getEntityIdLSB()));
@@ -451,7 +463,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
                                     saveEdgeEvent(edge.getTenantId(),
                                             edge.getId(),
                                             EdgeEventType.RELATION,
-                                            ActionType.ADDED,
+                                            EdgeEventActionType.ADDED,
                                             null,
                                             mapper.valueToTree(relation));
                                 }
@@ -477,10 +489,11 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     @Override
     public ListenableFuture<Void> processDeviceCredentialsRequestMsg(Edge edge, DeviceCredentialsRequestMsg deviceCredentialsRequestMsg) {
+        log.trace("[{}] processDeviceCredentialsRequestMsg [{}][{}]", edge.getTenantId(), edge.getName(), deviceCredentialsRequestMsg);
         SettableFuture<Void> futureToSet = SettableFuture.create();
         if (deviceCredentialsRequestMsg.getDeviceIdMSB() != 0 && deviceCredentialsRequestMsg.getDeviceIdLSB() != 0) {
             DeviceId deviceId = new DeviceId(new UUID(deviceCredentialsRequestMsg.getDeviceIdMSB(), deviceCredentialsRequestMsg.getDeviceIdLSB()));
-            ListenableFuture<EdgeEvent> future = saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.DEVICE, ActionType.CREDENTIALS_UPDATED, deviceId, null);
+            ListenableFuture<EdgeEvent> future = saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_UPDATED, deviceId, null);
             Futures.addCallback(future, new FutureCallback<EdgeEvent>() {
                 @Override
                 public void onSuccess(@Nullable EdgeEvent result) {
@@ -499,10 +512,11 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     @Override
     public ListenableFuture<Void> processUserCredentialsRequestMsg(Edge edge, UserCredentialsRequestMsg userCredentialsRequestMsg) {
+        log.trace("[{}] processUserCredentialsRequestMsg [{}][{}]", edge.getTenantId(), edge.getName(), userCredentialsRequestMsg);
         SettableFuture<Void> futureToSet = SettableFuture.create();
         if (userCredentialsRequestMsg.getUserIdMSB() != 0 && userCredentialsRequestMsg.getUserIdLSB() != 0) {
             UserId userId = new UserId(new UUID(userCredentialsRequestMsg.getUserIdMSB(), userCredentialsRequestMsg.getUserIdLSB()));
-            ListenableFuture<EdgeEvent> future = saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, ActionType.CREDENTIALS_UPDATED, userId, null);
+            ListenableFuture<EdgeEvent> future = saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, EdgeEventActionType.CREDENTIALS_UPDATED, userId, null);
             Futures.addCallback(future, new FutureCallback<EdgeEvent>() {
                 @Override
                 public void onSuccess(@Nullable EdgeEvent result) {
@@ -522,17 +536,17 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     private ListenableFuture<EdgeEvent> saveEdgeEvent(TenantId tenantId,
                                EdgeId edgeId,
                                EdgeEventType type,
-                               ActionType action,
+                               EdgeEventActionType action,
                                EntityId entityId,
                                JsonNode body) {
-        log.debug("Pushing edge event to edge queue. tenantId [{}], edgeId [{}], type [{}], action[{}], entityId [{}], body [{}]",
+        log.trace("Pushing edge event to edge queue. tenantId [{}], edgeId [{}], type [{}], action[{}], entityId [{}], body [{}]",
                 tenantId, edgeId, type, action, entityId, body);
 
         EdgeEvent edgeEvent = new EdgeEvent();
         edgeEvent.setTenantId(tenantId);
         edgeEvent.setEdgeId(edgeId);
         edgeEvent.setType(type);
-        edgeEvent.setAction(action.name());
+        edgeEvent.setAction(action);
         if (entityId != null) {
             edgeEvent.setEntityId(entityId.getId());
         }

@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -95,7 +96,7 @@ public class AlarmController extends BaseController {
                     alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
             sendNotificationMsgToEdgeService(getTenantId(), savedAlarm.getId(),
-                    alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+                    alarm.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
 
             return savedAlarm;
         } catch (Exception e) {
@@ -114,7 +115,7 @@ public class AlarmController extends BaseController {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
             checkAlarmId(alarmId, Operation.WRITE);
 
-            sendNotificationMsgToEdgeService(getTenantId(), alarmId, ActionType.DELETED);
+            sendNotificationMsgToEdgeService(getTenantId(), alarmId, EdgeEventActionType.DELETED);
 
             return alarmService.deleteAlarm(getTenantId(), alarmId);
          } catch (Exception e) {
@@ -136,7 +137,7 @@ public class AlarmController extends BaseController {
             alarm.setStatus(alarm.getStatus().isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK);
             logEntityAction(alarm.getOriginator(), alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_ACK, null);
 
-            sendNotificationMsgToEdgeService(getTenantId(), alarmId, ActionType.ALARM_ACK);
+            sendNotificationMsgToEdgeService(getTenantId(), alarmId, EdgeEventActionType.ALARM_ACK);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -156,7 +157,7 @@ public class AlarmController extends BaseController {
             alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
             logEntityAction(alarm.getOriginator(), alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_CLEAR, null);
 
-            sendNotificationMsgToEdgeService(getTenantId(), alarmId, ActionType.ALARM_CLEAR);
+            sendNotificationMsgToEdgeService(getTenantId(), alarmId, EdgeEventActionType.ALARM_CLEAR);
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -27,7 +27,6 @@ public enum Resource {
     CUSTOMER(EntityType.CUSTOMER),
     DASHBOARD(EntityType.DASHBOARD),
     ENTITY_VIEW(EntityType.ENTITY_VIEW),
-    EDGE(EntityType.EDGE),
     TENANT(EntityType.TENANT),
     RULE_CHAIN(EntityType.RULE_CHAIN),
     USER(EntityType.USER),
@@ -37,7 +36,8 @@ public enum Resource {
     OAUTH2_CONFIGURATION_TEMPLATE(),
     TENANT_PROFILE(EntityType.TENANT_PROFILE),
     DEVICE_PROFILE(EntityType.DEVICE_PROFILE),
-    API_USAGE_STATE(EntityType.API_USAGE_STATE);
+    API_USAGE_STATE(EntityType.API_USAGE_STATE),
+    EDGE(EntityType.EDGE);
 
     private final EntityType entityType;
 

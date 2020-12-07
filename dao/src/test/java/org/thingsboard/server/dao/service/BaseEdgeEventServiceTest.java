@@ -18,9 +18,8 @@ package org.thingsboard.server.dao.service;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.Assert;
 import org.junit.Test;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeEventId;
@@ -42,7 +41,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
     public void saveEdgeEvent() throws Exception {
         EdgeId edgeId = new EdgeId(Uuids.timeBased());
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        EdgeEvent edgeEvent = generateEdgeEvent(null, edgeId, deviceId, DataConstants.ENTITY_CREATED);
+        EdgeEvent edgeEvent = generateEdgeEvent(null, edgeId, deviceId, EdgeEventActionType.ADDED);
         EdgeEvent saved = edgeEventService.saveAsync(edgeEvent).get();
         Assert.assertEquals(saved.getTenantId(), edgeEvent.getTenantId());
         Assert.assertEquals(saved.getEdgeId(), edgeEvent.getEdgeId());
@@ -52,7 +51,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertEquals(saved.getBody(), edgeEvent.getBody());
     }
 
-    protected EdgeEvent generateEdgeEvent(TenantId tenantId, EdgeId edgeId, EntityId entityId, String edgeEventAction) throws IOException {
+    protected EdgeEvent generateEdgeEvent(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType edgeEventAction) throws IOException {
         if (tenantId == null) {
             tenantId = new TenantId(Uuids.timeBased());
         }
@@ -109,7 +108,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
         TenantId tenantId = new TenantId(Uuids.timeBased());
         TimePageLink pageLink = new TimePageLink(1);
 
-        EdgeEvent edgeEventWithTsUpdate = generateEdgeEvent(tenantId, edgeId, deviceId, ActionType.TIMESERIES_UPDATED.name());
+        EdgeEvent edgeEventWithTsUpdate = generateEdgeEvent(tenantId, edgeId, deviceId, EdgeEventActionType.TIMESERIES_UPDATED);
         edgeEventService.saveAsync(edgeEventWithTsUpdate).get();
 
         PageData<EdgeEvent> allEdgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, true);
@@ -123,7 +122,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
     }
 
     private EdgeEvent saveEdgeEventWithProvidedTime(long time, EdgeId edgeId, EntityId entityId, TenantId tenantId) throws Exception {
-        EdgeEvent edgeEvent = generateEdgeEvent(tenantId, edgeId, entityId, DataConstants.ENTITY_CREATED);
+        EdgeEvent edgeEvent = generateEdgeEvent(tenantId, edgeId, entityId, EdgeEventActionType.ADDED);
         edgeEvent.setId(new EdgeEventId(Uuids.startOf(time)));
         return edgeEventService.saveAsync(edgeEvent).get();
     }
