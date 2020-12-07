@@ -25,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -34,6 +35,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -56,8 +58,10 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
@@ -118,6 +122,9 @@ public class AccessValidator {
     @Autowired
     protected AccessControlService accessControlService;
 
+    @Autowired
+    protected ApiUsageStateService apiUsageStateService;
+
     private ExecutorService executor;
 
     @PostConstruct
@@ -159,7 +166,11 @@ public class AccessValidator {
                 new FutureCallback<DeferredResult<ResponseEntity>>() {
                     @Override
                     public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
-                        onSuccess.accept(response, currentUser.getTenantId(), entityId);
+                        try {
+                            onSuccess.accept(response, currentUser.getTenantId(), entityId);
+                        } catch (Exception e) {
+                            onFailure(e);
+                        }
                     }
 
                     @Override
@@ -203,6 +214,9 @@ public class AccessValidator {
             case EDGE:
                 validateEdge(currentUser, operation, entityId, callback);
                 return;
+            case API_USAGE_STATE:
+                validateApiUsageState(currentUser, operation, entityId, callback);
+                return;
             default:
                 //TODO: add support of other entities
                 throw new IllegalStateException("Not Implemented!");
@@ -243,6 +257,27 @@ public class AccessValidator {
                     callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
                 }
                 callback.onSuccess(ValidationResult.ok(deviceProfile));
+            }
+        }
+    }
+
+    private void validateApiUsageState(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
+        if (currentUser.isSystemAdmin()) {
+            callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
+        } else {
+            if (!operation.equals(Operation.READ_TELEMETRY)) {
+                callback.onSuccess(ValidationResult.accessDenied("Allowed only READ_TELEMETRY operation!"));
+            }
+            ApiUsageState apiUsageState = apiUsageStateService.findApiUsageStateById(currentUser.getTenantId(), new ApiUsageStateId(entityId.getId()));
+            if (apiUsageState == null) {
+                callback.onSuccess(ValidationResult.entityNotFound("Api Usage State with requested id wasn't found!"));
+            } else {
+                try {
+                    accessControlService.checkPermission(currentUser, Resource.API_USAGE_STATE, operation, entityId, apiUsageState);
+                } catch (ThingsboardException e) {
+                    callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                }
+                callback.onSuccess(ValidationResult.ok(apiUsageState));
             }
         }
     }
@@ -434,9 +469,9 @@ public class AccessValidator {
 
     public static void handleError(Throwable e, final DeferredResult<ResponseEntity> response, HttpStatus defaultErrorStatus) {
         ResponseEntity responseEntity;
-        if (e != null && e instanceof ToErrorResponseEntity) {
+        if (e instanceof ToErrorResponseEntity) {
             responseEntity = ((ToErrorResponseEntity) e).toErrorResponseEntity();
-        } else if (e != null && e instanceof IllegalArgumentException) {
+        } else if (e instanceof IllegalArgumentException || e instanceof IncorrectParameterException) {
             responseEntity = new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } else {
             responseEntity = new ResponseEntity<>(defaultErrorStatus);

@@ -113,62 +113,10 @@ security:
   basic:
     enabled: "${SECURITY_BASIC_ENABLED:false}"
   oauth2:
-    # Enable/disable OAuth 2 login functionality
-    # For details please refer to https://thingsboard.io/docs/user-guide/oauth-2-support/
-    enabled: "${SECURITY_OAUTH2_ENABLED:false}"
     # Redirect URL where access code from external user management system will be processed
     loginProcessingUrl: "${SECURITY_OAUTH2_LOGIN_PROCESSING_URL:/login/oauth2/code/}"
-    # List of SSO clients
-    clients:
-      default:
-        # Label that going to be show on login button - 'Login with {loginButtonLabel}'
-        loginButtonLabel: "${SECURITY_OAUTH2_DEFAULT_LOGIN_BUTTON_LABEL:Default}"
-        # Icon that going to be show on login button. Material design icon ID (https://material.angularjs.org/latest/api/directive/mdIcon)
-        loginButtonIcon: "${SECURITY_OAUTH2_DEFAULT_LOGIN_BUTTON_ICON:}"
-        clientName: "${SECURITY_OAUTH2_DEFAULT_CLIENT_NAME:ClientName}"
-        clientId: "${SECURITY_OAUTH2_DEFAULT_CLIENT_ID:}"
-        clientSecret: "${SECURITY_OAUTH2_DEFAULT_CLIENT_SECRET:}"
-        accessTokenUri: "${SECURITY_OAUTH2_DEFAULT_ACCESS_TOKEN_URI:}"
-        authorizationUri: "${SECURITY_OAUTH2_DEFAULT_AUTHORIZATION_URI:}"
-        scope: "${SECURITY_OAUTH2_DEFAULT_SCOPE:}"
-        # Redirect URL that must be in sync with 'security.oauth2.loginProcessingUrl', but domain name added
-        redirectUriTemplate: "${SECURITY_OAUTH2_DEFAULT_REDIRECT_URI_TEMPLATE:http://localhost:8080/login/oauth2/code/}"
-        jwkSetUri: "${SECURITY_OAUTH2_DEFAULT_JWK_SET_URI:}"
-        # 'authorization_code', 'implicit', 'refresh_token' or 'client_credentials'
-        authorizationGrantType: "${SECURITY_OAUTH2_DEFAULT_AUTHORIZATION_GRANT_TYPE:authorization_code}"
-        clientAuthenticationMethod: "${SECURITY_OAUTH2_DEFAULT_CLIENT_AUTHENTICATION_METHOD:post}" # basic or post
-        userInfoUri: "${SECURITY_OAUTH2_DEFAULT_USER_INFO_URI:}"
-        userNameAttributeName: "${SECURITY_OAUTH2_DEFAULT_USER_NAME_ATTRIBUTE_NAME:email}"
-        mapperConfig:
-          # Allows to create user if it not exists
-          allowUserCreation: "${SECURITY_OAUTH2_DEFAULT_MAPPER_ALLOW_USER_CREATION:true}"
-          # Allows user to setup ThingsBoard internal password and login over default Login window
-          activateUser: "${SECURITY_OAUTH2_DEFAULT_MAPPER_ACTIVATE_USER:false}"
-          # Mapper type of converter from external user into internal - 'basic' or 'custom'
-          type: "${SECURITY_OAUTH2_DEFAULT_MAPPER_TYPE:basic}"
-          basic:
-            # Key from attributes of external user object to use as email
-            emailAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_EMAIL_ATTRIBUTE_KEY:email}"
-            firstNameAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_FIRST_NAME_ATTRIBUTE_KEY:}"
-            lastNameAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_LAST_NAME_ATTRIBUTE_KEY:}"
-            # Strategy for generating Tenant from external user object - 'domain', 'email' or 'custom'
-            # 'domain' - name of the Tenant will be extracted as domain from the email of the user
-            # 'email' - name of the Tenant will email of the user
-            # 'custom' - please configure 'tenantNamePattern' for custom mapping
-            tenantNameStrategy: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_TENANT_NAME_STRATEGY:domain}"
-            # %{attribute_key} as placeholder for attribute value of attributes of external user object
-            tenantNamePattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_TENANT_NAME_PATTERN:}"
-            # If this field is not empty, user will be created as a user under defined Customer
-            # %{attribute_key} as placeholder for attribute value of attributes of external user object
-            customerNamePattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_CUSTOMER_NAME_PATTERN:}"
-            # If this field is not empty, user will be created with default defined Dashboard
-            defaultDashboardName: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_DEFAULT_DASHBOARD_NAME:}"
-            # If this field is set 'true' along with non-empty 'defaultDashboardName', user will start from the defined Dashboard in fullscreen mode
-            alwaysFullScreen: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_ALWAYS_FULL_SCREEN:false}"
-          custom:
-            url: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_URL:}"
-            username: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_USERNAME:}"
-            password: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_PASSWORD:}"
+    githubMapper:
+      emailUrl: "${SECURITY_OAUTH2_GITHUB_MAPPER_EMAIL_URL_KEY:https://api.github.com/user/emails}"
 
 # Dashboard parameters
 dashboard:
@@ -337,8 +285,12 @@ actors:
     js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:50}"
     # Specify thread pool size for mail sender executor service
     mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:50}"
+    # Specify thread pool size for sms sender executor service
+    sms_thread_pool_size: "${ACTORS_RULE_SMS_THREAD_POOL_SIZE:50}"
     # Whether to allow usage of system mail service for rules
     allow_system_mail_service: "${ACTORS_RULE_ALLOW_SYSTEM_MAIL_SERVICE:true}"
+    # Whether to allow usage of system sms service for rules
+    allow_system_sms_service: "${ACTORS_RULE_ALLOW_SYSTEM_SMS_SERVICE:true}"
     # Specify thread pool size for external call service
     external_call_thread_pool_size: "${ACTORS_RULE_EXTERNAL_CALL_THREAD_POOL_SIZE:50}"
     chain:
@@ -562,7 +514,7 @@ js:
   remote:
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
-    # Maximum time in seconds for black listed function to stay in the list.
+    # Maximum time in seconds for black listed function to stay in 1:the list.
     max_black_list_duration_sec: "${REMOTE_JS_SANDBOX_MAX_BLACKLIST_DURATION_SEC:60}"
     stats:
       enabled: "${TB_JS_REMOTE_STATS_ENABLED:false}"
@@ -572,10 +524,6 @@ transport:
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
-  rate_limits:
-    enabled: "${TB_TRANSPORT_RATE_LIMITS_ENABLED:false}"
-    tenant: "${TB_TRANSPORT_RATE_LIMITS_TENANT:1000:1,20000:60}"
-    device: "${TB_TRANSPORT_RATE_LIMITS_DEVICE:10:1,300:60}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
     type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
@@ -674,6 +622,7 @@ queue:
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
     replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
+    max_poll_interval_ms: "${TB_QUEUE_KAFKA_MAX_POLL_INTERVAL_MS:0}"
     max_poll_records: "${TB_QUEUE_KAFKA_MAX_POLL_RECORDS:8192}"
     max_partition_fetch_bytes: "${TB_QUEUE_KAFKA_MAX_PARTITION_FETCH_BYTES:16777216}"
     fetch_max_bytes: "${TB_QUEUE_KAFKA_FETCH_MAX_BYTES:134217728}"
@@ -756,6 +705,7 @@ queue:
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
     pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
+    usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
     stats:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
@@ -847,7 +797,6 @@ metrics:
   timer:
     # Metrics percentiles returned by actuator for timer metrics. List of double values (divided by ,).
     percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
-
 
 management:
   endpoints:

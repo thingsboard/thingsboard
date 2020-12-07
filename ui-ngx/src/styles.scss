@@ -41,7 +41,7 @@ body, html {
 body {
   margin: 0;
   padding: 0;
-  background-color: rgb(250,250,250);
+  background-color: #eee;
   overflow: hidden;
 }
 
@@ -331,6 +331,9 @@ pre.tb-highlight {
   font-weight: 400;
   line-height: 18px;
   color: rgba(0, 0, 0, .38);
+  &.required {
+    color: rgb(221, 44, 0);
+  }
 }
 
 .tb-fullscreen {
@@ -869,10 +872,7 @@ mat-label {
       }
       .mat-dialog-actions {
         margin-bottom: 0;
-        padding: 8px 8px 8px 16px;
-        button:last-of-type{
-          margin-right: 20px;
-        }
+        padding: 8px;
       }
     }
   }

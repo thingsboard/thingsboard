@@ -202,6 +202,9 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " THEN (select additional_info from entity_view where id = entity_id)" +
             " END as additional_info";
 
+    private static final String SELECT_API_USAGE_STATE = "(select aus.id, aus.created_time, aus.tenant_id, '13814000-1dd2-11b2-8080-808080808080'::uuid as customer_id, " +
+            "(select title from tenant where id = aus.tenant_id) as name from api_usage_state as aus)";
+
     static {
         entityTableMap.put(EntityType.ASSET, "asset");
         entityTableMap.put(EntityType.DEVICE, "device");
@@ -210,6 +213,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.CUSTOMER, "customer");
         entityTableMap.put(EntityType.USER, "tb_user");
         entityTableMap.put(EntityType.TENANT, "tenant");
+        entityTableMap.put(EntityType.API_USAGE_STATE, SELECT_API_USAGE_STATE);
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
@@ -431,6 +435,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case DEVICE_SEARCH_QUERY:
             case ASSET_SEARCH_QUERY:
             case ENTITY_VIEW_SEARCH_QUERY:
+            case API_USAGE_STATE:
                 return "";
             default:
                 throw new RuntimeException("Not implemented!");
@@ -472,13 +477,13 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         if (entityFilter.isFetchLastLevelOnly()) {
             String fromOrTo = (entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "from" : "to");
             StringBuilder notExistsPart = new StringBuilder();
-            notExistsPart.append(" NOT EXISTS (SELECT 1 from relation nr where ")
+            notExistsPart.append(" NOT EXISTS (SELECT 1 from relation nr ")
+                    .append(whereFilter.replaceAll("re\\.", "nr\\."))
+                    .append(" and ")
                     .append("nr.").append(fromOrTo).append("_id").append(" = re.").append(toOrFrom).append("_id")
                     .append(" and ")
                     .append("nr.").append(fromOrTo).append("_type").append(" = re.").append(toOrFrom).append("_type");
-            if (!StringUtils.isEmpty(entityFilter.getRelationType())) {
-                notExistsPart.append(" and nr.relation_type = :where_relation_type");
-            }
+
             notExistsPart.append(")");
             whereFilter += " and ( re.lvl = " + entityFilter.getMaxLevel() + " OR " + notExistsPart.toString() + ")";
         }
@@ -551,12 +556,12 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
             StringBuilder notExistsPart = new StringBuilder();
             notExistsPart.append(" NOT EXISTS (SELECT 1 from relation nr WHERE ");
-            notExistsPart.append(whereFilter.toString());
             notExistsPart
-                    .append(" and ")
                     .append("nr.").append(fromOrTo).append("_id").append(" = re.").append(toOrFrom).append("_id")
                     .append(" and ")
-                    .append("nr.").append(fromOrTo).append("_type").append(" = re.").append(toOrFrom).append("_type");
+                    .append("nr.").append(fromOrTo).append("_type").append(" = re.").append(toOrFrom).append("_type")
+                    .append(" and ")
+                    .append(whereFilter.toString().replaceAll("re\\.", "nr\\."));
 
             notExistsPart.append(")");
             whereFilter.append(" and ( re.lvl = ").append(entityFilter.getMaxLevel()).append(" OR ").append(notExistsPart.toString()).append(")");
@@ -682,6 +687,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 return EntityType.ENTITY_VIEW;
             case RELATIONS_QUERY:
                 return ((RelationsQueryFilter) entityFilter).getRootEntity().getEntityType();
+            case API_USAGE_STATE:
+                return EntityType.API_USAGE_STATE;
             default:
                 throw new RuntimeException("Not implemented!");
         }

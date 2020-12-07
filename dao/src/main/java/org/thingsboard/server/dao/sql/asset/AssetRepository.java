@@ -132,4 +132,5 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
                                               @Param("searchText") String searchText,
                                               Pageable pageable);
 
+    Long countByTenantIdAndTypeIsNot(UUID tenantId, String type);
 }

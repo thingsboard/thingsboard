@@ -36,16 +36,23 @@ import {
   DeviceProfile,
   DeviceProfileType,
   deviceProfileTypeTranslationMap,
+  DeviceProvisionConfiguration,
+  DeviceProvisionType,
   DeviceTransportType,
+  deviceTransportTypeHintMap,
   deviceTransportTypeTranslationMap
 } from '@shared/models/device.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { MatHorizontalStepper } from '@angular/material/stepper';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
+import { StepperSelectionEvent } from '@angular/cdk/stepper';
+import { deepTrim } from '@core/utils';
+import {ServiceType} from "@shared/models/queue.models";
 
 export interface AddDeviceProfileDialogData {
   deviceProfileName: string;
+  transportType: DeviceTransportType;
 }
 
 @Component({
@@ -61,11 +68,15 @@ export class AddDeviceProfileDialogComponent extends
 
   selectedIndex = 0;
 
+  showNext = true;
+
   entityType = EntityType;
 
   deviceProfileTypes = Object.keys(DeviceProfileType);
 
   deviceProfileTypeTranslations = deviceProfileTypeTranslationMap;
+
+  deviceTransportTypeHints = deviceTransportTypeHintMap;
 
   deviceTransportTypes = Object.keys(DeviceTransportType);
 
@@ -76,6 +87,10 @@ export class AddDeviceProfileDialogComponent extends
   transportConfigFormGroup: FormGroup;
 
   alarmRulesFormGroup: FormGroup;
+
+  provisionConfigFormGroup: FormGroup;
+
+  serviceType = ServiceType.TB_RULE_ENGINE;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -92,12 +107,13 @@ export class AddDeviceProfileDialogComponent extends
         name: [data.deviceProfileName, [Validators.required]],
         type: [DeviceProfileType.DEFAULT, [Validators.required]],
         defaultRuleChainId: [null, []],
+        defaultQueueName: ['', []],
         description: ['', []]
       }
     );
     this.transportConfigFormGroup = this.fb.group(
       {
-        transportType: [DeviceTransportType.DEFAULT, [Validators.required]],
+        transportType: [data.transportType ? data.transportType : DeviceTransportType.DEFAULT, [Validators.required]],
         transportConfiguration: [createDeviceProfileTransportConfiguration(DeviceTransportType.DEFAULT),
           [Validators.required]]
       }
@@ -109,6 +125,14 @@ export class AddDeviceProfileDialogComponent extends
     this.alarmRulesFormGroup = this.fb.group(
       {
         alarms: [null]
+      }
+    );
+
+    this.provisionConfigFormGroup = this.fb.group(
+      {
+        provisionConfiguration: [{
+          type: DeviceProvisionType.DISABLED
+        } as DeviceProvisionConfiguration, [Validators.required]]
       }
     );
   }
@@ -131,7 +155,7 @@ export class AddDeviceProfileDialogComponent extends
   }
 
   nextStep() {
-    if (this.selectedIndex < 2) {
+    if (this.selectedIndex < 3) {
       this.addDeviceProfileStepper.next();
     } else {
       this.add();
@@ -146,28 +170,76 @@ export class AddDeviceProfileDialogComponent extends
         return this.transportConfigFormGroup;
       case 2:
         return this.alarmRulesFormGroup;
+      case 3:
+        return this.provisionConfigFormGroup;
     }
   }
 
-  private add(): void {
-    const deviceProfile: DeviceProfile = {
-      name: this.deviceProfileDetailsFormGroup.get('name').value,
-      type: this.deviceProfileDetailsFormGroup.get('type').value,
-      transportType: this.transportConfigFormGroup.get('transportType').value,
-      description: this.deviceProfileDetailsFormGroup.get('description').value,
-      profileData: {
-        configuration: createDeviceProfileConfiguration(DeviceProfileType.DEFAULT),
-        transportConfiguration: this.transportConfigFormGroup.get('transportConfiguration').value,
-        alarms: this.alarmRulesFormGroup.get('alarms').value
+  add(): void {
+    if (this.allValid()) {
+      const deviceProvisionConfiguration: DeviceProvisionConfiguration = this.provisionConfigFormGroup.get('provisionConfiguration').value;
+      const provisionDeviceKey = deviceProvisionConfiguration.provisionDeviceKey;
+      delete deviceProvisionConfiguration.provisionDeviceKey;
+      const deviceProfile: DeviceProfile = {
+        name: this.deviceProfileDetailsFormGroup.get('name').value,
+        type: this.deviceProfileDetailsFormGroup.get('type').value,
+        transportType: this.transportConfigFormGroup.get('transportType').value,
+        provisionType: deviceProvisionConfiguration.type,
+        provisionDeviceKey,
+        description: this.deviceProfileDetailsFormGroup.get('description').value,
+        profileData: {
+          configuration: createDeviceProfileConfiguration(DeviceProfileType.DEFAULT),
+          transportConfiguration: this.transportConfigFormGroup.get('transportConfiguration').value,
+          alarms: this.alarmRulesFormGroup.get('alarms').value,
+          provisionConfiguration: deviceProvisionConfiguration
+        }
+      };
+      if (this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value) {
+        deviceProfile.defaultRuleChainId = new RuleChainId(this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value);
       }
-    };
-    if (this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value) {
-      deviceProfile.defaultRuleChainId = new RuleChainId(this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value);
+      this.deviceProfileService.saveDeviceProfile(deepTrim(deviceProfile)).subscribe(
+        (savedDeviceProfile) => {
+          this.dialogRef.close(savedDeviceProfile);
+        }
+      );
     }
-    this.deviceProfileService.saveDeviceProfile(deviceProfile).subscribe(
-      (savedDeviceProfile) => {
-        this.dialogRef.close(savedDeviceProfile);
+  }
+
+  getFormLabel(index: number): string {
+    switch (index) {
+      case 0:
+        return 'device-profile.device-profile-details';
+      case 1:
+        return 'device-profile.transport-configuration';
+      case 2:
+        return 'device-profile.alarm-rules';
+      case 3:
+        return 'device-profile.device-provisioning';
+    }
+  }
+
+  changeStep($event: StepperSelectionEvent): void {
+    this.selectedIndex = $event.selectedIndex;
+    if (this.selectedIndex === this.maxStepperIndex) {
+      this.showNext = false;
+    } else {
+      this.showNext = true;
+    }
+  }
+
+  private get maxStepperIndex(): number {
+    return this.addDeviceProfileStepper?._steps?.length - 1;
+  }
+
+  allValid(): boolean {
+    return !this.addDeviceProfileStepper.steps.find((item, index) => {
+      if (item.stepControl.invalid) {
+        item.interacted = true;
+        this.addDeviceProfileStepper.selectedIndex = index;
+        return true;
+      } else {
+        return false;
       }
-    );
+    });
   }
 }

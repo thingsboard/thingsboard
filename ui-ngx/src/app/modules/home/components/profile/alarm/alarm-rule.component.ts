@@ -25,10 +25,14 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { AlarmConditionType, AlarmConditionTypeTranslationMap, AlarmRule } from '@shared/models/device.models';
+import { AlarmRule } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
-import { TimeUnit, timeUnitTranslationMap } from '@shared/models/time/time.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { isDefinedAndNotNull } from '@core/utils';
+import {
+  EditAlarmDetailsDialogComponent,
+  EditAlarmDetailsDialogData
+} from '@home/components/profile/alarm/edit-alarm-details-dialog.component';
 
 @Component({
   selector: 'tb-alarm-rule',
@@ -49,12 +53,6 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 })
 export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validator {
 
-  timeUnits = Object.keys(TimeUnit);
-  timeUnitTranslations = timeUnitTranslationMap;
-  alarmConditionTypes = Object.keys(AlarmConditionType);
-  AlarmConditionType = AlarmConditionType;
-  alarmConditionTypeTranslation = AlarmConditionTypeTranslationMap;
-
   @Input()
   disabled: boolean;
 
@@ -71,6 +69,8 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
 
   alarmRuleFormGroup: FormGroup;
 
+  expandAlarmDetails = false;
+
   private propagateChange = (v: any) => { };
 
   constructor(private dialog: MatDialog,
@@ -86,20 +86,9 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
 
   ngOnInit() {
     this.alarmRuleFormGroup = this.fb.group({
-      condition:  this.fb.group({
-        condition: [null, Validators.required],
-        spec: this.fb.group({
-          type: [AlarmConditionType.SIMPLE, Validators.required],
-          unit: [{value: null, disable: true}, Validators.required],
-          value: [{value: null, disable: true}, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]],
-          count: [{value: null, disable: true}, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]]
-        })
-      }, Validators.required),
+      condition: [null, [Validators.required]],
       schedule: [null],
       alarmDetails: [null]
-    });
-    this.alarmRuleFormGroup.get('condition.spec.type').valueChanges.subscribe((type) => {
-      this.updateValidators(type, true, true);
     });
     this.alarmRuleFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -117,13 +106,26 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
 
   writeValue(value: AlarmRule): void {
     this.modelValue = value;
-    if (this.modelValue?.condition?.spec === null) {
-      this.modelValue.condition.spec = {
-        type: AlarmConditionType.SIMPLE
-      };
-    }
     this.alarmRuleFormGroup.reset(this.modelValue || undefined, {emitEvent: false});
-    this.updateValidators(this.modelValue?.condition?.spec?.type);
+  }
+
+  public openEditDetailsDialog($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<EditAlarmDetailsDialogComponent, EditAlarmDetailsDialogData,
+          string>(EditAlarmDetailsDialogComponent, {
+          disableClose: true,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          data: {
+            alarmDetails: this.alarmRuleFormGroup.get('alarmDetails').value,
+            readonly: this.disabled
+          }
+        }).afterClosed().subscribe((alarmDetails) => {
+          if (isDefinedAndNotNull(alarmDetails)) {
+            this.alarmRuleFormGroup.patchValue({alarmDetails});
+          }
+    });
   }
 
   public validate(c: FormControl) {
@@ -132,47 +134,6 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
         valid: false,
       },
     };
-  }
-
-  private updateValidators(type: AlarmConditionType, resetDuration = false, emitEvent = false) {
-    switch (type) {
-      case AlarmConditionType.DURATION:
-        this.alarmRuleFormGroup.get('condition.spec.value').enable();
-        this.alarmRuleFormGroup.get('condition.spec.unit').enable();
-        this.alarmRuleFormGroup.get('condition.spec.count').disable();
-        if (resetDuration) {
-          this.alarmRuleFormGroup.get('condition.spec').patchValue({
-            count: null
-          });
-        }
-        break;
-      case AlarmConditionType.REPEATING:
-        this.alarmRuleFormGroup.get('condition.spec.count').enable();
-        this.alarmRuleFormGroup.get('condition.spec.value').disable();
-        this.alarmRuleFormGroup.get('condition.spec.unit').disable();
-        if (resetDuration) {
-          this.alarmRuleFormGroup.get('condition.spec').patchValue({
-            value: null,
-            unit: null
-          });
-        }
-        break;
-      case AlarmConditionType.SIMPLE:
-        this.alarmRuleFormGroup.get('condition.spec.value').disable();
-        this.alarmRuleFormGroup.get('condition.spec.unit').disable();
-        this.alarmRuleFormGroup.get('condition.spec.count').disable();
-        if (resetDuration) {
-          this.alarmRuleFormGroup.get('condition.spec').patchValue({
-            value: null,
-            unit: null,
-            count: null
-          });
-        }
-        break;
-    }
-    this.alarmRuleFormGroup.get('condition.spec.value').updateValueAndValidity({emitEvent});
-    this.alarmRuleFormGroup.get('condition.spec.unit').updateValueAndValidity({emitEvent});
-    this.alarmRuleFormGroup.get('condition.spec.count').updateValueAndValidity({emitEvent});
   }
 
   private updateModel() {

@@ -194,6 +194,7 @@ public class ThingsboardInstallService {
                             dataUpdateService.updateData("3.1.1");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
+                            systemDataLoaderService.createOAuth2Templates();
                             break;
                         default:
                             throw new RuntimeException("Unable to upgrade ThingsBoard, unsupported fromVersion: " + upgradeFromVersion);
@@ -226,6 +227,7 @@ public class ThingsboardInstallService {
                 systemDataLoaderService.createDefaultTenantProfiles();
                 systemDataLoaderService.createAdminSettings();
                 systemDataLoaderService.loadSystemWidgets();
+                systemDataLoaderService.createOAuth2Templates();
 //                systemDataLoaderService.loadSystemPlugins();
 //                systemDataLoaderService.loadSystemRules();
 

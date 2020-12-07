@@ -960,8 +960,8 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private updateAlarmDataSubscription() {
     if (this.alarmDataListener) {
-      const pageLink = this.alarmDataListener.subscription.alarmDataSubscriptionOptions.pageLink;
-      const keyFilters = this.alarmDataListener.subscription.alarmDataSubscriptionOptions.additionalKeyFilters;
+      const pageLink = this.alarmDataListener.alarmDataSubscriptionOptions.pageLink;
+      const keyFilters = this.alarmDataListener.alarmDataSubscriptionOptions.additionalKeyFilters;
       this.subscribeForAlarms(pageLink, keyFilters);
     }
   }
@@ -1226,9 +1226,6 @@ export class WidgetSubscription implements IWidgetSubscription {
         });
       });
     }
-    if (this.displayLegend) {
-      this.legendData.keys = this.legendData.keys.sort((key1, key2) => key1.dataKey.label.localeCompare(key2.dataKey.label));
-    }
     if (this.caulculateLegendData) {
       this.data.forEach((dataSetHolder, keyIndex) => {
         this.updateLegend(keyIndex, dataSetHolder.data, false);
@@ -1241,6 +1238,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     return datasource.dataKeys.map((dataKey, keyIndex) => {
       dataKey.hidden = !!dataKey.settings.hideDataByDefault;
       dataKey.inLegend = !dataKey.settings.removeFromLegend;
+      dataKey.label = this.ctx.utils.customTranslation(dataKey.label, dataKey.label);
       if (this.comparisonEnabled && dataKey.isAdditional && dataKey.settings.comparisonSettings.comparisonValuesLabel) {
          dataKey.label = createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
       } else {

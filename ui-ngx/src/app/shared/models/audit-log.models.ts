@@ -52,6 +52,8 @@ export enum ActionType {
   LOCKOUT = 'LOCKOUT',
   ASSIGNED_FROM_TENANT = 'ASSIGNED_FROM_TENANT',
   ASSIGNED_TO_TENANT = 'ASSIGNED_TO_TENANT',
+  PROVISION_SUCCESS = 'PROVISION_SUCCESS',
+  PROVISION_FAILURE = 'PROVISION_FAILURE',
   ASSIGNED_TO_EDGE = 'ASSIGNED_TO_EDGE',
   UNASSIGNED_FROM_EDGE = 'UNASSIGNED_FROM_EDGE'
 }
@@ -86,6 +88,8 @@ export const actionTypeTranslations = new Map<ActionType, string>(
     [ActionType.LOCKOUT, 'audit-log.type-lockout'],
     [ActionType.ASSIGNED_FROM_TENANT, 'audit-log.type-assigned-from-tenant'],
     [ActionType.ASSIGNED_TO_TENANT, 'audit-log.type-assigned-to-tenant'],
+    [ActionType.PROVISION_SUCCESS, 'audit-log.type-provision-success'],
+    [ActionType.PROVISION_FAILURE, 'audit-log.type-provision-failure'],
     [ActionType.ASSIGNED_TO_EDGE, 'audit-log.type-assigned-to-edge'],
     [ActionType.UNASSIGNED_FROM_EDGE, 'audit-log.type-unassigned-from-edge']
   ]

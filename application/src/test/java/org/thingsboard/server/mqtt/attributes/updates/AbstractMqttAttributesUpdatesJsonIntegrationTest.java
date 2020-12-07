@@ -21,11 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 @Slf4j
 public abstract class AbstractMqttAttributesUpdatesJsonIntegrationTest extends AbstractMqttAttributesUpdatesIntegrationTest {
 

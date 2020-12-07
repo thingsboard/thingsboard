@@ -73,6 +73,12 @@ enum KeyValueType {
   JSON_V = 4;
 }
 
+enum CredentialsType {
+  ACCESS_TOKEN = 0;
+  X509_CERTIFICATE = 1;
+  MQTT_BASIC = 2;
+}
+
 message KeyValueProto {
   string key = 1;
   KeyValueType type = 2;
@@ -171,32 +177,27 @@ message GetOrCreateDeviceFromGatewayResponseMsg {
   bytes profileBody = 2;
 }
 
-message GetTenantRoutingInfoRequestMsg {
-  int64 tenantIdMSB = 1;
-  int64 tenantIdLSB = 2;
+message GetEntityProfileRequestMsg {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
 }
 
-message GetTenantRoutingInfoResponseMsg {
-  bool isolatedTbCore = 1;
-  bool isolatedTbRuleEngine = 2;
+message GetEntityProfileResponseMsg {
+  string entityType = 1;
+  bytes data = 2;
+  bytes apiState = 3;
 }
 
-message GetDeviceProfileRequestMsg {
-  int64 profileIdMSB = 1;
-  int64 profileIdLSB = 2;
+message EntityUpdateMsg {
+  string entityType = 1;
+  bytes data = 2;
 }
 
-message GetDeviceProfileResponseMsg {
-  bytes data = 1;
-}
-
-message DeviceProfileUpdateMsg {
-  bytes data = 1;
-}
-
-message DeviceProfileDeleteMsg {
-    int64 profileIdMSB = 1;
-    int64 profileIdLSB = 2;
+message EntityDeleteMsg {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
 }
 
 message SessionCloseNotificationProto {
@@ -241,6 +242,44 @@ message ClaimDeviceMsg {
   int64 durationMs = 4;
 }
 
+message DeviceCredentialsProto {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+  CredentialsType credentialsType = 3;
+  string credentialsId = 4;
+  string credentialsValue = 5;
+}
+
+message CredentialsDataProto {
+  ValidateDeviceTokenRequestMsg validateDeviceTokenRequestMsg = 1;
+  ValidateDeviceX509CertRequestMsg validateDeviceX509CertRequestMsg = 2;
+  ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 3;
+}
+
+message ProvisionDeviceRequestMsg {
+  string deviceName = 1;
+  CredentialsType credentialsType = 2;
+  ProvisionDeviceCredentialsMsg provisionDeviceCredentialsMsg = 3;
+  CredentialsDataProto credentialsDataProto = 4;
+}
+
+message ProvisionDeviceCredentialsMsg {
+  string provisionDeviceKey = 1;
+  string provisionDeviceSecret = 2;
+}
+
+message ProvisionDeviceResponseMsg {
+  ProvisionResponseStatus status = 1;
+  CredentialsType credentialsType = 2;
+  string credentialsValue = 3;
+}
+
+enum ProvisionResponseStatus {
+  UNKNOWN = 0;
+  SUCCESS = 1;
+  NOT_FOUND = 2;
+  FAILURE = 3;
+}
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
 message SubscriptionInfoProto {
   int64 lastActivityTime = 1;
@@ -266,6 +305,7 @@ message TransportToDeviceActorMsg {
   ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 6;
   SubscriptionInfoProto subscriptionInfo = 7;
   ClaimDeviceMsg claimDevice = 8;
+  ProvisionDeviceRequestMsg provisionDevice = 9;
 }
 
 message TransportToRuleEngineMsg {
@@ -453,17 +493,17 @@ message TransportApiRequestMsg {
   ValidateDeviceTokenRequestMsg validateTokenRequestMsg = 1;
   ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
   GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
-  GetTenantRoutingInfoRequestMsg getTenantRoutingInfoRequestMsg = 4;
-  GetDeviceProfileRequestMsg getDeviceProfileRequestMsg = 5;
+  GetEntityProfileRequestMsg entityProfileRequestMsg = 4;
   ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 6;
+  ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 7;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
 message TransportApiResponseMsg {
   ValidateDeviceCredentialsResponseMsg validateCredResponseMsg = 1;
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
-  GetTenantRoutingInfoResponseMsg getTenantRoutingInfoResponseMsg = 4;
-  GetDeviceProfileResponseMsg getDeviceProfileResponseMsg = 5;
+  GetEntityProfileResponseMsg entityProfileResponseMsg = 3;
+  ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 4;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */
@@ -505,6 +545,21 @@ message ToTransportMsg {
   AttributeUpdateNotificationMsg attributeUpdateNotification = 5;
   ToDeviceRpcRequestMsg toDeviceRequest = 6;
   ToServerRpcResponseMsg toServerResponse = 7;
-  DeviceProfileUpdateMsg deviceProfileUpdateMsg = 8;
-  DeviceProfileDeleteMsg deviceProfileDeleteMsg = 9;
+  /* For Tenant, TenantProfile and DeviceProfile */
+  EntityUpdateMsg entityUpdateMsg = 8;
+  EntityDeleteMsg entityDeleteMsg = 9;
+  ProvisionDeviceResponseMsg provisionResponse = 10;
+}
+
+message UsageStatsKVProto{
+  string key = 1;
+  int64 value = 2;
+}
+
+message ToUsageStatsServiceMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+  repeated UsageStatsKVProto values = 5;
 }

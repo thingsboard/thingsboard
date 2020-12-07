@@ -64,9 +64,9 @@ public abstract class AbstractEntityService {
 
     protected Optional<ConstraintViolationException> extractConstraintViolationException(Exception t) {
         if (t instanceof ConstraintViolationException) {
-            return Optional.of ((ConstraintViolationException) t);
+            return Optional.of((ConstraintViolationException) t);
         } else if (t.getCause() instanceof ConstraintViolationException) {
-            return Optional.of ((ConstraintViolationException) (t.getCause()));
+            return Optional.of((ConstraintViolationException) (t.getCause()));
         } else {
             return Optional.empty();
         }

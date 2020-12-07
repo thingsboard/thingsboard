@@ -89,7 +89,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     let configuration: DeviceProfileTransportConfiguration = null;
     if (this.lwm2mDeviceProfileTransportConfigurationFormGroup.valid) {
       configuration = this.lwm2mDeviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
-      configuration.type = DeviceTransportType.LWM2M;
+      // configuration.type = DeviceTransportType.LWM2M;
     }
     this.propagateChange(configuration);
   }

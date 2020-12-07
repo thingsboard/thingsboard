@@ -187,7 +187,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                             ruleChainService.saveRuleChainMetaData(tenant.getId(), md);
                         }
                     } catch (Exception e) {
-                        log.error("Unable to update Tenant", e);
+                        log.error("[{}] Unable to update Tenant: {}", tenant.getId(), tenant.getName(), e);
                     }
                 }
             };

@@ -44,6 +44,8 @@ public enum ActionType {
     LOCKOUT(false),
     ASSIGNED_FROM_TENANT(false),
     ASSIGNED_TO_TENANT(false),
+    PROVISION_SUCCESS(false),
+    PROVISION_FAILURE(false),
     ASSIGNED_TO_EDGE(false), // log edge name
     UNASSIGNED_FROM_EDGE(false), // log edge name
     CREDENTIALS_REQUEST(false),  // request credentials from edge

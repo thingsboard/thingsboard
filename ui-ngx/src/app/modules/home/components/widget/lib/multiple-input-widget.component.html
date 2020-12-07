@@ -39,7 +39,7 @@
                      (blur)="key.isFocused = false; inputChanged(source, key)">
               <mat-icon *ngIf="key.settings.icon" matPrefix>{{key.settings.icon}}</mat-icon>
               <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
-                {{key.settings.requiredErrorMessage}}
+                {{ getErrorMessageText(key.settings, 'required') }}
               </mat-error>
             </mat-form-field>
           </div>
@@ -53,47 +53,56 @@
                      [readonly]="key.settings.isEditable === 'readonly'"
                      type="number"
                      step="{{key.settings.step}}"
+                     min="{{key.settings.minValue}}"
+                     max="{{key.settings.maxValue}}"
                      (focus)="key.isFocused = true; focusInputElement($event)"
                      (blur)="key.isFocused = false; inputChanged(source, key)">
               <mat-icon *ngIf="key.settings.icon" matPrefix>{{key.settings.icon}}</mat-icon>
               <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
-                {{key.settings.requiredErrorMessage}}
+                {{ getErrorMessageText(key.settings,'required') }}
+              </mat-error>
+              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('min')">
+                {{ getErrorMessageText(key.settings,'min') }}
+              </mat-error>
+              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('max')">
+                {{ getErrorMessageText(key.settings,'max') }}
               </mat-error>
             </mat-form-field>
           </div>
           <div class="input-field mat-block" *ngIf="key.settings.dataKeyValueType === 'booleanCheckbox'">
             <mat-checkbox formControlName="{{key.formId}}"
                           (change)="inputChanged(source, key)">
-              {{key.label}}
+              <span class="label-wrapper">{{key.label}}</span>
             </mat-checkbox>
           </div>
           <div class="input-field mat-block" *ngIf="key.settings.dataKeyValueType === 'booleanSwitch'">
             <mat-slide-toggle formControlName="{{key.formId}}"
                               (change)="inputChanged(source, key)">
-              {{key.label}}
+              <span class="label-wrapper">{{key.label}}</span>
             </mat-slide-toggle>
           </div>
           <div class="input-field mat-block date-time-input" *ngIf="(key.settings.dataKeyValueType === 'dateTime') ||
                                                     (key.settings.dataKeyValueType === 'date') ||
                                                     (key.settings.dataKeyValueType === 'time')" fxLayout="column">
-            <div fxLayout="row" [ngClass]="{'vertically-aligned': smallWidthContainer}" fxLayoutGap="16px">
-              <mat-form-field>
-                <mat-placeholder>{{key.label}}</mat-placeholder>
-                <mat-datetimepicker-toggle [for]="datePicker" matPrefix></mat-datetimepicker-toggle>
-                <mat-datetimepicker #datePicker type="{{datePickerType(key.settings.dataKeyValueType)}}"
-                                    openOnFocus="true"></mat-datetimepicker>
-                <input matInput formControlName="{{key.formId}}"
-                       [required]="key.settings.required"
-                       [readonly]="key.settings.isEditable === 'readonly'"
-                       [matDatetimepicker]="datePicker"
-                       (focus)="key.isFocused = true;"
-                       (blur)="key.isFocused = false;"
-                       (dateChange)="inputChanged(source, key)">
-                <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
-                  {{key.settings.requiredErrorMessage}}
-                </mat-error>
-              </mat-form-field>
-            </div>
+            <mat-form-field>
+              <mat-placeholder>{{key.label}}</mat-placeholder>
+              <mat-datetimepicker-toggle [for]="datePicker" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #datePicker type="{{datePickerType(key.settings.dataKeyValueType)}}"
+                                  openOnFocus="true"></mat-datetimepicker>
+              <input matInput formControlName="{{key.formId}}"
+                     [required]="key.settings.required"
+                     [readonly]="key.settings.isEditable === 'readonly'"
+                     [matDatetimepicker]="datePicker"
+                     (focus)="key.isFocused = true;"
+                     (blur)="key.isFocused = false;"
+                     (dateChange)="inputChanged(source, key)">
+              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
+                {{ getErrorMessageText(key.settings, 'required') }}
+              </mat-error>
+              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('matDatepickerParse')">
+                {{ getErrorMessageText(key.settings, 'invalidDate') }}
+              </mat-error>
+            </mat-form-field>
           </div>
         </div>
       </div>
@@ -103,12 +112,12 @@
       <button mat-button color="primary" type="button"
               (click)="discardAll()" style="max-height: 50px; margin-right:20px;"
               [disabled]="!multipleInputFormGroup.dirty">
-        {{ 'action.undo' | translate }}
+        {{ resetButtonLabel }}
       </button>
       <button mat-button mat-raised-button color="primary" type="submit"
                  style="max-height: 50px; margin-right:20px;"
                  [disabled]="!multipleInputFormGroup.dirty || multipleInputFormGroup.invalid">
-        {{ 'action.save' | translate }}
+        {{ saveButtonLabel }}
       </button>
     </div>
   </div>

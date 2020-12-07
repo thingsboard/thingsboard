@@ -39,8 +39,8 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import java.util.HashSet;
@@ -50,13 +50,14 @@ import java.util.Set;
 @Slf4j
 public class AppActor extends ContextAwareActor {
 
-    private static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
+    private final TbTenantProfileCache tenantProfileCache;
     private final TenantService tenantService;
     private final Set<TenantId> deletedTenants;
     private boolean ruleChainsInitialized;
 
     private AppActor(ActorSystemContext systemContext) {
         super(systemContext);
+        this.tenantProfileCache = systemContext.getTenantProfileCache();
         this.tenantService = systemContext.getTenantService();
         this.deletedTenants = new HashSet<>();
     }
@@ -117,8 +118,7 @@ public class AppActor extends ContextAwareActor {
                 boolean isRuleEngine = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
                 boolean isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
                 for (Tenant tenant : tenantIterator) {
-                    // TODO: Tenant Profile from cache
-                    TenantProfile tenantProfile = systemContext.getTenantProfileService().findTenantProfileById(TenantId.SYS_TENANT_ID, tenant.getTenantProfileId());
+                    TenantProfile tenantProfile = tenantProfileCache.get(tenant.getTenantProfileId());
                     if (isCore || (isRuleEngine && !tenantProfile.isIsolatedTbRuleEngine())) {
                         log.debug("[{}] Creating tenant actor", tenant.getId());
                         getOrCreateTenantActor(tenant.getId());
@@ -133,7 +133,7 @@ public class AppActor extends ContextAwareActor {
     }
 
     private void onQueueToRuleEngineMsg(QueueToRuleEngineMsg msg) {
-        if (SYSTEM_TENANT.equals(msg.getTenantId())) {
+        if (TenantId.SYS_TENANT_ID.equals(msg.getTenantId())) {
             msg.getTbMsg().getCallback().onFailure(new RuleEngineException("Message has system tenant id!"));
         } else {
             if (!deletedTenants.contains(msg.getTenantId())) {
@@ -146,15 +146,20 @@ public class AppActor extends ContextAwareActor {
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
         TbActorRef target = null;
-        if (SYSTEM_TENANT.equals(msg.getTenantId())) {
-            log.warn("Message has system tenant id: {}", msg);
+        if (TenantId.SYS_TENANT_ID.equals(msg.getTenantId())) {
+            if (!EntityType.TENANT_PROFILE.equals(msg.getEntityId().getEntityType())) {
+                log.warn("Message has system tenant id: {}", msg);
+            }
         } else {
-            if (msg.getEntityId().getEntityType() == EntityType.TENANT
-                    && msg.getEvent() == ComponentLifecycleEvent.DELETED) {
-                log.info("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
+            if (EntityType.TENANT.equals(msg.getEntityId().getEntityType())) {
                 TenantId tenantId = new TenantId(msg.getEntityId().getId());
-                deletedTenants.add(tenantId);
-                ctx.stop(new TbEntityActorId(tenantId));
+                if (msg.getEvent() == ComponentLifecycleEvent.DELETED) {
+                    log.info("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
+                    deletedTenants.add(tenantId);
+                    ctx.stop(new TbEntityActorId(tenantId));
+                } else {
+                    target = getOrCreateTenantActor(msg.getTenantId());
+                }
             } else {
                 target = getOrCreateTenantActor(msg.getTenantId());
             }

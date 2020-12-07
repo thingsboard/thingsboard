@@ -195,9 +195,11 @@ public class HashPartitionService implements PartitionService {
         if (current.getServiceTypesList().contains(serviceType.name())) {
             result.add(current.getServiceId());
         }
-        for (ServiceInfo serviceInfo : currentOtherServices) {
-            if (serviceInfo.getServiceTypesList().contains(serviceType.name())) {
-                result.add(serviceInfo.getServiceId());
+        if (currentOtherServices != null) {
+            for (ServiceInfo serviceInfo : currentOtherServices) {
+                if (serviceInfo.getServiceTypesList().contains(serviceType.name())) {
+                    result.add(serviceInfo.getServiceId());
+                }
             }
         }
         return result;

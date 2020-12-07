@@ -29,6 +29,7 @@ export * from './entity-relation.service';
 export * from './entity-view.service';
 export * from './event.service';
 export * from './http-utils';
+export * from './oauth2.service';
 export * from './queue.service';
 export * from './rule-chain.service';
 export * from './tenant.service';

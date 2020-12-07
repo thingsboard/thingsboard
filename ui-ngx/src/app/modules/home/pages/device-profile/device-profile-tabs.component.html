@@ -16,28 +16,61 @@
 
 -->
 <mat-tab *ngIf="entity"
-         label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
-  <tb-attribute-table [defaultAttributeScope]="attributeScopes.SERVER_SCOPE"
-                      [active]="attributesTab.isActive"
-                      [entityId]="entity.id"
-                      [entityName]="entity.name">
-  </tb-attribute-table>
+         label="{{ 'device-profile.transport-configuration' | translate }}" #transportType="matTab">
+  <div class="mat-padding" [formGroup]="detailsForm">
+    <mat-form-field class="mat-block">
+      <mat-label translate>device-profile.transport-type</mat-label>
+      <mat-select formControlName="transportType" required>
+        <mat-option *ngFor="let type of deviceTransportTypes" [value]="type">
+          {{deviceTransportTypeTranslations.get(type) | translate}}
+        </mat-option>
+      </mat-select>
+      <mat-hint *ngIf="detailsForm.get('transportType').value">
+        {{deviceTransportTypeHints.get(detailsForm.get('transportType').value) | translate}}
+      </mat-hint>
+      <mat-error *ngIf="detailsForm.get('transportType').hasError('required')">
+        {{ 'device-profile.transport-type-required' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <div formGroupName="profileData">
+      <tb-device-profile-transport-configuration
+        formControlName="transportConfiguration"
+        required>
+      </tb-device-profile-transport-configuration>
+    </div>
+  </div>
 </mat-tab>
 <mat-tab *ngIf="entity"
-         label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
-  <tb-attribute-table [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
-                      disableAttributeScopeSelection
-                      [active]="telemetryTab.isActive"
-                      [entityId]="entity.id"
-                      [entityName]="entity.name">
-  </tb-attribute-table>
+         label="{{'device-profile.alarm-rules-with-count' | translate:
+            {count: entity.profileData?.alarms?.length ? entity.profileData.alarms.length : 0}
+          }}" #alarmRules="matTab">
+  <div class="mat-padding" [formGroup]="detailsForm">
+    <div formGroupName="profileData">
+      <tb-device-profile-alarms formControlName="alarms"></tb-device-profile-alarms>
+    </div>
+  </div>
 </mat-tab>
 <mat-tab *ngIf="entity"
-         label="{{ 'alarm.alarms' | translate }}" #alarmsTab="matTab">
-  <tb-alarm-table [active]="alarmsTab.isActive" [entityId]="entity.id"></tb-alarm-table>
+         label="{{ 'device-profile.device-provisioning' | translate }}" #deviceProvisioning="matTab">
+  <div class="mat-padding" [formGroup]="detailsForm">
+    <div formGroupName="profileData">
+      <tb-device-profile-provision-configuration formControlName="provisionConfiguration">
+      </tb-device-profile-provision-configuration>
+    </div>
+  </div>
 </mat-tab>
-<mat-tab *ngIf="entity"
-         label="{{ 'tenant.events' | translate }}" #eventsTab="matTab">
-  <tb-event-table [defaultEventType]="eventTypes.ERROR" [active]="eventsTab.isActive" [tenantId]="nullUid"
-                  [entityId]="entity.id"></tb-event-table>
+<mat-tab *ngIf="false"
+         label="{{'device-profile.profile-configuration' | translate }}" #deviceProfile="matTab">
+  <div class="mat-padding" [formGroup]="detailsForm">
+    <div formGroupName="profileData">
+      <tb-device-profile-configuration
+        formControlName="configuration"
+        required>
+      </tb-device-profile-configuration>
+    </div>
+  </div>
+</mat-tab>
+<mat-tab *ngIf="entity && !isEdit"
+         label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
+  <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
 </mat-tab>

@@ -27,6 +27,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -40,6 +41,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
+import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
@@ -60,13 +62,19 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
+import org.thingsboard.server.dao.device.provision.ProvisionRequest;
+import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -116,6 +124,10 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
     @Autowired
     private EventService eventService;
+
+    @Autowired
+    @Lazy
+    private TbTenantProfileCache tenantProfileCache;
 
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId) {
@@ -469,6 +481,50 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Override
+    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#profile.tenantId, #provisionRequest.deviceName}")
+    @Transactional
+    public Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
+        Device device = new Device();
+        device.setName(provisionRequest.getDeviceName());
+        device.setType(profile.getName());
+        device.setTenantId(profile.getTenantId());
+        Device savedDevice = saveDevice(device);
+        if (!StringUtils.isEmpty(provisionRequest.getCredentialsData().getToken()) ||
+                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getX509CertHash()) ||
+                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getUsername()) ||
+                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getPassword()) ||
+                !StringUtils.isEmpty(provisionRequest.getCredentialsData().getClientId())) {
+            DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getTenantId(), savedDevice.getId());
+            if (deviceCredentials == null) {
+                deviceCredentials = new DeviceCredentials();
+            }
+            deviceCredentials.setDeviceId(savedDevice.getId());
+            deviceCredentials.setCredentialsType(provisionRequest.getCredentialsType());
+            switch (provisionRequest.getCredentialsType()) {
+                case ACCESS_TOKEN:
+                    deviceCredentials.setCredentialsId(provisionRequest.getCredentialsData().getToken());
+                    break;
+                case MQTT_BASIC:
+                    BasicMqttCredentials mqttCredentials = new BasicMqttCredentials();
+                    mqttCredentials.setClientId(provisionRequest.getCredentialsData().getClientId());
+                    mqttCredentials.setUserName(provisionRequest.getCredentialsData().getUsername());
+                    mqttCredentials.setPassword(provisionRequest.getCredentialsData().getPassword());
+                    deviceCredentials.setCredentialsValue(JacksonUtil.toString(mqttCredentials));
+                    break;
+                case X509_CERTIFICATE:
+                    deviceCredentials.setCredentialsValue(provisionRequest.getCredentialsData().getX509CertHash());
+                    break;
+            }
+            try {
+                deviceCredentialsService.updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
+            } catch (Exception e) {
+                throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+            }
+        }
+        return savedDevice;
+    }
+
+    @Override
     public Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId) {
         Device device = findDeviceById(tenantId, deviceId);
         Edge edge = edgeService.findEdgeById(tenantId, edgeId);
@@ -520,6 +576,10 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
                 @Override
                 protected void validateCreate(TenantId tenantId, Device device) {
+                    DefaultTenantProfileConfiguration profileConfiguration =
+                            (DefaultTenantProfileConfiguration)tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
+                    long maxDevices = profileConfiguration.getMaxDevices();
+                    validateNumberOfEntitiesPerTenant(tenantId, deviceDao, maxDevices, EntityType.DEVICE);
                 }
 
                 @Override
@@ -532,7 +592,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
                 @Override
                 protected void validateDataImpl(TenantId tenantId, Device device) {
-                    if (StringUtils.isEmpty(device.getName())) {
+                    if (StringUtils.isEmpty(device.getName()) || device.getName().trim().length() == 0) {
                         throw new DataValidationException("Device name should be specified!");
                     }
                     if (device.getTenantId() == null) {

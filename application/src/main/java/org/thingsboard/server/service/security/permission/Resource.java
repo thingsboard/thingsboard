@@ -33,8 +33,11 @@ public enum Resource {
     USER(EntityType.USER),
     WIDGETS_BUNDLE(EntityType.WIDGETS_BUNDLE),
     WIDGET_TYPE(EntityType.WIDGET_TYPE),
+    OAUTH2_CONFIGURATION_INFO(),
+    OAUTH2_CONFIGURATION_TEMPLATE(),
     TENANT_PROFILE(EntityType.TENANT_PROFILE),
-    DEVICE_PROFILE(EntityType.DEVICE_PROFILE);
+    DEVICE_PROFILE(EntityType.DEVICE_PROFILE),
+    API_USAGE_STATE(EntityType.API_USAGE_STATE);
 
     private final EntityType entityType;
 

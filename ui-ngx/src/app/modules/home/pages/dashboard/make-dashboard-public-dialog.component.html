@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div style="min-width: 400px;">
+<div style="min-width: 400px; position: relative;">
   <mat-toolbar fxLayout="row" color="primary">
     <h2>{{ 'dashboard.public-dashboard-title' | translate }}</h2>
     <span fxFlex></span>
@@ -54,7 +54,6 @@
   <div mat-dialog-actions fxLayout="row">
     <span fxFlex></span>
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="close()" cdkFocusInitial>

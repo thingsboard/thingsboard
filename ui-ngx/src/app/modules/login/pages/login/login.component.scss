@@ -21,14 +21,17 @@
   .tb-login-content {
     margin-top: 36px;
     margin-bottom: 76px;
-    background-color: rgb(250, 250, 250);
+    background-color: #eee;
     .tb-login-form {
       @media #{$mat-gt-xs} {
         width: 550px !important;
       }
 
-      .tb-reset-password{
-        padding: 0 6px;
+      .forgot-password {
+        padding: 0 0.5em 1em;
+        .tb-reset-password {
+          padding: 0 6px;
+        }
       }
 
       .tb-action-button{
@@ -65,9 +68,17 @@
         min-width: 20px;
       }
 
-      a.centered {
+      a.login-with-button {
+        color: rgba(black, 0.87);
+
         &:hover {
-          border-bottom: 0px;
+          border-bottom: 0;
+        }
+
+        .icon{
+          height: 20px;
+          width: 20px;
+          vertical-align: sub;
         }
       }
 

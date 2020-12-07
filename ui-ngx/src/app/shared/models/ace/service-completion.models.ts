@@ -56,6 +56,12 @@ export const customerHref = '<a href="https://github.com/thingsboard/thingsboard
 
 export const attributeDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L76">Attribute Data</a>';
 
+export const timeseriesDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/627c0577b08452308f925cecb3860e35292c649e/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L91">Timeseries Data</a>';
+
+export const aggregationTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/a8ea887eacf7729e603ace13ce2d7d89dae82931/ui-ngx/src/app/shared/models/time/time.models.ts#L54">Aggregation Type</a>';
+
+export const dataSortOrderHref = '<a href="https://github.com/thingsboard/thingsboard/blob/627c0577b08452308f925cecb3860e35292c649e/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L95">Data Sort Order</a>';
+
 export const userHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/user.model.ts#L23">User</a>';
 
 export const entityDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L567">Entity data</a>';
@@ -1079,6 +1085,23 @@ export const serviceCompletions: TbEditorCompletions = {
           requestConfigArg
         ],
         return: observableReturnTypeVariable('any')
+      },
+      getEntityTimeseries: {
+        description: 'Get entity timeseries',
+        meta: 'function',
+        args: [
+          {name: 'entityId', type: entityIdHref, description: 'Id of the entity'},
+          {name: 'keys', type: `Array&lt;string&gt;`, description: 'Array of the keys'},
+          {name: 'startTs', type: 'number', description: 'Start time in milliseconds'},
+          {name: 'endTs', type: 'number', description: 'End time in milliseconds'},
+          {name: 'limit', type: 'number', description: 'Limit of values to receive for each key'},
+          {name: 'agg', type: aggregationTypeHref, description: 'Aggregation type'},
+          {name: 'interval', type: 'number', description: 'Aggregation interval'},
+          {name: 'orderBy', type: dataSortOrderHref, description: 'Data order by time'},
+          {name: 'useStrictDataTypes', type: 'boolean', description: 'If "false" all values will be returned as strings'},
+          requestConfigArg
+        ],
+        return: observableReturnTypeVariable(timeseriesDataHref)
       },
     }
   },

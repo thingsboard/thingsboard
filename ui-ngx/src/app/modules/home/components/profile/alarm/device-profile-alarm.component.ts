@@ -25,7 +25,7 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { AlarmRule, DeviceProfileAlarm } from '@shared/models/device.models';
+import { AlarmRule, DeviceProfileAlarm, deviceProfileAlarmValidator } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
@@ -57,6 +57,7 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
 
   separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
 
+  @Input()
   expanded = false;
 
   private modelValue: DeviceProfileAlarm;
@@ -91,7 +92,7 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
       clearRule: [null],
       propagate: [null],
       propagateRelationTypes: [null]
-    });
+    }, { validators: deviceProfileAlarmValidator });
     this.alarmFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
@@ -132,6 +133,19 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
   }
 
   public validate(c: FormControl) {
+    if (c.parent) {
+      const alarmType = c.value.alarmType;
+      const profileAlarmsType = [];
+      c.parent.getRawValue().forEach((alarm: DeviceProfileAlarm) => {
+          profileAlarmsType.push(alarm.alarmType);
+        }
+      );
+      if (profileAlarmsType.filter(profileAlarmType => profileAlarmType === alarmType).length > 1) {
+        this.alarmFormGroup.get('alarmType').setErrors({
+          unique: true
+        });
+      }
+    }
     return (this.alarmFormGroup.valid) ? null : {
       alarm: {
         valid: false,

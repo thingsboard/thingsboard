@@ -100,6 +100,8 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -117,6 +119,7 @@ import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.edge.rpc.EdgeGrpcService;
 import org.thingsboard.server.service.edge.rpc.init.SyncEdgeService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
@@ -187,6 +190,12 @@ public abstract class BaseController {
     protected DashboardService dashboardService;
 
     @Autowired
+    protected OAuth2Service oAuth2Service;
+
+    @Autowired
+    protected OAuth2ConfigTemplateService oAuth2ConfigTemplateService;
+
+    @Autowired
     protected ComponentDiscoveryService componentDescriptorService;
 
     @Autowired
@@ -221,6 +230,9 @@ public abstract class BaseController {
 
     @Autowired
     protected TbQueueProducerProvider producerProvider;
+
+    @Autowired
+    protected TbTenantProfileCache tenantProfileCache;
 
     @Autowired
     protected TbDeviceProfileCache deviceProfileCache;
@@ -746,6 +758,12 @@ public abstract class BaseController {
                 break;
             case ASSIGNED_TO_TENANT:
                 msgType = DataConstants.ENTITY_ASSIGNED_TO_TENANT;
+                break;
+            case PROVISION_SUCCESS:
+                msgType = DataConstants.PROVISION_SUCCESS;
+                break;
+            case PROVISION_FAILURE:
+                msgType = DataConstants.PROVISION_FAILURE;
                 break;
             case ASSIGNED_TO_EDGE:
                 msgType = DataConstants.ENTITY_ASSIGNED_TO_EDGE;

@@ -14,19 +14,92 @@
 -- limitations under the License.
 --
 
+CREATE TABLE IF NOT EXISTS oauth2_client_registration_info (
+    id uuid NOT NULL CONSTRAINT oauth2_client_registration_info_pkey PRIMARY KEY,
+    enabled boolean,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    client_id varchar(255),
+    client_secret varchar(255),
+    authorization_uri varchar(255),
+    token_uri varchar(255),
+    scope varchar(255),
+    user_info_uri varchar(255),
+    user_name_attribute_name varchar(255),
+    jwk_set_uri varchar(255),
+    client_authentication_method varchar(255),
+    login_button_label varchar(255),
+    login_button_icon varchar(255),
+    allow_user_creation boolean,
+    activate_user boolean,
+    type varchar(31),
+    basic_email_attribute_key varchar(31),
+    basic_first_name_attribute_key varchar(31),
+    basic_last_name_attribute_key varchar(31),
+    basic_tenant_name_strategy varchar(31),
+    basic_tenant_name_pattern varchar(255),
+    basic_customer_name_pattern varchar(255),
+    basic_default_dashboard_name varchar(255),
+    basic_always_full_screen boolean,
+    custom_url varchar(255),
+    custom_username varchar(255),
+    custom_password varchar(255),
+    custom_send_token boolean
+);
+
+CREATE TABLE IF NOT EXISTS oauth2_client_registration (
+    id uuid NOT NULL CONSTRAINT oauth2_client_registration_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    domain_name varchar(255),
+    domain_scheme varchar(31),
+    client_registration_info_id uuid
+);
+
+CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
+    id uuid NOT NULL CONSTRAINT oauth2_client_registration_template_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    provider_id varchar(255),
+    authorization_uri varchar(255),
+    token_uri varchar(255),
+    scope varchar(255),
+    user_info_uri varchar(255),
+    user_name_attribute_name varchar(255),
+    jwk_set_uri varchar(255),
+    client_authentication_method varchar(255),
+    type varchar(31),
+    basic_email_attribute_key varchar(31),
+    basic_first_name_attribute_key varchar(31),
+    basic_last_name_attribute_key varchar(31),
+    basic_tenant_name_strategy varchar(31),
+    basic_tenant_name_pattern varchar(255),
+    basic_customer_name_pattern varchar(255),
+    basic_default_dashboard_name varchar(255),
+    basic_always_full_screen boolean,
+    comment varchar,
+    login_button_icon varchar(255),
+    login_button_label varchar(255),
+    help_link varchar(255),
+    CONSTRAINT oauth2_template_provider_id_unq_key UNIQUE (provider_id)
+);
+
 CREATE TABLE IF NOT EXISTS device_profile (
     id uuid NOT NULL CONSTRAINT device_profile_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     name varchar(255),
     type varchar(255),
     transport_type varchar(255),
+    provision_type varchar(255),
     profile_data jsonb,
     description varchar,
     search_text varchar(255),
     is_default boolean,
     tenant_id uuid,
     default_rule_chain_id uuid,
+    default_queue_name varchar(255),
+    provision_device_key varchar,
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
     CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id)
 );
 

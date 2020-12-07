@@ -40,17 +40,20 @@ import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.security.model.SecuritySettings;
+import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.user.UserServiceImpl;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
-import org.thingsboard.server.common.data.security.model.SecuritySettings;
-import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
+import org.thingsboard.server.utils.MiscUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -146,7 +149,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         if (isPositiveInteger(securitySettings.getPasswordPolicy().getPasswordExpirationPeriodDays())) {
             if ((userCredentials.getCreatedTime()
                     + TimeUnit.DAYS.toMillis(securitySettings.getPasswordPolicy().getPasswordExpirationPeriodDays()))
-                < System.currentTimeMillis()) {
+                    < System.currentTimeMillis()) {
                 userCredentials = userService.requestExpiredPasswordReset(tenantId, userCredentials.getId());
                 throw new UserPasswordExpiredException("User password expired!", userCredentials.getResetToken());
             }
@@ -195,6 +198,24 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
             }
         }
+    }
+
+    @Override
+    public String getBaseUrl(TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest) {
+        String baseUrl = null;
+        AdminSettings generalSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "general");
+
+        JsonNode prohibitDifferentUrl = generalSettings.getJsonValue().get("prohibitDifferentUrl");
+
+        if (prohibitDifferentUrl != null && prohibitDifferentUrl.asBoolean()) {
+            baseUrl = generalSettings.getJsonValue().get("baseUrl").asText();
+        }
+
+        if (StringUtils.isEmpty(baseUrl)) {
+            baseUrl = MiscUtils.constructBaseUrl(httpServletRequest);
+        }
+
+        return baseUrl;
     }
 
     private static boolean isPositiveInteger(Integer val) {

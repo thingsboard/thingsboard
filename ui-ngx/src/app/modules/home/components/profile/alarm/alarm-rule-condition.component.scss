@@ -21,10 +21,12 @@
     }
   }
   .tb-alarm-rule-condition {
-    padding: 8px;
-    border: 1px groove rgba(0, 0, 0, .25);
-    border-radius: 4px;
     cursor: pointer;
+    min-width: 0;
+    .tb-alarm-rule-condition-spec {
+      opacity: 0.7;
+      padding: 4px;
+    }
   }
 }
 

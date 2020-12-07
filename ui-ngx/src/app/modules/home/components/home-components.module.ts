@@ -77,37 +77,48 @@ import { ComplexFilterPredicateDialogComponent } from '@home/components/filter/c
 import { KeyFilterDialogComponent } from '@home/components/filter/key-filter-dialog.component';
 import { FiltersDialogComponent } from '@home/components/filter/filters-dialog.component';
 import { FilterDialogComponent } from '@home/components/filter/filter-dialog.component';
-import { FilterSelectComponent } from './filter/filter-select.component';
+import { FilterSelectComponent } from '@home/components/filter/filter-select.component';
 import { FiltersEditComponent } from '@home/components/filter/filters-edit.component';
 import { FiltersEditPanelComponent } from '@home/components/filter/filters-edit-panel.component';
 import { UserFilterDialogComponent } from '@home/components/filter/user-filter-dialog.component';
-import { FilterUserInfoComponent } from './filter/filter-user-info.component';
-import { FilterUserInfoDialogComponent } from './filter/filter-user-info-dialog.component';
-import { FilterPredicateValueComponent } from './filter/filter-predicate-value.component';
-import { TenantProfileAutocompleteComponent } from './profile/tenant-profile-autocomplete.component';
-import { TenantProfileComponent } from './profile/tenant-profile.component';
-import { TenantProfileDialogComponent } from './profile/tenant-profile-dialog.component';
-import { TenantProfileDataComponent } from './profile/tenant-profile-data.component';
-import { DefaultDeviceProfileConfigurationComponent } from './profile/device/default-device-profile-configuration.component';
-import { DeviceProfileConfigurationComponent } from './profile/device/device-profile-configuration.component';
-import { DeviceProfileDataComponent } from './profile/device-profile-data.component';
-import { DeviceProfileComponent } from './profile/device-profile.component';
-import { DefaultDeviceProfileTransportConfigurationComponent } from './profile/device/default-device-profile-transport-configuration.component';
-import { DeviceProfileTransportConfigurationComponent } from './profile/device/device-profile-transport-configuration.component';
-import { DeviceProfileDialogComponent } from './profile/device-profile-dialog.component';
-import { DeviceProfileAutocompleteComponent } from './profile/device-profile-autocomplete.component';
-import { MqttDeviceProfileTransportConfigurationComponent } from './profile/device/mqtt-device-profile-transport-configuration.component';
-import { Lwm2mDeviceProfileTransportConfigurationComponent } from './profile/device/lwm2m-device-profile-transport-configuration.component';
-import { DeviceProfileAlarmsComponent } from './profile/alarm/device-profile-alarms.component';
-import { DeviceProfileAlarmComponent } from './profile/alarm/device-profile-alarm.component';
-import { CreateAlarmRulesComponent } from './profile/alarm/create-alarm-rules.component';
-import { AlarmRuleComponent } from './profile/alarm/alarm-rule.component';
-import { AlarmRuleConditionComponent } from './profile/alarm/alarm-rule-condition.component';
-import { AlarmRuleKeyFiltersDialogComponent } from './profile/alarm/alarm-rule-key-filters-dialog.component';
-import { FilterTextComponent } from './filter/filter-text.component';
-import { AddDeviceProfileDialogComponent } from './profile/add-device-profile-dialog.component';
-import { RuleChainAutocompleteComponent } from './rule-chain/rule-chain-autocomplete.component';
-import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component';
+import { FilterUserInfoComponent } from '@home/components/filter/filter-user-info.component';
+import { FilterUserInfoDialogComponent } from '@home/components/filter/filter-user-info-dialog.component';
+import { FilterPredicateValueComponent } from '@home/components/filter/filter-predicate-value.component';
+import { TenantProfileAutocompleteComponent } from '@home/components/profile/tenant-profile-autocomplete.component';
+import { TenantProfileComponent } from '@home/components/profile/tenant-profile.component';
+import { TenantProfileDialogComponent } from '@home/components/profile/tenant-profile-dialog.component';
+import { TenantProfileDataComponent } from '@home/components/profile/tenant-profile-data.component';
+import { DefaultDeviceProfileConfigurationComponent } from '@home/components/profile/device/default-device-profile-configuration.component';
+import { DeviceProfileConfigurationComponent } from '@home/components/profile/device/device-profile-configuration.component';
+import { DeviceProfileComponent } from '@home/components/profile/device-profile.component';
+import { DefaultDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/default-device-profile-transport-configuration.component';
+import { DeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/device-profile-transport-configuration.component';
+import { DeviceProfileDialogComponent } from '@home/components/profile/device-profile-dialog.component';
+import { DeviceProfileAutocompleteComponent } from '@home/components/profile/device-profile-autocomplete.component';
+import { MqttDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/mqtt-device-profile-transport-configuration.component';
+import { Lwm2mDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/lwm2m-device-profile-transport-configuration.component';
+import { DeviceProfileAlarmsComponent } from '@home/components/profile/alarm/device-profile-alarms.component';
+import { DeviceProfileAlarmComponent } from '@home/components/profile/alarm/device-profile-alarm.component';
+import { CreateAlarmRulesComponent } from '@home/components/profile/alarm/create-alarm-rules.component';
+import { AlarmRuleComponent } from '@home/components/profile/alarm/alarm-rule.component';
+import { AlarmRuleConditionComponent } from '@home/components/profile/alarm/alarm-rule-condition.component';
+import { FilterTextComponent } from '@home/components/filter/filter-text.component';
+import { AddDeviceProfileDialogComponent } from '@home/components/profile/add-device-profile-dialog.component';
+import { RuleChainAutocompleteComponent } from '@home/components/rule-chain/rule-chain-autocomplete.component';
+import { DeviceProfileProvisionConfigurationComponent } from '@home/components/profile/device-profile-provision-configuration.component';
+import { AlarmScheduleComponent } from '@home/components/profile/alarm/alarm-schedule.component';
+import { DeviceWizardDialogComponent } from '@home/components/wizard/device-wizard-dialog.component';
+import { DeviceCredentialsComponent } from '@home/components/device/device-credentials.component';
+import { AlarmScheduleInfoComponent } from '@home/components/profile/alarm/alarm-schedule-info.component';
+import { AlarmScheduleDialogComponent } from '@home/components/profile/alarm/alarm-schedule-dialog.component';
+import { EditAlarmDetailsDialogComponent } from '@home/components/profile/alarm/edit-alarm-details-dialog.component';
+import { AlarmRuleConditionDialogComponent } from '@home/components/profile/alarm/alarm-rule-condition-dialog.component';
+import { DefaultTenantProfileConfigurationComponent } from '@home/components/profile/tenant/default-tenant-profile-configuration.component';
+import { TenantProfileConfigurationComponent } from '@home/components/profile/tenant/tenant-profile-configuration.component';
+import { SmsProviderConfigurationComponent } from '@home/components/sms/sms-provider-configuration.component';
+import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-sns-provider-configuration.component';
+import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
+import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
 
 @NgModule({
   declarations:
@@ -177,6 +188,8 @@ import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component
       FilterUserInfoDialogComponent,
       FilterPredicateValueComponent,
       TenantProfileAutocompleteComponent,
+      DefaultTenantProfileConfigurationComponent,
+      TenantProfileConfigurationComponent,
       TenantProfileDataComponent,
       TenantProfileComponent,
       TenantProfileDialogComponent,
@@ -189,16 +202,25 @@ import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component
       DeviceProfileTransportConfigurationComponent,
       CreateAlarmRulesComponent,
       AlarmRuleComponent,
-      AlarmRuleKeyFiltersDialogComponent,
+      AlarmRuleConditionDialogComponent,
       AlarmRuleConditionComponent,
       DeviceProfileAlarmComponent,
       DeviceProfileAlarmsComponent,
-      DeviceProfileDataComponent,
       DeviceProfileComponent,
       DeviceProfileDialogComponent,
       AddDeviceProfileDialogComponent,
       RuleChainAutocompleteComponent,
-      AlarmScheduleComponent
+      AlarmScheduleInfoComponent,
+      DeviceProfileProvisionConfigurationComponent,
+      AlarmScheduleComponent,
+      DeviceWizardDialogComponent,
+      DeviceCredentialsComponent,
+      CopyDeviceCredentialsComponent,
+      AlarmScheduleDialogComponent,
+      EditAlarmDetailsDialogComponent,
+      SmsProviderConfigurationComponent,
+      AwsSnsProviderConfigurationComponent,
+      TwilioSmsProviderConfigurationComponent
     ],
   imports: [
     CommonModule,
@@ -269,16 +291,25 @@ import { AlarmScheduleComponent } from './profile/alarm/alarm-schedule.component
     DeviceProfileTransportConfigurationComponent,
     CreateAlarmRulesComponent,
     AlarmRuleComponent,
-    AlarmRuleKeyFiltersDialogComponent,
+    AlarmRuleConditionDialogComponent,
     AlarmRuleConditionComponent,
     DeviceProfileAlarmComponent,
     DeviceProfileAlarmsComponent,
-    DeviceProfileDataComponent,
     DeviceProfileComponent,
     DeviceProfileDialogComponent,
     AddDeviceProfileDialogComponent,
     RuleChainAutocompleteComponent,
-    AlarmScheduleComponent
+    DeviceWizardDialogComponent,
+    DeviceCredentialsComponent,
+    CopyDeviceCredentialsComponent,
+    AlarmScheduleInfoComponent,
+    AlarmScheduleComponent,
+    AlarmScheduleDialogComponent,
+    EditAlarmDetailsDialogComponent,
+    DeviceProfileProvisionConfigurationComponent,
+    SmsProviderConfigurationComponent,
+    AwsSnsProviderConfigurationComponent,
+    TwilioSmsProviderConfigurationComponent
   ],
   providers: [
     WidgetComponentService,
