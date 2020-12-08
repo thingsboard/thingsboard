@@ -94,9 +94,8 @@ public class SnmpTransportContext extends TransportContext {
         if (DeviceCredentialsType.ACCESS_TOKEN.equals(credentials.getCredentialsType())) {
             SnmpDeviceTransportConfiguration snmpDeviceTransportConfiguration = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
             if (snmpDeviceTransportConfiguration.isValid()) {
-                DeviceSessionCtx deviceSessionCtx = new DeviceSessionCtx(UUID.randomUUID(), this, credentials.getCredentialsId());
+                DeviceSessionCtx deviceSessionCtx = new DeviceSessionCtx(UUID.randomUUID(), this, credentials.getCredentialsId(), snmpDeviceTransportConfiguration);
                 deviceSessionCtx.setDeviceId(device.getId());
-                deviceSessionCtx.setTransportConfiguration(snmpDeviceTransportConfiguration);
                 deviceSessionCtx.setDeviceProfile(deviceProfile);
 
                 deviceSessionCtx.initTarget((SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration());

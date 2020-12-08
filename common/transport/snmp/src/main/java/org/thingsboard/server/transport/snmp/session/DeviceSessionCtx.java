@@ -63,9 +63,10 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
     @Setter
     private volatile TransportProtos.SessionInfoProto sessionInfo;
 
-    public DeviceSessionCtx(UUID sessionId, SnmpTransportContext transportContext, String token) {
+    public DeviceSessionCtx(UUID sessionId, SnmpTransportContext transportContext, String token, SnmpDeviceTransportConfiguration transportConfiguration) {
         super(sessionId);
-        snmpSessionListener = new SnmpSessionListener(transportContext, token);
+        this.snmpSessionListener = new SnmpSessionListener(transportContext, token);
+        this.transportConfiguration = transportConfiguration;
     }
 
     @Override
@@ -109,30 +110,31 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
 
     @Override
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
+        super.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
         //TODO: cancel future for a specific device
-        deviceProfileOpt.ifPresent(deviceProfile -> {
-            if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
-                snmpSessionListener.getSnmpTransportContext().updateDeviceSessionCtx(device, deviceProfile);
-            }
-        });
+        if (super.getDeviceProfile() != null && DeviceTransportType.SNMP.equals(super.getDeviceProfile().getTransportType())) {
+            snmpSessionListener.getSnmpTransportContext().updateDeviceSessionCtx(device, deviceProfile);
+        }
     }
 
     public void createSessionInfo(Consumer<TransportProtos.SessionInfoProto> registerSession) {
-        getSnmpSessionListener().getSnmpTransportContext().getTransportService().process(DeviceTransportType.DEFAULT, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(getSnmpSessionListener().getToken()).build(),
+        getSnmpSessionListener().getSnmpTransportContext().getTransportService().process(DeviceTransportType.SNMP,
+                TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(getSnmpSessionListener().getToken()).build(),
                 new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
                         if (msg.hasDeviceInfo()) {
                             sessionInfo = SessionInfoCreator.create(msg, getSnmpSessionListener().getSnmpTransportContext(), UUID.randomUUID());
                             registerSession.accept(sessionInfo);
+                            setDeviceInfo(msg.getDeviceInfo());
                         } else {
-                            log.warn("Failed to process device auth");
+                            log.warn("[{}] Failed to process device auth", getDeviceId());
                         }
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        log.warn("Failed to process device auth", e);
+                        log.warn("[{}] Failed to process device auth", getDeviceId(), e);
                     }
                 });
     }

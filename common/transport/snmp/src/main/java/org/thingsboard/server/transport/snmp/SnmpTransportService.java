@@ -105,6 +105,7 @@ public class SnmpTransportService {
     }
 
     private void initSessionCtxList() {
+        //TODO: This approach works for monolith, in cluster the same data will be fetched by each node.
         for (Tenant tenant : new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT)) {
             TenantId tenantId = tenant.getTenantId();
             for (DeviceProfile deviceProfile : new PageDataIterable<>(pageLink -> deviceProfileService.findDeviceProfiles(tenantId, pageLink), ENTITY_PACK_LIMIT)) {
