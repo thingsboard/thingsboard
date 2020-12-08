@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.attributes;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -36,7 +36,7 @@ public interface AttributesDao {
 
     ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String attributeType);
 
-    ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityType entityType, List<EntityId> entityIds, String attributeType);
+    ListenableFuture<List<AttributeKvEntry>> findAllByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
 
     ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, String attributeType, AttributeKvEntry attribute);
 

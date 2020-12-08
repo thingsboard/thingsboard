@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,18 +35,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -58,7 +52,6 @@ import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -122,38 +115,17 @@ public class DeviceProfileController extends BaseController {
     @ResponseBody
     public DeferredResult<ResponseEntity> getTimeseriesKeys(
             @RequestParam(name = DEVICE_PROFILE_ID, required = false) String deviceProfileIdStr) throws ThingsboardException {
-
-        List<Device> devices;
-        TenantId tenantId = getTenantId();
-        devices = getDevices(tenantId, deviceProfileIdStr);
+        DeviceProfileId deviceProfileId;
+        if (StringUtils.isNotEmpty(deviceProfileIdStr)) {
+            deviceProfileId = new DeviceProfileId(UUID.fromString(deviceProfileIdStr));
+            checkDeviceProfileId(deviceProfileId, Operation.READ);
+        } else {
+            deviceProfileId = null;
+        }
 
         try {
             final DeferredResult<ResponseEntity> response = new DeferredResult<>();
-            if (devices.size() > 0) {
-                ListenableFuture<Set<String>> keysFuture = Futures.transform(
-                        timeseriesService.findAllLatestByEntityIds(getTenantId(), EntityType.DEVICE,
-                                devices.stream().map(Device::getId).collect(Collectors.toList())), list -> {
-                            if (!CollectionUtils.isEmpty(list)) {
-                                return list.stream().map(TsKvEntry::getKey).sorted().collect(Collectors.toCollection(LinkedHashSet::new));
-                            }
-                            return Collections.emptySet();
-                        }, MoreExecutors.directExecutor());
-
-                Futures.addCallback(keysFuture, new FutureCallback<Set<String>>() {
-                    @Override
-                    public void onSuccess(Set<String> keys) {
-                        response.setResult(new ResponseEntity<>(keys, HttpStatus.OK));
-                    }
-
-                    @Override
-                    public void onFailure(Throwable e) {
-                        log.error("Failed to fetch timeseries keys by deviceProfileId [{}]", deviceProfileIdStr, e);
-                        AccessValidator.handleError(e, response, HttpStatus.INTERNAL_SERVER_ERROR);
-                    }
-                }, MoreExecutors.directExecutor());
-            } else {
-                response.setResult(new ResponseEntity<>(Collections.EMPTY_SET, HttpStatus.OK));
-            }
+            addCallback(timeseriesService.findAllLatestByDeviceProfileId(getTenantId(), deviceProfileId), response);
             return response;
         } catch (Exception e) {
             throw handleException(e);
@@ -165,66 +137,43 @@ public class DeviceProfileController extends BaseController {
     @ResponseBody
     public DeferredResult<ResponseEntity> getAttributesKeys(
             @RequestParam(name = DEVICE_PROFILE_ID, required = false) String deviceProfileIdStr) throws ThingsboardException {
-
-        List<Device> devices;
-        TenantId tenantId = getTenantId();
-        devices = getDevices(tenantId, deviceProfileIdStr);
+        DeviceProfileId deviceProfileId;
+        if (StringUtils.isNotEmpty(deviceProfileIdStr)) {
+            deviceProfileId = new DeviceProfileId(UUID.fromString(deviceProfileIdStr));
+            checkDeviceProfileId(deviceProfileId, Operation.READ);
+        } else {
+            deviceProfileId = null;
+        }
 
         try {
             final DeferredResult<ResponseEntity> response = new DeferredResult<>();
-            if (devices.size() > 0) {
-                List<EntityId> ids = devices.stream().map(Device::getId).collect(Collectors.toList());
-
-                List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>(ids.size());
-
-                for (String scope : DataConstants.allScopes()) {
-                    futures.add(attributesService.findAll(tenantId, EntityType.DEVICE, ids, scope));
-                }
-
-                ListenableFuture<Set<String>> futureKeys = Futures.transform(Futures.allAsList(futures), lists -> {
-                    if (!CollectionUtils.isEmpty(lists)) {
-                        return lists.stream()
-                                .filter(list -> !CollectionUtils.isEmpty(list))
-                                .flatMap(List::stream)
-                                .map(AttributeKvEntry::getKey)
-                                .sorted()
-                                .collect(Collectors.toCollection(LinkedHashSet::new));
-                    }
-                    return Collections.emptySet();
-                }, MoreExecutors.directExecutor());
-
-                Futures.addCallback(futureKeys, new FutureCallback<Set<String>>() {
-                    @Override
-                    public void onSuccess(@Nullable Set<String> attributesKeys) {
-                        response.setResult(new ResponseEntity<>(attributesKeys, HttpStatus.OK));
-                    }
-
-                    @Override
-                    public void onFailure(Throwable e) {
-                        log.error("Failed to fetch attributes keys by deviceProfileId [{}]", deviceProfileIdStr, e);
-                        AccessValidator.handleError(e, response, HttpStatus.INTERNAL_SERVER_ERROR);
-                    }
-                }, MoreExecutors.directExecutor());
-            } else {
-                response.setResult(new ResponseEntity<>(Collections.EMPTY_SET, HttpStatus.OK));
-            }
+            addCallback(attributesService.findAllByDeviceProfileId(getTenantId(), deviceProfileId), response);
             return response;
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
-    private List<Device> getDevices(TenantId tenantId, String deviceProfileIdStr) throws ThingsboardException {
-        List<Device> devices;
-        PageLink pageLink = new PageLink(100, 0);
-        if (StringUtils.isNotEmpty(deviceProfileIdStr)) {
-            DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.fromString(deviceProfileIdStr));
-            DeviceProfile deviceProfile = checkDeviceProfileId(deviceProfileId, Operation.READ);
-            devices = deviceService.findDevicesByTenantIdAndType(tenantId, deviceProfile.getName(), pageLink).getData();
-        } else {
-            devices = deviceService.findDevicesByTenantId(tenantId, pageLink).getData();
-        }
-        return devices;
+    private <T extends KvEntry> void addCallback(ListenableFuture<List<T>> future, DeferredResult<ResponseEntity> response) {
+        ListenableFuture<Set<String>> keysFuture = Futures.transform(future, list -> {
+            if (!CollectionUtils.isEmpty(list)) {
+                return list.stream().map(KvEntry::getKey).sorted().collect(Collectors.toCollection(LinkedHashSet::new));
+            }
+            return Collections.emptySet();
+        }, MoreExecutors.directExecutor());
+
+        Futures.addCallback(keysFuture, new FutureCallback<Set<String>>() {
+            @Override
+            public void onSuccess(Set<String> keys) {
+                response.setResult(new ResponseEntity<>(keys, HttpStatus.OK));
+            }
+
+            @Override
+            public void onFailure(Throwable e) {
+                log.error("Failed to fetch keys!", e);
+                AccessValidator.handleError(e, response, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
