@@ -834,7 +834,13 @@
           "endpoint": "Endpoint Client Name",
           "mode": "Security config mode",
           "client-tab": "Client Security Config",
-          "client-certificate": "Client certificate"
+          "client-certificate": "Client certificate",
+          "bootstrap-tab": "Bootstrap Client",
+          "bootstrap-server": "Bootstrap Server",
+          "lwm2m-server": "LwM2M Server",
+          "client-publicKey-or-id": "Client Public Key or Id",
+          "client-secret-key": "Client Secret Key",
+           "config-json-tab": "Json Client Security Config"
         },
         "client-id": "Client ID",
         "client-id-pattern": "Contains invalid character.",

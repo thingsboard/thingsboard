@@ -27,8 +27,6 @@ import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
 import { SecurityConfigComponent } from '@home/pages/device/lwm2m/security-config.component';
 // TODO: @nickAS21 move to device profile
 import {SecurityConfigServerComponent} from "@home/pages/device/lwm2m/security-config-server.component";
-import {SecurityConfigObserveAttrComponent} from "@home/pages/device/lwm2m/security-config-observe-attr.component";
-import {SecurityConfigObserveAttrResourceComponent} from "@home/pages/device/lwm2m/security-config-observe-attr-resource.component";
 import { DefaultDeviceConfigurationComponent } from './data/default-device-configuration.component';
 import { DeviceConfigurationComponent } from './data/device-configuration.component';
 import { DeviceDataComponent } from './data/device-data.component';
@@ -51,9 +49,7 @@ import { Lwm2mDeviceTransportConfigurationComponent } from './data/lwm2m-device-
     DeviceTableHeaderComponent,
     DeviceCredentialsDialogComponent,
     SecurityConfigComponent,
-    SecurityConfigServerComponent,
-    SecurityConfigObserveAttrComponent,
-    SecurityConfigObserveAttrResourceComponent
+    SecurityConfigServerComponent
   ],
   imports: [
     CommonModule,

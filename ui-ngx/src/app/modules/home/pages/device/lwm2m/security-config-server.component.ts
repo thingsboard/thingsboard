@@ -21,13 +21,9 @@ import {
   FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators
 } from "@angular/forms";
 import {
-  BOOTSTRAP_SERVER,
   SECURITY_CONFIG_MODE,
   SECURITY_CONFIG_MODE_NAMES,
-  getDefaultPortBootstrap,
-  getDefaultPortServer,
   KEY_IDENT_REGEXP_PSK,
-  KEY_PUBLIC_REGEXP_PSK,
   ServerSecurityConfig,
   DeviceCredentialsDialogLwm2mData,
   LEN_MAX_PSK,
@@ -59,7 +55,6 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
   credentialTypeLwM2MNamesMap = SECURITY_CONFIG_MODE_NAMES;
   lenMaxClientPublicKeyOrId = LEN_MAX_PSK;
   lenMaxClientSecretKey = LEN_MAX_PRIVATE_KEY;
-  lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK;
 
   @Input() serverFormGroup: FormGroup;
 
@@ -73,7 +68,6 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
   }
 
   ngOnInit(): void {
-    this.serverFormGroup.get('bootstrapServerIs').disable();
     this.registerDisableOnLoadFormControl(this.serverFormGroup.get('securityMode'));
   }
 
@@ -88,31 +82,24 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
       case SECURITY_CONFIG_MODE.NO_SEC:
         this.serverFormGroup.get('clientPublicKeyOrId').setValidators([]);
         this.serverFormGroup.get('clientSecretKey').setValidators([]);
-        this.serverFormGroup.get('serverPublicKey').setValidators([]);
         break;
       case SECURITY_CONFIG_MODE.PSK:
         this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_RPK;
         this.lenMaxClientSecretKey = LEN_MAX_PSK;
-        this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK;
         this.serverFormGroup.get('clientPublicKeyOrId').setValidators([Validators.required]);
         this.serverFormGroup.get('clientSecretKey').setValidators([Validators.required, Validators.pattern(KEY_IDENT_REGEXP_PSK)]);
-        this.serverFormGroup.get('serverPublicKey').setValidators([]);
         break;
       case SECURITY_CONFIG_MODE.RPK:
         this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_X509;
         this.lenMaxClientSecretKey = LEN_MAX_PRIVATE_KEY;
-        this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_X509;
         this.serverFormGroup.get('clientPublicKeyOrId').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
         this.serverFormGroup.get('clientSecretKey').setValidators([Validators.required, Validators.pattern(KEY_PRIVATE_REGEXP)]);
-        this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
         break;
       case SECURITY_CONFIG_MODE.X509:
         this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_X509;
         this.lenMaxClientSecretKey = LEN_MAX_PRIVATE_KEY;
-        this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_X509;
         this.serverFormGroup.get('clientPublicKeyOrId').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
         this.serverFormGroup.get('clientSecretKey').setValidators([Validators.required, Validators.pattern(KEY_PRIVATE_REGEXP)]);
-        this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
         break;
     }
     this.serverFormGroup.updateValueAndValidity();

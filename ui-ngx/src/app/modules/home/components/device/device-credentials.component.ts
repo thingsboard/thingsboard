@@ -90,8 +90,7 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
 
   constructor(public fb: FormBuilder,
               private translate: TranslateService,
-              private dialog: MatDialog,
-              @Inject(WINDOW) private window: Window) {
+              private dialog: MatDialog) {
     this.deviceCredentialsFormGroup = this.fb.group({
       credentialsType: [DeviceCredentialsType.ACCESS_TOKEN],
       credentialsId: [null],
@@ -256,7 +255,7 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        jsonAllConfig: (value === null || value.length === 0) ? getDefaultSecurityConfig(this.window.location.hostname) as SecurityConfigModels : JSON.parse(value) as SecurityConfigModels,
+        jsonAllConfig: (value === null || value.length === 0) ? getDefaultSecurityConfig() as SecurityConfigModels : JSON.parse(value) as SecurityConfigModels,
         endPoint: (id === null) ? DEFAULT_END_POINT : id,
         isNew: (id === null || value === null || value.length === 0)
       }

@@ -29,16 +29,15 @@ import {
   LEN_MAX_PRIVATE_KEY,
   LEN_MAX_PUBLIC_KEY_RPK,
   LEN_MAX_PUBLIC_KEY_X509,
-  KEY_PUBLIC_REGEXP_X509
+  KEY_PUBLIC_REGEXP_X509,
+  DEFAULT_PORT_BOOTSTRAP_NO_SEC,
+  DEFAULT_PORT_SERVER_NO_SEC,
+  DEFAULT_CLIENT_HOLD_OFF_TIME,
+  DEFAULT_ID_SERVER
 } from "./profile-config.models";
 import { Store } from "@ngrx/store";
 import { AppState } from "@core/core.state";
 import { coerceBooleanProperty } from "@angular/cdk/coercion";
-import {
-  DEFAULT_CLIENT_HOLD_OFF_TIME, DEFAULT_ID_SERVER,
-  DEFAULT_PORT_BOOTSTRAP_NO_SEC,
-  DEFAULT_PORT_SERVER_NO_SEC
-} from "../../../../pages/device/lwm2m/security-config.models";
 import { WINDOW } from "../../../../../../core/services/window.service";
 import { pairwise, startWith } from 'rxjs/operators';
 import { DeviceProfileService } from '@core/http/device-profile.service';
