@@ -46,7 +46,7 @@
           }}" #alarmRules="matTab">
   <div class="mat-padding" [formGroup]="detailsForm">
     <div formGroupName="profileData">
-      <tb-device-profile-alarms formControlName="alarms"></tb-device-profile-alarms>
+      <tb-device-profile-alarms formControlName="alarms" [deviceProfileId]="entity.id"></tb-device-profile-alarms>
     </div>
   </div>
 </mat-tab>
