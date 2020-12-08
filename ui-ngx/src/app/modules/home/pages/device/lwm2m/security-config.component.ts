@@ -21,7 +21,7 @@ import {Store} from '@ngrx/store';
 import {AppState} from '@core/core.state';
 import {Router} from '@angular/router';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import {ControlValueAccessor, FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {TranslateService} from '@ngx-translate/core';
 import {
   SECURITY_CONFIG_MODE_NAMES,
@@ -29,7 +29,6 @@ import {
   SecurityConfigModels,
   ClientSecurityConfigPSK,
   ClientSecurityConfigRPK,
-  JSON_OBSERVE,
   JSON_ALL_CONFIG,
   KEY_IDENT_REGEXP_PSK,
   KEY_PUBLIC_REGEXP_PSK,
@@ -363,8 +362,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     return this.fb.group({
       securityMode: [this.fb.control(SECURITY_CONFIG_MODE.NO_SEC), []],
       clientPublicKeyOrId: ['', []],
-      clientSecretKey: ['', []],
-      bootstrapServerAccountTimeout: ['', [Validators.required]],
+      clientSecretKey: ['', []]
     })
   }
 

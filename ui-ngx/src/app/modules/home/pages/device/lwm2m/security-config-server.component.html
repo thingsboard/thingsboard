@@ -71,7 +71,7 @@
          <mat-error *ngIf="serverFormGroup.get('clientSecretKey').hasError('pattern') &&
                                 (serverFormGroup.get('securityMode').value === securityConfigLwM2MType.PSK)">
             {{ 'device.lwm2m-security-config.client-key' | translate }}
-            <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec_64' | translate }}</strong>
+            <strong>{{ 'device-profile.lwm2m.pattern_hex_dec_64' | translate }}</strong>
           </mat-error>
         </mat-form-field>
       </div>

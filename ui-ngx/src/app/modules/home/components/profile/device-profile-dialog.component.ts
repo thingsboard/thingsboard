@@ -83,12 +83,10 @@ export class DeviceProfileDialogComponent extends
   }
 
   cancel(): void {
-    debugger
     this.dialogRef.close(null);
   }
 
   save(): void {
-    debugger
     this.submitted = true;
     if (this.deviceProfileComponent.entityForm.valid) {
       this.deviceProfile = {...this.deviceProfile, ...this.deviceProfileComponent.entityFormValue()};
@@ -99,5 +97,4 @@ export class DeviceProfileDialogComponent extends
       );
     }
   }
-
 }

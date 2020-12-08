@@ -46,7 +46,6 @@ import {
 } from '@home/pages/device/lwm2m/security-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
-import { WINDOW } from '@core/services/window.service';
 import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
@@ -214,10 +213,10 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
         break;
       case DeviceCredentialsType.LWM2M_CREDENTIALS:
         this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([Validators.required]);
-        this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity();
+        this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity({emitEvent: false});
         this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
-        this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity();
-        this.deviceCredentialsFormGroup.get('credentialsBasic').disable();
+        this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
+        this.deviceCredentialsFormGroup.get('credentialsBasic').disable({emitEvent: false});
         break;
     }
   }

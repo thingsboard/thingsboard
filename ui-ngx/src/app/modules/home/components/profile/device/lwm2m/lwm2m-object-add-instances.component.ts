@@ -22,7 +22,6 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
-import { nodeDebugInfo } from '@angular/compiler-cli/src/ngtsc/util/src/typescript';
 
 export interface Lwm2mObjectAddInstancesData {
   instancesIds: Set<number>;

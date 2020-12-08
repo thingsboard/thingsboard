@@ -118,7 +118,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
       } else if (JSON.stringify(value) !== JSON.stringify(this.valuePrev)) {
         this.valuePrev = value;
         if (this.observeAttrTelemetryFormGroup.valid) {
-          console.warn(value, "attr")
           this.propagateChange(value);
         } else {
           this.propagateChange(null);

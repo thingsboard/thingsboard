@@ -31,10 +31,10 @@ public class ReadResultSecurityStore {
     private SecurityInfo securityInfo;
     @Builder.Default
     private int securityMode = DEFAULT_MODE.code;
-    DeviceProfile deviceProfile;
 
     /** bootstrap */
-    JsonObject bootstrapJson;
+    DeviceProfile deviceProfile;
+    JsonObject bootstrapJsonCredential;
     String endPoint;
     BootstrapConfig bootstrapConfig;
 }

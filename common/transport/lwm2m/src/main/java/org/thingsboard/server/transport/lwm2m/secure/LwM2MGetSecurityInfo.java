@@ -60,8 +60,8 @@ public class LwM2MGetSecurityInfo {
                 new TransportServiceCallback<ValidateDeviceCredentialsResponseMsg>() {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponseMsg msg) {
-                        String ingfosStr = msg.getCredentialsBody();
-                        resultSecurityStore[0] = putSecurityInfo(endPoint, msg.getDeviceInfo().getDeviceName(), ingfosStr, keyValue);
+                        String credentialsBody = msg.getCredentialsBody();
+                        resultSecurityStore[0] = putSecurityInfo(endPoint, msg.getDeviceInfo().getDeviceName(), credentialsBody, keyValue);
                         resultSecurityStore[0].setMsg(msg);
                         Optional<DeviceProfile> deviceProfileOpt = LwM2MTransportHandler.decode(msg.getProfileBody().toByteArray());
                         deviceProfileOpt.ifPresent(profile -> resultSecurityStore[0].setDeviceProfile(profile));
@@ -97,7 +97,7 @@ public class LwM2MGetSecurityInfo {
             endPoint = (endPointPsk == null || endPointPsk.isEmpty()) ? endPoint : endPointPsk;
             if (object != null && !object.isJsonNull()) {
                 if (keyValue.equals(TypeServer.BOOTSTRAP)) {
-                    result.setBootstrapJson(object);
+                    result.setBootstrapJsonCredential(object);
                     result.setEndPoint(endPoint);
                 } else {
                     LwM2MSecurityMode lwM2MSecurityMode = LwM2MSecurityMode.fromSecurityMode(object.get("securityConfigClientMode").getAsString().toLowerCase());

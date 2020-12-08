@@ -36,10 +36,8 @@ export const DEFAULT_DEFAULT_MIN_PERIOD = 1;
 export const DEFAULT_NOTIF_IF_DESIBLED = true;
 export const DEFAULT_BINDING = "U";
 export const DEFAULT_BOOTSTRAP_SERVER_ACCOUNT_TIME_OUT = 0;
-export const LEN_MAX_PSK = 64;
-export const LEN_MAX_PRIVATE_KEY = 134;
-export const LEN_MAX_PUBLIC_KEY_RPK = 182;
-export const LEN_MAX_PUBLIC_KEY_X509 = 3000;
+export const LEN_MAX_PUBLIC_KEY_PSK = 182;
+export const LEN_MAX_PUBLIC_KEY_RPK_X509 = 3000;
 export const KEY_IDENT_REGEXP_PSK = /^[0-9a-fA-F]{64,64}$/;
 export const KEY_PRIVATE_REGEXP = /^[0-9a-fA-F]{134,134}$/;
 export const KEY_PUBLIC_REGEXP_PSK = /^[0-9a-fA-F]{182,182}$/;
@@ -123,8 +121,6 @@ export function getDefaultBootstrapServerSecurityConfig(hostname: any): ServerSe
     port: getDefaultPortBootstrap(),
     bootstrapServerIs: true,
     securityMode: SECURITY_CONFIG_MODE.NO_SEC.toString(),
-    clientPublicKeyOrId: '',
-    clientSecretKey: '',
     serverPublicKey: '',
     clientHoldOffTime: DEFAULT_CLIENT_HOLD_OFF_TIME,
     serverId: DEFAULT_ID_BOOTSTRAP,

@@ -840,7 +840,9 @@
           "lwm2m-server": "LwM2M Server",
           "client-publicKey-or-id": "Client Public Key or Id",
           "client-secret-key": "Client Secret Key",
-           "config-json-tab": "Json Client Security Config"
+           "config-json-tab": "Json Client Security Config",
+          "pattern_hex_dec_64": "must be hex decimal format and 64 characters",
+          "pattern_hex_dec_182": "must be hex decimal format and 182 characters"
         },
         "client-id": "Client ID",
         "client-id-pattern": "Contains invalid character.",

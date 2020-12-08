@@ -17,8 +17,10 @@ package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
 
+@Slf4j
 @Data
 public class LwM2MServerBootstrap {
 
@@ -46,4 +48,18 @@ public class LwM2MServerBootstrap {
     @Builder.Default
     boolean bootstrapServerIs = false;
 
+    public LwM2MServerBootstrap(){};
+
+    public LwM2MServerBootstrap(LwM2MServerBootstrap bootstrapFromCredential, LwM2MServerBootstrap profileServerBootstrap) {
+            this.clientPublicKeyOrId = bootstrapFromCredential.getClientPublicKeyOrId();
+            this.clientSecretKey = bootstrapFromCredential.getClientSecretKey();
+            this.serverPublicKey = profileServerBootstrap.getServerPublicKey();
+            this.clientHoldOffTime = profileServerBootstrap.getClientHoldOffTime();
+            this.bootstrapServerAccountTimeout = profileServerBootstrap.getBootstrapServerAccountTimeout();
+            this.host = (profileServerBootstrap.getHost().equals("0.0.0.0")) ? "localhost" : profileServerBootstrap.getHost();
+            this.port = profileServerBootstrap.getPort();
+            this.securityMode = profileServerBootstrap.getSecurityMode();
+            this.serverId = profileServerBootstrap.getServerId();
+            this.bootstrapServerIs = profileServerBootstrap.bootstrapServerIs;
+    }
 }

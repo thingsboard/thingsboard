@@ -69,6 +69,10 @@ public class LwM2MTransportHandler{
     public static final String ATTRIBUTE = "attribute";
     public static final String TELEMETRY = "telemetry";
     public static final String OBSERVE = "observe";
+    public static final String BOOTSTRAP = "bootstrap";
+    public static final String SERVERS = "servers";
+    public static final String LWM2M_SERVER = "lwm2mServer";
+    public static final String BOOTSTRAP_SERVER = "bootstrapServer";
     public static final String BASE_DEVICE_API_TOPIC = "v1/devices/me";
     public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + "/attributes";
     public static final String DEVICE_TELEMETRY_TOPIC = BASE_DEVICE_API_TOPIC + "/telemetry";
@@ -207,14 +211,31 @@ public class LwM2MTransportHandler{
         return null;
     }
 
+    public static JsonObject getBootstrapParametersFromThingsboard(DeviceProfile deviceProfile) {
+        if (deviceProfile != null && ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
+            Lwm2mDeviceProfileTransportConfiguration lwm2mDeviceProfileTransportConfiguration = (Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+            Object bootstrap = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                String bootstrapStr = mapper.writeValueAsString(bootstrap);
+                JsonObject objectMsg = (bootstrapStr != null) ? validateJson(bootstrapStr) : null;
+                return (getValidateBootstrapProfileFromThingsboard(objectMsg)) ? objectMsg.get(BOOTSTRAP).getAsJsonObject() : null;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
     private static boolean getValidateCredentialsBodyFromThingsboard(JsonObject objectMsg) {
         return (objectMsg != null &&
                 !objectMsg.isJsonNull() &&
                 objectMsg.has(OBSERVE_ATTRIBUTE_TELEMETRY) &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonObject() &&
                 !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonNull() &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonObject() &&
                 objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(KEYNAME) &&
                 !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEYNAME).isJsonNull() &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEYNAME).isJsonObject() &&
                 objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(ATTRIBUTE) &&
                 !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).isJsonNull() &&
                 objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).isJsonArray() &&
@@ -224,6 +245,23 @@ public class LwM2MTransportHandler{
                 objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(OBSERVE) &&
                 !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE).isJsonNull() &&
                 objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE).isJsonArray());
+    }
+
+    private static boolean getValidateBootstrapProfileFromThingsboard(JsonObject objectMsg) {
+        return (objectMsg != null &&
+                !objectMsg.isJsonNull() &&
+                objectMsg.has(BOOTSTRAP) &&
+                objectMsg.get(BOOTSTRAP).isJsonObject() &&
+                !objectMsg.get(BOOTSTRAP).isJsonNull() &&
+                objectMsg.get(BOOTSTRAP).getAsJsonObject().has(SERVERS) &&
+                !objectMsg.get(BOOTSTRAP).getAsJsonObject().get(SERVERS).isJsonNull() &&
+                objectMsg.get(BOOTSTRAP).getAsJsonObject().get(SERVERS).isJsonObject() &&
+                objectMsg.get(BOOTSTRAP).getAsJsonObject().has(BOOTSTRAP_SERVER) &&
+                !objectMsg.get(BOOTSTRAP).getAsJsonObject().get(BOOTSTRAP_SERVER).isJsonNull() &&
+                objectMsg.get(BOOTSTRAP).getAsJsonObject().get(BOOTSTRAP_SERVER).isJsonObject() &&
+                objectMsg.get(BOOTSTRAP).getAsJsonObject().has(LWM2M_SERVER) &&
+                !objectMsg.get(BOOTSTRAP).getAsJsonObject().get(LWM2M_SERVER).isJsonNull() &&
+                objectMsg.get(BOOTSTRAP).getAsJsonObject().get(LWM2M_SERVER).isJsonObject());
     }
 
 

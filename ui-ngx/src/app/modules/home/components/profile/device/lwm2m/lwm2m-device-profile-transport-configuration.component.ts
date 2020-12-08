@@ -137,7 +137,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     if (modelValue.objectIds !== null) {
       this.deviceProfileService.getLwm2mObjects(modelValue.objectIds).subscribe(
         (objectsList) => {
-          debugger
           modelValue.objectsList = objectsList;
           this.updateWriteValue(modelValue);
         }
