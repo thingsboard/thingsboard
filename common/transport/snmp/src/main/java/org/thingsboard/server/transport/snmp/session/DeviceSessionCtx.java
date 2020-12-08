@@ -48,10 +48,8 @@ import java.util.function.Consumer;
 
 @Slf4j
 public class DeviceSessionCtx extends DeviceAwareSessionContext implements SessionMsgListener {
-
     private final AtomicInteger msgIdSeq = new AtomicInteger(0);
 
-    //TODO: temp implementation
     @Getter
     @Setter
     private SnmpDeviceTransportConfiguration transportConfiguration;
@@ -61,7 +59,6 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
     @Getter
     @Setter
     private Target target;
-
     @Getter
     @Setter
     private volatile TransportProtos.SessionInfoProto sessionInfo;
@@ -99,28 +96,25 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
     @Override
     public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto newSessionInfo, DeviceProfile deviceProfile) {
         super.onDeviceProfileUpdate(sessionInfo, deviceProfile);
-        //TODO: Is this check needed. What should be done if profile type was changed to not SNMP?
+        //TODO: Is this check needed? What should be done if profile type was changed to not SNMP?
         if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
+            SnmpDeviceProfileTransportConfiguration snmpDeviceProfileTransportConfiguration = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
             snmpSessionListener.getSnmpTransportContext().getDeviceProfileTransportConfig().put(
                     deviceProfile.getId(),
-                    (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration());
+                    snmpDeviceProfileTransportConfiguration);
             //TODO: Cancel futures, update PDUs and start new features.
+            snmpSessionListener.getSnmpTransportContext().updatePdusPerProfile(deviceProfile.getId(), snmpDeviceProfileTransportConfiguration);
         }
     }
 
     @Override
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         //TODO: cancel future for a specific device
-    }
-
-    public void initTarget(SnmpDeviceProfileTransportConfiguration config) {
-        CommunityTarget communityTarget = new CommunityTarget();
-        communityTarget.setAddress(GenericAddress.parse(GenericAddress.TYPE_UDP + ":" + transportConfiguration.getAddress() + "/" + transportConfiguration.getPort()));
-        communityTarget.setVersion(getSnmpVersion(transportConfiguration.getProtocolVersion()));
-        communityTarget.setCommunity(new OctetString(transportConfiguration.getCommunity()));
-        communityTarget.setTimeout(config.getTimeoutMs());
-        communityTarget.setRetries(config.getRetries());
-        this.target = communityTarget;
+        deviceProfileOpt.ifPresent(deviceProfile -> {
+            if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
+                snmpSessionListener.getSnmpTransportContext().updateDeviceSessionCtx(device, deviceProfile);
+            }
+        });
     }
 
     public void createSessionInfo(Consumer<TransportProtos.SessionInfoProto> registerSession) {
@@ -135,11 +129,22 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
                             log.warn("Failed to process device auth");
                         }
                     }
+
                     @Override
                     public void onError(Throwable e) {
                         log.warn("Failed to process device auth", e);
                     }
                 });
+    }
+
+    public void initTarget(SnmpDeviceProfileTransportConfiguration config) {
+        CommunityTarget communityTarget = new CommunityTarget();
+        communityTarget.setAddress(GenericAddress.parse(GenericAddress.TYPE_UDP + ":" + transportConfiguration.getAddress() + "/" + transportConfiguration.getPort()));
+        communityTarget.setVersion(getSnmpVersion(transportConfiguration.getProtocolVersion()));
+        communityTarget.setCommunity(new OctetString(transportConfiguration.getCommunity()));
+        communityTarget.setTimeout(config.getTimeoutMs());
+        communityTarget.setRetries(config.getRetries());
+        this.target = communityTarget;
     }
 
     //TODO: replace with enum, wtih preliminary discussion of type version in config (string or integer)

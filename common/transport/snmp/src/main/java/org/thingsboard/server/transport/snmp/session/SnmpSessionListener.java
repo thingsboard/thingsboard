@@ -48,9 +48,8 @@ import java.util.function.Consumer;
 public class SnmpSessionListener implements ResponseListener {
 
     @Getter
-    private SnmpTransportContext snmpTransportContext;
+    private final SnmpTransportContext snmpTransportContext;
 
-    //TODO: temp implementation
     @Getter
     private final String token;
 
