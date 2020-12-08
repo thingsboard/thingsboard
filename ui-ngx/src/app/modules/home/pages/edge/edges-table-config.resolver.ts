@@ -103,7 +103,8 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<EdgeInfo>> {
     const routeParams = route.params;
     this.config.componentsData = {
-      edgeScope: route.data.edgesType
+      edgeScope: route.data.edgesType,
+      edgeType: ''
     };
     this.customerId = routeParams.customerId;
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
@@ -161,7 +162,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
   configureEntityFunctions(edgeScope: string): void {
     if (edgeScope === 'tenant') {
       this.config.entitiesFetchFunction = pageLink =>
-        this.edgeService.getTenantEdgeInfos(pageLink);
+        this.edgeService.getTenantEdgeInfos(pageLink, this.config.componentsData.edgeType);
       this.config.deleteEntity = id => this.edgeService.deleteEdge(id.id);
     }
     if (edgeScope === 'customer') {

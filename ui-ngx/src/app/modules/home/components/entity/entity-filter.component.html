@@ -103,6 +103,16 @@
         <input matInput formControlName="entityViewNameFilter">
       </mat-form-field>
     </ng-template>
+    <ng-template [ngSwitchCase]="aliasFilterType.edgeType">
+      <tb-entity-subtype-autocomplete required
+                                      formControlName="edgeType"
+                                      [entityType]="entityType.EDGE">
+      </tb-entity-subtype-autocomplete>
+      <mat-form-field class="mat-block">
+        <mat-label translate>edge.name-starts-with</mat-label>
+        <input matInput formControlName="edgeNameFilter">
+      </mat-form-field>
+    </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.relationsQuery">
       <section fxLayout="column" id="relationsQueryFilter">
         <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
@@ -169,6 +179,7 @@
     </ng-template>
     <ng-template [ngSwitchCase]="entityFilterFormGroup.get('type').value === aliasFilterType.assetSearchQuery ||
                                  entityFilterFormGroup.get('type').value === aliasFilterType.deviceSearchQuery ||
+                                 entityFilterFormGroup.get('type').value === aliasFilterType.edgeSearchQuery ||
                                  entityFilterFormGroup.get('type').value === aliasFilterType.entityViewSearchQuery ?
                                  entityFilterFormGroup.get('type').value : ''">
       <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
@@ -246,6 +257,14 @@
         required
         [entityType]="entityType.DEVICE"
         formControlName="deviceTypes">
+      </tb-entity-subtype-list>
+    </ng-template>
+    <ng-template [ngSwitchCase]="aliasFilterType.edgeSearchQuery">
+      <div class="mat-caption tb-required" style="color: rgba(0,0,0,0.57);" translate>edge.edge-types</div>
+      <tb-entity-subtype-list
+        required
+        [entityType]="entityType.EDGE"
+        formControlName="edgeTypes">
       </tb-entity-subtype-list>
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.entityViewSearchQuery">

@@ -213,6 +213,7 @@
         "filter-type-entity-view-type-and-name-description": "Entity Views of type '{{entityView}}' and with name starting with '{{prefix}}'",
         "filter-type-edge-type": "Edge type",
         "filter-type-edge-type-description": "Edges of type '{{edgeType}}'",
+        "filter-type-edge-type-and-name-description": "Edges of type '{{edgeType}}' and with name starting with '{{prefix}}'",
         "filter-type-relations-query": "Relations query",
         "filter-type-relations-query-description": "{{entities}} that have {{relationType}} relation {{direction}} {{rootEntity}}",
         "filter-type-asset-search-query": "Asset search query",
@@ -1002,7 +1003,9 @@
       "selected-edges": "{ count, plural, 1 {1 edge} other {# edges} } selected",
       "enter-edge-type": "Enter entity view type",
       "any-edge": "Any edge",
-      "no-edge-types-matching": "No edge types matching '{{entitySubtype}}' were found."
+      "no-edge-types-matching": "No edge types matching '{{entitySubtype}}' were found.",
+      "edge-type-list-empty": "No device types selected.",
+      "edge-types": "Edge types"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",
