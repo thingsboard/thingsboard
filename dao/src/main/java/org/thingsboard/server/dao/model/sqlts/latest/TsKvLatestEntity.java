@@ -63,8 +63,14 @@ import java.util.UUID;
                 resultClass = TsKvLatestEntity.class
         ),
         @NamedNativeQuery(
-                name = SearchTsKvLatestRepository.FIND_ALL_BY_ENTITY_IDS,
-                query = SearchTsKvLatestRepository.FIND_ALL_BY_ENTITY_IDS_QUERY,
+                name = SearchTsKvLatestRepository.FIND_ALL_BY_DEVICE_PROFILE_ID,
+                query = SearchTsKvLatestRepository.FIND_ALL_BY_DEVICE_PROFILE_ID_QUERY,
+                resultSetMapping = "tsKvLatestFindMapping",
+                resultClass = TsKvLatestEntity.class
+        ),
+        @NamedNativeQuery(
+                name = SearchTsKvLatestRepository.FIND_ALL_BY_TENANT_ID,
+                query = SearchTsKvLatestRepository.FIND_ALL_BY_TENANT_ID_QUERY,
                 resultSetMapping = "tsKvLatestFindMapping",
                 resultClass = TsKvLatestEntity.class
         )

@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -61,7 +61,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -162,8 +161,8 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     }
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityType entityType, List<EntityId> entityIds) {
-        return getFindAllLatestFutures(entityIds);
+    public ListenableFuture<List<TsKvEntry>> findAllLatestByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
+        return getFindAllLatestFuturesByDeviceProfileId(tenantId, deviceProfileId);
     }
 
     private ListenableFuture<Void> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
@@ -260,10 +259,10 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
                         searchTsKvLatestRepository.findAllByEntityId(entityId.getId()))));
     }
 
-    protected ListenableFuture<List<TsKvEntry>> getFindAllLatestFutures(List<EntityId> entityIds) {
+    protected ListenableFuture<List<TsKvEntry>> getFindAllLatestFuturesByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
         return Futures.immediateFuture(
                 DaoUtil.convertDataList(Lists.newArrayList(
-                        searchTsKvLatestRepository.findAllByEntityIds(entityIds.stream().map(EntityId::getId).collect(Collectors.toList())))));
+                        searchTsKvLatestRepository.findAllByDeviceProfileId(tenantId.getId(), deviceProfileId != null ? deviceProfileId.getId() : null))));
     }
 
     protected ListenableFuture<Void> getSaveLatestFuture(EntityId entityId, TsKvEntry tsKvEntry) {

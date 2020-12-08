@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -119,9 +120,8 @@ public class BaseTimeseriesService implements TimeseriesService {
         return timeseriesLatestDao.findAllLatest(tenantId, entityId);
     }
 
-    @Override
-    public ListenableFuture<List<TsKvEntry>> findAllLatestByEntityIds(TenantId tenantId, EntityType entityType, List<EntityId> entityIds) {
-        return timeseriesLatestDao.findAllLatest(tenantId, entityType, entityIds);
+    public ListenableFuture<List<TsKvEntry>> findAllLatestByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
+        return timeseriesLatestDao.findAllLatestByDeviceProfileId(tenantId, deviceProfileId);
     }
 
     @Override
