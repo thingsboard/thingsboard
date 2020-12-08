@@ -35,7 +35,7 @@
         </mat-error>
       </mat-form-field>
       <mat-divider vertical></mat-divider>
-      <tb-alarm-rule formControlName="alarmRule" required fxFlex>
+      <tb-alarm-rule formControlName="alarmRule" [deviceProfileId]="deviceProfileId" required fxFlex>
       </tb-alarm-rule>
     </div>
     <button *ngIf="!disabled"
