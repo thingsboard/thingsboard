@@ -87,7 +87,7 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
     public ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityType entityType, List<EntityId> entityIds) {
         try {
             List<UUID> ids = entityIds.stream().map(EntityId::getId).collect(Collectors.toList());
-            BoundStatementBuilder stmtBuilder = new BoundStatementBuilder(getFindAllLatestByDeviceIdsStmt().bind());
+            BoundStatementBuilder stmtBuilder = new BoundStatementBuilder(getFindAllLatestByEntityIdsStmt().bind());
             stmtBuilder.setString(0, entityType.name());
             stmtBuilder.setList(1, ids, UUID.class);
             BoundStatement stmt = stmtBuilder.build();
@@ -256,7 +256,7 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
         return findAllLatestStmt;
     }
 
-    private PreparedStatement getFindAllLatestByDeviceIdsStmt() {
+    private PreparedStatement getFindAllLatestByEntityIdsStmt() {
         if (findAllLatestByDeviceIdsStmt == null) {
             findAllLatestByDeviceIdsStmt = prepare(SELECT_PREFIX +
                     ModelConstants.KEY_COLUMN + "," +

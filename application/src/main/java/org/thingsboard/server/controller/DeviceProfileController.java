@@ -131,7 +131,8 @@ public class DeviceProfileController extends BaseController {
             final DeferredResult<ResponseEntity> response = new DeferredResult<>();
             if (devices.size() > 0) {
                 ListenableFuture<Set<String>> keysFuture = Futures.transform(
-                        timeseriesService.findAllLatestByEntityIds(getTenantId(), EntityType.DEVICE, devices.stream().map(Device::getId).collect(Collectors.toList())), list -> {
+                        timeseriesService.findAllLatestByEntityIds(getTenantId(), EntityType.DEVICE,
+                                devices.stream().map(Device::getId).collect(Collectors.toList())), list -> {
                             if (!CollectionUtils.isEmpty(list)) {
                                 return list.stream().map(TsKvEntry::getKey).sorted().collect(Collectors.toCollection(LinkedHashSet::new));
                             }
@@ -151,7 +152,7 @@ public class DeviceProfileController extends BaseController {
                     }
                 }, MoreExecutors.directExecutor());
             } else {
-                response.setResult(new ResponseEntity<>(Collections.EMPTY_LIST, HttpStatus.OK));
+                response.setResult(new ResponseEntity<>(Collections.EMPTY_SET, HttpStatus.OK));
             }
             return response;
         } catch (Exception e) {
@@ -205,7 +206,7 @@ public class DeviceProfileController extends BaseController {
                     }
                 }, MoreExecutors.directExecutor());
             } else {
-                response.setResult(new ResponseEntity<>(Collections.EMPTY_LIST, HttpStatus.OK));
+                response.setResult(new ResponseEntity<>(Collections.EMPTY_SET, HttpStatus.OK));
             }
             return response;
         } catch (Exception e) {
