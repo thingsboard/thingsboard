@@ -53,7 +53,7 @@ const routes: Routes = [
           auth: [Authority.TENANT_ADMIN],
           ruleChainsType: 'edge',
           breadcrumb: {
-            label: 'edge.rulechains',
+            label: 'rulechain.edge-rulechains',
             icon: 'settings_ethernet'
           },
         },

@@ -100,11 +100,11 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     };
     if (this.config.componentsData.edgeId) {
       this.config.entitySelectionEnabled = ruleChain => this.config.componentsData.edge.rootRuleChainId.id != ruleChain.id.id;
-      this.config.deleteEnabled = () => false;
       this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(edge => {
         this.config.componentsData.edge = edge;
         this.config.tableTitle = edge.name + ': ' + this.translate.instant('rulechain.edge-rulechains');
       });
+      this.config.entitiesDeleteEnabled = false;
     }
     else {
       this.config.entitySelectionEnabled = ruleChain => ruleChain && !ruleChain.root;
@@ -294,7 +294,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     ).subscribe((res) => {
         if (res) {
           if (this.config.componentsData.edgeId) {
-            this.edgeService.setRootRuleChain(this.config.componentsData.edgeId, ruleChain.id.id).subscribe(
+            this.ruleChainService.setEdgeRootRuleChain(this.config.componentsData.edgeId, ruleChain.id.id).subscribe(
               (edge) => {
                 this.config.componentsData.edge = edge;
                 this.config.table.updateData();

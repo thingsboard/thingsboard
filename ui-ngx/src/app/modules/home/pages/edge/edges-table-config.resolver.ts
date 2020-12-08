@@ -149,10 +149,10 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     if (edgeScope === 'tenant') {
       columns.push(
         new EntityTableColumn<EdgeInfo>('customerTitle', 'customer.customer', '25%'),
-        new EntityTableColumn<EdgeInfo>('customerIsPublic', 'edge.public', '60px',
+        /* new EntityTableColumn<EdgeInfo>('customerIsPublic', 'edge.public', '60px',
           entity => {
             return checkBoxCell(entity.customerIsPublic);
-          }, () => ({}), false),
+          }, () => ({}), false) */
       );
     }
     return columns;
@@ -175,12 +175,12 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     const actions: Array<CellActionDescriptor<EdgeInfo>> = [];
     if (edgeScope === 'tenant') {
       actions.push(
-        {
-          name: this.translate.instant('edge.make-public'),
-          icon: 'share',
-          isEnabled: (entity) => (!entity.customerId || entity.customerId.id === NULL_UUID),
-          onAction: ($event, entity) => this.makePublic($event, entity)
-        },
+        /* {
+           name: this.translate.instant('edge.make-public'),
+           icon: 'share',
+           isEnabled: (entity) => (!entity.customerId || entity.customerId.id === NULL_UUID),
+           onAction: ($event, entity) => this.makePublic($event, entity)
+         }, */
         {
           name: this.translate.instant('edge.assign-to-customer'),
           icon: 'assignment_ind',
@@ -335,7 +335,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
       });
   }
 
-  makePublic($event: Event, edge: Edge) {
+  /* makePublic($event: Event, edge: Edge) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -355,7 +355,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
         }
       }
     );
-  }
+  } */
 
   openEdgeDashboards($event, edge) {
     if ($event) {
@@ -474,9 +474,9 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
 
   onEdgeAction(action: EntityAction<EdgeInfo>): boolean {
   switch (action.action) {
-    case 'makePublic':
-      this.makePublic(action.event, action.entity);
-    return true;
+    // case 'makePublic':
+    //   this.makePublic(action.event, action.entity);
+    // return true;
     case 'assignToCustomer':
       this.assignToCustomer(action.event, [action.entity.id]);
     return true;

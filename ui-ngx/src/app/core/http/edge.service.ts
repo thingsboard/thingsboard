@@ -76,12 +76,6 @@ export class EdgeService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public setRootRuleChain(edgeId: string, ruleChainId: string,
-                          config?: RequestConfig): Observable<Edge> {
-    return this.http.post<Edge>(`/api/edge/${edgeId}/${ruleChainId}/root`,
-      defaultHttpOptionsFromConfig(config));
-  }
-
   public getTenantEdgeInfos(pageLink: PageLink, type: string = '',
                             config?: RequestConfig): Observable<PageData<EdgeInfo>> {
     return this.http.get<PageData<EdgeInfo>>(`/api/tenant/edgeInfos${pageLink.toQuery()}&type=${type}`,

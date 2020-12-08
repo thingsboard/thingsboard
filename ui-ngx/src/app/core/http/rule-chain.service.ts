@@ -44,6 +44,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
 import { deepClone, snakeCase } from '@core/utils';
 import { DebugRuleNodeEventBody } from '@app/shared/models/event.models';
+import { Edge } from "@shared/models/edge.models";
 
 @Injectable({
   providedIn: 'root'
@@ -321,6 +322,11 @@ export class RuleChainService {
 
   public getDefaultEdgeRuleChains(config?: RequestConfig): Observable<Array<RuleChain>> {
     return this.http.get<Array<RuleChain>>(`/api/ruleChain/defaultEdgeRuleChains`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public setEdgeRootRuleChain(edgeId: string, ruleChainId: string, config?: RequestConfig): Observable<Edge> { //TODO deaflynx EdgeInfo vs. Edge check usage
+    return this.http.post<Edge>(`/api/edge/${edgeId}/${ruleChainId}/root`,
+      defaultHttpOptionsFromConfig(config));
   }
 
 }
