@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.snmp;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
+import org.snmp4j.Snmp;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.VariableBinding;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -81,26 +81,21 @@ public class SnmpTransportContext extends TransportContext {
                 .findFirst();
     }
 
-    public void initPdusPerProfile() {
-        deviceProfileTransportConfig.forEach(this::updatePdusPerProfile);
+    public void initPduListPerProfile() {
+        deviceProfileTransportConfig.forEach(this::updatePduListPerProfile);
     }
 
-    public void updatePdusPerProfile(DeviceProfileId id, SnmpDeviceProfileTransportConfiguration config) {
-        pdusPerProfile.put(id, getPduList(config));
+    public void updatePduListPerProfile(DeviceProfileId id, SnmpDeviceProfileTransportConfiguration config) {
+        pdusPerProfile.put(id, createPduList(config));
     }
 
-    public void updateDeviceSessionCtx(Device device, DeviceProfile deviceProfile) {
+    public void updateDeviceSessionCtx(Device device, DeviceProfile deviceProfile, Snmp snmp) {
         DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
         if (DeviceCredentialsType.ACCESS_TOKEN.equals(credentials.getCredentialsType())) {
             SnmpDeviceTransportConfiguration snmpDeviceTransportConfiguration = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
             if (snmpDeviceTransportConfiguration.isValid()) {
-                DeviceSessionCtx deviceSessionCtx = new DeviceSessionCtx(UUID.randomUUID(), this, credentials.getCredentialsId(), snmpDeviceTransportConfiguration);
-                deviceSessionCtx.setDeviceId(device.getId());
-                deviceSessionCtx.setDeviceProfile(deviceProfile);
-
-                deviceSessionCtx.initTarget((SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration());
+                DeviceSessionCtx deviceSessionCtx = new DeviceSessionCtx(this, credentials.getCredentialsId(), snmpDeviceTransportConfiguration, snmp, device.getId(), deviceProfile);
                 deviceSessionCtx.createSessionInfo(ctx -> getTransportService().registerAsyncSession(deviceSessionCtx.getSessionInfo(), deviceSessionCtx));
-
                 this.deviceSessions.put(device.getId(), deviceSessionCtx);
             }
         } else {
@@ -108,14 +103,12 @@ public class SnmpTransportContext extends TransportContext {
         }
     }
 
-    private List<PDU> getPduList(SnmpDeviceProfileTransportConfiguration deviceProfileConfig) {
+    private List<PDU> createPduList(SnmpDeviceProfileTransportConfiguration deviceProfileConfig) {
         Map<String, List<VariableBinding>> varBindingPerMethod = new HashMap<>();
 
-        Consumer<SnmpDeviceProfileKvMapping> varBindingPerMethodConsumer = mapping -> varBindingPerMethod
+        deviceProfileConfig.getKvMappings().forEach(mapping -> varBindingPerMethod
                 .computeIfAbsent(mapping.getMethod(), v -> new ArrayList<>())
-                .add(new VariableBinding(new OID(mapping.getOid())));
-
-        deviceProfileConfig.getKvMappings().forEach(varBindingPerMethodConsumer);
+                .add(new VariableBinding(new OID(mapping.getOid()))));
 
         return varBindingPerMethod.keySet().stream()
                 .map(method -> {

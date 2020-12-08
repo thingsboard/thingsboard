@@ -19,6 +19,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.CommunityTarget;
+import org.snmp4j.Snmp;
 import org.snmp4j.Target;
 import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.smi.GenericAddress;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
@@ -41,8 +43,11 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMs
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
 
+import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -63,10 +68,28 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
     @Setter
     private volatile TransportProtos.SessionInfoProto sessionInfo;
 
-    public DeviceSessionCtx(UUID sessionId, SnmpTransportContext transportContext, String token, SnmpDeviceTransportConfiguration transportConfiguration) {
-        super(sessionId);
+    protected volatile ScheduledFuture<?> poolingTask;
+
+    private Snmp snmp;
+
+    public DeviceSessionCtx(SnmpTransportContext transportContext, String token, SnmpDeviceTransportConfiguration transportConfiguration, Snmp snmp, DeviceId deviceId, DeviceProfile deviceProfile) {
+        super(UUID.randomUUID());
         this.snmpSessionListener = new SnmpSessionListener(transportContext, token);
         this.transportConfiguration = transportConfiguration;
+        super.setDeviceId(deviceId);
+        super.setDeviceProfile(deviceProfile);
+        if (snmp != null) {
+            this.snmp = snmp;
+        }
+        SnmpDeviceProfileTransportConfiguration config = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+        initPoolingTask(config);
+        initTarget(config);
+    }
+
+    private void initPoolingTask(SnmpDeviceProfileTransportConfiguration config) {
+        poolingTask = snmpSessionListener.getSnmpTransportContext().getScheduler().scheduleWithFixedDelay(
+                this::sendSnmpRequest,
+                config.getPoolPeriodMs(), config.getPoolPeriodMs(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -97,23 +120,28 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
     @Override
     public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto newSessionInfo, DeviceProfile deviceProfile) {
         super.onDeviceProfileUpdate(sessionInfo, deviceProfile);
-        //TODO: Is this check needed? What should be done if profile type was changed to not SNMP?
+        poolingTask.cancel(true);
         if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
             SnmpDeviceProfileTransportConfiguration snmpDeviceProfileTransportConfiguration = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
             snmpSessionListener.getSnmpTransportContext().getDeviceProfileTransportConfig().put(
                     deviceProfile.getId(),
                     snmpDeviceProfileTransportConfiguration);
-            //TODO: Cancel futures, update PDUs and start new features.
-            snmpSessionListener.getSnmpTransportContext().updatePdusPerProfile(deviceProfile.getId(), snmpDeviceProfileTransportConfiguration);
+            snmpSessionListener.getSnmpTransportContext().updatePduListPerProfile(deviceProfile.getId(), snmpDeviceProfileTransportConfiguration);
+            initPoolingTask(snmpDeviceProfileTransportConfiguration);
+        } else {
+            //TODO: should the context be removed from the map?
         }
     }
 
     @Override
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         super.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
-        //TODO: cancel future for a specific device
+        poolingTask.cancel(true);
         if (super.getDeviceProfile() != null && DeviceTransportType.SNMP.equals(super.getDeviceProfile().getTransportType())) {
-            snmpSessionListener.getSnmpTransportContext().updateDeviceSessionCtx(device, deviceProfile);
+            snmpSessionListener.getSnmpTransportContext().updateDeviceSessionCtx(device, deviceProfile, null);
+            initPoolingTask((SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration());
+        } else {
+            //TODO: should the context be removed from the map?
         }
     }
 
@@ -139,7 +167,7 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
                 });
     }
 
-    public void initTarget(SnmpDeviceProfileTransportConfiguration config) {
+    private void initTarget(SnmpDeviceProfileTransportConfiguration config) {
         CommunityTarget communityTarget = new CommunityTarget();
         communityTarget.setAddress(GenericAddress.parse(GenericAddress.TYPE_UDP + ":" + transportConfiguration.getAddress() + "/" + transportConfiguration.getPort()));
         communityTarget.setVersion(getSnmpVersion(transportConfiguration.getProtocolVersion()));
@@ -147,6 +175,20 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
         communityTarget.setTimeout(config.getTimeoutMs());
         communityTarget.setRetries(config.getRetries());
         this.target = communityTarget;
+    }
+
+    public void sendSnmpRequest() {
+        snmpSessionListener.getSnmpTransportContext().getPdusPerProfile().get(deviceProfile.getId()).forEach(pdu -> {
+            try {
+                log.info("[{}] Sending SNMP message...", pdu.getRequestID());
+                snmp.send(pdu,
+                        target,
+                        deviceProfile.getId(),
+                        snmpSessionListener);
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+        });
     }
 
     //TODO: replace with enum, wtih preliminary discussion of type version in config (string or integer)

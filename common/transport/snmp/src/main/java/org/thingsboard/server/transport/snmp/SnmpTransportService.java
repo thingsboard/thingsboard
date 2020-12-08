@@ -24,7 +24,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -39,9 +38,8 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Service("SnmpTransportService")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.snmp.enabled}'=='true')")
@@ -63,11 +61,13 @@ public class SnmpTransportService {
     DeviceService deviceService;
 
     private Snmp snmp;
-    private ScheduledExecutorService schedulerExecutor;
+
+    private ExecutorService snmpCallbackExecutor;
 
     @PostConstruct
     public void init() {
         log.info("Starting SNMP transport...");
+        this.snmpCallbackExecutor = Executors.newWorkStealingPool(20);
         initializeSnmp();
         log.info("SNMP transport started!");
     }
@@ -75,8 +75,8 @@ public class SnmpTransportService {
     @PreDestroy
     public void shutdown() {
         log.info("Stopping SNMP transport!");
-        if (schedulerExecutor != null) {
-            schedulerExecutor.shutdownNow();
+        if (snmpCallbackExecutor != null) {
+            snmpCallbackExecutor.shutdownNow();
         }
         if (snmp != null) {
             try {
@@ -112,35 +112,16 @@ public class SnmpTransportService {
                 if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
                     snmpTransportContext.getDeviceProfileTransportConfig().put(deviceProfile.getId(),
                             (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration());
-                    addDeviceSessions(deviceProfile);
+                    initDeviceSessions(deviceProfile);
                 }
             }
         }
-
-        snmpTransportContext.initPdusPerProfile();
-
-        this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("snmp-pooling-scheduler"));
-        this.schedulerExecutor.scheduleAtFixedRate(this::executeSnmp, 1000, 5000, TimeUnit.MILLISECONDS);
+        snmpTransportContext.initPduListPerProfile();
     }
 
-    private void addDeviceSessions(DeviceProfile deviceProfile) {
+    private void initDeviceSessions(DeviceProfile deviceProfile) {
         for (DeviceInfo deviceInfo : new PageDataIterable<>(pageLink -> deviceService.findDeviceInfosByTenantIdAndDeviceProfileId(deviceProfile.getTenantId(), deviceProfile.getId(), pageLink), ENTITY_PACK_LIMIT)) {
-            snmpTransportContext.updateDeviceSessionCtx(deviceInfo, deviceProfile);
+            snmpTransportContext.updateDeviceSessionCtx(deviceInfo, deviceProfile, snmp);
         }
-    }
-
-    private void executeSnmp() {
-        snmpTransportContext.getDeviceSessions().forEach((deviceId, deviceSessionCtx) ->
-                snmpTransportContext.getPdusPerProfile().get(deviceSessionCtx.getDeviceProfile().getId()).forEach(pdu -> {
-                    try {
-                        log.info("[{}] Sending SNMP message...", pdu.getRequestID());
-                        this.snmp.send(pdu,
-                                deviceSessionCtx.getTarget(),
-                                deviceSessionCtx.getDeviceProfile().getId(),
-                                deviceSessionCtx.getSnmpSessionListener());
-                    } catch (IOException e) {
-                        log.error(e.getMessage(), e);
-                    }
-                }));
     }
 }
