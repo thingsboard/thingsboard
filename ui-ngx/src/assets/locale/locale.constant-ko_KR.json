@@ -266,7 +266,7 @@
         "add-to-dashboard": "대시보드에 추가",
         "add-widget-to-dashboard": "대시보드에 위젯 추가",
         "selected-attributes": "{ count, plural, 1 {속성 1개} other {속성 #개} } 선택됨",
-        "selected-telemetry": "{ count, plural, 1 {최근 데이터 1개} other {최근 데이터 #개} } 선택됨"
+        "selected-telemetry": "{ count, plural, 1 {최근 데이터 1개} other {최근 데이터 #개} } 선택됨",
         "no-attributes-text": "아무 속성도 찾을 수 없습니다",
         "no-telemetry-text": "아무 텔레메트리도 찾을 수 없습니다."
     },
