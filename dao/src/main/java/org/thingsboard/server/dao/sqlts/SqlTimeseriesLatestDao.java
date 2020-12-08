@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -51,7 +52,13 @@ import org.thingsboard.server.dao.util.SqlTsLatestAnyDao;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -154,6 +161,11 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         return getFindAllLatestFuture(entityId);
     }
 
+    @Override
+    public ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityType entityType, List<EntityId> entityIds) {
+        return getFindAllLatestFutures(entityIds);
+    }
+
     private ListenableFuture<Void> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         ListenableFuture<List<TsKvEntry>> future = findNewLatestEntryFuture(tenantId, entityId, query);
         return Futures.transformAsync(future, entryList -> {
@@ -246,6 +258,12 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         return Futures.immediateFuture(
                 DaoUtil.convertDataList(Lists.newArrayList(
                         searchTsKvLatestRepository.findAllByEntityId(entityId.getId()))));
+    }
+
+    protected ListenableFuture<List<TsKvEntry>> getFindAllLatestFutures(List<EntityId> entityIds) {
+        return Futures.immediateFuture(
+                DaoUtil.convertDataList(Lists.newArrayList(
+                        searchTsKvLatestRepository.findAllByEntityIds(entityIds.stream().map(EntityId::getId).collect(Collectors.toList())))));
     }
 
     protected ListenableFuture<Void> getSaveLatestFuture(EntityId entityId, TsKvEntry tsKvEntry) {

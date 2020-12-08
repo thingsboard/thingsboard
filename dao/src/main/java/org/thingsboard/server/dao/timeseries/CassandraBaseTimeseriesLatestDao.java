@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.timeseries;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.google.common.util.concurrent.FutureCallback;
@@ -28,14 +27,13 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.nosql.TbResultSet;
@@ -45,7 +43,9 @@ import org.thingsboard.server.dao.util.NoSqlTsLatestDao;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
@@ -60,6 +60,7 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
     private PreparedStatement latestInsertStmt;
     private PreparedStatement findLatestStmt;
     private PreparedStatement findAllLatestStmt;
+    private PreparedStatement findAllLatestByDeviceIdsStmt;
 
     @Override
     public ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key) {
@@ -81,6 +82,23 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
         log.debug(GENERATED_QUERY_FOR_ENTITY_TYPE_AND_ENTITY_ID, stmt, entityId.getEntityType(), entityId.getId());
         return getFutureAsync(executeAsyncRead(tenantId, stmt), rs -> convertAsyncResultSetToTsKvEntryList(rs));
     }
+
+    @Override
+    public ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityType entityType, List<EntityId> entityIds) {
+        try {
+            List<UUID> ids = entityIds.stream().map(EntityId::getId).collect(Collectors.toList());
+            BoundStatementBuilder stmtBuilder = new BoundStatementBuilder(getFindAllLatestByEntityIdsStmt().bind());
+            stmtBuilder.setString(0, entityType.name());
+            stmtBuilder.setList(1, ids, UUID.class);
+            BoundStatement stmt = stmtBuilder.build();
+//        log.debug(GENERATED_QUERY_FOR_ENTITY_TYPE_AND_ENTITY_ID, stmt, entityId.getEntityType(), entityId.getId());
+            return getFutureAsync(executeAsyncRead(tenantId, stmt), rs -> convertAsyncResultSetToTsKvEntryList(rs));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
     @Override
     public ListenableFuture<Void> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
@@ -236,5 +254,22 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
                     "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM);
         }
         return findAllLatestStmt;
+    }
+
+    private PreparedStatement getFindAllLatestByEntityIdsStmt() {
+        if (findAllLatestByDeviceIdsStmt == null) {
+            findAllLatestByDeviceIdsStmt = prepare(SELECT_PREFIX +
+                    ModelConstants.KEY_COLUMN + "," +
+                    ModelConstants.TS_COLUMN + "," +
+                    ModelConstants.STRING_VALUE_COLUMN + "," +
+                    ModelConstants.BOOLEAN_VALUE_COLUMN + "," +
+                    ModelConstants.LONG_VALUE_COLUMN + "," +
+                    ModelConstants.DOUBLE_VALUE_COLUMN + "," +
+                    ModelConstants.JSON_VALUE_COLUMN + " " +
+                    "FROM " + ModelConstants.TS_KV_LATEST_CF + " " +
+                    "WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM +
+                    "AND " + ModelConstants.ENTITY_ID_COLUMN + " IN ?");
+        }
+        return findAllLatestByDeviceIdsStmt;
     }
 }

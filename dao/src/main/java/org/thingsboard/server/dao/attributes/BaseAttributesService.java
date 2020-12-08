@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -57,6 +58,11 @@ public class BaseAttributesService implements AttributesService {
     public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String scope) {
         validate(entityId, scope);
         return attributesDao.findAll(tenantId, entityId, scope);
+    }
+
+    @Override
+    public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityType entityType, List<EntityId> entityIds, String scope) {
+        return attributesDao.findAll(tenantId, entityType, entityIds, scope);
     }
 
     @Override

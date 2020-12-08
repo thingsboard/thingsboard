@@ -22,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -38,6 +40,7 @@ import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -132,6 +135,20 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                         attributeKvRepository.findAllByEntityTypeAndEntityIdAndAttributeType(
                                 entityId.getEntityType(),
                                 entityId.getId(),
+                                attributeType))));
+    }
+
+    @Override
+    public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId,EntityType entityType, List<EntityId> entityIds, String attributeType) {
+        if (CollectionUtils.isEmpty(entityIds)) {
+            return Futures.immediateFuture(Collections.EMPTY_LIST);
+        }
+
+        return Futures.immediateFuture(
+                DaoUtil.convertDataList(Lists.newArrayList(
+                        attributeKvRepository.findAllByEntityTypeAndEntityIds(
+                                entityType,
+                                entityIds.stream().map(EntityId::getId).collect(Collectors.toList()),
                                 attributeType))));
     }
 

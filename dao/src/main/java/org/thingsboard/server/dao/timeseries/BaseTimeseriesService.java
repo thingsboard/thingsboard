@@ -36,11 +36,11 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -54,6 +54,9 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 @Service
 @Slf4j
 public class BaseTimeseriesService implements TimeseriesService {
+
+    @Autowired
+    private DeviceService deviceService;
 
     private static final int INSERTS_PER_ENTRY = 3;
     private static final int DELETES_PER_ENTRY = INSERTS_PER_ENTRY;
@@ -114,6 +117,11 @@ public class BaseTimeseriesService implements TimeseriesService {
     public ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityId entityId) {
         validate(entityId);
         return timeseriesLatestDao.findAllLatest(tenantId, entityId);
+    }
+
+    @Override
+    public ListenableFuture<List<TsKvEntry>> findAllLatestByEntityIds(TenantId tenantId, EntityType entityType, List<EntityId> entityIds) {
+        return timeseriesLatestDao.findAllLatest(tenantId, entityType, entityIds);
     }
 
     @Override
