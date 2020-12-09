@@ -55,6 +55,3 @@ services:
   tb-coap-transport:
     env_file:
       - queue-confluent.env
-  tb-lwm2m-transport:
-    env_file:
-      - queue-confluent.env

@@ -86,10 +86,6 @@
             <artifactId>coap</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.common.transport</groupId>
-            <artifactId>lwm2m</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.thingsboard</groupId>
             <artifactId>dao</artifactId>
         </dependency>

@@ -69,8 +69,3 @@ services:
       - queue-aws-sqs.env
     depends_on:
       - zookeeper
-  tb-lwm2m-transport:
-    env_file:
-      - queue-aws-sqs.env
-    depends_on:
-      - zookeeper

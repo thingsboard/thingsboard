@@ -193,7 +193,6 @@ public class DefaultTransportService implements TransportService {
                     }
                     records.forEach(record -> {
                         try {
-                            log.info("[{}] SessionIdMSB, [{}] SessionIdLSB, records", record.getValue().getSessionIdMSB(), record.getValue().getSessionIdLSB());
                             processToTransportMsg(record.getValue());
                         } catch (Throwable e) {
                             log.warn("Failed to process the notification.", e);
@@ -268,13 +267,6 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public void process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg msg, TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg> callback)  {
-        log.trace("Processing msg: {}", msg);
-        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateDeviceLwM2MCredentialsRequestMsg(msg).build());
-        AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg),
-                response -> callback.onSuccess(response.getValue().getValidateCredResponseMsg()), callback::onError, transportCallbackExecutor);
-    }
-
     public void process(DeviceTransportType transportType, TransportProtos.ValidateDeviceX509CertRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         log.trace("Processing msg: {}", msg);
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateX509CertRequestMsg(msg).build());
@@ -326,15 +318,6 @@ public class DefaultTransportService implements TransportService {
         AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
     }
 
-    @Override
-    public void process(TransportProtos.LwM2MRequestMsg msg, TransportServiceCallback<TransportProtos.LwM2MResponseMsg> callback) {
-        log.trace("Processing msg: {}", msg);
-        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(),
-                TransportApiRequestMsg.newBuilder().setLwM2MRequestMsg(msg).build());
-        AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg),
-                response -> callback.onSuccess(response.getValue().getLwM2MResponseMsg()), callback::onError, transportCallbackExecutor);
-    }
-
     private TransportDeviceInfo getTransportDeviceInfo(TransportProtos.DeviceInfoProto di) {
         TransportDeviceInfo tdi = new TransportDeviceInfo();
         tdi.setTenantId(new TenantId(new UUID(di.getTenantIdMSB(), di.getTenantIdLSB())));
@@ -355,7 +338,6 @@ public class DefaultTransportService implements TransportService {
                 , MoreExecutors.directExecutor());
         AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
     }
-
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscriptionInfoProto msg, TransportServiceCallback<Void> callback) {
@@ -623,9 +605,6 @@ public class DefaultTransportService implements TransportService {
                 if (toSessionMsg.hasSessionCloseNotification()) {
                     listener.onRemoteSessionCloseCommand(toSessionMsg.getSessionCloseNotification());
                 }
-                if (toSessionMsg.hasToTransportUpdateCredentialsNotification()) {
-                    listener.onToTransportUpdateCredentials(toSessionMsg.getToTransportUpdateCredentialsNotification());
-                }
                 if (toSessionMsg.hasToDeviceRequest()) {
                     listener.onToDeviceRpcRequest(toSessionMsg.getToDeviceRequest());
                 }
@@ -689,7 +668,7 @@ public class DefaultTransportService implements TransportService {
         }
     }
 
-    public void onProfileUpdate(DeviceProfile deviceProfile) {
+    private void onProfileUpdate(DeviceProfile deviceProfile) {
         long deviceProfileIdMSB = deviceProfile.getId().getId().getMostSignificantBits();
         long deviceProfileIdLSB = deviceProfile.getId().getId().getLeastSignificantBits();
         sessions.forEach((id, md) -> {
