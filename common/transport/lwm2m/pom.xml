@@ -87,7 +87,6 @@
 <!--            <groupId>org.eclipse.californium</groupId>-->
 <!--            <artifactId>californium-core</artifactId>-->
 <!--        </dependency>-->
-        <!--  leshan finish -->
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
