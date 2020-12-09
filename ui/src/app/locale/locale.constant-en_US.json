@@ -842,7 +842,8 @@
         "set-root-rule-chain-to-edges-text": "Set root rule chain for { count, plural, 1 {1 edge} other {# edges} }",
         "status": "Received by edge",
         "deployed": "Deployed",
-        "pending": "Pending"
+        "pending": "Pending",
+        "unassign-edges-action-title": "Unassign { count, plural, 1 {1 edge} other {# edges} } from customer"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",
