@@ -595,7 +595,7 @@ queue:
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
     replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
-    max_poll_interval_ms: "${TB_QUEUE_KAFKA_MAX_POLL_INTERVAL_MS:0}"
+    max_poll_interval_ms: "${TB_QUEUE_KAFKA_MAX_POLL_INTERVAL_MS:300000}"
     max_poll_records: "${TB_QUEUE_KAFKA_MAX_POLL_RECORDS:8192}"
     max_partition_fetch_bytes: "${TB_QUEUE_KAFKA_MAX_PARTITION_FETCH_BYTES:16777216}"
     fetch_max_bytes: "${TB_QUEUE_KAFKA_FETCH_MAX_BYTES:134217728}"
@@ -695,8 +695,6 @@ queue:
     max_requests_timeout: "${REMOTE_JS_MAX_REQUEST_TIMEOUT:10000}"
     # JS response poll interval
     response_poll_interval: "${REMOTE_JS_RESPONSE_POLL_INTERVAL_MS:25}"
-    # JS response auto commit interval
-    response_auto_commit_interval: "${REMOTE_JS_RESPONSE_AUTO_COMMIT_INTERVAL_MS:100}"
   rule-engine:
     topic: "${TB_QUEUE_RULE_ENGINE_TOPIC:tb_rule_engine}"
     poll-interval: "${TB_QUEUE_RULE_ENGINE_POLL_INTERVAL_MS:25}"
