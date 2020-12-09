@@ -69,8 +69,3 @@ services:
       - queue-rabbitmq.env
     depends_on:
       - zookeeper
-  tb-lwm2m-transport:
-    env_file:
-      - queue-rabbitmq.env
-    depends_on:
-      - zookeeper

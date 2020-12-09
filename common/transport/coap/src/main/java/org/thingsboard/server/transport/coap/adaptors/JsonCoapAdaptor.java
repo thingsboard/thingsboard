@@ -31,7 +31,6 @@ import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.CoapTransportResource;
 
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;

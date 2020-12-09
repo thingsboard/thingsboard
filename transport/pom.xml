@@ -37,7 +37,6 @@
         <module>http</module>
         <module>mqtt</module>
         <module>coap</module>
-        <module>lwm2m</module>
     </modules>
 
 </project>

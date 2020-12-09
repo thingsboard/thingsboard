@@ -22,7 +22,7 @@ import { ActionNotificationHide, ActionNotificationShow } from '@core/notificati
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { guid, isUndefined } from '@core/utils';
+import { guid } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 
 @Component({
@@ -59,27 +59,21 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
 
   @Input() fillHeight: boolean;
 
-  @Input() editorStyle: { [klass: string]: any };
-
-  @Input() sort: Function;
+  @Input() editorStyle: {[klass: string]: any};
 
   private requiredValue: boolean;
-
   get required(): boolean {
     return this.requiredValue;
   }
-
   @Input()
   set required(value: boolean) {
     this.requiredValue = coerceBooleanProperty(value);
   }
 
   private readonlyValue: boolean;
-
   get readonly(): boolean {
     return this.readonlyValue;
   }
-
   @Input()
   set readonly(value: boolean) {
     this.readonlyValue = coerceBooleanProperty(value);
@@ -224,12 +218,8 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     this.contentValue = '';
     this.objectValid = false;
     try {
-
       if (this.modelValue) {
-        this.contentValue = JSON.stringify(this.modelValue, isUndefined(this.sort) ? undefined :
-          (key, value) => {
-            return this.sort(key, value)
-          }, 2);
+        this.contentValue = JSON.stringify(this.modelValue, undefined, 2);
         this.objectValid = true;
       } else {
         this.objectValid = !this.required;
