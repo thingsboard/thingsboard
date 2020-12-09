@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+
+Copyright 2019 Tampere University. 
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+For more information about this object, please contact Bilhanan.Silverajan@tuni.fi
+
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.openmobilealliance.org/tech/profiles/LWM2M.xsd">
+  <Object ObjectType="MODefinition">
+    <Name>LWM2M Meta Object</Name>
+    <Description1>
+	  <![CDATA[
+	  Use this meta object to provide one or more locations hosting XML data
+	  model definitions for reusable or private and vendor-specific devices,
+	  such as those in the range 26241-42768.
+	  ]]>
+	</Description1>
+    <ObjectID>10300</ObjectID>
+    <ObjectURN>urn:oma:lwm2m:x:10300</ObjectURN>
+    <LWM2MVersion>1.0</LWM2MVersion>
+    <ObjectVersion>1.0</ObjectVersion>
+    <MultipleInstances>Multiple</MultipleInstances>
+    <Mandatory>Optional</Mandatory>
+    <Resources>
+      <Item ID="0">
+        <Name>ObjectID</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units></Units>
+        <Description>
+		  <![CDATA[
+		  Object ID of the vendor-specific object. If a finer granularity is
+		  needed to identify the object (for example, Object IDs in the range
+		  26241 - 32768), the optional ObjectInstanceHandle resource can also be
+		  used.
+		  ]]>
+		</Description>
+      </Item>
+      <Item ID="1">
+        <Name>ObjectURN</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units></Units>
+        <Description>
+		  <![CDATA[
+		  Object URN of the vendor-specific object. URN-equivalence resolution
+		  must conform to Section 3 of RFC 8141.
+		  ]]>
+		</Description>
+      </Item>
+      <Item ID="4000">
+        <Name>ObjectInstanceHandle</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Objlnk</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units></Units>
+        <Description>
+          <![CDATA[The object link is used to refer an Instance of a given Object. An Object link value is composed of two concatenated 16-bits unsigned integers following the Network Byte Order convention. The Most Significant Halfword is an ObjectID, the Least Significant Hafword is an ObjectInstance ID.An Object Link referencing no Object Instance will contain the concatenation of 2 MAX-ID values (null link. Test 5]]>
+        </Description>
+      </Item>
+      <Item ID="2">
+        <Name>URI</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units></Units>
+        <Description>
+		  <![CDATA[
+		  The full URI of the XML file containing the object definition of the
+		  vendor-specfic object. The URI must contain the scheme and authority
+		  components, and the URI syntax must conform to RFC 3986. If several
+		  alternative locations exist for the XML definition, multiple instances
+		  can be used, with each instance containing a single URI. In such
+		  cases, the URI selection is implementation-specific.
+		  ]]>
+		</Description>
+      </Item>
+	  <Item ID="3">
+        <Name>SHAType</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration>0..8</RangeEnumeration>
+        <Units></Units>
+        <Description>
+		  <![CDATA[
+		  The Secure Hash Algorithm used to compute the message digest for the
+		  XML file in the URL(s). Currently defined values are "0" (no checksum
+		  used), "1" (for SHA224), "2" (for SHA256), "3" (for SHA384), "4" (for
+		  SHA512), "5" (SHA3-224), "6" (for SHA3-256), "7" (for SHA3-384) and
+		  "8" (for SHA3-512).
+		  ]]>
+		</Description>
+      </Item>
+	  <Item ID="4">
+		<Name>ChecksumValue</Name>
+		<Operations>R</Operations>
+		<MultipleInstances>Single</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Type>String</Type>
+		<RangeEnumeration></RangeEnumeration>
+		<Units></Units>
+		<Description>
+		  <![CDATA[
+		  If the SHAType value is "0" then this string must be ignored. If the
+		  SHAType value is 1-8, this field contains a hexadecimal encoded
+		  checksum value based on the SHA function used. Valid characters for
+		  the string are: 0123456789abcdef. The length of the string must
+		  correspond exactly to the respective digest. Otherwise, the value must
+		  be ignored and no SHA computation should be performed. For instance, a
+		  file containing "foo" as its content would have the following value
+		  for SHAType 1 (SHA224) as a 56 character string representing 224 bits:
+		  e7d5e36e8d470c3e5103fedd2e4f2aa5c30ab27f6629bdc3286f9dd2
+		  ]]>
+		</Description>
+	  </Item>
+    </Resources>
+    <Description2 />
+  </Object>
+</LWM2M>

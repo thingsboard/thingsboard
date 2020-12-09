@@ -80,3 +80,8 @@ services:
       - queue-kafka.env
     depends_on:
       - kafka
+  tb-lwm2m-transport:
+    env_file:
+      - queue-kafka.env
+    depends_on:
+      - kafka

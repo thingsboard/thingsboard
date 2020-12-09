@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- BSD-3 Clause License
+
+Copyright 2019 Vodafone Group. 
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+    <Object ObjectType="MODefinition">
+        <Name>Connected UE Measurements</Name>
+        <Description1>This LWM2M Object provides a range of measurements of connected UEs and provides an Object link to the Connected UE report.</Description1>
+        <ObjectID>10248</ObjectID>
+        <ObjectURN>urn:oma:lwm2m:x:10248</ObjectURN>
+        <LWM2MVersion/>
+        <ObjectVersion/>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Resources>
+            <Item ID="0">
+                <Name>Number of Connected Users</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration>0..255</RangeEnumeration>
+                <Units></Units>
+                <Description>The number of different UEs currently connected to the eNB (i.e. in RRC_CONNECTED state).</Description>
+            </Item>
+            <Item ID="1">
+                <Name>Cumulative Number of Unique Users</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration>0..65535</RangeEnumeration>
+                <Units></Units>
+                <Description>The number of different UEs that have connected to the eNB over the immediately preceding period specified by the "Cumulative Measurement Window" field.</Description>
+            </Item>
+            <Item ID="2">
+                <Name>Connected UE Report</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Multiple</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Objlnk</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description>Provides an Object link to the Connected UE Report which provides a range of information related to the connected UEs.</Description>
+            </Item>
+        </Resources>
+      <Description2></Description2>
+    </Object>
+</LWM2M>

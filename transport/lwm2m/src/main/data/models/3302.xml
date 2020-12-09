@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<LWM2M  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+	<Object ObjectType="MODefinition">
+		<Name>Presence</Name>
+		<Description1>Presence sensor with digital sensing, optional delay parameters</Description1>
+		<ObjectID>3302</ObjectID>
+		<ObjectURN>urn:oma:lwm2m:ext:3302</ObjectURN>
+		<LWM2MVersion>1.0</LWM2MVersion>
+                <ObjectVersion>1.0</ObjectVersion>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Resources>
+			<Item ID="5500">
+				<Name>Digital Input State</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>The current state of the presence sensor</Description>
+			</Item>
+			<Item ID="5501">
+				<Name>Digital Input Counter</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>The cumulative value of active state detected.</Description>
+			</Item>
+			<Item ID="5505">
+				<Name>Digital Input Counter Reset</Name>
+				<Operations>E</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type></Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Reset the Counter value</Description>
+			</Item>
+			<Item ID="5751">
+				<Name>Sensor Type</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>The type of the sensor (for instance PIR type)</Description>
+			</Item>
+			<Item ID="5903">
+				<Name>Busy to Clear delay</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>ms</Units>
+				<Description>Delay from the detection state to the clear state in ms</Description>
+			</Item>
+			<Item ID="5904">
+				<Name>Clear to Busy delay</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>ms</Units>
+				<Description>Delay from the clear state to the busy state in ms</Description>
+			</Item>
+		</Resources>
+		<Description2></Description2>
+	</Object>
+</LWM2M>

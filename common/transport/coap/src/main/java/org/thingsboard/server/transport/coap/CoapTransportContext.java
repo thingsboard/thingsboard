@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
 
+
 /**
  * Created by ashvayka on 18.10.18.
  */

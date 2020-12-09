@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- BSD-3 Clause License
+
+Copyright 2019 Open Mobile Alliance. 
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<LWM2M  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+    <Object ObjectType="MODefinition">
+        <Name>Timer</Name>
+        <Description1>This IPSO object is used to time events and actions, using patterns common to industrial timers. A write to the trigger resource or On/Off input state change starts the timing operation, and the timer remaining time shows zero when the operation is complete. The patterns supported are One-Shot (mode 1), On-Time or Interval (mode 2), Time delay on pick-up or TDPU (mode 3), and Time Delay on Drop-Out or TDDO (mode 4). Mode 0 disables the timer, so the output follows the input with no delay. A counter is provided to count occurrences of the timer output changing from 0 to 1. Writing a value of zero resets the counter. The Digital Input State resource reports the state of the timer output.
+        </Description1>
+        <ObjectID>3340</ObjectID>
+        <ObjectURN>urn:oma:lwm2m:ext:3340</ObjectURN>
+        <LWM2MVersion>1.0</LWM2MVersion>
+        <ObjectVersion>1.0</ObjectVersion>        
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Resources>
+            <Item ID="5521">
+                <Name>Delay Duration</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Float</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units>s</Units>
+                <Description>The duration of the time delay.</Description>
+            </Item>
+            <Item ID="5538">
+                <Name>Remaining Time</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Float</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units>s</Units>
+                <Description>The time remaining in an operation.</Description>
+            </Item>
+            <Item ID="5525">
+                <Name>Minimum Off-time</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Float</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units>s</Units>
+                <Description>The duration of the rearm delay (i.e. the delay from the end of one cycle until the beginning of the next, the inhibit time).</Description>
+            </Item>
+            <Item ID="5523">
+                <Name>Trigger</Name>
+                <Operations>E</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type></Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description>Trigger initiating actuation.</Description>
+            </Item>
+            <Item ID="5850">
+                <Name>On/Off</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Boolean</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description>On/off control. Boolean value where True is On and False is Off.</Description>
+            </Item>
+            <Item ID="5501">
+                <Name>Digital Input Counter</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description>The number of times the input.</Description>
+            </Item>
+            <Item ID="5544">
+                <Name>Cumulative Time</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Float</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units>s</Units>
+                <Description>The total time in seconds that the timer input is true. Writing a 0 resets the time.</Description>
+            </Item>
+            <Item ID="5543">
+                <Name>Digital State</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Boolean</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description>The current state of the timer output.</Description>
+            </Item>
+            <Item ID="5534">
+                <Name>Counter</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description>Counts the number of times the timer output transitions from 0 to 1.</Description>
+            </Item>
+            <Item ID="5526">
+                <Name>Timer Mode</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration>0..4</RangeEnumeration>
+                <Units></Units>
+                <Description>Type of timer pattern used by the patterns.</Description>
+            </Item>
+            <Item ID="5750">
+                <Name>Application Type</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>String</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description>The application type of the sensor or actuator as a string depending on the use case.</Description>
+            </Item>
+        </Resources>
+        <Description2></Description2>
+    </Object>
+</LWM2M>

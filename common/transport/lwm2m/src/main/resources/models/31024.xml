@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LWM2M  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+    <Object ObjectType="MODefinition">
+        <Name>Test</Name>
+        <Description1>A Wakaama object for testing purpose.
+        </Description1>
+        <ObjectID>31024</ObjectID>
+        <ObjectURN>urn:oma:lwm2m:x:31024</ObjectURN>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Resources>
+            <Item ID="1">
+                <Name>test</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration>0-255</RangeEnumeration>
+                <Description></Description>
+            </Item>
+            <Item ID="2">
+                <Name>exec</Name>
+                <Operations>E</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Description></Description>
+            </Item>
+            <Item ID="3">
+                <Name>dec</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Float</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description></Description>
+            </Item>
+            <Item ID="4">
+                <Name>sig</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description>16-bit signed integer</Description>
+            </Item>
+         </Resources>
+        <Description2></Description2>
+    </Object>
+</LWM2M>
