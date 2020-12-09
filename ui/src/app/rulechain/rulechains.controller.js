@@ -97,6 +97,8 @@ export default function RuleChainsController(ruleChainService, userService, impo
 
     vm.exportRuleChain = exportRuleChain;
     vm.setRootRuleChain = setRootRuleChain;
+    vm.setDefaultEdgeRuleChain = setDefaultEdgeRuleChain;
+    vm.removeDefaultEdgeRuleChain = removeDefaultEdgeRuleChain;
     
     initController();
 
