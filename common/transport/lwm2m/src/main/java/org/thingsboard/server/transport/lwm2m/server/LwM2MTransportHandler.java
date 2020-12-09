@@ -63,7 +63,6 @@ public class LwM2MTransportHandler{
     // We choose a default timeout a bit higher to the MAX_TRANSMIT_WAIT(62-93s) which is the time from starting to
     // send a Confirmable message to the time when an acknowledgement is no longer expected.
     public static final long DEFAULT_TIMEOUT = 2 * 60 * 1000l; // 2min in ms
-    public static final String EVENT_DEREGISTRATION = "DEREGISTRATION";
     public static final String OBSERVE_ATTRIBUTE_TELEMETRY = "observeAttr";
     public static final String KEYNAME = "keyName";
     public static final String ATTRIBUTE = "attribute";
@@ -76,6 +75,11 @@ public class LwM2MTransportHandler{
     public static final String BASE_DEVICE_API_TOPIC = "v1/devices/me";
     public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + "/attributes";
     public static final String DEVICE_TELEMETRY_TOPIC = BASE_DEVICE_API_TOPIC + "/telemetry";
+    public static final String LOG_LW2M_TELEMETRY = "logLwm2m";
+    public static final String LOG_LW2M_INFO = "info";
+    public static final String LOG_LW2M_ERROR = "error";
+    public static final String LOG_LW2M_WARN = "warn";
+
 
     public static final String CLIENT_NOT_AUTHORIZED = "Client not authorized";
 

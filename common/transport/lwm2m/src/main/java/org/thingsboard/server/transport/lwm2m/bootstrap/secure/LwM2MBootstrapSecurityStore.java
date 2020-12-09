@@ -62,7 +62,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         ReadResultSecurityStore store = lwM2MGetSecurityInfo.getSecurityInfo(endPointKey, TypeServer.BOOTSTRAP);
         if (store.getBootstrapJsonCredential() != null) {
             /** add value to store  from BootstrapJson */
-            setBootstrapConfigScurityInfo(store);
+            this.setBootstrapConfigScurityInfo(store);
             BootstrapConfig bsConfigNew = store.getBootstrapConfig();
             if (bsConfigNew != null) {
                 try {
@@ -85,7 +85,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     public SecurityInfo getByIdentity(String identity) {
         ReadResultSecurityStore store = lwM2MGetSecurityInfo.getSecurityInfo(identity, TypeServer.BOOTSTRAP);
         /** add value to store  from BootstrapJson */
-        setBootstrapConfigScurityInfo(store);
+        this.setBootstrapConfigScurityInfo(store);
 
         if (store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             BootstrapConfig bsConfig = store.getBootstrapConfig();
@@ -103,7 +103,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     private void setBootstrapConfigScurityInfo(ReadResultSecurityStore store) {
         /** BootstrapConfig */
-        LwM2MBootstrapConfig lwM2MBootstrapConfig = getParametersBootstrap(store);
+        LwM2MBootstrapConfig lwM2MBootstrapConfig = this.getParametersBootstrap(store);
         if (lwM2MBootstrapConfig != null) {
             /** Security info */
             switch (SecurityMode.valueOf(lwM2MBootstrapConfig.getBootstrapServer().getSecurityMode())) {
@@ -154,6 +154,9 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             }
             else {
                 log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndPoint());
+                log.error(LOG_LW2M_ERROR + " getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", store.getEndPoint());
+                String logMsg = String.format(LOG_LW2M_ERROR + " getParametersBootstrap: %s Different values SecurityMode between of client and profile.", store.getEndPoint());
+//                sentLogsToThingsboard(logMsg, store.getEndPoint());
                 return null;
             }
         } catch (JsonProcessingException e) {
@@ -162,9 +165,17 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         }
     }
 
+    /**
+     * Bootstrap security have to sync between (bootstrapServer in credential and  bootstrapServer in profile)
+     * and (lwm2mServer  in credential and lwm2mServer  in profile
+     * @param bootstrapFromCredential - Bootstrap -> Security of bootstrapServer in credential
+     * @param profileServerBootstrap  - Bootstrap -> Security of bootstrapServer in profile
+     * @param lwm2mFromCredential     - Bootstrap -> Security of lwm2mServer in credential
+     * @param profileLwm2mServer      - Bootstrap -> Security of lwm2mServer in profile
+     * @return false if not sync between SecurityMode of Bootstrap credential and profile
+     */
     private boolean getValidatedSecurityMode(LwM2MServerBootstrap bootstrapFromCredential, LwM2MServerBootstrap profileServerBootstrap, LwM2MServerBootstrap lwm2mFromCredential, LwM2MServerBootstrap profileLwm2mServer) {
         return  (bootstrapFromCredential.getSecurityMode().equals(profileServerBootstrap.getSecurityMode()) &&
-                bootstrapFromCredential.getSecurityMode().equals(lwm2mFromCredential.getSecurityMode()) &&
-                bootstrapFromCredential.getSecurityMode().equals(profileLwm2mServer.getSecurityMode()));
+                lwm2mFromCredential.getSecurityMode().equals(profileLwm2mServer.getSecurityMode()));
     }
 }

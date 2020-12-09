@@ -20,6 +20,7 @@ import org.eclipse.californium.core.coap.Response;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.ContentFormat;
@@ -60,7 +61,17 @@ import java.util.concurrent.Executors;
 
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.isSuccess;
 import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEFAULT_TIMEOUT;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_DISCOVER;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_OBSERVE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_READ;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_WRITE_ATTRIBUTES;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_WRITE_UPDATE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.POST_TYPE_OPER_EXECUTE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.POST_TYPE_OPER_OBSERVE_CANCEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.POST_TYPE_OPER_WRITE_REPLACE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LOG_LW2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LOG_LW2M_INFO;
 
 @Slf4j
 @Service("LwM2MTransportRequest")
@@ -217,34 +228,53 @@ public class LwM2MTransportRequest {
         lwServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
             if  (isSuccess(((Response)response.getCoapResponse()).getCode())) {
                 this.handleResponse(registration, request.getPath().toString(), response, request, lwM2MClient);
+                if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest()) {
+                    String msg = String.format(LOG_LW2M_INFO + " sendRequest Replace: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
+                            ((Response)response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString(),
+                            ((LwM2mSingleResource)((WriteRequest) request).getNode()).getValue().toString());
+                    service.sentLogsToThingsboard(msg, registration.getId());
+                    log.info("[{}] - [{}] [{}] [{}] Update SendRequest", ((Response)response.getCoapResponse()).getCode(), response.getCode(),  request.getPath().toString(), ((LwM2mSingleResource)((WriteRequest) request).getNode()).getValue());
+                }
             }
             else {
+                String msg = String.format(LOG_LW2M_ERROR + " sendRequest: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client",
+                        ((Response)response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString());
+                service.sentLogsToThingsboard(msg, registration.getId());
                 log.error("[{}] - [{}] [{}] error SendRequest", ((Response)response.getCoapResponse()).getCode(), response.getCode(),  request.getPath().toString());
             }
         }, e -> {
+            String msg = String.format(LOG_LW2M_ERROR + " sendRequest: Resource path - %s msg error - %s  SendRequest to Client",
+                    request.getPath().toString(), e.toString());
+            service.sentLogsToThingsboard(msg, registration.getId());
             log.error("[{}] - [{}] error SendRequest",  request.getPath().toString(), e.toString());
         });
     }
 
     private WriteRequest getWriteRequestSingleResource(ContentFormat contentFormat, Integer objectId, Integer instanceId, Integer resourceId, Object value, ResourceModel.Type type) {
-        switch (type) {
-            case STRING:    // String
-                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, value.toString()) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, value.toString());
-            case INTEGER:   // Long
-                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Integer.toUnsignedLong(Integer.valueOf(value.toString()))) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Integer.toUnsignedLong(Integer.valueOf(value.toString())));
-            case OBJLNK:    // ObjectLink
-                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString()));
-            case BOOLEAN:   // Boolean
-                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Boolean.valueOf(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Boolean.valueOf(value.toString()));
-            case FLOAT:     // Double
-                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Double.valueOf(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Double.valueOf(value.toString()));
-            case TIME:      // Date
-                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, new Date((Long) Integer.toUnsignedLong(Integer.valueOf(value.toString())))) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, new Date((Long) Integer.toUnsignedLong(Integer.valueOf(value.toString()))));
-            case OPAQUE:    // byte[] value, base64
-                return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray()));
-            default:
+        try {
+            switch (type) {
+                case STRING:    // String
+                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, value.toString()) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, value.toString());
+                case INTEGER:   // Long
+                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Integer.toUnsignedLong(Integer.valueOf(value.toString()))) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Integer.toUnsignedLong(Integer.valueOf(value.toString())));
+                case OBJLNK:    // ObjectLink
+                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString()));
+                case BOOLEAN:   // Boolean
+                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Boolean.valueOf(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Boolean.valueOf(value.toString()));
+                case FLOAT:     // Double
+                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Double.valueOf(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Double.valueOf(value.toString()));
+                case TIME:      // Date
+                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, new Date((Long) Integer.toUnsignedLong(Integer.valueOf(value.toString())))) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, new Date((Long) Integer.toUnsignedLong(Integer.valueOf(value.toString()))));
+                case OPAQUE:    // byte[] value, base64
+                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray()));
+                default:
+            }
+            return null;
+        } catch (NumberFormatException e) {
+            String patn = "/" + objectId + "/" +  instanceId + "/" +  resourceId;
+            log.error("Path: [{}] type: [{}] value: [{}] errorMsg: [{}]]",   patn, type, value, e.toString());
+            return  null;
         }
-        return null;
     }
 
     private void handleResponse(Registration registration, final String path, LwM2mResponse response, DownlinkRequest request, LwM2MClient lwM2MClient) {

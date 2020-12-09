@@ -15,10 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -137,10 +134,10 @@ public class LwM2MTransportService {
                 lwM2MClient.setProfileUuid(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
                 lwM2MClient.setDeviceName(sessionInfo.getDeviceName());
                 lwM2MClient.setDeviceProfileName(sessionInfo.getDeviceType());
-
                 transportService.registerAsyncSession(sessionInfo, new LwM2MSessionMsgListener(this, sessionInfo));
                 transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), null);
                 transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), null);
+                this.sentLogsToThingsboard(LOG_LW2M_INFO + ": Client registration", registration.getId());
             } else {
                 log.error("Client: [{}] onRegistered [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), sessionInfo);
             }
@@ -168,10 +165,11 @@ public class LwM2MTransportService {
      *                     !!! Warn: if have not finishing unReg, then this operation will be finished on next Client`s connect
      */
     public void unReg(Registration registration, Collection<Observation> observations) {
-        this.closeClientSession (registration);
+        this.sentLogsToThingsboard(LOG_LW2M_INFO + ": Client unRegistration", registration.getId());
+        this.closeClientSession(registration);
     }
 
-    private void closeClientSession (Registration registration) {
+    private void closeClientSession(Registration registration) {
         SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration.getId());
         if (sessionInfo != null) {
             transportService.deregisterSession(sessionInfo);
@@ -263,7 +261,7 @@ public class LwM2MTransportService {
             ValidateDeviceCredentialsResponseMsg msg = lwM2MClient.getCredentialsResponse();
             if (msg == null || msg.getDeviceInfo() == null) {
                 log.error("[{}] [{}]", lwM2MClient.getEndPoint(), CLIENT_NOT_AUTHORIZED);
-                this.closeClientSession (lwM2MClient.getRegistration());
+                this.closeClientSession(lwM2MClient.getRegistration());
             } else {
                 sessionInfo = SessionInfoProto.newBuilder()
                         .setNodeId(this.context.getNodeId())
@@ -474,6 +472,7 @@ public class LwM2MTransportService {
         };
     }
 
+
     /**
      * Start observe
      * #1 - Analyze:
@@ -643,6 +642,7 @@ public class LwM2MTransportService {
 
     /**
      * Update - sent request in change value resources in Client (path to resources from profile by keyName)
+     * Only fo resources  W
      * Delete - nothing
      *
      * @param msg         -
@@ -658,11 +658,21 @@ public class LwM2MTransportService {
                         .orElse("");
                 String path = !profilePath.isEmpty() ? profilePath : this.getPathAttributeUpdate(sessionInfo, de.getKey());
                 if (path != null) {
+                    ResultIds resultIds = new ResultIds(path);
                     LwM2MClient lwM2MClient = lwM2mInMemorySecurityStore.getSession(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB())).entrySet().iterator().next().getValue();
-                    lwM2MTransportRequest.sendAllRequest(lwM2MClient.getLwServer(), lwM2MClient.getRegistration(), path, POST_TYPE_OPER_WRITE_REPLACE,
-                            ContentFormat.TLV.getName(), lwM2MClient, null, de.getValue(), this.context.getCtxServer().getTimeout());
+                    ResourceModel.Operations operations = lwM2MClient.getModelObjects().get(resultIds.getObjectId()).getObjectModel().resources.get(resultIds.getResourceId()).operations;
+                    String value = ((JsonPrimitive) de.getValue()).getAsString();
+                    if (operations.isWritable()) {
+                        lwM2MTransportRequest.sendAllRequest(lwM2MClient.getLwServer(), lwM2MClient.getRegistration(), path, POST_TYPE_OPER_WRITE_REPLACE,
+                                ContentFormat.TLV.getName(), lwM2MClient, null, value, this.context.getCtxServer().getTimeout());
+                        log.info("[{}] path onAttributeUpdate", path);
+                    }
+                    else {
+                        log.error(LOG_LW2M_ERROR + ": Resource path - [{}] value - [{}] is not Writable and cannot be updated", path, value);
+                        String logMsg = String.format(LOG_LW2M_ERROR + " attributeUpdate: Resource path - %s value - %s is not Writable and cannot be updated", path, value);
+                        this.sentLogsToThingsboard(logMsg, lwM2MClient.getRegistration().getId());
+                    }
                 }
-                log.info("[{}] path onAttributeUpdate", path);
             });
         } else if (msg.getSharedDeletedCount() > 0) {
             log.info("[{}] delete [{}]  onAttributeUpdate", msg.getSharedDeletedList(), sessionInfo);
@@ -673,10 +683,14 @@ public class LwM2MTransportService {
         try {
             LwM2MClient lwM2MClient = lwM2mInMemorySecurityStore.getSession(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB())).entrySet().iterator().next().getValue();
             Predicate<Map.Entry<Integer, ResourceModel>> predicateRes = res -> keyName.equals(splitCamelCaseString(res.getValue().name));
-            Predicate<Map.Entry<Integer, ModelObject>> predicateObj = (obj -> {return obj.getValue().getObjectModel().resources.entrySet().stream().filter(predicateRes).findFirst().isPresent();});
+            Predicate<Map.Entry<Integer, ModelObject>> predicateObj = (obj -> {
+                return obj.getValue().getObjectModel().resources.entrySet().stream().filter(predicateRes).findFirst().isPresent();
+            });
             Stream<Map.Entry<Integer, ModelObject>> objectStream = lwM2MClient.getModelObjects().entrySet().stream().filter(predicateObj);
-            Predicate<Map.Entry<Integer, ResourceModel>> predicateResFinal =  (objectStream.count() > 0) ? predicateRes : res -> keyName.equals(res.getValue().name);
-            Predicate<Map.Entry<Integer, ModelObject>> predicateObjFinal = (obj -> {return obj.getValue().getObjectModel().resources.entrySet().stream().filter(predicateResFinal).findFirst().isPresent();});
+            Predicate<Map.Entry<Integer, ResourceModel>> predicateResFinal = (objectStream.count() > 0) ? predicateRes : res -> keyName.equals(res.getValue().name);
+            Predicate<Map.Entry<Integer, ModelObject>> predicateObjFinal = (obj -> {
+                return obj.getValue().getObjectModel().resources.entrySet().stream().filter(predicateResFinal).findFirst().isPresent();
+            });
             Map.Entry<Integer, ModelObject> object = lwM2MClient.getModelObjects().entrySet().stream().filter(predicateObjFinal).findFirst().get();
             ModelObject modelObject = object.getValue();
             LwM2mObjectInstance instance = modelObject.getInstances().entrySet().stream().findFirst().get().getValue();
@@ -963,7 +977,6 @@ public class LwM2MTransportService {
 
     /**
      * Deregister session in transport
-     *
      * @param sessionInfo - lwm2m client
      */
     private void doDisconnect(SessionInfoProto sessionInfo) {
@@ -973,6 +986,14 @@ public class LwM2MTransportService {
 
     private void checkInactivityAndReportActivity() {
         lwM2mInMemorySecurityStore.getSessions().forEach((key, value) -> transportService.reportActivity(this.getValidateSessionInfo(key)));
+    }
+
+    public void sentLogsToThingsboard(String msg, String registrationId) {
+        if (msg != null) {
+            JsonObject telemetrys = new JsonObject();
+            telemetrys.addProperty(LOG_LW2M_TELEMETRY, msg);
+            this.updateParametersOnThingsboard(telemetrys, LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC, registrationId);
+        }
     }
 
 }
