@@ -34,6 +34,8 @@ CREATE INDEX IF NOT EXISTS idx_device_customer_id_and_type ON device(tenant_id, 
 
 CREATE INDEX IF NOT EXISTS idx_device_type ON device(tenant_id, type);
 
+CREATE INDEX IF NOT EXISTS idx_device_device_profile_id ON device(tenant_id, device_profile_id);
+
 CREATE INDEX IF NOT EXISTS idx_asset_customer_id ON asset(tenant_id, customer_id);
 
 CREATE INDEX IF NOT EXISTS idx_asset_customer_id_and_type ON asset(tenant_id, customer_id, type);
