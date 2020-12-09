@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.attributes;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -48,9 +49,16 @@ public interface AttributeKvRepository extends CrudRepository<AttributeKvEntity,
                 @Param("attributeKey") String attributeKey);
 
     @Query("SELECT a FROM AttributeKvEntity a WHERE a.id.entityType = :entityType " +
-            "AND a.id.entityId in (SELECT d.id FROM DeviceEntity d WHERE d.deviceProfileId = :deviceProfileId or (:deviceProfileId = '13814000-1dd2-11b2-8080-808080808080' and d.tenantId = :tenantId)) ")
+            "AND a.id.entityId in (SELECT d.id FROM DeviceEntity d WHERE d.tenantId = :tenantId and d.deviceProfileId = :deviceProfileId)")
     List<AttributeKvEntity> findAllByDeviceProfileId(@Param("tenantId") UUID tenantId,
                                                      @Param("deviceProfileId") UUID deviceProfileId,
-                                                     @Param("entityType") EntityType entityType);
+                                                     @Param("entityType") EntityType entityType,
+                                                     Pageable pageable);
+
+    @Query("SELECT a FROM AttributeKvEntity a WHERE a.id.entityType = :entityType " +
+            "AND a.id.entityId in (SELECT d.id FROM DeviceEntity d WHERE d.tenantId = :tenantId)")
+    List<AttributeKvEntity> findAllByTenantId(@Param("tenantId") UUID tenantId,
+                                              @Param("entityType") EntityType entityType,
+                                              Pageable pageable);
 }
 

@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -139,9 +140,14 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
 
     @Override
     public ListenableFuture<List<AttributeKvEntry>> findAllByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
-        return Futures.immediateFuture(
-                DaoUtil.convertDataList(Lists.newArrayList(
-                        attributeKvRepository.findAllByDeviceProfileId(tenantId.getId(), deviceProfileId != null ? deviceProfileId.getId() : EntityId.NULL_UUID, EntityType.DEVICE))));
+        List<AttributeKvEntity> entities;
+        PageRequest page = PageRequest.of(0, 100);
+        if (deviceProfileId != null) {
+            entities = attributeKvRepository.findAllByDeviceProfileId(tenantId.getId(), deviceProfileId.getId(), EntityType.DEVICE, page);
+        } else {
+            entities = attributeKvRepository.findAllByTenantId(tenantId.getId(), EntityType.DEVICE, page);
+        }
+        return Futures.immediateFuture(DaoUtil.convertDataList(Lists.newArrayList(entities)));
     }
 
     @Override

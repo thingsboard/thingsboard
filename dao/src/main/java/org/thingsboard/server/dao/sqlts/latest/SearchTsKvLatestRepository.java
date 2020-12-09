@@ -41,11 +41,11 @@ public class SearchTsKvLatestRepository {
 
     public static final String FIND_ALL_BY_DEVICE_PROFILE_ID_QUERY = "SELECT ts_kv_latest.entity_id AS entityId, ts_kv_latest.key AS key, ts_kv_dictionary.key AS strKey, ts_kv_latest.str_v AS strValue," +
             " ts_kv_latest.bool_v AS boolValue, ts_kv_latest.long_v AS longValue, ts_kv_latest.dbl_v AS doubleValue, ts_kv_latest.json_v AS jsonValue, ts_kv_latest.ts AS ts FROM ts_kv_latest " +
-            "INNER JOIN ts_kv_dictionary ON ts_kv_latest.key = ts_kv_dictionary.key_id WHERE ts_kv_latest.entity_id in (SELECT id FROM device where device_profile_id = :id)";
+            "INNER JOIN ts_kv_dictionary ON ts_kv_latest.key = ts_kv_dictionary.key_id WHERE ts_kv_latest.entity_id in (SELECT id FROM device where tenant_id = :tenant_id and device_profile_id = :device_profile_id)";
 
     public static final String FIND_ALL_BY_TENANT_ID_QUERY = "SELECT ts_kv_latest.entity_id AS entityId, ts_kv_latest.key AS key, ts_kv_dictionary.key AS strKey, ts_kv_latest.str_v AS strValue," +
             " ts_kv_latest.bool_v AS boolValue, ts_kv_latest.long_v AS longValue, ts_kv_latest.dbl_v AS doubleValue, ts_kv_latest.json_v AS jsonValue, ts_kv_latest.ts AS ts FROM ts_kv_latest " +
-            "INNER JOIN ts_kv_dictionary ON ts_kv_latest.key = ts_kv_dictionary.key_id WHERE ts_kv_latest.entity_id in (SELECT id FROM device where tenant_id = :id)";
+            "INNER JOIN ts_kv_dictionary ON ts_kv_latest.key = ts_kv_dictionary.key_id WHERE ts_kv_latest.entity_id in (SELECT id FROM device where tenant_id = :tenant_id)";
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -57,18 +57,16 @@ public class SearchTsKvLatestRepository {
     }
 
     public List<TsKvLatestEntity> findAllByDeviceProfileId(UUID tenantId, UUID deviceProfileId) {
-        UUID id;
         TypedQuery<TsKvLatestEntity> query;
 
         if (deviceProfileId != null) {
-            id = deviceProfileId;
             query = entityManager.createNamedQuery(FIND_ALL_BY_DEVICE_PROFILE_ID, TsKvLatestEntity.class);
+            query.setParameter("device_profile_id", deviceProfileId);
         } else {
-            id = tenantId;
             query = entityManager.createNamedQuery(FIND_ALL_BY_TENANT_ID, TsKvLatestEntity.class);
         }
         return query
-                .setParameter("id", id)
+                .setParameter("tenant_id", tenantId)
                 .getResultList();
     }
 }
