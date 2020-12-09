@@ -34,7 +34,7 @@
            class="md-raised md-primary">{{ 'rulechain.remove-default-edge' | translate }}</md-button>
 
 <md-button ng-click="onSetRootRuleChain({event: $event})"
-           ng-show="!isEdit && ruleChainsScope == 'edge'"
+           ng-show="!isEdit && ruleChainsScope == 'edge' && edge.rootRuleChainId.id !== ruleChain.id.id"
            class="md-raised md-primary">{{ 'rulechain.set-root' | translate }}</md-button>
 
 <md-button ng-click="onDeleteRuleChain({event: $event})"
