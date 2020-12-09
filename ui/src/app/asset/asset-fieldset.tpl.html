@@ -27,6 +27,9 @@
 <md-button ng-click="onDeleteAsset({event: $event})"
            ng-show="!isEdit && assetScope === 'tenant'"
            class="md-raised md-primary">{{ 'asset.delete' | translate }}</md-button>
+<md-button ng-click="onUnassignFromEdge({event: $event})"
+           ng-show="!isEdit && assetScope === 'edge'"
+           class="md-raised md-primary">{{ 'edge.unassign-from-edge' | translate }}</md-button>
 
 <div layout="row">
     <md-button ngclipboard data-clipboard-action="copy"

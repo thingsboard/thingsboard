@@ -106,6 +106,7 @@ export function EntityViewController($rootScope, userService, entityViewService,
     vm.assignToCustomer = assignToCustomer;
     vm.makePublic = makePublic;
     vm.unassignFromCustomer = unassignFromCustomer;
+    vm.unassignFromEdge = unassignFromEdge;
 
     initController();
 
