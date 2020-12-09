@@ -35,7 +35,7 @@ export enum DeviceProfileType {
 export enum DeviceTransportType {
   DEFAULT = 'DEFAULT',
   MQTT = 'MQTT',
-  // LWM2M = 'LWM2M'
+  LWM2M = 'LWM2M'
 }
 
 export enum MqttTransportPayloadType {
@@ -76,7 +76,7 @@ export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, st
   [
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt'],
-    // [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
+    [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
   ]
 );
 
@@ -93,7 +93,7 @@ export const deviceTransportTypeHintMap = new Map<DeviceTransportType, string>(
   [
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default-hint'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt-hint'],
-    // [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint']
+    [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint']
   ]
 );
 
@@ -121,13 +121,13 @@ export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportTy
         hasDeviceConfiguration: false,
       }
     ],
-    /*[
+    [
       DeviceTransportType.LWM2M,
       {
         hasProfileConfiguration: true,
         hasDeviceConfiguration: false,
       }
-    ]*/
+    ]
   ]
 );
 
@@ -214,10 +214,10 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         };
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
-      /*case DeviceTransportType.LWM2M:
+      case DeviceTransportType.LWM2M:
         const lwm2mTransportConfiguration: Lwm2mDeviceProfileTransportConfiguration = {};
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
-        break;*/
+        break;
     }
   }
   return transportConfiguration;
@@ -235,10 +235,10 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
         const mqttTransportConfiguration: MqttDeviceTransportConfiguration = {};
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
-      /* case DeviceTransportType.LWM2M:
+      case DeviceTransportType.LWM2M:
         const lwm2mTransportConfiguration: Lwm2mDeviceTransportConfiguration = {};
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
-        break;*/
+        break;
     }
   }
   return transportConfiguration;
@@ -436,14 +436,16 @@ export interface DeviceInfo extends Device {
 export enum DeviceCredentialsType {
   ACCESS_TOKEN = 'ACCESS_TOKEN',
   X509_CERTIFICATE = 'X509_CERTIFICATE',
-  MQTT_BASIC = 'MQTT_BASIC'
+  MQTT_BASIC = 'MQTT_BASIC',
+  LWM2M_CREDENTIALS = 'LWM2M_CREDENTIALS'
 }
 
 export const credentialTypeNames = new Map<DeviceCredentialsType, string>(
   [
     [DeviceCredentialsType.ACCESS_TOKEN, 'Access token'],
     [DeviceCredentialsType.X509_CERTIFICATE, 'MQTT X.509'],
-    [DeviceCredentialsType.MQTT_BASIC, 'MQTT Basic']
+    [DeviceCredentialsType.MQTT_BASIC, 'MQTT Basic'],
+    [DeviceCredentialsType.LWM2M_CREDENTIALS, 'LwM2M Credentials']
   ]
 );
 
@@ -452,6 +454,8 @@ export interface DeviceCredentials extends BaseData<DeviceCredentialsId> {
   credentialsType: DeviceCredentialsType;
   credentialsId: string;
   credentialsValue: string;
+  credentialsLwKey: string;
+  credentialsLwValue: string;
 }
 
 export interface DeviceCredentialMQTTBasic {

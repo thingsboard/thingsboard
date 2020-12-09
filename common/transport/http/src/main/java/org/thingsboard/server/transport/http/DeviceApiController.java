@@ -327,6 +327,7 @@ public class DeviceApiController {
         public void onToServerRpcResponse(ToServerRpcResponseMsg msg) {
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
         }
+
     }
 
     private void reportActivity(SessionInfoProto sessionInfo) {

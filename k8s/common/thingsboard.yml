@@ -266,6 +266,72 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: tb-lwm2m-transport
+  namespace: thingsboard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tb-lwm2m-transport
+  template:
+    metadata:
+      labels:
+        app: tb-lwm2m-transport
+    spec:
+      volumes:
+        - name: tb-lwm2m-transport-config
+          configMap:
+            name: tb-lwm2m-transport-config
+            items:
+              - key: conf
+                path:  tb-lwm2m-transport.conf
+              - key: logback
+                path:  logback.xml
+      containers:
+        - name: server
+          imagePullPolicy: Always
+          image: thingsboard/tb-lwm2m-transport:latest
+          ports:
+            - containerPort: 5685
+              name: lwm2m
+              protocol: UDP
+          env:
+            - name: TB_SERVICE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: TB_QUEUE_TYPE
+              value: "kafka"
+            - name: LWM2M_BIND_ADDRESS
+              value: "0.0.0.0"
+            - name: LWM2M_BIND_PORT
+              value: "5685"
+            - name: LWM2M_TIMEOUT
+              value: "10000"
+            - name: TB_KAFKA_SERVERS
+              value: "tb-kafka:9092"
+          volumeMounts:
+            - mountPath: /config
+              name: tb-lwm2m-transport-config
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tb-lwm2m-transport
+  namespace: thingsboard
+spec:
+  type: LoadBalancer
+  selector:
+    app: tb-lwm2m-transport
+  ports:
+    - port: 5685
+      name: lwm2m
+      protocol: UDP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: tb-web-ui
   namespace: thingsboard
 spec:

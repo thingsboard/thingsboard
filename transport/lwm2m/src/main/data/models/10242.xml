@@ -1,0 +1,647 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd" >
+<Object ObjectType="MODefinition">
+    <Name>3-Phase Power Meter</Name>
+    <Description1>
+        <![CDATA[This Object provides the information to represent a generic 3-Phase Power Meter.]]>
+    </Description1>
+    <ObjectID>10242</ObjectID>
+    <ObjectURN>urn:oma:lwm2m:x:10242</ObjectURN>
+    <LWM2MVersion>1.0</LWM2MVersion>
+	<ObjectVersion>1.0</ObjectVersion>
+    <MultipleInstances>Multiple</MultipleInstances>
+    <Mandatory>Optional</Mandatory>
+    <Resources>
+        <Item ID="0">
+            <Name>Manufacturer</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>String</Type>
+            <RangeEnumeration/>
+            <Units/>
+            <Description>
+                <![CDATA[Human readable manufacturer name]]>
+            </Description>
+        </Item>
+        <Item ID="1">
+            <Name>Model Number</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>String</Type>
+            <RangeEnumeration/>
+            <Units/>
+            <Description>
+                <![CDATA[A model identifier (manufacturer specified string)]]>
+            </Description>
+        </Item>
+        <Item ID="2">
+            <Name>Serial Number</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>String</Type>
+            <RangeEnumeration/>
+            <Units/>
+            <Description>
+                <![CDATA[Serial number of the meter]]>
+            </Description>
+        </Item>
+        <Item ID="3">
+            <Name>Description</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>String</Type>
+            <RangeEnumeration/>
+            <Units/>
+            <Description>
+                <![CDATA[Description of the meter]]>
+            </Description>
+        </Item>
+        <Item ID="4">
+            <Name>Tension R</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Mandatory</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>V</Units>
+            <Description>
+                <![CDATA[Voltage phase 1 (phase to neutral)]]>
+            </Description>
+        </Item>
+        <Item ID="5">
+            <Name>Current R</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Mandatory</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>A</Units>
+            <Description>
+                <![CDATA[Current phase 1]]>
+            </Description>
+        </Item>
+        <Item ID="6">
+            <Name>Active Power R</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kW</Units>
+            <Description>
+                <![CDATA[Active Power phase 1]]>
+            </Description>
+        </Item>
+        <Item ID="7">
+            <Name>Reactive Power R</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[Reactive Power phase 1]]>
+            </Description>
+        </Item>
+        <Item ID="8">
+            <Name>Inductive Reactive Power R</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[Inductive Reactive Power phase 1]]>
+            </Description>
+        </Item>
+        <Item ID="9">
+            <Name>Capacitive Reactive Power R</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[Capacitive Reactive Power phase 1]]>
+            </Description>
+        </Item>
+        <Item ID="10">
+            <Name>Apparent Power R</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kVA</Units>
+            <Description>
+                <![CDATA[Apparent Power phase 1]]>
+            </Description>
+        </Item>
+        <Item ID="11">
+            <Name>Power Factor R</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration>-1..1</RangeEnumeration>
+            <Units/>
+            <Description>
+                <![CDATA[Power Factor phase 1]]>
+            </Description>
+        </Item>
+        <Item ID="12">
+            <Name>THD-V R</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>/100</Units>
+            <Description>
+                <![CDATA[Total Harmonic Distortion phase 1 (Tension)]]>
+            </Description>
+        </Item>
+        <Item ID="13">
+            <Name>THD-A R</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>/100</Units>
+            <Description>
+                <![CDATA[Total Harmonig Distortion phase 1 (Current)]]>
+            </Description>
+        </Item>
+        <Item ID="14">
+            <Name>Tension S</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Mandatory</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>V</Units>
+            <Description>
+                <![CDATA[Voltage phase 2 (phase to neutral)]]>
+            </Description>
+        </Item>
+        <Item ID="15">
+            <Name>Current S</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Mandatory</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>A</Units>
+            <Description>
+                <![CDATA[Current phase 2]]>
+            </Description>
+        </Item>
+        <Item ID="16">
+            <Name>Active Power S</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kW</Units>
+            <Description>
+                <![CDATA[Active Power phase 2]]>
+            </Description>
+        </Item>
+        <Item ID="17">
+            <Name>Reactive Power S</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[Reactive Power phase 2]]>
+            </Description>
+        </Item>
+        <Item ID="18">
+            <Name>Inductive Reactive Power S</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[Inductive Reactive Power phase 2]]>
+            </Description>
+        </Item>
+        <Item ID="19">
+            <Name>Capacitive Reactive Power S</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[Capacitive Reactive Power phase 2]]>
+            </Description>
+        </Item>
+        <Item ID="20">
+            <Name>Apparent Power S</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kVA</Units>
+            <Description>
+                <![CDATA[Apparent Power phase 2]]>
+            </Description>
+        </Item>
+        <Item ID="21">
+            <Name>Power Factor S</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration>-1..1</RangeEnumeration>
+            <Units/>
+            <Description>
+                <![CDATA[Power Factor phase 2]]>
+            </Description>
+        </Item>
+        <Item ID="22">
+            <Name>THD-V S</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>/100</Units>
+            <Description>
+                <![CDATA[Total Harmonic Distortion phase 2 (Tension)]]>
+            </Description>
+        </Item>
+        <Item ID="23">
+            <Name>THD-A S</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>/100</Units>
+            <Description>
+                <![CDATA[Total Harmonic Distortion phase 2 (Current)]]>
+            </Description>
+        </Item>
+        <Item ID="24">
+            <Name>Tension T</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Mandatory</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>V</Units>
+            <Description>
+                <![CDATA[Voltage phase 3 (phase to neutral)]]>
+            </Description>
+        </Item>
+        <Item ID="25">
+            <Name>Current T</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Mandatory</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>A</Units>
+            <Description>
+                <![CDATA[Current phase 3]]>
+            </Description>
+        </Item>
+        <Item ID="26">
+            <Name>Active Power T</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kW</Units>
+            <Description>
+                <![CDATA[Active Power phase 3]]>
+            </Description>
+        </Item>
+        <Item ID="27">
+            <Name>Reactive Power T</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[Reactive Power phase 3]]>
+            </Description>
+        </Item>
+        <Item ID="28">
+            <Name>Inductive Reactive Power T</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[Inductive Reactive Power phase 3]]>
+            </Description>
+        </Item>
+        <Item ID="29">
+            <Name>Capacitive Reactive Power T</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[Capacitive Reactive Power phase 3]]>
+            </Description>
+        </Item>
+        <Item ID="30">
+            <Name>Apparent Power T</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kVA</Units>
+            <Description>
+                <![CDATA[Apparent Power phase 3]]>
+            </Description>
+        </Item>
+        <Item ID="31">
+            <Name>Power Factor T</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration>-1..1</RangeEnumeration>
+            <Units/>
+            <Description>
+                <![CDATA[Power Factor phase 3]]>
+            </Description>
+        </Item>
+        <Item ID="32">
+            <Name>THD-V T</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>/100</Units>
+            <Description>
+                <![CDATA[Total Harmonic Distortion phase 3 (Tension)]]>
+            </Description>
+        </Item>
+        <Item ID="33">
+            <Name>THD-A T</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>/100</Units>
+            <Description>
+                <![CDATA[Total Harmonic Distortion phase 3 (Current)]]>
+            </Description>
+        </Item>
+        <Item ID="34">
+            <Name>3-Phase Active Power</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kW</Units>
+            <Description>
+                <![CDATA[3-Phase Active Power]]>
+            </Description>
+        </Item>
+        <Item ID="35">
+            <Name>3-Phase Reactive Power</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[3-Phase Reactive Power]]>
+            </Description>
+        </Item>
+        <Item ID="36">
+            <Name>3-Phase Inductive Reactive Power</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[3-Phase Inductive Reactive Power]]>
+            </Description>
+        </Item>
+        <Item ID="37">
+            <Name>3-Phase Capacitive Reactive Power</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[3-Phase Capacitive Reactive Power]]>
+            </Description>
+        </Item>
+        <Item ID="38">
+            <Name>3-Phase Apparent Power</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kVA</Units>
+            <Description>
+                <![CDATA[3-Phase Apparent Power]]>
+            </Description>
+        </Item>
+        <Item ID="39">
+            <Name>3-Phase Power Factor</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration>-1..1</RangeEnumeration>
+            <Units/>
+            <Description>
+                <![CDATA[3-Phase Power Factor]]>
+            </Description>
+        </Item>
+        <Item ID="40">
+            <Name>3-Phase phi cosine</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration>-1..1</RangeEnumeration>
+            <Units/>
+            <Description>
+                <![CDATA[3-Phase phi cosine]]>
+            </Description>
+        </Item>
+        <Item ID="41">
+            <Name>Active Energy</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kWh</Units>
+            <Description>
+                <![CDATA[Active Energy]]>
+            </Description>
+        </Item>
+        <Item ID="42">
+            <Name>Reactive Energy</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvarh</Units>
+            <Description>
+                <![CDATA[Reactive Energy]]>
+            </Description>
+        </Item>
+        <Item ID="43">
+            <Name>Inductive Reactive Energy</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvarh</Units>
+            <Description>
+                <![CDATA[Inductive Reactive Energy]]>
+            </Description>
+        </Item>
+        <Item ID="44">
+            <Name>Capacitive Reactive Energy</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvarh</Units>
+            <Description>
+                <![CDATA[Capacitive Reactive Energy]]>
+            </Description>
+        </Item>
+        <Item ID="45">
+            <Name>Apparent Energy</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kVAh</Units>
+            <Description>
+                <![CDATA[Apparent Energy]]>
+            </Description>
+        </Item>
+        <Item ID="46">
+            <Name>Tension R-S</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>V</Units>
+            <Description>
+                <![CDATA[Voltage phase 1 to phase 2]]>
+            </Description>
+        </Item>
+        <Item ID="47">
+            <Name>Tension S-T</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>V</Units>
+            <Description>
+                <![CDATA[Voltage phase 2 to phase 3]]>
+            </Description>
+        </Item>
+        <Item ID="48">
+            <Name>Tension T-R</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>V</Units>
+            <Description>
+                <![CDATA[Voltage phase 3 to phase 1]]>
+            </Description>
+        </Item>
+        <Item ID="49">
+            <Name>Frequency</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>Hz</Units>
+            <Description>
+                <![CDATA[Frequency]]>
+            </Description>
+        </Item>
+        <Item ID="50">
+            <Name>Neutral Current</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>A</Units>
+            <Description>
+                <![CDATA[Neutral Current]]>
+            </Description>
+        </Item>
+    </Resources>
+    <Description2/>
+</Object>
+</LWM2M>

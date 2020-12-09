@@ -69,3 +69,8 @@ services:
       - queue-pubsub.env
     depends_on:
       - zookeeper
+  tb-lwm2m-transport:
+    env_file:
+      - queue-pubsub.env
+    depends_on:
+      - zookeeper
