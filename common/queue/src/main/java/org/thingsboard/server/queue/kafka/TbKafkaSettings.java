@@ -24,6 +24,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -34,6 +35,7 @@ import java.util.Properties;
  */
 @Slf4j
 @ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
+@ConfigurationProperties(prefix = "queue.kafka")
 @Component
 public class TbKafkaSettings {
 
