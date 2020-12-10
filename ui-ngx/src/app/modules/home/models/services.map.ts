@@ -32,11 +32,9 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { UserService } from '@core/http/user.service';
 import { AlarmService } from '@core/http/alarm.service';
 import { Router } from '@angular/router';
-import { BroadcastService } from "@core/services/broadcast.service";
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
-   ['broadcastService', BroadcastService],
    ['deviceService', DeviceService],
    ['alarmService', AlarmService],
    ['assetService', AssetService],
