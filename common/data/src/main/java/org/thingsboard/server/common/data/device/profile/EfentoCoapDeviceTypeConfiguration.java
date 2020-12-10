@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.common.data.device.profile;
 
-public enum DeviceTransportType {
-    DEFAULT,
-    MQTT,
-    LWM2M,
-    COAP
+import lombok.Data;
+import org.thingsboard.server.common.data.CoapDeviceType;
+
+@Data
+public class EfentoCoapDeviceTypeConfiguration implements CoapDeviceTypeConfiguration {
+
+    @Override
+    public CoapDeviceType getCoapDeviceType() {
+        return CoapDeviceType.EFENTO;
+    }
 }

@@ -119,6 +119,7 @@ import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-s
 import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
 import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
 import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lwm2m/lwm2m-profile-components.module';
+import {CoapDeviceProfileTransportConfigurationComponent} from "@home/components/profile/device/coap-device-profile-transport-configuration.component";
 
 @NgModule({
   declarations:
@@ -198,6 +199,7 @@ import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lw
       DeviceProfileConfigurationComponent,
       DefaultDeviceProfileTransportConfigurationComponent,
       MqttDeviceProfileTransportConfigurationComponent,
+      CoapDeviceProfileTransportConfigurationComponent,
       DeviceProfileTransportConfigurationComponent,
       CreateAlarmRulesComponent,
       AlarmRuleComponent,
@@ -287,6 +289,7 @@ import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lw
     DeviceProfileConfigurationComponent,
     DefaultDeviceProfileTransportConfigurationComponent,
     MqttDeviceProfileTransportConfigurationComponent,
+    CoapDeviceProfileTransportConfigurationComponent,
     DeviceProfileTransportConfigurationComponent,
     CreateAlarmRulesComponent,
     AlarmRuleComponent,

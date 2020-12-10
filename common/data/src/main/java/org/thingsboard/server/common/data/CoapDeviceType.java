@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
-public enum DeviceTransportType {
+public enum CoapDeviceType {
     DEFAULT,
-    MQTT,
-    LWM2M,
-    COAP
+    EFENTO
 }
