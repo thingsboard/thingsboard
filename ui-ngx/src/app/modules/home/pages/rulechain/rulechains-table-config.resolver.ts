@@ -69,18 +69,6 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.RULE_CHAIN);
     this.config.entityResources = entityTypeResources.get(EntityType.RULE_CHAIN);
 
-    this.config.columns.push(
-      new DateEntityTableColumn<RuleChain>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<RuleChain>('name', 'rulechain.name', '100%'),
-      new EntityTableColumn<RuleChain>('root', 'rulechain.root', '60px',
-        entity => {
-          if (isDefined(this.config.componentsData.edgeId)) {
-            return checkBoxCell((this.config.componentsData.edge.rootRuleChainId.id == entity.id.id));
-          } else {
-            return checkBoxCell(entity.root);
-          }
-        })
-    );
     this.config.deleteEntityTitle = ruleChain => this.translate.instant('rulechain.delete-rulechain-title',
       { ruleChainName: ruleChain.name });
     this.config.deleteEntityContent = () => this.translate.instant('rulechain.delete-rulechain-text');
@@ -98,6 +86,34 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       ruleChainScope: route.data.ruleChainsType,
       edgeId: routeParams.edgeId
     };
+
+    if (this.config.componentsData.ruleChainScope === 'edges') {
+      this.config.columns = [];
+      this.config.columns.push(
+        new DateEntityTableColumn<RuleChain>('createdTime', 'common.created-time', this.datePipe, '150px'),
+        new EntityTableColumn<RuleChain>('name', 'rulechain.name', '100%'),
+        new EntityTableColumn<RuleChain>('root', 'rulechain.default-root', '60px',
+          entity => {
+            return checkBoxCell(entity.root);
+          })
+      );
+    } else {
+      this.config.columns = [];
+      this.config.columns.push(
+      new DateEntityTableColumn<RuleChain>('createdTime', 'common.created-time', this.datePipe, '150px'),
+      new EntityTableColumn<RuleChain>('name', 'rulechain.name', '100%'),
+      new EntityTableColumn<RuleChain>('root', 'rulechain.root', '60px',
+        entity => {
+          if (this.config.componentsData.edgeId) {
+            return checkBoxCell((this.config.componentsData.edge.rootRuleChainId.id == entity.id.id));
+          } else {
+            return checkBoxCell(entity.root);
+          }
+
+        })
+      );
+    }
+
     if (this.config.componentsData.edgeId) {
       this.config.entitySelectionEnabled = ruleChain => this.config.componentsData.edge.rootRuleChainId.id != ruleChain.id.id;
       this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(edge => {

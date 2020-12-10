@@ -1853,7 +1853,8 @@
         "unassign-rulechain-title": "Are you sure you want to unassign the rulechain '{{ruleChainName}}'?",
         "unassign-rulechains-title": "Are you sure you want to unassign { count, plural, 1 {1 rulechain} other {# rulechains} }?",
         "unassign-rulechains": "Unassign rulechains",
-        "default": "Default"
+        "default": "Default",
+        "default-root": "Default root"
     },
     "rulenode": {
         "details": "Details",
