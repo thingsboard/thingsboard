@@ -99,7 +99,7 @@ export class AssetService {
     return this.http.delete(`/api/edge/${edgeId}/asset/${assetId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getEdgeAssets(edgeId, pageLink: PageLink, type: string = '',
+  public getEdgeAssets(edgeId: string, pageLink: PageLink, type: string = '',
                        config?: RequestConfig): Observable<PageData<AssetInfo>> {
     return this.http.get<PageData<AssetInfo>>(`/api/edge/${edgeId}/assets${pageLink.toQuery()}&type=${type}`,
       defaultHttpOptionsFromConfig(config));

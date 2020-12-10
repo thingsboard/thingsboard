@@ -543,6 +543,9 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       case 'unassignFromCustomer':
         this.unassignFromCustomer(action.event, action.entity, this.config.componentsData.customerId);
         return true;
+      case 'unassignFromEdge':
+        this.unassignFromEdge(action.event, action.entity);
+        return true;
     }
     return false;
   }
@@ -572,7 +575,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('dashboard.unassign-dashboard-from-edge-title', {dashboardName: dashboard.name}),
+      this.translate.instant('dashboard.unassign-dashboard-title', {dashboardTitle: dashboard.title}),
       this.translate.instant('dashboard.unassign-dashboard-from-edge-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),

@@ -31,12 +31,19 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 })
 export class RuleChainComponent extends EntityComponent<RuleChain> {
 
+  ruleChainScope: 'tenant' | 'edges' | 'edge';
+
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: RuleChain,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<RuleChain>,
               public fb: FormBuilder) {
     super(store, fb, entityValue, entitiesTableConfigValue);
+  }
+
+  ngOnInit() {
+    this.ruleChainScope = this.entitiesTableConfig.componentsData.ruleChainScope;
+    super.ngOnInit();
   }
 
   hideDelete() {
@@ -77,30 +84,6 @@ export class RuleChainComponent extends EntityComponent<RuleChain> {
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
-  }
-
-  isTenantRuleChainScope() {
-    if (this.entitiesTableConfig) {
-      return this.entitiesTableConfig.componentsData.ruleChainScope == 'tenant';
-    } else {
-      return false;
-    }
-  }
-
-  isEdgesRuleChainScope() {
-    if (this.entitiesTableConfig) {
-      return this.entitiesTableConfig.componentsData.ruleChainScope == 'edges';
-    } else {
-      return false;
-    }
-  }
-
-  isEdgeRuleChainScope() {
-    if (this.entitiesTableConfig) {
-      return this.entitiesTableConfig.componentsData.ruleChainScope == 'edge';
-    } else {
-      return false;
-    }
   }
 
   isRootRuleChain() {

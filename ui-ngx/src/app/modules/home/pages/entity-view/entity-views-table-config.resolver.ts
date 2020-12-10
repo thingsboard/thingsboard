@@ -441,6 +441,9 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
       case 'unassignFromCustomer':
         this.unassignFromCustomer(action.event, action.entity);
         return true;
+      case 'unassignFromEdge':
+        this.unassignFromEdge(action.event, action.entity);
+        return true;
     }
     return false;
   }

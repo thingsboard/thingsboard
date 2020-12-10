@@ -132,4 +132,15 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
                                               @Param("searchText") String searchText,
                                               Pageable pageable);
 
+    @Query("SELECT a FROM AssetEntity a, RelationEntity re WHERE a.tenantId = :tenantId " +
+            "AND a.id = re.toId AND re.toType = 'ASSET' AND re.relationTypeGroup = 'EDGE' " +
+            "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
+            "AND a.type = :type " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<AssetEntity> findByTenantIdAndEdgeIdAndType(@Param("tenantId") UUID tenantId,
+                                              @Param("edgeId") UUID edgeId,
+                                              @Param("type") String type,
+                                              @Param("searchText") String searchText,
+                                              Pageable pageable);
+
 }
