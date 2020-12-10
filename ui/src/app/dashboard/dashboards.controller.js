@@ -129,6 +129,7 @@ export function DashboardsController(userService, dashboardService, customerServ
     vm.manageAssignedCustomers = manageAssignedCustomers;
     vm.unassignFromCustomer = unassignFromCustomer;
     vm.exportDashboard = exportDashboard;
+    vm.unassignFromEdge = unassignFromEdge;
 
     initController();
 
@@ -154,6 +155,10 @@ export function DashboardsController(userService, dashboardService, customerServ
                     }
                 }
             );
+        }
+
+        if (edgeId) {
+            vm.edgeId = edgeId;
         }
 
         if (vm.dashboardsScope === 'tenant') {

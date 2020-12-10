@@ -26,12 +26,14 @@
 								  is-edit="vm.grid.detailsConfig.isDetailsEditMode"
 								  dashboard-scope="vm.dashboardsScope"
 								  customer-id="vm.customerId"
+                                  edge-id="vm.edgeId"
 								  the-form="vm.grid.detailsForm"
 								  on-make-public="vm.makePublic(event, vm.grid.detailsConfig.currentItem)"
 								  on-make-private="vm.makePrivate(event, vm.grid.detailsConfig.currentItem)"
 								  on-manage-assigned-customers="vm.manageAssignedCustomers(event, vm.grid.detailsConfig.currentItem)"
 								  on-unassign-from-customer="vm.unassignFromCustomer(event, vm.grid.detailsConfig.currentItem, vm.customerId)"
-								  on-export-dashboard="vm.exportDashboard(event, vm.grid.detailsConfig.currentItem)"
+                                  on-unassign-from-edge="vm.unassignFromEdge(event, vm.grid.detailsConfig.currentItem, vm.edgeId)"
+                                  on-export-dashboard="vm.exportDashboard(event, vm.grid.detailsConfig.currentItem)"
 								  on-delete-dashboard="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-dashboard-details>
 		</md-tab>
 		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.grid.isTenantAdmin()" md-on-select="vm.grid.triggerResize()" label="{{ 'audit-log.audit-logs' | translate }}">

@@ -27,6 +27,9 @@
 <md-button ng-click="onDeleteEntityView({event: $event})"
            ng-show="!isEdit && entityViewScope === 'tenant'"
            class="md-raised md-primary">{{ 'entity-view.delete' | translate }}</md-button>
+<md-button ng-click="onUnassignFromEdge({event: $event})"
+           ng-show="!isEdit && entityViewScope === 'edge'"
+           class="md-raised md-primary">{{ 'edge.unassign-from-edge' | translate }}</md-button>
 
 <div layout="row">
 	<md-button ngclipboard data-clipboard-action="copy"
