@@ -36,7 +36,7 @@ public class LwM2MSessionMsgListener implements GenericFutureListener<Future<? s
     private LwM2MTransportService service;
     private TransportProtos.SessionInfoProto sessionInfo;
 
-    LwM2MSessionMsgListener(LwM2MTransportService service, TransportProtos.SessionInfoProto sessionInfo) {
+    public LwM2MSessionMsgListener(LwM2MTransportService service, TransportProtos.SessionInfoProto sessionInfo) {
         this.service = service;
         this.sessionInfo = sessionInfo;
     }

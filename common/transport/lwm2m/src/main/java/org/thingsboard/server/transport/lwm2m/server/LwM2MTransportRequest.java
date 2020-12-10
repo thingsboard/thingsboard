@@ -229,7 +229,7 @@ public class LwM2MTransportRequest {
             if  (isSuccess(((Response)response.getCoapResponse()).getCode())) {
                 this.handleResponse(registration, request.getPath().toString(), response, request, lwM2MClient);
                 if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest()) {
-                    String msg = String.format(LOG_LW2M_INFO + " sendRequest Replace: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
+                    String msg = String.format(LOG_LW2M_INFO + ": sendRequest Replace: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
                             ((Response)response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString(),
                             ((LwM2mSingleResource)((WriteRequest) request).getNode()).getValue().toString());
                     service.sentLogsToThingsboard(msg, registration.getId());
@@ -237,13 +237,13 @@ public class LwM2MTransportRequest {
                 }
             }
             else {
-                String msg = String.format(LOG_LW2M_ERROR + " sendRequest: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client",
+                String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client",
                         ((Response)response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString());
                 service.sentLogsToThingsboard(msg, registration.getId());
                 log.error("[{}] - [{}] [{}] error SendRequest", ((Response)response.getCoapResponse()).getCode(), response.getCode(),  request.getPath().toString());
             }
         }, e -> {
-            String msg = String.format(LOG_LW2M_ERROR + " sendRequest: Resource path - %s msg error - %s  SendRequest to Client",
+            String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: Resource path - %s msg error - %s  SendRequest to Client",
                     request.getPath().toString(), e.toString());
             service.sentLogsToThingsboard(msg, registration.getId());
             log.error("[{}] - [{}] error SendRequest",  request.getPath().toString(), e.toString());

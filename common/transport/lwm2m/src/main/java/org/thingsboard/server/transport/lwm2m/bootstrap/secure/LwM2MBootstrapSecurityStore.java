@@ -30,15 +30,21 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MGetSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MSessionMsgListener;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
 
@@ -51,6 +57,11 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Autowired
     LwM2MGetSecurityInfo lwM2MGetSecurityInfo;
+
+    @Autowired
+    public LwM2MTransportContextServer context;
+
+
 
     public LwM2MBootstrapSecurityStore(EditableBootstrapConfigStore bootstrapConfigStore) {
         this.bootstrapConfigStore = bootstrapConfigStore;
@@ -147,16 +158,21 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             lwM2MBootstrapConfig.servers = mapper.readValue(bootstrapObject.get(SERVERS).toString(), LwM2MBootstrapServers.class);
             LwM2MServerBootstrap profileServerBootstrap = mapper.readValue(bootstrapObject.get(BOOTSTRAP_SERVER).toString(), LwM2MServerBootstrap.class);
             LwM2MServerBootstrap profileLwm2mServer = mapper.readValue(bootstrapObject.get(LWM2M_SERVER).toString(), LwM2MServerBootstrap.class);
+            UUID sessionUUiD = UUID.randomUUID();
+            TransportProtos.SessionInfoProto sessionInfo = context.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
+            context.getTransportService().registerAsyncSession(sessionInfo, new LwM2MSessionMsgListener(null, sessionInfo));
             if (getValidatedSecurityMode(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap, lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer)) {
                 lwM2MBootstrapConfig.bootstrapServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap);
                 lwM2MBootstrapConfig.lwm2mServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer);
+                String logMsg = String.format(LOG_LW2M_INFO + ": getParametersBootstrap: %s Access connect client with bootstrap server.", store.getEndPoint());
+                context.sentParametersOnThingsboard(context.getTelemetryMsgObject(logMsg), LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC, sessionInfo);
                 return lwM2MBootstrapConfig;
             }
             else {
                 log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndPoint());
                 log.error(LOG_LW2M_ERROR + " getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", store.getEndPoint());
-                String logMsg = String.format(LOG_LW2M_ERROR + " getParametersBootstrap: %s Different values SecurityMode between of client and profile.", store.getEndPoint());
-//                sentLogsToThingsboard(logMsg, store.getEndPoint());
+                String logMsg = String.format(LOG_LW2M_ERROR + ": getParametersBootstrap: %s Different values SecurityMode between of client and profile.", store.getEndPoint());
+                context.sentParametersOnThingsboard(context.getTelemetryMsgObject(logMsg), LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC, sessionInfo);
                 return null;
             }
         } catch (JsonProcessingException e) {
@@ -164,6 +180,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             return null;
         }
     }
+
 
     /**
      * Bootstrap security have to sync between (bootstrapServer in credential and  bootstrapServer in profile)

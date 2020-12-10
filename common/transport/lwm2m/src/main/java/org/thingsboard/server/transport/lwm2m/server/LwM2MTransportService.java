@@ -85,8 +85,8 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' ) || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportService {
 
-    @Autowired
-    private LwM2MJsonAdaptor adaptor;
+//    @Autowired
+//    private LwM2MJsonAdaptor adaptor;
 
     @Autowired
     private TransportService transportService;
@@ -263,9 +263,9 @@ public class LwM2MTransportService {
                 log.error("[{}] [{}]", lwM2MClient.getEndPoint(), CLIENT_NOT_AUTHORIZED);
                 this.closeClientSession(lwM2MClient.getRegistration());
             } else {
-                sessionInfo = SessionInfoProto.newBuilder()
+                 sessionInfo = SessionInfoProto.newBuilder()
                         .setNodeId(this.context.getNodeId())
-                        .setSessionIdMSB(lwM2MClient.getSessionUuid().getMostSignificantBits())
+                        .setSessionIdMSB(lwM2MClient.getSessionUuid().getMostSignificantBits() )
                         .setSessionIdLSB(lwM2MClient.getSessionUuid().getLeastSignificantBits())
                         .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
                         .setDeviceIdLSB(msg.getDeviceInfo().getDeviceIdLSB())
@@ -315,7 +315,7 @@ public class LwM2MTransportService {
      */
     private void updateAttrTelemetry(Registration registration, boolean start, Set<String> paths) {
         JsonObject attributes = new JsonObject();
-        JsonObject telemetrys = new JsonObject();
+        JsonObject telemetries = new JsonObject();
         if (start) {
             // #1.1
             JsonObject attributeClient = this.getAttributeClient(registration);
@@ -327,7 +327,7 @@ public class LwM2MTransportService {
         }
         // #1.2
         CountDownLatch cancelLatch = new CountDownLatch(1);
-        this.getParametersFromProfile(attributes, telemetrys, registration, paths);
+        this.getParametersFromProfile(attributes, telemetries, registration, paths);
         cancelLatch.countDown();
         try {
             cancelLatch.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
@@ -336,8 +336,8 @@ public class LwM2MTransportService {
         }
         if (attributes.getAsJsonObject().entrySet().size() > 0)
             this.updateParametersOnThingsboard(attributes, DEVICE_ATTRIBUTES_TOPIC, registration.getId());
-        if (telemetrys.getAsJsonObject().entrySet().size() > 0)
-            this.updateParametersOnThingsboard(telemetrys, DEVICE_TELEMETRY_TOPIC, registration.getId());
+        if (telemetries.getAsJsonObject().entrySet().size() > 0)
+            this.updateParametersOnThingsboard(telemetries, DEVICE_TELEMETRY_TOPIC, registration.getId());
     }
 
     /**
@@ -432,20 +432,22 @@ public class LwM2MTransportService {
     public void updateParametersOnThingsboard(JsonElement msg, String topicName, String registrationId) {
         SessionInfoProto sessionInfo = this.getValidateSessionInfo(registrationId);
         if (sessionInfo != null) {
-            try {
-                if (topicName.equals(LwM2MTransportHandler.DEVICE_ATTRIBUTES_TOPIC)) {
-                    PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
-                    TransportServiceCallback call = this.getPubAckCallbackSentAttrTelemetry(-1, postAttributeMsg);
-                    transportService.process(sessionInfo, postAttributeMsg, call);
-                } else if (topicName.equals(LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC)) {
-                    PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
-                    TransportServiceCallback call = this.getPubAckCallbackSentAttrTelemetry(-1, postTelemetryMsg);
-                    transportService.process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSentAttrTelemetry(-1, call));
-                }
-            } catch (AdaptorException e) {
-                log.error("[{}] Failed to process publish msg [{}]", topicName, e);
-                log.info("[{}] Closing current session due to invalid publish", topicName);
-            }
+            context.sentParametersOnThingsboard(msg, topicName, sessionInfo);
+//            try {
+//                if (topicName.equals(LwM2MTransportHandler.DEVICE_ATTRIBUTES_TOPIC)) {
+//
+////                    PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
+////                    TransportServiceCallback call = this.getPubAckCallbackSentAttrTelemetry(-1, postAttributeMsg);
+////                    transportService.process(sessionInfo, postAttributeMsg, call);
+//                } else if (topicName.equals(LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC)) {
+//                    PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
+//                    TransportServiceCallback call = this.getPubAckCallbackSentAttrTelemetry(-1, postTelemetryMsg);
+//                    transportService.process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSentAttrTelemetry(-1, call));
+//                }
+//            } catch (AdaptorException e) {
+//                log.error("[{}] Failed to process publish msg [{}]", topicName, e);
+//                log.info("[{}] Closing current session due to invalid publish", topicName);
+//            }
         } else {
             log.error("Client: [{}] updateParametersOnThingsboard [{}] sessionInfo ", registrationId, sessionInfo);
         }
@@ -669,7 +671,7 @@ public class LwM2MTransportService {
                     }
                     else {
                         log.error(LOG_LW2M_ERROR + ": Resource path - [{}] value - [{}] is not Writable and cannot be updated", path, value);
-                        String logMsg = String.format(LOG_LW2M_ERROR + " attributeUpdate: Resource path - %s value - %s is not Writable and cannot be updated", path, value);
+                        String logMsg = String.format(LOG_LW2M_ERROR + ": attributeUpdate: Resource path - %s value - %s is not Writable and cannot be updated", path, value);
                         this.sentLogsToThingsboard(logMsg, lwM2MClient.getRegistration().getId());
                     }
                 }
@@ -990,9 +992,9 @@ public class LwM2MTransportService {
 
     public void sentLogsToThingsboard(String msg, String registrationId) {
         if (msg != null) {
-            JsonObject telemetrys = new JsonObject();
-            telemetrys.addProperty(LOG_LW2M_TELEMETRY, msg);
-            this.updateParametersOnThingsboard(telemetrys, LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC, registrationId);
+            JsonObject telemetries = new JsonObject();
+            telemetries.addProperty(LOG_LW2M_TELEMETRY, msg);
+            this.updateParametersOnThingsboard(telemetries, LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC, registrationId);
         }
     }
 
