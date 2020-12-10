@@ -59,7 +59,6 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
     private PreparedStatement latestInsertStmt;
     private PreparedStatement findLatestStmt;
     private PreparedStatement findAllLatestStmt;
-    private PreparedStatement findAllLatestByDeviceIdsStmt;
 
     @Override
     public ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key) {
@@ -241,22 +240,5 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
                     "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM);
         }
         return findAllLatestStmt;
-    }
-
-    private PreparedStatement getFindAllLatestByEntityIdsStmt() {
-        if (findAllLatestByDeviceIdsStmt == null) {
-            findAllLatestByDeviceIdsStmt = prepare(SELECT_PREFIX +
-                    ModelConstants.KEY_COLUMN + "," +
-                    ModelConstants.TS_COLUMN + "," +
-                    ModelConstants.STRING_VALUE_COLUMN + "," +
-                    ModelConstants.BOOLEAN_VALUE_COLUMN + "," +
-                    ModelConstants.LONG_VALUE_COLUMN + "," +
-                    ModelConstants.DOUBLE_VALUE_COLUMN + "," +
-                    ModelConstants.JSON_VALUE_COLUMN + " " +
-                    "FROM " + ModelConstants.TS_KV_LATEST_CF + " " +
-                    "WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM +
-                    "AND " + ModelConstants.ENTITY_ID_COLUMN + " IN ?");
-        }
-        return findAllLatestByDeviceIdsStmt;
     }
 }

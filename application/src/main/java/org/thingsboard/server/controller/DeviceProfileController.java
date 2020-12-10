@@ -127,7 +127,7 @@ public class DeviceProfileController extends BaseController {
         }
 
         try {
-            return attributesService.findAllKeysByDeviceProfileID(getTenantId(), deviceProfileId);
+            return attributesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
         } catch (Exception e) {
             throw handleException(e);
         }

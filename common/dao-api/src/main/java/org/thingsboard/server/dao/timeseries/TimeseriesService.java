@@ -37,8 +37,6 @@ public interface TimeseriesService {
 
     ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityId entityId);
 
-    List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
-
     ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry);
 
     ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntry, long ttl);
@@ -50,4 +48,6 @@ public interface TimeseriesService {
     ListenableFuture<List<Void>> removeLatest(TenantId tenantId, EntityId entityId, Collection<String> keys);
 
     ListenableFuture<Collection<String>> removeAllLatest(TenantId tenantId, EntityId entityId);
+
+    List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
 }

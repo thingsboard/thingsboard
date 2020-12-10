@@ -61,7 +61,7 @@ public class BaseAttributesService implements AttributesService {
     }
 
     @Override
-    public List<String> findAllKeysByDeviceProfileID(TenantId tenantId, DeviceProfileId deviceProfileId) {
+    public List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
         return attributesDao.findAllKeysByDeviceProfileId(tenantId, deviceProfileId);
     }
 

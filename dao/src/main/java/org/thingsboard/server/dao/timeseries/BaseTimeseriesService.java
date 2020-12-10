@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
@@ -55,9 +54,6 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 @Service
 @Slf4j
 public class BaseTimeseriesService implements TimeseriesService {
-
-    @Autowired
-    private DeviceService deviceService;
 
     private static final int INSERTS_PER_ENTRY = 3;
     private static final int DELETES_PER_ENTRY = INSERTS_PER_ENTRY;

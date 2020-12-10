@@ -36,9 +36,10 @@ public interface AttributesService {
 
     ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String scope);
 
-    List<String> findAllKeysByDeviceProfileID(TenantId tenantId, DeviceProfileId deviceProfileId);
-
     ListenableFuture<List<Void>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes);
 
     ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys);
+
+    List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
+
 }
