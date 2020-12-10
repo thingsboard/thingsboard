@@ -36,6 +36,12 @@
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'setDefaultRoot')"
+          [fxShow]="!isEdit && !entity?.root && isEdgesRuleChainScope()">
+    {{'rulechain.set-default-root-edge' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [fxShow]="!hideDelete() && !isEdit">
     {{'rulechain.delete' | translate }}

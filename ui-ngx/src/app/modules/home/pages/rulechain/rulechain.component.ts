@@ -78,4 +78,12 @@ export class RuleChainComponent extends EntityComponent<RuleChain> {
         horizontalPosition: 'right'
       }));
   }
+
+  isEdgesRuleChainScope() {
+    if (this.entitiesTableConfig) {
+      return this.entitiesTableConfig.componentsData.ruleChainScope == 'edges';
+    } else {
+      return false;
+    }
+  }
 }

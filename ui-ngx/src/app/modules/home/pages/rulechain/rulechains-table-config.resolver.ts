@@ -339,6 +339,9 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       case 'setRoot':
         this.setRootRuleChain(action.event, action.entity);
         return true;
+      case 'setDefaultRoot':
+        this.setDefaultRootEdgeRuleChain(action.event, action.entity);
+        return true;
     }
     return false;
   }
