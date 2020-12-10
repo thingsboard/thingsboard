@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.attributes;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -48,17 +47,14 @@ public interface AttributeKvRepository extends CrudRepository<AttributeKvEntity,
                 @Param("attributeType") String attributeType,
                 @Param("attributeKey") String attributeKey);
 
-    @Query("SELECT a FROM AttributeKvEntity a WHERE a.id.entityType = :entityType " +
-            "AND a.id.entityId in (SELECT d.id FROM DeviceEntity d WHERE d.tenantId = :tenantId and d.deviceProfileId = :deviceProfileId)")
-    List<AttributeKvEntity> findAllByDeviceProfileId(@Param("tenantId") UUID tenantId,
-                                                     @Param("deviceProfileId") UUID deviceProfileId,
-                                                     @Param("entityType") EntityType entityType,
-                                                     Pageable pageable);
+    @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE entity_type = 'DEVICE' " +
+            "AND entity_id in (SELECT id FROM device WHERE tenant_id = :tenantId and device_profile_id = :deviceProfileId limit 100) ORDER BY attribute_key", nativeQuery = true)
+    List<String> findAllKeysByDeviceProfileId(@Param("tenantId") UUID tenantId,
+                                              @Param("deviceProfileId") UUID deviceProfileId);
 
-    @Query("SELECT a FROM AttributeKvEntity a WHERE a.id.entityType = :entityType " +
-            "AND a.id.entityId in (SELECT d.id FROM DeviceEntity d WHERE d.tenantId = :tenantId)")
-    List<AttributeKvEntity> findAllByTenantId(@Param("tenantId") UUID tenantId,
-                                              @Param("entityType") EntityType entityType,
-                                              Pageable pageable);
+    @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE entity_type = 'DEVICE' " +
+            "AND entity_id in (SELECT id FROM device WHERE tenant_id = :tenantId limit 100) ORDER BY attribute_key", nativeQuery = true)
+    List<String> findAllKeysByTenantId(@Param("tenantId") UUID tenantId);
+
 }
 

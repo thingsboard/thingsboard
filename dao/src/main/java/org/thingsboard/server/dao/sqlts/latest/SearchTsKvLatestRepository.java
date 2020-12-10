@@ -21,7 +21,6 @@ import org.thingsboard.server.dao.util.SqlTsLatestAnyDao;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,22 +29,9 @@ import java.util.UUID;
 public class SearchTsKvLatestRepository {
 
     public static final String FIND_ALL_BY_ENTITY_ID = "findAllByEntityId";
-
-    public static final String FIND_ALL_BY_DEVICE_PROFILE_ID = "findAllByDeviceProfileId";
-
-    public static final String FIND_ALL_BY_TENANT_ID = "findAllByTenantId";
-
     public static final String FIND_ALL_BY_ENTITY_ID_QUERY = "SELECT ts_kv_latest.entity_id AS entityId, ts_kv_latest.key AS key, ts_kv_dictionary.key AS strKey, ts_kv_latest.str_v AS strValue," +
             " ts_kv_latest.bool_v AS boolValue, ts_kv_latest.long_v AS longValue, ts_kv_latest.dbl_v AS doubleValue, ts_kv_latest.json_v AS jsonValue, ts_kv_latest.ts AS ts FROM ts_kv_latest " +
             "INNER JOIN ts_kv_dictionary ON ts_kv_latest.key = ts_kv_dictionary.key_id WHERE ts_kv_latest.entity_id = cast(:id AS uuid)";
-
-    public static final String FIND_ALL_BY_DEVICE_PROFILE_ID_QUERY = "SELECT ts_kv_latest.entity_id AS entityId, ts_kv_latest.key AS key, ts_kv_dictionary.key AS strKey, ts_kv_latest.str_v AS strValue," +
-            " ts_kv_latest.bool_v AS boolValue, ts_kv_latest.long_v AS longValue, ts_kv_latest.dbl_v AS doubleValue, ts_kv_latest.json_v AS jsonValue, ts_kv_latest.ts AS ts FROM ts_kv_latest " +
-            "INNER JOIN ts_kv_dictionary ON ts_kv_latest.key = ts_kv_dictionary.key_id WHERE ts_kv_latest.entity_id in (SELECT id FROM device where tenant_id = :tenant_id and device_profile_id = :device_profile_id)";
-
-    public static final String FIND_ALL_BY_TENANT_ID_QUERY = "SELECT ts_kv_latest.entity_id AS entityId, ts_kv_latest.key AS key, ts_kv_dictionary.key AS strKey, ts_kv_latest.str_v AS strValue," +
-            " ts_kv_latest.bool_v AS boolValue, ts_kv_latest.long_v AS longValue, ts_kv_latest.dbl_v AS doubleValue, ts_kv_latest.json_v AS jsonValue, ts_kv_latest.ts AS ts FROM ts_kv_latest " +
-            "INNER JOIN ts_kv_dictionary ON ts_kv_latest.key = ts_kv_dictionary.key_id WHERE ts_kv_latest.entity_id in (SELECT id FROM device where tenant_id = :tenant_id)";
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -56,17 +42,4 @@ public class SearchTsKvLatestRepository {
                 .getResultList();
     }
 
-    public List<TsKvLatestEntity> findAllByDeviceProfileId(UUID tenantId, UUID deviceProfileId) {
-        TypedQuery<TsKvLatestEntity> query;
-
-        if (deviceProfileId != null) {
-            query = entityManager.createNamedQuery(FIND_ALL_BY_DEVICE_PROFILE_ID, TsKvLatestEntity.class);
-            query.setParameter("device_profile_id", deviceProfileId);
-        } else {
-            query = entityManager.createNamedQuery(FIND_ALL_BY_TENANT_ID, TsKvLatestEntity.class);
-        }
-        return query
-                .setParameter("tenant_id", tenantId)
-                .getResultList();
-    }
 }

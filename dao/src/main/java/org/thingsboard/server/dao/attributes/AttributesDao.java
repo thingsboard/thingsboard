@@ -36,9 +36,9 @@ public interface AttributesDao {
 
     ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String attributeType);
 
-    ListenableFuture<List<AttributeKvEntry>> findAllByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
-
     ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, String attributeType, AttributeKvEntry attribute);
 
     ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String attributeType, List<String> keys);
+
+    List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
 }

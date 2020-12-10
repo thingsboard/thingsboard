@@ -61,8 +61,8 @@ public class BaseAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> findAllByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
-        return attributesDao.findAllByDeviceProfileId(tenantId, deviceProfileId);
+    public List<String> findAllKeysByDeviceProfileID(TenantId tenantId, DeviceProfileId deviceProfileId) {
+        return attributesDao.findAllKeysByDeviceProfileId(tenantId, deviceProfileId);
     }
 
     @Override

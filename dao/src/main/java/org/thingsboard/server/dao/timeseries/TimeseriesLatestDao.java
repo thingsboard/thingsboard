@@ -30,10 +30,9 @@ public interface TimeseriesLatestDao {
 
     ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityId entityId);
 
-    ListenableFuture<List<TsKvEntry>> findAllLatestByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
-
     ListenableFuture<Void> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry);
 
     ListenableFuture<Void> removeLatest(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query);
 
+    List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
 }

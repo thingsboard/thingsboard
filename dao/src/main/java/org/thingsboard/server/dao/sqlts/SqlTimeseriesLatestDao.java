@@ -161,8 +161,12 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     }
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> findAllLatestByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
-        return getFindAllLatestFuturesByDeviceProfileId(tenantId, deviceProfileId);
+    public List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
+        if (deviceProfileId != null) {
+            return tsKvLatestRepository.getKeysByDeviceProfileId(tenantId.getId(), deviceProfileId.getId());
+        } else {
+            return tsKvLatestRepository.getKeysByTenantId(tenantId.getId());
+        }
     }
 
     private ListenableFuture<Void> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
@@ -257,12 +261,6 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         return Futures.immediateFuture(
                 DaoUtil.convertDataList(Lists.newArrayList(
                         searchTsKvLatestRepository.findAllByEntityId(entityId.getId()))));
-    }
-
-    protected ListenableFuture<List<TsKvEntry>> getFindAllLatestFuturesByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
-        return Futures.immediateFuture(
-                DaoUtil.convertDataList(Lists.newArrayList(
-                        searchTsKvLatestRepository.findAllByDeviceProfileId(tenantId.getId(), deviceProfileId != null ? deviceProfileId.getId() : null))));
     }
 
     protected ListenableFuture<Void> getSaveLatestFuture(EntityId entityId, TsKvEntry tsKvEntry) {

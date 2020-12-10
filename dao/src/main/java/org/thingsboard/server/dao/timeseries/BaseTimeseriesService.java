@@ -120,8 +120,9 @@ public class BaseTimeseriesService implements TimeseriesService {
         return timeseriesLatestDao.findAllLatest(tenantId, entityId);
     }
 
-    public ListenableFuture<List<TsKvEntry>> findAllLatestByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
-        return timeseriesLatestDao.findAllLatestByDeviceProfileId(tenantId, deviceProfileId);
+    @Override
+    public List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
+        return timeseriesLatestDao.findAllKeysByDeviceProfileId(tenantId, deviceProfileId);
     }
 
     @Override

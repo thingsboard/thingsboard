@@ -83,10 +83,9 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
     }
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> findAllLatestByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
-        return Futures.immediateFuture(Collections.emptyList());
+    public List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
+        return Collections.emptyList();
     }
-
 
     @Override
     public ListenableFuture<Void> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {

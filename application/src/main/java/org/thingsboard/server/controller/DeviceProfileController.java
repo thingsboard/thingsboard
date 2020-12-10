@@ -15,17 +15,11 @@
  */
 package org.thingsboard.server.controller;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,30 +28,22 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @TbCoreComponent
@@ -66,9 +52,6 @@ import java.util.stream.Collectors;
 public class DeviceProfileController extends BaseController {
 
     private static final String DEVICE_PROFILE_ID = "deviceProfileId";
-
-    @Autowired
-    private DeviceService deviceService;
 
     @Autowired
     private TimeseriesService timeseriesService;
@@ -113,7 +96,7 @@ public class DeviceProfileController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/deviceProfile/devices/keys/timeseries", method = RequestMethod.GET)
     @ResponseBody
-    public DeferredResult<ResponseEntity> getTimeseriesKeys(
+    public List<String> getTimeseriesKeys(
             @RequestParam(name = DEVICE_PROFILE_ID, required = false) String deviceProfileIdStr) throws ThingsboardException {
         DeviceProfileId deviceProfileId;
         if (StringUtils.isNotEmpty(deviceProfileIdStr)) {
@@ -124,9 +107,7 @@ public class DeviceProfileController extends BaseController {
         }
 
         try {
-            final DeferredResult<ResponseEntity> response = new DeferredResult<>();
-            addCallback(timeseriesService.findAllLatestByDeviceProfileId(getTenantId(), deviceProfileId), response);
-            return response;
+            return timeseriesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -135,7 +116,7 @@ public class DeviceProfileController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/deviceProfile/devices/keys/attributes", method = RequestMethod.GET)
     @ResponseBody
-    public DeferredResult<ResponseEntity> getAttributesKeys(
+    public List<String> getAttributesKeys(
             @RequestParam(name = DEVICE_PROFILE_ID, required = false) String deviceProfileIdStr) throws ThingsboardException {
         DeviceProfileId deviceProfileId;
         if (StringUtils.isNotEmpty(deviceProfileIdStr)) {
@@ -146,34 +127,10 @@ public class DeviceProfileController extends BaseController {
         }
 
         try {
-            final DeferredResult<ResponseEntity> response = new DeferredResult<>();
-            addCallback(attributesService.findAllByDeviceProfileId(getTenantId(), deviceProfileId), response);
-            return response;
+            return attributesService.findAllKeysByDeviceProfileID(getTenantId(), deviceProfileId);
         } catch (Exception e) {
             throw handleException(e);
         }
-    }
-
-    private <T extends KvEntry> void addCallback(ListenableFuture<List<T>> future, DeferredResult<ResponseEntity> response) {
-        ListenableFuture<Set<String>> keysFuture = Futures.transform(future, list -> {
-            if (!CollectionUtils.isEmpty(list)) {
-                return list.stream().map(KvEntry::getKey).sorted().collect(Collectors.toCollection(LinkedHashSet::new));
-            }
-            return Collections.emptySet();
-        }, MoreExecutors.directExecutor());
-
-        Futures.addCallback(keysFuture, new FutureCallback<Set<String>>() {
-            @Override
-            public void onSuccess(Set<String> keys) {
-                response.setResult(new ResponseEntity<>(keys, HttpStatus.OK));
-            }
-
-            @Override
-            public void onFailure(Throwable e) {
-                log.error("Failed to fetch keys!", e);
-                AccessValidator.handleError(e, response, HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        }, MoreExecutors.directExecutor());
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
