@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.edge;
 
 import com.google.common.base.Function;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -324,13 +325,20 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     public void assignDefaultRuleChainsToEdge(TenantId tenantId, EdgeId edgeId) {
         log.trace("Executing assignDefaultRuleChainsToEdge, tenantId [{}], edgeId [{}]", tenantId, edgeId);
         ListenableFuture<List<RuleChain>> future = ruleChainService.findDefaultEdgeRuleChainsByTenantId(tenantId);
-        Futures.transform(future, ruleChains -> {
-            if (ruleChains != null && !ruleChains.isEmpty()) {
-                for (RuleChain ruleChain : ruleChains) {
-                    ruleChainService.assignRuleChainToEdge(tenantId, ruleChain.getId(), edgeId);
+        Futures.addCallback(future, new FutureCallback<List<RuleChain>>() {
+            @Override
+            public void onSuccess(List<RuleChain> ruleChains) {
+                if (ruleChains != null && !ruleChains.isEmpty()) {
+                    for (RuleChain ruleChain : ruleChains) {
+                        ruleChainService.assignRuleChainToEdge(tenantId, ruleChain.getId(), edgeId);
+                    }
                 }
             }
-            return null;
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}] can't find default edge rule chains [{}]", tenantId.getId(), edgeId.getId(), t);
+            }
         }, MoreExecutors.directExecutor());
     }
 

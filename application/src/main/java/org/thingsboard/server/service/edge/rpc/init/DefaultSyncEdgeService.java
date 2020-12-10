@@ -545,34 +545,47 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         futures.add(findRelationByQuery(edge, entityId, EntitySearchDirection.FROM));
         futures.add(findRelationByQuery(edge, entityId, EntitySearchDirection.TO));
         ListenableFuture<List<List<EntityRelation>>> relationsListFuture = Futures.allAsList(futures);
-        return Futures.transform(relationsListFuture, relationsList -> {
-            try {
-                if (relationsList != null && !relationsList.isEmpty()) {
-                    for (List<EntityRelation> entityRelations : relationsList) {
-                        log.trace("[{}] [{}] [{}] relation(s) are going to be pushed to edge.", edge.getId(), entityId, entityRelations.size());
-                        for (EntityRelation relation : entityRelations) {
-                            try {
-                                if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
-                                        !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
-                                    saveEdgeEvent(edge.getTenantId(),
-                                            edge.getId(),
-                                            EdgeEventType.RELATION,
-                                            EdgeEventActionType.ADDED,
-                                            null,
-                                            mapper.valueToTree(relation));
+        SettableFuture<Void> futureToSet = SettableFuture.create();
+        Futures.addCallback(relationsListFuture, new FutureCallback<List<List<EntityRelation>>>() {
+                    @Override
+                    public void onSuccess(@Nullable List<List<EntityRelation>> relationsList) {
+                        try {
+                            if (relationsList != null && !relationsList.isEmpty()) {
+                                for (List<EntityRelation> entityRelations : relationsList) {
+                                    log.trace("[{}] [{}] [{}] relation(s) are going to be pushed to edge.", edge.getId(), entityId, entityRelations.size());
+                                    for (EntityRelation relation : entityRelations) {
+                                        try {
+                                            if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
+                                                    !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
+                                                saveEdgeEvent(edge.getTenantId(),
+                                                        edge.getId(),
+                                                        EdgeEventType.RELATION,
+                                                        EdgeEventActionType.ADDED,
+                                                        null,
+                                                        mapper.valueToTree(relation));
+                                            }
+                                        } catch (Exception e) {
+                                            log.error("Exception during loading relation [{}] to edge on sync!", relation, e);
+                                            futureToSet.setException(e);
+                                            return;
+                                        }
+                                    }
                                 }
-                            } catch (Exception e) {
-                                log.error("Exception during loading relation [{}] to edge on sync!", relation, e);
                             }
+                            futureToSet.set(null);
+                        } catch (Exception e) {
+                            log.error("Exception during loading relation(s) to edge on sync!", e);
+                            futureToSet.setException(e);
                         }
                     }
-                }
-            } catch (Exception e) {
-                log.error("Exception during loading relation(s) to edge on sync!", e);
-                throw new RuntimeException("Exception during loading relation(s) to edge on sync!", e);
-            }
-            return null;
-        }, dbCallbackExecutorService);
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("[{}] Can't find relation by query. Entity id [{}]", edge.getTenantId(), entityId, t);
+                        futureToSet.setException(t);
+                    }
+                }, dbCallbackExecutorService);
+        return futureToSet;
     }
 
     private ListenableFuture<List<EntityRelation>> findRelationByQuery(Edge edge, EntityId entityId, EntitySearchDirection direction) {

@@ -441,27 +441,41 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     private void processAlarm(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         AlarmId alarmId = new AlarmId(new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
         ListenableFuture<Alarm> alarmFuture = alarmService.findAlarmByIdAsync(tenantId, alarmId);
-        Futures.transform(alarmFuture, alarm -> {
-            if (alarm != null) {
-                EdgeEventType type = getEdgeQueueTypeByEntityType(alarm.getOriginator().getEntityType());
-                if (type != null) {
-                    ListenableFuture<List<EdgeId>> relatedEdgeIdsByEntityIdFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, alarm.getOriginator());
-                    Futures.transform(relatedEdgeIdsByEntityIdFuture, relatedEdgeIdsByEntityId -> {
-                        if (relatedEdgeIdsByEntityId != null) {
-                            for (EdgeId edgeId : relatedEdgeIdsByEntityId) {
-                                saveEdgeEvent(tenantId,
-                                        edgeId,
-                                        EdgeEventType.ALARM,
-                                        EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
-                                        alarmId,
-                                        null);
+        Futures.addCallback(alarmFuture, new FutureCallback<Alarm>() {
+            @Override
+            public void onSuccess(@Nullable Alarm alarm) {
+                if (alarm != null) {
+                    EdgeEventType type = getEdgeQueueTypeByEntityType(alarm.getOriginator().getEntityType());
+                    if (type != null) {
+                        ListenableFuture<List<EdgeId>> relatedEdgeIdsByEntityIdFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, alarm.getOriginator());
+                        Futures.addCallback(relatedEdgeIdsByEntityIdFuture, new FutureCallback<List<EdgeId>>() {
+                            @Override
+                            public void onSuccess(@Nullable List<EdgeId> relatedEdgeIdsByEntityId) {
+                                if (relatedEdgeIdsByEntityId != null) {
+                                    for (EdgeId edgeId : relatedEdgeIdsByEntityId) {
+                                        saveEdgeEvent(tenantId,
+                                                edgeId,
+                                                EdgeEventType.ALARM,
+                                                EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
+                                                alarmId,
+                                                null);
+                                    }
+                                }
                             }
-                        }
-                        return null;
-                    }, dbCallbackExecutorService);
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.warn("[{}] can't find related edge ids by entity id [{}]", tenantId.getId(), alarm.getOriginator(), t);
+                            }
+                        }, dbCallbackExecutorService);
+                    }
                 }
             }
-            return null;
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}] can't find alarm by id [{}]", tenantId.getId(), alarmId.getId(), t);
+            }
         }, dbCallbackExecutorService);
     }
 
@@ -473,26 +487,34 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             futures.add(edgeService.findRelatedEdgeIdsByEntityId(tenantId, relation.getTo()));
             futures.add(edgeService.findRelatedEdgeIdsByEntityId(tenantId, relation.getFrom()));
             ListenableFuture<List<List<EdgeId>>> combinedFuture = Futures.allAsList(futures);
-            Futures.transform(combinedFuture, listOfListsEdgeIds -> {
-                Set<EdgeId> uniqueEdgeIds = new HashSet<>();
-                if (listOfListsEdgeIds != null && !listOfListsEdgeIds.isEmpty()) {
-                    for (List<EdgeId> listOfListsEdgeId : listOfListsEdgeIds) {
-                        if (listOfListsEdgeId != null) {
-                            uniqueEdgeIds.addAll(listOfListsEdgeId);
+            Futures.addCallback(combinedFuture, new FutureCallback<List<List<EdgeId>>>() {
+                @Override
+                public void onSuccess(@Nullable List<List<EdgeId>> listOfListsEdgeIds) {
+                    Set<EdgeId> uniqueEdgeIds = new HashSet<>();
+                    if (listOfListsEdgeIds != null && !listOfListsEdgeIds.isEmpty()) {
+                        for (List<EdgeId> listOfListsEdgeId : listOfListsEdgeIds) {
+                            if (listOfListsEdgeId != null) {
+                                uniqueEdgeIds.addAll(listOfListsEdgeId);
+                            }
+                        }
+                    }
+                    if (!uniqueEdgeIds.isEmpty()) {
+                        for (EdgeId edgeId : uniqueEdgeIds) {
+                            saveEdgeEvent(tenantId,
+                                    edgeId,
+                                    EdgeEventType.RELATION,
+                                    EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
+                                    null,
+                                    mapper.valueToTree(relation));
                         }
                     }
                 }
-                if (!uniqueEdgeIds.isEmpty()) {
-                    for (EdgeId edgeId : uniqueEdgeIds) {
-                        saveEdgeEvent(tenantId,
-                                edgeId,
-                                EdgeEventType.RELATION,
-                                EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
-                                null,
-                                mapper.valueToTree(relation));
-                    }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.warn("[{}] can't find related edge ids by relation to id [{}] and relation from id [{}]" ,
+                            tenantId.getId(), relation.getTo().getId(), relation.getFrom().getId(), t);
                 }
-                return null;
             }, dbCallbackExecutorService);
         }
     }

@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -48,10 +49,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -62,6 +65,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private final ConcurrentMap<EdgeId, EdgeGrpcSession> sessions = new ConcurrentHashMap<>();
     private final ConcurrentMap<EdgeId, Boolean> sessionNewEvents = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EdgeId, ScheduledFuture<?>> sessionEdgeEventChecks = new ConcurrentHashMap<>();
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @Value("${edges.rpc.port}")
@@ -77,6 +81,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     @Value("${edges.rpc.client_max_keep_alive_time_sec}")
     private int clientMaxKeepAliveTimeSec;
 
+    @Value("${edges.scheduler_pool_size}")
+    private int schedulerPoolSize;
+
     @Autowired
     private EdgeContextComponent ctx;
 
@@ -85,7 +92,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private Server server;
 
-    private ExecutorService executor;
+    private ScheduledExecutorService scheduler;
 
     @PostConstruct
     public void init() {
@@ -112,8 +119,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             throw new RuntimeException("Failed to start Edge RPC server!");
         }
         log.info("Edge RPC service initialized!");
-        executor = Executors.newSingleThreadExecutor();
-        processHandleMessages();
+        this.scheduler = Executors.newScheduledThreadPool(schedulerPoolSize, ThingsBoardThreadFactory.forName("edge-scheduler"));
     }
 
     @PreDestroy
@@ -121,8 +127,16 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         if (server != null) {
             server.shutdownNow();
         }
-        if (executor != null) {
-            executor.shutdownNow();
+        for (Map.Entry<EdgeId, ScheduledFuture<?>> entry : sessionEdgeEventChecks.entrySet()) {
+            EdgeId edgeId = entry.getKey();
+            ScheduledFuture<?> sessionEdgeEventCheck = entry.getValue();
+            if (sessionEdgeEventCheck != null && !sessionEdgeEventCheck.isCancelled() && !sessionEdgeEventCheck.isDone()) {
+                sessionEdgeEventCheck.cancel(true);
+                sessionEdgeEventChecks.remove(edgeId);
+            }
+        }
+        if (scheduler != null) {
+            scheduler.shutdownNow();
         }
     }
 
@@ -150,6 +164,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             session.close();
             sessions.remove(edgeId);
             sessionNewEvents.remove(edgeId);
+            cancelScheduleEdgeEventsCheck(edgeId);
         }
     }
 
@@ -168,6 +183,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         sessionNewEvents.put(edgeId, false);
         save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, true);
         save(edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, System.currentTimeMillis());
+        scheduleEdgeEventsCheck(edgeGrpcSession);
     }
 
     public EdgeGrpcSession getEdgeGrpcSessionById(EdgeId edgeId) {
@@ -179,38 +195,38 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
-    private void processHandleMessages() {
-        executor.submit(() -> {
-            while (!Thread.interrupted()) {
+    private void scheduleEdgeEventsCheck(EdgeGrpcSession session) {
+        EdgeId edgeId = session.getEdge().getId();
+        UUID tenantId = session.getEdge().getTenantId().getId();
+        if (sessions.containsKey(edgeId)) {
+            ScheduledFuture<?> schedule = scheduler.schedule(() -> {
                 try {
-                    if (sessions.size() > 0) {
-                        for (Map.Entry<EdgeId, EdgeGrpcSession> entry : sessions.entrySet()) {
-                            EdgeId edgeId = entry.getKey();
-                            EdgeGrpcSession session = entry.getValue();
-                            if (sessionNewEvents.get(edgeId)) {
-                                log.trace("[{}] set session new events flag to false", edgeId.getId());
-                                sessionNewEvents.put(edgeId, false);
-                                // TODO: voba - at the moment all edge events are processed in a single thread. Maybe this should be updated?
-                                session.processHandleMessages();
-                            }
-                        }
-                    } else {
-                        log.trace("No sessions available");
-                    }
-                    log.trace("Sleep for the next run");
-                    try {
-                        Thread.sleep(ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval());
-                    } catch (InterruptedException ignore) {
+                    if (sessionNewEvents.get(edgeId)) {
+                        log.trace("[{}] Set session new events flag to false", edgeId.getId());
+                        sessionNewEvents.put(edgeId, false);
+                        session.processEdgeEvents();
                     }
                 } catch (Exception e) {
-                    log.warn("Failed to process messages handling!", e);
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException ignore) {
-                    }
+                    log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, session.getEdge().getId().getId(), e);
                 }
+                scheduleEdgeEventsCheck(session);
+            }, ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval(), TimeUnit.MILLISECONDS);
+            sessionEdgeEventChecks.put(edgeId, schedule);
+            log.trace("[{}] Check edge event was scheduler for edge [{}]", tenantId, edgeId.getId());
+        } else {
+            log.debug("[{}] Session was removed and edge event check schedule must not be started [{}]",
+                    tenantId, edgeId.getId());
+        }
+    }
+
+    private void cancelScheduleEdgeEventsCheck(EdgeId edgeId) {
+        if (sessionEdgeEventChecks.containsKey(edgeId)) {
+            ScheduledFuture<?> sessionEdgeEventCheck = sessionEdgeEventChecks.get(edgeId);
+            if (sessionEdgeEventCheck != null && !sessionEdgeEventCheck.isCancelled() && !sessionEdgeEventCheck.isDone()) {
+                sessionEdgeEventCheck.cancel(true);
+                sessionEdgeEventChecks.remove(edgeId);
             }
-        });
+        }
     }
 
     private void onEdgeDisconnect(EdgeId edgeId) {
@@ -219,6 +235,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         sessionNewEvents.remove(edgeId);
         save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, false);
         save(edgeId, DefaultDeviceStateService.LAST_DISCONNECT_TIME, System.currentTimeMillis());
+        cancelScheduleEdgeEventsCheck(edgeId);
     }
 
     private void save(EdgeId edgeId, String key, long value) {

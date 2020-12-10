@@ -258,7 +258,7 @@ public final class EdgeGrpcSession implements Closeable {
         }
     }
 
-    void processHandleMessages() throws ExecutionException, InterruptedException {
+    void processEdgeEvents() throws ExecutionException, InterruptedException {
         log.trace("[{}] processHandleMessages started", this.sessionId);
         if (isConnected()) {
             Long queueStartTs = getQueueStartTs().get();
