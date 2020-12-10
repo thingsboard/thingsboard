@@ -36,11 +36,17 @@ export enum DeviceTransportType {
   DEFAULT = 'DEFAULT',
   MQTT = 'MQTT',
   // LWM2M = 'LWM2M'
+  COAP = 'COAP'
 }
 
 export enum MqttTransportPayloadType {
   JSON = 'JSON',
   PROTOBUF = 'PROTOBUF'
+}
+
+export enum CoapTransportDeviceType {
+  DEFAULT = 'DEFAULT',
+  EFENTO = 'EFENTO'
 }
 
 export enum DeviceProvisionType {
@@ -77,6 +83,7 @@ export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, st
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt'],
     // [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
+    [DeviceTransportType.COAP, 'device-profile.transport-type-coap']
   ]
 );
 
@@ -94,6 +101,7 @@ export const deviceTransportTypeHintMap = new Map<DeviceTransportType, string>(
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default-hint'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt-hint'],
     // [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint']
+    [DeviceTransportType.COAP, 'device-profile.transport-type-coap-hint']
   ]
 );
 
@@ -101,6 +109,13 @@ export const mqttTransportPayloadTypeTranslationMap = new Map<MqttTransportPaylo
   [
     [MqttTransportPayloadType.JSON, 'device-profile.mqtt-device-payload-type-json'],
     [MqttTransportPayloadType.PROTOBUF, 'device-profile.mqtt-device-payload-type-proto']
+  ]
+);
+
+export const coapDeviceTypeTranslationMap = new Map<CoapTransportDeviceType, string>(
+  [
+    [CoapTransportDeviceType.DEFAULT, 'device-profile.coap-device-type-default'],
+    [CoapTransportDeviceType.EFENTO, 'device-profile.coap-device-type-efento']
   ]
 );
 
@@ -128,6 +143,13 @@ export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportTy
         hasDeviceConfiguration: false,
       }
     ]*/
+    [
+      DeviceTransportType.COAP,
+      {
+        hasProfileConfiguration: true,
+        hasDeviceConfiguration: false,
+      }
+    ]
   ]
 );
 
@@ -154,12 +176,19 @@ export interface MqttDeviceProfileTransportConfiguration {
   [key: string]: any;
 }
 
+export interface CoapDeviceProfileTransportConfiguration {
+  coapDeviceTypeConfiguration?: {
+    coapDeviceType?: CoapTransportDeviceType;
+  };
+}
+
 export interface Lwm2mDeviceProfileTransportConfiguration {
   [key: string]: any;
 }
 
 export type DeviceProfileTransportConfigurations = DefaultDeviceProfileTransportConfiguration &
                                                    MqttDeviceProfileTransportConfiguration &
+                                                   CoapDeviceProfileTransportConfiguration &
                                                    Lwm2mDeviceProfileTransportConfiguration;
 
 export interface DeviceProfileTransportConfiguration extends DeviceProfileTransportConfigurations {
@@ -218,6 +247,12 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         const lwm2mTransportConfiguration: Lwm2mDeviceProfileTransportConfiguration = {};
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;*/
+      case DeviceTransportType.COAP:
+        const coapTransportConfiguration: CoapDeviceProfileTransportConfiguration = {
+          coapDeviceTypeConfiguration: {coapDeviceType: CoapTransportDeviceType.DEFAULT}
+        };
+        transportConfiguration = {...coapTransportConfiguration, type: DeviceTransportType.COAP};
+        break;
     }
   }
   return transportConfiguration;
@@ -239,6 +274,10 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
         const lwm2mTransportConfiguration: Lwm2mDeviceTransportConfiguration = {};
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;*/
+      case DeviceTransportType.COAP:
+        const coapTransportConfiguration: CoapDeviceTransportConfiguration = {};
+        transportConfiguration = {...coapTransportConfiguration, type: DeviceTransportType.COAP};
+        break;
     }
   }
   return transportConfiguration;
@@ -399,12 +438,17 @@ export interface MqttDeviceTransportConfiguration {
   [key: string]: any;
 }
 
+export interface CoapDeviceTransportConfiguration {
+  [key: string]: any;
+}
+
 export interface Lwm2mDeviceTransportConfiguration {
   [key: string]: any;
 }
 
 export type DeviceTransportConfigurations = DefaultDeviceTransportConfiguration &
   MqttDeviceTransportConfiguration &
+  CoapDeviceTransportConfiguration &
   Lwm2mDeviceTransportConfiguration;
 
 export interface DeviceTransportConfiguration extends DeviceTransportConfigurations {
