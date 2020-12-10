@@ -79,9 +79,33 @@ export class RuleChainComponent extends EntityComponent<RuleChain> {
       }));
   }
 
+  isTenantRuleChainScope() {
+    if (this.entitiesTableConfig) {
+      return this.entitiesTableConfig.componentsData.ruleChainScope == 'tenant';
+    } else {
+      return false;
+    }
+  }
+
   isEdgesRuleChainScope() {
     if (this.entitiesTableConfig) {
       return this.entitiesTableConfig.componentsData.ruleChainScope == 'edges';
+    } else {
+      return false;
+    }
+  }
+
+  isEdgeRuleChainScope() {
+    if (this.entitiesTableConfig) {
+      return this.entitiesTableConfig.componentsData.ruleChainScope == 'edge';
+    } else {
+      return false;
+    }
+  }
+
+  isRootRuleChain() {
+    if (this.entitiesTableConfig && this.entityValue) {
+      return this.entitiesTableConfig.componentsData.rootRuleChainId == this.entityValue.id.id;
     } else {
       return false;
     }

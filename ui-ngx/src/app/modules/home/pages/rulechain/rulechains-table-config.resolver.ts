@@ -118,6 +118,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       this.config.entitySelectionEnabled = ruleChain => this.config.componentsData.edge.rootRuleChainId.id != ruleChain.id.id;
       this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(edge => {
         this.config.componentsData.edge = edge;
+        this.config.componentsData.rootRuleChainId = edge.rootRuleChainId.id;
         this.config.tableTitle = edge.name + ': ' + this.translate.instant('rulechain.edge-rulechains');
       });
       this.config.entitiesDeleteEnabled = false;

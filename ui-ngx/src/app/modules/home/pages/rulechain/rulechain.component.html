@@ -31,7 +31,13 @@
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setRoot')"
-          [fxShow]="!isEdit && !entity?.root">
+          [fxShow]="!isEdit && !entity?.root && !isEdgeRuleChainScope()">
+    {{'rulechain.set-root' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'setRoot')"
+          [fxShow]="!isEdit && isEdgeRuleChainScope() && !isRootRuleChain()">
     {{'rulechain.set-root' | translate }}
   </button>
   <button mat-raised-button color="primary"
