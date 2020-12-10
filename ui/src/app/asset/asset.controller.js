@@ -130,6 +130,7 @@ export function AssetController($rootScope, userService, assetService, customerS
     vm.assignToCustomer = assignToCustomer;
     vm.makePublic = makePublic;
     vm.unassignFromCustomer = unassignFromCustomer;
+    vm.unassignFromEdge = unassignFromEdge;
 
     initController();
 

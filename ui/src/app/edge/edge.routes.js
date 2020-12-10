@@ -49,7 +49,7 @@ export default function EdgeRoutes($stateProvider, types) {
                 pageTitle: 'edge.edges'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "transform", "label": "edge.edges"}'
+                label: '{"icon": "router", "label": "edge.edges"}'
             }
         }).state('home.edges.entityViews', {
             url: '/:edgeId/entityViews',

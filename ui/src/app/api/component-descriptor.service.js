@@ -28,31 +28,31 @@ function ComponentDescriptorService($http, $q) {
 
     return service;
 
-    function getComponentDescriptorsByTypes(componentTypes, type) {
+    function getComponentDescriptorsByTypes(componentTypes, ruleChainType) {
         var deferred = $q.defer();
         var result = [];
-        if (!componentsByType[type]) {
-            componentsByType[type] = {};
+        if (!componentsByType[ruleChainType]) {
+            componentsByType[ruleChainType] = {};
         }
         for (var i=componentTypes.length-1;i>=0;i--) {
             var componentType = componentTypes[i];
-            if (componentsByType[type][componentType]) {
-                result = result.concat(componentsByType[type][componentType]);
+            if (componentsByType[ruleChainType][componentType]) {
+                result = result.concat(componentsByType[ruleChainType][componentType]);
                 componentTypes.splice(i, 1);
             }
         }
         if (!componentTypes.length) {
             deferred.resolve(result);
         } else {
-            var url = '/api/components?componentTypes=' + componentTypes.join(',') + '&ruleChainType=' + type;
+            var url = '/api/components?componentTypes=' + componentTypes.join(',') + '&ruleChainType=' + ruleChainType;
             $http.get(url, null).then(function success(response) {
                 var components = response.data;
                 for (var i = 0; i < components.length; i++) {
                     var component = components[i];
-                    var componentsList = componentsByType[type][component.type];
+                    var componentsList = componentsByType[ruleChainType][component.type];
                     if (!componentsList) {
                         componentsList = [];
-                        componentsByType[type][component.type] = componentsList;
+                        componentsByType[ruleChainType][component.type] = componentsList;
                     }
                     componentsList.push(component);
                     componentsByClazz[component.clazz] = component;

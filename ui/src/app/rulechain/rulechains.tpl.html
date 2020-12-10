@@ -26,6 +26,10 @@
                      is-edit="vm.grid.detailsConfig.isDetailsEditMode"
                      is-read-only="vm.grid.isDetailsReadOnly(vm.grid.operatingItem())"
                      the-form="vm.grid.detailsForm"
+                     rule-chains-scope="vm.ruleChainsScope"
+                     edge="vm.edge"
+                     on-set-default-edge-rule-chain="vm.setDefaultEdgeRuleChain(event, vm.grid.detailsConfig.currentItem)"
+                     on-remove-default-edge-rule-chain="vm.removeDefaultEdgeRuleChain(event, vm.grid.detailsConfig.currentItem)"
                      on-set-root-rule-chain="vm.setRootRuleChain(event, vm.grid.detailsConfig.currentItem)"
                      on-export-rule-chain="vm.exportRuleChain(event, vm.grid.detailsConfig.currentItem)"
                      on-delete-rule-chain="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)">

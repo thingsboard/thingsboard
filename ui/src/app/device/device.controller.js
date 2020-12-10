@@ -131,6 +131,7 @@ export function DeviceController($rootScope, userService, deviceService, custome
     vm.makePublic = makePublic;
     vm.unassignFromCustomer = unassignFromCustomer;
     vm.manageCredentials = manageCredentials;
+    vm.unassignFromEdge = unassignFromEdge;
 
     initController();
 

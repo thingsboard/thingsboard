@@ -24,6 +24,9 @@
 <md-button ng-click="onUnassignFromCustomer({event: $event, isPublic: isPublic})"
            ng-show="!isEdit && (deviceScope === 'customer' || deviceScope === 'tenant') && isAssignedToCustomer"
            class="md-raised md-primary">{{ isPublic ? 'device.make-private' : 'device.unassign-from-customer' | translate }}</md-button>
+<md-button ng-click="onUnassignFromEdge({event: $event})"
+           ng-show="!isEdit && deviceScope === 'edge'"
+           class="md-raised md-primary">{{ 'edge.unassign-from-edge' | translate }}</md-button>
 <md-button ng-click="onManageCredentials({event: $event})"
            ng-show="!isEdit"
            class="md-raised md-primary">{{ (deviceScope === 'customer_user' ? 'device.view-credentials' : 'device.manage-credentials') | translate }}</md-button>

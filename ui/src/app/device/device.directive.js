@@ -82,7 +82,8 @@ export default function DeviceDirective($compile, $templateCache, toast, $transl
             onMakePublic: '&',
             onUnassignFromCustomer: '&',
             onManageCredentials: '&',
-            onDeleteDevice: '&'
+            onDeleteDevice: '&',
+            onUnassignFromEdge: '&',
         }
     };
 }

@@ -16,7 +16,7 @@
 
 -->
 <md-button ng-click="onExportDashboard({event: $event})"
-		   ng-show="!isEdit && dashboardScope === 'tenant'"
+		   ng-show="!isEdit && (dashboardScope === 'tenant' || dashboardScope === 'edge')"
 		   class="md-raised md-primary">{{ 'dashboard.export' | translate }}</md-button>
 <md-button ng-click="onMakePublic({event: $event})"
 		   ng-show="!isEdit && dashboardScope === 'tenant' && !dashboard.publicCustomerId"
@@ -34,6 +34,9 @@
 <md-button ng-click="onDeleteDashboard({event: $event})"
 		   ng-show="!isEdit && dashboardScope === 'tenant'"
 		   class="md-raised md-primary">{{ 'dashboard.delete' | translate }}</md-button>
+<md-button ng-click="onUnassignFromEdge({event: $event})"
+           ng-show="!isEdit && dashboardScope === 'edge'"
+           class="md-raised md-primary">{{ 'edge.unassign-from-edge' | translate }}</md-button>
 <md-content class="md-padding" layout="column">
 	<md-input-container class="md-block"
 						ng-show="!isEdit && dashboard.assignedCustomersText && dashboardScope === 'tenant'">
