@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
+import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
@@ -92,6 +93,9 @@ public class AppActor extends ContextAwareActor {
             case DEVICE_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
             case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((TenantAwareMsg) msg, true);
+                break;
+            case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG:
+                onToTenantActorMsg((EdgeEventUpdateMsg) msg);
                 break;
             default:
                 return false;
@@ -184,6 +188,20 @@ public class AppActor extends ContextAwareActor {
         return ctx.getOrCreateChildActor(new TbEntityActorId(tenantId),
                 () -> DefaultActorService.TENANT_DISPATCHER_NAME,
                 () -> new TenantActor.ActorCreator(systemContext, tenantId));
+    }
+
+    private void onToTenantActorMsg(EdgeEventUpdateMsg msg) {
+        TbActorRef target = null;
+        if (SYSTEM_TENANT.equals(msg.getTenantId())) {
+            log.warn("Message has system tenant id: {}", msg);
+        } else {
+            target = getOrCreateTenantActor(msg.getTenantId());
+        }
+        if (target != null) {
+            target.tellWithHighPriority(msg);
+        } else {
+            log.debug("[{}] Invalid edge event update msg: {}", msg.getTenantId(), msg);
+        }
     }
 
     public static class ActorCreator extends ContextBasedCreator {

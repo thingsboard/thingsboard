@@ -52,7 +52,6 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
     private final TbClusterService clusterService;
     private final TbServiceInfoProvider serviceInfoProvider;
 
-
     private final ConcurrentMap<UUID, Consumer<FromDeviceRpcResponse>> toDeviceRpcRequests = new ConcurrentHashMap<>();
 
     private Optional<TbCoreDeviceRpcService> tbCoreRpcService;

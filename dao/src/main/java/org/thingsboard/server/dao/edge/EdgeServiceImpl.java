@@ -98,6 +98,8 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
 
+    private static final int DEFAULT_LIMIT = 100;
+
     private RestTemplate restTemplate;
 
     private static final String EDGE_LICENSE_SERVER_ENDPOINT = "https://license.thingsboard.io";
@@ -460,8 +462,21 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     public ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId) {
         log.trace("[{}] Executing findRelatedEdgeIdsByEntityId [{}]", tenantId, entityId);
         if (EntityType.TENANT.equals(entityId.getEntityType())) {
-            TextPageData<Edge> edgesByTenantId = findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
-            return Futures.immediateFuture(edgesByTenantId.getData().stream().map(IdBased::getId).collect(Collectors.toList()));
+            List<EdgeId> result = new ArrayList<>();
+            TextPageLink pageLink = new TextPageLink(DEFAULT_LIMIT);
+            TextPageData<Edge> pageData;
+            do {
+                pageData = findEdgesByTenantId(tenantId, pageLink);
+                if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                    for (Edge edge : pageData.getData()) {
+                        result.add(edge.getId());
+                    }
+                    if (pageData.hasNext()) {
+                        pageLink = pageData.getNextPageLink();
+                    }
+                }
+            } while (pageData != null && pageData.hasNext());
+            return Futures.immediateFuture(result);
         } else {
             switch (entityId.getEntityType()) {
                 case DEVICE:
@@ -486,13 +501,23 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                     if (userById == null) {
                         return Futures.immediateFuture(Collections.emptyList());
                     }
-                    TextPageData<Edge> edges;
-                    if (userById.getCustomerId() == null || userById.getCustomerId().isNullUid()) {
-                        edges = findEdgesByTenantId(tenantId, new TextPageLink(Integer.MAX_VALUE));
-                    } else {
-                        edges = findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), new TextPageLink(Integer.MAX_VALUE));
-                    }
-                    return convertToEdgeIds(Futures.immediateFuture(edges.getData()));
+                    List<Edge> result = new ArrayList<>();
+                    TextPageLink pageLink = new TextPageLink(DEFAULT_LIMIT);
+                    TextPageData<Edge> pageData;
+                    do {
+                        if (userById.getCustomerId() == null || userById.getCustomerId().isNullUid()) {
+                            pageData = findEdgesByTenantId(tenantId, pageLink);
+                        } else {
+                            pageData = findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), pageLink);
+                        }
+                        if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                            result.addAll(pageData.getData());
+                            if (pageData.hasNext()) {
+                                pageLink = pageData.getNextPageLink();
+                            }
+                        }
+                    } while (pageData != null && pageData.hasNext());
+                    return convertToEdgeIds(Futures.immediateFuture(result));
                 default:
                     return Futures.immediateFuture(Collections.emptyList());
             }

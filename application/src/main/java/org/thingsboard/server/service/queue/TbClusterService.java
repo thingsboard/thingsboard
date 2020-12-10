@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.queue;
 
 import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -48,5 +49,7 @@ public interface TbClusterService {
     void pushNotificationToTransport(String targetServiceId, ToTransportMsg response, TbQueueCallback callback);
 
     void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
+
+    void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
 
 }

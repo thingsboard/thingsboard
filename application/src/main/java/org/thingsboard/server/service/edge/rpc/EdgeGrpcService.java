@@ -49,6 +49,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -59,7 +60,8 @@ import java.util.concurrent.TimeUnit;
 @TbCoreComponent
 public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase implements EdgeRpcService {
 
-    private final Map<EdgeId, EdgeGrpcSession> sessions = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EdgeId, EdgeGrpcSession> sessions = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EdgeId, Boolean> sessionNewEvents = new ConcurrentHashMap<>();
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @Value("${edges.rpc.port}")
@@ -147,12 +149,23 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             log.debug("Closing and removing session for edge [{}]", edgeId);
             session.close();
             sessions.remove(edgeId);
+            sessionNewEvents.remove(edgeId);
+        }
+    }
+
+    @Override
+    public void onEdgeEvent(EdgeId edgeId) {
+        log.trace("[{}] onEdgeEvent", edgeId.getId());
+        if (!sessionNewEvents.get(edgeId)) {
+            log.trace("[{}] set session new events flag to true", edgeId.getId());
+            sessionNewEvents.put(edgeId, true);
         }
     }
 
     private void onEdgeConnect(EdgeId edgeId, EdgeGrpcSession edgeGrpcSession) {
         log.debug("[{}] onEdgeConnect [{}]", edgeId, edgeGrpcSession.getSessionId());
         sessions.put(edgeId, edgeGrpcSession);
+        sessionNewEvents.put(edgeId, false);
         save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, true);
         save(edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, System.currentTimeMillis());
     }
@@ -171,15 +184,23 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             while (!Thread.interrupted()) {
                 try {
                     if (sessions.size() > 0) {
-                        for (EdgeGrpcSession session : sessions.values()) {
-                            session.processHandleMessages();
+                        for (Map.Entry<EdgeId, EdgeGrpcSession> entry : sessions.entrySet()) {
+                            EdgeId edgeId = entry.getKey();
+                            EdgeGrpcSession session = entry.getValue();
+                            if (sessionNewEvents.get(edgeId)) {
+                                log.trace("[{}] set session new events flag to false", edgeId.getId());
+                                sessionNewEvents.put(edgeId, false);
+                                // TODO: voba - at the moment all edge events are processed in a single thread. Maybe this should be updated?
+                                session.processHandleMessages();
+                            }
                         }
                     } else {
-                        log.trace("No sessions available, sleep for the next run");
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException ignore) {
-                        }
+                        log.trace("No sessions available");
+                    }
+                    log.trace("Sleep for the next run");
+                    try {
+                        Thread.sleep(ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval());
+                    } catch (InterruptedException ignore) {
                     }
                 } catch (Exception e) {
                     log.warn("Failed to process messages handling!", e);
@@ -195,6 +216,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void onEdgeDisconnect(EdgeId edgeId) {
         log.debug("[{}] onEdgeDisconnect", edgeId);
         sessions.remove(edgeId);
+        sessionNewEvents.remove(edgeId);
         save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, false);
         save(edgeId, DefaultDeviceStateService.LAST_DISCONNECT_TIME, System.currentTimeMillis());
     }

@@ -251,12 +251,11 @@ public class RuleChainController extends BaseController {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
+            RuleChainType type = RuleChainType.CORE;
             if (typeStr != null && typeStr.trim().length() > 0) {
-                RuleChainType type = RuleChainType.valueOf(typeStr);
-                return checkNotNull(ruleChainService.findTenantRuleChainsByType(tenantId, type, pageLink));
-            } else {
-                return checkNotNull(ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, pageLink));
+                type = RuleChainType.valueOf(typeStr);
             }
+            return checkNotNull(ruleChainService.findTenantRuleChainsByType(tenantId, type, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -304,11 +304,6 @@ public final class EdgeGrpcSession implements Closeable {
                 Long newStartTs = UUIDs.unixTimestamp(ifOffset);
                 updateQueueStartTs(newStartTs);
             }
-            try {
-                Thread.sleep(ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval());
-            } catch (InterruptedException e) {
-                log.error("[{}] Error during sleep between no records interval", this.sessionId, e);
-            }
         }
         log.trace("[{}] processHandleMessages finished", this.sessionId);
     }

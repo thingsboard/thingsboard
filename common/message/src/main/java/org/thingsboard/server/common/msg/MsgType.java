@@ -105,6 +105,11 @@ public enum MsgType {
     /**
      * Message that is sent by TransportRuleEngineService to Device Actor. Represents messages from the device itself.
      */
-    TRANSPORT_TO_DEVICE_ACTOR_MSG;
+    TRANSPORT_TO_DEVICE_ACTOR_MSG,
+
+    /**
+     * Message that is sent on Edge Event to Edge Session
+     */
+    EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG;
 
 }

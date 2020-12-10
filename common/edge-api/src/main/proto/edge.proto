@@ -315,6 +315,7 @@ message AttributesRequestMsg {
   int64 entityIdMSB = 1;
   int64 entityIdLSB = 2;
   string entityType = 3;
+  string scope = 4;
 }
 
 message RelationRequestMsg {

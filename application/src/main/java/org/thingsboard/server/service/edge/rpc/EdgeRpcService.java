@@ -23,4 +23,6 @@ public interface EdgeRpcService {
     void updateEdge(Edge edge);
 
     void deleteEdge(EdgeId edgeId);
+
+    void onEdgeEvent(EdgeId edgeId);
 }

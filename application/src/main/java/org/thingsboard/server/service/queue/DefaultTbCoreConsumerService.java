@@ -203,16 +203,22 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             log.trace("[{}] Forwarding message to RPC service {}", id, toCoreNotification.getFromDeviceRpcResponse());
             forwardToCoreRpcService(toCoreNotification.getFromDeviceRpcResponse(), callback);
         } else if (toCoreNotification.getComponentLifecycleMsg() != null && !toCoreNotification.getComponentLifecycleMsg().isEmpty()) {
-            Optional<TbActorMsg> actorMsg = encodingService.decode(toCoreNotification.getComponentLifecycleMsg().toByteArray());
-            if (actorMsg.isPresent()) {
-                log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
-                actorContext.tellWithHighPriority(actorMsg.get());
-            }
-            callback.onSuccess();
+            forwardToAppActor(id, toCoreNotification.getComponentLifecycleMsg().toByteArray(), callback);
+        } else if (toCoreNotification.getEdgeEventUpdateMsg() != null && !toCoreNotification.getEdgeEventUpdateMsg().isEmpty()) {
+            forwardToAppActor(id, toCoreNotification.getEdgeEventUpdateMsg().toByteArray(), callback);
         }
         if (statsEnabled) {
             stats.log(toCoreNotification);
         }
+    }
+
+    private void forwardToAppActor(UUID id, byte[] msgBytes, TbCallback callback) {
+        Optional<TbActorMsg> actorMsg = encodingService.decode(msgBytes);
+        if (actorMsg.isPresent()) {
+            log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
+            actorContext.tellWithHighPriority(actorMsg.get());
+        }
+        callback.onSuccess();
     }
 
     private void forwardToCoreRpcService(FromDeviceRPCResponseProto proto, TbCallback callback) {

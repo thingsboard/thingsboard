@@ -115,11 +115,12 @@ public class TbMsgPushToEdgeNode implements TbNode {
                                     @Override
                                     public void onSuccess(@Nullable EdgeEvent event) {
                                         ctx.tellNext(msg, SUCCESS);
+                                        ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
                                     }
 
                                     @Override
                                     public void onFailure(Throwable th) {
-                                        log.error("Could not save edge event", th);
+                                        log.warn("[{}] Can't save edge event [{}] for edge [{}]", ctx.getTenantId().getId(), edgeEvent, edgeId.getId(), th);
                                         ctx.tellFailure(msg, th);
                                     }
                                 }, ctx.getDbCallbackExecutor());

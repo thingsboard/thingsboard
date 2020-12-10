@@ -17,8 +17,11 @@ package org.thingsboard.server.service.edge.rpc.processor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -107,6 +110,18 @@ public abstract class BaseProcessor {
             edgeEvent.setEntityId(entityId.getId());
         }
         edgeEvent.setBody(body);
-        return edgeEventService.saveAsync(edgeEvent);
+        ListenableFuture<EdgeEvent> future = edgeEventService.saveAsync(edgeEvent);
+        Futures.addCallback(future, new FutureCallback<EdgeEvent>() {
+            @Override
+            public void onSuccess(@Nullable EdgeEvent result) {
+                tbClusterService.onEdgeEventUpdate(tenantId, edgeId);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}] Can't save edge event [{}] for edge [{}]", tenantId.getId(), edgeEvent, edgeId.getId(), t);
+            }
+        }, dbCallbackExecutorService);
+        return future;
     }
 }
