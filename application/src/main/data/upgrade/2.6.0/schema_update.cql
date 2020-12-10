@@ -107,15 +107,15 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.edge_by_customer_by_type_and_
     WITH CLUSTERING ORDER BY ( tenant_id DESC, type ASC, search_text ASC, id DESC );
 
 CREATE TABLE IF NOT EXISTS thingsboard.edge_event (
-	id timeuuid,
-	tenant_id timeuuid,
+    id timeuuid,
+    tenant_id timeuuid,
     edge_id timeuuid,
-	edge_event_type text,
-	edge_event_action text,
-	edge_event_uid text,
-	entity_id timeuuid,
-	body text,
-	PRIMARY KEY ((tenant_id, edge_id), edge_event_type, edge_event_uid)
+    edge_event_type text,
+    edge_event_action text,
+    edge_event_uid text,
+    entity_id timeuuid,
+    body text,
+    PRIMARY KEY ((tenant_id, edge_id), edge_event_type, edge_event_uid)
 );
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.edge_event_by_id AS
