@@ -289,7 +289,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private void putToQueue(TopicPartitionInfo tpi, TbMsg msg, TbQueueCallback callbackWrapper, EntityId target) {
         switch (target.getEntityType()) {
             case RULE_NODE:
-                putToQueue(tpi, msg.copyWithRuleNodeId(entityId, new RuleNodeId(target.getId())), callbackWrapper);
+                putToQueue(tpi, msg.copyWithRuleNodeId(entityId, new RuleNodeId(target.getId()), UUID.randomUUID()), callbackWrapper);
                 break;
             case RULE_CHAIN:
                 putToQueue(tpi, msg.copyWithRuleChainId(new RuleChainId(target.getId()), UUID.randomUUID()), callbackWrapper);
