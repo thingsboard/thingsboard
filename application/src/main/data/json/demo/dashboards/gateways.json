@@ -955,7 +955,7 @@
             },
             "methodName": "gateway_restart",
             "methodParams": "{}",
-            "buttonText": "gateway restart"
+            "buttonText": "GATEWAY RESTART"
           },
           "title": "New RPC Button",
           "dropShadow": true,

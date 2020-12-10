@@ -32,6 +32,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.DataConstants;
@@ -73,13 +75,14 @@ import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.profile.TbTenantProfileCache;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
+import org.thingsboard.server.service.sms.SmsExecutorService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
@@ -230,6 +233,10 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
+    private SmsExecutorService smsExecutor;
+
+    @Autowired
+    @Getter
     private DbCallbackExecutorService dbCallbackExecutor;
 
     @Autowired
@@ -243,6 +250,14 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private MailService mailService;
+
+    @Autowired
+    @Getter
+    private SmsService smsService;
+
+    @Autowired
+    @Getter
+    private SmsSenderFactory smsSenderFactory;
 
     @Autowired
     @Getter
@@ -324,6 +339,10 @@ public class ActorSystemContext {
     @Value("${actors.rule.allow_system_mail_service}")
     @Getter
     private boolean allowSystemMailService;
+
+    @Value("${actors.rule.allow_system_sms_service}")
+    @Getter
+    private boolean allowSystemSmsService;
 
     @Value("${transport.sessions.inactivity_timeout}")
     @Getter

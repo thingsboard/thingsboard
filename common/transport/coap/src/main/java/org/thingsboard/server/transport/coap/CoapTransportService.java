@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.network.CoapEndpoint;
+import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -46,7 +47,7 @@ public class CoapTransportService {
     public void init() throws UnknownHostException {
         log.info("Starting CoAP transport...");
         log.info("Starting CoAP transport server");
-        this.server = new CoapServer();
+        this.server = new CoapServer(NetworkConfig.createStandardWithoutFile());
         createResources();
         InetAddress addr = InetAddress.getByName(coapTransportContext.getHost());
         InetSocketAddress sockAddr = new InetSocketAddress(addr, coapTransportContext.getPort());

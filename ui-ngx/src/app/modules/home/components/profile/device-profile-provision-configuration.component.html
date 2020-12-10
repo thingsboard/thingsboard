@@ -31,6 +31,14 @@
     <mat-form-field fxFlex class="mat-block">
       <mat-label translate>device-profile.provision-device-key</mat-label>
       <input matInput formControlName="provisionDeviceKey" required/>
+      <button mat-button matSuffix mat-icon-button
+              ngxClipboard
+              [cbContent]="provisionConfigurationFormGroup.get('provisionDeviceKey').value"
+              (cbOnSuccess)="onProvisionCopied(true)"
+              matTooltip="{{ 'device-profile.copy-provision-key' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon svgIcon="mdi:clipboard-arrow-left" style="font-size: 20px;"></mat-icon>
+      </button>
       <mat-error *ngIf="provisionConfigurationFormGroup.get('provisionDeviceKey').hasError('required')">
         {{ 'device-profile.provision-device-key-required' | translate }}
       </mat-error>
@@ -38,6 +46,14 @@
     <mat-form-field fxFlex class="mat-block">
       <mat-label translate>device-profile.provision-device-secret</mat-label>
       <input matInput formControlName="provisionDeviceSecret" required/>
+      <button mat-button matSuffix mat-icon-button
+              ngxClipboard
+              [cbContent]="provisionConfigurationFormGroup.get('provisionDeviceSecret').value"
+              (cbOnSuccess)="onProvisionCopied(false)"
+              matTooltip="{{ 'device-profile.copy-provision-secret' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon svgIcon="mdi:clipboard-arrow-left" style="font-size: 20px;"></mat-icon>
+      </button>
       <mat-error *ngIf="provisionConfigurationFormGroup.get('provisionDeviceSecret').hasError('required')">
         {{ 'device-profile.provision-device-secret-required' | translate }}
       </mat-error>

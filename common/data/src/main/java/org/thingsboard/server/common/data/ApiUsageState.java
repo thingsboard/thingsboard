@@ -47,6 +47,12 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
     @Getter
     @Setter
     private ApiUsageStateValue jsExecState;
+    @Getter
+    @Setter
+    private ApiUsageStateValue emailExecState;
+    @Getter
+    @Setter
+    private ApiUsageStateValue smsExecState;
 
     public ApiUsageState() {
         super();
@@ -64,6 +70,8 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
         this.dbStorageState = ur.getDbStorageState();
         this.reExecState = ur.getReExecState();
         this.jsExecState = ur.getJsExecState();
+        this.emailExecState = ur.getEmailExecState();
+        this.smsExecState = ur.getSmsExecState();
     }
 
     public boolean isTransportEnabled() {
@@ -80,5 +88,13 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
 
     public boolean isJsExecEnabled() {
         return !ApiUsageStateValue.DISABLED.equals(jsExecState);
+    }
+
+    public boolean isEmailSendEnabled(){
+        return !ApiUsageStateValue.DISABLED.equals(emailExecState);
+    }
+
+    public boolean isSmsSendEnabled(){
+        return !ApiUsageStateValue.DISABLED.equals(smsExecState);
     }
 }

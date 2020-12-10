@@ -282,8 +282,7 @@ export class AuthService {
       if (publicId) {
         return this.publicLogin(publicId).pipe(
           mergeMap((response) => {
-            this.updateAndValidateToken(response.token, 'jwt_token', false);
-            this.updateAndValidateToken(response.refreshToken, 'refresh_token', false);
+            this.updateAndValidateTokens(response.token, response.refreshToken, false);
             return this.procceedJwtTokenValidate();
           }),
           catchError((err) => {
@@ -317,8 +316,7 @@ export class AuthService {
         };
         return this.http.post<LoginResponse>('/api/auth/login', loginRequest, defaultHttpOptions()).pipe(
           mergeMap((loginResponse: LoginResponse) => {
-              this.updateAndValidateToken(loginResponse.token, 'jwt_token', false);
-              this.updateAndValidateToken(loginResponse.refreshToken, 'refresh_token', false);
+              this.updateAndValidateTokens(loginResponse.token, loginResponse.refreshToken, false);
               return this.procceedJwtTokenValidate();
             }
           )
@@ -439,7 +437,7 @@ export class AuthService {
       }));
   }
 
-  public refreshJwtToken(): Observable<LoginResponse> {
+  public refreshJwtToken(loadUserElseStoreJwtToken = true): Observable<LoginResponse> {
     let response: Observable<LoginResponse> = this.refreshTokenSubject;
     if (this.refreshTokenSubject === null) {
         this.refreshTokenSubject = new ReplaySubject<LoginResponse>(1);
@@ -456,7 +454,11 @@ export class AuthService {
           };
           const refreshObservable = this.http.post<LoginResponse>('/api/auth/token', refreshTokenRequest, defaultHttpOptions());
           refreshObservable.subscribe((loginResponse: LoginResponse) => {
-            this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, false);
+            if (loadUserElseStoreJwtToken) {
+              this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, false);
+            } else {
+              this.updateAndValidateTokens(loginResponse.token, loginResponse.refreshToken, true);
+            }
             this.refreshTokenSubject.next(loginResponse);
             this.refreshTokenSubject.complete();
             this.refreshTokenSubject = null;
@@ -474,7 +476,7 @@ export class AuthService {
     const subject = new ReplaySubject<void>();
     if (!AuthService.isTokenValid('jwt_token')) {
       if (doRefresh) {
-        this.refreshJwtToken().subscribe(
+        this.refreshJwtToken(!doRefresh).subscribe(
           () => {
             subject.next();
             subject.complete();
@@ -505,8 +507,7 @@ export class AuthService {
         this.notifyUnauthenticated();
       }
     } else {
-      this.updateAndValidateToken(jwtToken, 'jwt_token', true);
-      this.updateAndValidateToken(refreshToken, 'refresh_token', true);
+      this.updateAndValidateTokens(jwtToken, refreshToken, true);
       if (notify) {
         this.notifyUserLoaded(false);
         this.loadUser(false).subscribe(
@@ -523,6 +524,11 @@ export class AuthService {
         this.loadUser(false).subscribe();
       }
     }
+  }
+
+  private updateAndValidateTokens(jwtToken, refreshToken, notify: boolean) {
+    this.updateAndValidateToken(jwtToken, 'jwt_token', notify);
+    this.updateAndValidateToken(refreshToken, 'refresh_token', notify);
   }
 
   public parsePublicId(): string {

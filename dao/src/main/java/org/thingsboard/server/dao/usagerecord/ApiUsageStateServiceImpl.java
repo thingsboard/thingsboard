@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.usagerecord;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -76,6 +78,8 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         apiUsageState.setReExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setJsExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setDbStorageState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setSmsExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setEmailExecState(ApiUsageStateValue.ENABLED);
         apiUsageStateValidator.validate(apiUsageState, ApiUsageState::getTenantId);
 
         ApiUsageState saved = apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
@@ -83,7 +87,23 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         Tenant tenant = tenantDao.findById(tenantId, tenantId.getId());
         TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
         TenantProfileConfiguration configuration = tenantProfile.getProfileData().getConfiguration();
+        List<TsKvEntry> apiUsageStates = new ArrayList<>();
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
+                new StringDataEntry(ApiFeature.TRANSPORT.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
+                new StringDataEntry(ApiFeature.DB.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
+                new StringDataEntry(ApiFeature.RE.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
+                new StringDataEntry(ApiFeature.JS.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
+                new StringDataEntry(ApiFeature.EMAIL.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
+                new StringDataEntry(ApiFeature.SMS.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        tsService.save(tenantId, saved.getId(), apiUsageStates, 0L);
+
         List<TsKvEntry> profileThresholds = new ArrayList<>();
+
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
             profileThresholds.add(new BasicTsKvEntry(saved.getCreatedTime(), new LongDataEntry(key.getApiLimitKey(), configuration.getProfileThreshold(key))));
         }

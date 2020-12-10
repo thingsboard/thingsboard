@@ -26,6 +26,10 @@ export enum TenantProfileType {
 export interface DefaultTenantProfileConfiguration {
   maxDevices: number;
   maxAssets: number;
+  maxCustomers: number;
+  maxUsers: number;
+  maxDashboards: number;
+  maxRuleChains: number;
 
   transportTenantMsgRateLimit?: string;
   transportTenantTelemetryMsgRateLimit?: string;
@@ -40,6 +44,10 @@ export interface DefaultTenantProfileConfiguration {
   maxJSExecutions: number;
   maxDPStorageDays: number;
   maxRuleNodeExecutionsPerMessage: number;
+  maxEmails: number;
+  maxSms: number;
+
+  defaultStorageTtlDays: number;
 }
 
 export type TenantProfileConfigurations = DefaultTenantProfileConfiguration;
@@ -56,12 +64,19 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
         const defaultConfiguration: DefaultTenantProfileConfiguration = {
           maxDevices: 0,
           maxAssets: 0,
+          maxCustomers: 0,
+          maxUsers: 0,
+          maxDashboards: 0,
+          maxRuleChains: 0,
           maxTransportMessages: 0,
           maxTransportDataPoints: 0,
           maxREExecutions: 0,
           maxJSExecutions: 0,
           maxDPStorageDays: 0,
-          maxRuleNodeExecutionsPerMessage: 0
+          maxRuleNodeExecutionsPerMessage: 0,
+          maxEmails: 0,
+          maxSms: 0,
+          defaultStorageTtlDays: 0
         };
         configuration = {...defaultConfiguration, type: TenantProfileType.DEFAULT};
         break;

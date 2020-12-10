@@ -55,6 +55,10 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
     this.defaultTenantProfileConfigurationFormGroup = this.fb.group({
       maxDevices: [null, [Validators.required, Validators.min(0)]],
       maxAssets: [null, [Validators.required, Validators.min(0)]],
+      maxCustomers: [null, [Validators.required, Validators.min(0)]],
+      maxUsers: [null, [Validators.required, Validators.min(0)]],
+      maxDashboards: [null, [Validators.required, Validators.min(0)]],
+      maxRuleChains: [null, [Validators.required, Validators.min(0)]],
       transportTenantMsgRateLimit: [null, []],
       transportTenantTelemetryMsgRateLimit: [null, []],
       transportTenantTelemetryDataPointsRateLimit: [null, []],
@@ -66,7 +70,10 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxREExecutions: [null, [Validators.required, Validators.min(0)]],
       maxJSExecutions: [null, [Validators.required, Validators.min(0)]],
       maxDPStorageDays: [null, [Validators.required, Validators.min(0)]],
-      maxRuleNodeExecutionsPerMessage: [null, [Validators.required, Validators.min(0)]]
+      maxRuleNodeExecutionsPerMessage: [null, [Validators.required, Validators.min(0)]],
+      maxEmails: [null, [Validators.required, Validators.min(0)]],
+      maxSms: [null, [Validators.required, Validators.min(0)]],
+      defaultStorageTtlDays: [null, [Validators.required, Validators.min(0)]]
     });
     this.defaultTenantProfileConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();

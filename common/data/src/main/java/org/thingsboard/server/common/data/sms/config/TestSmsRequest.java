@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.profile;
+package org.thingsboard.server.common.data.sms.config;
 
-import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.TenantProfileId;
+import lombok.Data;
 
-public interface TbTenantProfileCache {
+@Data
+public class TestSmsRequest {
 
-    TenantProfile get(TenantId tenantId);
-
-    TenantProfile get(TenantProfileId tenantProfileId);
-
-    void put(TenantProfile profile);
-
-    void evict(TenantProfileId id);
-
-    void evict(TenantId id);
+    private SmsProviderConfiguration providerConfiguration;
+    private String numberTo;
+    private String message;
 
 }

@@ -18,6 +18,7 @@
 
   &__last-photo {
     width: 100%;
+    min-height: 0;
     margin: 5px 0;
     text-align: center;
     border: solid 1px;
@@ -70,5 +71,12 @@
     font-size: 18px;
     color: #a0a0a0;
     text-align: center;
+  }
+
+  .image-container{
+    height: 100%;
+    min-height: 0;
+    width: 100%;
+    min-width: 100%;
   }
 }

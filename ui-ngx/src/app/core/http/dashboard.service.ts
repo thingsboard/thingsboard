@@ -130,7 +130,7 @@ export class DashboardService {
         const publicCustomerId = publicCustomers[0].customerId.id;
         let url = this.window.location.protocol + '//' + this.window.location.hostname;
         const port = this.window.location.port;
-        if (port !== '80' && port !== '443') {
+        if (port && port.length > 0 && port !== '80' && port !== '443') {
           url += ':' + port;
         }
         url += `/dashboard/${dashboard.id.id}?publicId=${publicCustomerId}`;
