@@ -37,7 +37,7 @@ import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.com
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { ItemBufferService } from '@core/services/item-buffer.service';
 import { EdgeService } from "@core/http/edge.service";
-import { map } from "rxjs/operators";
+import {map, mergeMap} from "rxjs/operators";
 import { forkJoin, Observable } from "rxjs";
 import {
   AddEntitiesToEdgeDialogComponent,
@@ -494,11 +494,11 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   }
 
   isDefaultEdgeRuleChain(ruleChain) {
-    return (isDefined(ruleChain)) && !ruleChain.root && ruleChain.isDefault;
+    return (isDefined(ruleChain)) && !ruleChain.root && this.config.componentsData.defaultEdgeRuleChainIds.includes(ruleChain.id.id);
   }
 
   isNonDefaultEdgeRuleChain(ruleChain) {
-    return (isDefined(ruleChain)) && !ruleChain.root && !ruleChain.isDefault;
+    return (isDefined(ruleChain)) && !ruleChain.root && !this.config.componentsData.defaultEdgeRuleChainIds.includes(ruleChain.id.id);
   }
 
   fetchRuleChains(pageLink: PageLink) {
@@ -506,17 +506,10 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   }
 
   fetchEdgeRuleChains(pageLink: PageLink) {
-    let defaultEdgeRuleChainIds: Array<string> = [];
+    this.config.componentsData.defaultEdgeRuleChainIds = [];
     this.ruleChainService.getDefaultEdgeRuleChains().subscribe(ruleChains => {
-        ruleChains.map(ruleChain => defaultEdgeRuleChainIds.push(ruleChain.id.id))
+        ruleChains.map(ruleChain => this.config.componentsData.defaultEdgeRuleChainIds.push(ruleChain.id.id));
     });
-    return this.ruleChainService.getRuleChains(pageLink, ruleChainType.edge).pipe(
-      map(response => {
-        response.data.map(ruleChain =>
-          ruleChain.isDefault = defaultEdgeRuleChainIds.some(id => ruleChain.id.id.includes(id))
-        );
-        return response;
-     })
-   );
+    return this.ruleChainService.getRuleChains(pageLink, ruleChainType.edge);
   }
 }
