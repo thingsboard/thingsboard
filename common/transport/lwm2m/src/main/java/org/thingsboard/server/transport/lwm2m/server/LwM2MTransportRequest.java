@@ -113,8 +113,8 @@ public class LwM2MTransportRequest {
      * @param lwM2MClient
      * @param observation
      */
-    public void sendAllRequest(LeshanServer lwServer, Registration registration, String target, String typeOper,
-                               String contentFormatParam, LwM2MClient lwM2MClient, Observation observation, Object params, long timeoutInMs) {
+    public void sendAllRequest(LeshanServer lwServer, Registration registration, String target, String typeOper, String contentFormatParam,
+                               LwM2MClient lwM2MClient, Observation observation, Object params, long timeoutInMs, boolean isDelayedUpdate) {
         ResultIds resultIds = new ResultIds(target);
         if (registration != null && resultIds.getObjectId() >= 0) {
             DownlinkRequest request = null;
@@ -212,41 +212,47 @@ public class LwM2MTransportRequest {
                     break;
                 default:
             }
-            if (request != null) sendRequest(lwServer, registration, request, lwM2MClient, timeoutInMs);
+            if (request != null)
+                this.sendRequest(lwServer, registration, request, lwM2MClient, timeoutInMs, isDelayedUpdate);
         }
     }
 
     /**
      *
-     * @param lwServer
-     * @param registration
-     * @param request
-     * @param lwM2MClient
-     * @param timeoutInMs
+     * @param lwServer -
+     * @param registration -
+     * @param request -
+     * @param lwM2MClient -
+     * @param timeoutInMs -
      */
-    private void sendRequest(LeshanServer lwServer, Registration registration, DownlinkRequest request, LwM2MClient lwM2MClient, long timeoutInMs) {
+    private void sendRequest(LeshanServer lwServer, Registration registration, DownlinkRequest request, LwM2MClient lwM2MClient, long timeoutInMs, boolean isDelayedUpdate) {
         lwServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
-            if  (isSuccess(((Response)response.getCoapResponse()).getCode())) {
-                this.handleResponse(registration, request.getPath().toString(), response, request, lwM2MClient);
+            if (isSuccess(((Response) response.getCoapResponse()).getCode())) {
+                this.handleResponse(registration, request.getPath().toString(), response, request, lwM2MClient, isDelayedUpdate);
                 if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest()) {
-                    String msg = String.format(LOG_LW2M_INFO + ": sendRequest Replace: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
-                            ((Response)response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString(),
-                            ((LwM2mSingleResource)((WriteRequest) request).getNode()).getValue().toString());
+                    String delayedUpdateStr = "";
+                    if (isDelayedUpdate) {
+                        delayedUpdateStr = " (delayedUpdate) ";
+                    }
+
+                    String msg = String.format(LOG_LW2M_INFO + ": sendRequest Replace%s: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
+                            delayedUpdateStr, ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString(),
+                            ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue().toString());
                     service.sentLogsToThingsboard(msg, registration.getId());
-                    log.info("[{}] - [{}] [{}] [{}] Update SendRequest", ((Response)response.getCoapResponse()).getCode(), response.getCode(),  request.getPath().toString(), ((LwM2mSingleResource)((WriteRequest) request).getNode()).getValue());
+                    log.info("[{}] - [{}] [{}] [{}] Update SendRequest[{}]", ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString(),
+                            ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue(), delayedUpdateStr);
                 }
-            }
-            else {
+            } else {
                 String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client",
-                        ((Response)response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString());
+                        ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString());
                 service.sentLogsToThingsboard(msg, registration.getId());
-                log.error("[{}] - [{}] [{}] error SendRequest", ((Response)response.getCoapResponse()).getCode(), response.getCode(),  request.getPath().toString());
+                log.error("[{}] - [{}] [{}] error SendRequest", ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString());
             }
         }, e -> {
             String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: Resource path - %s msg error - %s  SendRequest to Client",
                     request.getPath().toString(), e.toString());
             service.sentLogsToThingsboard(msg, registration.getId());
-            log.error("[{}] - [{}] error SendRequest",  request.getPath().toString(), e.toString());
+            log.error("[{}] - [{}] error SendRequest", request.getPath().toString(), e.toString());
         });
     }
 
@@ -271,19 +277,18 @@ public class LwM2MTransportRequest {
             }
             return null;
         } catch (NumberFormatException e) {
-            String patn = "/" + objectId + "/" +  instanceId + "/" +  resourceId;
-            log.error("Path: [{}] type: [{}] value: [{}] errorMsg: [{}]]",   patn, type, value, e.toString());
-            return  null;
+            String patn = "/" + objectId + "/" + instanceId + "/" + resourceId;
+            log.error("Path: [{}] type: [{}] value: [{}] errorMsg: [{}]]", patn, type, value, e.toString());
+            return null;
         }
     }
 
-    private void handleResponse(Registration registration, final String path, LwM2mResponse response, DownlinkRequest request, LwM2MClient lwM2MClient) {
+    private void handleResponse(Registration registration, final String path, LwM2mResponse response, DownlinkRequest request, LwM2MClient lwM2MClient, boolean isDelayedUpdate) {
         executorService.submit(new Runnable() {
             @Override
             public void run() {
-
                 try {
-                    sendResponse(registration, path, response, request, lwM2MClient);
+                    sendResponse(registration, path, response, request, lwM2MClient, isDelayedUpdate);
                 } catch (RuntimeException t) {
                     log.error("[{}] endpoint [{}] path [{}] error Unable to after send response.", registration.getEndpoint(), path, t.toString());
                 }
@@ -298,7 +303,7 @@ public class LwM2MTransportRequest {
      * @param response -
      * @param lwM2MClient -
      */
-    private void sendResponse(Registration registration, String path, LwM2mResponse response, DownlinkRequest request, LwM2MClient lwM2MClient) {
+    private void sendResponse(Registration registration, String path, LwM2mResponse response, DownlinkRequest request, LwM2MClient lwM2MClient, boolean isDelayedUpdate) {
         if (response instanceof ObserveResponse) {
             service.onObservationResponse(registration, path, (ReadResponse) response);
         } else if (response instanceof CancelObservationResponse) {
@@ -329,7 +334,7 @@ public class LwM2MTransportRequest {
             log.info("[{}] Path [{}] WriteAttributesResponse 8_Send", path, response);
         } else if (response instanceof WriteResponse) {
             log.info("[{}] Path [{}] WriteAttributesResponse 9_Send", path, response);
-            service.onAttributeUpdateOk(registration, path, (WriteRequest) request);
+            service.onAttributeUpdateOk(registration, path, (WriteRequest) request, isDelayedUpdate);
         }
     }
 }

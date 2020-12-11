@@ -30,7 +30,6 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MGetSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
@@ -46,7 +45,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.*;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.BOOTSTRAP_SERVER;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LOG_LW2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LWM2M_SERVER;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.SERVERS;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getBootstrapParametersFromThingsboard;
 
 @Slf4j
 @Component("LwM2MBootstrapSecurityStore")
@@ -60,8 +64,6 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Autowired
     public LwM2MTransportContextServer context;
-
-
 
     public LwM2MBootstrapSecurityStore(EditableBootstrapConfigStore bootstrapConfigStore) {
         this.bootstrapConfigStore = bootstrapConfigStore;
@@ -161,7 +163,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             UUID sessionUUiD = UUID.randomUUID();
             TransportProtos.SessionInfoProto sessionInfo = context.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
             context.getTransportService().registerAsyncSession(sessionInfo, new LwM2MSessionMsgListener(null, sessionInfo));
-            if (getValidatedSecurityMode(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap, lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer)) {
+            if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap, lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer)) {
                 lwM2MBootstrapConfig.bootstrapServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap);
                 lwM2MBootstrapConfig.lwm2mServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer);
                 String logMsg = String.format(LOG_LW2M_INFO + ": getParametersBootstrap: %s Access connect client with bootstrap server.", store.getEndPoint());
@@ -180,7 +182,6 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             return null;
         }
     }
-
 
     /**
      * Bootstrap security have to sync between (bootstrapServer in credential and  bootstrapServer in profile)

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,6 +32,7 @@ package org.thingsboard.server.transport.lwm2m.server;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -43,14 +44,10 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigServer;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
 
 import javax.annotation.PostConstruct;
 
-import java.util.UUID;
-
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.CLIENT_NOT_AUTHORIZED;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LOG_LW2M_TELEMETRY;
 
 @Slf4j
@@ -66,6 +63,7 @@ public class LwM2MTransportContextServer extends TransportContext {
     @Autowired
     private TransportService transportService;
 
+    @Getter
     @Autowired
     private LwM2MJsonAdaptor adaptor;
 

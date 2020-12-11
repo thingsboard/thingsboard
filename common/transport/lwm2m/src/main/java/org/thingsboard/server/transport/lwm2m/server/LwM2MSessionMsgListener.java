@@ -43,7 +43,7 @@ public class LwM2MSessionMsgListener implements GenericFutureListener<Future<? s
 
     @Override
     public void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse) {
-        log.info("[{}] attributesResponse", getAttributesResponse);
+        this.service.onGetAttributesResponse(getAttributesResponse, this.sessionInfo);
     }
 
     @Override

@@ -18,12 +18,15 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
+import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportService;
 import org.thingsboard.server.transport.lwm2m.server.ResultIds;
@@ -34,6 +37,8 @@ import java.util.Set;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 
 @Slf4j
 @Data
@@ -53,6 +58,8 @@ public class LwM2MClient implements Cloneable {
     private Map<String, String> attributes;
     private Map<Integer, ModelObject> modelObjects;
     private Set<String> pendingRequests;
+    private Map<String, TransportProtos.TsKvProto> delayedRequests;
+    private Set<Integer> delayedRequestsId;
     private Map<String, LwM2mResponse> responses;
 
     public Object clone() throws CloneNotSupportedException {
@@ -67,6 +74,8 @@ public class LwM2MClient implements Cloneable {
         this.attributes = (attributes != null && attributes.size() > 0) ? attributes : new ConcurrentHashMap<String, String>();
         this.modelObjects = (modelObjects != null && modelObjects.size() > 0) ? modelObjects : new ConcurrentHashMap<Integer, ModelObject>();
         this.pendingRequests = ConcurrentHashMap.newKeySet();
+        this.delayedRequests = new ConcurrentHashMap<>();
+        this.delayedRequestsId = ConcurrentHashMap.newKeySet();
         this.profileUuid = profileUuid;
         /**
          * Key <objectId>, response<Value -> instance -> resources: value...>
@@ -84,7 +93,7 @@ public class LwM2MClient implements Cloneable {
         this.pendingRequests.remove(path);
         if (this.pendingRequests.size() == 0) {
             this.initValue();
-            this.lwM2MTransportService.updatesAndSentModelParameter(this.lwServer, this.registration);
+            this.lwM2MTransportService.putDelayedUpdateResourcesThingsboard(this);
         }
     }
 
@@ -104,4 +113,42 @@ public class LwM2MClient implements Cloneable {
             }
         });
     }
+
+    public void onSuccessDelayedRequests (String path) {
+        if (path != null) this.delayedRequests.remove(path);
+        if (this.delayedRequests.size() == 0 && this.getDelayedRequestsId().size() == 0) {
+            this.lwM2MTransportService.updatesAndSentModelParameter(this);
+        }
+    }
+
+    public ResourceModel.Operations getOperation(String path) {
+        ResultIds resultIds = new ResultIds(path);
+        return (this.getModelObjects().get(resultIds.getObjectId()) != null) ? this.getModelObjects().get(resultIds.getObjectId()).getObjectModel().resources.get(resultIds.getResourceId()).operations : ResourceModel.Operations.NONE;
+    }
+
+    public String getResourceName (String path) {
+        ResultIds resultIds = new ResultIds(path);
+        return (this.getModelObjects().get(resultIds.getObjectId()) != null) ? this.getModelObjects().get(resultIds.getObjectId()).getObjectModel().resources.get(resultIds.getResourceId()).name : "";
+    }
+
+    /**
+     * @param path - path resource
+     * @return - value of Resource or null
+     */public String getResourceValue(String path) {
+        String resValue = null;
+        ResultIds pathIds = new ResultIds(path);
+        ModelObject modelObject = this.getModelObjects().get(pathIds.getObjectId());
+        if (modelObject != null && modelObject.getInstances().get(pathIds.getInstanceId()) != null) {
+            LwM2mObjectInstance instance = modelObject.getInstances().get(pathIds.getInstanceId());
+            if (instance.getResource(pathIds.getResourceId()) != null) {
+                resValue = instance.getResource(pathIds.getResourceId()).getType() == OPAQUE ?
+                        Hex.encodeHexString((byte[]) instance.getResource(pathIds.getResourceId()).getValue()).toLowerCase() :
+                        (instance.getResource(pathIds.getResourceId()).isMultiInstances()) ?
+                                instance.getResource(pathIds.getResourceId()).getValues().toString() :
+                                instance.getResource(pathIds.getResourceId()).getValue().toString();
+            }
+        }
+        return resValue;
+    }
 }
+

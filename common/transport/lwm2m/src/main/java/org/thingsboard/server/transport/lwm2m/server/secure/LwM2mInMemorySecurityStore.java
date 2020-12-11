@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MGetSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler;
@@ -44,7 +45,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.DEFAULT_MODE;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
 
 @Slf4j
 @Component("LwM2mInMemorySecurityStore")
@@ -118,18 +120,22 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         this.listener = listener;
     }
 
-    public LwM2MClient getlwM2MClient(String endPoint, String identity) {
+    public LwM2MClient getLwM2MClient(String endPoint, String identity) {
         Map.Entry<String, LwM2MClient> modelClients = (endPoint != null) ?
                 this.sessions.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndPoint())).findAny().orElse(null) :
                 this.sessions.entrySet().stream().filter(model -> identity.equals(model.getValue().getIdentity())).findAny().orElse(null);
         return (modelClients != null) ? modelClients.getValue() : null;
     }
 
-    public LwM2MClient getlwM2MClient(String registrationId) {
+    public LwM2MClient getLwM2MClient(String registrationId) {
         return this.sessions.get(registrationId);
     }
 
-    public LwM2MClient getlwM2MClient(LeshanServer lwServer, Registration registration) {
+    public LwM2MClient getLwM2MClient(TransportProtos.SessionInfoProto sessionInfo) {
+        return this.getSession(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB())).entrySet().iterator().next().getValue();
+
+    }
+    public LwM2MClient updateInSessionsLwM2MClient(LeshanServer lwServer, Registration registration) {
         writeLock.lock();
         try {
             if (this.sessions.get(registration.getEndpoint()) == null) {
@@ -191,6 +197,10 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
 
     public Map<UUID, AttrTelemetryObserveValue> getProfiles() {
         return this.profiles;
+    }
+
+    public AttrTelemetryObserveValue getProfile(UUID profileUuId) {
+        return this.profiles.get(profileUuId);
     }
 
     public Map<UUID, AttrTelemetryObserveValue>setProfiles(Map<UUID, AttrTelemetryObserveValue> profiles) {

@@ -39,7 +39,11 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.*;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.PSK;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.RPK;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.X509;
+
 
 @Slf4j
 @Component("LwM2MGetSecurityInfo")
