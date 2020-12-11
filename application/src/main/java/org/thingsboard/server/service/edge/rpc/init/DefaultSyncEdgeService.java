@@ -151,7 +151,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
             syncWidgetsBundleAndWidgetTypes(edge);
             syncAdminSettings(edge);
             syncRuleChains(edge, new TimePageLink(DEFAULT_LIMIT));
-            syncUsers(edge);
+            syncUsers(edge, new TextPageLink(DEFAULT_LIMIT));
             syncDevices(edge, new TimePageLink(DEFAULT_LIMIT));
             syncAssets(edge, new TimePageLink(DEFAULT_LIMIT));
             syncEntityViews(edge, new TimePageLink(DEFAULT_LIMIT));
@@ -303,10 +303,9 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         }
     }
 
-    private void syncUsers(Edge edge) {
+    private void syncUsers(Edge edge, TextPageLink pageLink) {
         log.trace("[{}] syncUsers [{}]", edge.getTenantId(), edge.getName());
         try {
-            TextPageLink pageLink = new TextPageLink(DEFAULT_LIMIT);
             TextPageData<User> pageData;
             do {
                 pageData = userService.findTenantAdmins(edge.getTenantId(), pageLink);
