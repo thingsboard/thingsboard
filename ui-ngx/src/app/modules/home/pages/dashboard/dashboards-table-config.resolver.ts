@@ -250,6 +250,12 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     if (dashboardScope === 'edge') {
       actions.push(
         {
+          name: this.translate.instant('dashboard.export'),
+          icon: 'file_download',
+          isEnabled: () => true,
+          onAction: ($event, entity) => this.exportDashboard($event, entity)
+        },
+        {
           name: this.translate.instant('edge.unassign-from-edge'),
           icon: 'portable_wifi_off',
           isEnabled: (entity) => true,
