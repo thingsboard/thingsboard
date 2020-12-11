@@ -86,27 +86,28 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       ruleChainScope: route.data.ruleChainsType,
       edgeId: routeParams.edgeId
     };
-    this.config.columns = this.configuteEntityTableColumns(this.config.componentsData.ruleChainScope);
+    this.config.columns = this.configureEntityTableColumns(this.config.componentsData.ruleChainScope);
     this.configureEntityFunctions(this.config.componentsData.ruleChainScope);
     this.config.groupActionDescriptors = this.configureGroupActions(this.config.componentsData.ruleChainScope);
     this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.ruleChainScope);
     this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.ruleChainScope);
-    if (this.config.componentsData.edgeId) {
-      this.config.entitySelectionEnabled = ruleChain => this.config.componentsData.rootRuleChainId !== ruleChain.id.id;
-      this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(edge => {
-        this.config.componentsData.rootRuleChainId = edge.rootRuleChainId.id;
-        this.config.tableTitle = edge.name + ': ' + this.translate.instant('rulechain.edge-rulechains');
-      });
-      this.config.entitiesDeleteEnabled = false;
-    } else {
+    if (this.config.componentsData.ruleChainScope === 'tenant' || this.config.componentsData.ruleChainScope === 'edges') {
       this.config.entitySelectionEnabled = ruleChain => ruleChain && !ruleChain.root;
       this.config.deleteEnabled = (ruleChain) => ruleChain && !ruleChain.root;
       this.config.entitiesDeleteEnabled = true;
     }
+    else if (this.config.componentsData.ruleChainScope === 'edge') {
+      this.config.entitySelectionEnabled = ruleChain => this.config.componentsData.edge.rootRuleChainId.id != ruleChain.id.id;
+      this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(edge => {
+        this.config.componentsData.edge = edge;
+        this.config.tableTitle = edge.name + ': ' + this.translate.instant('rulechain.edge-rulechains');
+      });
+      this.config.entitiesDeleteEnabled = false;
+    }
     return this.config;
   }
 
-  configuteEntityTableColumns(ruleChainScope: string): Array<EntityColumn<RuleChain>> {
+  configureEntityTableColumns(ruleChainScope: string): Array<EntityColumn<RuleChain>> {
     const columns: Array<EntityColumn<RuleChain>> = [];
     if (ruleChainScope === 'tenant' || ruleChainScope === 'edge') {
       columns.push(
@@ -115,7 +116,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         new EntityTableColumn<RuleChain>('root', 'rulechain.root', '60px',
           entity => {
           if (ruleChainScope === 'edge') {
-            return checkBoxCell((this.config.componentsData.rootRuleChainId == entity.id.id));
+            return checkBoxCell((this.config.componentsData.edge.rootRuleChainId.id == entity.id.id));
           } else {
             return checkBoxCell(entity.root);
           }
@@ -254,7 +255,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         {
           name: this.translate.instant('edge.unassign-from-edge'),
           icon: 'portable_wifi_off',
-          isEnabled: (entity) => entity.id.id != this.config.componentsData.rootRuleChainId,
+          isEnabled: (entity) => entity.id.id != this.config.componentsData.edge.rootRuleChainId.id,
           onAction: ($event, entity) => this.unassignFromEdge($event, entity)
         }
       )
@@ -311,7 +312,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       true
     ).subscribe((res) => {
         if (res) {
-          if (this.config.componentsData.edgeId) {
+          if (this.config.componentsData.ruleChainScope === 'edge') {
             this.ruleChainService.setEdgeRootRuleChain(this.config.componentsData.edgeId, ruleChain.id.id).subscribe(
               (edge) => {
                 this.config.componentsData.edge = edge;
@@ -486,8 +487,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   }
 
   isNonRootRuleChain(ruleChain: RuleChain) {
-    if (this.config.componentsData.edgeId) {
-      return (this.config.componentsData.rootRuleChainId && this.config.componentsData.rootRuleChainId != null && this.config.componentsData.rootRuleChainId != ruleChain.id.id);
+    if (this.config.componentsData.ruleChainScope === 'edge') {
+      return (isDefined(this.config.componentsData.edge.rootRuleChainId) && this.config.componentsData.edge.rootRuleChainId != null && this.config.componentsData.edge.rootRuleChainId.id != ruleChain.id.id);
     }
     return (isDefined(ruleChain)) && !ruleChain.root;
   }
