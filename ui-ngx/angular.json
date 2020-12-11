@@ -59,6 +59,11 @@
                 "glob": "marker-shadow.png",
                 "input": "node_modules/leaflet/dist/images/",
                 "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/material-design-icons/iconfont/",
+                "output": "/fonts"
               }
             ],
             "styles": [
