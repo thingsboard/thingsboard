@@ -1005,7 +1005,8 @@
       "any-edge": "Any edge",
       "no-edge-types-matching": "No edge types matching '{{entitySubtype}}' were found.",
       "edge-type-list-empty": "No device types selected.",
-      "edge-types": "Edge types"
+      "edge-types": "Edge types",
+      "dashboard": "Edge dashboard"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",
