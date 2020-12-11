@@ -390,6 +390,16 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         return entityViewDao.findEntityViewsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
     }
 
+    @Override
+    public PageData<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, TimePageLink pageLink) {
+        log.trace("Executing findEntityViewsByTenantIdAndEdgeIdAndType, tenantId [{}], edgeId [{}], type [{}], pageLink [{}]", tenantId, edgeId, type, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        validateString(type, "Incorrect type " + type);
+        validatePageLink(pageLink);
+        return entityViewDao.findEntityViewsByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
+    }
+
     private DataValidator<EntityView> entityViewValidator =
             new DataValidator<EntityView>() {
 

@@ -677,6 +677,7 @@ public class EntityViewController extends BaseController {
             @PathVariable(EDGE_ID) String strEdgeId,
             @RequestParam int pageSize,
             @RequestParam int page,
+            @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
             @RequestParam(required = false) String sortOrder,
@@ -688,7 +689,11 @@ public class EntityViewController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             checkEdgeId(edgeId, Operation.READ);
             TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-            return checkNotNull(entityViewService.findEntityViewsByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
+            if (type != null && type.trim().length() > 0) {
+                return checkNotNull(entityViewService.findEntityViewsByTenantIdAndEdgeIdAndType(tenantId, edgeId, type, pageLink));
+            } else {
+                return checkNotNull(entityViewService.findEntityViewsByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
+            }
         } catch (Exception e) {
             throw handleException(e);
         }

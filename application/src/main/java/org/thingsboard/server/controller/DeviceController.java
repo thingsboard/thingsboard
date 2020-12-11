@@ -701,6 +701,8 @@ public class DeviceController extends BaseController {
             @PathVariable(EDGE_ID) String strEdgeId,
             @RequestParam int pageSize,
             @RequestParam int page,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String deviceProfileId,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
             @RequestParam(required = false) String sortOrder,
@@ -712,7 +714,15 @@ public class DeviceController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             checkEdgeId(edgeId, Operation.READ);
             TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-            return checkNotNull(deviceService.findDevicesByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
+            if (type != null && type.trim().length() > 0) {
+                return checkNotNull(deviceService.findDevicesByTenantIdAndEdgeIdAndType(tenantId, edgeId, type, pageLink));
+            }
+            else if (deviceProfileId != null && deviceProfileId.length() > 0) {
+                DeviceProfileId profileId = new DeviceProfileId(toUUID(deviceProfileId));
+                return checkNotNull(deviceService.findDevicesByTenantIdAndEdgeIdAndDeviceProfileId(tenantId, edgeId, profileId, pageLink));
+            } else {
+                return checkNotNull(deviceService.findDevicesByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
+            }
         } catch (Exception e) {
             throw handleException(e);
         }

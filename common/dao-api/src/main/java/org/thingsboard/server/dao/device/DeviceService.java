@@ -90,4 +90,9 @@ public interface DeviceService {
     Device unassignDeviceFromEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId);
 
     PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
+
+    PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, TimePageLink pageLink);
+
+    PageData<Device> findDevicesByTenantIdAndEdgeIdAndDeviceProfileId(TenantId tenantId, EdgeId edgeId, DeviceProfileId deviceProfileId, TimePageLink pageLink);
+
 }
