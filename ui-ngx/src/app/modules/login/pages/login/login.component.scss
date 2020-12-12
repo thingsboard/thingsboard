@@ -91,3 +91,52 @@
   }
 }
 
+
+
+.myP{
+font-family: SF Pro Display;
+font-style: normal;
+font-weight: 600;
+font-size: 32px;
+line-height: 40px;
+color: #40A9FF;
+}
+
+.myPTitle{
+font-family: SF Pro Display;
+font-style: normal;
+font-weight: 600;
+font-size: 24px;
+line-height: 32px;
+color: #FFFFFF;
+}
+
+::ng-deep .mat-form-field {
+  padding: 0;
+  
+  .mat-input-element {
+    align-self: center;
+  
+      color:  #BFBFBF;
+      ;
+  }
+ 
+  .mat-form-field-label {
+      color:   #BFBFBF;
+      ;
+  }
+  .mat-form-field-underline {
+      background-color: #1890FF;
+  }
+  .mat-form-field-outline{
+    color: #1890FF;
+  }
+  
+  .mat-form-field-ripple {
+      background-color: #1890FF;
+  }
+  .mat-form-field-required-marker {
+      color: #BFBFBF;
+  }
+ 
+}

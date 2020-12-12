@@ -15,13 +15,15 @@
     limitations under the License.
 
 -->
-<div class="tb-login-content mat-app-background tb-dark" fxFlex fxLayoutAlign="center center">
-  <mat-card style="max-height: 80vh; overflow-y: auto;">
-    <mat-card-content>
-      <form class="tb-login-form" [formGroup]="loginFormGroup" (ngSubmit)="login()">
+<div class="tb-login-content mat-app-background tb-dark"  style="background-image: url('../../../../../assets/img/OverLay-BW.svg');  object-fit: cover;padding: 0;margin: 0;
+" fxFlex fxLayoutAlign="center center">
+  <!-- <mat-card style="max-height: 80vh; overflow-y: auto;background-color: transparent; border-width: 0px;">
+        <mat-card-content> -->
+      <form class="tb-login-form" [formGroup]="loginFormGroup" (ngSubmit)="login()" style="background-color: transparent;" >
         <fieldset [disabled]="isLoading$ | async" fxLayout="column">
-          <div fxLayout="column" fxLayoutAlign="start center" style="padding: 15px 0;">
-            <tb-logo class="login-logo"></tb-logo>
+          <div fxLayout="column" fxLayoutAlign="start center" style="padding: 0">
+            <tb-logo class="login-logo" ></tb-logo>
+            
           </div>
           <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
           </mat-progress-bar>
@@ -41,30 +43,36 @@
                 <div class="line"><mat-divider></mat-divider></div>
               </div>
             </div>
-            <mat-form-field>
+          <div>
+            <h4 class="myPTitle" >Welcome Back,</h4>
+            <h4 class="myP">Login to your account</h4>
+          </div>
+            <mat-form-field appearance="outline" style="background-color: transparent; border-radius: 5px;margin-bottom: 10px;">
               <mat-label translate>login.username</mat-label>
-              <input id="username-input" matInput type="email" autofocus formControlName="username" email required/>
-              <mat-icon matPrefix>email</mat-icon>
+              <input id="username-input" matInput type="email" autofocus formControlName="username" email required style="color: #BFBFBF"/>
+              <mat-icon style="color:#BFBFBF" matPrefix>email</mat-icon>
               <mat-error *ngIf="loginFormGroup.get('username').invalid">
                 {{ 'user.invalid-email-format' | translate }}
               </mat-error>
             </mat-form-field>
-            <mat-form-field>
-              <mat-label translate>common.password</mat-label>
-              <input id="password-input" matInput type="password" formControlName="password"/>
-              <mat-icon matPrefix>lock</mat-icon>
+            <mat-form-field appearance="outline" style="font-size: 10;background-color: transparent; border-radius: 5px;margin-bottom: 10px;">
+              <mat-label  style="color:#BFBFBF;" translate>common.password</mat-label>
+              <input id="password-input" matInput type="password" formControlName="password" style="color: #BFBFBF"/>
+              <mat-icon style="color: #BFBFBF" matPrefix>lock</mat-icon>
             </mat-form-field>
             <div fxLayoutAlign="end center" class="forgot-password">
               <button class="tb-reset-password" mat-button type="button" routerLink="/login/resetPasswordRequest">{{ 'login.forgot-password' | translate }}
               </button>
             </div>
             <div fxLayout="column" class="tb-action-button">
-              <button mat-raised-button color="accent" [disabled]="(isLoading$ | async)"
+              <button mat-raised-button style="background-color: #1890FF;border-radius: 12px;border: 1px solid #1890FF;
+              " [disabled]="(isLoading$ | async)"
                       type="submit">{{ 'login.login' | translate }}</button>
             </div>
           </div>
         </fieldset>
       </form>
-    </mat-card-content>
-  </mat-card>
+
+    <!-- </mat-card-content>
+  </mat-card> -->
 </div>

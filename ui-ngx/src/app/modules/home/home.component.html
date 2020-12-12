@@ -21,20 +21,20 @@
                [mode]="sidenavMode"
                [opened]="sidenavOpened && !forceFullscreen">
     <header class="tb-nav-header">
-      <mat-toolbar color="primary" class="tb-nav-header-toolbar">
+      <mat-toolbar style="background-color: #ffffff" class="tb-nav-header-toolbar">
         <div fxFlex="auto" fxLayout="row">
           <img [src]="logo"
                aria-label="logo" class="tb-logo-title"/>
         </div>
       </mat-toolbar>
     </header>
-    <mat-toolbar color="primary" fxFlex="0%" class="tb-side-menu-toolbar" fxLayout="column" role="navigation">
+    <mat-toolbar style="background-color: #ffffff;color:#969696" fxFlex="0%" class="tb-side-menu-toolbar" fxLayout="column" role="navigation">
       <tb-side-menu></tb-side-menu>
     </mat-toolbar>
   </mat-sidenav>
   <mat-sidenav-content>
     <div fxLayout="column" role="main" style="height: 100%;">
-      <mat-toolbar fxLayout="row" color="primary" class="mat-elevation-z1 tb-primary-toolbar">
+      <mat-toolbar fxLayout="row" style="background-color: #ffffff;color: #909090;" class="mat-elevation-z1 tb-primary-toolbar">
         <button [fxShow]="!forceFullscreen" mat-icon-button id="main"
                 [ngClass]="{'tb-invisible': displaySearchMode()}"
                 fxHide.gt-sm (click)="sidenav.toggle()">

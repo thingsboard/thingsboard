@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<a mat-button routerLinkActive="tb-active" [routerLinkActiveOptions]="{exact: !section.notExact}" routerLink="{{section.path}}">
+<a mat-button style="padding-bottom: 10px;padding-top: 10px; font-size: 16px " routerLinkActive="tb-active" [routerLinkActiveOptions]="{exact: !section.notExact}" routerLink="{{section.path}}">
   <mat-icon *ngIf="!section.isMdiIcon && section.icon != null" class="material-icons">{{section.icon}}</mat-icon>
   <mat-icon *ngIf="section.isMdiIcon && section.icon != null" [svgIcon]="section.icon"></mat-icon>
   <span>{{section.name | translate}}</span>

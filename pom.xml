@@ -68,7 +68,7 @@
         <mail.version>1.6.2</mail.version>
         <curator.version>4.2.0</curator.version>
         <zookeeper.version>3.5.5</zookeeper.version>
-        <protobuf.version>3.11.4</protobuf.version>
+        <protobuf.version>4.0.0-rc-2</protobuf.version>
         <grpc.version>1.22.1</grpc.version>
         <lombok.version>1.16.18</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
@@ -91,7 +91,7 @@
             org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
         </sonar.exclusions>
         <elasticsearch.version>5.0.2</elasticsearch.version>
-        <delight-nashorn-sandbox.version>0.1.14</delight-nashorn-sandbox.version>
+        <delight-nashorn-sandbox.version>0.1.31</delight-nashorn-sandbox.version>
         <kafka.version>2.3.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
         <fst.version>2.57</fst.version>
@@ -130,6 +130,7 @@
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
+
         </profile>
         <!-- download sources under target/dependencies -->
         <!-- mvn package -Pdownload-dependencies -Dclassifier=sources dependency:copy-dependencies -->
