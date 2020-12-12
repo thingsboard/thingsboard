@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -57,7 +57,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         name = "push to edge",
         configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "Pushes messages to edge",
-        nodeDetails = "Pushes messages to edge, if Message Originator assigned to particular edge or is EDGE entity. This node is used only on Cloud instances to push messages from Cloud to Edge. Supports only DEVICE, ENTITY_VIEW, ASSET and EDGE Message Originator(s).",
+        nodeDetails = "Pushes messages to edge, if Message Originator assigned to particular edge or is EDGE entity. This node is used only on Cloud instances to push messages from Cloud to Edge. Supports only DEVICE, ENTITY_VIEW, ASSET, ENTITY_VIEW, DASHBOARD, TENANT, CUSTOMER and EDGE Message Originator(s).",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbNodeEmptyConfig",
         icon = "cloud_download",
@@ -97,48 +97,75 @@ public class TbMsgPushToEdgeNode implements TbNode {
     }
 
     private void processMsg(TbContext ctx, TbMsg msg) {
-        ListenableFuture<List<EdgeId>> getEdgeIdsFuture = ctx.getEdgeService().findRelatedEdgeIdsByEntityId(ctx.getTenantId(), msg.getOriginator());
-        Futures.addCallback(getEdgeIdsFuture, new FutureCallback<List<EdgeId>>() {
-            @Override
-            public void onSuccess(@Nullable List<EdgeId> edgeIds) {
-                if (edgeIds != null && !edgeIds.isEmpty()) {
-                    for (EdgeId edgeId : edgeIds) {
-                        try {
-                            EdgeEvent edgeEvent = buildEdgeEvent(msg, ctx);
-                            if (edgeEvent == null) {
-                                log.debug("Edge event type is null. Entity Type {}", msg.getOriginator().getEntityType());
-                                ctx.tellFailure(msg, new RuntimeException("Edge event type is null. Entity Type '" + msg.getOriginator().getEntityType() + "'"));
-                            } else {
-                                edgeEvent.setEdgeId(edgeId);
-                                ListenableFuture<EdgeEvent> saveFuture = ctx.getEdgeEventService().saveAsync(edgeEvent);
-                                Futures.addCallback(saveFuture, new FutureCallback<EdgeEvent>() {
-                                    @Override
-                                    public void onSuccess(@Nullable EdgeEvent event) {
-                                        ctx.tellNext(msg, SUCCESS);
-                                        ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
-                                    }
+        if (EntityType.EDGE.equals(msg.getOriginator().getEntityType())) {
+            try {
+                EdgeEvent edgeEvent = buildEdgeEvent(msg, ctx);
+                if (edgeEvent != null) {
+                    EdgeId edgeId = new EdgeId(msg.getOriginator().getId());
+                    edgeEvent.setEdgeId(edgeId);
+                    ListenableFuture<EdgeEvent> saveFuture = ctx.getEdgeEventService().saveAsync(edgeEvent);
+                    Futures.addCallback(saveFuture, new FutureCallback<EdgeEvent>() {
+                        @Override
+                        public void onSuccess(@Nullable EdgeEvent event) {
+                            ctx.tellNext(msg, SUCCESS);
+                            ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
+                        }
 
-                                    @Override
-                                    public void onFailure(Throwable th) {
-                                        log.warn("[{}] Can't save edge event [{}] for edge [{}]", ctx.getTenantId().getId(), edgeEvent, edgeId.getId(), th);
-                                        ctx.tellFailure(msg, th);
-                                    }
-                                }, ctx.getDbCallbackExecutor());
+                        @Override
+                        public void onFailure(Throwable th) {
+                            log.warn("[{}] Can't save edge event [{}] for edge [{}]", ctx.getTenantId().getId(), edgeEvent, edgeId.getId(), th);
+                            ctx.tellFailure(msg, th);
+                        }
+                    }, ctx.getDbCallbackExecutor());
+                }
+            } catch (JsonProcessingException e) {
+                log.error("Failed to build edge event", e);
+                ctx.tellFailure(msg, e);
+            }
+        } else {
+            ListenableFuture<List<EdgeId>> getEdgeIdsFuture = ctx.getEdgeService().findRelatedEdgeIdsByEntityId(ctx.getTenantId(), msg.getOriginator());
+            Futures.addCallback(getEdgeIdsFuture, new FutureCallback<List<EdgeId>>() {
+                @Override
+                public void onSuccess(@Nullable List<EdgeId> edgeIds) {
+                    if (edgeIds != null && !edgeIds.isEmpty()) {
+                        for (EdgeId edgeId : edgeIds) {
+                            try {
+                                EdgeEvent edgeEvent = buildEdgeEvent(msg, ctx);
+                                if (edgeEvent == null) {
+                                    log.debug("Edge event type is null. Entity Type {}", msg.getOriginator().getEntityType());
+                                    ctx.tellFailure(msg, new RuntimeException("Edge event type is null. Entity Type '" + msg.getOriginator().getEntityType() + "'"));
+                                } else {
+                                    edgeEvent.setEdgeId(edgeId);
+                                    ListenableFuture<EdgeEvent> saveFuture = ctx.getEdgeEventService().saveAsync(edgeEvent);
+                                    Futures.addCallback(saveFuture, new FutureCallback<EdgeEvent>() {
+                                        @Override
+                                        public void onSuccess(@Nullable EdgeEvent event) {
+                                            ctx.tellNext(msg, SUCCESS);
+                                            ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
+                                        }
+
+                                        @Override
+                                        public void onFailure(Throwable th) {
+                                            log.warn("[{}] Can't save edge event [{}] for edge [{}]", ctx.getTenantId().getId(), edgeEvent, edgeId.getId(), th);
+                                            ctx.tellFailure(msg, th);
+                                        }
+                                    }, ctx.getDbCallbackExecutor());
+                                }
+                            } catch (JsonProcessingException e) {
+                                log.error("Failed to build edge event", e);
+                                ctx.tellFailure(msg, e);
                             }
-                        } catch (JsonProcessingException e) {
-                            log.error("Failed to build edge event", e);
-                            ctx.tellFailure(msg, e);
                         }
                     }
                 }
-            }
 
-            @Override
-            public void onFailure(Throwable t) {
-                ctx.tellFailure(msg, t);
-            }
+                @Override
+                public void onFailure(Throwable t) {
+                    ctx.tellFailure(msg, t);
+                }
 
-        }, ctx.getDbCallbackExecutor());
+            }, ctx.getDbCallbackExecutor());
+        }
     }
 
     private EdgeEvent buildEdgeEvent(TbMsg msg, TbContext ctx) throws JsonProcessingException {
@@ -221,6 +248,7 @@ public class TbMsgPushToEdgeNode implements TbNode {
             case DASHBOARD:
             case TENANT:
             case CUSTOMER:
+            case EDGE:
                 return true;
             default:
                 return false;

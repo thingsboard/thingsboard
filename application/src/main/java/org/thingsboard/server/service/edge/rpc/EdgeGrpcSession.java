@@ -431,6 +431,9 @@ public final class EdgeGrpcSession implements Closeable {
             case CUSTOMER:
                 entityId = new CustomerId(edgeEvent.getEntityId());
                 break;
+            case EDGE:
+                entityId = new EdgeId(edgeEvent.getEntityId());
+                break;
         }
         DownlinkMsg downlinkMsg = null;
         if (entityId != null) {

@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.User;
@@ -146,7 +147,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
 
     @Override
     public void sync(Edge edge) {
-        log.trace("[{}] staring sync process for edge [{}]", edge.getTenantId(), edge.getName());
+        log.trace("[{}][{}] Staring edge sync process", edge.getTenantId(), edge.getId());
         try {
             syncWidgetsBundleAndWidgetTypes(edge);
             syncAdminSettings(edge);
@@ -157,7 +158,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
             syncEntityViews(edge, new TimePageLink(DEFAULT_LIMIT));
             syncDashboards(edge, new TimePageLink(DEFAULT_LIMIT));
         } catch (Exception e) {
-            log.error("Exception during sync process", e);
+            log.error("[{}][{}] Exception during sync process", edge.getTenantId(), edge.getId(), e);
         }
     }
 
@@ -461,7 +462,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(
                 EntityType.valueOf(attributesRequestMsg.getEntityType()),
                 new UUID(attributesRequestMsg.getEntityIdMSB(), attributesRequestMsg.getEntityIdLSB()));
-        final EdgeEventType type = getEdgeQueueTypeByEntityType(entityId.getEntityType());
+        final EdgeEventType type = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());
         if (type != null) {
             SettableFuture<Void> futureToSet = SettableFuture.create();
             String scope = attributesRequestMsg.getScope();
@@ -517,19 +518,6 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         } else {
             log.warn("[{}] Type doesn't supported {}", edge.getTenantId(), entityId.getEntityType());
             return Futures.immediateFuture(null);
-        }
-    }
-
-    private EdgeEventType getEdgeQueueTypeByEntityType(EntityType entityType) {
-        switch (entityType) {
-            case DEVICE:
-                return EdgeEventType.DEVICE;
-            case ASSET:
-                return EdgeEventType.ASSET;
-            case ENTITY_VIEW:
-                return EdgeEventType.ENTITY_VIEW;
-            default:
-                return null;
         }
     }
 

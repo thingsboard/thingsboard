@@ -469,12 +469,16 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     @Override
     public ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId) {
         log.trace("[{}] Executing findRelatedEdgeIdsByEntityId [{}]", tenantId, entityId);
-        if (EntityType.TENANT.equals(entityId.getEntityType())) {
+        if (EntityType.TENANT.equals(entityId.getEntityType()) || EntityType.CUSTOMER.equals(entityId.getEntityType())) {
             List<EdgeId> result = new ArrayList<>();
             TextPageLink pageLink = new TextPageLink(DEFAULT_LIMIT);
             TextPageData<Edge> pageData;
             do {
-                pageData = findEdgesByTenantId(tenantId, pageLink);
+                if (EntityType.TENANT.equals(entityId.getEntityType())) {
+                    pageData = findEdgesByTenantId(tenantId, pageLink);
+                } else {
+                    pageData = findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), pageLink);
+                }
                 if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                     for (Edge edge : pageData.getData()) {
                         result.add(edge.getId());

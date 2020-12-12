@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -445,7 +446,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             @Override
             public void onSuccess(@Nullable Alarm alarm) {
                 if (alarm != null) {
-                    EdgeEventType type = getEdgeQueueTypeByEntityType(alarm.getOriginator().getEntityType());
+                    EdgeEventType type = EdgeUtils.getEdgeEventTypeByEntityType(alarm.getOriginator().getEntityType());
                     if (type != null) {
                         ListenableFuture<List<EdgeId>> relatedEdgeIdsByEntityIdFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, alarm.getOriginator());
                         Futures.addCallback(relatedEdgeIdsByEntityIdFuture, new FutureCallback<List<EdgeId>>() {
@@ -516,20 +517,6 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                             tenantId.getId(), relation.getTo().getId(), relation.getFrom().getId(), t);
                 }
             }, dbCallbackExecutorService);
-        }
-    }
-
-    private EdgeEventType getEdgeQueueTypeByEntityType(EntityType entityType) {
-        switch (entityType) {
-            case DEVICE:
-                return EdgeEventType.DEVICE;
-            case ASSET:
-                return EdgeEventType.ASSET;
-            case ENTITY_VIEW:
-                return EdgeEventType.ENTITY_VIEW;
-            default:
-                log.debug("Unsupported entity type: [{}]", entityType);
-                return null;
         }
     }
 }
