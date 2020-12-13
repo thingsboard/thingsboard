@@ -119,7 +119,7 @@ import { SmsProviderConfigurationComponent } from '@home/components/sms/sms-prov
 import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-sns-provider-configuration.component';
 import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
 import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
-
+import {CookieService} from 'ngx-cookie-service'
 @NgModule({
   declarations:
     [
@@ -314,7 +314,8 @@ import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-dev
   providers: [
     WidgetComponentService,
     CustomDialogService,
-    ImportExportService
+    ImportExportService,
+    CookieService
   ]
 })
 export class HomeComponentsModule { }

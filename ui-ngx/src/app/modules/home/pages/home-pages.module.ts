@@ -36,6 +36,8 @@ import { DeviceProfileModule } from './device-profile/device-profile.module';
 import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
 import { AcsComponent } from './acs/acs.component';
 import {ACSModule} from '@home/pages/acs/acs.module'
+import { CookieService } from 'ngx-cookie-service';
+
 @NgModule({
   exports: [
     AdminModule,
@@ -60,7 +62,8 @@ import {ACSModule} from '@home/pages/acs/acs.module'
     {
       provide: MODULES_MAP,
       useValue: modulesMap
-    }
+    },
+    CookieService
   ],
   declarations: []
 })

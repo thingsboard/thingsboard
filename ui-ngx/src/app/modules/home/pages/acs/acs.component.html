@@ -1,1 +1,34 @@
-<p>acs works!</p>
+
+
+<table mat-table [dataSource]="dataSource" class="mat-elevation-z8" style="margin: 10px;margin-right: 20px;">
+
+    <!--- Note that these columns can be defined in any order.
+          The actual rendered columns are set as a property on the row definition" -->
+  
+    <!-- Position Column -->
+    <ng-container matColumnDef="Device Name">
+      <th mat-header-cell *matHeaderCellDef> Device Name </th>
+      <td mat-cell *matCellDef="let element"> {{element['DeviceID.ID']['value'][0]}} </td>
+    </ng-container>
+  
+    <!-- Name Column -->
+    <ng-container matColumnDef="SSID">
+      <th mat-header-cell *matHeaderCellDef> SSID </th>
+      <td mat-cell *matCellDef="let element"> {{element['InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.SSID']['value'][0]}} </td>
+    </ng-container>
+  
+    <!-- Weight Column -->
+    <ng-container matColumnDef="Last Inform">
+      <th mat-header-cell *matHeaderCellDef> Last Inform </th>
+      <td mat-cell *matCellDef="let element"> {{element['Events.Inform']['value'][0] | date: 'MMM d, y, h:mm:ss a'}} </td>
+    </ng-container>
+  
+    <!-- Symbol Column -->
+    <ng-container matColumnDef="symbol">
+      <th mat-header-cell *matHeaderCellDef> Symbol </th>
+      <td mat-cell *matCellDef="let element"> {{element.symbol}} </td>
+    </ng-container>
+  
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>

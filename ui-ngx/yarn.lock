@@ -6520,6 +6520,13 @@ ngx-color-picker@^10.1.0:
   dependencies:
     tslib "^2.0.0"
 
+ngx-cookie-service@^11.0.2:
+  version "11.0.2"
+  resolved "https://registry.yarnpkg.com/ngx-cookie-service/-/ngx-cookie-service-11.0.2.tgz#f1dfaff3da838bc9babecdae7ee56e761495f81e"
+  integrity sha512-nsjzdcjK+gNAweE/DDdnOyHo04jlxTeMXOL/oJNp8MHtOTvCXnOtIFYgq4Sb2JU6UXTovO9tHEMIf9TxjlsdgQ==
+  dependencies:
+    tslib "^2.0.0"
+
 ngx-daterangepicker-material@^4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/ngx-daterangepicker-material/-/ngx-daterangepicker-material-4.0.1.tgz#788c2e32eb4717629d4a0e60a60bf8d6430d8c13"
