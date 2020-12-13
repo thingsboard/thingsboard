@@ -66,6 +66,7 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.transport.util.JsonUtils;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.AssetUpdateMsg;
@@ -957,17 +958,24 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private EdgeConfiguration constructEdgeConfigProto(Edge edge) {
-        return EdgeConfiguration.newBuilder()
+        EdgeConfiguration.Builder builder = EdgeConfiguration.newBuilder()
                 .setEdgeIdMSB(edge.getId().getId().getMostSignificantBits())
                 .setEdgeIdLSB(edge.getId().getId().getLeastSignificantBits())
                 .setTenantIdMSB(edge.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(edge.getTenantId().getId().getLeastSignificantBits())
                 .setName(edge.getName())
-                .setRoutingKey(edge.getRoutingKey())
                 .setType(edge.getType())
+                .setRoutingKey(edge.getRoutingKey())
+                .setSecret(edge.getSecret())
                 .setEdgeLicenseKey(edge.getEdgeLicenseKey())
                 .setCloudEndpoint(edge.getCloudEndpoint())
-                .setCloudType("CE")
+                .setConfiguration(JacksonUtil.toString(edge.getConfiguration()))
+                .setCloudType("CE");
+        if (edge.getCustomerId() != null) {
+            builder.setCustomerIdMSB(edge.getCustomerId().getId().getMostSignificantBits())
+                .setCustomerIdLSB(edge.getCustomerId().getId().getLeastSignificantBits());
+        }
+        return builder
                 .build();
     }
 

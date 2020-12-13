@@ -153,6 +153,7 @@ export default function EntityFilterViewDirective($compile, $templateCache, $q, 
                     case types.aliasFilterType.assetSearchQuery.value:
                     case types.aliasFilterType.deviceSearchQuery.value:
                     case types.aliasFilterType.entityViewSearchQuery.value:
+                    case types.aliasFilterType.edgeSearchQuery.value:
                         allEntitiesText = $translate.instant('alias.all-entities');
                         anyRelationText = $translate.instant('alias.any-relation');
                         if (scope.filter.rootStateEntity) {
@@ -202,6 +203,16 @@ export default function EntityFilterViewDirective($compile, $templateCache, $q, 
                             var entityViewTypesText = entityViewTypesQuoted.join(', ');
                             translationValues.entityViewTypes = entityViewTypesText;
                             scope.filterDisplayValue = $translate.instant('alias.filter-type-entity-view-search-query-description',
+                                translationValues
+                            );
+                        } else if (scope.filter.type == types.aliasFilterType.edgeSearchQuery.value) {
+                            var edgeTypesQuoted = [];
+                            scope.filter.edgeTypes.forEach(function(edgeType) {
+                                edgeTypesQuoted.push("'"+edgeType+"'");
+                            });
+                            var edgeTypesText = edgeTypesQuoted.join(', ');
+                            translationValues.edgeTypes = edgeTypesText;
+                            scope.filterDisplayValue = $translate.instant('alias.filter-type-edge-search-query-description',
                                 translationValues
                             );
                         }
