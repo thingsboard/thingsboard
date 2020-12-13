@@ -1694,6 +1694,14 @@
         "avatar": "Avatar",
         "open-user-menu": "Open user menu"
     },
+    "acs": {
+        "acs": "acs",
+        "profile": "Profile",
+        "logout": "Logout",
+        "menu": "Menu",
+        "avatar": "Avatar",
+        "open-user-menu": "Open user menu"
+    },
     "import": {
         "no-file": "No file selected",
         "drop-file": "Drop a JSON file or click to select a file to upload.",

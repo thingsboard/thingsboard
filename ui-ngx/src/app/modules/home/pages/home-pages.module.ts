@@ -34,7 +34,8 @@ import { MODULES_MAP } from '@shared/public-api';
 import { modulesMap } from '../../common/modules-map';
 import { DeviceProfileModule } from './device-profile/device-profile.module';
 import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
-
+import { AcsComponent } from './acs/acs.component';
+import {ACSModule} from '@home/pages/acs/acs.module'
 @NgModule({
   exports: [
     AdminModule,
@@ -52,13 +53,15 @@ import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
     DashboardModule,
     AuditLogModule,
     ApiUsageModule,
-    UserModule
+    UserModule,
+    ACSModule
   ],
   providers: [
     {
       provide: MODULES_MAP,
       useValue: modulesMap
     }
-  ]
+  ],
+  declarations: []
 })
 export class HomePagesModule { }

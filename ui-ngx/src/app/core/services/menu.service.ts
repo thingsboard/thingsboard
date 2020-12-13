@@ -248,6 +248,13 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'acs.acs',
+        type: 'link',
+        path: '/acs',
+        icon: 'devices_other'
+      },
+      {
+        id: guid(),
         name: 'device.devices',
         type: 'link',
         path: '/devices',
