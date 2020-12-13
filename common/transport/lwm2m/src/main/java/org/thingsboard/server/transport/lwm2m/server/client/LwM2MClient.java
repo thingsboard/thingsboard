@@ -114,7 +114,7 @@ public class LwM2MClient implements Cloneable {
         });
     }
 
-    public void onSuccessDelayedRequests (String path) {
+    public void onSuccessOrErrorDelayedRequests(String path) {
         if (path != null) this.delayedRequests.remove(path);
         if (this.delayedRequests.size() == 0 && this.getDelayedRequestsId().size() == 0) {
             this.lwM2MTransportService.updatesAndSentModelParameter(this);

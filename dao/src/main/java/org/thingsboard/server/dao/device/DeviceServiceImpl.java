@@ -512,6 +512,8 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 case X509_CERTIFICATE:
                     deviceCredentials.setCredentialsValue(provisionRequest.getCredentialsData().getX509CertHash());
                     break;
+                case LWM2M_CREDENTIALS:
+                    break;
             }
             try {
                 deviceCredentialsService.updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);

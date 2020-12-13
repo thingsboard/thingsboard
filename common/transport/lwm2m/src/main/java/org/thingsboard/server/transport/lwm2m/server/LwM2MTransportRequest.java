@@ -23,23 +23,23 @@ import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.observation.Observation;
+import org.eclipse.leshan.core.request.CancelObservationRequest;
 import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.request.DiscoverRequest;
 import org.eclipse.leshan.core.request.DownlinkRequest;
-import org.eclipse.leshan.core.request.ObserveRequest;
-import org.eclipse.leshan.core.request.CancelObservationRequest;
-import org.eclipse.leshan.core.request.ReadRequest;
 import org.eclipse.leshan.core.request.ExecuteRequest;
+import org.eclipse.leshan.core.request.ObserveRequest;
+import org.eclipse.leshan.core.request.ReadRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
-import org.eclipse.leshan.core.response.ResponseCallback;
+import org.eclipse.leshan.core.request.WriteRequest;
+import org.eclipse.leshan.core.response.CancelObservationResponse;
+import org.eclipse.leshan.core.response.DeleteResponse;
+import org.eclipse.leshan.core.response.DiscoverResponse;
+import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
-import org.eclipse.leshan.core.response.CancelObservationResponse;
-import org.eclipse.leshan.core.response.DeleteResponse;
-import org.eclipse.leshan.core.response.ExecuteResponse;
-import org.eclipse.leshan.core.response.DiscoverResponse;
+import org.eclipse.leshan.core.response.ResponseCallback;
 import org.eclipse.leshan.core.response.WriteAttributesResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
 import org.eclipse.leshan.core.util.Hex;
@@ -65,13 +65,13 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_DISCOVER;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_OBSERVE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.GET_TYPE_OPER_READ;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_WRITE_ATTRIBUTES;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_WRITE_UPDATE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LOG_LW2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.POST_TYPE_OPER_EXECUTE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.POST_TYPE_OPER_OBSERVE_CANCEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.POST_TYPE_OPER_WRITE_REPLACE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LOG_LW2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_WRITE_ATTRIBUTES;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_WRITE_UPDATE;
 
 @Slf4j
 @Service("LwM2MTransportRequest")
@@ -153,11 +153,11 @@ public class LwM2MTransportRequest {
                 case POST_TYPE_OPER_WRITE_REPLACE:
                     // Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
                     if (contentFormat.equals(ContentFormat.TLV) && !resMultiple) {
-                        request = this.getWriteRequestSingleResource(null, resultIds.getObjectId(), resultIds.getInstanceId(), resultIds.getResourceId(), params, resType);
+                        request = this.getWriteRequestSingleResource(null, resultIds.getObjectId(), resultIds.getInstanceId(), resultIds.getResourceId(), params, resType, registration);
                     }
                     // Mode.REPLACE && Request to write a <b>String Single-Instance Resource</b> using the given content format (TEXT, TLV, JSON)
                     else if (!contentFormat.equals(ContentFormat.TLV) && !resMultiple) {
-                        request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(), resultIds.getInstanceId(), resultIds.getResourceId(), params, resType);
+                        request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(), resultIds.getInstanceId(), resultIds.getResourceId(), params, resType, registration);
                     }
                     break;
                 case PUT_TYPE_OPER_WRITE_UPDATE:
@@ -212,8 +212,16 @@ public class LwM2MTransportRequest {
                     break;
                 default:
             }
-            if (request != null)
+            if (request != null) {
                 this.sendRequest(lwServer, registration, request, lwM2MClient, timeoutInMs, isDelayedUpdate);
+            }
+            else if (request == null && isDelayedUpdate) {
+                String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: Resource path - %s msg  No  SendRequest to Client", target);
+                service.sentLogsToThingsboard(msg, registration.getId());
+                log.error("[{}] - [{}] No SendRequest", target);
+                this.handleResponseError(registration, target, lwM2MClient, isDelayedUpdate);
+
+            }
         }
     }
 
@@ -225,6 +233,7 @@ public class LwM2MTransportRequest {
      * @param lwM2MClient -
      * @param timeoutInMs -
      */
+
     private void sendRequest(LeshanServer lwServer, Registration registration, DownlinkRequest request, LwM2MClient lwM2MClient, long timeoutInMs, boolean isDelayedUpdate) {
         lwServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
             if (isSuccess(((Response) response.getCoapResponse()).getCode())) {
@@ -234,7 +243,6 @@ public class LwM2MTransportRequest {
                     if (isDelayedUpdate) {
                         delayedUpdateStr = " (delayedUpdate) ";
                     }
-
                     String msg = String.format(LOG_LW2M_INFO + ": sendRequest Replace%s: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
                             delayedUpdateStr, ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString(),
                             ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue().toString());
@@ -243,20 +251,27 @@ public class LwM2MTransportRequest {
                             ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue(), delayedUpdateStr);
                 }
             } else {
-                String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client",
+                String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: CoapCode - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client",
                         ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString());
                 service.sentLogsToThingsboard(msg, registration.getId());
                 log.error("[{}] - [{}] [{}] error SendRequest", ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString());
+                if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest() && isDelayedUpdate) {
+                    this.handleResponseError(registration, request.getPath().toString(), lwM2MClient, isDelayedUpdate);
+                }
             }
+
         }, e -> {
             String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: Resource path - %s msg error - %s  SendRequest to Client",
                     request.getPath().toString(), e.toString());
             service.sentLogsToThingsboard(msg, registration.getId());
             log.error("[{}] - [{}] error SendRequest", request.getPath().toString(), e.toString());
+            if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest() && isDelayedUpdate) {
+                this.handleResponseError(registration, request.getPath().toString(), lwM2MClient, isDelayedUpdate);
+            }
         });
     }
 
-    private WriteRequest getWriteRequestSingleResource(ContentFormat contentFormat, Integer objectId, Integer instanceId, Integer resourceId, Object value, ResourceModel.Type type) {
+    private WriteRequest getWriteRequestSingleResource(ContentFormat contentFormat, Integer objectId, Integer instanceId, Integer resourceId, Object value, ResourceModel.Type type, Registration registration) {
         try {
             switch (type) {
                 case STRING:    // String
@@ -270,7 +285,7 @@ public class LwM2MTransportRequest {
                 case FLOAT:     // Double
                     return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Double.valueOf(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Double.valueOf(value.toString()));
                 case TIME:      // Date
-                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, new Date((Long) Integer.toUnsignedLong(Integer.valueOf(value.toString())))) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, new Date((Long) Integer.toUnsignedLong(Integer.valueOf(value.toString()))));
+                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, new Date(Long.decode(value.toString()))) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, new Date((Long) Integer.toUnsignedLong(Integer.valueOf(value.toString()))));
                 case OPAQUE:    // byte[] value, base64
                     return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray()));
                 default:
@@ -278,6 +293,9 @@ public class LwM2MTransportRequest {
             return null;
         } catch (NumberFormatException e) {
             String patn = "/" + objectId + "/" + instanceId + "/" + resourceId;
+            String msg = String.format(LOG_LW2M_ERROR + ": NumberFormatException: Resource path - %s type - %s value - %s msg error - %s  SendRequest to Client",
+                    patn, type, value, e.toString());
+            service.sentLogsToThingsboard(msg, registration.getId());
             log.error("Path: [{}] type: [{}] value: [{}] errorMsg: [{}]]", patn, type, value, e.toString());
             return null;
         }
@@ -289,6 +307,19 @@ public class LwM2MTransportRequest {
             public void run() {
                 try {
                     sendResponse(registration, path, response, request, lwM2MClient, isDelayedUpdate);
+                } catch (RuntimeException t) {
+                    log.error("[{}] endpoint [{}] path [{}] error Unable to after send response.", registration.getEndpoint(), path, t.toString());
+                }
+            }
+        });
+    }
+
+    private void handleResponseError(Registration registration, final String path, LwM2MClient lwM2MClient, boolean isDelayedUpdate) {
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (isDelayedUpdate) lwM2MClient.onSuccessOrErrorDelayedRequests(path);
                 } catch (RuntimeException t) {
                     log.error("[{}] endpoint [{}] path [{}] error Unable to after send response.", registration.getEndpoint(), path, t.toString());
                 }

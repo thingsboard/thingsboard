@@ -77,6 +77,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.transport.util.JsonUtils.getJsonObject;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.CLIENT_NOT_AUTHORIZED;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEFAULT_TIMEOUT;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEVICE_ATTRIBUTES_REQUEST;
@@ -330,7 +331,7 @@ public class LwM2MTransportService {
             }
             // #2.2
             else {
-                lwM2MClient.onSuccessDelayedRequests(null);
+                lwM2MClient.onSuccessOrErrorDelayedRequests(null);
             }
         }
     }
@@ -361,11 +362,15 @@ public class LwM2MTransportService {
             });
             // #2.1
             lwM2MClient.getDelayedRequests().forEach((k, v)->{
-                this.putDelayedUpdateResourcesClient (lwM2MClient, lwM2MClient.getResourceValue(k), v.getKv().getStringV(), k);
+                List listV = new ArrayList<TransportProtos.KeyValueProto>();
+                listV.add(v.getKv());
+                this.putDelayedUpdateResourcesClient (lwM2MClient, lwM2MClient.getResourceValue(k), getJsonObject(listV).get(v.getKv().getKey()), k);
                 System.out.printf("    k: %s, v: %s%n, v1: %s%n", k, v.getKv().getStringV(), lwM2MClient.getResourceValue(k));
             });
             lwM2MClient.getDelayedRequestsId().remove(attributesResponse.getRequestId());
-//            lwM2MClient.onSuccessDelayedRequests();
+            if (lwM2MClient.getDelayedRequests().size() == 0) {
+                lwM2MClient.onSuccessOrErrorDelayedRequests(null);
+            }
         }
     }
 
@@ -686,7 +691,7 @@ public class LwM2MTransportService {
                 String value = de.getValue().getAsString();
                 LwM2MClient lwM2MClient = lwM2mInMemorySecurityStore.getSession(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB())).entrySet().iterator().next().getValue();
                 AttrTelemetryObserveValue profile = lwM2mInMemorySecurityStore.getProfile(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
-                if (path != null && validatePathInAttrProfile(profile.getPostAttributeProfile(), path)) {
+                if (path != null && (this.validatePathInAttrProfile(profile, path) || this.validatePathInTelemetryProfile(profile, path))) {
                     if (lwM2MClient.getOperation(path).isWritable()) {
                         lwM2MTransportRequest.sendAllRequest(lwM2MClient.getLwServer(), lwM2MClient.getRegistration(), path, POST_TYPE_OPER_WRITE_REPLACE,
                                 ContentFormat.TLV.getName(), lwM2MClient, null, value, this.context.getCtxServer().getTimeout(),
@@ -714,7 +719,7 @@ public class LwM2MTransportService {
      *
      * @param sessionInfo -
      * @param name        -
-     * @return
+     * @return true if path isPresent in postProfile
      */
     private String getPathAttributeUpdate(TransportProtos.SessionInfoProto sessionInfo, String name) {
         String profilePath = this.getPathAttributeUpdateProfile(sessionInfo, name);
@@ -722,13 +727,23 @@ public class LwM2MTransportService {
     }
 
     /**
-     * @param postAttributeProfile -
+     * @param profile -
      * @param path                 -
      * @return true if path isPresent in postAttributeProfile
      */
-    private boolean validatePathInAttrProfile(JsonArray postAttributeProfile, String path) {
-        Set<String> attributesSet = new Gson().fromJson(postAttributeProfile, Set.class);
+    private boolean validatePathInAttrProfile(AttrTelemetryObserveValue profile, String path) {
+        Set<String> attributesSet = new Gson().fromJson(profile.getPostAttributeProfile(), Set.class);
         return attributesSet.stream().filter(p -> p.equals(path)).findFirst().isPresent();
+    }
+
+    /**
+     * @param profile -
+     * @param path                 -
+     * @return true if path isPresent in postAttributeProfile
+     */
+    private boolean validatePathInTelemetryProfile(AttrTelemetryObserveValue profile, String path) {
+        Set<String> telemetriesSet = new Gson().fromJson(profile.getPostTelemetryProfile(), Set.class);
+        return telemetriesSet.stream().filter(p -> p.equals(path)).findFirst().isPresent();
     }
 
 
@@ -786,8 +801,7 @@ public class LwM2MTransportService {
         } else {
             this.onObservationSetResourcesValue(registration, ((LwM2mSingleResource) request.getNode()).getValue(), null, path);
         }
-
-        if (isDelayedUpdate) lwM2MClient.onSuccessDelayedRequests (request.getPath().toString());
+        if (isDelayedUpdate) lwM2MClient.onSuccessOrErrorDelayedRequests(request.getPath().toString());
     }
 
     /**
