@@ -515,26 +515,6 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         return deviceDao.findDevicesByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
     }
 
-    @Override
-    public PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, TimePageLink pageLink) {
-        log.trace("Executing findDevicesByTenantIdAndEdgeIdAndType, tenantId [{}], edgeId [{}], type [{}], pageLink [{}]", tenantId, edgeId, type, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
-        validateString(type, "Incorrect type " + type);
-        validatePageLink(pageLink);
-        return deviceDao.findDevicesByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
-    }
-
-    @Override
-    public PageData<Device> findDevicesByTenantIdAndEdgeIdAndDeviceProfileId(TenantId tenantId, EdgeId edgeId, DeviceProfileId deviceProfileId, TimePageLink pageLink) {
-        log.trace("Executing findDevicesByTenantIdAndEdgeIdAndDeviceProfileId, tenantId [{}], edgeId [{}], deviceProfileId [{}], pageLink [{}]", tenantId, edgeId, deviceProfileId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
-        validateId(deviceProfileId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
-        validatePageLink(pageLink);
-        return deviceDao.findDevicesByTenantIdAndEdgeIdAndDeviceProfileId(tenantId.getId(), edgeId.getId(), deviceProfileId.getId(), pageLink);
-    }
-
     private DataValidator<Device> deviceValidator =
             new DataValidator<Device>() {
 
