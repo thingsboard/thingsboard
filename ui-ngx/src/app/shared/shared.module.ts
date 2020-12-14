@@ -49,6 +49,8 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSortModule } from '@angular/material/sort';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
+import {MatListModule} from '@angular/material/list';
+
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -247,6 +249,7 @@ import { TimezoneSelectComponent } from '@shared/components/time/timezone-select
     MatSortModule,
     MatProgressSpinnerModule,
     MatDividerModule,
+    MatListModule,
     MatTabsModule,
     MatRadioModule,
     MatSlideToggleModule,
@@ -332,6 +335,7 @@ import { TimezoneSelectComponent } from '@shared/components/time/timezone-select
     MatSelectModule,
     MatTooltipModule,
     MatTableModule,
+    MatListModule,
     MatPaginatorModule,
     MatSortModule,
     MatProgressSpinnerModule,

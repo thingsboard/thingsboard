@@ -1,4 +1,4 @@
-<h1 mat-dialog-title>Favorite Animal</h1>
+<!-- <h1 mat-dialog-title>Favorite Animal</h1>
 <div mat-dialog-content>
   My favorite animal is:
   <ul>
@@ -12,4 +12,31 @@
       <span *ngIf="data.animal === 'lion'">&#10003;</span> Lion
     </li>
   </ul>
+</div> -->
+<div style="margin: 10px;padding: 10px;">
+<table mat-table [dataSource]="myDataSouce" class="mat-elevation-z8"  >
+
+    <!--- Note that these columns can be defined in any order.
+          The actual rendered columns are set as a property on the row definition" -->
+  
+    <!-- Parameter Column -->
+    <ng-container matColumnDef="Parameter">
+      <th mat-header-cell *matHeaderCellDef> Parameter Name </th>
+      <td mat-cell *matCellDef="let element"> {{element.parameter}} </td>
+    </ng-container>
+      <!-- Values Column -->
+
+    <ng-container matColumnDef="Value">
+      <th mat-header-cell *matHeaderCellDef> Value </th>
+      <td mat-cell *matCellDef="let element"> {{element.deviceData['value'] ?  element.deviceData['value'][0] : '' }} &nbsp; <img src="../../../../../assets/write_img.svg" *ngIf="element.deviceData['writable']" /> </td>
+    </ng-container>
+   
+    
+
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns; "></tr>
+  </table>
+  <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
+
 </div>

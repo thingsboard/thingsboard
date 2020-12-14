@@ -1,10 +1,13 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, ViewChild, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {MatDialog, MAT_DIALOG_DATA} from '@angular/material/dialog';
+import {MatPaginator} from '@angular/material/paginator';
+import { MatTableDataSource } from '@angular/material/table';
 
 export interface DialogData {
   animal: 'panda' | 'unicorn' | 'lion';
 }
+
 
 
 @Component({
@@ -16,35 +19,57 @@ export interface DialogData {
 
 
 
-export class AcsComponent implements OnInit {
+export class AcsComponent implements OnInit, AfterViewInit{
+  
+  isLoading: Boolean = false;
+
+  
+  @ViewChild(MatPaginator) paginator: MatPaginator;
 
   constructor(private http: HttpClient,public dialog: MatDialog) { }
 
   displayedColumns: string[] = ['Device Name', 'SSID', 'Last Inform', 'IP','Action'];
-  dataSource : any[] = ELEMENT_DATA
+  dataSource : MatTableDataSource<any>;
   ngOnInit(): void {
     this.http.post( 'http://127.0.0.1:3000/login',{
       "username": "admin",
       "password": "admin"
   },{withCredentials:true}).subscribe(data => {
       this.http.get<any[]>('http://localhost:3000/api/devices',{withCredentials:true}).subscribe((deviceData)=>{
-        this.dataSource = deviceData
+        this.dataSource = new MatTableDataSource(deviceData)
+        this.dataSource.paginator = this.paginator;
+
       })
     })
         
   }
 
+  ngAfterViewInit() {
+  }
+  
   getRecord(row){
 console.log(row)
 
   }
 
   openDialog(row) {
-    this.dialog.open(DialogDataDialog, {
-      data: {
-        animal: 'panda'
-      }
+    this.isLoading = true;
+    let myObject : [];
+    let DeviceObject = Object.values(row)
+    let DeviceKeys = Object.keys(row)
+    const deviceArray = DeviceKeys.map((item,index) => ({ parameter: DeviceKeys[index] ,deviceData: DeviceObject[index]}))
+    console.log(deviceArray)
+
+    console.log(Object.values(row))
+    
+    const dialogRef = this.dialog.open(DialogDataDialog, {
+      data: deviceArray,
+      
+      
     });
+    dialogRef.afterOpened().subscribe(()=>{
+        this.isLoading = false
+    })
   }
 }
 
@@ -52,11 +77,23 @@ console.log(row)
   selector: 'dialog-data-example-dialog',
   templateUrl: 'dialog-data.html',
 })
-export class DialogDataDialog {
-  constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}
+export class DialogDataDialog implements OnInit,AfterViewInit {
+    
+    @ViewChild(MatPaginator) paginator: MatPaginator;
+
+   myDataSouce : MatTableDataSource<any>
+  constructor(@Inject(MAT_DIALOG_DATA) public data: any[]) {}
+  displayedColumns: string[] = ['Parameter','Value'];
+  ngOnInit(): void {
+    this.myDataSouce = new MatTableDataSource(this.data);
+    setTimeout(() => this.myDataSouce.paginator = this.paginator);
+}
+  ngAfterViewInit(): void {
+    setTimeout(() => this.myDataSouce.paginator = this.paginator);}
+
 }
 
-const ELEMENT_DATA: any[] = [
+const ELEMENT_DATA = [
   {
       "DeviceID.ID": {
           "value": [

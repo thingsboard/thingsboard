@@ -27,6 +27,7 @@ import { HomeComponentsModule } from '@modules/home/components/home-components.m
   declarations: [
    AcsComponent,
    DialogDataDialog
+   
   ],
   imports: [
     CommonModule,

@@ -1,6 +1,9 @@
 
-
-<table mat-table [dataSource]="dataSource" class="mat-elevation-z8" style="margin: 10px;margin-right: 20px;">
+<div class="mat-table-padding" style="margin: 10px;padding: 10px;">
+  <mat-progress-bar color="warn" style="z-index: 10; margin-bottom: -4px; width: 100%;" mode="indeterminate"
+                        *ngIf="isLoading">
+      </mat-progress-bar>
+<table mat-table [dataSource]="dataSource" class="mat-elevation-z8" >
 
     <!--- Note that these columns can be defined in any order.
           The actual rendered columns are set as a property on the row definition" -->
@@ -43,4 +46,8 @@
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns; " (click)="openDialog(row)"></tr>
+
   </table>
+  <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
+
+</div>
