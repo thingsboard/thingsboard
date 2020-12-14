@@ -311,11 +311,11 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
             do {
                 pageData = userService.findTenantAdmins(edge.getTenantId(), pageLink);
                 pushUsersToEdge(pageData, edge);
-                syncCustomerUsers(edge);
                 if (pageData != null && pageData.hasNext()) {
                     pageLink = pageData.getNextPageLink();
                 }
             } while (pageData != null && pageData.hasNext());
+            syncCustomerUsers(edge);
         } catch (Exception e) {
             log.error("Exception during loading edge user(s) on sync!", e);
         }
@@ -333,6 +333,15 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
                     pageLink = pageData.getNextPageLink();
                 }
             } while (pageData != null && pageData.hasNext());
+        }
+    }
+
+    private void pushUsersToEdge(TextPageData<User> pageData, Edge edge) {
+        if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+            log.trace("[{}] [{}] user(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
+            for (User user : pageData.getData()) {
+                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, EdgeEventActionType.ADDED, user.getId(), null);
+            }
         }
     }
 
@@ -421,15 +430,6 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         tenantMailSettings.setJsonValue(jsonValue);
         tenantMailSettings.setKey(key);
         return tenantMailSettings;
-    }
-
-    private void pushUsersToEdge(TextPageData<User> pageData, Edge edge) {
-        if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-            log.trace("[{}] [{}] user(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
-            for (User user : pageData.getData()) {
-                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, EdgeEventActionType.ADDED, user.getId(), null);
-            }
-        }
     }
 
     @Override
