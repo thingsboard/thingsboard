@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -152,6 +153,8 @@ public interface TbContext {
 
     // TODO: Does this changes the message?
     TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action);
+
+    void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
 
     /*
      *

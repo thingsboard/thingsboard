@@ -145,8 +145,13 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (result != null && result.size() > 0) {
             EntityRelation relationToEdge = result.get(0);
             if (relationToEdge.getFrom() != null && relationToEdge.getFrom().getId() != null) {
+                log.trace("[{}][{}] found edge [{}] for device", tenantId, deviceId, relationToEdge.getFrom().getId());
                 return new EdgeId(relationToEdge.getFrom().getId());
+            } else {
+                log.trace("[{}][{}] edge relation is empty {}", tenantId, deviceId, relationToEdge);
             }
+        } else {
+            log.trace("[{}][{}] device doesn't have any related edge", tenantId, deviceId);
         }
         return null;
     }
@@ -165,6 +170,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
         boolean sent;
         if (systemContext.isEdgesRpcEnabled() && edgeId != null) {
+            log.debug("[{}][{}] device is related to edge [{}]. Saving RPC request to edge queue", tenantId, deviceId, edgeId.getId());
             saveRpcRequestToEdgeQueue(request, rpcRequest.getRequestId());
             sent = true;
         } else {
@@ -516,6 +522,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     void processEdgeUpdate(DeviceEdgeUpdateMsg msg) {
+        log.trace("[{}] Processing edge update {}", deviceId, msg);
         this.edgeId = msg.getEdgeId();
     }
 
@@ -568,7 +575,18 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         edgeEvent.setBody(body);
 
         edgeEvent.setEdgeId(edgeId);
-        systemContext.getEdgeEventService().saveAsync(edgeEvent);
+        ListenableFuture<EdgeEvent> future = systemContext.getEdgeEventService().saveAsync(edgeEvent);
+        Futures.addCallback(future, new FutureCallback<EdgeEvent>() {
+            @Override
+            public void onSuccess( EdgeEvent result) {
+                systemContext.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}] Can't save edge event [{}] for edge [{}]", tenantId.getId(), edgeEvent, edgeId.getId(), t);
+            }
+        }, systemContext.getDbCallbackExecutor());
     }
 
     private List<TsKvProto> toTsKvProtos(@Nullable List<AttributeKvEntry> result) {

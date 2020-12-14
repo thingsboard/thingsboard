@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.edge;
 
 import com.google.common.base.Function;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -97,6 +98,8 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
+
+    private static final int DEFAULT_LIMIT = 100;
 
     private RestTemplate restTemplate;
 
@@ -353,13 +356,20 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     public void assignDefaultRuleChainsToEdge(TenantId tenantId, EdgeId edgeId) {
         log.trace("Executing assignDefaultRuleChainsToEdge, tenantId [{}], edgeId [{}]", tenantId, edgeId);
         ListenableFuture<List<RuleChain>> future = ruleChainService.findDefaultEdgeRuleChainsByTenantId(tenantId);
-        Futures.transform(future, ruleChains -> {
-            if (ruleChains != null && !ruleChains.isEmpty()) {
-                for (RuleChain ruleChain : ruleChains) {
-                    ruleChainService.assignRuleChainToEdge(tenantId, ruleChain.getId(), edgeId);
+        Futures.addCallback(future, new FutureCallback<List<RuleChain>>() {
+            @Override
+            public void onSuccess(List<RuleChain> ruleChains) {
+                if (ruleChains != null && !ruleChains.isEmpty()) {
+                    for (RuleChain ruleChain : ruleChains) {
+                        ruleChainService.assignRuleChainToEdge(tenantId, ruleChain.getId(), edgeId);
+                    }
                 }
             }
-            return null;
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}] can't find default edge rule chains [{}]", tenantId.getId(), edgeId.getId(), t);
+            }
         }, MoreExecutors.directExecutor());
     }
 
@@ -462,9 +472,26 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     @Override
     public ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId) {
         log.trace("[{}] Executing findRelatedEdgeIdsByEntityId [{}]", tenantId, entityId);
-        if (EntityType.TENANT.equals(entityId.getEntityType())) {
-            PageData<Edge> edgesByTenantId = findEdgesByTenantId(tenantId, new PageLink(Integer.MAX_VALUE));
-            return Futures.immediateFuture(edgesByTenantId.getData().stream().map(IdBased::getId).collect(Collectors.toList()));
+        if (EntityType.TENANT.equals(entityId.getEntityType()) || EntityType.CUSTOMER.equals(entityId.getEntityType())) {
+            List<EdgeId> result = new ArrayList<>();
+            PageLink pageLink = new PageLink(DEFAULT_LIMIT);
+            PageData<Edge> pageData;
+            do {
+                if (EntityType.TENANT.equals(entityId.getEntityType())) {
+                    pageData = findEdgesByTenantId(tenantId, pageLink);
+                } else {
+                    pageData = findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), pageLink);
+                }
+                if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                    for (Edge edge : pageData.getData()) {
+                        result.add(edge.getId());
+                    }
+                    if (pageData.hasNext()) {
+                        pageLink = pageLink.nextPageLink();
+                    }
+                }
+            } while (pageData != null && pageData.hasNext());
+            return Futures.immediateFuture(result);
         } else {
             switch (entityId.getEntityType()) {
                 case DEVICE:
@@ -489,13 +516,23 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                     if (userById == null) {
                         return Futures.immediateFuture(Collections.emptyList());
                     }
-                    PageData<Edge> edges;
-                    if (userById.getCustomerId() == null || userById.getCustomerId().isNullUid()) {
-                        edges = findEdgesByTenantId(tenantId, new PageLink(Integer.MAX_VALUE));
-                    } else {
-                        edges = findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), new PageLink(Integer.MAX_VALUE));
-                    }
-                    return convertToEdgeIds(Futures.immediateFuture(edges.getData()));
+                    List<Edge> result = new ArrayList<>();
+                    PageLink pageLink = new PageLink(DEFAULT_LIMIT);
+                    PageData<Edge> pageData;
+                    do {
+                        if (userById.getCustomerId() == null || userById.getCustomerId().isNullUid()) {
+                            pageData = findEdgesByTenantId(tenantId, pageLink);
+                        } else {
+                            pageData = findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), pageLink);
+                        }
+                        if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                            result.addAll(pageData.getData());
+                            if (pageData.hasNext()) {
+                                pageLink = pageLink.nextPageLink();
+                            }
+                        }
+                    } while (pageData != null && pageData.hasNext());
+                    return convertToEdgeIds(Futures.immediateFuture(result));
                 default:
                     return Futures.immediateFuture(Collections.emptyList());
             }

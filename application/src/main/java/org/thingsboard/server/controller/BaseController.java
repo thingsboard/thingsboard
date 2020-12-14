@@ -955,6 +955,7 @@ public abstract class BaseController {
             builder.setBody(body);
         }
         TransportProtos.EdgeNotificationMsgProto msg = builder.build();
+        log.trace("[{}] sending notification to edge service {}", tenantId.getId(), msg);
         tbClusterService.pushMsgToCore(tenantId, entityId != null ? entityId : tenantId,
                 TransportProtos.ToCoreMsg.newBuilder().setEdgeNotificationMsg(msg).build(), null);
     }

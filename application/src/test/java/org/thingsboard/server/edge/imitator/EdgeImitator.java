@@ -56,6 +56,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public class EdgeImitator {
@@ -64,6 +66,8 @@ public class EdgeImitator {
     private String routingSecret;
 
     private EdgeRpcClient edgeRpcClient;
+
+    private final Lock lock = new ReentrantLock();
 
     private CountDownLatch messagesLatch;
     private CountDownLatch responsesLatch;
@@ -74,7 +78,7 @@ public class EdgeImitator {
     @Getter
     private UserId userId;
     @Getter
-    private List<AbstractMessage> downlinkMsgs;
+    private final List<AbstractMessage> downlinkMsgs;
 
     public EdgeImitator(String host, int port, String routingKey, String routingSecret) throws NoSuchFieldException, IllegalAccessException {
         edgeRpcClient = new EdgeGrpcClient();
@@ -241,7 +245,12 @@ public class EdgeImitator {
 
     private ListenableFuture<Void> saveDownlinkMsg(AbstractMessage message) {
         if (!ignoredTypes.contains(message.getClass())) {
-            downlinkMsgs.add(message);
+            try {
+                lock.lock();
+                downlinkMsgs.add(message);
+            } finally {
+                lock.unlock();
+            }
             messagesLatch.countDown();
         }
         return Futures.immediateFuture(null);
@@ -262,7 +271,14 @@ public class EdgeImitator {
     }
 
     public <T> Optional<T> findMessageByType(Class<T> tClass) {
-        return (Optional<T>) downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg.getClass().isAssignableFrom(tClass)).findAny();
+        Optional<T> result;
+        try {
+            lock.lock();
+            result = (Optional<T>) downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg.getClass().isAssignableFrom(tClass)).findAny();
+        } finally {
+            lock.unlock();
+        }
+        return result;
     }
 
     public AbstractMessage getLatestMessage() {

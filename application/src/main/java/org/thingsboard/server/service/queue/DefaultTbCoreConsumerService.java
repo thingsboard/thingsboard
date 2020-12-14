@@ -280,6 +280,13 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (toCoreNotification.getComponentLifecycleMsg() != null && !toCoreNotification.getComponentLifecycleMsg().isEmpty()) {
             handleComponentLifecycleMsg(id, toCoreNotification.getComponentLifecycleMsg());
             callback.onSuccess();
+        } else if (toCoreNotification.getEdgeEventUpdateMsg() != null && !toCoreNotification.getEdgeEventUpdateMsg().isEmpty()) {
+            Optional<TbActorMsg> actorMsg = encodingService.decode(toCoreNotification.getEdgeEventUpdateMsg().toByteArray());
+            if (actorMsg.isPresent()) {
+                log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
+                actorContext.tellWithHighPriority(actorMsg.get());
+            }
+            callback.onSuccess();
         }
         if (statsEnabled) {
             stats.log(toCoreNotification);

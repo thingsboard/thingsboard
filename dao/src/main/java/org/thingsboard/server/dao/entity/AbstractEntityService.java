@@ -77,6 +77,7 @@ public abstract class AbstractEntityService {
             List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId).get();
             if (entityViews != null && !entityViews.isEmpty()) {
                 EntityView entityView = entityViews.get(0);
+                // TODO: voba - refactor this blocking operation in 3.3+
                 Boolean relationExists = relationService.checkRelation(tenantId,edgeId, entityView.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE).get();
                 if (relationExists) {
@@ -84,7 +85,7 @@ public abstract class AbstractEntityService {
                 }
             }
         } catch (Exception e) {
-            log.error("Exception while finding entity views for entityId [{}]", entityId, e);
+            log.error("[{}] Exception while finding entity views for entityId [{}]", tenantId, entityId, e);
             throw new RuntimeException("Exception while finding entity views for entityId [" + entityId + "]", e);
         }
     }

@@ -68,6 +68,7 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.transport.util.JsonUtils;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.AssetUpdateMsg;
@@ -121,7 +122,7 @@ import java.util.function.Consumer;
 @Data
 public final class EdgeGrpcSession implements Closeable {
 
-    private static final ReentrantLock responseMsgLock = new ReentrantLock();
+    private static final ReentrantLock downlinkMsgLock = new ReentrantLock();
 
     private static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
 
@@ -200,7 +201,7 @@ public final class EdgeGrpcSession implements Closeable {
             @Override
             public void onSuccess(@Nullable List<Void> result) {
                 UplinkResponseMsg uplinkResponseMsg = UplinkResponseMsg.newBuilder().setSuccess(true).build();
-                sendResponseMsg(ResponseMsg.newBuilder()
+                sendDownlinkMsg(ResponseMsg.newBuilder()
                         .setUplinkResponseMsg(uplinkResponseMsg)
                         .build());
             }
@@ -208,7 +209,7 @@ public final class EdgeGrpcSession implements Closeable {
             @Override
             public void onFailure(Throwable t) {
                 UplinkResponseMsg uplinkResponseMsg = UplinkResponseMsg.newBuilder().setSuccess(false).setErrorMsg(t.getMessage()).build();
-                sendResponseMsg(ResponseMsg.newBuilder()
+                sendDownlinkMsg(ResponseMsg.newBuilder()
                         .setUplinkResponseMsg(uplinkResponseMsg)
                         .build());
             }
@@ -228,38 +229,35 @@ public final class EdgeGrpcSession implements Closeable {
         }
     }
 
-    private void sendResponseMsg(ResponseMsg responseMsg) {
-        log.trace("[{}] Sending response msg [{}]", this.sessionId, responseMsg);
+    private void sendDownlinkMsg(ResponseMsg downlinkMsg) {
+        log.trace("[{}] Sending downlink msg [{}]", this.sessionId, downlinkMsg);
         if (isConnected()) {
             try {
-                responseMsgLock.lock();
-                outputStream.onNext(responseMsg);
+                downlinkMsgLock.lock();
+                outputStream.onNext(downlinkMsg);
             } catch (Exception e) {
-                log.error("[{}] Failed to send response message [{}]", this.sessionId, responseMsg, e);
+                log.error("[{}] Failed to send downlink message [{}]", this.sessionId, downlinkMsg, e);
                 connected = false;
                 sessionCloseListener.accept(edge.getId());
             } finally {
-                responseMsgLock.unlock();
+                downlinkMsgLock.unlock();
             }
-            log.trace("[{}] Response msg successfully sent [{}]", this.sessionId, responseMsg);
+            log.trace("[{}] Response msg successfully sent [{}]", this.sessionId, downlinkMsg);
         }
     }
 
     void onConfigurationUpdate(Edge edge) {
         log.debug("[{}] onConfigurationUpdate [{}]", this.sessionId, edge);
-        try {
-            this.edge = edge;
-            EdgeUpdateMsg edgeConfig = EdgeUpdateMsg.newBuilder()
-                    .setConfiguration(constructEdgeConfigProto(edge)).build();
-            outputStream.onNext(ResponseMsg.newBuilder()
-                    .setEdgeUpdateMsg(edgeConfig)
-                    .build());
-        } catch (Exception e) {
-            log.error("[{}] Failed to construct proto objects!", this.sessionId, e);
-        }
+        this.edge = edge;
+        EdgeUpdateMsg edgeConfig = EdgeUpdateMsg.newBuilder()
+                .setConfiguration(constructEdgeConfigProto(edge)).build();
+        ResponseMsg edgeConfigMsg = ResponseMsg.newBuilder()
+                .setEdgeUpdateMsg(edgeConfig)
+                .build();
+        sendDownlinkMsg(edgeConfigMsg);
     }
 
-    void processHandleMessages() throws ExecutionException, InterruptedException {
+    void processEdgeEvents() throws ExecutionException, InterruptedException {
         log.trace("[{}] processHandleMessages started", this.sessionId);
         if (isConnected()) {
             Long queueStartTs = getQueueStartTs().get();
@@ -282,7 +280,7 @@ public final class EdgeGrpcSession implements Closeable {
 
                     latch = new CountDownLatch(downlinkMsgsPack.size());
                     for (DownlinkMsg downlinkMsg : downlinkMsgsPack) {
-                        sendResponseMsg(ResponseMsg.newBuilder()
+                        sendDownlinkMsg(ResponseMsg.newBuilder()
                                 .setDownlinkMsg(downlinkMsg)
                                 .build());
                     }
@@ -309,11 +307,6 @@ public final class EdgeGrpcSession implements Closeable {
             if (ifOffset != null) {
                 Long newStartTs = Uuids.unixTimestamp(ifOffset);
                 updateQueueStartTs(newStartTs);
-            }
-            try {
-                Thread.sleep(ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval());
-            } catch (InterruptedException e) {
-                log.error("[{}] Error during sleep between no records interval", this.sessionId, e);
             }
         }
         log.trace("[{}] processHandleMessages finished", this.sessionId);
@@ -445,6 +438,9 @@ public final class EdgeGrpcSession implements Closeable {
                 break;
             case CUSTOMER:
                 entityId = new CustomerId(edgeEvent.getEntityId());
+                break;
+            case EDGE:
+                entityId = new EdgeId(edgeEvent.getEntityId());
                 break;
         }
         DownlinkMsg downlinkMsg = null;
@@ -969,17 +965,24 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private EdgeConfiguration constructEdgeConfigProto(Edge edge) {
-        return EdgeConfiguration.newBuilder()
+        EdgeConfiguration.Builder builder = EdgeConfiguration.newBuilder()
                 .setEdgeIdMSB(edge.getId().getId().getMostSignificantBits())
                 .setEdgeIdLSB(edge.getId().getId().getLeastSignificantBits())
                 .setTenantIdMSB(edge.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(edge.getTenantId().getId().getLeastSignificantBits())
                 .setName(edge.getName())
-                .setRoutingKey(edge.getRoutingKey())
                 .setType(edge.getType())
+                .setRoutingKey(edge.getRoutingKey())
+                .setSecret(edge.getSecret())
                 .setEdgeLicenseKey(edge.getEdgeLicenseKey())
                 .setCloudEndpoint(edge.getCloudEndpoint())
-                .setCloudType("CE")
+                .setConfiguration(JacksonUtil.toString(edge.getConfiguration()))
+                .setCloudType("CE");
+        if (edge.getCustomerId() != null) {
+            builder.setCustomerIdMSB(edge.getCustomerId().getId().getMostSignificantBits())
+                .setCustomerIdLSB(edge.getCustomerId().getId().getLeastSignificantBits());
+        }
+        return builder
                 .build();
     }
 
