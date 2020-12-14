@@ -14,11 +14,11 @@
 /// limitations under the License.
 ///
 
-import {Component, forwardRef} from '@angular/core';
-import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms';
-import {AliasFilterType, EntityAliasFilter} from '@shared/models/alias.models';
-import {AliasEntityType, EntityType, entityTypeTranslations} from '@shared/models/entity-type.models';
-import {TranslateService} from '@ngx-translate/core';
+import { Component, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { AliasFilterType, EntityAliasFilter } from '@shared/models/alias.models';
+import { AliasEntityType, EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-entity-filter-view',
