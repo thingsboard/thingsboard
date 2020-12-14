@@ -1,5 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import {MatDialog, MAT_DIALOG_DATA} from '@angular/material/dialog';
+
+export interface DialogData {
+  animal: 'panda' | 'unicorn' | 'lion';
+}
 
 
 @Component({
@@ -7,11 +12,15 @@ import { HttpClient } from '@angular/common/http';
   templateUrl: './acs.component.html',
   styleUrls: ['./acs.component.scss']
 })
+
+
+
+
 export class AcsComponent implements OnInit {
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient,public dialog: MatDialog) { }
 
-  displayedColumns: string[] = ['Device Name', 'SSID', 'Last Inform', 'symbol'];
+  displayedColumns: string[] = ['Device Name', 'SSID', 'Last Inform', 'IP','Action'];
   dataSource : any[] = ELEMENT_DATA
   ngOnInit(): void {
     this.http.post( 'http://127.0.0.1:3000/login',{
@@ -25,9 +34,27 @@ export class AcsComponent implements OnInit {
         
   }
 
+  getRecord(row){
+console.log(row)
 
+  }
+
+  openDialog(row) {
+    this.dialog.open(DialogDataDialog, {
+      data: {
+        animal: 'panda'
+      }
+    });
+  }
 }
 
+@Component({
+  selector: 'dialog-data-example-dialog',
+  templateUrl: 'dialog-data.html',
+})
+export class DialogDataDialog {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}
+}
 
 const ELEMENT_DATA: any[] = [
   {
