@@ -427,7 +427,6 @@ CREATE TABLE IF NOT EXISTS edge (
     additional_info varchar,
     customer_id uuid,
     root_rule_chain_id uuid,
-    configuration varchar(10000000),
     type varchar(255),
     name varchar(255),
     label varchar(255),

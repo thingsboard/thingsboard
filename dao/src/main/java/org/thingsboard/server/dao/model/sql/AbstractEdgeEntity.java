@@ -87,10 +87,6 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
     private String cloudEndpoint;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.EDGE_CONFIGURATION_PROPERTY)
-    private JsonNode configuration;
-
-    @Type(type = "json")
     @Column(name = ModelConstants.EDGE_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
@@ -118,7 +114,6 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
         this.secret = edge.getSecret();
         this.edgeLicenseKey = edge.getEdgeLicenseKey();
         this.cloudEndpoint = edge.getCloudEndpoint();
-        this.configuration = edge.getConfiguration();
         this.additionalInfo = edge.getAdditionalInfo();
     }
 
@@ -135,7 +130,6 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
         this.secret = edgeEntity.getSecret();
         this.edgeLicenseKey = edgeEntity.getEdgeLicenseKey();
         this.cloudEndpoint = edgeEntity.getCloudEndpoint();
-        this.configuration = edgeEntity.getConfiguration();
         this.additionalInfo = edgeEntity.getAdditionalInfo();
     }
 
@@ -172,7 +166,6 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
         edge.setSecret(secret);
         edge.setEdgeLicenseKey(edgeLicenseKey);
         edge.setCloudEndpoint(cloudEndpoint);
-        edge.setConfiguration(configuration);
         edge.setAdditionalInfo(additionalInfo);
         return edge;
     }

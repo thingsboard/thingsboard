@@ -87,7 +87,7 @@ message EdgeConfiguration {
   string secret = 10;
   string edgeLicenseKey = 11;
   string cloudEndpoint = 12;
-  string configuration = 13;
+  string additionalInfo = 13;
   string cloudType = 14;
 }
 

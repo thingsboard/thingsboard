@@ -976,7 +976,7 @@ public final class EdgeGrpcSession implements Closeable {
                 .setSecret(edge.getSecret())
                 .setEdgeLicenseKey(edge.getEdgeLicenseKey())
                 .setCloudEndpoint(edge.getCloudEndpoint())
-                .setConfiguration(JacksonUtil.toString(edge.getConfiguration()))
+                .setAdditionalInfo(JacksonUtil.toString(edge.getAdditionalInfo()))
                 .setCloudType("CE");
         if (edge.getCustomerId() != null) {
             builder.setCustomerIdMSB(edge.getCustomerId().getId().getMostSignificantBits())

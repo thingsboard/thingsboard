@@ -465,7 +465,6 @@ public class ModelConstants {
     public static final String EDGE_NAME_PROPERTY = "name";
     public static final String EDGE_LABEL_PROPERTY = "label";
     public static final String EDGE_TYPE_PROPERTY = "type";
-    public static final String EDGE_CONFIGURATION_PROPERTY = "configuration";
     public static final String EDGE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
     public static final String EDGE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "edge_by_tenant_and_search_text";
     public static final String EDGE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "edge_by_tenant_by_type_and_search_text";
