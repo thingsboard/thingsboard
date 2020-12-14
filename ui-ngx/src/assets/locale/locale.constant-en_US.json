@@ -1205,7 +1205,8 @@
       "edge-type-list-empty": "No device types selected.",
       "edge-types": "Edge types",
       "dashboard": "Edge dashboard",
-      "unassign-edges-action-title": "Unassign { count, plural, 1 {1 edge} other {# edges} } from customer"
+      "unassign-edges-action-title": "Unassign { count, plural, 1 {1 edge} other {# edges} } from customer",
+      "enter-edge-type": "Enter edge type"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",

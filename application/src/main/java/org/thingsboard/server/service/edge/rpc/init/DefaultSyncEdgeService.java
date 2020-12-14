@@ -304,6 +304,15 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         }
     }
 
+    private void pushUsersToEdge(PageData<User> pageData, Edge edge) {
+        if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+            log.trace("[{}] [{}] user(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
+            for (User user : pageData.getData()) {
+                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, EdgeEventActionType.ADDED, user.getId(), null);
+            }
+        }
+    }
+
     private void syncWidgetsBundleAndWidgetTypes(Edge edge) {
         log.trace("[{}] syncWidgetsBundleAndWidgetTypes [{}]", edge.getTenantId(), edge.getName());
         List<WidgetsBundle> widgetsBundlesToPush = new ArrayList<>();
@@ -389,15 +398,6 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         tenantMailSettings.setJsonValue(jsonValue);
         tenantMailSettings.setKey(key);
         return tenantMailSettings;
-    }
-
-    private void pushUsersToEdge(PageData<User> pageData, Edge edge) {
-        if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-            log.trace("[{}] [{}] user(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
-            for (User user : pageData.getData()) {
-                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, EdgeEventActionType.ADDED, user.getId(), null);
-            }
-        }
     }
 
     @Override
