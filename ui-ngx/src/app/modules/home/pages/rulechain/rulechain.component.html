@@ -31,7 +31,19 @@
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setRoot')"
-          [fxShow]="!isEdit && !entity?.root">
+          [fxShow]="!isEdit && !entity?.root && ruleChainScope === 'tenant'">
+    {{'rulechain.set-root' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'setDefaultRoot')"
+          [fxShow]="!isEdit && !entity?.root && ruleChainScope === 'edges'">
+    {{'rulechain.set-default-root-edge' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'setRoot')"
+          [fxShow]="!isEdit && !isRootRuleChain() && ruleChainScope === 'edge'">
     {{'rulechain.set-root' | translate }}
   </button>
   <button mat-raised-button color="primary"

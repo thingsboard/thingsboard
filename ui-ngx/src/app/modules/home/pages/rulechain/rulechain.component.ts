@@ -31,12 +31,19 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 })
 export class RuleChainComponent extends EntityComponent<RuleChain> {
 
+  ruleChainScope: 'tenant' | 'edges' | 'edge';
+
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: RuleChain,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<RuleChain>,
               public fb: FormBuilder) {
     super(store, fb, entityValue, entitiesTableConfigValue);
+  }
+
+  ngOnInit() {
+    this.ruleChainScope = this.entitiesTableConfig.componentsData.ruleChainScope;
+    super.ngOnInit();
   }
 
   hideDelete() {
@@ -77,5 +84,13 @@ export class RuleChainComponent extends EntityComponent<RuleChain> {
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
+  }
+
+  isRootRuleChain() {
+    if (this.entitiesTableConfig && this.entityValue) {
+      return this.entitiesTableConfig.componentsData.rootRuleChainId == this.entityValue.id.id;
+    } else {
+      return false;
+    }
   }
 }

@@ -466,6 +466,9 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
       case 'unassignFromCustomer':
         this.unassignFromCustomer(action.event, action.entity);
         return true;
+      case 'unassignFromEdge':
+        this.unassignFromEdge(action.event, action.entity);
+        return true;
     }
     return false;
   }

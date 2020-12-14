@@ -82,4 +82,6 @@ public interface AssetService {
     Asset unassignAssetFromEdge(TenantId tenantId, AssetId assetId, EdgeId edgeId);
 
     PageData<Asset> findAssetsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
+
+    PageData<Asset> findAssetsByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, TimePageLink pageLink);
 }

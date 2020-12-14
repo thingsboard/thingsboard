@@ -24,6 +24,9 @@ import { DevicesTableConfigResolver } from "@home/pages/device/devices-table-con
 import { EntityViewsTableConfigResolver } from "@home/pages/entity-view/entity-views-table-config.resolver";
 import { DashboardsTableConfigResolver } from "@home/pages/dashboard/dashboards-table-config.resolver";
 import { RuleChainsTableConfigResolver } from "@home/pages/rulechain/rulechains-table-config.resolver";
+import { DashboardPageComponent } from "@home/pages/dashboard/dashboard-page.component";
+import { dashboardBreadcumbLabelFunction, DashboardResolver } from "@home/pages/dashboard/dashboard-routing.module";
+import { BreadCrumbConfig } from "@shared/components/breadcrumb";
 
 const routes: Routes = [
   {
@@ -53,7 +56,7 @@ const routes: Routes = [
           auth: [Authority.TENANT_ADMIN],
           ruleChainsType: 'edge',
           breadcrumb: {
-            label: 'edge.rulechains',
+            label: 'rulechain.edge-rulechains',
             icon: 'settings_ethernet'
           },
         },
@@ -108,19 +111,43 @@ const routes: Routes = [
       },
       {
         path: ':edgeId/dashboards',
-        component: EntitiesTableComponent,
         data: {
-          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          dashboardsType: 'edge',
           breadcrumb: {
             label: 'edge.dashboards',
             icon: 'dashboard'
           }
         },
-        resolve: {
-          entitiesTableConfig: DashboardsTableConfigResolver
-        }
-      }]
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN],
+              dashboardsType: 'edge'
+            },
+            resolve: {
+              entitiesTableConfig: DashboardsTableConfigResolver
+            },
+          },
+          {
+            path: ':dashboardId',
+            component: DashboardPageComponent,
+            data: {
+              breadcrumb: {
+                labelFunction: dashboardBreadcumbLabelFunction,
+                icon: 'dashboard'
+              } as BreadCrumbConfig<DashboardPageComponent>,
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              title: 'edge.dashboard',
+              widgetEditMode: false
+            },
+            resolve: {
+              dashboard: DashboardResolver
+            }
+          }
+        ]
+      },
+      ]
   }]
 
 @NgModule({

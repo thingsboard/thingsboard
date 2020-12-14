@@ -143,9 +143,10 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
         break;
       case EntityType.EDGE:
         this.placeholder = this.required ? this.translate.instant('edge.enter-edge-type')
-          : this.translate.instant('edge.edge-any-edge');
+          : this.translate.instant('edge.any-edge');
         this.secondaryPlaceholder = '+' + this.translate.instant('edge.edge-type');
         this.noSubtypesMathingText = 'edge.no-edge-types-matching';
+        this.subtypeListEmptyText = 'edge.edge-type-list-empty';
         this.broadcastSubscription = this.broadcast.on('edgeSaved', () => {
           this.entitySubtypes = null;
         });

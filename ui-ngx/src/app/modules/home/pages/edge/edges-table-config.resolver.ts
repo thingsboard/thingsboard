@@ -103,7 +103,8 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<EdgeInfo>> {
     const routeParams = route.params;
     this.config.componentsData = {
-      edgeScope: route.data.edgesType
+      edgeScope: route.data.edgesType,
+      edgeType: ''
     };
     this.customerId = routeParams.customerId;
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
@@ -152,7 +153,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
         new EntityTableColumn<EdgeInfo>('customerIsPublic', 'edge.public', '60px',
           entity => {
             return checkBoxCell(entity.customerIsPublic);
-          }, () => ({}), false),
+          }, () => ({}), false)
       );
     }
     return columns;
@@ -161,7 +162,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
   configureEntityFunctions(edgeScope: string): void {
     if (edgeScope === 'tenant') {
       this.config.entitiesFetchFunction = pageLink =>
-        this.edgeService.getTenantEdgeInfos(pageLink);
+        this.edgeService.getTenantEdgeInfos(pageLink, this.config.componentsData.edgeType);
       this.config.deleteEntity = id => this.edgeService.deleteEdge(id.id);
     }
     if (edgeScope === 'customer') {
@@ -176,10 +177,10 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     if (edgeScope === 'tenant') {
       actions.push(
         {
-          name: this.translate.instant('edge.make-public'),
-          icon: 'share',
-          isEnabled: (entity) => (!entity.customerId || entity.customerId.id === NULL_UUID),
-          onAction: ($event, entity) => this.makePublic($event, entity)
+           name: this.translate.instant('edge.make-public'),
+           icon: 'share',
+           isEnabled: (entity) => (!entity.customerId || entity.customerId.id === NULL_UUID),
+           onAction: ($event, entity) => this.makePublic($event, entity)
         },
         {
           name: this.translate.instant('edge.assign-to-customer'),

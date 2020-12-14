@@ -190,9 +190,9 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         this.columns.push(
           new EntityTableColumn<Event>('type', 'event.type', '100%',
             (entity) => entity.type, entity => ({}), false),
-          new EntityTableColumn<Event>('action', 'event.action', '100%',
+          new EntityTableColumn<Event>('action', 'edge.event-action', '100%',
             (entity) => entity.action, entity => ({}), false),
-          new EntityTableColumn<Event>('entityId', 'event.entityId', '100%',
+          new EntityTableColumn<Event>('entityId', 'edge.entity-id', '100%',
             (entity) => entity.id.id, entity => ({}), false),   //TODO: replace this to entity.entityId because of conflict wiht entityId model
           new EntityTableColumn<Event>('status', 'event.status', '100%',
             (entity) => this.updateEdgeEventStatus(entity.createdTime),

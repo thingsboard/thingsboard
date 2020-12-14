@@ -194,7 +194,7 @@ export default function EdgeRoutes($stateProvider, types) {
             },
             data: {
                 searchEnabled: true,
-                pageTitle: 'edge.rulechains',
+                pageTitle: 'rulechain.edge-rulechains',
                 ruleChainsType: 'edge'
             },
             ncyBreadcrumb: {

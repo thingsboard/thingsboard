@@ -250,6 +250,12 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     if (dashboardScope === 'edge') {
       actions.push(
         {
+          name: this.translate.instant('dashboard.export'),
+          icon: 'file_download',
+          isEnabled: () => true,
+          onAction: ($event, entity) => this.exportDashboard($event, entity)
+        },
+        {
           name: this.translate.instant('edge.unassign-from-edge'),
           icon: 'portable_wifi_off',
           isEnabled: (entity) => true,
@@ -351,7 +357,10 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     }
     if (this.config.componentsData.dashboardScope === 'customer') {
       this.router.navigateByUrl(`customers/${this.config.componentsData.customerId}/dashboards/${dashboard.id.id}`);
-    } else {
+    } else if (this.config.componentsData.dashboardScope === 'edge') {
+      this.router.navigateByUrl(`edges/${this.config.componentsData.edgeId}/dashboards/${dashboard.id.id}`);
+    }
+    else {
       this.router.navigateByUrl(`dashboards/${dashboard.id.id}`);
     }
   }
@@ -543,6 +552,9 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       case 'unassignFromCustomer':
         this.unassignFromCustomer(action.event, action.entity, this.config.componentsData.customerId);
         return true;
+      case 'unassignFromEdge':
+        this.unassignFromEdge(action.event, action.entity);
+        return true;
     }
     return false;
   }
@@ -572,7 +584,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('dashboard.unassign-dashboard-from-edge-title', {dashboardName: dashboard.name}),
+      this.translate.instant('dashboard.unassign-dashboard-title', {dashboardTitle: dashboard.title}),
       this.translate.instant('dashboard.unassign-dashboard-from-edge-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),

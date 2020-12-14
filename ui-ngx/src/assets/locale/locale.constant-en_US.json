@@ -1179,8 +1179,6 @@
       "unassign-from-edge": "Unassign from edge",
       "dashboards": "Edge Dashboards",
       "manage-edge-rulechains": "Manage edge rule chains",
-      "rulechains": "Edge Rule Chains",
-      "rulechain": "Edge Rule Chain",
       "edge-key": "Edge key",
       "copy-edge-key": "Copy Edge key",
       "edge-key-copied-message": "Edge key has been copied to clipboard",
@@ -1204,6 +1202,9 @@
       "enter-edge-type": "Enter entity view type",
       "any-edge": "Any edge",
       "no-edge-types-matching": "No edge types matching '{{entitySubtype}}' were found.",
+      "edge-type-list-empty": "No device types selected.",
+      "edge-types": "Edge types",
+      "dashboard": "Edge dashboard",
       "unassign-edges-action-title": "Unassign { count, plural, 1 {1 edge} other {# edges} } from customer"
     },
     "error": {
@@ -2035,6 +2036,7 @@
         "open-rulechain": "Open rule chain",
         "assign-new-rulechain": "Assign new rulechain",
         "edge-rulechains": "Edge Rule chains",
+        "edge-rulechain": "Edge Rule chain",
         "core-rulechains": "Core Rule chains",
         "unassign-rulechain-from-edge-text": "After the confirmation the rulechain will be unassigned and won't be accessible by the edge.",
         "unassign-rulechains-from-edge-title": "Unassign { count, plural, 1 {1 rulechain} other {# rulechains} } from edge",
@@ -2054,7 +2056,8 @@
         "unassign-rulechain-title": "Are you sure you want to unassign the rulechain '{{ruleChainName}}'?",
         "unassign-rulechains-title": "Are you sure you want to unassign { count, plural, 1 {1 rulechain} other {# rulechains} }?",
         "unassign-rulechains": "Unassign rulechains",
-        "default": "Default"
+        "default": "Default",
+        "default-root": "Default root"
     },
     "rulenode": {
         "details": "Details",

@@ -210,7 +210,7 @@ const routes: Routes = [
             component: EntitiesTableComponent,
             data: {
               auth: [Authority.TENANT_ADMIN],
-              title: 'edge.rulechains',
+              title: 'rulechain.edge-rulechains',
               ruleChainsType: 'edges'
             },
             resolve: {
@@ -227,7 +227,7 @@ const routes: Routes = [
                 icon: 'settings_ethernet'
               } as BreadCrumbConfig<RuleChainPageComponent>,
               auth: [Authority.TENANT_ADMIN],
-              title: 'edge.rulechain',
+              title: 'rulechain.edge-rulechain',
               import: false,
               ruleChainType: ruleChainType.edge
             },
@@ -248,7 +248,7 @@ const routes: Routes = [
                 icon: 'settings_ethernet'
               } as BreadCrumbConfig<RuleChainPageComponent>,
               auth: [Authority.TENANT_ADMIN],
-              title: 'edge.rulechain',
+              title: 'rulechain.edge-rulechain',
               import: true,
               ruleChainType: ruleChainType.edge
             },

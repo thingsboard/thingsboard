@@ -544,6 +544,9 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       case 'unassignFromCustomer':
         this.unassignFromCustomer(action.event, action.entity);
         return true;
+      case 'unassignFromEdge':
+        this.unassignFromEdge(action.event, action.entity);
+        return true;
       case 'manageCredentials':
         this.manageCredentials(action.event, action.entity);
         return true;
