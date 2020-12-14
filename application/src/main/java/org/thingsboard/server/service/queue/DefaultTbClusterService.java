@@ -184,12 +184,9 @@ public class DefaultTbClusterService implements TbClusterService {
         byte[] msgBytes = encodingService.encode(msg);
         TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineProducer = producerProvider.getRuleEngineNotificationsMsgProducer();
         Set<String> tbRuleEngineServices = new HashSet<>(partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE));
-        boolean toCore = msg.getEntityId().getEntityType().equals(EntityType.TENANT) ||
-                msg.getEntityId().getEntityType().equals(EntityType.EDGE);
 
-        boolean toRuleEngine = !msg.getEntityId().getEntityType().equals(EntityType.EDGE);
-
-        if (toCore) {
+        if (msg.getEntityId().getEntityType().equals(EntityType.TENANT) ||
+                msg.getEntityId().getEntityType().equals(EntityType.EDGE)) {
             TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
             Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
             for (String serviceId : tbCoreServices) {
@@ -201,13 +198,11 @@ public class DefaultTbClusterService implements TbClusterService {
             // No need to push notifications twice
             tbRuleEngineServices.removeAll(tbCoreServices);
         }
-        if (toRuleEngine) {
-            for (String serviceId : tbRuleEngineServices) {
-                TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
-                ToRuleEngineNotificationMsg toRuleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setComponentLifecycleMsg(ByteString.copyFrom(msgBytes)).build();
-                toRuleEngineProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toRuleEngineMsg), null);
-                toRuleEngineNfs.incrementAndGet();
-            }
+        for (String serviceId : tbRuleEngineServices) {
+            TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
+            ToRuleEngineNotificationMsg toRuleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setComponentLifecycleMsg(ByteString.copyFrom(msgBytes)).build();
+            toRuleEngineProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toRuleEngineMsg), null);
+            toRuleEngineNfs.incrementAndGet();
         }
     }
 
