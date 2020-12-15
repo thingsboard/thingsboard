@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -342,8 +343,8 @@ public final class EdgeGrpcSession implements Closeable {
                     case CREDENTIALS_REQUEST:
                         downlinkMsg = processCredentialsRequestMessage(edgeEvent);
                         break;
-                    case ENTITY_EXISTS_REQUEST:
-                        downlinkMsg = processEntityExistsRequestMessage(edgeEvent);
+                    case ENTITY_MERGE_REQUEST:
+                        downlinkMsg = processEntityMergeRequestMessage(edgeEvent);
                         break;
                     case RPC_CALL:
                         downlinkMsg = processRpcCallMsg(edgeEvent);
@@ -359,13 +360,18 @@ public final class EdgeGrpcSession implements Closeable {
         return result;
     }
 
-    private DownlinkMsg processEntityExistsRequestMessage(EdgeEvent edgeEvent) {
+    private DownlinkMsg processEntityMergeRequestMessage(EdgeEvent edgeEvent) {
         DownlinkMsg downlinkMsg = null;
         if (EdgeEventType.DEVICE.equals(edgeEvent.getType())) {
             DeviceId deviceId = new DeviceId(edgeEvent.getEntityId());
             Device device = ctx.getDeviceService().findDeviceById(edge.getTenantId(), deviceId);
             CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(device);
-            DeviceUpdateMsg d = ctx.getDeviceMsgConstructor().constructDeviceUpdatedMsg(UpdateMsgType.DEVICE_CONFLICT_RPC_MESSAGE, device, customerId);
+            String conflictName = null;
+            if(edgeEvent.getBody() != null) {
+                conflictName = edgeEvent.getBody().get("conflictName").asText();
+            }
+            DeviceUpdateMsg d = ctx.getDeviceMsgConstructor()
+                    .constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_MERGE_RPC_MESSAGE, device, customerId, conflictName);
             downlinkMsg = DownlinkMsg.newBuilder()
                     .addAllDeviceUpdateMsg(Collections.singletonList(d))
                     .build();
@@ -504,7 +510,7 @@ public final class EdgeGrpcSession implements Closeable {
                 if (device != null) {
                     CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(device);
                     DeviceUpdateMsg deviceUpdateMsg =
-                            ctx.getDeviceMsgConstructor().constructDeviceUpdatedMsg(msgType, device, customerId);
+                            ctx.getDeviceMsgConstructor().constructDeviceUpdatedMsg(msgType, device, customerId, null);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .addAllDeviceUpdateMsg(Collections.singletonList(deviceUpdateMsg))
                             .build();

@@ -109,6 +109,7 @@ import org.thingsboard.server.common.data.rule.DefaultRuleChainCreateRequest;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
@@ -120,6 +121,7 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -700,22 +702,31 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public List<ComponentDescriptor> getComponentDescriptorsByType(ComponentType componentType) {
+        return getComponentDescriptorsByType(componentType, RuleChainType.CORE);
+    }
+
+    public List<ComponentDescriptor> getComponentDescriptorsByType(ComponentType componentType, RuleChainType ruleChainType) {
         return restTemplate.exchange(
-                baseURL + "/api/components?componentType={componentType}",
+                baseURL + "/api/components/" + componentType.name() + "/?ruleChainType={ruleChainType}",
                 HttpMethod.GET, HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<ComponentDescriptor>>() {
                 },
-                componentType).getBody();
+                ruleChainType).getBody();
     }
 
     public List<ComponentDescriptor> getComponentDescriptorsByTypes(List<ComponentType> componentTypes) {
+        return getComponentDescriptorsByTypes(componentTypes, RuleChainType.CORE);
+    }
+
+    public List<ComponentDescriptor> getComponentDescriptorsByTypes(List<ComponentType> componentTypes, RuleChainType ruleChainType) {
         return restTemplate.exchange(
-                baseURL + "/api/components?componentTypes={componentTypes}",
+                baseURL + "/api/components?componentTypes={componentTypes}&ruleChainType={ruleChainType}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<ComponentDescriptor>>() {
                 },
-                listEnumToString(componentTypes))
+                listEnumToString(componentTypes),
+                ruleChainType)
                 .getBody();
     }
 
