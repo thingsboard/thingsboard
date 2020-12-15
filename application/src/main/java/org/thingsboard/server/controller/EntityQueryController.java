@@ -16,14 +16,16 @@
 package org.thingsboard.server.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
@@ -32,15 +34,8 @@ import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
-import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.query.EntityQueryService;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @RestController
 @TbCoreComponent
@@ -49,13 +44,6 @@ public class EntityQueryController extends BaseController {
 
     @Autowired
     private EntityQueryService entityQueryService;
-
-    @Autowired
-    private AttributesService attributesService;
-
-    @Autowired
-    private TimeseriesService timeseriesService;
-
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entitiesQuery/count", method = RequestMethod.POST)
@@ -96,35 +84,22 @@ public class EntityQueryController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entitiesQuery/find/keys/timeseries", method = RequestMethod.POST)
     @ResponseBody
-    public List<String> findEntityTimeseriesKeysByQuery(@RequestBody EntityDataQuery query) throws ThingsboardException {
+    public DeferredResult<ResponseEntity> findEntityTimeseriesAndAttributesKeysByQuery(@RequestBody EntityDataQuery query,
+                                                                                       @RequestParam("timeseries") boolean isTimeseries,
+                                                                                       @RequestParam("attributes") boolean isAttributes) throws ThingsboardException {
         TenantId tenantId = getTenantId();
-        return getKeys(query, entityIds ->  timeseriesService.findAllKeysByEntityIds(tenantId, entityIds));
-    }
-
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/entitiesQuery/find/keys/attributes", method = RequestMethod.POST)
-    @ResponseBody
-    public List<String> findEntityAttributesKeysByQuery(@RequestBody EntityDataQuery query) throws ThingsboardException {
-        TenantId tenantId = getTenantId();
-        return getKeys(query, entityIds ->  attributesService.findAllKeysByEntityIds(tenantId, entityIds.get(0).getEntityType(), entityIds));
-    }
-
-    private List<String> getKeys(EntityDataQuery query, Function<List<EntityId>, List<String>> function) throws ThingsboardException {
         checkNotNull(query);
         try {
             EntityDataPageLink pageLink = query.getPageLink();
             if (pageLink.getPageSize() > 100) {
                 pageLink.setPageSize(100);
             }
-            List<EntityId> ids = this.entityQueryService.findEntityDataByQuery(getCurrentUser(), query).getData().stream()
-                    .map(EntityData::getEntityId)
-                    .collect(Collectors.toList());
-            if (ids.isEmpty()) {
-                return Collections.emptyList();
-            }
-            return function.apply(ids);
+            DeferredResult<ResponseEntity> response = new DeferredResult<>();
+            entityQueryService.getKeysByQueryCallback(getCurrentUser(), tenantId, query, isTimeseries, isAttributes, response);
+            return response;
         } catch (Exception e) {
             throw handleException(e);
         }
     }
+
 }
