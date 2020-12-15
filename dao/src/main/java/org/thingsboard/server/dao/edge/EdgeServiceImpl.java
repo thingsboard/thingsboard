@@ -25,6 +25,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
@@ -172,6 +173,21 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     public Edge saveEdge(Edge edge) {
         log.trace("Executing saveEdge [{}]", edge);
         edgeValidator.validate(edge, Edge::getTenantId);
+        Edge savedEdge;
+        if (!sqlDatabaseUsed) {
+            savedEdge = edgeDao.save(edge.getTenantId(), edge);
+        } else {
+            try {
+                savedEdge = edgeDao.save(edge.getTenantId(), edge);
+            } catch (Exception t) {
+                ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+                if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("edge_name_unq_key")) {
+                    throw new DataValidationException("Edge with such name already exists!");
+                } else {
+                    throw t;
+                }
+            }
+        }
         return edgeDao.save(edge.getTenantId(), edge);
     }
 
