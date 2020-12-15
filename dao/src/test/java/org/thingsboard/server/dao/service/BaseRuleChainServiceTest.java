@@ -317,6 +317,16 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         ruleChainService.deleteRuleChainById(tenantId, savedRuleChainMetaData.getRuleChainId());
     }
 
+    @Test(expected = DataValidationException.class)
+    public void testUpdateRuleChainMetaDataWithCirclingRelation() throws Exception {
+        ruleChainService.saveRuleChainMetaData(tenantId, createRuleChainMetadataWithCirclingRelation());
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testUpdateRuleChainMetaDataWithCirclingRelation2() throws Exception {
+        ruleChainService.saveRuleChainMetaData(tenantId, createRuleChainMetadataWithCirclingRelation2());
+    }
+
     private RuleChainMetaData createRuleChainMetadata() throws Exception {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("My RuleChain");
@@ -357,5 +367,85 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         return ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData);
     }
 
+    private RuleChainMetaData createRuleChainMetadataWithCirclingRelation() throws Exception {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName("My RuleChain");
+        ruleChain.setTenantId(tenantId);
+        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
 
+        RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
+        ruleChainMetaData.setRuleChainId(savedRuleChain.getId());
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        RuleNode ruleNode1 = new RuleNode();
+        ruleNode1.setName("name1");
+        ruleNode1.setType("type1");
+        ruleNode1.setConfiguration(mapper.readTree("\"key1\": \"val1\""));
+
+        RuleNode ruleNode2 = new RuleNode();
+        ruleNode2.setName("name2");
+        ruleNode2.setType("type2");
+        ruleNode2.setConfiguration(mapper.readTree("\"key2\": \"val2\""));
+
+        RuleNode ruleNode3 = new RuleNode();
+        ruleNode3.setName("name3");
+        ruleNode3.setType("type3");
+        ruleNode3.setConfiguration(mapper.readTree("\"key3\": \"val3\""));
+
+        List<RuleNode> ruleNodes = new ArrayList<>();
+        ruleNodes.add(ruleNode1);
+        ruleNodes.add(ruleNode2);
+        ruleNodes.add(ruleNode3);
+        ruleChainMetaData.setFirstNodeIndex(0);
+        ruleChainMetaData.setNodes(ruleNodes);
+
+        ruleChainMetaData.addConnectionInfo(0,1,"success");
+        ruleChainMetaData.addConnectionInfo(0,2,"fail");
+        ruleChainMetaData.addConnectionInfo(1,2,"success");
+        ruleChainMetaData.addConnectionInfo(2,2,"success");
+
+        return ruleChainMetaData;
+    }
+
+    private RuleChainMetaData createRuleChainMetadataWithCirclingRelation2() throws Exception {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName("My RuleChain");
+        ruleChain.setTenantId(tenantId);
+        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
+
+        RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
+        ruleChainMetaData.setRuleChainId(savedRuleChain.getId());
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        RuleNode ruleNode1 = new RuleNode();
+        ruleNode1.setName("name1");
+        ruleNode1.setType("type1");
+        ruleNode1.setConfiguration(mapper.readTree("\"key1\": \"val1\""));
+
+        RuleNode ruleNode2 = new RuleNode();
+        ruleNode2.setName("name2");
+        ruleNode2.setType("type2");
+        ruleNode2.setConfiguration(mapper.readTree("\"key2\": \"val2\""));
+
+        RuleNode ruleNode3 = new RuleNode();
+        ruleNode3.setName("name3");
+        ruleNode3.setType("type3");
+        ruleNode3.setConfiguration(mapper.readTree("\"key3\": \"val3\""));
+
+        List<RuleNode> ruleNodes = new ArrayList<>();
+        ruleNodes.add(ruleNode1);
+        ruleNodes.add(ruleNode2);
+        ruleNodes.add(ruleNode3);
+        ruleChainMetaData.setFirstNodeIndex(0);
+        ruleChainMetaData.setNodes(ruleNodes);
+
+        ruleChainMetaData.addConnectionInfo(0,1,"success");
+        ruleChainMetaData.addConnectionInfo(0,2,"fail");
+        ruleChainMetaData.addConnectionInfo(1,2,"success");
+        ruleChainMetaData.addConnectionInfo(2,0,"success");
+
+        return ruleChainMetaData;
+    }
 }

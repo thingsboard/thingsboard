@@ -19,14 +19,21 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DeviceInfo } from '@shared/models/device.models';
+import {
+  createDeviceConfiguration,
+  createDeviceTransportConfiguration, DeviceCredentials,
+  DeviceData,
+  DeviceInfo,
+  DeviceProfileInfo,
+  DeviceProfileType,
+  DeviceTransportType
+} from '@shared/models/device.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
-import { DeviceService } from '@core/http/device.service';
-import { ClipboardService } from 'ngx-clipboard';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'tb-device',
@@ -37,12 +44,12 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
 
   entityType = EntityType;
 
+  deviceCredentials$: Subject<DeviceCredentials>;
+
   deviceScope: 'tenant' | 'customer' | 'customer_user';
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              private deviceService: DeviceService,
-              private clipboardService: ClipboardService,
               @Inject('entity') protected entityValue: DeviceInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<DeviceInfo>,
               public fb: FormBuilder) {
@@ -51,6 +58,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
 
   ngOnInit() {
     this.deviceScope = this.entitiesTableConfig.componentsData.deviceScope;
+    this.deviceCredentials$ = this.entitiesTableConfigValue.componentsData.deviceCredentials$;
     super.ngOnInit();
   }
 
@@ -70,8 +78,9 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
     return this.fb.group(
       {
         name: [entity ? entity.name : '', [Validators.required]],
-        type: [entity ? entity.type : null, [Validators.required]],
+        deviceProfileId: [entity ? entity.deviceProfileId : null, [Validators.required]],
         label: [entity ? entity.label : ''],
+        deviceData: [entity ? entity.deviceData : null, [Validators.required]],
         additionalInfo: this.fb.group(
           {
             gateway: [entity && entity.additionalInfo ? entity.additionalInfo.gateway : false],
@@ -84,8 +93,9 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
 
   updateForm(entity: DeviceInfo) {
     this.entityForm.patchValue({name: entity.name});
-    this.entityForm.patchValue({type: entity.type});
+    this.entityForm.patchValue({deviceProfileId: entity.deviceProfileId});
     this.entityForm.patchValue({label: entity.label});
+    this.entityForm.patchValue({deviceData: entity.deviceData});
     this.entityForm.patchValue({additionalInfo:
         {gateway: entity.additionalInfo ? entity.additionalInfo.gateway : false}});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
@@ -103,23 +113,37 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
       }));
   }
 
-  copyAccessToken($event) {
-    if (this.entity.id) {
-      this.deviceService.getDeviceCredentials(this.entity.id.id, true).subscribe(
-        (deviceCredentials) => {
-          const credentialsId = deviceCredentials.credentialsId;
-          if (this.clipboardService.copyFromContent(credentialsId)) {
-            this.store.dispatch(new ActionNotificationShow(
-              {
-                message: this.translate.instant('device.accessTokenCopiedMessage'),
-                type: 'success',
-                duration: 750,
-                verticalPosition: 'bottom',
-                horizontalPosition: 'right'
-              }));
-          }
+  onDeviceProfileUpdated() {
+    this.entitiesTableConfig.table.updateData(false);
+  }
+
+  onDeviceProfileChanged(deviceProfile: DeviceProfileInfo) {
+    if (deviceProfile && this.isEdit) {
+      const deviceProfileType: DeviceProfileType = deviceProfile.type;
+      const deviceTransportType: DeviceTransportType = deviceProfile.transportType;
+      let deviceData: DeviceData = this.entityForm.getRawValue().deviceData;
+      if (!deviceData) {
+        deviceData = {
+          configuration: createDeviceConfiguration(deviceProfileType),
+          transportConfiguration: createDeviceTransportConfiguration(deviceTransportType)
+        };
+        this.entityForm.patchValue({deviceData});
+        this.entityForm.markAsDirty();
+      } else {
+        let changed = false;
+        if (deviceData.configuration.type !== deviceProfileType) {
+          deviceData.configuration = createDeviceConfiguration(deviceProfileType);
+          changed = true;
         }
-      );
+        if (deviceData.transportConfiguration.type !== deviceTransportType) {
+          deviceData.transportConfiguration = createDeviceTransportConfiguration(deviceTransportType);
+          changed = true;
+        }
+        if (changed) {
+          this.entityForm.patchValue({deviceData});
+          this.entityForm.markAsDirty();
+        }
+      }
     }
   }
 }

@@ -52,15 +52,19 @@ export class LegendComponent implements OnInit {
   }
 
   toggleHideData(index: number) {
-    if (!this.legendData.keys[index].dataKey.settings.disableDataHiding) {
-      this.legendData.keys[index].dataKey.hidden = !this.legendData.keys[index].dataKey.hidden;
+    const dataKey = this.legendData.keys.find(key => key.dataIndex === index).dataKey;
+    if (!dataKey.settings.disableDataHiding) {
+      dataKey.hidden = !dataKey.hidden;
       this.legendKeyHiddenChange.emit(index);
     }
   }
 
   legendKeys(): LegendKey[] {
-    return this.legendData.keys
-      .filter(legendKey => this.legendData.keys[legendKey.dataIndex].dataKey.inLegend);
+    let keys = this.legendData.keys;
+    if (this.legendConfig.sortDataKeys) {
+      keys = this.legendData.keys.sort((key1, key2) => key1.dataKey.label.localeCompare(key2.dataKey.label));
+    }
+    return keys.filter(legendKey => this.legendData.keys[legendKey.dataIndex].dataKey.inLegend);
   }
 
 }

@@ -25,7 +25,7 @@ import {
   FixedLevelColors
 } from '@home/components/widget/lib/digital-gauge.models';
 import * as tinycolor_ from 'tinycolor2';
-import { isDefined } from '@core/utils';
+import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { prepareFontSettings } from '@home/components/widget/lib/settings.models';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import { DatePipe } from '@angular/common';
@@ -53,7 +53,7 @@ export class TbCanvasDigitalGauge {
   }
 
   constructor(protected ctx: WidgetContext, canvasId: string) {
-    const gaugeElement = $('#'+canvasId, ctx.$container)[0];
+    const gaugeElement = $('#' + canvasId, ctx.$container)[0];
     const settings: DigitalGaugeSettings = ctx.settings;
 
     this.localSettings = {};
@@ -80,7 +80,7 @@ export class TbCanvasDigitalGauge {
 
     this.localSettings.useFixedLevelColor = settings.useFixedLevelColor || false;
     if (!settings.useFixedLevelColor) {
-      if (!settings.levelColors || settings.levelColors.length <= 0) {
+      if (!settings.levelColors || settings.levelColors.length === 0) {
         this.localSettings.levelColors = [keyColor];
       } else {
         this.localSettings.levelColors = settings.levelColors.slice();
@@ -97,14 +97,15 @@ export class TbCanvasDigitalGauge {
     this.localSettings.colorTicks = settings.colorTicks || '#666';
 
     this.localSettings.decimals = isDefined(dataKey.decimals) ? dataKey.decimals :
-      ((isDefined(settings.decimals) && settings.decimals !== null)
-        ? settings.decimals : ctx.decimals);
+      (isDefinedAndNotNull(settings.decimals) ? settings.decimals : ctx.decimals);
 
     this.localSettings.units = dataKey.units && dataKey.units.length ? dataKey.units :
       (isDefined(settings.units) && settings.units.length > 0 ? settings.units : ctx.units);
 
     this.localSettings.hideValue = settings.showValue !== true;
     this.localSettings.hideMinMax = settings.showMinMax !== true;
+    this.localSettings.donutStartAngle = isDefinedAndNotNull(settings.donutStartAngle) ?
+      -TbCanvasDigitalGauge.toRadians(settings.donutStartAngle) : null;
 
     this.localSettings.title = ((settings.showTitle === true) ?
       (settings.title && settings.title.length > 0 ?
@@ -191,14 +192,15 @@ export class TbCanvasDigitalGauge {
       hideValue: this.localSettings.hideValue,
       hideMinMax: this.localSettings.hideMinMax,
 
+      donutStartAngle: this.localSettings.donutStartAngle,
+
       valueDec: this.localSettings.decimals,
 
       neonGlowBrightness: this.localSettings.neonGlowBrightness,
 
       // animations
       animation: settings.animation !== false && !ctx.isMobile,
-      animationDuration: (isDefined(settings.animationDuration) && settings.animationDuration !== null)
-        ? settings.animationDuration : 500,
+      animationDuration: isDefinedAndNotNull(settings.animationDuration) ? settings.animationDuration : 500,
       animationRule: settings.animationRule || 'linear',
 
       isMobile: ctx.isMobile
@@ -241,7 +243,7 @@ export class TbCanvasDigitalGauge {
       if (findDataKey) {
         findDataKey.settings.push(settings);
       } else {
-        datasource.dataKeys.push(dataKey)
+        datasource.dataKeys.push(dataKey);
       }
     } else {
       const datasourceAttribute: Datasource = {
@@ -257,17 +259,23 @@ export class TbCanvasDigitalGauge {
     return datasources;
   }
 
-  init() {
-    if (this.localSettings.useFixedLevelColor) {
-      if (this.localSettings.fixedLevelColors && this.localSettings.fixedLevelColors.length > 0) {
-        this.localSettings.levelColors = this.settingLevelColorsSubscribe(this.localSettings.fixedLevelColors);
-      }
+  private static toRadians(angle: number): number {
+    return angle * (Math.PI / 180);
+  }
 
-      if (this.localSettings.showTicks) {
-        if (this.localSettings.ticksValue && this.localSettings.ticksValue.length) {
-          this.localSettings.ticks = this.settingTicksSubscribe(this.localSettings.ticksValue);
-        }
-      }
+  init() {
+    let updateSetting = false;
+
+    if (this.localSettings.useFixedLevelColor && this.localSettings.fixedLevelColors?.length > 0) {
+      this.localSettings.levelColors = this.settingLevelColorsSubscribe(this.localSettings.fixedLevelColors);
+      updateSetting = true;
+    }
+    if (this.localSettings.showTicks && this.localSettings.ticksValue?.length) {
+      this.localSettings.ticks = this.settingTicksSubscribe(this.localSettings.ticksValue);
+      updateSetting = true;
+    }
+
+    if (updateSetting) {
       this.updateSetting();
     }
   }
@@ -281,7 +289,7 @@ export class TbCanvasDigitalGauge {
         predefineLevelColors.push({
           value: levelSetting.value,
           color
-        })
+        });
       } else if (levelSetting.entityAlias && levelSetting.attribute) {
         try {
           levelColorsDatasource = TbCanvasDigitalGauge.generateDatasource(this.ctx, levelColorsDatasource,
@@ -293,7 +301,7 @@ export class TbCanvasDigitalGauge {
       }
     }
 
-    for(const levelColor of options){
+    for (const levelColor of options) {
       if (levelColor.from) {
         setLevelColor.call(this, levelColor.from, levelColor.color);
       }
@@ -313,9 +321,9 @@ export class TbCanvasDigitalGauge {
     let ticksDatasource: Datasource[] = [];
     const predefineTicks: number[] = [];
 
-    for(const tick of options){
+    for (const tick of options) {
       if (tick.valueSource === 'predefinedValue' && isFinite(tick.value)) {
-        predefineTicks.push(tick.value)
+        predefineTicks.push(tick.value);
       } else if (tick.entityAlias && tick.attribute) {
         try {
           ticksDatasource = TbCanvasDigitalGauge
@@ -398,7 +406,7 @@ export class TbCanvasDigitalGauge {
             filter.transform(timestamp, this.localSettings.timestampFormat);
         }
         const value = tvPair[1];
-        if(value !== this.gauge.value) {
+        if (value !== this.gauge.value) {
           if (!this.gauge.options.animation) {
             this.gauge._value = value;
           }

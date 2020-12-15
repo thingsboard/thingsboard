@@ -30,10 +30,13 @@ import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseriesDao implements AggregationTimeseriesDao {
+
+    protected static final long SECONDS_IN_DAY = TimeUnit.DAYS.toSeconds(1);
 
     @Autowired
     protected ScheduledLogExecutorComponent logExecutor;
@@ -53,6 +56,12 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
     @Value("${sql.timescale.batch_threads:4}")
     protected int timescaleBatchThreads;
 
+    @Value("${sql.batch_sort:false}")
+    protected boolean batchSortEnabled;
+
+    @Value("${sql.ttl.ts.ts_key_value_ttl:0}")
+    private long systemTtl;
+
     protected ListenableFuture<List<TsKvEntry>> processFindAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
         List<ListenableFuture<List<TsKvEntry>>> futures = queries
                 .stream()
@@ -71,5 +80,20 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
                         .collect(Collectors.toList());
             }
         }, service);
+    }
+
+    protected long computeTtl(long ttl) {
+        if (systemTtl > 0) {
+            if (ttl == 0) {
+                ttl = systemTtl;
+            } else {
+                ttl = Math.min(systemTtl, ttl);
+            }
+        }
+        return ttl;
+    }
+
+    protected int getDataPointDays(TsKvEntry tsKvEntry, long ttl) {
+        return tsKvEntry.getDataPoints() * Math.max(1, (int) (ttl / SECONDS_IN_DAY));
     }
 }

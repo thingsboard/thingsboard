@@ -90,7 +90,7 @@ public class AlarmController extends BaseController {
             checkEntity(alarm.getId(), alarm, Resource.ALARM);
 
             Alarm savedAlarm = checkNotNull(alarmService.createOrUpdateAlarm(alarm));
-            logEntityAction(savedAlarm.getId(), savedAlarm,
+            logEntityAction(savedAlarm.getOriginator(), savedAlarm,
                     getCurrentUser().getCustomerId(),
                     alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
             return savedAlarm;
@@ -126,7 +126,8 @@ public class AlarmController extends BaseController {
             long ackTs = System.currentTimeMillis();
             alarmService.ackAlarm(getCurrentUser().getTenantId(), alarmId, ackTs).get();
             alarm.setAckTs(ackTs);
-            logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_ACK, null);
+            alarm.setStatus(alarm.getStatus().isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK);
+            logEntityAction(alarm.getOriginator(), alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_ACK, null);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -143,7 +144,8 @@ public class AlarmController extends BaseController {
             long clearTs = System.currentTimeMillis();
             alarmService.clearAlarm(getCurrentUser().getTenantId(), alarmId, null, clearTs).get();
             alarm.setClearTs(clearTs);
-            logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_CLEAR, null);
+            alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
+            logEntityAction(alarm.getOriginator(), alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_CLEAR, null);
         } catch (Exception e) {
             throw handleException(e);
         }

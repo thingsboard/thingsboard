@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="filterUserInfoFormGroup" (ngSubmit)="save()" style="width: 500px;">
   <mat-toolbar color="primary">
-    <h2 translate>filter.edit-filter-user-params</h2>
+    <h2>{{(data.readonly ? 'filter.filter-user-params' : 'filter.edit-filter-user-params') | translate}}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -46,17 +46,18 @@
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
-    <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || filterUserInfoFormGroup.invalid || !filterUserInfoFormGroup.dirty">
-      {{ 'action.update' | translate }}
-    </button>
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()"
             cdkFocusInitial>
-      {{ 'action.cancel' | translate }}
+      {{ (data.readonly ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            *ngIf="!data.readonly"
+            type="submit"
+            [disabled]="(isLoading$ | async) || filterUserInfoFormGroup.invalid || !filterUserInfoFormGroup.dirty">
+      {{ 'action.update' | translate }}
     </button>
   </div>
 </form>

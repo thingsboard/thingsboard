@@ -29,10 +29,10 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { EntityAction } from '@home/models/entity/entity-component.models';
+import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
 import { Device, DeviceCredentials, DeviceInfo } from '@app/shared/models/device.models';
 import { DeviceComponent } from '@modules/home/pages/device/device.component';
-import { forkJoin, Observable, of } from 'rxjs';
+import { forkJoin, Observable, of, Subject } from 'rxjs';
 import { select, Store } from '@ngrx/store';
 import { selectAuthUser } from '@core/auth/auth.selectors';
 import { map, mergeMap, take, tap } from 'rxjs/operators';
@@ -61,6 +61,9 @@ import {
 } from '../../dialogs/add-entities-to-customer-dialog.component';
 import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
+import { DeviceWizardDialogComponent } from '@home/components/wizard/device-wizard-dialog.component';
+import { BaseData, HasId } from '@shared/models/base-data';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Injectable()
 export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<DeviceInfo>> {
@@ -85,6 +88,8 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     this.config.entityTabsComponent = DeviceTabsComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.DEVICE);
     this.config.entityResources = entityTypeResources.get(EntityType.DEVICE);
+
+    this.config.addDialogStyle = {width: '600px'};
 
     this.config.deleteEntityTitle = device => this.translate.instant('device.delete-device-title', { deviceName: device.name });
     this.config.deleteEntityContent = () => this.translate.instant('device.delete-device-text');
@@ -111,7 +116,8 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     const routeParams = route.params;
     this.config.componentsData = {
       deviceScope: route.data.devicesType,
-      deviceType: ''
+      deviceProfileId: null,
+      deviceCredentials$: new Subject<DeviceCredentials>()
     };
     this.customerId = routeParams.customerId;
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
@@ -151,7 +157,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     const columns: Array<EntityTableColumn<DeviceInfo>> = [
       new DateEntityTableColumn<DeviceInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<DeviceInfo>('name', 'device.name', '25%'),
-      new EntityTableColumn<DeviceInfo>('type', 'device.device-type', '25%'),
+      new EntityTableColumn<DeviceInfo>('deviceProfileName', 'device-profile.device-profile', '25%'),
       new EntityTableColumn<DeviceInfo>('label', 'device.label', '25%')
     ];
     if (deviceScope === 'tenant') {
@@ -175,11 +181,15 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
   configureEntityFunctions(deviceScope: string): void {
     if (deviceScope === 'tenant') {
       this.config.entitiesFetchFunction = pageLink =>
-        this.deviceService.getTenantDeviceInfos(pageLink, this.config.componentsData.deviceType);
+        this.deviceService.getTenantDeviceInfosByDeviceProfileId(pageLink,
+          this.config.componentsData.deviceProfileId !== null ?
+            this.config.componentsData.deviceProfileId.id : '');
       this.config.deleteEntity = id => this.deviceService.deleteDevice(id.id);
     } else {
       this.config.entitiesFetchFunction = pageLink =>
-        this.deviceService.getCustomerDeviceInfos(this.customerId, pageLink, this.config.componentsData.deviceType);
+        this.deviceService.getCustomerDeviceInfosByDeviceProfileId(this.customerId, pageLink,
+          this.config.componentsData.deviceProfileId !== null ?
+          this.config.componentsData.deviceProfileId.id : '');
       this.config.deleteEntity = id => this.deviceService.unassignDeviceFromCustomer(id.id);
     }
   }
@@ -215,7 +225,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         {
           name: this.translate.instant('device.manage-credentials'),
           icon: 'security',
-          isEnabled: (entity) => true,
+          isEnabled: () => true,
           onAction: ($event, entity) => this.manageCredentials($event, entity)
         }
       );
@@ -237,7 +247,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           {
             name: this.translate.instant('device.manage-credentials'),
             icon: 'security',
-            isEnabled: (entity) => true,
+            isEnabled: () => true,
             onAction: ($event, entity) => this.manageCredentials($event, entity)
           }
         );
@@ -247,7 +257,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         {
           name: this.translate.instant('device.view-credentials'),
           icon: 'security',
-          isEnabled: (entity) => true,
+          isEnabled: () => true,
           onAction: ($event, entity) => this.manageCredentials($event, entity)
         }
       );
@@ -288,14 +298,14 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           name: this.translate.instant('device.add-device-text'),
           icon: 'insert_drive_file',
           isEnabled: () => true,
-          onAction: ($event) => this.config.table.addEntity($event)
+          onAction: ($event) => this.deviceWizard($event)
         },
         {
           name: this.translate.instant('device.import'),
           icon: 'file_upload',
           isEnabled: () => true,
           onAction: ($event) => this.importDevices($event)
-        }
+        },
       );
     }
     if (deviceScope === 'customer') {
@@ -318,6 +328,23 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         this.config.table.updateData();
       }
     });
+  }
+
+  deviceWizard($event: Event) {
+    this.dialog.open<DeviceWizardDialogComponent, AddEntityDialogData<BaseData<HasId>>,
+      boolean>(DeviceWizardDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        entitiesTableConfig: this.config.table.entitiesTableConfig
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        if (res) {
+          this.config.table.updateData();
+        }
+      }
+    );
   }
 
   addDevicesToCustomer($event: Event) {
@@ -454,6 +481,10 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         deviceId: device.id.id,
         isReadOnly: this.config.componentsData.deviceScope === 'customer_user'
       }
+    }).afterClosed().subscribe(deviceCredentials => {
+      if (isDefinedAndNotNull(deviceCredentials)) {
+        this.config.componentsData.deviceCredentials$.next(deviceCredentials);
+      }
     });
   }
 
@@ -474,5 +505,4 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     }
     return false;
   }
-
 }

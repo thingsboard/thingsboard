@@ -59,7 +59,9 @@ const helpBaseUrl = 'https://thingsboard.io';
 export const HelpLinks = {
   linksMap: {
     outgoingMailSettings: helpBaseUrl + '/docs/user-guide/ui/mail-settings',
+    smsProviderSettings: helpBaseUrl + '/docs/user-guide/ui/sms-provider-settings',
     securitySettings: helpBaseUrl + '/docs/user-guide/ui/security-settings',
+    oauth2Settings: helpBaseUrl + '/docs/user-guide/oauth-2-support/',
     ruleEngine: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/overview/',
     ruleNodeCheckRelation: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#check-relation-filter-node',
     ruleNodeCheckExistenceFields: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#check-existence-fields-node',
@@ -106,10 +108,13 @@ export const HelpLinks = {
     ruleNodeRabbitMq: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#rabbitmq-node',
     ruleNodeRestApiCall: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#rest-api-call-node',
     ruleNodeSendEmail: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-email-node',
+    ruleNodeSendSms: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-sms-node',
     tenants: helpBaseUrl + '/docs/user-guide/ui/tenants',
+    tenantProfiles: helpBaseUrl + '/docs/user-guide/ui/tenant-profiles',
     customers: helpBaseUrl + '/docs/user-guide/ui/customers',
     users: helpBaseUrl + '/docs/user-guide/ui/users',
     devices: helpBaseUrl + '/docs/user-guide/ui/devices',
+    deviceProfiles: helpBaseUrl + '/docs/user-guide/ui/device-profiles',
     assets: helpBaseUrl + '/docs/user-guide/ui/assets',
     entityViews: helpBaseUrl + '/docs/user-guide/ui/entity-views',
     entitiesImport: helpBaseUrl + '/docs/user-guide/bulk-provisioning',
@@ -121,7 +126,7 @@ export const HelpLinks = {
     widgetsConfigLatest: helpBaseUrl +  '/docs/user-guide/ui/dashboards#latest',
     widgetsConfigRpc: helpBaseUrl +  '/docs/user-guide/ui/dashboards#rpc',
     widgetsConfigAlarm: helpBaseUrl +  '/docs/user-guide/ui/dashboards#alarm',
-    widgetsConfigStatic: helpBaseUrl +  '/docs/user-guide/ui/dashboards#static'
+    widgetsConfigStatic: helpBaseUrl +  '/docs/user-guide/ui/dashboards#static',
   }
 };
 
@@ -216,5 +221,6 @@ export const contentTypesMap = new Map<ContentType, ContentTypeData>(
 );
 
 export const customTranslationsPrefix = 'custom.';
+export const i18nPrefix = 'i18n';
 
 export const MODULES_MAP = new InjectionToken<{[key: string]: any}>('ModulesMap');

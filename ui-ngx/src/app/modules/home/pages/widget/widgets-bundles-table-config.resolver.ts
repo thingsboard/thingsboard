@@ -37,6 +37,7 @@ import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { Direction } from "@shared/models/page/sort-order";
 
 @Injectable()
 export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableConfig<WidgetsBundle>> {
@@ -55,6 +56,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     this.config.entityComponent = WidgetsBundleComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.WIDGETS_BUNDLE);
     this.config.entityResources = entityTypeResources.get(EntityType.WIDGETS_BUNDLE);
+    this.config.defaultSortOrder = {property: 'title', direction: Direction.ASC};
 
     this.config.entityTitle = (widgetsBundle) => widgetsBundle ?
       widgetsBundle.title : '';

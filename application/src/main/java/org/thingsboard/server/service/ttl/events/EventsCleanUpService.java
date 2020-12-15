@@ -52,7 +52,7 @@ public class EventsCleanUpService extends AbstractCleanUpService {
     }
 
     @Override
-    protected void doCleanUp(Connection connection) {
+    protected void doCleanUp(Connection connection) throws SQLException {
         long totalEventsRemoved = executeQuery(connection, "call cleanup_events_by_ttl(" + ttl + ", " + debugTtl + ", 0);");
         log.info("Total events removed by TTL: [{}]", totalEventsRemoved);
     }

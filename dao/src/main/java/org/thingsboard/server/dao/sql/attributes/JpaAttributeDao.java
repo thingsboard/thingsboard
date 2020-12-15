@@ -38,6 +38,7 @@ import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -71,6 +72,9 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Value("${sql.attributes.batch_threads:4}")
     private int batchThreads;
 
+    @Value("${sql.batch_sort:false}")
+    private boolean batchSortEnabled;
+
     private TbSqlBlockingQueueWrapper<AttributeKvEntity> queue;
 
     @PostConstruct
@@ -81,11 +85,17 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 .maxDelay(maxDelay)
                 .statsPrintIntervalMs(statsPrintIntervalMs)
                 .statsNamePrefix("attributes")
+                .batchSortEnabled(batchSortEnabled)
                 .build();
 
         Function<AttributeKvEntity, Integer> hashcodeFunction = entity -> entity.getId().getEntityId().hashCode();
         queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads, statsFactory);
-        queue.init(logExecutor, v -> attributeKvInsertRepository.saveOrUpdate(v));
+        queue.init(logExecutor, v -> attributeKvInsertRepository.saveOrUpdate(v),
+                Comparator.comparing((AttributeKvEntity attributeKvEntity) -> attributeKvEntity.getId().getEntityId())
+                        .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getEntityType().name())
+                        .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getAttributeType())
+                        .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getAttributeKey())
+        );
     }
 
     @PreDestroy

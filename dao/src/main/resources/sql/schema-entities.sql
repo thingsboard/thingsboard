@@ -25,7 +25,7 @@ CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
 $$
 BEGIN
     IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
-        INSERT INTO tb_schema_settings (schema_version) VALUES (3001000);
+        INSERT INTO tb_schema_settings (schema_version) VALUES (3002000);
     END IF;
 END;
 $$;
@@ -139,17 +139,76 @@ CREATE TABLE IF NOT EXISTS dashboard (
     title varchar(255)
 );
 
+CREATE TABLE IF NOT EXISTS rule_chain (
+    id uuid NOT NULL CONSTRAINT rule_chain_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    configuration varchar(10000000),
+    name varchar(255),
+    first_rule_node_id uuid,
+    root boolean,
+    debug_mode boolean,
+    search_text varchar(255),
+    tenant_id uuid
+);
+
+CREATE TABLE IF NOT EXISTS rule_node (
+    id uuid NOT NULL CONSTRAINT rule_node_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    rule_chain_id uuid,
+    additional_info varchar,
+    configuration varchar(10000000),
+    type varchar(255),
+    name varchar(255),
+    debug_mode boolean,
+    search_text varchar(255)
+);
+
+CREATE TABLE IF NOT EXISTS rule_node_state (
+    id uuid NOT NULL CONSTRAINT rule_node_state_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    rule_node_id uuid NOT NULL,
+    entity_type varchar(32) NOT NULL,
+    entity_id uuid NOT NULL,
+    state_data varchar(16384) NOT NULL,
+    CONSTRAINT rule_node_state_unq_key UNIQUE (rule_node_id, entity_id),
+    CONSTRAINT fk_rule_node_state_node_id FOREIGN KEY (rule_node_id) REFERENCES rule_node(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS device_profile (
+    id uuid NOT NULL CONSTRAINT device_profile_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    name varchar(255),
+    type varchar(255),
+    transport_type varchar(255),
+    provision_type varchar(255),
+    profile_data jsonb,
+    description varchar,
+    search_text varchar(255),
+    is_default boolean,
+    tenant_id uuid,
+    default_rule_chain_id uuid,
+    default_queue_name varchar(255),
+    provision_device_key varchar,
+    CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
+    CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id)
+);
+
 CREATE TABLE IF NOT EXISTS device (
     id uuid NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     additional_info varchar,
     customer_id uuid,
+    device_profile_id uuid NOT NULL,
+    device_data jsonb,
     type varchar(255),
     name varchar(255),
     label varchar(255),
     search_text varchar(255),
     tenant_id uuid,
-    CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name)
+    CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (
@@ -207,10 +266,24 @@ CREATE TABLE IF NOT EXISTS tb_user (
     tenant_id uuid
 );
 
+CREATE TABLE IF NOT EXISTS tenant_profile (
+    id uuid NOT NULL CONSTRAINT tenant_profile_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    name varchar(255),
+    profile_data jsonb,
+    description varchar,
+    search_text varchar(255),
+    is_default boolean,
+    isolated_tb_core boolean,
+    isolated_tb_rule_engine boolean,
+    CONSTRAINT tenant_profile_name_unq_key UNIQUE (name)
+);
+
 CREATE TABLE IF NOT EXISTS tenant (
     id uuid NOT NULL CONSTRAINT tenant_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     additional_info varchar,
+    tenant_profile_id uuid NOT NULL,
     address varchar,
     address2 varchar,
     city varchar(255),
@@ -222,8 +295,7 @@ CREATE TABLE IF NOT EXISTS tenant (
     state varchar(255),
     title varchar(255),
     zip varchar(255),
-    isolated_tb_core boolean,
-    isolated_tb_rule_engine boolean
+    CONSTRAINT fk_tenant_profile FOREIGN KEY (tenant_profile_id) REFERENCES tenant_profile(id)
 );
 
 CREATE TABLE IF NOT EXISTS user_credentials (
@@ -253,31 +325,6 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     search_text varchar(255),
     tenant_id uuid,
     title varchar(255)
-);
-
-CREATE TABLE IF NOT EXISTS rule_chain (
-    id uuid NOT NULL CONSTRAINT rule_chain_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    additional_info varchar,
-    configuration varchar(10000000),
-    name varchar(255),
-    first_rule_node_id uuid,
-    root boolean,
-    debug_mode boolean,
-    search_text varchar(255),
-    tenant_id uuid
-);
-
-CREATE TABLE IF NOT EXISTS rule_node (
-    id uuid NOT NULL CONSTRAINT rule_node_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    rule_chain_id uuid,
-    additional_info varchar,
-    configuration varchar(10000000),
-    type varchar(255),
-    name varchar(255),
-    debug_mode boolean,
-    search_text varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS entity_view (
@@ -314,6 +361,90 @@ CREATE TABLE IF NOT EXISTS ts_kv_dictionary
     key    varchar(255) NOT NULL,
     key_id serial UNIQUE,
     CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
+);
+
+CREATE TABLE IF NOT EXISTS oauth2_client_registration_info (
+    id uuid NOT NULL CONSTRAINT oauth2_client_registration_info_pkey PRIMARY KEY,
+    enabled boolean,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    client_id varchar(255),
+    client_secret varchar(255),
+    authorization_uri varchar(255),
+    token_uri varchar(255),
+    scope varchar(255),
+    user_info_uri varchar(255),
+    user_name_attribute_name varchar(255),
+    jwk_set_uri varchar(255),
+    client_authentication_method varchar(255),
+    login_button_label varchar(255),
+    login_button_icon varchar(255),
+    allow_user_creation boolean,
+    activate_user boolean,
+    type varchar(31),
+    basic_email_attribute_key varchar(31),
+    basic_first_name_attribute_key varchar(31),
+    basic_last_name_attribute_key varchar(31),
+    basic_tenant_name_strategy varchar(31),
+    basic_tenant_name_pattern varchar(255),
+    basic_customer_name_pattern varchar(255),
+    basic_default_dashboard_name varchar(255),
+    basic_always_full_screen boolean,
+    custom_url varchar(255),
+    custom_username varchar(255),
+    custom_password varchar(255),
+    custom_send_token boolean
+);
+
+CREATE TABLE IF NOT EXISTS oauth2_client_registration (
+    id uuid NOT NULL CONSTRAINT oauth2_client_registration_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    domain_name varchar(255),
+    domain_scheme varchar(31),
+    client_registration_info_id uuid
+);
+
+CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
+    id uuid NOT NULL CONSTRAINT oauth2_client_registration_template_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    provider_id varchar(255),
+    authorization_uri varchar(255),
+    token_uri varchar(255),
+    scope varchar(255),
+    user_info_uri varchar(255),
+    user_name_attribute_name varchar(255),
+    jwk_set_uri varchar(255),
+    client_authentication_method varchar(255),
+    type varchar(31),
+    basic_email_attribute_key varchar(31),
+    basic_first_name_attribute_key varchar(31),
+    basic_last_name_attribute_key varchar(31),
+    basic_tenant_name_strategy varchar(31),
+    basic_tenant_name_pattern varchar(255),
+    basic_customer_name_pattern varchar(255),
+    basic_default_dashboard_name varchar(255),
+    basic_always_full_screen boolean,
+    comment varchar,
+    login_button_icon varchar(255),
+    login_button_label varchar(255),
+    help_link varchar(255),
+    CONSTRAINT oauth2_template_provider_id_unq_key UNIQUE (provider_id)
+);
+
+CREATE TABLE IF NOT EXISTS api_usage_state (
+    id uuid NOT NULL CONSTRAINT usage_record_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid,
+    entity_type varchar(32),
+    entity_id uuid,
+    transport varchar(32),
+    db_storage varchar(32),
+    re_exec varchar(32),
+    js_exec varchar(32),
+    email_exec varchar(32),
+    sms_exec varchar(32),
+    CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)
 );
 
 CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)

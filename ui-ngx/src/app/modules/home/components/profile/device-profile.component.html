@@ -1,0 +1,136 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-details-buttons" fxLayout.xs="column" *ngIf="!standalone">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'setDefault')"
+          [fxShow]="!isEdit && !entity?.default">
+    {{'device-profile.set-default' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'delete')"
+          [fxShow]="!hideDelete() && !isEdit">
+    {{'device-profile.delete' | translate }}
+  </button>
+  <div fxLayout="row" fxLayout.xs="column">
+    <button mat-raised-button
+            ngxClipboard
+            (cbOnSuccess)="onDeviceProfileIdCopied($event)"
+            [cbContent]="entity?.id?.id"
+            [fxShow]="!isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>device-profile.copyId</span>
+    </button>
+  </div>
+</div>
+<div class="mat-padding" fxLayout="column">
+  <form [formGroup]="entityForm">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-width: 0;">
+      <mat-form-field class="mat-block">
+        <mat-label translate>device-profile.name</mat-label>
+        <input matInput formControlName="name" required/>
+        <mat-error *ngIf="entityForm.get('name').hasError('required')">
+          {{ 'device-profile.name-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <tb-rule-chain-autocomplete
+        labelText="device-profile.default-rule-chain"
+        formControlName="defaultRuleChainId">
+      </tb-rule-chain-autocomplete>
+      <tb-queue-type-list
+        [queueType]="serviceType"
+        formControlName="defaultQueueName">
+      </tb-queue-type-list>
+      <mat-form-field fxHide class="mat-block">
+        <mat-label translate>device-profile.type</mat-label>
+        <mat-select formControlName="type" required>
+          <mat-option *ngFor="let type of deviceProfileTypes" [value]="type">
+            {{deviceProfileTypeTranslations.get(type) | translate}}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="entityForm.get('type').hasError('required')">
+          {{ 'device-profile.type-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field class="mat-block">
+        <mat-label translate>device-profile.description</mat-label>
+        <textarea matInput formControlName="description" rows="2"></textarea>
+      </mat-form-field>
+      <mat-form-field *ngIf="standalone" class="mat-block">
+        <mat-label translate>device-profile.transport-type</mat-label>
+        <mat-select formControlName="transportType" required>
+          <mat-option *ngFor="let type of deviceTransportTypes" [value]="type">
+            {{deviceTransportTypeTranslations.get(type) | translate}}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="entityForm.get('transportType').hasError('required')">
+          {{ 'device-profile.transport-type-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <div formGroupName="profileData" *ngIf="standalone" style="padding-bottom: 16px;">
+        <mat-accordion multi="true">
+          <mat-expansion-panel *ngIf="displayProfileConfiguration" [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div translate>device-profile.profile-configuration</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <tb-device-profile-configuration
+              formControlName="configuration"
+              required>
+            </tb-device-profile-configuration>
+          </mat-expansion-panel>
+          <mat-expansion-panel *ngIf="displayTransportConfiguration" [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div translate>device-profile.transport-configuration</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <tb-device-profile-transport-configuration
+              formControlName="transportConfiguration"
+              required>
+            </tb-device-profile-transport-configuration>
+          </mat-expansion-panel>
+          <mat-expansion-panel [expanded]="false">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div>{{'device-profile.alarm-rules-with-count' | translate:
+                  {count: entityForm.get('profileData.alarms').value ?
+                      entityForm.get('profileData.alarms').value.length : 0} }}</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <tb-device-profile-alarms
+              formControlName="alarms">
+            </tb-device-profile-alarms>
+          </mat-expansion-panel>
+          <mat-expansion-panel [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div translate>device-profile.device-provisioning</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <tb-device-profile-provision-configuration
+              formControlName="provisionConfiguration">
+            </tb-device-profile-provision-configuration>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </div>
+    </fieldset>
+  </form>
+</div>

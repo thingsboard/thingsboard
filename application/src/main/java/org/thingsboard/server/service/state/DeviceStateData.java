@@ -30,8 +30,8 @@ class DeviceStateData {
 
     private final TenantId tenantId;
     private final DeviceId deviceId;
-
+    private final long deviceCreationTime;
     private TbMsgMetaData metaData;
     private final DeviceState state;
-
+    
 }

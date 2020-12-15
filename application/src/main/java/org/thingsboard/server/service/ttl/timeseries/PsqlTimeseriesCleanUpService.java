@@ -23,6 +23,7 @@ import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 @SqlTsDao
 @PsqlDao
@@ -34,10 +35,10 @@ public class PsqlTimeseriesCleanUpService extends AbstractTimeseriesCleanUpServi
     private String partitionType;
 
     @Override
-    protected void doCleanUp(Connection connection) {
-        long totalPartitionsRemoved = executeQuery(connection, "call drop_partitions_by_max_ttl('" + partitionType + "'," + systemTtl + ", 0);");
-        log.info("Total partitions removed by TTL: [{}]", totalPartitionsRemoved);
-        long totalEntitiesTelemetryRemoved = executeQuery(connection, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID + "'," + systemTtl + ", 0);");
-        log.info("Total telemetry removed stats by TTL for entities: [{}]", totalEntitiesTelemetryRemoved);
+    protected void doCleanUp(Connection connection) throws SQLException {
+            long totalPartitionsRemoved = executeQuery(connection, "call drop_partitions_by_max_ttl('" + partitionType + "'," + systemTtl + ", 0);");
+            log.info("Total partitions removed by TTL: [{}]", totalPartitionsRemoved);
+            long totalEntitiesTelemetryRemoved = executeQuery(connection, "call cleanup_timeseries_by_ttl('" + ModelConstants.NULL_UUID + "'," + systemTtl + ", 0);");
+            log.info("Total telemetry removed stats by TTL for entities: [{}]", totalEntitiesTelemetryRemoved);
     }
 }
