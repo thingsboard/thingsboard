@@ -321,9 +321,6 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
             url += '&offset=' + pageLink.idOffset;
         }
         $http.get(url, config).then(function success(response) {
-            if (pageLink.textSearch) {
-                response.data.data = $filter('filter')(response.data.data, {title: pageLink.textSearch});
-            }
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();

@@ -357,8 +357,8 @@ export function DeviceController($rootScope, userService, deviceService, custome
             vm.deviceGridConfig.addItemActions = [];
 
         } else if (vm.devicesScope === 'edge') {
-            fetchDevicesFunction = function (pageLink, deviceType) {
-                return deviceService.getEdgeDevices(edgeId, pageLink, null, deviceType);
+            fetchDevicesFunction = function (pageLink) {
+                return deviceService.getEdgeDevices(edgeId, pageLink, null);
             };
             deleteDeviceFunction = function (deviceId) {
                 return deviceService.unassignDeviceFromEdge(edgeId, deviceId);

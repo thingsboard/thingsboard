@@ -30,6 +30,7 @@ function EdgeService($http, $q, customerService) {
         getTenantEdges: getTenantEdges,
         getCustomerEdges: getCustomerEdges,
         assignEdgeToCustomer: assignEdgeToCustomer,
+        findByQuery: findByQuery,
         unassignEdgeFromCustomer: unassignEdgeFromCustomer,
         makeEdgePublic: makeEdgePublic,
         setRootRuleChain: setRootRuleChain,
@@ -61,13 +62,7 @@ function EdgeService($http, $q, customerService) {
 
     function getEdgesByIds(edgeIds, config) {
         var deferred = $q.defer();
-        var ids = '';
-        for (var i=0;i<edgeIds.length;i++) {
-            if (i>0) {
-                ids += ',';
-            }
-            ids += edgeIds[i];
-        }
+        var ids = edgeIds.join(',');
         var url = '/api/edges?edgeIds=' + ids;
         $http.get(url, config).then(function success(response) {
             var entities = response.data;
@@ -85,9 +80,13 @@ function EdgeService($http, $q, customerService) {
         return deferred.promise;
     }
 
-    function getEdge(edgeId, config) {
+    function getEdge(edgeId, ignoreErrors, config) {
         var deferred = $q.defer();
         var url = '/api/edge/' + edgeId;
+        if (!config) {
+            config = {};
+        }
+        config = Object.assign(config, { ignoreErrors: ignoreErrors });
         $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail(response) {
@@ -129,7 +128,7 @@ function EdgeService($http, $q, customerService) {
         return deferred.promise;
     }
 
-    function getTenantEdges(pageLink, applyCustomersInfo, config, type) {
+    function getTenantEdges(pageLink, applyCustomersInfo, type, config) {
         var deferred = $q.defer();
         var url = '/api/tenant/edges?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -164,7 +163,7 @@ function EdgeService($http, $q, customerService) {
         return deferred.promise;
     }
 
-    function getCustomerEdges(customerId, pageLink, applyCustomersInfo, config, type) {
+    function getCustomerEdges(customerId, pageLink, applyCustomersInfo, type, config) {
         var deferred = $q.defer();
         var url = '/api/customer/' + customerId + '/edges?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -197,6 +196,21 @@ function EdgeService($http, $q, customerService) {
             deferred.reject();
         });
 
+        return deferred.promise;
+    }
+
+    function findByQuery(query, ignoreErrors, config) {
+        var deferred = $q.defer();
+        var url = '/api/edges';
+        if (!config) {
+            config = {};
+        }
+        config = Object.assign(config, { ignoreErrors: ignoreErrors });
+        $http.post(url, query, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
         return deferred.promise;
     }
 

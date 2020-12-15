@@ -384,19 +384,13 @@ function DeviceService($http, $q, $window, $filter, userService, attributeServic
         return deferred.promise;
     }
 
-    function getEdgeDevices(edgeId, pageLink, config, type) {
+    function getEdgeDevices(edgeId, pageLink, config) {
         var deferred = $q.defer();
         var url = '/api/edge/' + edgeId + '/devices?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.idOffset)) {
             url += '&offset=' + pageLink.idOffset;
         }
         $http.get(url, config).then(function success(response) {
-            if (pageLink.textSearch) {
-                response.data.data = $filter('filter')(response.data.data, {name: pageLink.textSearch});
-            }
-            if (angular.isDefined(type) && type.length) {
-                response.data.data = $filter('filter')(response.data.data, {type: type});
-            }
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
