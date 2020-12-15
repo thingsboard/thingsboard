@@ -614,6 +614,16 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                     }
                 );
                 return deferred.promise;
+            case types.entityType.edge:
+                openImportDialogCSV($event, entityType, 'edge.import', 'edge.edge-file').then(
+                    function success() {
+                        deferred.resolve();
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+                return deferred.promise;
         }
 
     }
