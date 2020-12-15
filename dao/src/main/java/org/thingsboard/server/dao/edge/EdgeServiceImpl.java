@@ -188,7 +188,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                 }
             }
         }
-        return edgeDao.save(edge.getTenantId(), edge);
+        return savedEdge;
     }
 
     @Override
