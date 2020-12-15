@@ -136,13 +136,13 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 }
             }
 
-                Set<RuleNodeId> existingNodes = ruleNodeList.stream().map(RuleNode::getId).collect(Collectors.toSet());
-                List<RuleNodeId> removedRules = nodeActors.keySet().stream().filter(node -> !existingNodes.contains(node)).collect(Collectors.toList());
-                removedRules.forEach(ruleNodeId -> {
-                    log.trace("[{}][{}] Removing rule node [{}]", tenantId, entityId, ruleNodeId);
-                    RuleNodeCtx removed = nodeActors.remove(ruleNodeId);
-                    removed.getSelfActor().tellWithHighPriority(new ComponentLifecycleMsg(tenantId, removed.getSelf().getId(), ComponentLifecycleEvent.DELETED));
-                });
+            Set<RuleNodeId> existingNodes = ruleNodeList.stream().map(RuleNode::getId).collect(Collectors.toSet());
+            List<RuleNodeId> removedRules = nodeActors.keySet().stream().filter(node -> !existingNodes.contains(node)).collect(Collectors.toList());
+            removedRules.forEach(ruleNodeId -> {
+                log.trace("[{}][{}] Removing rule node [{}]", tenantId, entityId, ruleNodeId);
+                RuleNodeCtx removed = nodeActors.remove(ruleNodeId);
+                removed.getSelfActor().tellWithHighPriority(new ComponentLifecycleMsg(tenantId, removed.getSelf().getId(), ComponentLifecycleEvent.DELETED));
+            });
 
             initRoutes(ruleChain, ruleNodeList);
         }

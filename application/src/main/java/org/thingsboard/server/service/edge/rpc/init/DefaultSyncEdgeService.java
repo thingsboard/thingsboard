@@ -149,7 +149,8 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         log.trace("[{}][{}] Staring edge sync process", edge.getTenantId(), edge.getId());
         try {
             syncWidgetsBundleAndWidgetTypes(edge);
-            syncAdminSettings(edge);
+            // TODO: voba - implement this functionality
+            // syncAdminSettings(edge);
             syncRuleChains(edge);
             syncUsers(edge);
             syncDevices(edge);
