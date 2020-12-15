@@ -107,7 +107,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
         var deleteRuleChainFunction = null;
 
         if (edgeId) {
-            edgeService.getEdge(edgeId).then(
+            edgeService.getEdge(edgeId, true, null).then(
                 function success(edge) {
                     vm.edge = edge;
                 }

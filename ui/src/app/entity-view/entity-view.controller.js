@@ -285,8 +285,8 @@ export function EntityViewController($rootScope, userService, entityViewService,
                 vm.entityViewGridConfig.addItemAction = {};
             }
         } else if (vm.entityViewsScope === 'edge') {
-            fetchEntityViewsFunction = function (pageLink, entityViewType) {
-                return entityViewService.getEdgeEntityViews(edgeId, pageLink, null, entityViewType);
+            fetchEntityViewsFunction = function (pageLink) {
+                return entityViewService.getEdgeEntityViews(edgeId, pageLink, null);
             };
             deleteEntityViewFunction = function (entityViewId) {
                 return entityViewService.unassignEntityViewFromEdge(edgeId, entityViewId);

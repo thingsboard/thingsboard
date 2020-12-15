@@ -161,7 +161,7 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
 
         if (vm.edgesScope === 'tenant') {
             fetchEdgesFunction = function (pageLink, edgeType) {
-                return edgeService.getTenantEdges(pageLink, true, null, edgeType);
+                return edgeService.getTenantEdges(pageLink, true, edgeType, null);
             };
             deleteEdgeFunction = function (edgeId) {
                 return edgeService.deleteEdge(edgeId);
@@ -337,7 +337,7 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
 
        } else if (vm.edgesScope === 'customer' || vm.edgesScope === 'customer_user') {
             fetchEdgesFunction = function (pageLink, edgeType) {
-                return edgeService.getCustomerEdges(customerId, pageLink, true, null, edgeType);
+                return edgeService.getCustomerEdges(customerId, pageLink, true, edgeType, null);
             };
             deleteEdgeFunction = function (edgeId) {
                 return edgeService.unassignEdgeFromCustomer(edgeId);

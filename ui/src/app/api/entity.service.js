@@ -78,7 +78,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 $log.error('Get Alarm Entity is not implemented!');
                 break;
             case types.entityType.edge:
-                promise = edgeService.getEdge(entityId, config);
+                promise = edgeService.getEdge(entityId, true, config);
                 break;
         }
         return promise;
@@ -164,7 +164,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 break;
             case types.entityType.edge:
                 promise = getEntitiesByIdsPromise(
-                    (id) => edgeService.getEdge(id, config), entityIds);
+                    (id) => edgeService.getEdge(id, true, config), entityIds);
                 break;
         }
         return promise;
@@ -294,9 +294,9 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 break;
             case types.entityType.edge:
                 if (user.authority === 'CUSTOMER_USER') {
-                    promise = edgeService.getCustomerEdges(customerId, pageLink, false, config, subType);
+                    promise = edgeService.getCustomerEdges(customerId, pageLink, false, subType, config);
                 } else {
-                    promise = edgeService.getTenantEdges(pageLink, false, config, subType);
+                    promise = edgeService.getTenantEdges(pageLink, false, subType, config);
                 }
                 break;
         }
@@ -960,9 +960,6 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 break;
             case types.entityType.entityView:
             case types.entityType.edge:
-                entityFieldKeys.push(types.entityField.name.keyName);
-                entityFieldKeys.push(types.entityField.type.keyName);
-                break;
             case types.entityType.device:
             case types.entityType.asset:
                 entityFieldKeys.push(types.entityField.name.keyName);

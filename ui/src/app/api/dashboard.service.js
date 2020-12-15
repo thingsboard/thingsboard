@@ -302,9 +302,6 @@ function DashboardService($rootScope, $http, $q, $location, $filter) {
         }
         $http.get(url, config).then(function success(response) {
             response.data = prepareDashboards(response.data);
-            if (pageLink.textSearch) {
-                response.data.data = $filter('filter')(response.data.data, {title: pageLink.textSearch});
-            }
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();

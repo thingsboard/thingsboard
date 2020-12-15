@@ -324,8 +324,8 @@ export function AssetController($rootScope, userService, assetService, customerS
             vm.assetGridConfig.addItemActions = [];
 
         } else if (vm.assetsScope === 'edge') {
-            fetchAssetsFunction = function (pageLink, assetType) {
-                return assetService.getEdgeAssets(edgeId, pageLink, null, assetType);
+            fetchAssetsFunction = function (pageLink) {
+                return assetService.getEdgeAssets(edgeId, pageLink, null);
             };
             deleteAssetFunction = function (assetId) {
                 return assetService.unassignAssetFromEdge(edgeId, assetId);
