@@ -117,7 +117,7 @@ public class DashboardController extends BaseController {
                     dashboard.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
             if (dashboard.getId() != null) {
-                sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), EdgeEventActionType.UPDATED);
+                sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), EntityType.DASHBOARD, EdgeEventActionType.UPDATED);
             }
 
             return savedDashboard;
@@ -143,7 +143,7 @@ public class DashboardController extends BaseController {
                     null,
                     ActionType.DELETED, null, strDashboardId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), dashboardId, EdgeEventActionType.DELETED);
+            sendNotificationMsgToEdgeService(getTenantId(), dashboardId, EntityType.DASHBOARD, EdgeEventActionType.DELETED);
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.DASHBOARD),
@@ -505,7 +505,7 @@ public class DashboardController extends BaseController {
                     null,
                     ActionType.ASSIGNED_TO_EDGE, null, strDashboardId, strEdgeId, edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedDashboard.getId(), EdgeEventActionType.ASSIGNED_TO_EDGE);
+            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedDashboard.getId(), EntityType.DASHBOARD, EdgeEventActionType.ASSIGNED_TO_EDGE);
 
             return savedDashboard;
         } catch (Exception e) {
@@ -537,7 +537,7 @@ public class DashboardController extends BaseController {
                     null,
                     ActionType.UNASSIGNED_FROM_EDGE, null, strDashboardId, strEdgeId, edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedDashboard.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
+            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedDashboard.getId(), EntityType.DASHBOARD, EdgeEventActionType.UNASSIGNED_FROM_EDGE);
 
             return savedDashboard;
         } catch (Exception e) {

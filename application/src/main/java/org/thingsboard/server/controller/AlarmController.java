@@ -93,7 +93,7 @@ public class AlarmController extends BaseController {
                     getCurrentUser().getCustomerId(),
                     alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
-            sendNotificationMsgToEdgeService(getTenantId(), savedAlarm.getId(),
+            sendNotificationMsgToEdgeService(getTenantId(), savedAlarm.getId(), EntityType.ALARM,
                     alarm.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
 
             return savedAlarm;
@@ -113,7 +113,7 @@ public class AlarmController extends BaseController {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
             checkAlarmId(alarmId, Operation.WRITE);
 
-            sendNotificationMsgToEdgeService(getTenantId(), alarmId, EdgeEventActionType.DELETED);
+            sendNotificationMsgToEdgeService(getTenantId(), alarmId, EntityType.ALARM, EdgeEventActionType.DELETED);
 
             return alarmService.deleteAlarm(getTenantId(), alarmId);
          } catch (Exception e) {
@@ -135,7 +135,7 @@ public class AlarmController extends BaseController {
             alarm.setStatus(alarm.getStatus().isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK);
             logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_ACK, null);
 
-            sendNotificationMsgToEdgeService(getTenantId(), alarmId, EdgeEventActionType.ALARM_ACK);
+            sendNotificationMsgToEdgeService(getTenantId(), alarmId, EntityType.ALARM, EdgeEventActionType.ALARM_ACK);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -155,7 +155,7 @@ public class AlarmController extends BaseController {
             alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
             logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_CLEAR, null);
 
-            sendNotificationMsgToEdgeService(getTenantId(), alarmId, EdgeEventActionType.ALARM_CLEAR);
+            sendNotificationMsgToEdgeService(getTenantId(), alarmId, EntityType.ALARM, EdgeEventActionType.ALARM_CLEAR);
         } catch (Exception e) {
             throw handleException(e);
         }
