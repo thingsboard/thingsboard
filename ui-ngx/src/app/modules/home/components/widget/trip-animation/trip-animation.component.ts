@@ -234,8 +234,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
       if(isMainTooltip) {
         this.mainTooltips.push(this.sanitizer.sanitize(SecurityContext.HTML, tooltipText));
       }
-      this.cd.detectChanges();
     }
+    this.cd.detectChanges();
     return tooltipText;
   }
 
