@@ -178,11 +178,30 @@ message DeviceUpdateMsg {
   int64 idLSB = 3;
   int64 customerIdMSB = 4;
   int64 customerIdLSB = 5;
-  string name = 6;
+  int64 deviceProfileIdMSB = 6;
+  int64 deviceProfileIdLSB = 7;
+  string name = 8;
+  string type = 9;
+  string label = 10;
+  string additionalInfo = 11;
+  string conflictName = 12;
+}
+
+message DeviceProfileUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  string description = 5;
+  bool default = 6;
   string type = 7;
-  string label = 8;
-  string additionalInfo = 9;
-  string conflictName = 10;
+  string transportType = 8;
+  string provisionType = 9;
+  int64 defaultRuleChainIdMSB = 10;
+  int64 defaultRuleChainIdLSB = 11;
+  string defaultQueueName = 12;
+  bytes profileDataBytes = 13;
+  string provisionDeviceKey = 14;
 }
 
 message DeviceCredentialsUpdateMsg {
@@ -400,20 +419,21 @@ message DownlinkMsg {
   repeated EntityDataProto entityData = 2;
   repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 3;
   repeated DeviceUpdateMsg deviceUpdateMsg = 4;
-  repeated DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 5;
-  repeated RuleChainUpdateMsg ruleChainUpdateMsg = 6;
-  repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 7;
-  repeated DashboardUpdateMsg dashboardUpdateMsg = 8;
-  repeated AssetUpdateMsg assetUpdateMsg = 9;
-  repeated EntityViewUpdateMsg entityViewUpdateMsg = 10;
-  repeated AlarmUpdateMsg alarmUpdateMsg = 11;
-  repeated UserUpdateMsg userUpdateMsg = 12;
-  repeated UserCredentialsUpdateMsg userCredentialsUpdateMsg = 13;
-  repeated CustomerUpdateMsg customerUpdateMsg = 14;
-  repeated RelationUpdateMsg relationUpdateMsg = 15;
-  repeated WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = 16;
-  repeated WidgetTypeUpdateMsg widgetTypeUpdateMsg = 17;
-  repeated AdminSettingsUpdateMsg adminSettingsUpdateMsg = 18;
-  repeated DeviceRpcCallMsg deviceRpcCallMsg = 19;
+  repeated DeviceProfileUpdateMsg deviceProfileUpdateMsg = 5;
+  repeated DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 6;
+  repeated RuleChainUpdateMsg ruleChainUpdateMsg = 7;
+  repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 8;
+  repeated DashboardUpdateMsg dashboardUpdateMsg = 9;
+  repeated AssetUpdateMsg assetUpdateMsg = 10;
+  repeated EntityViewUpdateMsg entityViewUpdateMsg = 11;
+  repeated AlarmUpdateMsg alarmUpdateMsg = 12;
+  repeated UserUpdateMsg userUpdateMsg = 13;
+  repeated UserCredentialsUpdateMsg userCredentialsUpdateMsg = 14;
+  repeated CustomerUpdateMsg customerUpdateMsg = 15;
+  repeated RelationUpdateMsg relationUpdateMsg = 16;
+  repeated WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = 17;
+  repeated WidgetTypeUpdateMsg widgetTypeUpdateMsg = 18;
+  repeated AdminSettingsUpdateMsg adminSettingsUpdateMsg = 19;
+  repeated DeviceRpcCallMsg deviceRpcCallMsg = 20;
 }
 

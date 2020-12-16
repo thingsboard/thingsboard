@@ -21,8 +21,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.Getter;
 
+import java.io.Serializable;
+
 @Data
-public class FilterPredicateValue<T> {
+public class FilterPredicateValue<T> implements Serializable {
 
     @Getter
     private final T defaultValue;

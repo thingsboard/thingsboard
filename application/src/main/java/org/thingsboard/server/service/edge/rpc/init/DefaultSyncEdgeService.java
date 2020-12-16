@@ -33,8 +33,8 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -55,7 +55,6 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
@@ -67,6 +66,7 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
@@ -118,6 +118,9 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     private DeviceService deviceService;
 
     @Autowired
+    private DeviceProfileService deviceProfileService;
+
+    @Autowired
     private AssetService assetService;
 
     @Autowired
@@ -152,6 +155,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
             // TODO: voba - implement this functionality
             // syncAdminSettings(edge);
             syncRuleChains(edge);
+            syncDeviceProfiles(edge);
             syncUsers(edge);
             syncDevices(edge);
             syncAssets(edge);
@@ -203,6 +207,28 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
             } while (pageData != null && pageData.hasNext());
         } catch (Exception e) {
             log.error("Exception during loading edge device(s) on sync!", e);
+        }
+    }
+
+    private void syncDeviceProfiles(Edge edge) {
+        log.trace("[{}] syncDeviceProfiles [{}]", edge.getTenantId(), edge.getName());
+        try {
+            TimePageLink pageLink = new TimePageLink(DEFAULT_LIMIT);
+            PageData<DeviceProfile> pageData;
+            do {
+                pageData = deviceProfileService.findDeviceProfiles(edge.getTenantId(), pageLink);
+                if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                    log.trace("[{}] [{}] user(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
+                    for (DeviceProfile deviceProfile : pageData.getData()) {
+                        saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.DEVICE_PROFILE, EdgeEventActionType.ADDED, deviceProfile.getId(), null);
+                    }
+                    if (pageData.hasNext()) {
+                        pageLink = pageLink.nextPageLink();
+                    }
+                }
+            } while (pageData != null && pageData.hasNext());
+        } catch (Exception e) {
+            log.error("Exception during loading device profile(s) on sync!", e);
         }
     }
 

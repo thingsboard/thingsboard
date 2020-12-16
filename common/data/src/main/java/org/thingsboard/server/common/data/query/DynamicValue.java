@@ -19,8 +19,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.Getter;
 
+import java.io.Serializable;
+
 @Data
-public class DynamicValue<T> {
+public class DynamicValue<T> implements Serializable {
 
     @JsonIgnore
     private T resolvedValue;

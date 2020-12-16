@@ -52,6 +52,10 @@ public class DeviceMsgConstructor {
             builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
             builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
         }
+        if (device.getDeviceProfileId() != null) {
+            builder.setDeviceProfileIdMSB(device.getDeviceProfileId().getId().getMostSignificantBits());
+            builder.setDeviceProfileIdLSB(device.getDeviceProfileId().getId().getLeastSignificantBits());
+        }
         if (device.getAdditionalInfo() != null) {
             builder.setAdditionalInfo(JacksonUtil.toString(device.getAdditionalInfo()));
         }

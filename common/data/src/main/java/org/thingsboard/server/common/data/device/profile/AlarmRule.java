@@ -17,8 +17,10 @@ package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class AlarmRule {
+public class AlarmRule implements Serializable {
 
     private AlarmCondition condition;
     private AlarmSchedule schedule;

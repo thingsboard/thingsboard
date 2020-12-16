@@ -153,7 +153,7 @@ public class RuleChainController extends BaseController {
 
             if (RuleChainType.EDGE.equals(savedRuleChain.getType())) {
                 if (!created) {
-                    sendNotificationMsgToEdgeService(savedRuleChain.getTenantId(), savedRuleChain.getId(), EdgeEventActionType.UPDATED);
+                    sendNotificationMsgToEdgeService(savedRuleChain.getTenantId(), savedRuleChain.getId(), EntityType.RULE_CHAIN, EdgeEventActionType.UPDATED);
                 }
             }
 
@@ -256,7 +256,7 @@ public class RuleChainController extends BaseController {
 
             if (RuleChainType.EDGE.equals(ruleChain.getType())) {
                 sendNotificationMsgToEdgeService(ruleChain.getTenantId(),
-                        ruleChain.getId(), EdgeEventActionType.UPDATED);
+                        ruleChain.getId(), EntityType.RULE_CHAIN, EdgeEventActionType.UPDATED);
             }
 
             return savedRuleChainMetaData;
@@ -321,7 +321,7 @@ public class RuleChainController extends BaseController {
                     ActionType.DELETED, null, strRuleChainId);
 
             if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                sendNotificationMsgToEdgeService(ruleChain.getTenantId(), ruleChain.getId(), EdgeEventActionType.DELETED);
+                sendNotificationMsgToEdgeService(ruleChain.getTenantId(), ruleChain.getId(), EntityType.RULE_CHAIN, EdgeEventActionType.DELETED);
             }
 
         } catch (Exception e) {
@@ -483,7 +483,7 @@ public class RuleChainController extends BaseController {
                     null,
                     ActionType.ASSIGNED_TO_EDGE, null, strRuleChainId, strEdgeId, edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedRuleChain.getId(), EdgeEventActionType.ASSIGNED_TO_EDGE);
+            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedRuleChain.getId(), EntityType.RULE_CHAIN, EdgeEventActionType.ASSIGNED_TO_EDGE);
 
             return savedRuleChain;
         } catch (Exception e) {
@@ -515,7 +515,7 @@ public class RuleChainController extends BaseController {
                     null,
                     ActionType.UNASSIGNED_FROM_EDGE, null, strRuleChainId, strEdgeId, edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedRuleChain.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
+            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedRuleChain.getId(), EntityType.RULE_CHAIN, EdgeEventActionType.UNASSIGNED_FROM_EDGE);
 
             return savedRuleChain;
         } catch (Exception e) {

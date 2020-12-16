@@ -180,7 +180,6 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         testAttributes();
         testSendMessagesToCloud();
         testRpcCall();
-        // TODO: voba - test conflict messages in case device with current name already exist or ID is already used
     }
 
     private Device findDeviceByName(String deviceName) throws Exception {

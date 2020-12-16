@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.User;
@@ -47,6 +48,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -81,6 +83,7 @@ import org.thingsboard.server.gen.edge.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
+import org.thingsboard.server.gen.edge.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
@@ -467,6 +470,8 @@ public final class EdgeGrpcSession implements Closeable {
         switch (edgeEvent.getType()) {
             case DEVICE:
                 return processDevice(edgeEvent, msgType, action);
+            case DEVICE_PROFILE:
+                return processDeviceProfile(edgeEvent, msgType, action);
             case ASSET:
                 return processAsset(edgeEvent, msgType, action);
             case ENTITY_VIEW:
@@ -536,6 +541,39 @@ public final class EdgeGrpcSession implements Closeable {
                 break;
         }
         log.trace("[{}] device processed [{}]", this.sessionId, downlinkMsg);
+        return downlinkMsg;
+    }
+
+    private DownlinkMsg processDeviceProfile(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
+        DeviceProfileId deviceProfileId = new DeviceProfileId(edgeEvent.getEntityId());
+        DownlinkMsg downlinkMsg = null;
+        switch (action) {
+            case ADDED:
+            case UPDATED:
+                DeviceProfile deviceProfile = ctx.getDeviceProfileService().findDeviceProfileById(edgeEvent.getTenantId(), deviceProfileId);
+                if (deviceProfile != null) {
+
+                    // TODO: voba HACK
+//                    PageData<RuleChain> ruleChainsByTenantIdAndEdgeId = ctx.getRuleChainService().findRuleChainsByTenantIdAndEdgeId(edgeEvent.getTenantId(), edgeEvent.getEdgeId(), new TimePageLink(100));
+//                    RuleChain ruleChain = ruleChainsByTenantIdAndEdgeId.getData().get(0);
+//                    deviceProfile.setDefaultRuleChainId(ruleChain.getId());
+
+                    DeviceProfileUpdateMsg deviceProfileUpdateMsg =
+                            ctx.getDeviceProfileMsgConstructor().constructDeviceProfileUpdatedMsg(msgType, deviceProfile);
+                    downlinkMsg = DownlinkMsg.newBuilder()
+                            .addAllDeviceProfileUpdateMsg(Collections.singletonList(deviceProfileUpdateMsg))
+                            .build();
+                }
+                break;
+            case DELETED:
+                DeviceProfileUpdateMsg deviceProfileUpdateMsg =
+                        ctx.getDeviceProfileMsgConstructor().constructDeviceProfileDeleteMsg(deviceProfileId);
+                downlinkMsg = DownlinkMsg.newBuilder()
+                        .addAllDeviceProfileUpdateMsg(Collections.singletonList(deviceProfileUpdateMsg))
+                        .build();
+                break;
+        }
+        log.trace("[{}] device profile processed [{}]", this.sessionId, downlinkMsg);
         return downlinkMsg;
     }
 

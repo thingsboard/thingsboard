@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 
+import java.io.Serializable;
+
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
@@ -31,7 +33,7 @@ import org.thingsboard.server.common.data.DeviceProfileProvisionType;
         @JsonSubTypes.Type(value = DisabledDeviceProfileProvisionConfiguration.class, name = "DISABLED"),
         @JsonSubTypes.Type(value = AllowCreateNewDevicesDeviceProfileProvisionConfiguration.class, name = "ALLOW_CREATE_NEW_DEVICES"),
         @JsonSubTypes.Type(value = CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration.class, name = "CHECK_PRE_PROVISIONED_DEVICES")})
-public interface DeviceProfileProvisionConfiguration {
+public interface DeviceProfileProvisionConfiguration extends Serializable {
 
     String getProvisionDeviceSecret();
 

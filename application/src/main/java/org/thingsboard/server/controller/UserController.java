@@ -167,7 +167,7 @@ public class UserController extends BaseController {
                     savedUser.getCustomerId(),
                     user.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
-            sendNotificationMsgToEdgeService(getTenantId(), savedUser.getId(),
+            sendNotificationMsgToEdgeService(getTenantId(), savedUser.getId(), EntityType.USER,
                     user.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
 
             return savedUser;
@@ -245,7 +245,7 @@ public class UserController extends BaseController {
                     user.getCustomerId(),
                     ActionType.DELETED, null, strUserId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), user.getId(), EdgeEventActionType.DELETED);
+            sendNotificationMsgToEdgeService(getTenantId(), user.getId(), EntityType.USER, EdgeEventActionType.DELETED);
 
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.USER),
