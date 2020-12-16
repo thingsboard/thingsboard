@@ -135,7 +135,11 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
                     server: [],
                     shared: []
                 },
-                timeseries: []
+                timeseries: [],
+                edgeLicenseKey: "",
+                cloudEndpoint: "",
+                routingKey: "",
+                secret: ""
             };
             for (var j = 0; j < parameterColumns.length; j++) {
                 switch (parameterColumns[j].type) {
@@ -174,6 +178,18 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
                         break;
                     case types.importEntityColumnType.description.value:
                         entityData.description = importData.rows[i][j];
+                        break;
+                    case types.importEntityColumnType.edgeLicenseKey.value:
+                        entityData.edgeLicenseKey = importData.rows[i][j];
+                        break;
+                    case types.importEntityColumnType.cloudEndpoint.value:
+                        entityData.cloudEndpoint = importData.rows[i][j];
+                        break;
+                    case types.importEntityColumnType.routingKey.value:
+                        entityData.routingKey = importData.rows[i][j];
+                        break;
+                    case types.importEntityColumnType.secret.value:
+                        entityData.secret = importData.rows[i][j];
                         break;
                 }
             }

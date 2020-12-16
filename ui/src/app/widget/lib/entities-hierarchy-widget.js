@@ -41,8 +41,7 @@ function EntitiesHierarchyWidget() {
 }
 
 /*@ngInject*/
-function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast, types, entityService, entityRelationService,
-                                           assetService, deviceService, entityViewService, dashboardService, ruleChainService /*$filter, $mdMedia, $mdPanel, $document, $translate, $timeout, utils, types*/) {
+function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast, types, entityService, entityRelationService /*$filter, $mdMedia, $mdPanel, $document, $translate, $timeout, utils, types*/) {
     var vm = this;
 
     vm.showData = true;
@@ -294,95 +293,27 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
             });
         } else {
             if (node.data && node.data.nodeCtx.entity && node.data.nodeCtx.entity.id && node.data.nodeCtx.entity.id.entityType !== 'function') {
-                if (node.data.nodeCtx.entity.id.entityType === types.entityType.edge) {
-                    assetService.getEdgeAssets(node.data.nodeCtx.entity.id.id, {limit: 20}, null).then(
-                        (entities) => {
-                            var tasks = [];
-                            for (var i=0;i<entities.data.length;i++) {
-                                var relation = entities.data[i];
-                                var targetId = node.data.nodeCtx.entity.id.entityType === types.entityType.edge ? relation.id : node.data.nodeCtx.entity.id;
-                                tasks.push(entityIdToNode(targetId.entityType, targetId.id, node.data.datasource, node.data.nodeCtx));
-                            }
-                            $q.all(tasks).then((nodes) => {
-                                cb(prepareNodes(nodes));
-                            });
+                var relationQuery = prepareNodeRelationQuery(node.data.nodeCtx);
+                entityRelationService.findByQuery(relationQuery, {ignoreErrors: true, ignoreLoading: true}).then(
+                    (entityRelations) => {
+                        var tasks = [];
+                        for (var i=0;i<entityRelations.length;i++) {
+                            var relation = entityRelations[i];
+                            var targetId = relationQuery.parameters.direction === types.entitySearchDirection.from ? relation.to : relation.from;
+                            tasks.push(entityIdToNode(targetId.entityType, targetId.id, node.data.datasource, node.data.nodeCtx));
                         }
-                    );
-                    deviceService.getEdgeDevices(node.data.nodeCtx.entity.id.id, {limit: 20}, null).then(
-                        (entities) => {
-                            var tasks = [];
-                            for (var i=0;i<entities.data.length;i++) {
-                                var relation = entities.data[i];
-                                var targetId = node.data.nodeCtx.entity.id.entityType === types.entityType.edge ? relation.id : node.data.nodeCtx.entity.id;
-                                tasks.push(entityIdToNode(targetId.entityType, targetId.id, node.data.datasource, node.data.nodeCtx));
-                            }
-                            $q.all(tasks).then((nodes) => {
-                                cb(prepareNodes(nodes));
-                            });
+                        $q.all(tasks).then((nodes) => {
+                            cb(prepareNodes(nodes));
+                        });
+                    },
+                    (error) => {
+                        var errorText = "Failed to get relations!";
+                        if (error && error.status === 400) {
+                            errorText = "Invalid relations query returned by 'Node relations query function'! Please check widget configuration!";
                         }
-                    );
-                    entityViewService.getEdgeEntityViews(node.data.nodeCtx.entity.id.id, {limit: 20}, null).then(
-                        (entities) => {
-                            var tasks = [];
-                            for (var i=0;i<entities.data.length;i++) {
-                                var relation = entities.data[i];
-                                var targetId = node.data.nodeCtx.entity.id.entityType === types.entityType.edge ? relation.id : node.data.nodeCtx.entity.id;
-                                tasks.push(entityIdToNode(targetId.entityType, targetId.id, node.data.datasource, node.data.nodeCtx));
-                            }
-                            $q.all(tasks).then((nodes) => {
-                                cb(prepareNodes(nodes));
-                            });
-                        }
-                    );
-                    dashboardService.getEdgeDashboards(node.data.nodeCtx.entity.id.id, {limit: 20}, null).then(
-                        (entities) => {
-                            var tasks = [];
-                            for (var i=0;i<entities.data.length;i++) {
-                                var relation = entities.data[i];
-                                var targetId = node.data.nodeCtx.entity.id.entityType === types.entityType.edge ? relation.id : node.data.nodeCtx.entity.id;
-                                tasks.push(entityIdToNode(targetId.entityType, targetId.id, node.data.datasource, node.data.nodeCtx));
-                            }
-                            $q.all(tasks).then((nodes) => {
-                                cb(prepareNodes(nodes));
-                            });
-                        }
-                    )
-                    ruleChainService.getEdgeRuleChains(node.data.nodeCtx.entity.id.id, {limit: 20}, null).then(
-                        (entities) => {
-                            var tasks = [];
-                            for (var i=0;i<entities.data.length;i++) {
-                                var relation = entities.data[i];
-                                var targetId = node.data.nodeCtx.entity.id.entityType === types.entityType.edge ? relation.id : node.data.nodeCtx.entity.id;
-                                tasks.push(entityIdToNode(targetId.entityType, targetId.id, node.data.datasource, node.data.nodeCtx));
-                            }
-                            $q.all(tasks).then((nodes) => {
-                                cb(prepareNodes(nodes));
-                            });
-                        }
-                    )
-                } else {
-                    var relationQuery = prepareNodeRelationQuery(node.data.nodeCtx);
-                    entityRelationService.findByQuery(relationQuery, {ignoreErrors: true, ignoreLoading: true}).then(
-                        (entityRelations) => {
-                            var tasks = [];
-                            for (var i=0;i<entityRelations.length;i++) {
-                                var relation = entityRelations[i];
-                                var targetId = relationQuery.parameters.direction === types.entitySearchDirection.from ? relation.to : relation.from;
-                                tasks.push(entityIdToNode(targetId.entityType, targetId.id, node.data.datasource, node.data.nodeCtx));
-                            }
-                            $q.all(tasks).then((nodes) => {
-                                cb(prepareNodes(nodes));
-                            });
-                        },
-                        (error) => {
-                            var errorText = "Failed to get relations!";
-                            if (error && error.status === 400) {
-                                errorText = "Invalid relations query returned by 'Node relations query function'! Please check widget configuration!";
-                            }
-                            showError(errorText);
-                        }
-                    );
-                }
+                        showError(errorText);
+                    }
+                );
             } else {
                 cb([]);
             }
@@ -579,9 +510,6 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
                     break;
                 case types.entityType.edge:
                     materialIcon = 'router';
-                    break;
-                case types.entityType.rulechain:
-                    materialIcon = 'settings_ethernet';
                     break;
             }
         }
