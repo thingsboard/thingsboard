@@ -1,0 +1,51 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-absolute-fill tb-edges-hierarchy" layout="column">
+    <div ng-show="vm.showData" flex class="tb-absolute-fill" layout="column">
+        <md-toolbar class="md-table-toolbar md-default" ng-show="vm.query.search != null">
+            <div class="md-toolbar-tools">
+                <md-button class="md-icon-button" aria-label="{{ 'action.search' | translate }}">
+                    <md-icon aria-label="{{ 'action.search' | translate }}" class="material-icons">search</md-icon>
+                    <md-tooltip md-direction="{{vm.ctx.dashboard.isWidgetExpanded ? 'bottom' : 'top'}}">
+                        {{'entity.search' | translate}}
+                    </md-tooltip>
+                </md-button>
+                <md-input-container flex>
+                    <label>&nbsp;</label>
+                    <input ng-model="vm.query.search" class="searchInput" placeholder="{{'entity.search' | translate}}"/>
+                </md-input-container>
+                <md-button class="md-icon-button" aria-label="Close" ng-click="vm.exitFilterMode()">
+                    <md-icon aria-label="Close" class="material-icons">close</md-icon>
+                    <md-tooltip md-direction="{{vm.ctx.dashboard.isWidgetExpanded ? 'bottom' : 'top'}}">
+                        {{ 'action.close' | translate }}
+                    </md-tooltip>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <div flex class="tb-entities-nav-tree-panel">
+            <tb-nav-tree
+                    load-nodes="vm.loadNodes"
+                    on-node-selected="vm.onNodeSelected(node, event)"
+                    on-nodes-inserted="vm.onNodesInserted(nodes, parent)"
+                    edit-callbacks="vm.nodeEditCallbacks"
+                    enable-search="true"
+                    search-callback="vm.searchCallback(searchText, node)"
+            ></tb-nav-tree>
+        </div>
+    </div>
+</div>
