@@ -141,7 +141,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   timeUpdated(time: number) {
     this.currentTime = time;
-    let currentPosition = this.interpolatedTimeData
+    const currentPosition = this.interpolatedTimeData
       .map(dataSource => dataSource[time])
     for(let j = 0; j < this.interpolatedTimeData.length; j++) {
       if (isUndefined(currentPosition[j])) {
@@ -175,7 +175,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
         this.mapWidget.map.updatePolygons(this.interpolatedTimeData);
       }
       if (this.settings.showPoints) {
-        this.mapWidget.map.updatePoints(formattedInterpolatedTimeData, this.calcTooltip);
+        this.mapWidget.map.updatePoints(formattedInterpolatedTimeData.map(ds => _.union(ds)), this.calcTooltip);
       }
       this.mapWidget.map.updateMarkers(currentPosition, true, (trip) => {
         this.activeTrip = trip;
@@ -235,20 +235,19 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
         this.mainTooltips.push(this.sanitizer.sanitize(SecurityContext.HTML, tooltipText));
       }
       this.cd.detectChanges();
-      this.activeTrip = point;
     }
     return tooltipText;
   }
 
   calcLabel(formattedDataArr: FormattedData[]) {
-    this.label = '';
+    let labelToSet = '';
     for (let formattedData of formattedDataArr) {
-      const data = formattedData;
       const labelText: string = this.settings.useLabelFunction ?
-        safeExecute(this.settings.labelFunction, [data, this.historicalData, data.dsIndex]) : this.settings.label;
-      const label = (parseWithTranslation.parseTemplate(labelText, data, true));
-      this.label = this.label.length ? this.label + ',' + label : label;
+        safeExecute(this.settings.labelFunction, [formattedData, this.historicalData, formattedData.dsIndex]) : this.settings.label;
+      const label = (parseWithTranslation.parseTemplate(labelText, formattedData, true));
+      labelToSet = labelToSet.length ? labelToSet + ',' + label : label;
     }
+    this.label = labelToSet;
   }
 
   interpolateArray(originData: FormattedData[]) {

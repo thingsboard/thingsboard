@@ -629,7 +629,7 @@ export default abstract class LeafletMap {
         }
         this.points.addLayer(point);
       });
-      if(i === 0) {
+      if(i === (pointsData.length - 1)) {
         this.map.addLayer(this.points);
       }
     }

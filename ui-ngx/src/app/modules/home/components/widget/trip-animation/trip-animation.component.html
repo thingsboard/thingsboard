@@ -32,7 +32,7 @@
              [ngStyle]="{'background-color': settings.tooltipColor, 'opacity': settings.tooltipOpacity, 'color': settings.tooltipFontColor}">
           <div *ngFor="let mainTooltip of mainTooltips"
                [innerHTML]="mainTooltip"
-               [ngStyle]="{'padding': '10px 0'}">
+               ngStyle="{'padding': '10px 0'}">
           </div>
         </div>
     </div>
