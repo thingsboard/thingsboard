@@ -84,7 +84,7 @@ public class EntityQueryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/entitiesQuery/find/keys/timeseries", method = RequestMethod.POST)
+    @RequestMapping(value = "/entitiesQuery/find/keys", method = RequestMethod.POST)
     @ResponseBody
     public DeferredResult<ResponseEntity> findEntityTimeseriesAndAttributesKeysByQuery(@RequestBody EntityDataQuery query,
                                                                                        @RequestParam("timeseries") boolean isTimeseries,

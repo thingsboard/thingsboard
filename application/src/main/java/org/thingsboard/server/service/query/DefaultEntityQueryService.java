@@ -203,7 +203,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
 
     private void replyWithResponse(DeferredResult<ResponseEntity> response, Set<EntityType> types, List<String> timeseriesKeys, List<String> attributesKeys) {
         ObjectNode json = JacksonUtil.newObjectNode();
-        addItemsToArrayNode(json.putArray("types"), types);
+        addItemsToArrayNode(json.putArray("entityTypes"), types);
         addItemsToArrayNode(json.putArray("timeseriesKeys"), timeseriesKeys);
         addItemsToArrayNode(json.putArray("attributesKeys"), attributesKeys);
         response.setResult(new ResponseEntity(json, HttpStatus.OK));
