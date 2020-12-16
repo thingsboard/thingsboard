@@ -45,6 +45,8 @@ public class EntityQueryController extends BaseController {
     @Autowired
     private EntityQueryService entityQueryService;
 
+    private static final int MAX_PAGE_SIZE = 100;
+
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entitiesQuery/count", method = RequestMethod.POST)
     @ResponseBody
@@ -91,12 +93,10 @@ public class EntityQueryController extends BaseController {
         checkNotNull(query);
         try {
             EntityDataPageLink pageLink = query.getPageLink();
-            if (pageLink.getPageSize() > 100) {
-                pageLink.setPageSize(100);
+            if (pageLink.getPageSize() > MAX_PAGE_SIZE) {
+                pageLink.setPageSize(MAX_PAGE_SIZE);
             }
-            DeferredResult<ResponseEntity> response = new DeferredResult<>();
-            entityQueryService.getKeysByQueryCallback(getCurrentUser(), tenantId, query, isTimeseries, isAttributes, response);
-            return response;
+            return entityQueryService.getKeysByQuery(getCurrentUser(), tenantId, query, isTimeseries, isAttributes);
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -34,7 +34,7 @@ public interface EntityQueryService {
 
     PageData<AlarmData> findAlarmDataByQuery(SecurityUser securityUser, AlarmDataQuery query);
 
-    void getKeysByQueryCallback(SecurityUser securityUser, TenantId tenantId, EntityDataQuery query,
-                                boolean isTimeseries, boolean isAttributes, DeferredResult<ResponseEntity> response);
+    DeferredResult<ResponseEntity> getKeysByQuery(SecurityUser securityUser, TenantId tenantId, EntityDataQuery query,
+                                                  boolean isTimeseries, boolean isAttributes);
 
 }
