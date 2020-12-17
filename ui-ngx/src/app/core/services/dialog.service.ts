@@ -42,6 +42,7 @@ export class DialogService {
     private translate: TranslateService,
     private authService: AuthService,
     public dialog: MatDialog
+    
   ) {
   }
 

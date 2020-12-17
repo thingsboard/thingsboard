@@ -18,7 +18,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { AcsComponent } from '@modules/home/pages/acs/acs.component';
-import { DialogDataDialog } from '@modules/home/pages/acs/acs.component';
+import { DialogDataDialog } from '@modules/home/pages/acs/Dialog.component';
 
 import { AcsRoutingModule } from '@modules/home/pages/acs/acs-routing.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';

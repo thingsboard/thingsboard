@@ -23,12 +23,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -211,6 +206,9 @@ public class DeviceApiController {
                 new DeviceProvisionCallback(responseWriter));
         return responseWriter;
     }
+
+
+
 
     private static class DeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponse> {
         private final TransportContext transportContext;

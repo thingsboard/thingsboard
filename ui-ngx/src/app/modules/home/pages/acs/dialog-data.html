@@ -28,8 +28,7 @@
 
     <ng-container matColumnDef="Value">
       <th mat-header-cell *matHeaderCellDef> Value </th>
-      <td mat-cell *matCellDef="let element"> {{element.deviceData['value'] ?  element.deviceData['value'][0] : '' }} &nbsp; <img src="../../../../../assets/write_img.svg" *ngIf="element.deviceData['writable']" /> </td>
-    </ng-container>
+      <td mat-cell *matCellDef="let element"> {{element.deviceData['value'] ?  element.deviceData['value'][0] : '' }} &nbsp; <img src="../../../../../assets/write_img.svg" *ngIf="element.deviceData['writable']"(click)="updateValue(element.parameter,element.deviceData['value'][0])" style="cursor: pointer;"/> </td>    </ng-container>
    
     
 
