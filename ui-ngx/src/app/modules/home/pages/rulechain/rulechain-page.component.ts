@@ -48,7 +48,8 @@ import {
   RuleChainConnectionInfo,
   RuleChainImport,
   RuleChainMetaData,
-  ruleChainNodeComponent
+  ruleChainNodeComponent,
+  ruleChainType
 } from '@shared/models/rule-chain.models';
 import { FcItemInfo, FlowchartConstants, NgxFlowchartComponent, UserCallbacks } from 'ngx-flowchart/dist/ngx-flowchart';
 import {
@@ -118,6 +119,8 @@ export class RuleChainPageComponent extends PageComponent
   isImport: boolean;
   isDirtyValue: boolean;
   isInvalid = false;
+
+  ruleChainType: string;
 
   errorTooltips: {[nodeId: string]: JQueryTooltipster.ITooltipsterInstance} = {};
   isFullscreen = false;
@@ -288,6 +291,7 @@ export class RuleChainPageComponent extends PageComponent
   private init() {
     this.initHotKeys();
     this.isImport = this.route.snapshot.data.import;
+    this.ruleChainType = this.route.snapshot.data.ruleChainType;
     if (this.isImport) {
       const ruleChainImport: RuleChainImport = this.itembuffer.getRuleChainImport();
       this.ruleChain = ruleChainImport.ruleChain;
@@ -1281,7 +1285,11 @@ export class RuleChainPageComponent extends PageComponent
         if (this.isImport) {
           this.isDirtyValue = false;
           this.isImport = false;
-          this.router.navigateByUrl(`ruleChains/${this.route.snapshot.data.ruleChainType.toLowerCase()}/${this.ruleChain.id.id}`);
+          if (this.ruleChainType !== ruleChainType.edge) {
+            this.router.navigateByUrl(`ruleChains/${this.ruleChain.id.id}`);
+          } else {
+            this.router.navigateByUrl(`edges/ruleChains/${this.ruleChain.id.id}`);
+          }
         } else {
           this.createRuleChainModel();
         }

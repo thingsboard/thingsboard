@@ -228,26 +228,9 @@ export class MenuService {
       {
         id: guid(),
         name: 'rulechain.rulechains',
-        type: 'toggle',
+        type: 'link',
         path: '/ruleChains',
-        height: '80px',
         icon: 'settings_ethernet',
-        pages: [
-          {
-            id: guid(),
-            name: 'rulechain.core-rulechains',
-            type: 'link',
-            path: '/ruleChains/core',
-            icon: 'settings_ethernet'
-          },
-          {
-            id: guid(),
-            name: 'rulechain.edge-rulechains',
-            type: 'link',
-            path: '/ruleChains/edge',
-            icon: 'router'
-          }
-        ]
       },
       {
         id: guid(),
@@ -287,10 +270,27 @@ export class MenuService {
       },
       {
         id: guid(),
-        name: 'edge.edges',
-        type: 'link',
+        name: 'edge.management',
+        type: 'toggle',
         path: '/edges',
-        icon: 'router'
+        height: '80px',
+        icon: 'router',
+        pages: [
+          {
+            id: guid(),
+            name: 'edge.edges',
+            type: 'link',
+            path: '/edges',
+            icon: 'router'
+          },
+          {
+            id: guid(),
+            name: 'rulechain.edge-rulechains',
+            type: 'link',
+            path: '/edges/ruleChains',
+            icon: 'settings_ethernet'
+          }
+        ]
       },
       {
         id: guid(),
@@ -335,11 +335,6 @@ export class MenuService {
             name: 'rulechain.rulechains',
             icon: 'settings_ethernet',
             path: '/ruleChains'
-          },
-          {
-            name: 'rulechain.edge-rulechains',
-            icon: 'router',
-            path: '/edgesRuleChains'
           }
         ]
       },
@@ -396,6 +391,11 @@ export class MenuService {
             name: 'edge.edges',
             icon: 'router',
             path: '/edges'
+          },
+          {
+            name: 'rulechain.edge-rulechains',
+            icon: 'settings_ethernet',
+            path: '/edges/ruleChains'
           }
         ]
       },

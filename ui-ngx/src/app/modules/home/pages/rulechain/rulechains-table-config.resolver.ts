@@ -169,7 +169,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
 
   configureEntityFunctions(ruleChainScope: string): void {
     if (ruleChainScope === 'tenant') {
-      this.config.tableTitle = this.translate.instant('rulechain.core-rulechains');
+      this.config.tableTitle = this.translate.instant('rulechain.rulechains');
       this.config.entitiesFetchFunction = pageLink => this.fetchRuleChains(pageLink);
     } else if (ruleChainScope === 'edges') {
       this.config.tableTitle = this.translate.instant('rulechain.edge-rulechains');
