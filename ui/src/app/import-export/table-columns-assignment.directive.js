@@ -133,15 +133,19 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
                 vm.columnTypes.name.disable = isSelectName;
                 vm.columnTypes.type.disable = isSelectType;
                 vm.columnTypes.label.disable = isSelectLabel;
-                vm.columnTypes.gateway.disable = isSelectGateway;
+                if (angular.isDefined(vm.columnTypes.gateway)) {
+                    vm.columnTypes.gateway.disable = isSelectGateway;
+                }
                 vm.columnTypes.description.disable = isSelectDescription;
                 if (angular.isDefined(vm.columnTypes.accessToken)) {
                     vm.columnTypes.accessToken.disable = isSelectCredentials;
                 }
-                vm.columnTypes.edgeLicenseKey.disable = isSelectEdgeLicenseKey;
-                vm.columnTypes.cloudEndpoint.disable = isSelectCloudEndpoint;
-                vm.columnTypes.routingKey.disable = isSelectRoutingKey;
-                vm.columnTypes.secret.disable = isSelectSecret;
+                if (vm.entityType === types.entityType.edge) {
+                    vm.columnTypes.edgeLicenseKey.disable = isSelectEdgeLicenseKey;
+                    vm.columnTypes.cloudEndpoint.disable = isSelectCloudEndpoint;
+                    vm.columnTypes.routingKey.disable = isSelectRoutingKey;
+                    vm.columnTypes.secret.disable = isSelectSecret;
+                }
             });
         }
     }, true);

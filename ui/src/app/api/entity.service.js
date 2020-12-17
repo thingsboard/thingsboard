@@ -1278,10 +1278,14 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         }
 
         if (entityType === types.entityType.edge) {
-            newEntity.edgeLicenseKey = entityParameters.edgeLicenseKey;
-            newEntity.cloudEndpoint = entityParameters.cloudEndpoint;
-            newEntity.routingKey = entityParameters.routingKey;
-            newEntity.secret = entityParameters.secret;
+            Object.assign(newEntity,
+                {
+                    edgeLicenseKey: entityParameters.edgeLicenseKey,
+                    cloudEndpoint: entityParameters.cloudEndpoint,
+                    routingKey: entityParameters.routingKey,
+                    secret: entityParameters.secret
+                }
+            );
         }
 
         let saveEntityPromise = getEntitySavePromise(entityType, newEntity, config);

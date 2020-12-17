@@ -1405,9 +1405,9 @@
             "access-token": "Access token",
             "isgateway": "Is Gateway",
             "description": "Description",
-            "edgeLicenseKey": "Edge license key",
-            "cloudEndpoint": "Cloud endpoint",
-            "routingKey": "Edge routing key",
+            "edgeLicenseKey": "License Key",
+            "cloudEndpoint": "Cloud Endpoint",
+            "routingKey": "Edge key",
             "secret": "Edge secret"
         },
         "stepper-text":{
