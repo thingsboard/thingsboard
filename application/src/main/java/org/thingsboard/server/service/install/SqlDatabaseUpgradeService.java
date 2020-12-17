@@ -267,6 +267,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             case "2.5.5":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
+                    // TODO: voba - should be 2.6.0
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.5.0", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
 
