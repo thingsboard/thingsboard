@@ -16,7 +16,7 @@
 
 -->
 <div fxLayout="column" [formGroup]="alarmRuleFormGroup">
-  <tb-alarm-rule-condition formControlName="condition">
+  <tb-alarm-rule-condition formControlName="condition" [deviceProfileId]="deviceProfileId">
   </tb-alarm-rule-condition>
   <tb-alarm-schedule-info formControlName="schedule">
   </tb-alarm-schedule-info>

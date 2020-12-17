@@ -229,9 +229,12 @@ public class HashPartitionService implements PartitionService {
     @Override
     public Set<ServiceInfo> getOtherServices(ServiceType serviceType) {
         Set<ServiceInfo> result = new HashSet<>();
-        for (ServiceInfo serviceInfo : currentOtherServices) {
-            if (serviceInfo.getServiceTypesList().contains(serviceType.name())) {
-                result.add(serviceInfo);
+        // TODO: check and remove this 'if' if do not need (check update api usage state after restart TB of the end of a month)
+        if (currentOtherServices != null) {
+            for (ServiceInfo serviceInfo : currentOtherServices) {
+                if (serviceInfo.getServiceTypesList().contains(serviceType.name())) {
+                    result.add(serviceInfo);
+                }
             }
         }
         return result;

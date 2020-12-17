@@ -39,7 +39,7 @@
     </button>
   </div>
 </div>
-<div class="mat-padding" fxLayout="column">
+<div [ngClass]="{'mat-padding': !standalone}" fxLayout="column">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-width: 0;">
       <mat-form-field class="mat-block">
@@ -53,6 +53,10 @@
         labelText="device-profile.default-rule-chain"
         formControlName="defaultRuleChainId">
       </tb-rule-chain-autocomplete>
+      <tb-queue-type-list
+        [queueType]="serviceType"
+        formControlName="defaultQueueName">
+      </tb-queue-type-list>
       <mat-form-field fxHide class="mat-block">
         <mat-label translate>device-profile.type</mat-label>
         <mat-select formControlName="type" required>
@@ -112,7 +116,8 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <tb-device-profile-alarms
-              formControlName="alarms">
+              formControlName="alarms"
+              [deviceProfileId]="deviceProfileId">
             </tb-device-profile-alarms>
           </mat-expansion-panel>
           <mat-expansion-panel [expanded]="true">

@@ -18,11 +18,15 @@ package org.thingsboard.rule.engine.api;
 import io.netty.channel.EventLoopGroup;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -48,6 +52,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -145,7 +150,7 @@ public interface TbContext {
     TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId);
 
     // TODO: Does this changes the message?
-    TbMsg alarmCreatedMsg(Alarm alarm, RuleNodeId ruleNodeId);
+    TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action);
 
     /*
      *
@@ -193,11 +198,17 @@ public interface TbContext {
 
     ListeningExecutor getMailExecutor();
 
+    ListeningExecutor getSmsExecutor();
+
     ListeningExecutor getDbCallbackExecutor();
 
     ListeningExecutor getExternalCallExecutor();
 
     MailService getMailService();
+
+    SmsService getSmsService();
+
+    SmsSenderFactory getSmsSenderFactory();
 
     QueueStatsService getQueueStatsService();
 
@@ -224,11 +235,17 @@ public interface TbContext {
 
     RuleNodeState findRuleNodeStateForEntity(EntityId entityId);
 
+    void removeRuleNodeStateForEntity(EntityId entityId);
+
     RuleNodeState saveRuleNodeState(RuleNodeState state);
 
     void clearRuleNodeStates();
 
-    void addProfileListener(Consumer<DeviceProfile> listener);
+    void addTenantProfileListener(Consumer<TenantProfile> listener);
 
-    void removeProfileListener();
+    void addDeviceProfileListeners(Consumer<DeviceProfile> listener, BiConsumer<DeviceId, DeviceProfile> deviceListener);
+
+    void removeListeners();
+
+    TenantProfile getTenantProfile();
 }

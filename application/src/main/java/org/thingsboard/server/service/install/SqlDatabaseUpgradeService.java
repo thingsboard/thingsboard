@@ -36,6 +36,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 import org.thingsboard.server.service.queue.upgrade.TbQueueYmlRuleEngineSettings;
 
@@ -94,6 +95,9 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private InstallScripts installScripts;
 
     @Autowired
+    private SystemDataLoaderService systemDataLoaderService;
+
+    @Autowired
     private TenantService tenantService;
 
     @Autowired
@@ -103,13 +107,13 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private DeviceProfileService deviceProfileService;
 
     @Autowired
+    private ApiUsageStateService apiUsageStateService;
+
+    @Autowired
     private TbQueueYmlRuleEngineSettings ruleEngineSettings;
 
     @Autowired
     private QueueService queueService;
-
-    @Autowired
-    private SystemDataLoaderService systemDataLoaderService;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -366,6 +370,24 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         } catch (Exception e) {
                         }
 
+                        try {
+                            conn.createStatement().execute("CREATE TABLE IF NOT EXISTS api_usage_state (" +
+                                    " id uuid NOT NULL CONSTRAINT usage_record_pkey PRIMARY KEY," +
+                                    " created_time bigint NOT NULL," +
+                                    " tenant_id uuid," +
+                                    " entity_type varchar(32)," +
+                                    " entity_id uuid," +
+                                    " transport varchar(32)," +
+                                    " db_storage varchar(32)," +
+                                    " re_exec varchar(32)," +
+                                    " js_exec varchar(32)," +
+                                    " email_exec varchar(32)," +
+                                    " sms_exec varchar(32)," +
+                                    " CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)\n" +
+                                    ");");
+                        } catch (Exception e) {
+                        }
+
                         schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.1", "schema_update_before.sql");
                         loadSql(schemaUpdateFile, conn);
 
@@ -381,6 +403,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         do {
                             pageData = tenantService.findTenants(pageLink);
                             for (Tenant tenant : pageData.getData()) {
+                                try {
+                                    apiUsageStateService.createDefaultApiUsageState(tenant.getId());
+                                } catch (Exception e) {
+                                }
                                 List<EntitySubtype> deviceTypes = deviceService.findDeviceTypesByTenantId(tenant.getId()).get();
                                 try {
                                     deviceProfileService.createDefaultDeviceProfile(tenant.getId());
@@ -404,6 +430,27 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3002000;");
                     }
+                    log.info("Schema updated.");
+                } catch (Exception e) {
+                    log.error("Failed updating schema!!!", e);
+                }
+                break;
+            case "3.2.0":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    try {
+                        conn.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_device_device_profile_id ON device(tenant_id, device_profile_id);");
+                        conn.createStatement().execute("ALTER TABLE dashboard ALTER COLUMN configuration TYPE varchar;");
+                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3002001;");
+                    } catch (Exception e) {
+                        log.error("Failed updating schema!!!", e);
+                    }
+                    log.info("Schema updated.");
+                }
+                break;
+            case "3.2.1":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
                     try {
                         conn.createStatement().execute("CREATE TABLE IF NOT EXISTS queue ( " +
                                 "id uuid NOT NULL CONSTRAINT queue_pkey PRIMARY KEY, " +
@@ -462,9 +509,12 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 "CONSTRAINT queue_stats_queue_id_unq_key UNIQUE (tenant_id, queue_id));");
                     } catch (Exception e) {
                     }
+
+                    try {
+                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3003000;");
+                    } catch (Exception e) {
+                    }
                     log.info("Schema updated.");
-                } catch (Exception e) {
-                    log.error("Failed updating schema!!!", e);
                 }
                 break;
             default:

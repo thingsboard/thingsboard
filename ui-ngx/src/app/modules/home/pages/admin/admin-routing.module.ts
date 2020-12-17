@@ -31,6 +31,7 @@ import { Observable } from 'rxjs';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { OAuth2Service } from '@core/http/oauth2.service';
 import { UserProfileResolver } from '@home/pages/profile/profile-routing.module';
+import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { QueuesTableConfigResolver } from './queues-table-config.resolver';
 
@@ -84,6 +85,19 @@ const routes: Routes = [
           breadcrumb: {
             label: 'admin.outgoing-mail',
             icon: 'mail'
+          }
+        }
+      },
+      {
+        path: 'sms-provider',
+        component: SmsProviderComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN],
+          title: 'admin.sms-provider-settings',
+          breadcrumb: {
+            label: 'admin.sms-provider',
+            icon: 'sms'
           }
         }
       },

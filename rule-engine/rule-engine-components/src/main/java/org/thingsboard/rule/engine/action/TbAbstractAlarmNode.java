@@ -58,13 +58,11 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                     if (alarmResult.alarm == null) {
                         ctx.tellNext(msg, "False");
                     } else if (alarmResult.isCreated) {
-                        ctx.enqueue(ctx.alarmCreatedMsg(alarmResult.alarm, ctx.getSelfId()),
-                                () -> ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Created"),
-                                throwable -> ctx.tellFailure(toAlarmMsg(ctx, alarmResult, msg), throwable));
+                        tellNext(ctx, msg, alarmResult, DataConstants.ENTITY_CREATED, "Created");
                     } else if (alarmResult.isUpdated) {
-                        ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Updated");
+                        tellNext(ctx, msg, alarmResult, DataConstants.ENTITY_UPDATED, "Updated");
                     } else if (alarmResult.isCleared) {
-                        ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Cleared");
+                        tellNext(ctx, msg, alarmResult, DataConstants.ALARM_CLEAR, "Cleared");
                     } else {
                         ctx.tellSuccess(msg);
                     }
@@ -109,4 +107,9 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
         }
     }
 
+    private void tellNext(TbContext ctx, TbMsg msg, TbAlarmResult alarmResult, String entityAction, String alarmAction) {
+        ctx.enqueue(ctx.alarmActionMsg(alarmResult.alarm, ctx.getSelfId(), entityAction),
+                () -> ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), alarmAction),
+                throwable -> ctx.tellFailure(toAlarmMsg(ctx, alarmResult, msg), throwable));
+    }
 }

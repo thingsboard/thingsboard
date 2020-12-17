@@ -16,102 +16,177 @@
 package org.thingsboard.server.common.transport.limits;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.TenantProfileData;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
+import org.thingsboard.server.queue.util.TbTransportComponent;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 @Service
-@ConditionalOnExpression("('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true') || '${service.type:null}'=='tb-transport'")
+@TbTransportComponent
 @Slf4j
 public class DefaultTransportRateLimitService implements TransportRateLimitService {
 
-    private final ConcurrentMap<TenantId, TransportRateLimit[]> perTenantLimits = new ConcurrentHashMap<>();
-    private final ConcurrentMap<DeviceId, TransportRateLimit[]> perDeviceLimits = new ConcurrentHashMap<>();
+    private final static DummyTransportRateLimit ALLOW = new DummyTransportRateLimit();
+    private final ConcurrentMap<TenantId, Boolean> tenantAllowed = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, Set<DeviceId>> tenantDevices = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, EntityTransportRateLimits> perTenantLimits = new ConcurrentHashMap<>();
+    private final ConcurrentMap<DeviceId, EntityTransportRateLimits> perDeviceLimits = new ConcurrentHashMap<>();
 
-    private final TransportRateLimitFactory rateLimitFactory;
     private final TransportTenantProfileCache tenantProfileCache;
 
-    public DefaultTransportRateLimitService(TransportRateLimitFactory rateLimitFactory, TransportTenantProfileCache tenantProfileCache) {
-        this.rateLimitFactory = rateLimitFactory;
+    public DefaultTransportRateLimitService(TransportTenantProfileCache tenantProfileCache) {
         this.tenantProfileCache = tenantProfileCache;
     }
 
     @Override
-    public TransportRateLimit getRateLimit(TenantId tenantId, TransportRateLimitType limitType) {
-        TransportRateLimit[] limits = perTenantLimits.get(tenantId);
-        if (limits == null) {
-            limits = fetchProfileAndInit(tenantId);
-            perTenantLimits.put(tenantId, limits);
+    public EntityType checkLimits(TenantId tenantId, DeviceId deviceId, int dataPoints) {
+        if (!tenantAllowed.getOrDefault(tenantId, Boolean.TRUE)) {
+            return EntityType.TENANT;
         }
-        return limits[limitType.ordinal()];
+        if (!checkEntityRateLimit(dataPoints, getTenantRateLimits(tenantId))) {
+            return EntityType.TENANT;
+        }
+        if (!checkEntityRateLimit(dataPoints, getDeviceRateLimits(tenantId, deviceId))) {
+            return EntityType.DEVICE;
+        }
+        return null;
     }
 
-    @Override
-    public TransportRateLimit getRateLimit(TenantId tenantId, DeviceId deviceId, TransportRateLimitType limitType) {
-        TransportRateLimit[] limits = perDeviceLimits.get(deviceId);
-        if (limits == null) {
-            limits = fetchProfileAndInit(tenantId);
-            perDeviceLimits.put(deviceId, limits);
+    private boolean checkEntityRateLimit(int dataPoints, EntityTransportRateLimits tenantLimits) {
+        if (dataPoints > 0) {
+            return tenantLimits.getTelemetryMsgRateLimit().tryConsume() && tenantLimits.getTelemetryDataPointsRateLimit().tryConsume(dataPoints);
+        } else {
+            return tenantLimits.getRegularMsgRateLimit().tryConsume();
         }
-        return limits[limitType.ordinal()];
     }
 
     @Override
     public void update(TenantProfileUpdateResult update) {
-        TransportRateLimit[] newLimits = createTransportRateLimits(update.getProfile());
+        log.info("Received tenant profile update: {}", update.getProfile());
+        EntityTransportRateLimits tenantRateLimitPrototype = createRateLimits(update.getProfile(), true);
+        EntityTransportRateLimits deviceRateLimitPrototype = createRateLimits(update.getProfile(), false);
         for (TenantId tenantId : update.getAffectedTenants()) {
-            mergeLimits(tenantId, newLimits);
+            mergeLimits(tenantId, tenantRateLimitPrototype, perTenantLimits::get, perTenantLimits::put);
+            tenantDevices.get(tenantId).forEach(deviceId -> {
+                mergeLimits(deviceId, deviceRateLimitPrototype, perDeviceLimits::get, perDeviceLimits::put);
+            });
         }
     }
 
     @Override
     public void update(TenantId tenantId) {
-        mergeLimits(tenantId, fetchProfileAndInit(tenantId));
-    }
-
-    public void mergeLimits(TenantId tenantId, TransportRateLimit[] newRateLimits) {
-        TransportRateLimit[] oldRateLimits = perTenantLimits.get(tenantId);
-        if (oldRateLimits == null) {
-            perTenantLimits.put(tenantId, newRateLimits);
-        } else {
-            for (int i = 0; i < TransportRateLimitType.values().length; i++) {
-                TransportRateLimit newLimit = newRateLimits[i];
-                TransportRateLimit oldLimit = oldRateLimits[i];
-                if (newLimit != null && (oldLimit == null || !oldLimit.getConfiguration().equals(newLimit.getConfiguration()))) {
-                    oldRateLimits[i] = newLimit;
-                }
-            }
-        }
+        EntityTransportRateLimits tenantRateLimitPrototype = createRateLimits(tenantProfileCache.get(tenantId), true);
+        EntityTransportRateLimits deviceRateLimitPrototype = createRateLimits(tenantProfileCache.get(tenantId), false);
+        mergeLimits(tenantId, tenantRateLimitPrototype, perTenantLimits::get, perTenantLimits::put);
+        tenantDevices.get(tenantId).forEach(deviceId -> {
+            mergeLimits(deviceId, deviceRateLimitPrototype, perDeviceLimits::get, perDeviceLimits::put);
+        });
     }
 
     @Override
     public void remove(TenantId tenantId) {
         perTenantLimits.remove(tenantId);
+        tenantDevices.remove(tenantId);
     }
 
     @Override
     public void remove(DeviceId deviceId) {
         perDeviceLimits.remove(deviceId);
+        tenantDevices.values().forEach(set -> set.remove(deviceId));
     }
 
-    private TransportRateLimit[] fetchProfileAndInit(TenantId tenantId) {
-        return perTenantLimits.computeIfAbsent(tenantId, tmp -> createTransportRateLimits(tenantProfileCache.get(tenantId)));
+    @Override
+    public void update(TenantId tenantId, boolean allowed) {
+        tenantAllowed.put(tenantId, allowed);
     }
 
-    private TransportRateLimit[] createTransportRateLimits(TenantProfile tenantProfile) {
-        TenantProfileData profileData = tenantProfile.getProfileData();
-        TransportRateLimit[] rateLimits = new TransportRateLimit[TransportRateLimitType.values().length];
-        for (TransportRateLimitType type : TransportRateLimitType.values()) {
-            rateLimits[type.ordinal()] = rateLimitFactory.create(type, profileData.getProperties().get(type.getConfigurationKey()));
+    private <T extends EntityId> void mergeLimits(T entityId, EntityTransportRateLimits newRateLimits,
+                                                  Function<T, EntityTransportRateLimits> getFunction,
+                                                  BiConsumer<T, EntityTransportRateLimits> putFunction) {
+        EntityTransportRateLimits oldRateLimits = getFunction.apply(entityId);
+        if (oldRateLimits == null) {
+            if (EntityType.TENANT.equals(entityId.getEntityType())) {
+                log.info("[{}] New rate limits: {}", entityId, newRateLimits);
+            } else {
+                log.debug("[{}] New rate limits: {}", entityId, newRateLimits);
+            }
+            putFunction.accept(entityId, newRateLimits);
+        } else {
+            EntityTransportRateLimits updated = merge(oldRateLimits, newRateLimits);
+            if (updated != null) {
+                if (EntityType.TENANT.equals(entityId.getEntityType())) {
+                    log.info("[{}] Updated rate limits: {}", entityId, updated);
+                } else {
+                    log.debug("[{}] Updated rate limits: {}", entityId, updated);
+                }
+                putFunction.accept(entityId, updated);
+            }
         }
-        return rateLimits;
+    }
+
+    private EntityTransportRateLimits merge(EntityTransportRateLimits oldRateLimits, EntityTransportRateLimits newRateLimits) {
+        boolean regularUpdate = !oldRateLimits.getRegularMsgRateLimit().getConfiguration().equals(newRateLimits.getRegularMsgRateLimit().getConfiguration());
+        boolean telemetryMsgRateUpdate = !oldRateLimits.getTelemetryMsgRateLimit().getConfiguration().equals(newRateLimits.getTelemetryMsgRateLimit().getConfiguration());
+        boolean telemetryDataPointUpdate = !oldRateLimits.getTelemetryDataPointsRateLimit().getConfiguration().equals(newRateLimits.getTelemetryDataPointsRateLimit().getConfiguration());
+        if (regularUpdate || telemetryMsgRateUpdate || telemetryDataPointUpdate) {
+            return new EntityTransportRateLimits(
+                    regularUpdate ? newLimit(newRateLimits.getRegularMsgRateLimit().getConfiguration()) : oldRateLimits.getRegularMsgRateLimit(),
+                    telemetryMsgRateUpdate ? newLimit(newRateLimits.getTelemetryMsgRateLimit().getConfiguration()) : oldRateLimits.getTelemetryMsgRateLimit(),
+                    telemetryDataPointUpdate ? newLimit(newRateLimits.getTelemetryDataPointsRateLimit().getConfiguration()) : oldRateLimits.getTelemetryDataPointsRateLimit());
+        } else {
+            return null;
+        }
+    }
+
+    private EntityTransportRateLimits createRateLimits(TenantProfile tenantProfile, boolean tenant) {
+        TenantProfileData profileData = tenantProfile.getProfileData();
+        DefaultTenantProfileConfiguration profile = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
+        if (profile == null) {
+            return new EntityTransportRateLimits(ALLOW, ALLOW, ALLOW);
+        } else {
+            TransportRateLimit regularMsgRateLimit = newLimit(tenant ? profile.getTransportTenantMsgRateLimit() : profile.getTransportDeviceMsgRateLimit());
+            TransportRateLimit telemetryMsgRateLimit = newLimit(tenant ? profile.getTransportTenantTelemetryMsgRateLimit() : profile.getTransportDeviceTelemetryMsgRateLimit());
+            TransportRateLimit telemetryDpRateLimit = newLimit(tenant ? profile.getTransportTenantTelemetryDataPointsRateLimit() : profile.getTransportTenantTelemetryDataPointsRateLimit());
+            return new EntityTransportRateLimits(regularMsgRateLimit, telemetryMsgRateLimit, telemetryDpRateLimit);
+        }
+    }
+
+    private static TransportRateLimit newLimit(String config) {
+        return StringUtils.isEmpty(config) ? ALLOW : new SimpleTransportRateLimit(config);
+    }
+
+    private EntityTransportRateLimits getTenantRateLimits(TenantId tenantId) {
+        EntityTransportRateLimits limits = perTenantLimits.get(tenantId);
+        if (limits == null) {
+            limits = createRateLimits(tenantProfileCache.get(tenantId), true);
+            perTenantLimits.put(tenantId, limits);
+        }
+        return limits;
+    }
+
+    private EntityTransportRateLimits getDeviceRateLimits(TenantId tenantId, DeviceId deviceId) {
+        EntityTransportRateLimits limits = perDeviceLimits.get(deviceId);
+        if (limits == null) {
+            limits = createRateLimits(tenantProfileCache.get(tenantId), false);
+            perDeviceLimits.put(deviceId, limits);
+            tenantDevices.computeIfAbsent(tenantId, id -> ConcurrentHashMap.newKeySet()).add(deviceId);
+        }
+        return limits;
     }
 }

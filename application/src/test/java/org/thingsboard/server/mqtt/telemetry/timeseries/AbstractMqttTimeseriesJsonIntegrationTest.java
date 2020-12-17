@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @Slf4j

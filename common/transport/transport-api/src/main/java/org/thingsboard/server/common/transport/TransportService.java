@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.transport;
 
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
@@ -44,14 +43,13 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenR
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Created by ashvayka on 04.10.18.
  */
 public interface TransportService {
 
-    GetEntityProfileResponseMsg getRoutingInfo(GetEntityProfileRequestMsg msg);
+    GetEntityProfileResponseMsg getEntityProfile(GetEntityProfileRequestMsg msg);
 
     List<GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(GetQueueRoutingInfoRequestMsg msg);
 
@@ -74,10 +72,6 @@ public interface TransportService {
     void process(ProvisionDeviceRequestMsg msg,
                  TransportServiceCallback<ProvisionDeviceResponseMsg> callback);
 
-    void onProfileUpdate(DeviceProfile deviceProfile);
-
-    boolean checkLimits(SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback);
-
     void process(SessionInfoProto sessionInfo, SessionEventMsg msg, TransportServiceCallback<Void> callback);
 
     void process(SessionInfoProto sessionInfo, PostTelemetryMsg msg, TransportServiceCallback<Void> callback);
@@ -97,8 +91,6 @@ public interface TransportService {
     void process(SessionInfoProto sessionInfo, SubscriptionInfoProto msg, TransportServiceCallback<Void> callback);
 
     void process(SessionInfoProto sessionInfo, ClaimDeviceMsg msg, TransportServiceCallback<Void> callback);
-
-    ScheduledExecutorService getSchedulerExecutor();
 
     void registerAsyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener);
 

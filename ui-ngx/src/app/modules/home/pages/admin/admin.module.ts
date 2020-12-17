@@ -24,6 +24,8 @@ import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-sett
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { OAuth2SettingsComponent } from '@modules/home/pages/admin/oauth2-settings.component';
+import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
+import { SendTestSmsDialogComponent } from '@home/pages/admin/send-test-sms-dialog.component';
 import { QueueComponent} from './queue.component';
 
 @NgModule({
@@ -31,6 +33,8 @@ import { QueueComponent} from './queue.component';
     [
       GeneralSettingsComponent,
       MailServerComponent,
+      SmsProviderComponent,
+      SendTestSmsDialogComponent,
       SecuritySettingsComponent,
       OAuth2SettingsComponent,
       QueueComponent,

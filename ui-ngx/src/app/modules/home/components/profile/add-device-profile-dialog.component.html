@@ -45,6 +45,10 @@
               labelText="device-profile.default-rule-chain"
               formControlName="defaultRuleChainId">
             </tb-rule-chain-autocomplete>
+            <tb-queue-type-list
+              [queueType]="serviceType"
+              formControlName="defaultQueueName">
+            </tb-queue-type-list>
             <mat-form-field fxHide class="mat-block">
               <mat-label translate>device-profile.type</mat-label>
               <mat-select formControlName="type" required>
@@ -92,7 +96,8 @@
             {count: alarmRulesFormGroup.get('alarms').value ?
                 alarmRulesFormGroup.get('alarms').value.length : 0} }}</ng-template>
           <tb-device-profile-alarms
-            formControlName="alarms">
+            formControlName="alarms"
+            [deviceProfileId]="null">
           </tb-device-profile-alarms>
         </form>
       </mat-step>

@@ -66,6 +66,8 @@ public class EntityIdFactory {
                 return new DeviceProfileId(uuid);
             case TENANT_PROFILE:
                 return new TenantProfileId(uuid);
+            case API_USAGE_STATE:
+                return new ApiUsageStateId(uuid);
             case QUEUE:
                 return new QueueId(uuid);
             case QUEUE_STATS:

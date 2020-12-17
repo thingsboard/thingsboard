@@ -29,6 +29,7 @@ import { AlarmRule, DeviceProfileAlarm, deviceProfileAlarmValidator } from '@sha
 import { MatDialog } from '@angular/material/dialog';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
+import { EntityId } from '@shared/models/id/entity-id';
 
 @Component({
   selector: 'tb-device-profile-alarm',
@@ -59,6 +60,9 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
 
   @Input()
   expanded = false;
+
+  @Input()
+  deviceProfileId: EntityId;
 
   private modelValue: DeviceProfileAlarm;
 
@@ -133,6 +137,19 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
   }
 
   public validate(c: FormControl) {
+    if (c.parent) {
+      const alarmType = c.value.alarmType;
+      const profileAlarmsType = [];
+      c.parent.getRawValue().forEach((alarm: DeviceProfileAlarm) => {
+          profileAlarmsType.push(alarm.alarmType);
+        }
+      );
+      if (profileAlarmsType.filter(profileAlarmType => profileAlarmType === alarmType).length > 1) {
+        this.alarmFormGroup.get('alarmType').setErrors({
+          unique: true
+        });
+      }
+    }
     return (this.alarmFormGroup.valid) ? null : {
       alarm: {
         valid: false,

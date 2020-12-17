@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -185,12 +186,15 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Override
     @Transactional
     public Queue createDefaultMainQueue(TenantProfile tenantProfile, Tenant tenant) {
+        DefaultTenantProfileConfiguration profileConfiguration =
+                (DefaultTenantProfileConfiguration)tenantProfile.getProfileData().getConfiguration();
+
         Queue mainQueue = new Queue();
         mainQueue.setTenantId(tenant.getTenantId());
         mainQueue.setName("Main");
         mainQueue.setTopic("tb_rule_engine.main");
         mainQueue.setPollInterval(25);
-        mainQueue.setPartitions(Math.max(tenantProfile.getProfileData().getMaxNumberOfPartitionsPerQueue(), 1));
+        mainQueue.setPartitions(Math.max(profileConfiguration.getMaxNumberOfPartitionsPerQueue(), 1));
         mainQueue.setPackProcessingTimeout(60000);
         SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
         mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
@@ -231,6 +235,8 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                     if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
                         Tenant queueTenant = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
                         TenantProfile queueTenantProfile = tenantProfileDao.findById(TenantId.SYS_TENANT_ID, queueTenant.getTenantProfileId().getId());
+                        DefaultTenantProfileConfiguration profileConfiguration =
+                                (DefaultTenantProfileConfiguration)queueTenantProfile.getProfileData().getConfiguration();
 
                         if (!queueTenantProfile.isIsolatedTbRuleEngine()) {
                             throw new DataValidationException("Tenant should be isolated!");
@@ -238,13 +244,13 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
 
                         if (queue.getId() == null) {
                             List<Queue> existingQueues = findQueues(tenantId);
-                            if (existingQueues.size() >= queueTenantProfile.getProfileData().getMaxNumberOfQueues()) {
+                            if (existingQueues.size() >= profileConfiguration.getMaxNumberOfQueues()) {
                                 throw new DataValidationException("The limit for creating new queue has been exceeded!");
                             }
                         }
 
-                        if (queue.getPartitions() > queueTenantProfile.getProfileData().getMaxNumberOfPartitionsPerQueue()) {
-                            throw new DataValidationException(String.format("Queue partitions can't be more then %d", queueTenantProfile.getProfileData().getMaxNumberOfPartitionsPerQueue()));
+                        if (queue.getPartitions() > profileConfiguration.getMaxNumberOfPartitionsPerQueue()) {
+                            throw new DataValidationException(String.format("Queue partitions can't be more then %d", profileConfiguration.getMaxNumberOfPartitionsPerQueue()));
                         }
                     }
 

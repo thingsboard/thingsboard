@@ -18,21 +18,20 @@ package org.thingsboard.server.common.transport.service;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.discovery.TenantRoutingInfo;
-import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
+import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -43,7 +42,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
-@ConditionalOnExpression("('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true') || '${service.type:null}'=='tb-transport'")
+@TbTransportComponent
 @Slf4j
 public class DefaultTransportTenantProfileCache implements TransportTenantProfileCache {
 
@@ -53,7 +52,14 @@ public class DefaultTransportTenantProfileCache implements TransportTenantProfil
     private final ConcurrentMap<TenantProfileId, Set<TenantId>> tenantProfileIds = new ConcurrentHashMap<>();
     private final DataDecodingEncodingService dataDecodingEncodingService;
 
+    private TransportRateLimitService rateLimitService;
     private TransportService transportService;
+
+    @Lazy
+    @Autowired
+    public void setRateLimitService(TransportRateLimitService rateLimitService) {
+        this.rateLimitService = rateLimitService;
+    }
 
     @Lazy
     @Autowired
@@ -76,7 +82,8 @@ public class DefaultTransportTenantProfileCache implements TransportTenantProfil
         if (profileOpt.isPresent()) {
             TenantProfile newProfile = profileOpt.get();
             log.trace("[{}] put: {}", newProfile.getId(), newProfile);
-            return new TenantProfileUpdateResult(newProfile, tenantProfileIds.get(newProfile.getId()));
+            Set<TenantId> affectedTenants = tenantProfileIds.get(newProfile.getId());
+            return new TenantProfileUpdateResult(newProfile, affectedTenants != null ? affectedTenants : Collections.emptySet());
         } else {
             log.warn("Failed to decode profile: {}", profileBody.toString());
             return new TenantProfileUpdateResult(null, Collections.emptySet());
@@ -126,8 +133,8 @@ public class DefaultTransportTenantProfileCache implements TransportTenantProfil
                             .setEntityIdMSB(tenantId.getId().getMostSignificantBits())
                             .setEntityIdLSB(tenantId.getId().getLeastSignificantBits())
                             .build();
-                    TransportProtos.GetEntityProfileResponseMsg routingInfo = transportService.getRoutingInfo(msg);
-                    Optional<TenantProfile> profileOpt = dataDecodingEncodingService.decode(routingInfo.getData().toByteArray());
+                    TransportProtos.GetEntityProfileResponseMsg entityProfileMsg = transportService.getEntityProfile(msg);
+                    Optional<TenantProfile> profileOpt = dataDecodingEncodingService.decode(entityProfileMsg.getData().toByteArray());
                     if (profileOpt.isPresent()) {
                         profile = profileOpt.get();
                         TenantProfile existingProfile = profiles.get(profile.getId());
@@ -139,9 +146,11 @@ public class DefaultTransportTenantProfileCache implements TransportTenantProfil
                         tenantProfileIds.computeIfAbsent(profile.getId(), id -> ConcurrentHashMap.newKeySet()).add(tenantId);
                         tenantIds.put(tenantId, profile.getId());
                     } else {
-                        log.warn("[{}] Can't decode tenant profile: {}", tenantId, routingInfo.getData());
+                        log.warn("[{}] Can't decode tenant profile: {}", tenantId, entityProfileMsg.getData());
                         throw new RuntimeException("Can't decode tenant profile!");
                     }
+                    Optional<ApiUsageState> apiStateOpt = dataDecodingEncodingService.decode(entityProfileMsg.getApiState().toByteArray());
+                    apiStateOpt.ifPresent(apiUsageState -> rateLimitService.update(tenantId, apiUsageState.isTransportEnabled()));
                 }
             } finally {
                 tenantProfileFetchLock.unlock();

@@ -25,11 +25,12 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.TenantProfileData;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -145,7 +146,9 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
             defaultTenantProfile = new TenantProfile();
             defaultTenantProfile.setDefault(true);
             defaultTenantProfile.setName("Default");
-            defaultTenantProfile.setProfileData(new TenantProfileData());
+            TenantProfileData profileData = new TenantProfileData();
+            profileData.setConfiguration(new DefaultTenantProfileConfiguration());
+            defaultTenantProfile.setProfileData(profileData);
             defaultTenantProfile.setDescription("Default tenant profile");
             defaultTenantProfile.setIsolatedTbCore(false);
             defaultTenantProfile.setIsolatedTbRuleEngine(false);
@@ -213,6 +216,12 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
                     if (StringUtils.isEmpty(tenantProfile.getName())) {
                         throw new DataValidationException("Tenant profile name should be specified!");
                     }
+                    if (tenantProfile.getProfileData() == null) {
+                        throw new DataValidationException("Tenant profile data should be specified!");
+                    }
+                    if (tenantProfile.getProfileData().getConfiguration() == null) {
+                        throw new DataValidationException("Tenant profile data configuration should be specified!");
+                    }
                     if (tenantProfile.isDefault()) {
                         TenantProfile defaultTenantProfile = findDefaultTenantProfile(tenantId);
                         if (defaultTenantProfile != null && !defaultTenantProfile.getId().equals(tenantProfile.getId())) {
@@ -220,10 +229,10 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
                         }
                     }
                     if (tenantProfile.isIsolatedTbRuleEngine()) {
-                        if (tenantProfile.getProfileData().getMaxNumberOfQueues() < 1) {
+                        if (((DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration()).getMaxNumberOfQueues() < 1) {
                             throw new DataValidationException("Property maxNumberOfQueues can't be less then 1!");
                         }
-                        if (tenantProfile.getProfileData().getMaxNumberOfPartitionsPerQueue() < 1) {
+                        if (((DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration()).getMaxNumberOfPartitionsPerQueue() < 1) {
                             throw new DataValidationException("Property maxNumberOfPartitionsPerQueue can't be less then 1!");
                         }
                     }
@@ -239,10 +248,12 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
                     } else if (old.isIsolatedTbCore() != tenantProfile.isIsolatedTbCore()) {
                         throw new DataValidationException("Can't update isolatedTbCore property!");
                     } else if (tenantProfile.isIsolatedTbRuleEngine()) {
-                        if (old.getProfileData().getMaxNumberOfQueues() > tenantProfile.getProfileData().getMaxNumberOfQueues()) {
+                        if (((DefaultTenantProfileConfiguration) old.getProfileData().getConfiguration()).getMaxNumberOfQueues() >
+                                ((DefaultTenantProfileConfiguration) old.getProfileData().getConfiguration()).getMaxNumberOfQueues()) {
                             throw new DataValidationException("Can't decrease maxNumberOfQueues property!");
                         }
-                        if (old.getProfileData().getMaxNumberOfPartitionsPerQueue() > tenantProfile.getProfileData().getMaxNumberOfPartitionsPerQueue()) {
+                        if (((DefaultTenantProfileConfiguration) old.getProfileData().getConfiguration()).getMaxNumberOfPartitionsPerQueue() >
+                                ((DefaultTenantProfileConfiguration) old.getProfileData().getConfiguration()).getMaxNumberOfPartitionsPerQueue()) {
                             throw new DataValidationException("Can't decrease maxNumberOfPartitionsPerQueue property!");
                         }
                     }

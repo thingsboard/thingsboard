@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.mqtt.telemetry.attributes;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.junit.After;
@@ -142,7 +143,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
 
     }
 
-    protected void assertAttributesValues(List<Map<String, Object>> deviceValues, Set<String> expectedKeySet) {
+    protected void assertAttributesValues(List<Map<String, Object>> deviceValues, Set<String> expectedKeySet) throws JsonProcessingException {
         for (Map<String, Object> map : deviceValues) {
             String key = (String) map.get("key");
             Object value = map.get("value");

@@ -31,4 +31,6 @@ public interface RuleNodeStateService {
     RuleNodeState save(TenantId tenantId, RuleNodeState ruleNodeState);
 
     void removeByRuleNodeId(TenantId tenantId, RuleNodeId selfId);
+
+    void removeByRuleNodeIdAndEntityId(TenantId tenantId, RuleNodeId selfId, EntityId entityId);
 }

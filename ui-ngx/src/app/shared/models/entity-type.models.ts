@@ -48,6 +48,7 @@ export enum EntityType {
   ENTITY_VIEW = 'ENTITY_VIEW',
   WIDGETS_BUNDLE = 'WIDGETS_BUNDLE',
   WIDGET_TYPE = 'WIDGET_TYPE',
+  API_USAGE_STATE = 'API_USAGE_STATE',
   QUEUE = 'QUEUE',
   QUEUE_STATS = 'QUEUE_STATS'
 }
@@ -238,6 +239,12 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         noEntities: 'alarm.no-alarms-prompt',
         search: 'alarm.search',
         selectedEntities: 'alarm.selected-alarms'
+      }
+    ],
+    [
+      EntityType.API_USAGE_STATE,
+      {
+        type: 'entity.type-api-usage-state'
       }
     ],
     [

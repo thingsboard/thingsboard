@@ -42,6 +42,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
@@ -74,6 +75,9 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
     @Autowired
     private DeviceProfileService deviceProfileService;
+
+    @Autowired
+    private ApiUsageStateService apiUsageStateService;
 
     @Autowired
     private EntityViewService entityViewService;
@@ -127,6 +131,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
         Tenant savedTenant = tenantDao.save(tenant.getId(), tenant);
         if (tenant.getId() == null) {
             deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());
+            apiUsageStateService.createDefaultApiUsageState(savedTenant.getId());
             TenantProfile tenantProfile = this.tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, savedTenant.getTenantProfileId());
             if(tenantProfile.isIsolatedTbRuleEngine()) {
                 queueService.createDefaultMainQueue(tenantProfile, savedTenant);
@@ -148,6 +153,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
         deviceProfileService.deleteDeviceProfilesByTenantId(tenantId);
         userService.deleteTenantAdmins(tenantId);
         ruleChainService.deleteRuleChainsByTenantId(tenantId);
+        apiUsageStateService.deleteApiUsageStateByTenantId(tenantId);
         queueService.deleteQueuesByTenantId(tenantId);
         queueService.deleteQueuesByTenantId(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());

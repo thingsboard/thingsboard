@@ -43,7 +43,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
     private final short replicationFactor;
 
     public TbKafkaAdmin(TbKafkaSettings settings, Map<String, String> topicConfigs) {
-        client = AdminClient.create(settings.toProps());
+        client = AdminClient.create(settings.toAdminProps());
         this.topicConfigs = topicConfigs;
 
         try {

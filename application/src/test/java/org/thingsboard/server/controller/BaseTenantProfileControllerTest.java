@@ -23,7 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.TenantProfileData;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -139,8 +140,6 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
         TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
         savedTenantProfile.setIsolatedTbRuleEngine(true);
-        savedTenantProfile.getProfileData().setMaxNumberOfPartitionsPerQueue(1);
-        savedTenantProfile.getProfileData().setMaxNumberOfQueues(1);
         doPost("/api/tenantProfile", savedTenantProfile).andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Can't update isolatedTbRuleEngine property")));
     }
@@ -287,7 +286,9 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
         TenantProfile tenantProfile = new TenantProfile();
         tenantProfile.setName(name);
         tenantProfile.setDescription(name + " Test");
-        tenantProfile.setProfileData(new TenantProfileData());
+        TenantProfileData tenantProfileData = new TenantProfileData();
+        tenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        tenantProfile.setProfileData(tenantProfileData);
         tenantProfile.setDefault(false);
         tenantProfile.setIsolatedTbCore(false);
         tenantProfile.setIsolatedTbRuleEngine(false);

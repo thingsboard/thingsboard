@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.profile;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -52,13 +54,15 @@ import java.util.concurrent.TimeUnit;
         relationTypes = {"Alarm Created", "Alarm Updated", "Alarm Severity Updated", "Alarm Cleared", "Success", "Failure"},
         configClazz = TbDeviceProfileNodeConfiguration.class,
         nodeDescription = "Process device messages based on device profile settings",
-        nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. Generates ",
+        nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. The output relation type is either " +
+                "'Alarm Created', 'Alarm Updated', 'Alarm Severity Updated' and 'Alarm Cleared' or simply 'Success' if no alarms were affected.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbDeviceProfileConfig"
 )
 public class TbDeviceProfileNode implements TbNode {
     private static final String PERIODIC_MSG_TYPE = "TbDeviceProfilePeriodicMsg";
     private static final String PROFILE_UPDATE_MSG_TYPE = "TbDeviceProfileUpdateMsg";
+    private static final String DEVICE_UPDATE_MSG_TYPE = "TbDeviceUpdateMsg";
 
     private TbDeviceProfileNodeConfiguration config;
     private RuleEngineDeviceProfileCache cache;
@@ -71,7 +75,7 @@ public class TbDeviceProfileNode implements TbNode {
         this.cache = ctx.getDeviceProfileCache();
         this.ctx = ctx;
         scheduleAlarmHarvesting(ctx);
-        ctx.addProfileListener(this::onProfileUpdate);
+        ctx.addDeviceProfileListeners(this::onProfileUpdate, this::onDeviceUpdate);
         if (config.isFetchAlarmRulesStateOnStart()) {
             log.info("[{}] Fetching alarm rule state", ctx.getSelfId());
             int fetchCount = 0;
@@ -108,13 +112,21 @@ public class TbDeviceProfileNode implements TbNode {
             harvestAlarms(ctx, System.currentTimeMillis());
         } else if (msg.getType().equals(PROFILE_UPDATE_MSG_TYPE)) {
             updateProfile(ctx, new DeviceProfileId(UUID.fromString(msg.getData())));
+        } else if (msg.getType().equals(DEVICE_UPDATE_MSG_TYPE)) {
+            JsonNode data = JacksonUtil.toJsonNode(msg.getData());
+            DeviceId deviceId = new DeviceId(UUID.fromString(data.get("deviceId").asText()));
+            if (data.has("profileId")) {
+                invalidateDeviceProfileCache(deviceId, new DeviceProfileId(UUID.fromString(data.get("deviceProfileId").asText())));
+            } else {
+                removeDeviceState(deviceId);
+            }
         } else {
             if (EntityType.DEVICE.equals(originatorType)) {
                 DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
                 if (msg.getType().equals(DataConstants.ENTITY_UPDATED)) {
                     invalidateDeviceProfileCache(deviceId, msg.getData());
                 } else if (msg.getType().equals(DataConstants.ENTITY_DELETED)) {
-                    deviceStates.remove(deviceId);
+                    removeDeviceState(deviceId);
                 } else {
                     DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId, null);
                     if (deviceState != null) {
@@ -137,7 +149,7 @@ public class TbDeviceProfileNode implements TbNode {
 
     @Override
     public void destroy() {
-        ctx.removeProfileListener();
+        ctx.removeListeners();
         deviceStates.clear();
     }
 
@@ -182,15 +194,39 @@ public class TbDeviceProfileNode implements TbNode {
         ctx.tellSelf(TbMsg.newMsg(PROFILE_UPDATE_MSG_TYPE, ctx.getTenantId(), TbMsgMetaData.EMPTY, profile.getId().getId().toString()), 0L);
     }
 
+    private void onDeviceUpdate(DeviceId deviceId, DeviceProfile deviceProfile) {
+        ObjectNode msgData = JacksonUtil.newObjectNode();
+        msgData.put("deviceId", deviceId.getId().toString());
+        if (deviceProfile != null) {
+            msgData.put("deviceProfileId", deviceProfile.getId().getId().toString());
+        }
+        ctx.tellSelf(TbMsg.newMsg(DEVICE_UPDATE_MSG_TYPE, ctx.getTenantId(), TbMsgMetaData.EMPTY, JacksonUtil.toString(msgData)), 0L);
+    }
+
     protected void invalidateDeviceProfileCache(DeviceId deviceId, String deviceJson) {
         DeviceState deviceState = deviceStates.get(deviceId);
         if (deviceState != null) {
             DeviceProfileId currentProfileId = deviceState.getProfileId();
             Device device = JacksonUtil.fromString(deviceJson, Device.class);
             if (!currentProfileId.equals(device.getDeviceProfileId())) {
-                deviceStates.remove(deviceId);
+                removeDeviceState(deviceId);
             }
         }
     }
 
+    protected void invalidateDeviceProfileCache(DeviceId deviceId, DeviceProfileId deviceProfileId) {
+        DeviceState deviceState = deviceStates.get(deviceId);
+        if (deviceState != null) {
+            if (!deviceState.getProfileId().equals(deviceProfileId)) {
+                removeDeviceState(deviceId);
+            }
+        }
+    }
+
+    private void removeDeviceState(DeviceId deviceId) {
+        DeviceState state = deviceStates.remove(deviceId);
+        if (config.isPersistAlarmRulesState() && (state != null || !config.isFetchAlarmRulesStateOnStart())) {
+            ctx.removeRuleNodeStateForEntity(deviceId);
+        }
+    }
 }

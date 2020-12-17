@@ -62,7 +62,7 @@ export class AppComponent implements OnInit {
     this.matIconRegistry.addSvgIconLiteral(
       'alpha-e-circle-outline',
       this.domSanitizer.bypassSecurityTrustHtml(
-        '<svg viewBox="0 0 24 24"><path d="M9,7H15V9H11V11H15V13H11V15H15V17H9V7M12,2A10,10 0 0,'+
+        '<svg viewBox="0 0 24 24"><path d="M9,7H15V9H11V11H15V13H11V15H15V17H9V7M12,2A10,10 0 0,' +
         '1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 ' +
         '0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" /></svg>'
       )
@@ -134,5 +134,11 @@ export class AppComponent implements OnInit {
   ngOnInit() {
   }
 
-}
+  onActivateComponent($event: any) {
+    const loadingElement = $('div#tb-loading-spinner');
+    if (loadingElement.length) {
+      loadingElement.remove();
+    }
+  }
 
+}

@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS customer (
 CREATE TABLE IF NOT EXISTS dashboard (
     id uuid NOT NULL CONSTRAINT dashboard_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    configuration varchar(10000000),
+    configuration varchar,
     assigned_customers varchar(1000000),
     search_text varchar(255),
     tenant_id uuid,
@@ -170,6 +170,7 @@ CREATE TABLE IF NOT EXISTS device_profile (
     is_default boolean,
     tenant_id uuid,
     default_rule_chain_id uuid,
+    default_queue_name varchar(255),
     provision_device_key varchar,
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
@@ -426,4 +427,19 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
     login_button_label varchar(255),
     help_link varchar(255),
     CONSTRAINT oauth2_template_provider_id_unq_key UNIQUE (provider_id)
+);
+
+CREATE TABLE IF NOT EXISTS api_usage_state (
+    id uuid NOT NULL CONSTRAINT usage_record_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid,
+    entity_type varchar(32),
+    entity_id uuid,
+    transport varchar(32),
+    db_storage varchar(32),
+    re_exec varchar(32),
+    js_exec varchar(32),
+    email_exec varchar(32),
+    sms_exec varchar(32),
+    CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)
 );

@@ -21,14 +21,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
@@ -53,9 +52,6 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     private final Map<String, Map<Integer, TbSubscription>> subscriptionsBySessionId = new ConcurrentHashMap<>();
 
     @Autowired
-    private EntityViewService entityViewService;
-
-    @Autowired
     private PartitionService partitionService;
 
     @Autowired
@@ -65,17 +61,17 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     @Lazy
     private SubscriptionManagerService subscriptionManagerService;
 
-    private ExecutorService wsCallBackExecutor;
+    private ExecutorService subscriptionUpdateExecutor;
 
     @PostConstruct
     public void initExecutor() {
-        wsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ws-sub-callback"));
+        subscriptionUpdateExecutor = Executors.newWorkStealingPool(20);
     }
 
     @PreDestroy
     public void shutdownExecutor() {
-        if (wsCallBackExecutor != null) {
-            wsCallBackExecutor.shutdownNow();
+        if (subscriptionUpdateExecutor != null) {
+            subscriptionUpdateExecutor.shutdownNow();
         }
     }
 
@@ -101,7 +97,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
              * Since number of subscriptions is usually much less then number of devices that are pushing data.
              */
             subscriptionsBySessionId.values().forEach(map -> map.values()
-                    .forEach(sub -> pushSubscriptionToManagerService(sub, false)));
+                    .forEach(sub -> pushSubscriptionToManagerService(sub, true)));
         }
     }
 
@@ -141,7 +137,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                     update.getLatestValues().forEach((key, value) -> attrSub.getKeyStates().put(key, value));
                     break;
             }
-            subscription.getUpdateConsumer().accept(sessionId, update);
+            subscriptionUpdateExecutor.submit(() -> subscription.getUpdateConsumer().accept(sessionId, update));
         }
         callback.onSuccess();
     }
@@ -151,7 +147,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         TbSubscription subscription = subscriptionsBySessionId
                 .getOrDefault(sessionId, Collections.emptyMap()).get(update.getSubscriptionId());
         if (subscription != null && subscription.getType() == TbSubscriptionType.ALARMS) {
-            subscription.getUpdateConsumer().accept(sessionId, update);
+            subscriptionUpdateExecutor.submit(() -> subscription.getUpdateConsumer().accept(sessionId, update));
         }
         callback.onSuccess();
     }

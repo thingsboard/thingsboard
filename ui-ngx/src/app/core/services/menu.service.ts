@@ -108,7 +108,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '160px',
+        height: '200px',
         icon: 'settings',
         pages: [
           {
@@ -124,6 +124,13 @@ export class MenuService {
             type: 'link',
             path: '/settings/outgoing-mail',
             icon: 'mail'
+          },
+          {
+            id: guid(),
+            name: 'admin.sms-provider',
+            type: 'link',
+            path: '/settings/sms-provider',
+            icon: 'sms'
           },
           {
             id: guid(),
@@ -194,6 +201,11 @@ export class MenuService {
             name: 'admin.outgoing-mail',
             icon: 'mail',
             path: '/settings/outgoing-mail'
+          },
+          {
+            name: 'admin.sms-provider',
+            icon: 'sms',
+            path: '/settings/sms-provider'
           },
           {
             name: 'admin.security-settings',
@@ -290,6 +302,14 @@ export class MenuService {
         type: 'link',
         path: '/auditLogs',
         icon: 'track_changes'
+      },
+      {
+        id: guid(),
+        name: 'api-usage.api-usage',
+        type: 'link',
+        path: '/usage',
+        icon: 'insert_chart',
+        notExact: true
       }
     );
     return sections;
@@ -376,6 +396,11 @@ export class MenuService {
             name: 'audit-log.audit-logs',
             icon: 'track_changes',
             path: '/auditLogs'
+          },
+          {
+            name: 'api-usage.api-usage',
+            icon: 'insert_chart',
+            path: '/usage'
           }
         ]
       }

@@ -23,6 +23,11 @@ public class DummyTransportRateLimit implements TransportRateLimit {
     }
 
     @Override
+    public boolean tryConsume(long number) {
+        return true;
+    }
+
+    @Override
     public boolean tryConsume() {
         return true;
     }
