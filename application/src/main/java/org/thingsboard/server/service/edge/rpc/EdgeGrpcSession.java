@@ -552,12 +552,6 @@ public final class EdgeGrpcSession implements Closeable {
             case UPDATED:
                 DeviceProfile deviceProfile = ctx.getDeviceProfileService().findDeviceProfileById(edgeEvent.getTenantId(), deviceProfileId);
                 if (deviceProfile != null) {
-
-                    // TODO: voba HACK
-//                    PageData<RuleChain> ruleChainsByTenantIdAndEdgeId = ctx.getRuleChainService().findRuleChainsByTenantIdAndEdgeId(edgeEvent.getTenantId(), edgeEvent.getEdgeId(), new TimePageLink(100));
-//                    RuleChain ruleChain = ruleChainsByTenantIdAndEdgeId.getData().get(0);
-//                    deviceProfile.setDefaultRuleChainId(ruleChain.getId());
-
                     DeviceProfileUpdateMsg deviceProfileUpdateMsg =
                             ctx.getDeviceProfileMsgConstructor().constructDeviceProfileUpdatedMsg(msgType, deviceProfile);
                     downlinkMsg = DownlinkMsg.newBuilder()
@@ -916,57 +910,57 @@ public final class EdgeGrpcSession implements Closeable {
     private ListenableFuture<List<Void>> processUplinkMsg(UplinkMsg uplinkMsg) {
         List<ListenableFuture<Void>> result = new ArrayList<>();
         try {
-            if (uplinkMsg.getEntityDataList() != null && !uplinkMsg.getEntityDataList().isEmpty()) {
+            if (uplinkMsg.getEntityDataCount() > 0) {
                 for (EntityDataProto entityData : uplinkMsg.getEntityDataList()) {
                     result.addAll(ctx.getTelemetryProcessor().onTelemetryUpdate(edge.getTenantId(), entityData));
                 }
             }
-            if (uplinkMsg.getDeviceUpdateMsgList() != null && !uplinkMsg.getDeviceUpdateMsgList().isEmpty()) {
+            if (uplinkMsg.getDeviceUpdateMsgCount() > 0) {
                 for (DeviceUpdateMsg deviceUpdateMsg : uplinkMsg.getDeviceUpdateMsgList()) {
                     result.add(ctx.getDeviceProcessor().onDeviceUpdate(edge.getTenantId(), edge, deviceUpdateMsg));
                 }
             }
-            if (uplinkMsg.getDeviceCredentialsUpdateMsgList() != null && !uplinkMsg.getDeviceCredentialsUpdateMsgList().isEmpty()) {
+            if (uplinkMsg.getDeviceCredentialsUpdateMsgCount() > 0) {
                 for (DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg : uplinkMsg.getDeviceCredentialsUpdateMsgList()) {
                     result.add(ctx.getDeviceProcessor().onDeviceCredentialsUpdate(edge.getTenantId(), deviceCredentialsUpdateMsg));
                 }
             }
-            if (uplinkMsg.getAlarmUpdateMsgList() != null && !uplinkMsg.getAlarmUpdateMsgList().isEmpty()) {
+            if (uplinkMsg.getAlarmUpdateMsgCount() > 0) {
                 for (AlarmUpdateMsg alarmUpdateMsg : uplinkMsg.getAlarmUpdateMsgList()) {
                     result.add(ctx.getAlarmProcessor().onAlarmUpdate(edge.getTenantId(), alarmUpdateMsg));
                 }
             }
-            if (uplinkMsg.getRelationUpdateMsgList() != null && !uplinkMsg.getRelationUpdateMsgList().isEmpty()) {
+            if (uplinkMsg.getRelationUpdateMsgCount() > 0) {
                 for (RelationUpdateMsg relationUpdateMsg : uplinkMsg.getRelationUpdateMsgList()) {
                     result.add(ctx.getRelationProcessor().onRelationUpdate(edge.getTenantId(), relationUpdateMsg));
                 }
             }
-            if (uplinkMsg.getRuleChainMetadataRequestMsgList() != null && !uplinkMsg.getRuleChainMetadataRequestMsgList().isEmpty()) {
+            if (uplinkMsg.getRuleChainMetadataRequestMsgCount() > 0) {
                 for (RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg : uplinkMsg.getRuleChainMetadataRequestMsgList()) {
                     result.add(ctx.getSyncEdgeService().processRuleChainMetadataRequestMsg(edge, ruleChainMetadataRequestMsg));
                 }
             }
-            if (uplinkMsg.getAttributesRequestMsgList() != null && !uplinkMsg.getAttributesRequestMsgList().isEmpty()) {
+            if (uplinkMsg.getAttributesRequestMsgCount() > 0) {
                 for (AttributesRequestMsg attributesRequestMsg : uplinkMsg.getAttributesRequestMsgList()) {
                     result.add(ctx.getSyncEdgeService().processAttributesRequestMsg(edge, attributesRequestMsg));
                 }
             }
-            if (uplinkMsg.getRelationRequestMsgList() != null && !uplinkMsg.getRelationRequestMsgList().isEmpty()) {
+            if (uplinkMsg.getRelationRequestMsgCount() > 0) {
                 for (RelationRequestMsg relationRequestMsg : uplinkMsg.getRelationRequestMsgList()) {
                     result.add(ctx.getSyncEdgeService().processRelationRequestMsg(edge, relationRequestMsg));
                 }
             }
-            if (uplinkMsg.getUserCredentialsRequestMsgList() != null && !uplinkMsg.getUserCredentialsRequestMsgList().isEmpty()) {
+            if (uplinkMsg.getUserCredentialsRequestMsgCount() > 0) {
                 for (UserCredentialsRequestMsg userCredentialsRequestMsg : uplinkMsg.getUserCredentialsRequestMsgList()) {
                     result.add(ctx.getSyncEdgeService().processUserCredentialsRequestMsg(edge, userCredentialsRequestMsg));
                 }
             }
-            if (uplinkMsg.getDeviceCredentialsRequestMsgList() != null && !uplinkMsg.getDeviceCredentialsRequestMsgList().isEmpty()) {
+            if (uplinkMsg.getDeviceCredentialsRequestMsgCount() > 0) {
                 for (DeviceCredentialsRequestMsg deviceCredentialsRequestMsg : uplinkMsg.getDeviceCredentialsRequestMsgList()) {
                     result.add(ctx.getSyncEdgeService().processDeviceCredentialsRequestMsg(edge, deviceCredentialsRequestMsg));
                 }
             }
-            if (uplinkMsg.getDeviceRpcCallMsgList() != null && !uplinkMsg.getDeviceRpcCallMsgList().isEmpty()) {
+            if (uplinkMsg.getDeviceRpcCallMsgCount() > 0) {
                 for (DeviceRpcCallMsg deviceRpcCallMsg : uplinkMsg.getDeviceRpcCallMsgList()) {
                     result.add(ctx.getDeviceProcessor().processDeviceRpcCallResponseMsg(edge.getTenantId(), deviceRpcCallMsg));
                 }
