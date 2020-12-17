@@ -39,6 +39,8 @@ export class BooleanFilterPredicateComponent implements ControlValueAccessor, On
 
   @Input() disabled: boolean;
 
+  @Input() allowUserDynamicSource = true;
+
   valueTypeEnum = EntityKeyValueType;
 
   booleanFilterPredicateFormGroup: FormGroup;

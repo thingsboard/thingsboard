@@ -21,7 +21,7 @@
       </div>
     </mat-toolbar>
     <div fxFlex class="table-container">
-      <table mat-table [dataSource]="entityDatasource"
+      <table mat-table [dataSource]="entityDatasource" [trackBy]="trackByEntityId"
                  matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLinkSortDirection()" matSortDisableClear>
         <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; trackBy: trackByColumnDef;">
           <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header> {{ column.title }} </mat-header-cell>
@@ -40,7 +40,7 @@
                                                                 width: (actionCellDescriptors.length * 40) + 'px' }">
             <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
               <button mat-button mat-icon-button [disabled]="isLoading$ | async"
-                      *ngFor="let actionDescriptor of actionCellDescriptors"
+                      *ngFor="let actionDescriptor of actionCellDescriptors; trackBy: trackByActionCellDescriptionId"
                       matTooltip="{{ actionDescriptor.displayName }}"
                       matTooltipPosition="above"
                       (click)="onActionButtonClick($event, entity, actionDescriptor)">
@@ -54,7 +54,7 @@
                 <mat-icon class="material-icons">more_vert</mat-icon>
               </button>
               <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                <button mat-menu-item *ngFor="let actionDescriptor of actionCellDescriptors"
+                <button mat-menu-item *ngFor="let actionDescriptor of actionCellDescriptors; trackBy: trackByActionCellDescriptionId"
                         [disabled]="isLoading$ | async"
                         (click)="onActionButtonClick($event, entity, actionDescriptor)">
                   <mat-icon>{{actionDescriptor.icon}}</mat-icon>

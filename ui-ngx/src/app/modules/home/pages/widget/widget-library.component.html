@@ -1,5 +1,5 @@
 <section [fxShow]="!(isLoading$ | async) && widgetsData.widgets.length === 0" fxLayoutAlign="center center"
-         style="text-transform: uppercase; display: flex; z-index: 1;"
+         style="display: flex; z-index: 1;"
          class="tb-absolute-fill">
   <button mat-button *ngIf="!isReadOnly" class="tb-add-new-widget" (click)="addWidgetType($event)">
     <mat-icon class="tb-mat-96">add</mat-icon>
@@ -7,7 +7,7 @@
   </button>
   <span translate *ngIf="isReadOnly"
         fxLayoutAlign="center center"
-        style="text-transform: uppercase; display: flex;"
+        style="display: flex;"
         class="mat-headline tb-absolute-fill">widgets-bundle.empty</span>
 </section>
 <tb-dashboard #dashboard

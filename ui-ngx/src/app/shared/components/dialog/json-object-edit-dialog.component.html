@@ -24,17 +24,16 @@
   </div>
   <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">
     <span fxFlex></span>
-    <button mat-button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || jsonFormGroup.invalid || !jsonFormGroup.dirty">
-      {{ 'action.save' | translate }}
-    </button>
     <button mat-button color="primary"
-            style="margin-right: 20px;"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>
       {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || jsonFormGroup.invalid || !jsonFormGroup.dirty">
+      {{ 'action.save' | translate }}
     </button>
   </div>
 </form>

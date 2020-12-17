@@ -14,7 +14,17 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject, NgZone, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  Inject,
+  Input,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -98,12 +108,16 @@ import { Filters } from '@shared/models/query/query.models';
   encapsulation: ViewEncapsulation.None,
   // changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardPageComponent extends PageComponent implements IDashboardController, OnDestroy {
+export class DashboardPageComponent extends PageComponent implements IDashboardController, OnInit, OnDestroy {
 
   authState: AuthState = getCurrentAuthState(this.store);
 
   authUser: AuthUser = this.authState.authUser;
 
+  @Input()
+  embedded = false;
+
+  @Input()
   dashboard: Dashboard;
   dashboardConfiguration: DashboardConfiguration;
 
@@ -239,19 +253,26 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private cd: ChangeDetectorRef) {
     super(store);
 
+  }
+
+  ngOnInit() {
     this.rxSubscriptions.push(this.route.data.subscribe(
       (data) => {
+        if (this.embedded) {
+          data.dashboard = this.dashboard;
+          data.widgetEditMode = false;
+          data.singlePageMode = false;
+        }
         this.init(data);
         this.runChangeDetection();
       }
     ));
-
     this.rxSubscriptions.push(this.breakpointObserver
       .observe(MediaBreakpoints['gt-sm'])
       .subscribe((state: BreakpointState) => {
-        this.isMobile = !state.matches;
+          this.isMobile = !state.matches;
         }
-      ));
+    ));
   }
 
   private init(data: any) {

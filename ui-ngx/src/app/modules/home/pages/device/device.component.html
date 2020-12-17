@@ -34,16 +34,17 @@
             ngxClipboard
             (cbOnSuccess)="onDeviceIdCopied($event)"
             [cbContent]="entity?.id?.id"
+            [disabled]="(isLoading$ | async)"
             [fxShow]="!isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>device.copyId</span>
     </button>
-    <button mat-raised-button
-            (click)="copyAccessToken($event)"
-            [fxShow]="!isEdit">
-      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      <span translate>device.copyAccessToken</span>
-    </button>
+    <tb-copy-device-credentials
+      [fxShow]="!isEdit"
+      [disabled]="(isLoading$ | async)"
+      [credentials$]="deviceCredentials$"
+      [deviceId]="entity?.id">
+    </tb-copy-device-credentials>
   </div>
 </div>
 <div class="mat-padding" fxLayout="column">
@@ -66,16 +67,21 @@
           {{ 'device.name-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-entity-subtype-autocomplete
-        formControlName="type"
-        [required]="true"
-        [entityType]="entityType.DEVICE"
-      >
-      </tb-entity-subtype-autocomplete>
+      <tb-device-profile-autocomplete
+        [selectDefaultProfile]="isAdd"
+        required
+        formControlName="deviceProfileId"
+        (deviceProfileUpdated)="onDeviceProfileUpdated()"
+        (deviceProfileChanged)="onDeviceProfileChanged($event)">
+      </tb-device-profile-autocomplete>
       <mat-form-field class="mat-block">
         <mat-label translate>device.label</mat-label>
         <input matInput formControlName="label">
       </mat-form-field>
+      <tb-device-data
+        formControlName="deviceData"
+        required>
+      </tb-device-data>
       <div formGroupName="additionalInfo" fxLayout="column">
         <mat-checkbox fxFlex formControlName="gateway" style="padding-bottom: 16px;">
           {{ 'device.is-gateway' | translate }}

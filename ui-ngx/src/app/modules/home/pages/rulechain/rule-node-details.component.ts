@@ -72,8 +72,9 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
     }
     if (this.ruleNode) {
       if (this.ruleNode.component.type !== RuleNodeType.RULE_CHAIN) {
+
         this.ruleNodeFormGroup = this.fb.group({
-          name: [this.ruleNode.name, [Validators.required]],
+          name: [this.ruleNode.name, [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*')]],
           debugMode: [this.ruleNode.debugMode, []],
           configuration: [this.ruleNode.configuration, [Validators.required]],
           additionalInfo: this.fb.group(
@@ -102,6 +103,7 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
 
   private updateRuleNode() {
     const formValue = this.ruleNodeFormGroup.value || {};
+
     if (this.ruleNode.component.type === RuleNodeType.RULE_CHAIN) {
       const targetRuleChainId: string = formValue.targetRuleChainId;
       if (this.ruleNode.targetRuleChainId !== targetRuleChainId && targetRuleChainId) {
@@ -115,6 +117,7 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
         Object.assign(this.ruleNode, formValue);
       }
     } else {
+      formValue.name = formValue.name.trim();
       Object.assign(this.ruleNode, formValue);
     }
   }

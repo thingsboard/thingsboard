@@ -23,4 +23,5 @@
   <mat-error *ngIf="queueFormGroup.get('queue').hasError('required')">
     {{ 'queue.name_required' | translate }}
   </mat-error>
+  <mat-hint class="tb-hint" translate [fxShow]="!disabled">device-profile.select-queue-hint</mat-hint>
 </mat-form-field>

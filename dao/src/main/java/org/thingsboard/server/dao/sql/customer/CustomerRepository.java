@@ -37,4 +37,5 @@ public interface CustomerRepository extends PagingAndSortingRepository<CustomerE
 
     CustomerEntity findByTenantIdAndTitle(UUID tenantId, String title);
 
+    Long countByTenantId(UUID tenantId);
 }

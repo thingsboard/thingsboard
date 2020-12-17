@@ -1,0 +1,76 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-tab *ngIf="entity"
+         label="{{ 'device-profile.transport-configuration' | translate }}" #transportType="matTab">
+  <div class="mat-padding" [formGroup]="detailsForm">
+    <mat-form-field class="mat-block">
+      <mat-label translate>device-profile.transport-type</mat-label>
+      <mat-select formControlName="transportType" required>
+        <mat-option *ngFor="let type of deviceTransportTypes" [value]="type">
+          {{deviceTransportTypeTranslations.get(type) | translate}}
+        </mat-option>
+      </mat-select>
+      <mat-hint *ngIf="detailsForm.get('transportType').value">
+        {{deviceTransportTypeHints.get(detailsForm.get('transportType').value) | translate}}
+      </mat-hint>
+      <mat-error *ngIf="detailsForm.get('transportType').hasError('required')">
+        {{ 'device-profile.transport-type-required' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <div formGroupName="profileData">
+      <tb-device-profile-transport-configuration
+        formControlName="transportConfiguration"
+        required>
+      </tb-device-profile-transport-configuration>
+    </div>
+  </div>
+</mat-tab>
+<mat-tab *ngIf="entity"
+         label="{{'device-profile.alarm-rules-with-count' | translate:
+            {count: entity.profileData?.alarms?.length ? entity.profileData.alarms.length : 0}
+          }}" #alarmRules="matTab">
+  <div class="mat-padding" [formGroup]="detailsForm">
+    <div formGroupName="profileData">
+      <tb-device-profile-alarms formControlName="alarms"></tb-device-profile-alarms>
+    </div>
+  </div>
+</mat-tab>
+<mat-tab *ngIf="entity"
+         label="{{ 'device-profile.device-provisioning' | translate }}" #deviceProvisioning="matTab">
+  <div class="mat-padding" [formGroup]="detailsForm">
+    <div formGroupName="profileData">
+      <tb-device-profile-provision-configuration formControlName="provisionConfiguration">
+      </tb-device-profile-provision-configuration>
+    </div>
+  </div>
+</mat-tab>
+<mat-tab *ngIf="false"
+         label="{{'device-profile.profile-configuration' | translate }}" #deviceProfile="matTab">
+  <div class="mat-padding" [formGroup]="detailsForm">
+    <div formGroupName="profileData">
+      <tb-device-profile-configuration
+        formControlName="configuration"
+        required>
+      </tb-device-profile-configuration>
+    </div>
+  </div>
+</mat-tab>
+<mat-tab *ngIf="entity && !isEdit"
+         label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
+  <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
+</mat-tab>

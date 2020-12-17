@@ -86,8 +86,7 @@ export default abstract class LeafletMap {
 
     public initSettings(options: MapSettings) {
         this.options.tinyColor = tinycolor(this.options.color || defaultSettings.color);
-        const { disableScrollZooming,
-            useClusterMarkers,
+        const { useClusterMarkers,
             zoomOnClick,
             showCoverageOnHover,
             removeOutsideVisibleBounds,
@@ -95,9 +94,6 @@ export default abstract class LeafletMap {
             chunkedLoading,
             maxClusterRadius,
             maxZoom }: MapSettings = options;
-        if (disableScrollZooming) {
-            this.map.scrollWheelZoom.disable();
-        }
         if (useClusterMarkers) {
             const clusteringSettings: MarkerClusterGroupOptions = {
                 zoomToBoundsOnClick: zoomOnClick,
@@ -135,10 +131,13 @@ export default abstract class LeafletMap {
                       tooltipAnchor: [16, -28],
                       shadowSize: [41, 41]
                     });
+                    const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
+                    mousePositionOnMap.lat = customLatLng[this.options.latKeyName];
+                    mousePositionOnMap.lng = customLatLng[this.options.lngKeyName];
+
                     const newMarker = L.marker(mousePositionOnMap, { icon }).addTo(this.map);
                     this.addMarkers.push(newMarker);
                     const datasourcesList = document.createElement('div');
-                    const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
                     const header = document.createElement('p');
                     header.appendChild(document.createTextNode('Select entity:'));
                     header.setAttribute('style', 'font-size: 14px; margin: 8px 0');
@@ -307,8 +306,11 @@ export default abstract class LeafletMap {
         } else {
           this.bounds = new L.LatLngBounds(null, null);
         }
+        if (this.options.disableScrollZooming) {
+          this.map.scrollWheelZoom.disable();
+        }
         if (this.options.draggableMarker) {
-            this.addMarkerControl();
+          this.addMarkerControl();
         }
         if (this.options.editablePolygon) {
           this.addPolygonControl();
@@ -411,10 +413,15 @@ export default abstract class LeafletMap {
     }
 
     convertToCustomFormat(position: L.LatLng): object {
-        return {
-            [this.options.latKeyName]: position.lat % 90,
-            [this.options.lngKeyName]: position.lng % 180
-        };
+      if (position.lng > 180) {
+        position.lng = 180;
+      } else if (position.lng < -180) {
+        position.lng = -180;
+      }
+      return {
+        [this.options.latKeyName]: position.lat,
+        [this.options.lngKeyName]: position.lng
+      };
     }
 
     convertToPolygonFormat(points: Array<any>): Array<any> {
@@ -480,7 +487,8 @@ export default abstract class LeafletMap {
     }
 
     const mapBounds = this.map.getBounds();
-    if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || !this.bounds.equals(bounds) && !mapBounds.contains(bounds))) {
+    if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || !this.bounds.equals(bounds)
+        && this.options.fitMapBounds ? !mapBounds.contains(bounds) : false)) {
       this.bounds = bounds;
       this.fitBounds(bounds);
     }
@@ -623,10 +631,10 @@ export default abstract class LeafletMap {
 
     // Polyline
 
-    updatePolylines(polyData: FormattedData[][], updateBounds = true, data?: FormattedData) {
+    updatePolylines(polyData: FormattedData[][], updateBounds = true, activePolyline?: FormattedData) {
         const keys: string[] = [];
         polyData.forEach((dataSource: FormattedData[]) => {
-            data = data || dataSource[0];
+            const data = activePolyline || dataSource[0];
             if (dataSource.length && data.entityName === dataSource[0].entityName) {
                 if (this.polylines.get(data.entityName)) {
                     this.updatePolyline(data, dataSource, this.options, updateBounds);

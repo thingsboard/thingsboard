@@ -16,7 +16,6 @@
 package org.thingsboard.server.rules.flow.sql;
 
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.mqtt.rpc.AbstractMqttServerSideRpcIntegrationTest;
 import org.thingsboard.server.rules.flow.AbstractRuleEngineFlowIntegrationTest;
 
 /**

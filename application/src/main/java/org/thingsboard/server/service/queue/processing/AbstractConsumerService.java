@@ -15,23 +15,36 @@
  */
 package org.thingsboard.server.service.queue.processing;
 
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
-import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
+import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.profile.TbDeviceProfileCache;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
 
 import javax.annotation.PreDestroy;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -51,12 +64,19 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
 
     protected final ActorSystemContext actorContext;
     protected final DataDecodingEncodingService encodingService;
+    protected final TbTenantProfileCache tenantProfileCache;
+    protected final TbDeviceProfileCache deviceProfileCache;
+    protected final TbApiUsageStateService apiUsageStateService;
 
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
 
-    public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
+    public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
+                                   TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache, TbApiUsageStateService apiUsageStateService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
+        this.tenantProfileCache = tenantProfileCache;
+        this.deviceProfileCache = deviceProfileCache;
+        this.apiUsageStateService = apiUsageStateService;
         this.nfConsumer = nfConsumer;
     }
 
@@ -66,6 +86,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     }
 
     @EventListener(ApplicationReadyEvent.class)
+    @Order(value = 2)
     public void onApplicationEvent(ApplicationReadyEvent event) {
         log.info("Subscribing to notifications: {}", nfConsumer.getTopic());
         this.nfConsumer.subscribe();
@@ -126,18 +147,47 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         });
     }
 
+    protected void handleComponentLifecycleMsg(UUID id, ByteString nfMsg) {
+        Optional<TbActorMsg> actorMsgOpt = encodingService.decode(nfMsg.toByteArray());
+        if (actorMsgOpt.isPresent()) {
+            TbActorMsg actorMsg = actorMsgOpt.get();
+            if (actorMsg instanceof ComponentLifecycleMsg) {
+                ComponentLifecycleMsg componentLifecycleMsg = (ComponentLifecycleMsg) actorMsg;
+                log.info("[{}][{}][{}] Received Lifecycle event: {}", componentLifecycleMsg.getTenantId(), componentLifecycleMsg.getEntityId().getEntityType(),
+                        componentLifecycleMsg.getEntityId(), componentLifecycleMsg.getEvent());
+                if (EntityType.TENANT_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    TenantProfileId tenantProfileId = new TenantProfileId(componentLifecycleMsg.getEntityId().getId());
+                    tenantProfileCache.evict(tenantProfileId);
+                    if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
+                        apiUsageStateService.onTenantProfileUpdate(tenantProfileId);
+                    }
+                } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
+                    if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
+                        apiUsageStateService.onTenantUpdate(componentLifecycleMsg.getTenantId());
+                    }
+                } else if (EntityType.DEVICE_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
+                } else if (EntityType.DEVICE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceId(componentLifecycleMsg.getEntityId().getId()));
+                } else if (EntityType.API_USAGE_STATE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    apiUsageStateService.onApiUsageStateUpdate(componentLifecycleMsg.getTenantId());
+                }
+            }
+            log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
+            actorContext.tellWithHighPriority(actorMsg);
+        }
+    }
+
     protected abstract void handleNotification(UUID id, TbProtoQueueMsg<N> msg, TbCallback callback) throws Exception;
 
     @PreDestroy
     public void destroy() {
         stopped = true;
-
         stopMainConsumers();
-
         if (nfConsumer != null) {
             nfConsumer.unsubscribe();
         }
-
         if (consumersExecutor != null) {
             consumersExecutor.shutdownNow();
         }

@@ -24,17 +24,17 @@
     </mat-form-field>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
-    <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || detailsForm.invalid || !detailsForm.dirty">
-      {{ 'action.add' | translate }}
-    </button>
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial
             [disabled]="(isLoading$ | async)"
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || detailsForm.invalid || !detailsForm.dirty">
+      {{ 'action.add' | translate }}
     </button>
   </div>
 </form>

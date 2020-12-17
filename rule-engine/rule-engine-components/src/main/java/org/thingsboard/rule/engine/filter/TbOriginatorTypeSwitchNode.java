@@ -27,7 +27,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         type = ComponentType.FILTER,
         name = "originator type switch",
         configClazz = EmptyNodeConfiguration.class,
-        relationTypes = {"Device", "Asset", "Entity View", "Tenant", "Customer", "User", "Dashboard", "Rule chain", "Rule node"},
+        relationTypes = {"Device", "Asset", "Alarm", "Entity View", "Tenant", "Customer", "User", "Dashboard", "Rule chain", "Rule node"},
         nodeDescription = "Route incoming messages by Message Originator Type",
         nodeDetails = "Routes messages to chain according to the originator type ('Device', 'Asset', etc.).",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
@@ -72,6 +72,9 @@ public class TbOriginatorTypeSwitchNode implements TbNode {
                 break;
             case RULE_NODE:
                 relationType = "Rule node";
+                break;
+            case ALARM:
+                relationType = "Alarm";
                 break;
             default:
                 throw new TbNodeException("Unsupported originator type: " + originatorType);

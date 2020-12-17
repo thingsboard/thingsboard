@@ -11,7 +11,8 @@
     <mat-checkbox fxLayout="row" fxLayoutAlign="center" formControlName="ignoreCase" style="min-width: 70px;">
     </mat-checkbox>
   </div>
-  <tb-filter-predicate-value fxFlex="60"
+  <tb-filter-predicate-value [allowUserDynamicSource]="allowUserDynamicSource"
+                             fxFlex="60"
                              [valueType]="valueTypeEnum.STRING"
                              formControlName="value">
   </tb-filter-predicate-value>

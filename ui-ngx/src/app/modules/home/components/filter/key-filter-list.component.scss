@@ -11,4 +11,17 @@
     color: #666;
     font-weight: 500;
   }
+  .tb-filter-preview {
+    padding: 8px;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
+  }
+}
+
+:host ::ng-deep {
+  .tb-filter-preview {
+    .tb-filter-text {
+      max-height: 200px;
+    }
+  }
 }

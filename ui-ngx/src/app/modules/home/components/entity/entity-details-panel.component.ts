@@ -251,13 +251,14 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
   }
 
   onToggleEditMode(isEdit: boolean) {
-    this.isEdit = isEdit;
-    if (!this.isEdit) {
+    if (!isEdit) {
       this.entityComponent.entity = this.entity;
       if (this.entityTabsComponent) {
         this.entityTabsComponent.entity = this.entity;
       }
+      this.isEdit = isEdit;
     } else {
+      this.isEdit = isEdit;
       this.editingEntity = deepClone(this.entity);
       this.entityComponent.entity = this.editingEntity;
       if (this.entityTabsComponent) {

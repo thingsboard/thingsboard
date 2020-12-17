@@ -7,7 +7,7 @@
         [ngClass]="{'tb-toggled' : sectionActive()}"></span>
 </a>
 <ul id="docs-menu-{{section.name | nospace}}" class="tb-menu-toggle-list" [ngStyle]="{height: sectionHeight()}">
-  <li *ngFor="let page of section.pages">
+  <li *ngFor="let page of section.pages; trackBy: trackBySectionPages">
     <tb-menu-link [section]="page"></tb-menu-link>
   </li>
 </ul>

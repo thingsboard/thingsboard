@@ -17,7 +17,12 @@ package org.thingsboard.server.queue.provider;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
@@ -28,12 +33,12 @@ import javax.annotation.PostConstruct;
 public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
 
     private final TbRuleEngineQueueFactory tbQueueProvider;
-    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> toTransport;
-    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> toRuleEngine;
-    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> toTbCore;
-    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> toRuleEngineNotifications;
-    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> toTbCoreNotifications;
-
+    private TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> toTransport;
+    private TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> toRuleEngine;
+    private TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> toTbCore;
+    private TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineNotifications;
+    private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toTbCoreNotifications;
+    private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
 
     public TbRuleEngineProducerProvider(TbRuleEngineQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
@@ -46,30 +51,36 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
         this.toRuleEngine = tbQueueProvider.createRuleEngineMsgProducer();
         this.toRuleEngineNotifications = tbQueueProvider.createRuleEngineNotificationsMsgProducer();
         this.toTbCoreNotifications = tbQueueProvider.createTbCoreNotificationsMsgProducer();
+        this.toUsageStats = tbQueueProvider.createToUsageStatsServiceMsgProducer();
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> getTransportNotificationsMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer() {
         return toTransport;
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> getRuleEngineMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer() {
         return toRuleEngine;
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
         return toRuleEngineNotifications;
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> getTbCoreMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
         return toTbCore;
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> getTbCoreNotificationsMsgProducer() {
         return toTbCoreNotifications;
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> getTbUsageStatsMsgProducer() {
+        return toUsageStats;
     }
 }

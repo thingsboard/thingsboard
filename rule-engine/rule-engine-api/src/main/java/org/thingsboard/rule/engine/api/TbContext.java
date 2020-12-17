@@ -18,16 +18,23 @@ package org.thingsboard.rule.engine.api;
 import io.netty.channel.EventLoopGroup;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
@@ -44,6 +51,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -141,7 +149,7 @@ public interface TbContext {
     TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId);
 
     // TODO: Does this changes the message?
-    TbMsg alarmCreatedMsg(Alarm alarm, RuleNodeId ruleNodeId);
+    TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action);
 
     /*
      *
@@ -183,15 +191,23 @@ public interface TbContext {
 
     EntityViewService getEntityViewService();
 
+    RuleEngineDeviceProfileCache getDeviceProfileCache();
+
     ListeningExecutor getJsExecutor();
 
     ListeningExecutor getMailExecutor();
+
+    ListeningExecutor getSmsExecutor();
 
     ListeningExecutor getDbCallbackExecutor();
 
     ListeningExecutor getExternalCallExecutor();
 
     MailService getMailService();
+
+    SmsService getSmsService();
+
+    SmsSenderFactory getSmsSenderFactory();
 
     ScriptEngine createJsScriptEngine(String script, String... argNames);
 
@@ -212,4 +228,21 @@ public interface TbContext {
     @Deprecated
     RedisTemplate<String, Object> getRedisTemplate();
 
+    PageData<RuleNodeState> findRuleNodeStates(PageLink pageLink);
+
+    RuleNodeState findRuleNodeStateForEntity(EntityId entityId);
+
+    void removeRuleNodeStateForEntity(EntityId entityId);
+
+    RuleNodeState saveRuleNodeState(RuleNodeState state);
+
+    void clearRuleNodeStates();
+
+    void addTenantProfileListener(Consumer<TenantProfile> listener);
+
+    void addDeviceProfileListeners(Consumer<DeviceProfile> listener, BiConsumer<DeviceId, DeviceProfile> deviceListener);
+
+    void removeListeners();
+
+    TenantProfile getTenantProfile();
 }

@@ -22,9 +22,9 @@
     </mat-toolbar>
     <mat-tab-group [ngClass]="{'tb-headless': sources.length === 1}" fxFlex
                    [(selectedIndex)]="sourceIndex" (selectedIndexChange)="onSourceIndexChanged()">
-      <mat-tab *ngFor="let source of sources" label="{{ source.datasource.name }}">
+      <mat-tab *ngFor="let source of sources; trackBy: trackBySourcesIndex" label="{{ source.datasource.name }}">
         <div fxFlex class="table-container">
-          <table mat-table [dataSource]="source.timeseriesDatasource" [trackBy]="trackByRowIndex"
+          <table mat-table [dataSource]="source.timeseriesDatasource" [trackBy]="trackByRowTimestamp"
                      matSort [matSortActive]="source.pageLink.sortOrder.property" [matSortDirection]="source.pageLink.sortDirection()" matSortDisableClear>
             <ng-container *ngIf="showTimestamp" [matColumnDef]="'0'">
               <mat-header-cell *matHeaderCellDef mat-sort-header>Timestamp</mat-header-cell>
@@ -50,7 +50,7 @@
                                                                 width: (actionCellDescriptors.length * 40) + 'px' }">
                 <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                   <button mat-button mat-icon-button [disabled]="isLoading$ | async"
-                          *ngFor="let actionDescriptor of actionCellDescriptors"
+                          *ngFor="let actionDescriptor of actionCellDescriptors; trackBy: trackByActionCellDescriptionId"
                           matTooltip="{{ actionDescriptor.displayName }}"
                           matTooltipPosition="above"
                           (click)="onActionButtonClick($event, row, actionDescriptor)">
@@ -64,7 +64,7 @@
                     <mat-icon class="material-icons">more_vert</mat-icon>
                   </button>
                   <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                    <button mat-menu-item *ngFor="let actionDescriptor of actionCellDescriptors"
+                    <button mat-menu-item *ngFor="let actionDescriptor of actionCellDescriptors; trackBy: trackByActionCellDescriptionId"
                             [disabled]="isLoading$ | async"
                             (click)="onActionButtonClick($event, row, actionDescriptor)">
                       <mat-icon>{{actionDescriptor.icon}}</mat-icon>

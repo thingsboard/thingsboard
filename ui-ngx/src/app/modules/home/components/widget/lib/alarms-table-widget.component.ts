@@ -29,7 +29,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetAction, WidgetContext } from '@home/models/widget-component.models';
-import { DataKey, Datasource, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
+import { DataKey, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -247,11 +247,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   }
 
   public onDataUpdated() {
-    this.ngZone.run(() => {
-      this.updateTitle(true);
-      this.alarmsDatasource.updateAlarms();
-      this.ctx.detectChanges();
-    });
+    this.updateTitle(true);
+    this.alarmsDatasource.updateAlarms();
   }
 
   public pageLinkSortDirection(): SortDirection {
@@ -374,7 +371,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.subscription.alarmSource.dataKeys.forEach((alarmDataKey) => {
         const dataKey: EntityColumn = deepClone(alarmDataKey) as EntityColumn;
         dataKey.entityKey = dataKeyToEntityKey(alarmDataKey);
-        dataKey.title = this.utils.customTranslation(dataKey.label, dataKey.label);
+        dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
+        dataKey.title = dataKey.label;
         dataKey.def = 'def' + this.columns.length;
         const keySettings: TableWidgetDataKeySettings = dataKey.settings;
         if (dataKey.type === DataKeyType.alarm && !isDefined(keySettings.columnWidth)) {
@@ -397,7 +395,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.displayedColumns.push(...this.columns.map(column => column.def));
     }
     if (this.settings.defaultSortOrder && this.settings.defaultSortOrder.length) {
-      this.defaultSortOrder = this.settings.defaultSortOrder;
+      this.defaultSortOrder = this.utils.customTranslation(this.settings.defaultSortOrder, this.settings.defaultSortOrder);
     }
     this.pageLink.sortOrder = entityDataSortOrderFromString(this.defaultSortOrder, this.columns);
     let sortColumn: EntityColumn;
@@ -565,6 +563,14 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     return column.def;
   }
 
+  public trackByAlarmId(index: number, alarm: AlarmData) {
+    return alarm.id.id;
+  }
+
+  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
+    return action.id;
+  }
+
   public headerStyle(key: EntityColumn): any {
     const columnWidth = this.columnWidth[key.def];
     return widthStyle(columnWidth);
@@ -606,7 +612,19 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       } else {
         content = this.defaultContent(key, contentInfo, value);
       }
-      return isDefined(content) ? this.domSanitizer.bypassSecurityTrustHtml(content) : '';
+
+      if (!isDefined(content)) {
+        return '';
+
+      } else {
+        switch (typeof content) {
+          case 'string':
+            return this.domSanitizer.bypassSecurityTrustHtml(content);
+          default:
+            return content;
+        }
+      }
+
     } else {
       return '';
     }
@@ -804,7 +822,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       const alarmField = alarmFields[key.name];
       if (alarmField) {
         if (alarmField.time) {
-          return this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss');
+          return value ? this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss') : '';
         } else if (alarmField.value === alarmFields.severity.value) {
           return this.translate.instant(alarmSeverityTranslations.get(value));
         } else if (alarmField.value === alarmFields.status.value) {
@@ -946,7 +964,7 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
           }
         }
       }
-      alarm[dataKey.name] = value;
+      alarm[dataKey.label] = value;
     });
     return alarm;
   }

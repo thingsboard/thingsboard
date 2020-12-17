@@ -38,10 +38,8 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.audit.AuditLogService;
-import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
@@ -83,9 +81,6 @@ public class AuthController extends BaseController {
 
     @Autowired
     private AuditLogService auditLogService;
-
-    @Autowired
-    private OAuth2Service oauth2Service;
 
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
@@ -171,7 +166,8 @@ public class AuthController extends BaseController {
         try {
             String email = resetPasswordByEmailRequest.get("email").asText();
             UserCredentials userCredentials = userService.requestPasswordReset(TenantId.SYS_TENANT_ID, email);
-            String baseUrl = MiscUtils.constructBaseUrl(request);
+            User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
+            String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
             String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
                     userCredentials.getResetToken());
             
@@ -219,7 +215,7 @@ public class AuthController extends BaseController {
             User user = userService.findUserById(TenantId.SYS_TENANT_ID, credentials.getUserId());
             UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
             SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
-            String baseUrl = MiscUtils.constructBaseUrl(request);
+            String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
             String loginUrl = String.format("%s/login", baseUrl);
             String email = user.getEmail();
 
@@ -266,7 +262,7 @@ public class AuthController extends BaseController {
                 User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
                 UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
                 SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), principal);
-                String baseUrl = MiscUtils.constructBaseUrl(request);
+                String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
                 String loginUrl = String.format("%s/login", baseUrl);
                 String email = user.getEmail();
                 mailService.sendPasswordWasResetEmail(loginUrl, email);
@@ -332,16 +328,6 @@ public class AuthController extends BaseController {
                     user.getTenantId(), user.getCustomerId(), user.getId(),
                     user.getName(), user.getId(), null, ActionType.LOGOUT, null, clientAddress, browser, os, device);
 
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @RequestMapping(value = "/noauth/oauth2Clients", method = RequestMethod.POST)
-    @ResponseBody
-    public List<OAuth2ClientInfo> getOAuth2Clients() throws ThingsboardException {
-        try {
-            return oauth2Service.getOAuth2Clients();
         } catch (Exception e) {
             throw handleException(e);
         }

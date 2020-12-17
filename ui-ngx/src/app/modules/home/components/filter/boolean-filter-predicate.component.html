@@ -7,7 +7,8 @@
       </mat-option>
     </mat-select>
   </mat-form-field>
-  <tb-filter-predicate-value fxFlex="60"
+  <tb-filter-predicate-value [allowUserDynamicSource]="allowUserDynamicSource"
+                             fxFlex="60"
                              [valueType]="valueTypeEnum.BOOLEAN"
                              formControlName="value">
   </tb-filter-predicate-value>

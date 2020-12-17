@@ -16,7 +16,8 @@
           </div>
           <label fxFlex="60" translate class="tb-title no-padding">filter.value</label>
         </div>
-        <label translate class="tb-title no-padding" style="width: 60px;">filter.user-parameters</label>
+        <label *ngIf="displayUserParameters"
+               translate class="tb-title no-padding" style="width: 60px;">filter.user-parameters</label>
         <span [fxShow]="!disabled" style="min-width: 40px;">&nbsp;</span>
       </div>
     </div>
@@ -33,6 +34,8 @@
             <tb-filter-predicate
               fxFlex
               [valueType]="valueType"
+              [displayUserParameters]="displayUserParameters"
+              [allowUserDynamicSource]="allowUserDynamicSource"
               [key]="key"
               [formControl]="predicateControl">
             </tb-filter-predicate>

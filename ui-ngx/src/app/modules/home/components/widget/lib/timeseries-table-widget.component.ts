@@ -40,7 +40,7 @@ import {
 } from '@shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { hashCode, isDefined, isNumber } from '@core/utils';
+import {hashCode, isDefined, isDefinedAndNotNull, isNumber} from '@core/utils';
 import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
@@ -197,11 +197,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   }
 
   public onDataUpdated() {
-    this.ngZone.run(() => {
-      this.sources.forEach((source) => {
-        source.timeseriesDatasource.dataUpdated(this.data);
-      });
-      this.ctx.detectChanges();
+    this.sources.forEach((source) => {
+      source.timeseriesDatasource.dataUpdated(this.data);
     });
   }
 
@@ -369,8 +366,16 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     return header.index;
   }
 
-  public trackByRowIndex(index: number) {
+  public trackByRowTimestamp(index: number) {
     return index;
+  }
+
+  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
+    return action.id;
+  }
+
+  public trackBySourcesIndex(index: number, source: TimeseriesTableSource) {
+    return source.datasource.entityId;
   }
 
   public cellStyle(source: TimeseriesTableSource, index: number, value: any): any {
@@ -410,7 +415,18 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         const units = contentInfo.units || this.ctx.widgetConfig.units;
         content = this.ctx.utils.formatValue(value, decimals, units, true);
       }
-      return isDefined(content) ? this.domSanitizer.bypassSecurityTrustHtml(content) : '';
+
+      if (!isDefined(content)) {
+        return '';
+
+      } else {
+        switch (typeof content) {
+          case 'string':
+            return this.domSanitizer.bypassSecurityTrustHtml(content);
+          default:
+            return content;
+        }
+      }
     }
   }
 
@@ -515,9 +531,10 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
         row[d + 1] = cellData[1];
       });
     }
-    const rows: TimeseriesRow[]  = [];
-    for (const t of Object.keys(rowsMap)) {
-      if (this.hideEmptyLines) {
+
+    let rows: TimeseriesRow[]  = [];
+    if (this.hideEmptyLines) {
+      for (const t of Object.keys(rowsMap)) {
         let hideLine = true;
         for (let c = 0; (c < data.length) && hideLine; c++) {
           if (rowsMap[t][c + 1]) {
@@ -527,13 +544,12 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
         if (!hideLine) {
           rows.push(rowsMap[t]);
         }
-      } else {
-        rows.push(rowsMap[t]);
       }
+    } else {
+      rows = Object.values(rowsMap);
     }
     return rows;
   }
-
 
   isEmpty(): Observable<boolean> {
     return this.rowsSubject.pipe(

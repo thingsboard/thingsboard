@@ -28,6 +28,10 @@ public class DataConstants {
     public static final String SERVER_SCOPE = "SERVER_SCOPE";
     public static final String SHARED_SCOPE = "SHARED_SCOPE";
     public static final String LATEST_TS = "LATEST_TS";
+    public static final String IS_NEW_ALARM = "isNewAlarm";
+    public static final String IS_EXISTING_ALARM = "isExistingAlarm";
+    public static final String IS_SEVERITY_UPDATED_ALARM = "isSeverityUpdated";
+    public static final String IS_CLEARED_ALARM = "isClearedAlarm";
 
     public static final String[] allScopes() {
         return new String[]{CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE};
@@ -59,11 +63,27 @@ public class DataConstants {
     public static final String ALARM_CLEAR = "ALARM_CLEAR";
     public static final String ENTITY_ASSIGNED_FROM_TENANT = "ENTITY_ASSIGNED_FROM_TENANT";
     public static final String ENTITY_ASSIGNED_TO_TENANT = "ENTITY_ASSIGNED_TO_TENANT";
+    public static final String PROVISION_SUCCESS = "PROVISION_SUCCESS";
+    public static final String PROVISION_FAILURE = "PROVISION_FAILURE";
 
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
     public static final String DEFAULT_SECRET_KEY = "";
     public static final String SECRET_KEY_FIELD_NAME = "secretKey";
     public static final String DURATION_MS_FIELD_NAME = "durationMs";
+
+    public static final String PROVISION = "provision";
+    public static final String PROVISION_KEY = "provisionDeviceKey";
+    public static final String PROVISION_SECRET = "provisionDeviceSecret";
+
+    public static final String DEVICE_NAME = "deviceName";
+    public static final String DEVICE_TYPE = "deviceType";
+    public static final String CERT_PUB_KEY = "x509CertPubKey";
+    public static final String CREDENTIALS_TYPE = "credentialsType";
+    public static final String TOKEN = "token";
+    public static final String HASH = "hash";
+    public static final String CLIENT_ID = "clientId";
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
 
 }

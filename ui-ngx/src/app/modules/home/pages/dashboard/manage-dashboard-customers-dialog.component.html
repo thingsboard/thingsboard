@@ -24,18 +24,17 @@
   </div>
   <div mat-dialog-actions fxLayout="row">
     <span fxFlex></span>
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
     <button mat-button mat-raised-button color="primary"
             type="submit"
             [disabled]="(isLoading$ | async) || dashboardCustomersFormGroup.invalid
             || !dashboardCustomersFormGroup.dirty">
       {{ actionName | translate }}
-    </button>
-    <button mat-button color="primary"
-            style="margin-right: 20px;"
-            type="button"
-            [disabled]="(isLoading$ | async)"
-            (click)="cancel()" cdkFocusInitial>
-      {{ 'action.cancel' | translate }}
     </button>
   </div>
 </form>

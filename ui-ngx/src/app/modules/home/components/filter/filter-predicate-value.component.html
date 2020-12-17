@@ -38,7 +38,7 @@
               {{'filter.no-dynamic-value' | translate}}
             </mat-option>
             <mat-option *ngFor="let sourceType of dynamicValueSourceTypes" [value]="sourceType">
-              {{dynamicValueSourceTypeTranslations.get(dynamicValueSourceTypeEnum[sourceType]) | translate}}
+              {{dynamicValueSourceTypeTranslations.get(sourceType) | translate}}
             </mat-option>
           </mat-select>
         </mat-form-field>

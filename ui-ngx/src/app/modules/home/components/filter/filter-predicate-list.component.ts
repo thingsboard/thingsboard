@@ -62,6 +62,10 @@ export class FilterPredicateListComponent implements ControlValueAccessor, OnIni
 
   @Input() operation: ComplexOperation = ComplexOperation.AND;
 
+  @Input() displayUserParameters = true;
+
+  @Input() allowUserDynamicSource = true;
+
   filterListFormGroup: FormGroup;
 
   valueTypeEnum = EntityKeyValueType;
@@ -150,10 +154,12 @@ export class FilterPredicateListComponent implements ControlValueAccessor, OnIni
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         complexPredicate: predicate.keyFilterPredicate as ComplexFilterPredicateInfo,
-        disabled: this.disabled,
+        readonly: this.disabled,
         valueType: this.valueType,
         key: this.key,
-        isAdd: true
+        isAdd: true,
+        displayUserParameters: this.displayUserParameters,
+        allowUserDynamicSource: this.allowUserDynamicSource
       }
     }).afterClosed().pipe(
       map((result) => {

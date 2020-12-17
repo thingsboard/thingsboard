@@ -52,11 +52,13 @@ function AwsSqsProducer() {
             queueUrls.set(responseTopic, responseQueueUrl);
         }
 
+        let msgId = uuid();
+
         let params = {
             MessageBody: msgBody,
             QueueUrl: responseQueueUrl,
-            MessageGroupId: 'js_eval',
-            MessageDeduplicationId: uuid()
+            MessageGroupId: msgId,
+            MessageDeduplicationId: msgId
         };
 
         return new Promise((resolve, reject) => {

@@ -113,62 +113,10 @@ security:
   basic:
     enabled: "${SECURITY_BASIC_ENABLED:false}"
   oauth2:
-    # Enable/disable OAuth 2 login functionality
-    # For details please refer to https://thingsboard.io/docs/user-guide/oauth-2-support/
-    enabled: "${SECURITY_OAUTH2_ENABLED:false}"
     # Redirect URL where access code from external user management system will be processed
     loginProcessingUrl: "${SECURITY_OAUTH2_LOGIN_PROCESSING_URL:/login/oauth2/code/}"
-    # List of SSO clients
-    clients:
-      default:
-        # Label that going to be show on login button - 'Login with {loginButtonLabel}'
-        loginButtonLabel: "${SECURITY_OAUTH2_DEFAULT_LOGIN_BUTTON_LABEL:Default}"
-        # Icon that going to be show on login button. Material design icon ID (https://material.angularjs.org/latest/api/directive/mdIcon)
-        loginButtonIcon: "${SECURITY_OAUTH2_DEFAULT_LOGIN_BUTTON_ICON:}"
-        clientName: "${SECURITY_OAUTH2_DEFAULT_CLIENT_NAME:ClientName}"
-        clientId: "${SECURITY_OAUTH2_DEFAULT_CLIENT_ID:}"
-        clientSecret: "${SECURITY_OAUTH2_DEFAULT_CLIENT_SECRET:}"
-        accessTokenUri: "${SECURITY_OAUTH2_DEFAULT_ACCESS_TOKEN_URI:}"
-        authorizationUri: "${SECURITY_OAUTH2_DEFAULT_AUTHORIZATION_URI:}"
-        scope: "${SECURITY_OAUTH2_DEFAULT_SCOPE:}"
-        # Redirect URL that must be in sync with 'security.oauth2.loginProcessingUrl', but domain name added
-        redirectUriTemplate: "${SECURITY_OAUTH2_DEFAULT_REDIRECT_URI_TEMPLATE:http://localhost:8080/login/oauth2/code/}"
-        jwkSetUri: "${SECURITY_OAUTH2_DEFAULT_JWK_SET_URI:}"
-        # 'authorization_code', 'implicit', 'refresh_token' or 'client_credentials'
-        authorizationGrantType: "${SECURITY_OAUTH2_DEFAULT_AUTHORIZATION_GRANT_TYPE:authorization_code}"
-        clientAuthenticationMethod: "${SECURITY_OAUTH2_DEFAULT_CLIENT_AUTHENTICATION_METHOD:post}" # basic or post
-        userInfoUri: "${SECURITY_OAUTH2_DEFAULT_USER_INFO_URI:}"
-        userNameAttributeName: "${SECURITY_OAUTH2_DEFAULT_USER_NAME_ATTRIBUTE_NAME:email}"
-        mapperConfig:
-          # Allows to create user if it not exists
-          allowUserCreation: "${SECURITY_OAUTH2_DEFAULT_MAPPER_ALLOW_USER_CREATION:true}"
-          # Allows user to setup V-Sensor internal password and login over default Login window
-          activateUser: "${SECURITY_OAUTH2_DEFAULT_MAPPER_ACTIVATE_USER:false}"
-          # Mapper type of converter from external user into internal - 'basic' or 'custom'
-          type: "${SECURITY_OAUTH2_DEFAULT_MAPPER_TYPE:basic}"
-          basic:
-            # Key from attributes of external user object to use as email
-            emailAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_EMAIL_ATTRIBUTE_KEY:email}"
-            firstNameAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_FIRST_NAME_ATTRIBUTE_KEY:}"
-            lastNameAttributeKey: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_LAST_NAME_ATTRIBUTE_KEY:}"
-            # Strategy for generating Tenant from external user object - 'domain', 'email' or 'custom'
-            # 'domain' - name of the Tenant will be extracted as domain from the email of the user
-            # 'email' - name of the Tenant will email of the user
-            # 'custom' - please configure 'tenantNamePattern' for custom mapping
-            tenantNameStrategy: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_TENANT_NAME_STRATEGY:domain}"
-            # %{attribute_key} as placeholder for attribute value of attributes of external user object
-            tenantNamePattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_TENANT_NAME_PATTERN:}"
-            # If this field is not empty, user will be created as a user under defined Customer
-            # %{attribute_key} as placeholder for attribute value of attributes of external user object
-            customerNamePattern: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_CUSTOMER_NAME_PATTERN:}"
-            # If this field is not empty, user will be created with default defined Dashboard
-            defaultDashboardName: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_DEFAULT_DASHBOARD_NAME:}"
-            # If this field is set 'true' along with non-empty 'defaultDashboardName', user will start from the defined Dashboard in fullscreen mode
-            alwaysFullScreen: "${SECURITY_OAUTH2_DEFAULT_MAPPER_BASIC_ALWAYS_FULL_SCREEN:false}"
-          custom:
-            url: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_URL:}"
-            username: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_USERNAME:}"
-            password: "${SECURITY_OAUTH2_DEFAULT_MAPPER_CUSTOM_PASSWORD:}"
+    githubMapper:
+      emailUrl: "${SECURITY_OAUTH2_GITHUB_MAPPER_EMAIL_URL_KEY:https://api.github.com/user/emails}"
 
 # Dashboard parameters
 dashboard:
@@ -194,8 +142,21 @@ cassandra:
   url: "${CASSANDRA_URL:127.0.0.1:9042}"
   # Specify local datacenter name
   local_datacenter: "${CASSANDRA_LOCAL_DATACENTER:datacenter1}"
-  # Enable/disable secure connection
-  ssl: "${CASSANDRA_USE_SSL:false}"
+  ssl:
+    # Enable/disable secure connection
+    enabled: "${CASSANDRA_USE_SSL:false}"
+    # Enable/disable validation of Cassandra server hostname
+    # If enabled, hostname of Cassandra server must match CN of server certificate
+    hostname_validation: "${CASSANDRA_SSL_HOSTNAME_VALIDATION:true}"
+    # Set trust store for client authentication of server (optional, uses trust store from default SSLContext if not set)
+    trust_store: "${CASSANDRA_SSL_TRUST_STORE:}"
+    trust_store_password: "${CASSANDRA_SSL_TRUST_STORE_PASSWORD:}"
+    # Set key store for server authentication of client (optional, uses key store from default SSLContext if not set)
+    # A key store is only needed if the Cassandra server requires client authentication
+    key_store: "${CASSANDRA_SSL_KEY_STORE:}"
+    key_store_password: "${CASSANDRA_SSL_KEY_STORE_PASSWORD:}"
+    # Comma separated list of cipher suites (optional, uses Java default cipher suites if not set)
+    cipher_suites: "${CASSANDRA_SSL_CIPHER_SUITES:}"
   # Enable/disable JMX
   jmx: "${CASSANDRA_USE_JMX:false}"
   # Enable/disable metrics collection.
@@ -271,6 +232,8 @@ sql:
       batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
       batch_threads: "${SQL_TS_LATEST_BATCH_THREADS:4}"
+    # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
+    batch_sort: "${SQL_BATCH_SORT:false}"
     # Specify whether to remove null characters from strValue of attributes and timeseries before insert
     remove_null_chars: "${SQL_REMOVE_NULL_CHARS:true}"
   # Specify whether to log database queries and their parameters generated by entity query repository
@@ -318,8 +281,12 @@ actors:
     js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:50}"
     # Specify thread pool size for mail sender executor service
     mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:50}"
+    # Specify thread pool size for sms sender executor service
+    sms_thread_pool_size: "${ACTORS_RULE_SMS_THREAD_POOL_SIZE:50}"
     # Whether to allow usage of system mail service for rules
     allow_system_mail_service: "${ACTORS_RULE_ALLOW_SYSTEM_MAIL_SERVICE:true}"
+    # Whether to allow usage of system sms service for rules
+    allow_system_sms_service: "${ACTORS_RULE_ALLOW_SYSTEM_SMS_SERVICE:true}"
     # Specify thread pool size for external call service
     external_call_thread_pool_size: "${ACTORS_RULE_EXTERNAL_CALL_THREAD_POOL_SIZE:50}"
     chain:
@@ -372,6 +339,12 @@ caffeine:
     securitySettings:
       timeToLiveInMinutes: 1440
       maxSize: 0
+    tenantProfiles:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
+    deviceProfiles:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
 
 redis:
   # standalone or cluster
@@ -417,6 +390,9 @@ redis:
 updates:
   # Enable/disable updates checking.
   enabled: "${UPDATES_ENABLED:true}"
+
+# spring freemarker configuration
+spring.freemarker.checkTemplateLocation: "false"
 
 # spring CORS configuration
 spring.mvc.cors:
@@ -483,6 +459,7 @@ audit-log:
       "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}"
       "alarm": "${AUDIT_LOG_MASK_ALARM:W}"
       "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}"
+      "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}"
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"
@@ -515,7 +492,7 @@ js:
     # Specify thread pool size for JavaScript sandbox resource monitor
     monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
     # Maximum CPU time in milliseconds allowed for script execution
-    max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:10000}"
+    max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:8000}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${LOCAL_JS_SANDBOX_MAX_ERRORS:3}"
     # JS Eval max request timeout. 0 - no timeout
@@ -529,7 +506,7 @@ js:
   remote:
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
-    # Maximum time in seconds for black listed function to stay in the list.
+    # Maximum time in seconds for black listed function to stay in 1:the list.
     max_black_list_duration_sec: "${REMOTE_JS_SANDBOX_MAX_BLACKLIST_DURATION_SEC:60}"
     stats:
       enabled: "${TB_JS_REMOTE_STATS_ENABLED:false}"
@@ -539,10 +516,6 @@ transport:
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
-  rate_limits:
-    enabled: "${TB_TRANSPORT_RATE_LIMITS_ENABLED:false}"
-    tenant: "${TB_TRANSPORT_RATE_LIMITS_TENANT:1000:1,20000:60}"
-    device: "${TB_TRANSPORT_RATE_LIMITS_DEVICE:10:1,300:60}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
     type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
@@ -583,6 +556,8 @@ transport:
       key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
       # Type of the key store
       key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
+      # Skip certificate validity check for client certificates.
+      skip_validity_check_for_client_cert: "${MQTT_SSL_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
   # Local CoAP transport parameters
   coap:
     # Enable/disable coap transport protocol.
@@ -608,6 +583,10 @@ swagger:
 
 queue:
   type: "${TB_QUEUE_TYPE:in-memory}" # in-memory or kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
+  in_memory:
+    stats:
+      # For debug lvl
+      print-interval-ms: "${TB_QUEUE_IN_MEMORY_STATS_PRINT_INTERVAL_MS:60000}"
   kafka:
     bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
     acks: "${TB_KAFKA_ACKS:all}"
@@ -616,6 +595,7 @@ queue:
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
     replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
+    max_poll_interval_ms: "${TB_QUEUE_KAFKA_MAX_POLL_INTERVAL_MS:0}"
     max_poll_records: "${TB_QUEUE_KAFKA_MAX_POLL_RECORDS:8192}"
     max_partition_fetch_bytes: "${TB_QUEUE_KAFKA_MAX_PARTITION_FETCH_BYTES:16777216}"
     fetch_max_bytes: "${TB_QUEUE_KAFKA_FETCH_MAX_BYTES:134217728}"
@@ -627,11 +607,11 @@ queue:
       security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
     other:
     topic-properties:
-      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000}"
-      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000}"
-      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000}"
-      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000}"
-      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600}"
+      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
+      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
+      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
+      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
+      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100}"
   aws_sqs:
     use_default_credential_provider_chain: "${TB_QUEUE_AWS_SQS_USE_DEFAULT_CREDENTIAL_PROVIDER_CHAIN:false}"
     access_key_id: "${TB_QUEUE_AWS_SQS_ACCESS_KEY_ID:YOUR_KEY}"
@@ -698,6 +678,7 @@ queue:
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
     pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
+    usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
     stats:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
@@ -739,6 +720,7 @@ queue:
           retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_RETRIES:3}" # Number of retries, 0 is unlimited
           failure-percentage: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
           pause-between-retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_RETRY_PAUSE:3}"# Time in seconds to wait in consumer thread before retries;
+          max-pause-between-retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:3}"# Max allowed time in seconds for pause between retries.
       - name: "${TB_QUEUE_RE_HP_QUEUE_NAME:HighPriority}"
         topic: "${TB_QUEUE_RE_HP_TOPIC:tb_rule_engine.hp}"
         poll-interval: "${TB_QUEUE_RE_HP_POLL_INTERVAL_MS:25}"
@@ -754,6 +736,7 @@ queue:
           retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_RETRIES:0}" # Number of retries, 0 is unlimited
           failure-percentage: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
           pause-between-retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_RETRY_PAUSE:5}"# Time in seconds to wait in consumer thread before retries;
+          max-pause-between-retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:5}"# Max allowed time in seconds for pause between retries.
       - name: "${TB_QUEUE_RE_SQ_QUEUE_NAME:SequentialByOriginator}"
         topic: "${TB_QUEUE_RE_SQ_TOPIC:tb_rule_engine.sq}"
         poll-interval: "${TB_QUEUE_RE_SQ_POLL_INTERVAL_MS:25}"
@@ -769,6 +752,7 @@ queue:
           retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_RETRIES:3}" # Number of retries, 0 is unlimited
           failure-percentage: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
           pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_RETRY_PAUSE:5}"# Time in seconds to wait in consumer thread before retries;
+          max-pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:5}"# Max allowed time in seconds for pause between retries.
   transport:
     # For high priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"
@@ -786,7 +770,6 @@ metrics:
   timer:
     # Metrics percentiles returned by actuator for timer metrics. List of double values (divided by ,).
     percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
-
 
 management:
   endpoints:

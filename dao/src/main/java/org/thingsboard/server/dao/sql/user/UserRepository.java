@@ -47,4 +47,5 @@ public interface UserRepository extends PagingAndSortingRepository<UserEntity, U
                                     @Param("searchText") String searchText,
                                     Pageable pageable);
 
+    Long countByTenantId(UUID tenantId);
 }

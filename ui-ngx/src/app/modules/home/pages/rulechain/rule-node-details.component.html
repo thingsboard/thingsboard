@@ -12,7 +12,8 @@
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>rulenode.name</mat-label>
             <input matInput formControlName="name" required>
-            <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('required')">
+            <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('required')
+                           || ruleNodeFormGroup.get('name').hasError('pattern')">
               {{ 'rulenode.name-required' | translate }}
             </mat-error>
           </mat-form-field>

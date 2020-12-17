@@ -67,8 +67,14 @@ public class TbMsgPackCallback implements TbMsgCallback {
     }
 
     @Override
-    public void visit(RuleNodeInfo ruleNodeInfo) {
-        log.trace("[{}] ON PROCESS: {}", id, ruleNodeInfo);
-        ctx.visit(id, ruleNodeInfo);
+    public void onProcessingStart(RuleNodeInfo ruleNodeInfo) {
+        log.trace("[{}] ON PROCESSING START: {}", id, ruleNodeInfo);
+        ctx.onProcessingStart(id, ruleNodeInfo);
+    }
+
+    @Override
+    public void onProcessingEnd(RuleNodeId ruleNodeId) {
+        log.trace("[{}] ON PROCESSING END: {}", id, ruleNodeId);
+        ctx.onProcessingEnd(id, ruleNodeId);
     }
 }

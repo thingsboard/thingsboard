@@ -33,17 +33,16 @@
     </mat-chip-list>
   </mat-form-field>
   <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
+    <button type="button"
+            mat-button
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
     <button type="submit"
             mat-raised-button
             color="primary"
             [disabled]="alarmFilterFormGroup.invalid || !alarmFilterFormGroup.dirty">
       {{ 'action.update' | translate }}
-    </button>
-    <button type="button"
-            mat-button
-            (click)="cancel()"
-            style="margin-right: 20px;">
-      {{ 'action.cancel' | translate }}
     </button>
   </div>
 </form>

@@ -38,16 +38,16 @@
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
-    <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || filterFormGroup.invalid || !filterFormGroup.dirty">
-      {{ (isAdd ? 'action.add' : 'action.update') | translate }}
-    </button>
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>
       {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || filterFormGroup.invalid || !filterFormGroup.dirty">
+      {{ (isAdd ? 'action.add' : 'action.update') | translate }}
     </button>
   </div>
 </form>
