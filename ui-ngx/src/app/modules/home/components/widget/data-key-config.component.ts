@@ -36,7 +36,7 @@ import { EntityService } from '@core/http/entity.service';
 import { DataKeysCallbacks } from '@home/components/widget/data-keys.component.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { Observable, of } from 'rxjs';
-import { map, mergeMap, tap } from 'rxjs/operators';
+import { map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
 import { alarmFields } from '@shared/models/alarm.models';
 import { JsFuncComponent } from '@shared/components/js-func.component';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
@@ -95,6 +95,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   filteredKeys: Observable<Array<string>>;
   private latestKeySearchResult: Array<string> = null;
+  private fetchObservable$: Observable<Array<string>> = null;
 
   keySearchText = '';
 
@@ -205,31 +206,42 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
   }
 
   private fetchKeys(searchText?: string): Observable<Array<string>> {
-    if (this.latestKeySearchResult === null || this.keySearchText !== searchText) {
+    if (this.keySearchText !== searchText || this.latestKeySearchResult === null) {
       this.keySearchText = searchText;
-      let fetchObservable: Observable<Array<DataKey>> = null;
-      if (this.modelValue.type === DataKeyType.alarm) {
-        const dataKeyFilter = this.createDataKeyFilter(this.keySearchText);
-        fetchObservable = of(this.alarmKeys.filter(dataKeyFilter));
-      } else {
-        if (this.entityAliasId) {
-          const dataKeyTypes = [this.modelValue.type];
-          fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, this.keySearchText, dataKeyTypes);
-        } else {
-          fetchObservable = of([]);
-        }
-      }
-      return fetchObservable.pipe(
-        map((dataKeys) => dataKeys.map((dataKey) => dataKey.name)),
+      const dataKeyFilter = this.createKeyFilter(this.keySearchText);
+      return this.getKeys().pipe(
+        map(name => name.filter(dataKeyFilter)),
         tap(res => this.latestKeySearchResult = res)
       );
     }
     return of(this.latestKeySearchResult);
   }
 
-  private createDataKeyFilter(query: string): (key: DataKey) => boolean {
+  private getKeys() {
+    if (this.fetchObservable$ === null) {
+      let fetchObservable: Observable<Array<DataKey>>;
+      if (this.modelValue.type === DataKeyType.alarm) {
+        fetchObservable = of(this.alarmKeys);
+      } else {
+        if (this.entityAliasId) {
+          const dataKeyTypes = [this.modelValue.type];
+          fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, dataKeyTypes);
+        } else {
+          fetchObservable = of([]);
+        }
+      }
+      this.fetchObservable$ = fetchObservable.pipe(
+        map((dataKeys) => dataKeys.map((dataKey) => dataKey.name)),
+        publishReplay(1),
+        refCount()
+      );
+    }
+    return this.fetchObservable$;
+  }
+
+  private createKeyFilter(query: string): (key: string) => boolean {
     const lowercaseQuery = query.toLowerCase();
-    return key => key.name.toLowerCase().indexOf(lowercaseQuery) === 0;
+    return key => key.toLowerCase().startsWith(lowercaseQuery);
   }
 
   public validateOnSubmit() {
