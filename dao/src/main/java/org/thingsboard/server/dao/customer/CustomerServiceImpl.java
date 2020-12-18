@@ -78,6 +78,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
 
     @Autowired
     private DashboardService dashboardService;
+
     @Autowired
     @Lazy
     private TbTenantProfileCache tenantProfileCache;
