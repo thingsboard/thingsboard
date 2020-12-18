@@ -64,6 +64,13 @@ public class EdgeController extends BaseController {
 
     public static final String EDGE_ID = "edgeId";
 
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/edges/enabled", method = RequestMethod.GET)
+    @ResponseBody
+    public boolean isEdgesSupportEnabled() {
+        return edgesEnabled;
+    }
+
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}", method = RequestMethod.GET)
     @ResponseBody
@@ -470,7 +477,7 @@ public class EdgeController extends BaseController {
     public void syncEdge(@RequestBody EdgeId edgeId) throws ThingsboardException {
         try {
             edgeId = checkNotNull(edgeId);
-            if (isEdgesRpcEnabled()) {
+            if (isEdgesEnabled()) {
                 EdgeGrpcSession session = edgeGrpcService.getEdgeGrpcSessionById(edgeId);
                 Edge edge = session.getEdge();
                 syncEdgeService.sync(edge);

@@ -23,10 +23,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Data
 public class EdgeEventStorageSettings {
-    @Value("${edges.rpc.storage.max_read_records_count}")
+    @Value("${edges.storage.max_read_records_count}")
     private int maxReadRecordsCount;
-    @Value("${edges.rpc.storage.no_read_records_sleep}")
+    @Value("${edges.storage.no_read_records_sleep}")
     private long noRecordsSleepInterval;
-    @Value("${edges.rpc.storage.sleep_between_batches}")
+    @Value("${edges.storage.sleep_between_batches}")
     private long sleepIntervalBetweenBatches;
 }

@@ -130,7 +130,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             this.defaultMetaData = new TbMsgMetaData();
             this.defaultMetaData.putValue("deviceName", deviceName);
             this.defaultMetaData.putValue("deviceType", deviceType);
-            if (systemContext.isEdgesRpcEnabled()) {
+            if (systemContext.isEdgesEnabled()) {
                 this.edgeId = findRelatedEdgeId();
             }
             return true;
@@ -169,7 +169,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
 
         boolean sent;
-        if (systemContext.isEdgesRpcEnabled() && edgeId != null) {
+        if (systemContext.isEdgesEnabled() && edgeId != null) {
             log.debug("[{}][{}] device is related to edge [{}]. Saving RPC request to edge queue", tenantId, deviceId, edgeId.getId());
             saveRpcRequestToEdgeQueue(request, rpcRequest.getRequestId());
             sent = true;
