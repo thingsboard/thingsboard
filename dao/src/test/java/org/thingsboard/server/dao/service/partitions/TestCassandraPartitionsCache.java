@@ -27,6 +27,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.core.env.Environment;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.cassandra.guava.GuavaSession;
@@ -91,7 +92,7 @@ public class TestCassandraPartitionsCache {
         cassandraBaseTimeseriesDao.init();
 
         doReturn(Futures.immediateFuture(0)).when(cassandraBaseTimeseriesDao,
-                "doSavePartition", any(TenantId.class), anyLong(), any(CassandraPartitionCacheKey.class));
+                "doSavePartition", any(TenantId.class), anyLong(), anyLong(), any(EntityId.class), anyString());
 
 
         UUID id = UUID.randomUUID();
@@ -106,7 +107,7 @@ public class TestCassandraPartitionsCache {
             cassandraBaseTimeseriesDao.savePartition(tenantId, tenantId, tsKvEntryTs, "test" + i, 0);
         }
 
-        verifyPrivate(cassandraBaseTimeseriesDao, times(60000)).invoke("doSavePartition", any(TenantId.class), anyLong(), any(CassandraPartitionCacheKey.class));
+        verifyPrivate(cassandraBaseTimeseriesDao, times(60000)).invoke("doSavePartition", any(TenantId.class), anyLong(), anyLong(), any(EntityId.class), anyString());
 
     }
 }

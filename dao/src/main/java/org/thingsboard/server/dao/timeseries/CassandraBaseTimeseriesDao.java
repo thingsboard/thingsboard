@@ -183,23 +183,24 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         }
         ttl = computeTtl(ttl);
         long partition = toPartitionTs(tsKvEntryTs);
-        CassandraPartitionCacheKey partitionSearchKey = new CassandraPartitionCacheKey(entityId, key, partition);
-        if (cassandraTsPartitionsCache != null && cassandraTsPartitionsCache.getIfPresent(partitionSearchKey)) {
-            return Futures.immediateFuture(0);
+        if (cassandraTsPartitionsCache == null) {
+            return doSavePartition(tenantId, ttl, partition, entityId, key);
         } else {
-            return Futures.transform(doSavePartition(tenantId, ttl, partitionSearchKey), input -> {
-                if (cassandraTsPartitionsCache != null) {
-                    cassandraTsPartitionsCache.put(partitionSearchKey);
-                }
-                return input;
-            }, readResultsProcessingExecutor);
+            CassandraPartitionCacheKey partitionSearchKey = new CassandraPartitionCacheKey(entityId, key, partition);
+            if (cassandraTsPartitionsCache.getIfPresent(partitionSearchKey)) {
+                return Futures.immediateFuture(0);
+            } else {
+                return Futures.transform(doSavePartition(tenantId, ttl, partition, entityId, key), input -> {
+                    if (cassandraTsPartitionsCache != null) {
+                        cassandraTsPartitionsCache.put(partitionSearchKey);
+                    }
+                    return input;
+                }, readResultsProcessingExecutor);
+            }
         }
     }
 
-    private ListenableFuture<Integer> doSavePartition(TenantId tenantId, long ttl, CassandraPartitionCacheKey searchKey) {
-        long partition = searchKey.getPartition();
-        EntityId entityId = searchKey.getEntityId();
-        String key = searchKey.getKey();
+    private ListenableFuture<Integer> doSavePartition(TenantId tenantId, long ttl, long partition, EntityId entityId, String key) {
         log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
         BoundStatementBuilder stmtBuilder = new BoundStatementBuilder((ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt()).bind());
         stmtBuilder.setString(0, entityId.getEntityType().name())
