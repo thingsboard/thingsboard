@@ -34,12 +34,15 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+
+import java.util.List;
 
 @RestController
 @TbCoreComponent
@@ -131,13 +134,16 @@ public class CustomerController extends BaseController {
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             Customer customer = checkCustomerId(customerId, Operation.DELETE);
+
+            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), customerId);
+
             customerService.deleteCustomer(getTenantId(), customerId);
 
             logEntityAction(customerId, customer,
                     customer.getId(),
                     ActionType.DELETED, null, strCustomerId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), customerId, EntityType.CUSTOMER, EdgeEventActionType.DELETED);
+            sendDeleteNotificationMsgToEdgeService(getTenantId(), customerId, EntityType.CUSTOMER, relatedEdgeIds);
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.CUSTOMER),

@@ -360,11 +360,14 @@ public class EntityViewController extends BaseController {
         try {
             EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
             EntityView entityView = checkEntityViewId(entityViewId, Operation.DELETE);
+
+            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), entityViewId);
+
             entityViewService.deleteEntityView(getTenantId(), entityViewId);
             logEntityAction(entityViewId, entityView, entityView.getCustomerId(),
                     ActionType.DELETED, null, strEntityViewId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), entityViewId, EntityType.ENTITY_VIEW, EdgeEventActionType.DELETED);
+            sendDeleteNotificationMsgToEdgeService(getTenantId(), entityViewId, EntityType.ENTITY_VIEW, relatedEdgeIds);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ENTITY_VIEW),
                     null,

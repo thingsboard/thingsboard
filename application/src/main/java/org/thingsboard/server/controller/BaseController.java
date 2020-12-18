@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -932,6 +933,30 @@ public abstract class BaseController {
             }
         } catch (Exception e) {
             log.warn("Failed to push relation to core: {}", relation, e);
+        }
+    }
+
+    protected List<EdgeId> findRelatedEdgeIds(TenantId tenantId, EntityId entityId) {
+        if (!edgesEnabled) {
+            return null;
+        }
+        List<EdgeId> result = null;
+        try {
+            result = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId).get();
+        } catch (Exception e) {
+            log.error("[{}] can't find related edge ids for entity [{}]", tenantId, entityId, e);
+        }
+        return result;
+    }
+
+    protected void sendDeleteNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, EntityType entityType, List<EdgeId> edgeIds) {
+        if (!edgesEnabled) {
+            return;
+        }
+        if (edgeIds != null && !edgeIds.isEmpty()) {
+            for (EdgeId edgeId : edgeIds) {
+                sendNotificationMsgToEdgeService(tenantId, edgeId, entityId, entityType, EdgeEventActionType.DELETED);
+            }
         }
     }
 

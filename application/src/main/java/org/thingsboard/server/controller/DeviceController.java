@@ -160,6 +160,9 @@ public class DeviceController extends BaseController {
         try {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId, Operation.DELETE);
+
+            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), deviceId);
+
             deviceService.deleteDevice(getCurrentUser().getTenantId(), deviceId);
 
             tbClusterService.onDeviceDeleted(device, null);
@@ -169,7 +172,7 @@ public class DeviceController extends BaseController {
                     device.getCustomerId(),
                     ActionType.DELETED, null, strDeviceId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), deviceId, EntityType.DEVICE, EdgeEventActionType.DELETED);
+            sendDeleteNotificationMsgToEdgeService(getTenantId(), deviceId, EntityType.DEVICE, relatedEdgeIds);
 
             deviceStateService.onDeviceDeleted(device);
         } catch (Exception e) {

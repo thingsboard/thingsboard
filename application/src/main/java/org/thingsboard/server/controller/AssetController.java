@@ -132,13 +132,16 @@ public class AssetController extends BaseController {
         try {
             AssetId assetId = new AssetId(toUUID(strAssetId));
             Asset asset = checkAssetId(assetId, Operation.DELETE);
+
+            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), assetId);
+
             assetService.deleteAsset(getTenantId(), assetId);
 
             logEntityAction(assetId, asset,
                     asset.getCustomerId(),
                     ActionType.DELETED, null, strAssetId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), assetId, EntityType.ASSET, EdgeEventActionType.DELETED);
+            sendDeleteNotificationMsgToEdgeService(getTenantId(), assetId, EntityType.ASSET, relatedEdgeIds);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ASSET),
                     null,
