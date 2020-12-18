@@ -274,6 +274,11 @@ public class RuleChainController extends BaseController {
 
             Set<RuleChainId> referencingRuleChainIds = referencingRuleNodes.stream().map(RuleNode::getRuleChainId).collect(Collectors.toSet());
 
+            List<EdgeId> relatedEdgeIds = null;
+            if (RuleChainType.EDGE.equals(ruleChain.getType())) {
+                relatedEdgeIds = findRelatedEdgeIds(getTenantId(), ruleChainId);
+            }
+
             ruleChainService.deleteRuleChainById(getTenantId(), ruleChainId);
 
             referencingRuleChainIds.remove(ruleChain.getId());
@@ -290,7 +295,7 @@ public class RuleChainController extends BaseController {
                     ActionType.DELETED, null, strRuleChainId);
 
             if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                sendNotificationMsgToEdgeService(ruleChain.getTenantId(), ruleChain.getId(), EntityType.RULE_CHAIN, EdgeEventActionType.DELETED);
+                sendDeleteNotificationMsgToEdgeService(ruleChain.getTenantId(), ruleChain.getId(), EntityType.RULE_CHAIN, relatedEdgeIds);
             }
 
         } catch (Exception e) {
