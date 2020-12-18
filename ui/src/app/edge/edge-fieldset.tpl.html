@@ -21,6 +21,9 @@
 <md-button ng-click="onUnassignFromCustomer({event: $event, isPublic: isPublic})"
            ng-show="!isEdit && (edgeScope === 'customer' || edgeScope === 'tenant') && isAssignedToCustomer"
            class="md-raised md-primary">{{ isPublic ? 'edge.make-private' : 'edge.unassign-from-customer' | translate }}</md-button>
+<md-button ng-click="onMakePublic({event: $event})"
+           ng-show="!isEdit && edgeScope === 'tenant' && !isAssignedToCustomer && !isPublic"
+           class="md-raised md-primary">{{ 'edge.make-public' | translate }}</md-button>
 <md-button ng-click="onManageEdgeAssets({event: $event})"
            ng-show="!isEdit && edgeScope === 'tenant'"
            class="md-raised md-primary">{{ 'edge.manage-edge-assets' | translate }}</md-button>
