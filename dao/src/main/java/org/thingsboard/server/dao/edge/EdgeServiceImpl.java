@@ -127,13 +127,13 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     @Autowired
     private RelationService relationService;
 
-    @Value("${edges.rpc.enabled:false}")
-    private boolean edgesRpcEnabled;
+    @Value("${edges.enabled:false}")
+    private boolean edgesEnabled;
 
     @PostConstruct
     public void init() {
         super.init();
-        if (edgesRpcEnabled) {
+        if (edgesEnabled) {
             initRestTemplate();
         }
     }

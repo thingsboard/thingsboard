@@ -59,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
-@ConditionalOnProperty(prefix = "edges.rpc", value = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
 @TbCoreComponent
 public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase implements EdgeRpcService {
 
