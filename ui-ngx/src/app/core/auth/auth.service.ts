@@ -45,6 +45,7 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
 import { OAuth2ClientInfo } from '@shared/models/oauth2.models';
+import { EdgeService } from "@core/http/edge.service";
 
 @Injectable({
     providedIn: 'root'
@@ -63,7 +64,8 @@ export class AuthService {
     private dashboardService: DashboardService,
     private adminService: AdminService,
     private translate: TranslateService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private edgeService: EdgeService
   ) {
   }
 
@@ -428,7 +430,8 @@ export class AuthService {
   private loadSystemParams(authPayload: AuthPayload): Observable<any> {
     const sources: Array<Observable<any>> = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
                                              this.fetchAllowedDashboardIds(authPayload),
-                                             this.timeService.loadMaxDatapointsLimit()];
+                                             this.timeService.loadMaxDatapointsLimit(),
+                                             this.edgeService.loadIsEdgesSupportEnabled()];
     return forkJoin(sources)
       .pipe(map((data) => {
         const userTokenAccessEnabled: boolean = data[0];

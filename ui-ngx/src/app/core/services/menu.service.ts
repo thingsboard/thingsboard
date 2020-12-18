@@ -25,6 +25,7 @@ import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { AuthUser } from '@shared/models/user.model';
 import { guid } from '@core/utils';
+import { EdgeService } from '../http/edge.service';
 
 @Injectable({
   providedIn: 'root'
@@ -34,7 +35,7 @@ export class MenuService {
   menuSections$: Subject<Array<MenuSection>> = new BehaviorSubject<Array<MenuSection>>([]);
   homeSections$: Subject<Array<HomeSection>> = new BehaviorSubject<Array<HomeSection>>([]);
 
-  constructor(private store: Store<AppState>, private authService: AuthService) {
+  constructor(private store: Store<AppState>, private authService: AuthService, private edgeService: EdgeService) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(
       (authenticated: boolean) => {
         if (authenticated) {
@@ -267,31 +268,37 @@ export class MenuService {
         type: 'link',
         path: '/entityViews',
         icon: 'view_quilt'
-      },
-      {
-        id: guid(),
-        name: 'edge.management',
-        type: 'toggle',
-        path: '/edges',
-        height: '80px',
-        icon: 'router',
-        pages: [
-          {
-            id: guid(),
-            name: 'edge.edges',
-            type: 'link',
-            path: '/edges',
-            icon: 'router'
-          },
-          {
-            id: guid(),
-            name: 'rulechain.edge-rulechains',
-            type: 'link',
-            path: '/edges/ruleChains',
-            icon: 'settings_ethernet'
-          }
-        ]
-      },
+      }
+    );
+    if (this.edgeService.isEdgesSupportEnabled()) {
+      sections.push(
+        {
+          id: guid(),
+          name: 'edge.management',
+          type: 'toggle',
+          path: '/edges',
+          height: '80px',
+          icon: 'router',
+          pages: [
+            {
+              id: guid(),
+              name: 'edge.edges',
+              type: 'link',
+              path: '/edges',
+              icon: 'router'
+            },
+            {
+              id: guid(),
+              name: 'rulechain.edge-rulechains',
+              type: 'link',
+              path: '/edges/ruleChains',
+              icon: 'settings_ethernet'
+            }
+          ]
+        }
+      );
+    }
+    sections.push(
       {
         id: guid(),
         name: 'widget.widget-library',
@@ -383,22 +390,28 @@ export class MenuService {
             path: '/entityViews'
           }
         ]
-      },
-      {
-        name: 'edge.management',
-        places: [
-          {
-            name: 'edge.edges',
-            icon: 'router',
-            path: '/edges'
-          },
-          {
-            name: 'rulechain.edge-rulechains',
-            icon: 'settings_ethernet',
-            path: '/edges/ruleChains'
-          }
-        ]
-      },
+      }
+    );
+    if (this.edgeService.isEdgesSupportEnabled()) {
+      homeSections.push(
+        {
+          name: 'edge.management',
+          places: [
+            {
+              name: 'edge.edges',
+              icon: 'router',
+              path: '/edges'
+            },
+            {
+              name: 'rulechain.edge-rulechains',
+              icon: 'settings_ethernet',
+              path: '/edges/ruleChains'
+            }
+          ]
+        }
+      );
+    }
+    homeSections.push(
       {
         name: 'dashboard.management',
         places: [
