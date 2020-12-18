@@ -70,7 +70,9 @@ public class TelemetryProcessor extends BaseProcessor {
         List<ListenableFuture<Void>> result = new ArrayList<>();
         EntityId entityId = constructEntityId(entityData);
         if ((entityData.hasPostAttributesMsg() || entityData.hasPostTelemetryMsg() || entityData.hasAttributesUpdatedMsg()) && entityId != null) {
-            TbMsgMetaData metaData = constructBaseMsgMetadata(tenantId, entityId);
+            // TODO: voba - in terms of performance we should not fetch device from DB by id
+            // TbMsgMetaData metaData = constructBaseMsgMetadata(tenantId, entityId);
+            TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue(DataConstants.MSG_SOURCE_KEY, DataConstants.EDGE_MSG_SOURCE);
             if (entityData.hasPostAttributesMsg()) {
                 result.add(processPostAttributes(tenantId, entityId, entityData.getPostAttributesMsg(), metaData));
