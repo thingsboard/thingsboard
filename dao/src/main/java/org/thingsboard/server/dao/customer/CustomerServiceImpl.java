@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -79,10 +78,6 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
 
     @Autowired
     private DashboardService dashboardService;
-
-    @Autowired
-    private EdgeService edgeService;
-
     @Autowired
     @Lazy
     private TbTenantProfileCache tenantProfileCache;
