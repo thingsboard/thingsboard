@@ -103,7 +103,7 @@ public class DeviceProfileController extends BaseController {
                     null,
                     savedDeviceProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
-            sendNotificationMsgToEdgeService(getTenantId(), deviceProfile.getId(), EntityType.DEVICE_PROFILE,
+            sendNotificationMsgToEdgeService(getTenantId(), savedDeviceProfile.getId(), EntityType.DEVICE_PROFILE,
                     deviceProfile.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
 
             return savedDeviceProfile;

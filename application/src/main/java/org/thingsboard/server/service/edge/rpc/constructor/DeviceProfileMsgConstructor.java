@@ -38,7 +38,6 @@ public class DeviceProfileMsgConstructor {
                 .setIdMSB(deviceProfile.getId().getId().getMostSignificantBits())
                 .setIdLSB(deviceProfile.getId().getId().getLeastSignificantBits())
                 .setName(deviceProfile.getName())
-                .setDescription(deviceProfile.getDescription())
                 .setDefault(deviceProfile.isDefault())
                 .setType(deviceProfile.getType().name())
                 .setTransportType(deviceProfile.getTransportType().name())
@@ -52,6 +51,9 @@ public class DeviceProfileMsgConstructor {
 //        if (deviceProfile.getDefaultQueueName() != null) {
 //            builder.setDefaultQueueName(deviceProfile.getDefaultQueueName());
 //        }
+        if (deviceProfile.getDescription() != null) {
+            builder.setDescription(deviceProfile.getDescription());
+        }
         if (deviceProfile.getProvisionDeviceKey() != null) {
             builder.setProvisionDeviceKey(deviceProfile.getProvisionDeviceKey());
         }
