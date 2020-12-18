@@ -310,7 +310,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
             return false;
         }
         if (angular.isUndefined(ruleChainImport.ruleChain.type)) {
-            return false;
+            ruleChainImport.ruleChain.type = types.ruleChainType.core;
         }
         return true;
     }
