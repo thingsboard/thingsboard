@@ -47,7 +47,6 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
     private String secret;
     private String edgeLicenseKey;
     private String cloudEndpoint;
-    private transient JsonNode configuration;
 
     public Edge() {
         super();
@@ -68,7 +67,6 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
         this.secret = edge.getSecret();
         this.edgeLicenseKey = edge.getEdgeLicenseKey();
         this.cloudEndpoint = edge.getCloudEndpoint();
-        this.configuration = edge.getConfiguration();
     }
 
     @Override

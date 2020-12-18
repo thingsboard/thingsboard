@@ -87,7 +87,7 @@ message EdgeConfiguration {
   string secret = 10;
   string edgeLicenseKey = 11;
   string cloudEndpoint = 12;
-  string configuration = 13;
+  string additionalInfo = 13;
   string cloudType = 14;
 }
 
@@ -97,7 +97,7 @@ enum UpdateMsgType {
   ENTITY_DELETED_RPC_MESSAGE = 2;
   ALARM_ACK_RPC_MESSAGE = 3;
   ALARM_CLEAR_RPC_MESSAGE = 4;
-  DEVICE_CONFLICT_RPC_MESSAGE = 5;
+  ENTITY_MERGE_RPC_MESSAGE = 5;
 }
 
 message EntityDataProto {
@@ -182,6 +182,7 @@ message DeviceUpdateMsg {
   string type = 7;
   string label = 8;
   string additionalInfo = 9;
+  string conflictName = 10;
 }
 
 message DeviceCredentialsUpdateMsg {

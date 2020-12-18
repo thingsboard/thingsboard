@@ -90,10 +90,6 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
     private String cloudEndpoint;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.EDGE_CONFIGURATION_PROPERTY)
-    private JsonNode configuration;
-
-    @Type(type = "json")
     @Column(name = ModelConstants.EDGE_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
@@ -121,7 +117,6 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
         this.secret = edge.getSecret();
         this.edgeLicenseKey = edge.getEdgeLicenseKey();
         this.cloudEndpoint = edge.getCloudEndpoint();
-        this.configuration = edge.getConfiguration();
         this.additionalInfo = edge.getAdditionalInfo();
     }
 
@@ -159,7 +154,6 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
         edge.setSecret(secret);
         edge.setEdgeLicenseKey(edgeLicenseKey);
         edge.setCloudEndpoint(cloudEndpoint);
-        edge.setConfiguration(configuration);
         edge.setAdditionalInfo(additionalInfo);
         return edge;
     }

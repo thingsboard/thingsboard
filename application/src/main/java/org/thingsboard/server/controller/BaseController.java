@@ -799,15 +799,15 @@ public abstract class BaseController {
         }
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
-        sendNotificationMsgToEdgeService(tenantId, null, entityId, action);
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, EntityType entityType, EdgeEventActionType action) {
+        sendNotificationMsgToEdgeService(tenantId, null, entityId, entityType, action);
     }
 
-    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
+    protected void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, EntityType entityType, EdgeEventActionType action) {
         if (!edgesRpcEnabled) {
             return;
         }
-        EdgeEventType type = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());
+        EdgeEventType type = EdgeUtils.getEdgeEventTypeByEntityType(entityType);
         if (type != null) {
             sendNotificationMsgToEdgeService(tenantId, edgeId, entityId, null, type, action);
         }

@@ -34,7 +34,6 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ADDITIONAL_INFO_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CLOUD_ENDPOINT_KEY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CONFIGURATION_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LABEL_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LICENSE_KEY_PROPERTY;
@@ -91,9 +90,6 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
     @Column(name = EDGE_SECRET_PROPERTY)
     private String secret;
 
-    @Column(name = EDGE_CONFIGURATION_PROPERTY, codec = JsonCodec.class)
-    private JsonNode configuration;
-
     @Column(name = EDGE_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
 
@@ -131,7 +127,6 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
         this.secret = edge.getSecret();
         this.edgeLicenseKey = edge.getEdgeLicenseKey();
         this.cloudEndpoint = edge.getCloudEndpoint();
-        this.configuration = edge.getConfiguration();
         this.additionalInfo = edge.getAdditionalInfo();
     }
 
@@ -160,7 +155,6 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
         edge.setSecret(secret);
         edge.setEdgeLicenseKey(edgeLicenseKey);
         edge.setCloudEndpoint(cloudEndpoint);
-        edge.setConfiguration(configuration);
         edge.setAdditionalInfo(additionalInfo);
         return edge;
     }

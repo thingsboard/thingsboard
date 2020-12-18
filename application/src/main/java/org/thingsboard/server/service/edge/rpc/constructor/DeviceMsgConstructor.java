@@ -38,7 +38,7 @@ public class DeviceMsgConstructor {
 
     protected static final ObjectMapper mapper = new ObjectMapper();
 
-    public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device, CustomerId customerId) {
+    public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device, CustomerId customerId, String conflictName) {
         DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(device.getId().getId().getMostSignificantBits())
@@ -54,6 +54,9 @@ public class DeviceMsgConstructor {
         }
         if (device.getAdditionalInfo() != null) {
             builder.setAdditionalInfo(JacksonUtil.toString(device.getAdditionalInfo()));
+        }
+        if (conflictName != null) {
+            builder.setConflictName(conflictName);
         }
         return builder.build();
     }

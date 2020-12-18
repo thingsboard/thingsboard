@@ -848,7 +848,8 @@
         "status": "Received by edge",
         "deployed": "Deployed",
         "pending": "Pending",
-        "unassign-edges-action-title": "Unassign { count, plural, 1 {1 edge} other {# edges} } from customer"
+        "unassign-edges-action-title": "Unassign { count, plural, 1 {1 edge} other {# edges} } from customer",
+        "enter-edge-type": "Enter edge type"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",
@@ -1405,9 +1406,9 @@
             "access-token": "Access token",
             "isgateway": "Is Gateway",
             "description": "Description",
-            "edgeLicenseKey": "Edge license key",
-            "cloudEndpoint": "Cloud endpoint",
-            "routingKey": "Edge routing key",
+            "edgeLicenseKey": "License Key",
+            "cloudEndpoint": "Cloud Endpoint",
+            "routingKey": "Edge key",
             "secret": "Edge secret"
         },
         "stepper-text":{
