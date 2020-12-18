@@ -22,7 +22,6 @@ import thingsboardTimeseriesTableWidget from '../widget/lib/timeseries-table-wid
 import thingsboardAlarmsTableWidget from '../widget/lib/alarms-table-widget';
 import thingsboardEntitiesTableWidget from '../widget/lib/entities-table-widget';
 import thingsboardEntitiesHierarchyWidget from '../widget/lib/entities-hierarchy-widget';
-import thingsboardEdgesHierarchyWidget from '../widget/lib/edges-hierarchy-widget';
 import thingsboardExtensionsTableWidget from '../widget/lib/extensions-table-widget';
 import thingsboardDateRangeNavigatorWidget from '../widget/lib/date-range-navigator/date-range-navigator';
 import thingsboardMultipleInputWidget from '../widget/lib/multiple-input-widget';
@@ -53,7 +52,7 @@ import thingsboardUtils from '../common/utils.service';
 
 export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thingsboardLedLight,
     thingsboardTimeseriesTableWidget, thingsboardAlarmsTableWidget, thingsboardEntitiesTableWidget,
-    thingsboardEntitiesHierarchyWidget, thingsboardEdgesHierarchyWidget, thingsboardExtensionsTableWidget, thingsboardDateRangeNavigatorWidget,
+    thingsboardEntitiesHierarchyWidget, thingsboardExtensionsTableWidget, thingsboardDateRangeNavigatorWidget,
     thingsboardMultipleInputWidget, thingsboardWebCameraInputWidget, thingsboardRpcWidgets, thingsboardTypes,
     thingsboardUtils, thingsboardJsonToString, TripAnimationWidget])
     .factory('widgetService', WidgetService)
