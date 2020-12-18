@@ -18,11 +18,9 @@ package org.thingsboard.server.dao.timeseries;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import lombok.Data;
 import org.apache.commons.lang3.BooleanUtils;
 import org.jetbrains.annotations.NotNull;
 
-@Data
 public class CassandraTsPartitionsCache {
 
     private LoadingCache<CassandraPartitionCacheKey, Boolean> partitionsCache;
