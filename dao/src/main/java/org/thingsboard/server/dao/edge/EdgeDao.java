@@ -43,6 +43,15 @@ public interface EdgeDao extends Dao<Edge> {
     Edge save(TenantId tenantId, Edge edge);
 
     /**
+     * Find edge info by id.
+     *
+     * @param tenantId the tenant id
+     * @param edgeId the edge id
+     * @return the edge info object
+     */
+    EdgeInfo findEdgeInfoById(TenantId tenantId, UUID edgeId);
+
+    /**
      * Find edges by tenantId and page link.
      *
      * @param tenantId the tenantId

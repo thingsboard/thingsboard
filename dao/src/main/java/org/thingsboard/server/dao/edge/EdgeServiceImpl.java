@@ -44,14 +44,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.IdBased;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -141,6 +134,13 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         log.trace("Executing findEdgeById [{}]", edgeId);
         validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
         return edgeDao.findById(tenantId, edgeId.getId());
+    }
+
+    @Override
+    public EdgeInfo findEdgeInfoById(TenantId tenantId, EdgeId edgeId) {
+        log.trace("Executing findEdgeInfoById [{}]", edgeId);
+        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        return edgeDao.findEdgeInfoById(tenantId, edgeId.getId());
     }
 
     @Override

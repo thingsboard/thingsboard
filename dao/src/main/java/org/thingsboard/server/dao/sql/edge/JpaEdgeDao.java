@@ -68,6 +68,11 @@ public class JpaEdgeDao extends JpaAbstractSearchTextDao<EdgeEntity, Edge> imple
     }
 
     @Override
+    public EdgeInfo findEdgeInfoById(TenantId tenantId, UUID edgeId) {
+        return DaoUtil.getData(edgeRepository.findEdgeInfoById(edgeId));
+    }
+
+    @Override
     public PageData<Edge> findEdgesByTenantId(UUID tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(
                 edgeRepository.findByTenantId(

@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -635,6 +636,18 @@ public abstract class BaseController {
         try {
             validateId(edgeId, "Incorrect edgeId " + edgeId);
             Edge edge = edgeService.findEdgeById(getTenantId(), edgeId);
+            checkNotNull(edge);
+            accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation, edgeId, edge);
+            return edge;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    EdgeInfo checkEdgeInfoId(EdgeId edgeId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(edgeId, "Incorrect edgeId " + edgeId);
+            EdgeInfo edge = edgeService.findEdgeInfoById(getCurrentUser().getTenantId(), edgeId);
             checkNotNull(edge);
             accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation, edgeId, edge);
             return edge;

@@ -415,7 +415,7 @@ export class ImportExportService {
           this.store.dispatch(new ActionNotificationShow(
             {message: this.translate.instant('rulechain.invalid-rulechain-type-error', { expectedRuleChainType: expectedRuleChainType }),
               type: 'error'}));
-          throw new Error('Invalid rule chain file');
+          throw new Error('Invalid rule chain type');
         } else {
           return this.ruleChainService.resolveRuleChainMetadata(ruleChainImport.metadata).pipe(
             map((resolvedMetadata) => {

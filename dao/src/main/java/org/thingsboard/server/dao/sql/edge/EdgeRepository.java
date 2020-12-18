@@ -36,6 +36,12 @@ public interface EdgeRepository extends PagingAndSortingRepository<EdgeEntity, U
                                                  @Param("textSearch") String textSearch,
                                                  Pageable pageable);
 
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.EdgeInfoEntity(d, c.title, c.additionalInfo) " +
+            "FROM EdgeEntity d " +
+            "LEFT JOIN CustomerEntity c on c.id = d.customerId " +
+            "WHERE d.id = :edgeId")
+    EdgeInfoEntity findEdgeInfoById(@Param("edgeId") UUID edgeId);
+
     @Query("SELECT d FROM EdgeEntity d WHERE d.tenantId = :tenantId " +
             "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
     Page<EdgeEntity> findByTenantId(@Param("tenantId") UUID tenantId,

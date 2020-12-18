@@ -36,10 +36,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -72,6 +69,19 @@ public class EdgeController extends BaseController {
         try {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             return checkEdgeId(edgeId, Operation.READ);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/edge/info/{edgeId}", method = RequestMethod.GET)
+    @ResponseBody
+    public EdgeInfo getEdgeInfoById(@PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
+        try {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            return checkEdgeInfoId(edgeId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }

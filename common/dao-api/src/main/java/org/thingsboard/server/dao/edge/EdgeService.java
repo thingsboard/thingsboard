@@ -20,12 +20,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
@@ -35,6 +30,8 @@ import java.util.Optional;
 public interface EdgeService {
 
     Edge findEdgeById(TenantId tenantId, EdgeId edgeId);
+
+    EdgeInfo findEdgeInfoById(TenantId tenantId, EdgeId edgeId);
 
     ListenableFuture<Edge> findEdgeByIdAsync(TenantId tenantId, EdgeId edgeId);
 

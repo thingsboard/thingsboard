@@ -86,13 +86,13 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     this.config.deleteEntitiesTitle = count => this.translate.instant('edge.delete-edges-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('edge.delete-edges-text');
 
-    this.config.loadEntity = id => this.edgeService.getEdge(id.id);
+    this.config.loadEntity = id => this.edgeService.getEdgeInfo(id.id);
     this.config.saveEntity = edge => {
       return this.edgeService.saveEdge(edge).pipe(
         tap(() => {
           this.broadcast.broadcast('edgeSaved');
         }),
-        mergeMap((savedEdge) => this.edgeService.getEdge(savedEdge.id.id)
+        mergeMap((savedEdge) => this.edgeService.getEdgeInfo(savedEdge.id.id)
         ));
     };
     this.config.onEntityAction = action => this.onEdgeAction(action);

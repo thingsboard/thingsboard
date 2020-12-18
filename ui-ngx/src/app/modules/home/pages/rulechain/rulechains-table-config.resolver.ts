@@ -45,7 +45,7 @@ import {
   AddEntitiesToEdgeDialogData
 } from "@home/dialogs/add-entities-to-edge-dialog.component";
 import {MatDialog} from "@angular/material/dialog";
-import {isDefined, isUndefined} from "@core/utils";
+import {isUndefined} from "@core/utils";
 import {PageLink} from "@shared/models/page/page-link";
 import {Edge} from "@shared/models/edge.models";
 
@@ -490,17 +490,17 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
 
   isNonRootRuleChain(ruleChain: RuleChain) {
     if (this.config.componentsData.ruleChainScope === 'edge') {
-      return (isDefined(this.config.componentsData.edge.rootRuleChainId) && this.config.componentsData.edge.rootRuleChainId != null && this.config.componentsData.edge.rootRuleChainId.id != ruleChain.id.id);
+      return this.config.componentsData.edge.rootRuleChainId && true && this.config.componentsData.edge.rootRuleChainId.id != ruleChain.id.id;
     }
-    return (isDefined(ruleChain)) && !ruleChain.root;
+    return !ruleChain.root;
   }
 
   isDefaultEdgeRuleChain(ruleChain) {
-    return (isDefined(ruleChain)) && !ruleChain.root && this.config.componentsData.defaultEdgeRuleChainIds.includes(ruleChain.id.id);
+    return !ruleChain.root && this.config.componentsData.defaultEdgeRuleChainIds.includes(ruleChain.id.id);
   }
 
   isNonDefaultEdgeRuleChain(ruleChain) {
-    return (isDefined(ruleChain)) && !ruleChain.root && !this.config.componentsData.defaultEdgeRuleChainIds.includes(ruleChain.id.id);
+    return !ruleChain.root && !this.config.componentsData.defaultEdgeRuleChainIds.includes(ruleChain.id.id);
   }
 
   fetchRuleChains(pageLink: PageLink) {
