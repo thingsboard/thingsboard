@@ -52,7 +52,13 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
 import { RequestConfig } from '@core/http/http-utils';
-import { RuleChain, RuleChainImport, RuleChainMetaData } from '@shared/models/rule-chain.models';
+import {
+  RuleChain,
+  RuleChainImport,
+  RuleChainMetaData,
+  RuleChainType,
+  ruleChainType
+} from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import * as JSZip from 'jszip';
 import { FiltersInfo } from '@shared/models/query/query.models';
@@ -397,7 +403,7 @@ export class ImportExportService {
     );
   }
 
-  public importRuleChain(): Observable<RuleChainImport> {
+  public importRuleChain(expectedRuleChainType: RuleChainType): Observable<RuleChainImport> {
     return this.openImportDialog('rulechain.import', 'rulechain.rulechain-file').pipe(
       mergeMap((ruleChainImport: RuleChainImport) => {
         if (!this.validateImportedRuleChain(ruleChainImport)) {
@@ -405,6 +411,11 @@ export class ImportExportService {
             {message: this.translate.instant('rulechain.invalid-rulechain-file-error'),
               type: 'error'}));
           throw new Error('Invalid rule chain file');
+        } else if (ruleChainImport.ruleChain.type !== expectedRuleChainType) {
+          this.store.dispatch(new ActionNotificationShow(
+            {message: this.translate.instant('rulechain.invalid-rulechain-type-error', { expectedRuleChainType: expectedRuleChainType }),
+              type: 'error'}));
+          throw new Error('Invalid rule chain type');
         } else {
           return this.ruleChainService.resolveRuleChainMetadata(ruleChainImport.metadata).pipe(
             map((resolvedMetadata) => {
@@ -457,6 +468,9 @@ export class ImportExportService {
       || isUndefined(ruleChainImport.metadata)
       || isUndefined(ruleChainImport.ruleChain.name)) {
       return false;
+    }
+    if (isUndefined(ruleChainImport.ruleChain.type)) {
+      ruleChainImport.ruleChain.type = ruleChainType.core;
     }
     return true;
   }

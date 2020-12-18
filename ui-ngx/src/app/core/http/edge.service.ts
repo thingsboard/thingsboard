@@ -38,8 +38,12 @@ export class EdgeService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public getEdge(edgeId: string, config?: RequestConfig): Observable<EdgeInfo> {
-    return this.http.get<EdgeInfo>(`/api/edge/${edgeId}`, defaultHttpOptionsFromConfig(config));
+  public getEdge(edgeId: string, config?: RequestConfig): Observable<Edge> {
+    return this.http.get<Edge>(`/api/edge/${edgeId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getEdgeInfo(edgeId: string, config?: RequestConfig): Observable<EdgeInfo> {
+    return this.http.get<EdgeInfo>(`/api/edge/info/${edgeId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public saveEdge(edge: Edge, config?: RequestConfig): Observable<Edge> {
@@ -72,7 +76,7 @@ export class EdgeService {
   }
 
   public makeEdgePublic(edgeId: string, config?: RequestConfig): Observable<Edge> {
-    return this.http.post<Edge>(`/api/customer/public/edge/${edgeId}`,
+    return this.http.post<Edge>(`/api/customer/public/edge/${edgeId}`, null,
       defaultHttpOptionsFromConfig(config));
   }
 

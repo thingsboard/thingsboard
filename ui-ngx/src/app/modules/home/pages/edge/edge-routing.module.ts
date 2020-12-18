@@ -27,9 +27,9 @@ import { RuleChainsTableConfigResolver } from "@home/pages/rulechain/rulechains-
 import { DashboardPageComponent } from "@home/pages/dashboard/dashboard-page.component";
 import { dashboardBreadcumbLabelFunction, DashboardResolver } from "@home/pages/dashboard/dashboard-routing.module";
 import { BreadCrumbConfig } from "@shared/components/breadcrumb";
-import {RuleChainPageComponent} from "@home/pages/rulechain/rulechain-page.component";
-import {ConfirmOnExitGuard} from "@core/guards/confirm-on-exit.guard";
-import {ruleChainType} from "@shared/models/rule-chain.models";
+import { RuleChainPageComponent } from "@home/pages/rulechain/rulechain-page.component";
+import { ConfirmOnExitGuard } from "@core/guards/confirm-on-exit.guard";
+import { ruleChainType } from "@shared/models/rule-chain.models";
 import {
   importRuleChainBreadcumbLabelFunction,
   ResolvedRuleChainMetaDataResolver,

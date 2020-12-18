@@ -14,39 +14,40 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 
-import {ActivatedRouteSnapshot, Resolve, Route, Router} from '@angular/router';
+import {ActivatedRouteSnapshot, Resolve, Router} from '@angular/router';
 import {
   CellActionDescriptor,
   checkBoxCell,
-  DateEntityTableColumn, EntityColumn,
+  DateEntityTableColumn,
+  EntityColumn,
   EntityTableColumn,
   EntityTableConfig,
-  GroupActionDescriptor, HeaderActionDescriptor
+  GroupActionDescriptor,
+  HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
-import { TranslateService } from '@ngx-translate/core';
-import { DatePipe } from '@angular/common';
-import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { EntityAction } from '@home/models/entity/entity-component.models';
-import { RuleChain, ruleChainType } from '@shared/models/rule-chain.models';
-import { RuleChainService } from '@core/http/rule-chain.service';
-import { RuleChainComponent } from '@modules/home/pages/rulechain/rulechain.component';
-import { DialogService } from '@core/services/dialog.service';
-import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
-import { ItemBufferService } from '@core/services/item-buffer.service';
-import { EdgeService } from "@core/http/edge.service";
-import {map, mergeMap} from "rxjs/operators";
-import { forkJoin, Observable } from "rxjs";
+import {TranslateService} from '@ngx-translate/core';
+import {DatePipe} from '@angular/common';
+import {EntityType, entityTypeResources, entityTypeTranslations} from '@shared/models/entity-type.models';
+import {EntityAction} from '@home/models/entity/entity-component.models';
+import {RuleChain, ruleChainType} from '@shared/models/rule-chain.models';
+import {RuleChainService} from '@core/http/rule-chain.service';
+import {RuleChainComponent} from '@modules/home/pages/rulechain/rulechain.component';
+import {DialogService} from '@core/services/dialog.service';
+import {RuleChainTabsComponent} from '@home/pages/rulechain/rulechain-tabs.component';
+import {ImportExportService} from '@home/components/import-export/import-export.service';
+import {ItemBufferService} from '@core/services/item-buffer.service';
+import {EdgeService} from "@core/http/edge.service";
+import {forkJoin, Observable} from "rxjs";
 import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
 } from "@home/dialogs/add-entities-to-edge-dialog.component";
-import { MatDialog } from "@angular/material/dialog";
-import { isDefined, isUndefined } from "@core/utils";
-import { PageLink } from "@shared/models/page/page-link";
-import { Edge } from "@shared/models/edge.models";
+import {MatDialog} from "@angular/material/dialog";
+import {isUndefined} from "@core/utils";
+import {PageLink} from "@shared/models/page/page-link";
+import {Edge} from "@shared/models/edge.models";
 
 @Injectable()
 export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {
@@ -267,7 +268,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     if ($event) {
       $event.stopPropagation();
     }
-    this.importExport.importRuleChain().subscribe((ruleChainImport) => {
+    const expectedRuleChainType = this.config.componentsData.ruleChainScope === 'tenant' ? ruleChainType.core : ruleChainType.edge;
+    this.importExport.importRuleChain(expectedRuleChainType).subscribe((ruleChainImport) => {
       if (ruleChainImport) {
         this.itembuffer.storeRuleChainImport(ruleChainImport);
         this.router.navigateByUrl(`${this.router.routerState.snapshot.url}/ruleChain/import`);
@@ -488,17 +490,17 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
 
   isNonRootRuleChain(ruleChain: RuleChain) {
     if (this.config.componentsData.ruleChainScope === 'edge') {
-      return (isDefined(this.config.componentsData.edge.rootRuleChainId) && this.config.componentsData.edge.rootRuleChainId != null && this.config.componentsData.edge.rootRuleChainId.id != ruleChain.id.id);
+      return this.config.componentsData.edge.rootRuleChainId && true && this.config.componentsData.edge.rootRuleChainId.id != ruleChain.id.id;
     }
-    return (isDefined(ruleChain)) && !ruleChain.root;
+    return !ruleChain.root;
   }
 
   isDefaultEdgeRuleChain(ruleChain) {
-    return (isDefined(ruleChain)) && !ruleChain.root && this.config.componentsData.defaultEdgeRuleChainIds.includes(ruleChain.id.id);
+    return !ruleChain.root && this.config.componentsData.defaultEdgeRuleChainIds.includes(ruleChain.id.id);
   }
 
   isNonDefaultEdgeRuleChain(ruleChain) {
-    return (isDefined(ruleChain)) && !ruleChain.root && !this.config.componentsData.defaultEdgeRuleChainIds.includes(ruleChain.id.id);
+    return !ruleChain.root && !this.config.componentsData.defaultEdgeRuleChainIds.includes(ruleChain.id.id);
   }
 
   fetchRuleChains(pageLink: PageLink) {

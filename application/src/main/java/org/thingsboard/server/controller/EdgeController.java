@@ -84,6 +84,19 @@ public class EdgeController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/edge/info/{edgeId}", method = RequestMethod.GET)
+    @ResponseBody
+    public EdgeInfo getEdgeInfoById(@PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
+        try {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            return checkEdgeInfoId(edgeId, Operation.READ);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge", method = RequestMethod.POST)
     @ResponseBody

@@ -144,6 +144,13 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     }
 
     @Override
+    public EdgeInfo findEdgeInfoById(TenantId tenantId, EdgeId edgeId) {
+        log.trace("Executing findEdgeInfoById [{}]", edgeId);
+        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        return edgeDao.findEdgeInfoById(tenantId, edgeId.getId());
+    }
+
+    @Override
     public ListenableFuture<Edge> findEdgeByIdAsync(TenantId tenantId, EdgeId edgeId) {
         log.trace("Executing findEdgeById [{}]", edgeId);
         validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
