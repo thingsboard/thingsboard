@@ -324,9 +324,8 @@ export class RuleChainService {
     return this.http.get<Array<RuleChain>>(`/api/ruleChain/defaultEdgeRuleChains`, defaultHttpOptionsFromConfig(config));
   }
 
-  public setEdgeRootRuleChain(edgeId: string, ruleChainId: string, config?: RequestConfig): Observable<Edge> { //TODO deaflynx EdgeInfo vs. Edge check usage
-    return this.http.post<Edge>(`/api/edge/${edgeId}/${ruleChainId}/root`,
-      defaultHttpOptionsFromConfig(config));
+  public setEdgeRootRuleChain(edgeId: string, ruleChainId: string, config?: RequestConfig): Observable<Edge> {
+    return this.http.post<Edge>(`/api/edge/${edgeId}/${ruleChainId}/root`, defaultHttpOptionsFromConfig(config));
   }
 
 }
