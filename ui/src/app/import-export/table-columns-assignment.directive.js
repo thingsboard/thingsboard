@@ -58,6 +58,12 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
             vm.columnTypes.serverAttribute = types.importEntityColumnType.serverAttribute;
             vm.columnTypes.timeseries = types.importEntityColumnType.timeseries;
             break;
+        case types.entityType.edge:
+            vm.columnTypes.edgeLicenseKey = types.importEntityColumnType.edgeLicenseKey;
+            vm.columnTypes.cloudEndpoint = types.importEntityColumnType.cloudEndpoint;
+            vm.columnTypes.routingKey = types.importEntityColumnType.routingKey;
+            vm.columnTypes.secret = types.importEntityColumnType.secret;
+            break;
     }
 
     $scope.isColumnTypeDiffers = function(columnType) {
@@ -66,7 +72,11 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
             columnType !== types.importEntityColumnType.label.value &&
             columnType !== types.importEntityColumnType.accessToken.value&&
             columnType !== types.importEntityColumnType.isGateway.value&&
-            columnType !== types.importEntityColumnType.description.value;
+            columnType !== types.importEntityColumnType.description.value&&
+            columnType !== types.importEntityColumnType.edgeLicenseKey.value&&
+            columnType !== types.importEntityColumnType.cloudEndpoint.value&&
+            columnType !== types.importEntityColumnType.routingKey.value&&
+            columnType !== types.importEntityColumnType.secret.value;
     };
 
     $scope.$watch('vm.columns', function(newVal){
@@ -77,6 +87,10 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
             var isSelectCredentials = false;
             var isSelectGateway = false;
             var isSelectDescription = false;
+            var isSelectEdgeLicenseKey = false;
+            var isSelectCloudEndpoint = false;
+            var isSelectRoutingKey = false;
+            var isSelectSecret = false;
             for (var i = 0; i < newVal.length; i++) {
                 switch (newVal[i].type) {
                     case types.importEntityColumnType.name.value:
@@ -94,6 +108,18 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
                     case types.importEntityColumnType.isGateway.value:
                         isSelectGateway = true;
                         break;
+                    case types.importEntityColumnType.edgeLicenseKey.value:
+                        isSelectEdgeLicenseKey = true;
+                        break;
+                    case types.importEntityColumnType.cloudEndpoint.value:
+                        isSelectCloudEndpoint = true;
+                        break;
+                    case types.importEntityColumnType.routingKey.value:
+                        isSelectRoutingKey = true;
+                        break;
+                    case types.importEntityColumnType.secret.value:
+                        isSelectSecret = true;
+                        break;
                     case types.importEntityColumnType.description.value:
                         isSelectDescription = true;
                 }
@@ -107,10 +133,18 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
                 vm.columnTypes.name.disable = isSelectName;
                 vm.columnTypes.type.disable = isSelectType;
                 vm.columnTypes.label.disable = isSelectLabel;
-                vm.columnTypes.gateway.disable = isSelectGateway;
+                if (angular.isDefined(vm.columnTypes.gateway)) {
+                    vm.columnTypes.gateway.disable = isSelectGateway;
+                }
                 vm.columnTypes.description.disable = isSelectDescription;
                 if (angular.isDefined(vm.columnTypes.accessToken)) {
                     vm.columnTypes.accessToken.disable = isSelectCredentials;
+                }
+                if (vm.entityType === types.entityType.edge) {
+                    vm.columnTypes.edgeLicenseKey.disable = isSelectEdgeLicenseKey;
+                    vm.columnTypes.cloudEndpoint.disable = isSelectCloudEndpoint;
+                    vm.columnTypes.routingKey.disable = isSelectRoutingKey;
+                    vm.columnTypes.secret.disable = isSelectSecret;
                 }
             });
         }

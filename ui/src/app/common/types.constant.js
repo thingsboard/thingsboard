@@ -465,6 +465,22 @@ export default angular.module('thingsboard.types', [])
                 description: {
                     name: 'import.column-type.description',
                     value: 'description'
+                },
+                edgeLicenseKey: {
+                    name: 'import.column-type.edgeLicenseKey',
+                    value: 'edgeLicenseKey'
+                },
+                cloudEndpoint: {
+                    name: 'import.column-type.cloudEndpoint',
+                    value: 'cloudEndpoint'
+                },
+                routingKey: {
+                    name: 'import.column-type.routingKey',
+                    value: 'routingKey'
+                },
+                secret: {
+                    name: 'import.column-type.secret',
+                    value: 'secret'
                 }
             },
             aliasEntityType: {

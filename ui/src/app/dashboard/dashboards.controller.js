@@ -383,7 +383,7 @@ export function DashboardsController(userService, dashboardService, customerServ
             }
         } else if (vm.dashboardsScope === 'edge') {
             fetchDashboardsFunction = function (pageLink) {
-                return dashboardService.getEdgeDashboards(edgeId, pageLink);
+                return dashboardService.getEdgeDashboards(edgeId, pageLink, null);
             };
             deleteDashboardFunction = function (dashboardId) {
                 return dashboardService.unassignDashboardFromEdge(edgeId, dashboardId);

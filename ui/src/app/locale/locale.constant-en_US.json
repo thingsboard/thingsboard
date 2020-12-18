@@ -1405,7 +1405,11 @@
             "entity-field": "Entity field",
             "access-token": "Access token",
             "isgateway": "Is Gateway",
-            "description": "Description"
+            "description": "Description",
+            "edgeLicenseKey": "License Key",
+            "cloudEndpoint": "Cloud Endpoint",
+            "routingKey": "Edge key",
+            "secret": "Edge secret"
         },
         "stepper-text":{
             "select-file": "Select a file",
