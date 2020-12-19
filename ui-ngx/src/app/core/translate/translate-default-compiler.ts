@@ -65,6 +65,7 @@ export class TranslateDefaultCompiler extends TranslateMessageFormatCompiler {
     } catch (e) {
       console.warn(`Failed to parse source: ${src}`);
       console.error(e);
+      return false;
     }
     const res = tokens.filter(
       (value) => typeof value !== 'string' && value.type === 'plural'
