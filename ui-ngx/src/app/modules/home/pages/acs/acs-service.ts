@@ -37,7 +37,7 @@ export class AcsService {
     }
 
     public change(id, parameterName, newValue): void {
-        this.http.post('http://localhost:3000/api/devices/' + id + '/tasks',
+        this.http.post('http://localhost:8080/api/v1/tr69/tasks/?deviceID=' + id,
             [
                 {
                     "device": id,

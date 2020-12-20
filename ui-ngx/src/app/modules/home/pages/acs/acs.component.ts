@@ -30,17 +30,24 @@ export class AcsComponent implements OnInit, AfterViewInit {
     displayedColumns: string[] = ['Device Name', 'SSID', 'Last Inform', 'IP', 'Action'];
     dataSource: MatTableDataSource<any>;
     ngOnInit(): void {
-        this.http.post('http://127.0.0.1:3000/login', {
-            "username": "admin",
-            "password": "admin"
-        }, { withCredentials: true }).subscribe(data => {
-            this.http.get<any[]>('http://localhost:3000/api/devices', { withCredentials: true }).subscribe((deviceData) => {
+        // this.http.post('http://127.0.0.1:3000/login', {
+        //     "username": "admin",
+        //     "password": "admin"
+        // }, { withCredentials: true }).subscribe(data => {
+        //     this.http.get<any[]>('http://localhost:3000/api/devices', { withCredentials: true }).subscribe((deviceData) => {
+        //         this.dataSource = new MatTableDataSource(deviceData)
+        //         this.dataSource.paginator = this.paginator;
+
+        //     })
+        // })
+
+
+        this.http.get<any[]>('http://localhost:8080/api/v1/tr69/devices', { withCredentials: true }).subscribe((deviceData) => {
                 this.dataSource = new MatTableDataSource(deviceData)
                 this.dataSource.paginator = this.paginator;
+                
 
             })
-        })
-
     }
 
     ngAfterViewInit() {
