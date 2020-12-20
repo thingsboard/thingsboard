@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink, TimePageLink } from '@shared/models/page/page-link';
@@ -24,31 +24,14 @@ import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { Edge, EdgeInfo, EdgeSearchQuery } from "@shared/models/edge.models";
 import { EntityId } from "@shared/models/id/entity-id";
 import { Event } from "@shared/models/event.models";
-import { map } from "rxjs/operators";
 @Injectable({
   providedIn: 'root'
 })
 export class EdgeService {
 
-  private edgesSupportEnabled = false;
-
   constructor(
     private http: HttpClient
   ) { }
-
-  public isEdgesSupportEnabled(): boolean {
-    return this.edgesSupportEnabled;
-  }
-
-  public loadIsEdgesSupportEnabled(): Observable<boolean> {
-    return this.http.get<boolean>('/api/edges/enabled',
-      defaultHttpOptions(true)).pipe(
-      map( (enabled) => {
-        this.edgesSupportEnabled = enabled;
-        return this.edgesSupportEnabled;
-      })
-    );
-  }
 
   public getEdges(edgeIds: Array<string>, config?: RequestConfig): Observable<Array<Edge>> {
     return this.http.get<Array<Edge>>(`/api/edges?edgeIds=${edgeIds.join(',')}`,

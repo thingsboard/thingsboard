@@ -18,14 +18,14 @@ import { Injectable } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
-import { selectAuthUser, selectIsAuthenticated } from '../auth/auth.selectors';
+import {selectAuth, selectAuthUser, selectIsAuthenticated} from '../auth/auth.selectors';
 import { take } from 'rxjs/operators';
 import { HomeSection, MenuSection } from '@core/services/menu.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { AuthUser } from '@shared/models/user.model';
 import { guid } from '@core/utils';
-import { EdgeService } from '../http/edge.service';
+import {AuthState} from "@core/auth/auth.models";
 
 @Injectable({
   providedIn: 'root'
@@ -35,7 +35,7 @@ export class MenuService {
   menuSections$: Subject<Array<MenuSection>> = new BehaviorSubject<Array<MenuSection>>([]);
   homeSections$: Subject<Array<HomeSection>> = new BehaviorSubject<Array<HomeSection>>([]);
 
-  constructor(private store: Store<AppState>, private authService: AuthService, private edgeService: EdgeService) {
+  constructor(private store: Store<AppState>, private authService: AuthService) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(
       (authenticated: boolean) => {
         if (authenticated) {
@@ -46,23 +46,23 @@ export class MenuService {
   }
 
   private buildMenu() {
-    this.store.pipe(select(selectAuthUser), take(1)).subscribe(
-      (authUser: AuthUser) => {
-        if (authUser) {
+    this.store.pipe(select(selectAuth), take(1)).subscribe(
+      (authState: AuthState) => {
+        if (authState.authUser) {
           let menuSections: Array<MenuSection>;
           let homeSections: Array<HomeSection>;
-          switch (authUser.authority) {
+          switch (authState.authUser.authority) {
             case Authority.SYS_ADMIN:
-              menuSections = this.buildSysAdminMenu(authUser);
-              homeSections = this.buildSysAdminHome(authUser);
+              menuSections = this.buildSysAdminMenu(authState);
+              homeSections = this.buildSysAdminHome(authState);
               break;
             case Authority.TENANT_ADMIN:
-              menuSections = this.buildTenantAdminMenu(authUser);
-              homeSections = this.buildTenantAdminHome(authUser);
+              menuSections = this.buildTenantAdminMenu(authState);
+              homeSections = this.buildTenantAdminHome(authState);
               break;
             case Authority.CUSTOMER_USER:
-              menuSections = this.buildCustomerUserMenu(authUser);
-              homeSections = this.buildCustomerUserHome(authUser);
+              menuSections = this.buildCustomerUserMenu(authState);
+              homeSections = this.buildCustomerUserHome(authState);
               break;
           }
           this.menuSections$.next(menuSections);
@@ -72,7 +72,7 @@ export class MenuService {
     );
   }
 
-  private buildSysAdminMenu(authUser: any): Array<MenuSection> {
+  private buildSysAdminMenu(authState: AuthState): Array<MenuSection> {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
@@ -153,7 +153,7 @@ export class MenuService {
     return sections;
   }
 
-  private buildSysAdminHome(authUser: any): Array<HomeSection> {
+  private buildSysAdminHome(authState: AuthState): Array<HomeSection> {
     const homeSections: Array<HomeSection> = [];
     homeSections.push(
       {
@@ -216,7 +216,7 @@ export class MenuService {
     return homeSections;
   }
 
-  private buildTenantAdminMenu(authUser: any): Array<MenuSection> {
+  private buildTenantAdminMenu(authState: AuthState): Array<MenuSection> {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
@@ -270,7 +270,7 @@ export class MenuService {
         icon: 'view_quilt'
       }
     );
-    if (this.edgeService.isEdgesSupportEnabled()) {
+    if (authState.edgesSupportEnabled) {
       sections.push(
         {
           id: guid(),
@@ -332,7 +332,7 @@ export class MenuService {
     return sections;
   }
 
-  private buildTenantAdminHome(authUser: any): Array<HomeSection> {
+  private buildTenantAdminHome(authState: AuthState): Array<HomeSection> {
     const homeSections: Array<HomeSection> = [];
     homeSections.push(
       {
@@ -392,7 +392,7 @@ export class MenuService {
         ]
       }
     );
-    if (this.edgeService.isEdgesSupportEnabled()) {
+    if (authState.edgesSupportEnabled) {
       homeSections.push(
         {
           name: 'edge.management',
@@ -446,7 +446,7 @@ export class MenuService {
     return homeSections;
   }
 
-  private buildCustomerUserMenu(authUser: any): Array<MenuSection> {
+  private buildCustomerUserMenu(authState: AuthState): Array<MenuSection> {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
@@ -488,7 +488,7 @@ export class MenuService {
     return sections;
   }
 
-  private buildCustomerUserHome(authUser: any): Array<HomeSection> {
+  private buildCustomerUserHome(authState: AuthState): Array<HomeSection> {
     const homeSections: Array<HomeSection> = [
       {
         name: 'asset.view-assets',
