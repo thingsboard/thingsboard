@@ -31,7 +31,7 @@ import { ActionAuthAuthenticated, ActionAuthLoadUser, ActionAuthUnauthenticated 
 import { getCurrentAuthState, getCurrentAuthUser } from './auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { ActionSettingsChangeLanguage } from '@app/core/settings/settings.actions';
-import { AuthPayload, AuthState } from '@core/auth/auth.models';
+import { AuthPayload, AuthState, SysParamsState } from '@core/auth/auth.models';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthUser } from '@shared/models/user.model';
 import { TimeService } from '@core/services/time.service';
@@ -45,6 +45,7 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
 import { OAuth2ClientInfo } from '@shared/models/oauth2.models';
+import { EdgeService } from "@core/http/edge.service";
 
 @Injectable({
     providedIn: 'root'
@@ -425,16 +426,24 @@ export class AuthService {
     }
   }
 
-  private loadSystemParams(authPayload: AuthPayload): Observable<any> {
-    const sources: Array<Observable<any>> = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
-                                             this.fetchAllowedDashboardIds(authPayload),
-                                             this.timeService.loadMaxDatapointsLimit()];
+  public loadIsEdgesSupportEnabled(): Observable<boolean> {
+    return this.http.get<boolean>('/api/edges/enabled', defaultHttpOptions());
+  }
+
+  private loadSystemParams(authPayload: AuthPayload): Observable<SysParamsState> {
+    const sources = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
+                     this.fetchAllowedDashboardIds(authPayload),
+                     this.loadIsEdgesSupportEnabled(),
+                     this.timeService.loadMaxDatapointsLimit()];
     return forkJoin(sources)
       .pipe(map((data) => {
-        const userTokenAccessEnabled: boolean = data[0];
-        const allowedDashboardIds: string[] = data[1];
-        return {userTokenAccessEnabled, allowedDashboardIds};
-      }));
+        const userTokenAccessEnabled: boolean = data[0] as boolean;
+        const allowedDashboardIds: string[] = data[1] as string[];
+        const edgesSupportEnabled: boolean = data[2] as boolean;
+        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled};
+      }, catchError((err) => {
+        return of({});
+      })));
   }
 
   public refreshJwtToken(loadUserElseStoreJwtToken = true): Observable<LoginResponse> {
