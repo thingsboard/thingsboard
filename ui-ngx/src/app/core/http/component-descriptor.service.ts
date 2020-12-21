@@ -54,16 +54,14 @@ export class ComponentDescriptorService {
     }
   }
 
-  public getComponentDescriptorsByTypes(componentTypes: Array<ComponentType>, ruleChainType: RuleChainType, ruleNodeScope: RuleChainType, config?: RequestConfig): Observable<Array<ComponentDescriptor>> {
+  public getComponentDescriptorsByTypes(componentTypes: Array<ComponentType>, ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<ComponentDescriptor>> {
     let result: ComponentDescriptor[] = [];
-    if (ruleNodeScope === ruleChainType) {
-      for (let i = componentTypes.length - 1; i >= 0; i--) {
-        const componentType = componentTypes[i];
-        const componentDescriptors = this.componentsByType.get(componentType);
-        if (componentDescriptors) {
-          result = result.concat(componentDescriptors);
-          componentTypes.splice(i, 1);
-        }
+    for (let i = componentTypes.length - 1; i >= 0; i--) {
+      const componentType = componentTypes[i];
+      const componentDescriptors = this.componentsByType.get(componentType);
+      if (componentDescriptors) {
+        result = result.concat(componentDescriptors);
+        componentTypes.splice(i, 1);
       }
     }
     if (!componentTypes.length) {

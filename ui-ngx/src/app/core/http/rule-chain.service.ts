@@ -53,7 +53,6 @@ export class RuleChainService {
 
   private ruleNodeComponents: Array<RuleNodeComponentDescriptor>;
   private ruleNodeConfigFactories: {[directive: string]: ComponentFactory<IRuleNodeConfigurationComponent>} = {};
-  private ruleNodeScope: RuleChainType;
 
   constructor(
     private http: HttpClient,
@@ -121,14 +120,13 @@ export class RuleChainService {
 
   public getRuleNodeComponents(ruleNodeConfigResourcesModulesMap: {[key: string]: any}, ruleChainType: RuleChainType, config?: RequestConfig):
     Observable<Array<RuleNodeComponentDescriptor>> {
-     if (this.ruleNodeComponents && this.ruleNodeScope == ruleChainType) {
+     if (this.ruleNodeComponents) {
        return of(this.ruleNodeComponents);
      } else {
-       return this.loadRuleNodeComponents(ruleChainType, config).pipe(
+      return this.loadRuleNodeComponents(ruleChainType, config).pipe(
         mergeMap((components) => {
           return this.resolveRuleNodeComponentsUiResources(components, ruleNodeConfigResourcesModulesMap).pipe(
             map((ruleNodeComponents) => {
-              this.ruleNodeScope = ruleChainType;
               this.ruleNodeComponents = ruleNodeComponents;
               this.ruleNodeComponents.push(ruleChainNodeComponent);
               this.ruleNodeComponents.sort(
@@ -209,7 +207,7 @@ export class RuleChainService {
   }
 
   private loadRuleNodeComponents(ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<RuleNodeComponentDescriptor>> {
-    return this.componentDescriptorService.getComponentDescriptorsByTypes(ruleNodeTypeComponentTypes, ruleChainType, this.ruleNodeScope, config).pipe(
+    return this.componentDescriptorService.getComponentDescriptorsByTypes(ruleNodeTypeComponentTypes, ruleChainType, config).pipe(
       map((components) => {
         const ruleNodeComponents: RuleNodeComponentDescriptor[] = [];
         components.forEach((component) => {
