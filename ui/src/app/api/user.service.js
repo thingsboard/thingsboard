@@ -29,7 +29,8 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         allowedDashboardIds = [],
         redirectParams = null,
         userTokenAccessEnabled = false,
-        userLoaded = false;
+        userLoaded = false,
+        edgesSupportEnabled = false;
 
     var refreshTokenQueue = [];
 
@@ -65,7 +66,9 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         reloadUser: reloadUser,
         isUserTokenAccessEnabled: isUserTokenAccessEnabled,
         loginAsUser: loginAsUser,
-        setUserCredentialsEnabled: setUserCredentialsEnabled
+        setUserCredentialsEnabled: setUserCredentialsEnabled,
+        isEdgesSupportEnabled: isEdgesSupportEnabled,
+        loadIsEdgesSupportEnabled: loadIsEdgesSupportEnabled
     }
 
     reloadUser();
@@ -451,6 +454,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
     function loadSystemParams() {
         var promises = [];
         promises.push(loadIsUserTokenAccessEnabled());
+        promises.push(loadIsEdgesSupportEnabled());
         promises.push(timeService.loadMaxDatapointsLimit());
         return $q.all(promises);
     }
@@ -683,6 +687,22 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
             setUserFromJwtToken(token, refreshToken, true);
         }, function fail() {
         });
+    }
+
+    function isEdgesSupportEnabled() {
+        return edgesSupportEnabled;
+    }
+
+    function loadIsEdgesSupportEnabled() {
+        var deferred = $q.defer();
+        var url = '/api/edges/enabled';
+        $http.get(url).then(function success(response) {
+            edgesSupportEnabled = response.data;
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
     }
 
 }

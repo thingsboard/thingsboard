@@ -58,6 +58,45 @@ function Menu(userService, $state, $rootScope) {
             if (authority !== user.authority) {
                 sections = [];
                 authority = user.authority;
+                var edgeMenuSection = {
+                    side: {
+                        name: 'edge.management',
+                        type: 'toggle',
+                        state: 'home.edges',
+                        height: '80px',
+                        icon: 'router',
+                        pages: [
+                            {
+                                name: 'edge.edges',
+                                type: 'link',
+                                state: 'home.edges',
+                                icon: 'router'
+                            },
+                            {
+                                name: 'rulechain.edge-rulechains',
+                                type: 'link',
+                                state: 'home.edges.edgeRuleChains',
+                                icon: 'code'
+                            }
+                        ]
+                    },
+                    home: {
+                        name: 'edge.management',
+                        places: [
+                            {
+                                name: 'edge.edges',
+                                icon: 'router',
+                                state: 'home.edges'
+                            },
+                            {
+                                name: 'rulechain.edge-rulechains',
+                                icon: 'code',
+                                state: 'home.edges.edgeRuleChains'
+                            }
+                        ]
+
+                    }
+                }
                 if (authority === 'SYS_ADMIN') {
                     sections = [
                         {
@@ -156,24 +195,9 @@ function Menu(userService, $state, $rootScope) {
                         },
                         {
                             name: 'rulechain.rulechains',
-                            type: 'toggle',
+                            type: 'link',
                             state: 'home.ruleChains',
-                            height: '80px',
-                            icon: 'settings_ethernet',
-                            pages: [
-                                {
-                                    name: 'rulechain.core-rulechains',
-                                    type: 'link',
-                                    state: 'home.ruleChains.core',
-                                    icon: 'settings_ethernet'
-                                },
-                                {
-                                    name: 'rulechain.edge-rulechains',
-                                    type: 'link',
-                                    state: 'home.ruleChains.edge',
-                                    icon: 'code'
-                                }
-                            ]
+                            icon: 'settings_ethernet'
                         },
                         {
                             name: 'customer.customers',
@@ -200,12 +224,6 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'view_quilt'
                         },
                         {
-                            name: 'edge.edges',
-                            type: 'link',
-                            state: 'home.edges',
-                            icon: 'router'
-                        },
-                        {
                             name: 'widget.widget-library',
                             type: 'link',
                             state: 'home.widgets-bundles',
@@ -226,17 +244,12 @@ function Menu(userService, $state, $rootScope) {
 
                     homeSections =
                         [{
-                            name: 'rulechain.management',
+                            name: 'rulechain.rulechains',
                             places: [
                                 {
-                                    name: 'rulechain.core-rulechains',
+                                    name: 'rulechain.rulechains',
                                     icon: 'settings_ethernet',
-                                    state: 'home.ruleChains.core'
-                                },
-                                {
-                                    name: 'rulechain.edge-rulechains',
-                                    icon: 'code',
-                                    state: 'home.ruleChains.edge'
+                                    state: 'home.ruleChains'
                                 }
                             ]
                         },
@@ -281,16 +294,6 @@ function Menu(userService, $state, $rootScope) {
                                 ]
                             },
                             {
-                                name: 'edge.management',
-                                places: [
-                                    {
-                                        name: 'edge.edges',
-                                        icon: 'router',
-                                        state: 'home.edges'
-                                    }
-                                ]
-                            },
-                            {
                                 name: 'dashboard.management',
                                 places: [
                                     {
@@ -315,6 +318,11 @@ function Menu(userService, $state, $rootScope) {
                                     }
                                 ]
                             }];
+
+                    if (userService.isEdgesSupportEnabled()) {
+                        sections.splice(6, 0, edgeMenuSection.side);
+                        homeSections.splice(5, 0, edgeMenuSection.home);
+                    }
 
                 } else if (authority === 'CUSTOMER_USER') {
                     sections = [
@@ -341,12 +349,6 @@ function Menu(userService, $state, $rootScope) {
                             type: 'link',
                             state: 'home.entityViews',
                             icon: 'view_quilt'
-                        },
-                        {
-                            name: 'edge.edges',
-                            type: 'link',
-                            state: 'home.edges',
-                            icon: 'router'
                         },
                         {
                             name: 'dashboard.dashboards',
@@ -387,16 +389,6 @@ function Menu(userService, $state, $rootScope) {
                             ]
                         },
                         {
-                            name: 'edge.management',
-                            places: [
-                                {
-                                    name: 'edge.edges',
-                                    icon: 'router',
-                                    state: 'home.edges'
-                                }
-                            ]
-                        },
-                        {
                             name: 'dashboard.view-dashboards',
                             places: [
                                 {
@@ -406,6 +398,11 @@ function Menu(userService, $state, $rootScope) {
                                 }
                             ]
                         }];
+
+                    if (userService.isEdgesSupportEnabled()) {
+                        sections.splice(4, 0, edgeMenuSection.side);
+                        homeSections.splice(3, 0, edgeMenuSection.home);
+                    }
                 }
             }
         }

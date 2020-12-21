@@ -247,7 +247,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
                 onAction: function ($event) {
                     importExport.importRuleChain($event, types.ruleChainType.edge).then(
                         function(ruleChainImport) {
-                            $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport, ruleChainType: types.ruleChainType.edge});
+                            $state.go('home.edges.edgeRuleChains.importRuleChain', {ruleChainImport:ruleChainImport, ruleChainType: types.ruleChainType.edge});
                         }
                     );
                 },
@@ -401,9 +401,9 @@ export default function RuleChainsController(ruleChainService, userService, impo
         if (vm.ruleChainsScope === 'edge') {
             $state.go('home.edges.ruleChains.ruleChain', Object.assign(ruleChainParams, edgeId = vm.edge.id.id));
         } else if (vm.ruleChainsScope === 'edges') {
-            $state.go('home.ruleChains.edge.ruleChain', ruleChainParams);
+            $state.go('home.edges.edgeRuleChains.ruleChain', ruleChainParams);
         } else {
-            $state.go('home.ruleChains.core.ruleChain', ruleChainParams);
+            $state.go('home.ruleChains.ruleChain', ruleChainParams);
         }
     }
 
