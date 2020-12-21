@@ -13,6 +13,7 @@
     </li>
   </ul>
 </div> -->
+
 <div style="margin: 10px;padding: 10px;">
 <table mat-table [dataSource]="myDataSouce" class="mat-elevation-z8"  >
 
@@ -28,8 +29,11 @@
 
     <ng-container matColumnDef="Value">
       <th mat-header-cell *matHeaderCellDef> Value </th>
-      <td mat-cell *matCellDef="let element"> {{element.deviceData['value'] ?  element.deviceData['value'][0] : '' }} &nbsp; <img src="../../../../../assets/write_img.svg" *ngIf="element.deviceData['writable']"(click)="updateValue(element.parameter,element.deviceData['value'][0])" style="cursor: pointer;"/> </td>    </ng-container>
-   
+      <td mat-cell *matCellDef="let element"> 
+        {{element.deviceData['value'] ?  element.deviceData['value'][0] : '' }} &nbsp; 
+        <img src="../../../../../assets/write_img.svg" *ngIf="element.deviceData['writable'] && element.deviceData['value']"(click)="updateValue(element.parameter,element.deviceData['value'][0])" style="cursor: pointer;"/> &nbsp;
+        <img src="../../../../../assets/refresh.svg" (click) = "refreshValue(element.parameter)" style="cursor: pointer;" />
+      </td>    </ng-container>
     
 
 

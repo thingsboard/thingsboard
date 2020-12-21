@@ -33,4 +33,9 @@ export class DialogDataDialog implements OnInit, AfterViewInit {
         this.acsService.change(deviceID, parameterName, newValue);
     };
 
+    refreshValue(parameterName) {
+        let deviceID = this.data[0].deviceData['value'][0];
+        this.acsService.refresh(deviceID, parameterName);
+    }
+
 }
