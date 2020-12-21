@@ -179,6 +179,9 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
       case 'manageDashboards':
         this.manageCustomerDashboards(action.event, action.entity);
         return true;
+      case 'manageEdges':
+        this.manageCustomerEdges(action.event, action.entity);
+        return true;
     }
     return false;
   }
