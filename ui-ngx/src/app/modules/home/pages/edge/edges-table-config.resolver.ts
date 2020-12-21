@@ -167,7 +167,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     }
     if (edgeScope === 'customer') {
       this.config.entitiesFetchFunction = pageLink =>
-        this.edgeService.getCustomerEdgeInfos(this.customerId, pageLink);
+        this.edgeService.getCustomerEdgeInfos(this.customerId, pageLink, this.config.componentsData.edgeType);
       this.config.deleteEntity = id => this.edgeService.unassignEdgeFromCustomer(id.id);
     }
     if (edgeScope === 'customer_user') {

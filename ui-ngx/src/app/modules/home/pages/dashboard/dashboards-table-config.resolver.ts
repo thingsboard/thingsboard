@@ -300,7 +300,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     if (dashboardScope === 'edge') {
       actions.push(
         {
-          name: this.translate.instant('dashboard.unassign-dashboards-from-edge'),
+          name: this.translate.instant('dashboard.unassign-dashboards'),
           icon: 'assignment_return',
           isEnabled: true,
           onAction: ($event, entities) => this.unassignDashboardsFromEdge($event, entities)
