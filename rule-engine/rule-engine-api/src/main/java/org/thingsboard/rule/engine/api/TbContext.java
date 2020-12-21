@@ -18,9 +18,12 @@ package org.thingsboard.rule.engine.api;
 import io.netty.channel.EventLoopGroup;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -194,11 +197,17 @@ public interface TbContext {
 
     ListeningExecutor getMailExecutor();
 
+    ListeningExecutor getSmsExecutor();
+
     ListeningExecutor getDbCallbackExecutor();
 
     ListeningExecutor getExternalCallExecutor();
 
     MailService getMailService();
+
+    SmsService getSmsService();
+
+    SmsSenderFactory getSmsSenderFactory();
 
     ScriptEngine createJsScriptEngine(String script, String... argNames);
 
@@ -229,7 +238,11 @@ public interface TbContext {
 
     void clearRuleNodeStates();
 
+    void addTenantProfileListener(Consumer<TenantProfile> listener);
+
     void addDeviceProfileListeners(Consumer<DeviceProfile> listener, BiConsumer<DeviceId, DeviceProfile> deviceListener);
 
-    void removeProfileListener();
+    void removeListeners();
+
+    TenantProfile getTenantProfile();
 }

@@ -22,15 +22,16 @@ import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { KeyFilter, keyFilterInfosToKeyFilters, keyFiltersToKeyFilterInfos } from '@shared/models/query/query.models';
+import { keyFilterInfosToKeyFilters, keyFiltersToKeyFilterInfos } from '@shared/models/query/query.models';
 import { AlarmCondition, AlarmConditionType, AlarmConditionTypeTranslationMap } from '@shared/models/device.models';
 import { TimeUnit, timeUnitTranslationMap } from '@shared/models/time/time.models';
+import { EntityId } from '@shared/models/id/entity-id';
 
 export interface AlarmRuleConditionDialogData {
   readonly: boolean;
   condition: AlarmCondition;
+  entityId?: EntityId;
 }
 
 @Component({
@@ -50,6 +51,7 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
 
   readonly = this.data.readonly;
   condition = this.data.condition;
+  entityId = this.data.entityId;
 
   conditionFormGroup: FormGroup;
 
@@ -61,7 +63,6 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AlarmRuleConditionDialogComponent, AlarmCondition>,
               private fb: FormBuilder,
-              private utils: UtilsService,
               public translate: TranslateService) {
     super(store, router, dialogRef);
 

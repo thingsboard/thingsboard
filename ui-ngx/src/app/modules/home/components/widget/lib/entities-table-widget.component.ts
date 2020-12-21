@@ -486,8 +486,12 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     return column.def;
   }
 
-  public trackByRowIndex(index: number) {
-    return index;
+  public trackByEntityId(index: number, entity: EntityData) {
+    return entity.id.id;
+  }
+
+  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
+    return action.id;
   }
 
   public headerStyle(key: EntityColumn): any {

@@ -40,11 +40,19 @@
           <mat-form-field fxFlex="60" class="mat-block">
             <mat-label translate>filter.key-name</mat-label>
             <input matInput required formControlName="key"
-                   [matAutocomplete]="auto"
-                   [matAutocompleteDisabled]="keyFilterFormGroup.get('key.type').value !== entityField">
-            <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete">
-              <mat-option *ngFor="let option of filteredEntityFields | async" [value]="option">
-                {{option}}
+                   #keyNameInput
+                   (focusin)="onFocus()"
+                   [matAutocomplete]="keyName"
+                   [matAutocompleteDisabled]="!showAutocomplete">
+            <button *ngIf="keyFilterFormGroup.get('key.key').value && showAutocomplete"
+                    type="button"
+                    matSuffix mat-button mat-icon-button aria-label="Clear"
+                    (click)="clear()">
+              <mat-icon class="material-icons">close</mat-icon>
+            </button>
+            <mat-autocomplete autoActiveFirstOption #keyName="matAutocomplete">
+              <mat-option *ngFor="let keyName of filteredKeysName | async" [value]="keyName">
+                <span [innerHTML]="keyName | highlight:searchText"></span>
               </mat-option>
             </mat-autocomplete>
             <mat-error *ngIf="keyFilterFormGroup.get('key.key').hasError('required')">

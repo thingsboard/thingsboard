@@ -122,5 +122,5 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
     @Query("SELECT DISTINCT a.type FROM AssetEntity a WHERE a.tenantId = :tenantId")
     List<String> findTenantAssetTypes(@Param("tenantId") UUID tenantId);
 
-    Long countByTenantId(UUID tenantId);
+    Long countByTenantIdAndTypeIsNot(UUID tenantId, String type);
 }

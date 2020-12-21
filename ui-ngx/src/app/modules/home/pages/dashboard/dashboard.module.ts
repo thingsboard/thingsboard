@@ -53,6 +53,9 @@ import { DashboardStateDialogComponent } from './states/dashboard-state-dialog.c
     ManageDashboardStatesDialogComponent,
     DashboardStateDialogComponent
   ],
+  exports: [
+    DashboardPageComponent
+  ],
   imports: [
     CommonModule,
     SharedModule,

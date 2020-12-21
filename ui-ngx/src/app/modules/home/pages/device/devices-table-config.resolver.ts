@@ -32,7 +32,7 @@ import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared
 import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
 import { Device, DeviceCredentials, DeviceInfo } from '@app/shared/models/device.models';
 import { DeviceComponent } from '@modules/home/pages/device/device.component';
-import { forkJoin, Observable, of } from 'rxjs';
+import { forkJoin, Observable, of, Subject } from 'rxjs';
 import { select, Store } from '@ngrx/store';
 import { selectAuthUser } from '@core/auth/auth.selectors';
 import { map, mergeMap, take, tap } from 'rxjs/operators';
@@ -63,6 +63,7 @@ import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 import { DeviceWizardDialogComponent } from '@home/components/wizard/device-wizard-dialog.component';
 import { BaseData, HasId } from '@shared/models/base-data';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Injectable()
 export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<DeviceInfo>> {
@@ -115,7 +116,8 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     const routeParams = route.params;
     this.config.componentsData = {
       deviceScope: route.data.devicesType,
-      deviceProfileId: null
+      deviceProfileId: null,
+      deviceCredentials$: new Subject<DeviceCredentials>()
     };
     this.customerId = routeParams.customerId;
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
@@ -478,6 +480,10 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       data: {
         deviceId: device.id.id,
         isReadOnly: this.config.componentsData.deviceScope === 'customer_user'
+      }
+    }).afterClosed().subscribe(deviceCredentials => {
+      if (isDefinedAndNotNull(deviceCredentials)) {
+        this.config.componentsData.deviceCredentials$.next(deviceCredentials);
       }
     });
   }
