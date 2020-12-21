@@ -698,7 +698,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         var url = '/api/edges/enabled';
         $http.get(url).then(function success(response) {
             edgesSupportEnabled = response.data;
-            deferred.resolve(response.data);
+            deferred.resolve(response);
         }, function fail() {
             deferred.reject();
         });
