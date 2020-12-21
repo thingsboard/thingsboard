@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,6 +62,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
@@ -79,11 +81,16 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
     protected static List<Long> FIXED_PARTITION = Arrays.asList(new Long[]{0L});
 
+    private CassandraTsPartitionsCache cassandraTsPartitionsCache;
+
     @Autowired
     private Environment environment;
 
     @Value("${cassandra.query.ts_key_value_partitioning}")
     private String partitioning;
+
+    @Value("${cassandra.query.ts_key_value_partitions_max_cache_size:100000}")
+    private long partitionsCacheSize;
 
     @Value("${cassandra.query.ts_key_value_ttl}")
     private long systemTtl;
@@ -111,13 +118,16 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         super.startExecutor();
         if (!isInstall()) {
             getFetchStmt(Aggregation.NONE, DESC_ORDER);
-        }
-        Optional<NoSqlTsPartitionDate> partition = NoSqlTsPartitionDate.parse(partitioning);
-        if (partition.isPresent()) {
-            tsFormat = partition.get();
-        } else {
-            log.warn("Incorrect configuration of partitioning {}", partitioning);
-            throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
+            Optional<NoSqlTsPartitionDate> partition = NoSqlTsPartitionDate.parse(partitioning);
+            if (partition.isPresent()) {
+                tsFormat = partition.get();
+                if (!isFixedPartitioning() && partitionsCacheSize > 0) {
+                    cassandraTsPartitionsCache = new CassandraTsPartitionsCache(partitionsCacheSize);
+                }
+            } else {
+                log.warn("Incorrect configuration of partitioning {}", partitioning);
+                throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
+            }
         }
     }
 
@@ -175,17 +185,28 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         }
         ttl = computeTtl(ttl);
         long partition = toPartitionTs(tsKvEntryTs);
-        log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
-        BoundStatementBuilder stmtBuilder = new BoundStatementBuilder((ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt()).bind());
-        stmtBuilder.setString(0, entityId.getEntityType().name())
-                .setUuid(1, entityId.getId())
-                .setLong(2, partition)
-                .setString(3, key);
-        if (ttl > 0) {
-            stmtBuilder.setInt(4, (int) ttl);
+        if (cassandraTsPartitionsCache == null) {
+            return doSavePartition(tenantId, entityId, key, ttl, partition);
+        } else {
+            CassandraPartitionCacheKey partitionSearchKey = new CassandraPartitionCacheKey(entityId, key, partition);
+            CompletableFuture<Boolean> hasInCacheFuture = cassandraTsPartitionsCache.has(partitionSearchKey);
+            if (hasInCacheFuture == null) {
+                return doSavePartitionWithCache(tenantId, entityId, key, partition, partitionSearchKey, ttl);
+            } else {
+                long finalTtl = ttl;
+                SettableFuture<Integer> futureResult = SettableFuture.create();
+                hasInCacheFuture.whenComplete((result, throwable) -> {
+                    if (throwable != null) {
+                        futureResult.setException(throwable);
+                    } else if (result) {
+                        futureResult.set(0);
+                    } else {
+                        futureResult.setFuture(doSavePartitionWithCache(tenantId, entityId, key, partition, partitionSearchKey, finalTtl));
+                    }
+                });
+                return futureResult;
+            }
         }
-        BoundStatement stmt = stmtBuilder.build();
-        return getFuture(executeAsyncWrite(tenantId, stmt), rs -> 0);
     }
 
     @Override
@@ -459,6 +480,27 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         }
         BoundStatement stmt = stmtBuilder.build();
         return getFuture(executeAsyncWrite(tenantId, stmt), rs -> null);
+    }
+
+    private ListenableFuture<Integer> doSavePartitionWithCache(TenantId tenantId, EntityId entityId, String key, long partition, CassandraPartitionCacheKey partitionSearchKey, long ttl) {
+        return Futures.transformAsync(doSavePartition(tenantId, entityId, key, ttl, partition), input -> {
+            cassandraTsPartitionsCache.put(partitionSearchKey);
+            return Futures.immediateFuture(input);
+        }, readResultsProcessingExecutor);
+    }
+
+    private ListenableFuture<Integer> doSavePartition(TenantId tenantId, EntityId entityId, String key, long ttl, long partition) {
+        log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
+        BoundStatementBuilder stmtBuilder = new BoundStatementBuilder((ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt()).bind());
+        stmtBuilder.setString(0, entityId.getEntityType().name())
+                .setUuid(1, entityId.getId())
+                .setLong(2, partition)
+                .setString(3, key);
+        if (ttl > 0) {
+            stmtBuilder.setInt(4, (int) ttl);
+        }
+        BoundStatement stmt = stmtBuilder.build();
+        return getFuture(executeAsyncWrite(tenantId, stmt), rs -> 0);
     }
 
     private long computeTtl(long ttl) {
