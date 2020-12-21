@@ -58,45 +58,6 @@ function Menu(userService, $state, $rootScope) {
             if (authority !== user.authority) {
                 sections = [];
                 authority = user.authority;
-                var edgeMenuSection = {
-                    side: {
-                        name: 'edge.management',
-                        type: 'toggle',
-                        state: 'home.edges',
-                        height: '80px',
-                        icon: 'router',
-                        pages: [
-                            {
-                                name: 'edge.edges',
-                                type: 'link',
-                                state: 'home.edges',
-                                icon: 'router'
-                            },
-                            {
-                                name: 'rulechain.edge-rulechains',
-                                type: 'link',
-                                state: 'home.edges.edgeRuleChains',
-                                icon: 'code'
-                            }
-                        ]
-                    },
-                    home: {
-                        name: 'edge.management',
-                        places: [
-                            {
-                                name: 'edge.edges',
-                                icon: 'router',
-                                state: 'home.edges'
-                            },
-                            {
-                                name: 'rulechain.edge-rulechains',
-                                icon: 'code',
-                                state: 'home.edges.edgeRuleChains'
-                            }
-                        ]
-
-                    }
-                }
                 if (authority === 'SYS_ADMIN') {
                     sections = [
                         {
@@ -186,6 +147,45 @@ function Menu(userService, $state, $rootScope) {
                                 ]
                             }];
                 } else if (authority === 'TENANT_ADMIN') {
+                    let edgeMenuSection = {
+                        side: {
+                            name: 'edge.management',
+                            type: 'toggle',
+                            state: 'home.edges',
+                            height: '80px',
+                            icon: 'router',
+                            pages: [
+                                {
+                                    name: 'edge.edges',
+                                    type: 'link',
+                                    state: 'home.edges',
+                                    icon: 'router'
+                                },
+                                {
+                                    name: 'rulechain.edge-rulechains',
+                                    type: 'link',
+                                    state: 'home.edges.edgeRuleChains',
+                                    icon: 'code'
+                                }
+                            ]
+                        },
+                        home: {
+                            name: 'edge.management',
+                            places: [
+                                {
+                                    name: 'edge.edges',
+                                    icon: 'router',
+                                    state: 'home.edges'
+                                },
+                                {
+                                    name: 'rulechain.edge-rulechains',
+                                    icon: 'code',
+                                    state: 'home.edges.edgeRuleChains'
+                                }
+                            ]
+
+                        }
+                    }
                     sections = [
                         {
                             name: 'home.home',
@@ -325,6 +325,25 @@ function Menu(userService, $state, $rootScope) {
                     }
 
                 } else if (authority === 'CUSTOMER_USER') {
+                    let edgeMenuSection = {
+                        side: {
+                            name: 'edge.edges',
+                            type: 'link',
+                            state: 'home.edges',
+                            icon: 'router'
+                        },
+                        home: {
+                            name: 'edge.edges',
+                            places: [
+                                {
+                                    name: 'edge.edges',
+                                    icon: 'router',
+                                    state: 'home.edges'
+                                }
+                            ]
+
+                        }
+                    }
                     sections = [
                         {
                             name: 'home.home',
