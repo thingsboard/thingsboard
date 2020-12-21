@@ -30,7 +30,8 @@ import {
 import { AlarmRule, alarmRuleValidator } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
-import { AlarmSeverity, alarmSeverityTranslations } from '../../../../../shared/models/alarm.models';
+import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
+import { EntityId } from '@shared/models/id/entity-id';
 
 @Component({
   selector: 'tb-create-alarm-rules',
@@ -58,6 +59,9 @@ export class CreateAlarmRulesComponent implements ControlValueAccessor, OnInit, 
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  deviceProfileId: EntityId;
 
   createAlarmRulesFormGroup: FormGroup;
 

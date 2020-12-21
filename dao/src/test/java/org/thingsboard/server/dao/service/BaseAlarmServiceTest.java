@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -45,6 +46,7 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -265,7 +267,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         PageData<AlarmData> tenantAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, new CustomerId(CustomerId.NULL_UUID), toQuery(pageLink), Arrays.asList(tenantDevice.getId(), customerDevice.getId()));
         Assert.assertEquals(2, tenantAlarms.getData().size());
 
-        PageData<AlarmData> customerAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, customer.getId(), toQuery(pageLink), Arrays.asList(tenantDevice.getId(), customerDevice.getId()));
+        PageData<AlarmData> customerAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, customer.getId(), toQuery(pageLink), Collections.singletonList(customerDevice.getId()));
         Assert.assertEquals(1, customerAlarms.getData().size());
         Assert.assertEquals(deviceAlarm, customerAlarms.getData().get(0));
 
@@ -278,6 +280,70 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(tenantAlarm, alarms.getData().get(0));
+    }
+
+    @Test
+    public void testFindPopagatedCustomerAlarm() throws ExecutionException, InterruptedException {
+        Customer customer = new Customer();
+        customer.setTitle("TestCustomer");
+        customer.setTenantId(tenantId);
+        customer = customerService.saveCustomer(customer);
+
+        Device tenantDevice = new Device();
+        tenantDevice.setName("TestTenantDevice");
+        tenantDevice.setType("default");
+        tenantDevice.setTenantId(tenantId);
+        tenantDevice = deviceService.saveDevice(tenantDevice);
+
+        Asset customerAsset = new Asset();
+        customerAsset.setName("TestCustomerDevice");
+        customerAsset.setType("default");
+        customerAsset.setTenantId(tenantId);
+        customerAsset.setCustomerId(customer.getId());
+        customerAsset = assetService.saveAsset(customerAsset);
+
+        EntityRelation relation = new EntityRelation();
+        relation.setFrom(customerAsset.getId());
+        relation.setTo(tenantDevice.getId());
+        relation.setAdditionalInfo(JacksonUtil.newObjectNode());
+        relation.setType("Contains");
+        relation.setTypeGroup(RelationTypeGroup.COMMON);
+        relationService.saveRelation(tenantId, relation);
+
+        long ts = System.currentTimeMillis();
+        Alarm tenantAlarm = Alarm.builder().tenantId(tenantId)
+                .originator(tenantDevice.getId())
+                .type("Not Propagated")
+                .propagate(false)
+                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .startTs(ts).build();
+        AlarmOperationResult result = alarmService.createOrUpdateAlarm(tenantAlarm);
+        tenantAlarm = result.getAlarm();
+
+        Alarm customerAlarm = Alarm.builder().tenantId(tenantId)
+                .originator(tenantDevice.getId())
+                .type("Propagated")
+                .propagate(true)
+                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .startTs(ts).build();
+        result = alarmService.createOrUpdateAlarm(customerAlarm);
+        customerAlarm = result.getAlarm();
+
+        AlarmDataPageLink pageLink = new AlarmDataPageLink();
+        pageLink.setPage(0);
+        pageLink.setPageSize(10);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+
+        pageLink.setStartTs(0L);
+        pageLink.setEndTs(System.currentTimeMillis());
+        pageLink.setSearchPropagatedAlarms(true);
+        pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
+        pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
+
+        //TEST that propagated alarms are visible on the asset level.
+        PageData<AlarmData> customerAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, customer.getId(), toQuery(pageLink), Collections.singletonList(customerAsset.getId()));
+        Assert.assertEquals(1, customerAlarms.getData().size());
+        Assert.assertEquals(customerAlarm, customerAlarms.getData().get(0));
     }
 
     private AlarmDataQuery toQuery(AlarmDataPageLink pageLink){

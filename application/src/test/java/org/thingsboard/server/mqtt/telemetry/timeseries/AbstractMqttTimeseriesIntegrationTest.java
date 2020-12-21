@@ -127,7 +127,34 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         } else {
             getTelemetryValuesUrl = "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?keys=" + String.join(",", actualKeySet);
         }
-        Map<String, List<Map<String, String>>> values = doGetAsync(getTelemetryValuesUrl, Map.class);
+        start = System.currentTimeMillis();
+        end = System.currentTimeMillis() + 5000;
+        Map<String, List<Map<String, String>>> values = null;
+        while (start <= end) {
+            values = doGetAsync(getTelemetryValuesUrl, Map.class);
+            boolean valid = values.size() == expectedKeys.size();
+            if (valid) {
+                for (String key : expectedKeys) {
+                    List<Map<String, String>> tsValues = values.get(key);
+                    if (tsValues != null && tsValues.size() > 0) {
+                        Object ts = tsValues.get(0).get("ts");
+                        if (ts == null) {
+                            valid = false;
+                            break;
+                        }
+                    } else {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+            if (valid) {
+                break;
+            }
+            Thread.sleep(100);
+            start += 100;
+        }
+        assertNotNull(values);
 
         if (withTs) {
             assertTs(values, expectedKeys, 10000, 0);

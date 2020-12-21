@@ -82,7 +82,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.TreeMap;
 
 @Service
 @Profile("install")
@@ -272,7 +272,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         thermostatDeviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
         thermostatDeviceProfile.setDescription("Thermostat device profile");
         thermostatDeviceProfile.setDefaultRuleChainId(ruleChainService.findTenantRuleChains(
-                demoTenant.getId(), new PageLink(1, 0, "Thermostat Alarms")).getData().get(0).getId());
+                demoTenant.getId(), new PageLink(1, 0, "Thermostat")).getData().get(0).getId());
 
         DeviceProfileData deviceProfileData = new DeviceProfileData();
         DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
@@ -290,13 +290,13 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AlarmCondition temperatureCondition = new AlarmCondition();
         temperatureCondition.setSpec(new SimpleAlarmConditionSpec());
 
-        KeyFilter alarmTemperatureAttributeFilter = new KeyFilter();
-        alarmTemperatureAttributeFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "alarmTemperature"));
-        alarmTemperatureAttributeFilter.setValueType(EntityKeyValueType.BOOLEAN);
-        BooleanFilterPredicate alarmTemperatureAttributePredicate = new BooleanFilterPredicate();
-        alarmTemperatureAttributePredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
-        alarmTemperatureAttributePredicate.setValue(new FilterPredicateValue<>(Boolean.TRUE));
-        alarmTemperatureAttributeFilter.setPredicate(alarmTemperatureAttributePredicate);
+        KeyFilter temperatureAlarmFlagAttributeFilter = new KeyFilter();
+        temperatureAlarmFlagAttributeFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperatureAlarmFlag"));
+        temperatureAlarmFlagAttributeFilter.setValueType(EntityKeyValueType.BOOLEAN);
+        BooleanFilterPredicate temperatureAlarmFlagAttributePredicate = new BooleanFilterPredicate();
+        temperatureAlarmFlagAttributePredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
+        temperatureAlarmFlagAttributePredicate.setValue(new FilterPredicateValue<>(Boolean.TRUE));
+        temperatureAlarmFlagAttributeFilter.setPredicate(temperatureAlarmFlagAttributePredicate);
 
         KeyFilter temperatureTimeseriesFilter = new KeyFilter();
         temperatureTimeseriesFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
@@ -305,13 +305,13 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         temperatureTimeseriesFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
         FilterPredicateValue<Double> temperatureTimeseriesPredicateValue =
                 new FilterPredicateValue<>(25.0, null,
-                        new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "thresholdTemperature"));
+                        new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "temperatureAlarmThreshold"));
         temperatureTimeseriesFilterPredicate.setValue(temperatureTimeseriesPredicateValue);
         temperatureTimeseriesFilter.setPredicate(temperatureTimeseriesFilterPredicate);
-        temperatureCondition.setCondition(Arrays.asList(alarmTemperatureAttributeFilter, temperatureTimeseriesFilter));
+        temperatureCondition.setCondition(Arrays.asList(temperatureAlarmFlagAttributeFilter, temperatureTimeseriesFilter));
         temperatureRule.setAlarmDetails("Current temperature = ${temperature}");
         temperatureRule.setCondition(temperatureCondition);
-        highTemperature.setCreateRules(new LinkedHashMap<>(Collections.singletonMap(AlarmSeverity.MAJOR, temperatureRule)));
+        highTemperature.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.MAJOR, temperatureRule)));
 
         AlarmRule clearTemperatureRule = new AlarmRule();
         AlarmCondition clearTemperatureCondition = new AlarmCondition();
@@ -324,7 +324,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         clearTemperatureTimeseriesFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS_OR_EQUAL);
         FilterPredicateValue<Double> clearTemperatureTimeseriesPredicateValue =
                 new FilterPredicateValue<>(25.0, null,
-                        new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "thresholdTemperature"));
+                        new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "temperatureAlarmThreshold"));
 
         clearTemperatureTimeseriesFilterPredicate.setValue(clearTemperatureTimeseriesPredicateValue);
         clearTemperatureTimeseriesFilter.setPredicate(clearTemperatureTimeseriesFilterPredicate);
@@ -340,13 +340,13 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AlarmCondition humidityCondition = new AlarmCondition();
         humidityCondition.setSpec(new SimpleAlarmConditionSpec());
 
-        KeyFilter alarmHumidityAttributeFilter = new KeyFilter();
-        alarmHumidityAttributeFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "alarmHumidity"));
-        alarmHumidityAttributeFilter.setValueType(EntityKeyValueType.BOOLEAN);
-        BooleanFilterPredicate alarmHumidityAttributePredicate = new BooleanFilterPredicate();
-        alarmHumidityAttributePredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
-        alarmHumidityAttributePredicate.setValue(new FilterPredicateValue<>(Boolean.TRUE));
-        alarmHumidityAttributeFilter.setPredicate(alarmHumidityAttributePredicate);
+        KeyFilter humidityAlarmFlagAttributeFilter = new KeyFilter();
+        humidityAlarmFlagAttributeFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "humidityAlarmFlag"));
+        humidityAlarmFlagAttributeFilter.setValueType(EntityKeyValueType.BOOLEAN);
+        BooleanFilterPredicate humidityAlarmFlagAttributePredicate = new BooleanFilterPredicate();
+        humidityAlarmFlagAttributePredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
+        humidityAlarmFlagAttributePredicate.setValue(new FilterPredicateValue<>(Boolean.TRUE));
+        humidityAlarmFlagAttributeFilter.setPredicate(humidityAlarmFlagAttributePredicate);
 
         KeyFilter humidityTimeseriesFilter = new KeyFilter();
         humidityTimeseriesFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "humidity"));
@@ -355,14 +355,14 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         humidityTimeseriesFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
         FilterPredicateValue<Double> humidityTimeseriesPredicateValue =
                 new FilterPredicateValue<>(60.0, null,
-                        new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "thresholdHumidity"));
+                        new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "humidityAlarmThreshold"));
         humidityTimeseriesFilterPredicate.setValue(humidityTimeseriesPredicateValue);
         humidityTimeseriesFilter.setPredicate(humidityTimeseriesFilterPredicate);
-        humidityCondition.setCondition(Arrays.asList(alarmHumidityAttributeFilter, humidityTimeseriesFilter));
+        humidityCondition.setCondition(Arrays.asList(humidityAlarmFlagAttributeFilter, humidityTimeseriesFilter));
 
         humidityRule.setCondition(humidityCondition);
         humidityRule.setAlarmDetails("Current humidity = ${humidity}");
-        lowHumidity.setCreateRules(new LinkedHashMap<>(Collections.singletonMap(AlarmSeverity.MINOR, humidityRule)));
+        lowHumidity.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.MINOR, humidityRule)));
 
         AlarmRule clearHumidityRule = new AlarmRule();
         AlarmCondition clearHumidityCondition = new AlarmCondition();
@@ -375,7 +375,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         clearHumidityTimeseriesFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER_OR_EQUAL);
         FilterPredicateValue<Double> clearHumidityTimeseriesPredicateValue =
                 new FilterPredicateValue<>(60.0, null,
-                        new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "thresholdHumidity"));
+                        new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "humidityAlarmThreshold"));
 
         clearHumidityTimeseriesFilterPredicate.setValue(clearHumidityTimeseriesPredicateValue);
         clearHumidityTimeseriesFilter.setPredicate(clearHumidityTimeseriesFilterPredicate);
@@ -394,18 +394,18 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         attributesService.save(demoTenant.getId(), t1Id, DataConstants.SERVER_SCOPE,
                 Arrays.asList(new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 37.3948)),
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", -122.1503)),
-                        new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("alarmTemperature", true)),
-                        new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("alarmHumidity", true)),
-                        new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("thresholdTemperature", (long) 20)),
-                        new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("thresholdHumidity", (long) 50))));
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("temperatureAlarmFlag", true)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("humidityAlarmFlag", true)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("temperatureAlarmThreshold", (long) 20)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("humidityAlarmThreshold", (long) 50))));
 
         attributesService.save(demoTenant.getId(), t2Id, DataConstants.SERVER_SCOPE,
                 Arrays.asList(new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 37.493801)),
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", -121.948769)),
-                        new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("alarmTemperature", true)),
-                        new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("alarmHumidity", true)),
-                        new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("thresholdTemperature", (long) 25)),
-                        new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("thresholdHumidity", (long) 30))));
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("temperatureAlarmFlag", true)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("humidityAlarmFlag", true)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("temperatureAlarmThreshold", (long) 25)),
+                        new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("humidityAlarmThreshold", (long) 30))));
 
         installScripts.loadDashboards(demoTenant.getId(), null);
     }

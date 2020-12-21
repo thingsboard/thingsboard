@@ -92,6 +92,10 @@ export function isEmptyStr(value: any): boolean {
   return value === '';
 }
 
+export function isNotEmptyStr(value: any): boolean {
+  return value !== null && typeof value === 'string' && value.trim().length > 0;
+}
+
 export function isFunction(value: any): boolean {
   return typeof value === 'function';
 }
@@ -379,6 +383,15 @@ export function padValue(val: any, dec: number): string {
   }
   strVal = (n ? '-' : '') + strVal;
   return strVal;
+}
+
+export function baseUrl(): string {
+  let url = window.location.protocol + '//' + window.location.hostname;
+  const port = window.location.port;
+  if (port && port.length > 0 && port !== '80' && port !== '443') {
+    url += ':' + port;
+  }
+  return url;
 }
 
 export function sortObjectKeys<T>(obj: T): T {

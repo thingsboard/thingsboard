@@ -78,6 +78,8 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
     public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_ASSET_ID = "Incorrect assetId ";
+    public static final String TB_SERVICE_QUEUE = "TbServiceQueue";
+
     @Autowired
     private AssetDao assetDao;
 
@@ -329,8 +331,10 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                 protected void validateCreate(TenantId tenantId, Asset asset) {
                     DefaultTenantProfileConfiguration profileConfiguration =
                             (DefaultTenantProfileConfiguration)tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
-                    long maxAssets = profileConfiguration.getMaxAssets();
-                    validateNumberOfEntitiesPerTenant(tenantId, assetDao, maxAssets, EntityType.ASSET);
+                    if (!TB_SERVICE_QUEUE.equals(asset.getType())) {
+                        long maxAssets = profileConfiguration.getMaxAssets();
+                        validateNumberOfEntitiesPerTenant(tenantId, assetDao, maxAssets, EntityType.ASSET);
+                    }
                 }
 
                 @Override
