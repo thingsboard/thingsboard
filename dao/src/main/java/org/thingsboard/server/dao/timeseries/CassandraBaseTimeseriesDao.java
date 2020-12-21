@@ -405,33 +405,29 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         } else {
             CassandraPartitionCacheKey partitionSearchKey = new CassandraPartitionCacheKey(entityId, key, partition);
             CompletableFuture<Boolean> hasFuture = cassandraTsPartitionsCache.has(partitionSearchKey);
-            SettableFuture<Boolean> listenableFuture = SettableFuture.create();
+            SettableFuture<Void> listenableFuture = SettableFuture.create();
             if (hasFuture == null) {
                 return processDoSavePartition(tenantId, entityId, key, partition, partitionSearchKey, ttl);
             } else {
+                long finalTtl = ttl;
                 hasFuture.whenComplete((result, throwable) -> {
                     if (throwable != null) {
                         listenableFuture.setException(throwable);
+                    } else if (result) {
+                        listenableFuture.set(null);
                     } else {
-                        listenableFuture.set(result);
+                        listenableFuture.setFuture(processDoSavePartition(tenantId, entityId, key, partition, partitionSearchKey, finalTtl));
                     }
                 });
-                long finalTtl = ttl;
-                return Futures.transformAsync(listenableFuture, result -> {
-                    if (result) {
-                        return Futures.immediateFuture(null);
-                    } else {
-                        return processDoSavePartition(tenantId, entityId, key, partition, partitionSearchKey, finalTtl);
-                    }
-                }, readResultsProcessingExecutor);
+                return listenableFuture;
             }
         }
     }
 
     private ListenableFuture<Void> processDoSavePartition(TenantId tenantId, EntityId entityId, String key, long partition, CassandraPartitionCacheKey partitionSearchKey, long ttl) {
-        return Futures.transformAsync(doSavePartition(tenantId, entityId, key, ttl, partition), input -> {
+        return Futures.transform(doSavePartition(tenantId, entityId, key, ttl, partition), input -> {
             cassandraTsPartitionsCache.put(partitionSearchKey);
-            return Futures.immediateFuture(input);
+            return input;
         }, readResultsProcessingExecutor);
     }
 
