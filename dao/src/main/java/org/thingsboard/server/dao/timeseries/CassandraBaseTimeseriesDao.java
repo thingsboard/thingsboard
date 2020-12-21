@@ -404,31 +404,32 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
             return doSavePartition(tenantId, entityId, key, ttl, partition);
         } else {
             CassandraPartitionCacheKey partitionSearchKey = new CassandraPartitionCacheKey(entityId, key, partition);
-            CompletableFuture<Boolean> hasInCacheFuture = cassandraTsPartitionsCache.has(partitionSearchKey);
-            if (hasInCacheFuture == null) {
-                return doSavePartitionWithCache(tenantId, entityId, key, partition, partitionSearchKey, ttl);
+            if (!cassandraTsPartitionsCache.has(partitionSearchKey)) {
+                ListenableFuture<Void> result = doSavePartition(tenantId, entityId, key, ttl, partition);
+                Futures.addCallback(result, new CacheCallback<>(partitionSearchKey), MoreExecutors.directExecutor());
+                return result;
             } else {
-                long finalTtl = ttl;
-                SettableFuture<Void> futureResult = SettableFuture.create();
-                hasInCacheFuture.whenComplete((result, throwable) -> {
-                    if (throwable != null) {
-                        futureResult.setException(throwable);
-                    } else if (result) {
-                        futureResult.set(null);
-                    } else {
-                        futureResult.setFuture(doSavePartitionWithCache(tenantId, entityId, key, partition, partitionSearchKey, finalTtl));
-                    }
-                });
-                return futureResult;
+                return Futures.immediateFuture(null);
             }
         }
     }
 
-    private ListenableFuture<Void> doSavePartitionWithCache(TenantId tenantId, EntityId entityId, String key, long partition, CassandraPartitionCacheKey partitionSearchKey, long ttl) {
-        return Futures.transform(doSavePartition(tenantId, entityId, key, ttl, partition), input -> {
-            cassandraTsPartitionsCache.put(partitionSearchKey);
-            return input;
-        }, readResultsProcessingExecutor);
+    private class CacheCallback<Void> implements FutureCallback<Void> {
+        private final CassandraPartitionCacheKey key;
+
+        private CacheCallback(CassandraPartitionCacheKey key) {
+            this.key = key;
+        }
+
+        @Override
+        public void onSuccess(Void result) {
+            cassandraTsPartitionsCache.put(key);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+
+        }
     }
 
     private ListenableFuture<Void> doSavePartition(TenantId tenantId, EntityId entityId, String key, long ttl, long partition) {
