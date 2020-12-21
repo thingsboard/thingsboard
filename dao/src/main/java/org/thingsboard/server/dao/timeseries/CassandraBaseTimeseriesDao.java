@@ -405,11 +405,11 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         } else {
             CassandraPartitionCacheKey partitionSearchKey = new CassandraPartitionCacheKey(entityId, key, partition);
             CompletableFuture<Boolean> hasInCacheFuture = cassandraTsPartitionsCache.has(partitionSearchKey);
-            SettableFuture<Void> futureResult = SettableFuture.create();
             if (hasInCacheFuture == null) {
                 return doSavePartitionWithCache(tenantId, entityId, key, partition, partitionSearchKey, ttl);
             } else {
                 long finalTtl = ttl;
+                SettableFuture<Void> futureResult = SettableFuture.create();
                 hasInCacheFuture.whenComplete((result, throwable) -> {
                     if (throwable != null) {
                         futureResult.setException(throwable);
