@@ -177,6 +177,27 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     @Override
+    public ListenableFuture<Integer> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key, long ttl) {
+        if (isFixedPartitioning()) {
+            return Futures.immediateFuture(null);
+        }
+        ttl = computeTtl(ttl);
+        long partition = toPartitionTs(tsKvEntryTs);
+        if (cassandraTsPartitionsCache == null) {
+            return doSavePartition(tenantId, entityId, key, ttl, partition);
+        } else {
+            CassandraPartitionCacheKey partitionSearchKey = new CassandraPartitionCacheKey(entityId, key, partition);
+            if (!cassandraTsPartitionsCache.has(partitionSearchKey)) {
+                ListenableFuture<Integer> result = doSavePartition(tenantId, entityId, key, ttl, partition);
+                Futures.addCallback(result, new CacheCallback<>(partitionSearchKey), MoreExecutors.directExecutor());
+                return result;
+            } else {
+                return Futures.immediateFuture(0);
+            }
+        }
+    }
+
+    @Override
     public ListenableFuture<Void> remove(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         long minPartition = toPartitionTs(query.getStartTs());
         long maxPartition = toPartitionTs(query.getEndTs());
@@ -449,47 +470,17 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         return getFuture(executeAsyncWrite(tenantId, stmt), rs -> null);
     }
 
-    @Override
-    public ListenableFuture<Integer> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key, long ttl) {
-        if (isFixedPartitioning()) {
-            return Futures.immediateFuture(null);
-        }
-        ttl = computeTtl(ttl);
-        long partition = toPartitionTs(tsKvEntryTs);
-        if (cassandraTsPartitionsCache == null) {
-            return doSavePartition(tenantId, entityId, key, ttl, partition);
-        } else {
-            CassandraPartitionCacheKey partitionSearchKey = new CassandraPartitionCacheKey(entityId, key, partition);
-            if (!cassandraTsPartitionsCache.has(partitionSearchKey)) {
-                ListenableFuture<Integer> result = doSavePartition(tenantId, entityId, key, ttl, partition);
-                Futures.addCallback(result, new CacheCallback<>(partitionSearchKey), MoreExecutors.directExecutor());
-                return result;
-            } else {
-                return Futures.immediateFuture(0);
-            }
-        }
-    }
-
     private ListenableFuture<Integer> doSavePartition(TenantId tenantId, EntityId entityId, String key, long ttl, long partition) {
         log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
-        PreparedStatement preparedStatement = ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt();
-        BoundStatement stmt = preparedStatement.bind();
-        stmt.setString(0, entityId.getEntityType().name());
-        stmt.setUuid(1, entityId.getId());
-        stmt.setLong(2, partition);
-        stmt.setString(3, key);
+        BoundStatementBuilder stmtBuilder = new BoundStatementBuilder((ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt()).bind());
+        stmtBuilder.setString(0, entityId.getEntityType().name())
+                .setUuid(1, entityId.getId())
+                .setLong(2, partition)
+                .setString(3, key);
         if (ttl > 0) {
-            stmt.setInt(4, (int) ttl);
+            stmtBuilder.setInt(4, (int) ttl);
         }
-//        BoundStatementBuilder stmtBuilder = new BoundStatementBuilder(bind);
-//        stmtBuilder.setString(0, entityId.getEntityType().name())
-//                .setUuid(1, entityId.getId())
-//                .setLong(2, partition)
-//                .setString(3, key);
-//        if (ttl > 0) {
-//            stmtBuilder.setInt(4, (int) ttl);
-//        }
-//        BoundStatement stmt = stmtBuilder.build();
+        BoundStatement stmt = stmtBuilder.build();
         return getFuture(executeAsyncWrite(tenantId, stmt), rs -> 0);
     }
 
