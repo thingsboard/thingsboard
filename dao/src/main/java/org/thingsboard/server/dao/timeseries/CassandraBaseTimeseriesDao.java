@@ -29,6 +29,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +67,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -88,11 +90,16 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     public static final String DESC_ORDER = "DESC";
     private static List<Long> FIXED_PARTITION = Arrays.asList(new Long[]{0L});
 
+    private CassandraTsPartitionsCache cassandraTsPartitionsCache;
+
     @Autowired
     private Environment environment;
 
     @Value("${cassandra.query.ts_key_value_partitioning}")
     private String partitioning;
+
+    @Value("${cassandra.query.ts_key_value_partitions_max_cache_size}")
+    private long partitionsCacheSize;
 
     @Value("${cassandra.query.ts_key_value_ttl}")
     private long systemTtl;
@@ -126,6 +133,9 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
             Optional<NoSqlTsPartitionDate> partition = NoSqlTsPartitionDate.parse(partitioning);
             if (partition.isPresent()) {
                 tsFormat = partition.get();
+                if (!isFixedPartitioning() && partitionsCacheSize > 0) {
+                    cassandraTsPartitionsCache = new CassandraTsPartitionsCache(partitionsCacheSize);
+                }
             } else {
                 log.warn("Incorrect configuration of partitioning {}", partitioning);
                 throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
@@ -390,6 +400,42 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         }
         ttl = computeTtl(ttl);
         long partition = toPartitionTs(tsKvEntryTs);
+        if (cassandraTsPartitionsCache == null) {
+            return doSavePartition(tenantId, entityId, key, ttl, partition);
+        } else {
+            CassandraPartitionCacheKey partitionSearchKey = new CassandraPartitionCacheKey(entityId, key, partition);
+            CompletableFuture<Boolean> hasFuture = cassandraTsPartitionsCache.has(partitionSearchKey);
+            SettableFuture<Boolean> listenableFuture = SettableFuture.create();
+            if (hasFuture == null) {
+                return processDoSavePartition(tenantId, entityId, key, partition, partitionSearchKey, ttl);
+            } else {
+                hasFuture.whenComplete((result, throwable) -> {
+                    if (throwable != null) {
+                        listenableFuture.setException(throwable);
+                    } else {
+                        listenableFuture.set(result);
+                    }
+                });
+                long finalTtl = ttl;
+                return Futures.transformAsync(listenableFuture, result -> {
+                    if (result) {
+                        return Futures.immediateFuture(null);
+                    } else {
+                        return processDoSavePartition(tenantId, entityId, key, partition, partitionSearchKey, finalTtl);
+                    }
+                }, readResultsProcessingExecutor);
+            }
+        }
+    }
+
+    private ListenableFuture<Void> processDoSavePartition(TenantId tenantId, EntityId entityId, String key, long partition, CassandraPartitionCacheKey partitionSearchKey, long ttl) {
+        return Futures.transformAsync(doSavePartition(tenantId, entityId, key, ttl, partition), input -> {
+            cassandraTsPartitionsCache.put(partitionSearchKey);
+            return Futures.immediateFuture(input);
+        }, readResultsProcessingExecutor);
+    }
+
+    private ListenableFuture<Void> doSavePartition(TenantId tenantId, EntityId entityId, String key, long ttl, long partition) {
         log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
         BoundStatement stmt = (ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt()).bind();
         stmt = stmt.setString(0, entityId.getEntityType().name())
