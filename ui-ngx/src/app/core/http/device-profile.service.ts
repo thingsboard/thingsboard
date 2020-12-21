@@ -69,4 +69,20 @@ export class DeviceProfileService {
     return this.http.get<PageData<DeviceProfileInfo>>(url, defaultHttpOptionsFromConfig(config));
   }
 
+  public getDeviceProfileDevicesAttributesKeys(deviceProfileId?: string, config?: RequestConfig): Observable<Array<string>> {
+    let url = `/api/deviceProfile/devices/keys/attributes`;
+    if (isDefinedAndNotNull(deviceProfileId)) {
+      url += `?deviceProfileId=${deviceProfileId}`;
+    }
+    return this.http.get<Array<string>>(url, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getDeviceProfileDevicesTimeseriesKeys(deviceProfileId?: string, config?: RequestConfig): Observable<Array<string>> {
+    let url = `/api/deviceProfile/devices/keys/timeseries`;
+    if (isDefinedAndNotNull(deviceProfileId)) {
+      url += `?deviceProfileId=${deviceProfileId}`;
+    }
+    return this.http.get<Array<string>>(url, defaultHttpOptionsFromConfig(config));
+  }
+
 }

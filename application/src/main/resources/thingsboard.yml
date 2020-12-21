@@ -64,9 +64,9 @@ server:
       # Minimum value of the server side RPC timeout. May override value provided in the REST API call.
       # Since 2.5 migration to queues, the RPC delay depends on the size of the pending messages in the queue,
       # so default UI parameter of 500ms may not be sufficient for loaded environments.
-      min_timeout:  "${MIN_SERVER_SIDE_RPC_TIMEOUT:5000}"
+      min_timeout: "${MIN_SERVER_SIDE_RPC_TIMEOUT:5000}"
       # Default value of the server side RPC timeout.
-      default_timeout:  "${DEFAULT_SERVER_SIDE_RPC_TIMEOUT:10000}"
+      default_timeout: "${DEFAULT_SERVER_SIDE_RPC_TIMEOUT:10000}"
 
 # Zookeeper connection parameters. Used for service discovery.
 zk:
@@ -522,7 +522,7 @@ transport:
     # Maximum allowed string value length when processing Telemetry/Attributes JSON (0 value disables string value length check)
     max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
   client_side_rpc:
-    timeout:  "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
+    timeout: "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
   # Enable/disable http/mqtt/coap transport protocols (has higher priority than certain protocol's 'enabled' property)
   api_enabled: "${TB_TRANSPORT_API_ENABLED:true}"
   # Local HTTP transport parameters

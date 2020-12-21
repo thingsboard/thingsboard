@@ -730,7 +730,8 @@
                             <exclude>docker/haproxy/**</exclude>
                             <exclude>docker/tb-node/**</exclude>
                             <exclude>ui/**</exclude>
-                            <exclude>src/browserslist</exclude>
+                            <exclude>src/.browserslistrc</exclude>
+                            <exclude>**/yarn.lock</exclude>
                             <exclude>**/*.raw</exclude>
                             <exclude>**/apache/cassandra/io/**</exclude>
                             <exclude>.run/**</exclude>

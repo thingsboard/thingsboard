@@ -195,11 +195,15 @@ public final class TbMsg implements Serializable {
     }
 
     public TbMsg copyWithRuleChainId(RuleChainId ruleChainId) {
-        return new TbMsg(this.queueName, this.id, this.ts, this.type, this.originator, this.metaData, this.dataType, this.data, ruleChainId, null, this.ruleNodeExecCounter.get(), callback);
+        return copyWithRuleChainId(ruleChainId, this.id);
     }
 
-    public TbMsg copyWithRuleNodeId(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
-        return new TbMsg(this.queueName, this.id, this.ts, this.type, this.originator, this.metaData, this.dataType, this.data, ruleChainId, ruleNodeId, this.ruleNodeExecCounter.get(), callback);
+    public TbMsg copyWithRuleChainId(RuleChainId ruleChainId, UUID msgId) {
+        return new TbMsg(this.queueName, msgId, this.ts, this.type, this.originator, this.metaData, this.dataType, this.data, ruleChainId, null, this.ruleNodeExecCounter.get(), callback);
+    }
+
+    public TbMsg copyWithRuleNodeId(RuleChainId ruleChainId, RuleNodeId ruleNodeId, UUID msgId) {
+        return new TbMsg(this.queueName, msgId, this.ts, this.type, this.originator, this.metaData, this.dataType, this.data, ruleChainId, ruleNodeId, this.ruleNodeExecCounter.get(), callback);
     }
 
     public TbMsgCallback getCallback() {
