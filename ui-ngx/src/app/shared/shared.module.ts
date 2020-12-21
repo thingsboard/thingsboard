@@ -137,6 +137,7 @@ import { EntityGatewaySelectComponent } from '@shared/components/entity/entity-g
 import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list.component';
 import { ContactComponent } from '@shared/components/contact.component';
 import { TimezoneSelectComponent } from '@shared/components/time/timezone-select.component';
+import { BrowserModule } from '@angular/platform-browser';
 
 @NgModule({
   providers: [
@@ -276,6 +277,7 @@ import { TimezoneSelectComponent } from '@shared/components/time/timezone-select
     NgxFlowchartModule
   ],
   exports: [
+    
     FooterComponent,
     LogoComponent,
     FooterFabButtonsComponent,

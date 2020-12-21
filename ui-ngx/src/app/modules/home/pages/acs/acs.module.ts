@@ -22,6 +22,8 @@ import { DialogDataDialog } from '@modules/home/pages/acs/Dialog.component';
 
 import { AcsRoutingModule } from '@modules/home/pages/acs/acs-routing.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
+import { ChartsModule } from 'ng2-charts';
+
 
 @NgModule({
   declarations: [
@@ -33,7 +35,9 @@ import { HomeComponentsModule } from '@modules/home/components/home-components.m
     CommonModule,
     SharedModule,
     HomeComponentsModule,
-    AcsRoutingModule
+    AcsRoutingModule,
+    ChartsModule
+    
   ]
 })
 export class ACSModule { }

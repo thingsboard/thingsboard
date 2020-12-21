@@ -37,9 +37,12 @@ import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
 import { AcsComponent } from './acs/acs.component';
 import {ACSModule} from '@home/pages/acs/acs.module'
 import { CookieService } from 'ngx-cookie-service';
+import {ChartsModule} from 'ng2-charts'
 
 @NgModule({
+  imports:[ChartsModule],
   exports: [
+    ChartsModule,
     AdminModule,
     HomeLinksModule,
     ProfileModule,

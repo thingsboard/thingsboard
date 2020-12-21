@@ -5,6 +5,9 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { DialogDataDialog } from './Dialog.component';
 import { AcsService } from './acs-service';
+import { ChartSize, ChartType } from 'chart.js';
+import { MultiDataSet, Label ,Color} from 'ng2-charts';
+
 export interface DialogData {
     animal: 'panda' | 'unicorn' | 'lion';
 }
@@ -76,6 +79,7 @@ export class AcsComponent implements OnInit, AfterViewInit {
             this.isLoading = false
         })
     }
+    
 }
 
 const ELEMENT_DATA = [
