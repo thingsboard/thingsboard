@@ -32,8 +32,8 @@ public class CassandraTsPartitionsCache {
                 });
     }
 
-    public CompletableFuture<Boolean> has(CassandraPartitionCacheKey key) {
-        return partitionsCache.getIfPresent(key);
+    public boolean has(CassandraPartitionCacheKey key) {
+        return partitionsCache.getIfPresent(key) != null;
     }
 
     public void put(CassandraPartitionCacheKey key) {
