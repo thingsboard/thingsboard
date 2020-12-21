@@ -103,14 +103,11 @@ public class CassandraPartitionsCacheTest {
         ReflectionTestUtils.setField(cassandraBaseTimeseriesDao, "cluster", cluster);
 
         doReturn(Futures.immediateFuture(null)).when(cassandraBaseTimeseriesDao).getFuture(any(ResultSetFuture.class), any());
-
     }
 
     @Test
     public void testPartitionSave() throws Exception {
-
         cassandraBaseTimeseriesDao.init();
-
 
         UUID id = UUID.randomUUID();
         TenantId tenantId = new TenantId(id);
@@ -119,14 +116,10 @@ public class CassandraPartitionsCacheTest {
         for (int i = 0; i < 50000; i++) {
             cassandraBaseTimeseriesDao.savePartition(tenantId, tenantId, tsKvEntryTs, "test" + i, 0);
         }
-
         for (int i = 0; i < 60000; i++) {
             cassandraBaseTimeseriesDao.savePartition(tenantId, tenantId, tsKvEntryTs, "test" + i, 0);
         }
 
         verify(cassandraBaseTimeseriesDao, times(60000)).executeAsyncWrite(any(TenantId.class), any(Statement.class));
-
-
     }
-
 }
