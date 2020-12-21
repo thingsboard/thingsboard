@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS customer (
 CREATE TABLE IF NOT EXISTS dashboard (
     id uuid NOT NULL CONSTRAINT dashboard_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    configuration varchar(10000000),
+    configuration varchar,
     assigned_customers varchar(1000000),
     search_text varchar(255),
     tenant_id uuid,

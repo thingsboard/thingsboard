@@ -80,14 +80,16 @@
   </mat-expansion-panel>
   <div fxFlex fxLayout="column">
     <div translate class="tb-small" style="padding-bottom: 8px;">device-profile.create-alarm-rules</div>
-    <tb-create-alarm-rules formControlName="createRules" style="padding-bottom: 16px;">
+    <tb-create-alarm-rules formControlName="createRules"
+                           style="padding-bottom: 16px;"
+                           [deviceProfileId]="deviceProfileId">
     </tb-create-alarm-rules>
     <div translate class="tb-small" style="padding-bottom: 8px;">device-profile.clear-alarm-rule</div>
     <div fxLayout="row" fxLayoutGap="8px;" fxLayoutAlign="start center"
          [fxShow]="alarmFormGroup.get('clearRule').value"
          style="padding-bottom: 8px;">
       <div class="clear-alarm-rule" fxFlex fxLayout="row">
-        <tb-alarm-rule formControlName="clearRule" fxFlex>
+        <tb-alarm-rule formControlName="clearRule" fxFlex [deviceProfileId]="deviceProfileId">
         </tb-alarm-rule>
       </div>
       <button *ngIf="!disabled"

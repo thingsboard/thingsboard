@@ -244,8 +244,18 @@ class DefaultTbContext implements TbContext {
         if (nodeCtx.getSelf().isDebugMode()) {
             mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, TbRelationTypes.FAILURE, th);
         }
+        String failureMessage;
+        if (th != null) {
+            if (!StringUtils.isEmpty(th.getMessage())) {
+                failureMessage = th.getMessage();
+            } else {
+                failureMessage = th.getClass().getSimpleName();
+            }
+        } else {
+            failureMessage = null;
+        }
         nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getId(), Collections.singleton(TbRelationTypes.FAILURE),
-                msg, th != null ? th.getMessage() : null));
+                msg, failureMessage));
     }
 
     public void updateSelf(RuleNode self) {

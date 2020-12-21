@@ -19,7 +19,8 @@ import {
   AbstractControl,
   ControlValueAccessor,
   FormArray,
-  FormBuilder, FormControl,
+  FormBuilder,
+  FormControl,
   FormGroup,
   NG_VALUE_ACCESSOR,
   Validators
@@ -28,12 +29,13 @@ import { Observable, Subscription } from 'rxjs';
 import {
   EntityKeyType,
   entityKeyTypeTranslationMap,
-  KeyFilter,
-  KeyFilterInfo, keyFilterInfosToKeyFilters
+  KeyFilterInfo,
+  keyFilterInfosToKeyFilters
 } from '@shared/models/query/query.models';
 import { MatDialog } from '@angular/material/dialog';
 import { deepClone } from '@core/utils';
 import { KeyFilterDialogComponent, KeyFilterDialogData } from '@home/components/filter/key-filter-dialog.component';
+import { EntityId } from '@shared/models/id/entity-id';
 
 @Component({
   selector: 'tb-key-filter-list',
@@ -56,6 +58,8 @@ export class KeyFilterListComponent implements ControlValueAccessor, OnInit {
   @Input() allowUserDynamicSource = true;
 
   @Input() telemetryKeysOnly = false;
+
+  @Input() entityId: EntityId;
 
   keyFilterListFormGroup: FormGroup;
 
@@ -170,7 +174,8 @@ export class KeyFilterListComponent implements ControlValueAccessor, OnInit {
         readonly: this.disabled,
         displayUserParameters: this.displayUserParameters,
         allowUserDynamicSource: this.allowUserDynamicSource,
-        telemetryKeysOnly: this.telemetryKeysOnly
+        telemetryKeysOnly: this.telemetryKeysOnly,
+        entityId: this.entityId
       }
     }).afterClosed();
   }
