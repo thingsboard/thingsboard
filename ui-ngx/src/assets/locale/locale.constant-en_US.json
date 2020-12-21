@@ -414,7 +414,8 @@
         "unassign-asset-from-edge-text": "After the confirmation the asset will be unassigned and won't be accessible by the edge.",
         "unassign-assets-from-edge-action-title": "Unassign { count, plural, 1 {1 asset} other {# assets} } from edge",
         "unassign-assets-from-edge-title": "Are you sure you want to unassign { count, plural, 1 {1 asset} other {# assets} }?",
-        "unassign-assets-from-edge-text": "After the confirmation all selected assets will be unassigned and won't be accessible by the edge."
+        "unassign-assets-from-edge-text": "After the confirmation all selected assets will be unassigned and won't be accessible by the edge.",
+        "selected-assets": "{ count, plural, 1 {1 asset} other {# assets} } selected"
     },
     "attribute": {
         "attributes": "Attributes",
@@ -2048,7 +2049,7 @@
         "edge-rulechain": "Edge Rule chain",
         "core-rulechains": "Core Rule chains",
         "unassign-rulechain-from-edge-text": "After the confirmation the rulechain will be unassigned and won't be accessible by the edge.",
-        "unassign-rulechains-from-edge-title": "Unassign { count, plural, 1 {1 rulechain} other {# rulechains} } from edge",
+        "unassign-rulechains-from-edge-title": "Are you sure you want to unassign { count, plural, 1 {1 rulechain} other {# rulechains} }?",
         "unassign-rulechains-from-edge-text": "After the confirmation all selected rulechains will be unassigned and won't be accessible by the edge.",
         "assign-rulechain-to-edge-title": "Assign Rule Chain(s) To Edge",
         "assign-rulechain-to-edge-text": "Please select the rulechains to assign to the edge",
