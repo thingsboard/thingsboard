@@ -42,7 +42,7 @@ const routes: Routes = [
     path: 'edges',
     data: {
       breadcrumb: {
-        label: 'edge.edges',
+        label: 'edge.edge-instances',
         icon: 'router'
       }
     },
@@ -65,7 +65,7 @@ const routes: Routes = [
           auth: [Authority.TENANT_ADMIN],
           ruleChainsType: 'edge',
           breadcrumb: {
-            label: 'rulechain.edge-rulechains',
+            label: 'edge.rulechain-templates',
             icon: 'settings_ethernet'
           },
         },
@@ -131,7 +131,7 @@ const routes: Routes = [
             path: '',
             component: EntitiesTableComponent,
             data: {
-              auth: [Authority.TENANT_ADMIN],
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
               dashboardsType: 'edge'
             },
             resolve: {
@@ -160,7 +160,7 @@ const routes: Routes = [
         path: 'ruleChains',
         data: {
           breadcrumb: {
-            label: 'rulechain.edge-rulechains',
+            label: 'edge.rulechain-templates',
             icon: 'settings_ethernet'
           }
         },
@@ -170,7 +170,7 @@ const routes: Routes = [
             component: EntitiesTableComponent,
             data: {
               auth: [Authority.TENANT_ADMIN],
-              title: 'rulechain.edge-rulechains',
+              title: 'edge.rulechain-templates',
               ruleChainsType: 'edges'
             },
             resolve: {

@@ -28,7 +28,7 @@ import { UserService } from './user.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import { Direction } from '@shared/models/page/sort-order';
 import { PageData } from '@shared/models/page/page-data';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
@@ -579,16 +579,18 @@ export class EntityService {
 
   public prepareAllowedEntityTypesList(allowedEntityTypes: Array<EntityType | AliasEntityType>,
                                        useAliasEntityTypes?: boolean): Array<EntityType | AliasEntityType> {
-    const authUser = getCurrentAuthUser(this.store);
+    const authState = getCurrentAuthState(this.store);
     const entityTypes: Array<EntityType | AliasEntityType> = [];
-    switch (authUser.authority) {
+    switch (authState.authUser.authority) {
       case Authority.SYS_ADMIN:
         entityTypes.push(EntityType.TENANT);
         break;
       case Authority.TENANT_ADMIN:
         entityTypes.push(EntityType.DEVICE);
         entityTypes.push(EntityType.ASSET);
-        entityTypes.push(EntityType.EDGE);
+        if (authState.edgesSupportEnabled) {
+          entityTypes.push(EntityType.EDGE);
+        }
         entityTypes.push(EntityType.ENTITY_VIEW);
         entityTypes.push(EntityType.TENANT);
         entityTypes.push(EntityType.CUSTOMER);
@@ -602,7 +604,9 @@ export class EntityService {
       case Authority.CUSTOMER_USER:
         entityTypes.push(EntityType.DEVICE);
         entityTypes.push(EntityType.ASSET);
-        entityTypes.push(EntityType.EDGE);
+        if (authState.edgesSupportEnabled) {
+          entityTypes.push(EntityType.EDGE);
+        }
         entityTypes.push(EntityType.ENTITY_VIEW);
         entityTypes.push(EntityType.CUSTOMER);
         entityTypes.push(EntityType.USER);
@@ -614,7 +618,7 @@ export class EntityService {
     }
     if (useAliasEntityTypes) {
       entityTypes.push(AliasEntityType.CURRENT_USER);
-      if (authUser.authority !== Authority.SYS_ADMIN) {
+      if (authState.authUser.authority !== Authority.SYS_ADMIN) {
         entityTypes.push(AliasEntityType.CURRENT_USER_OWNER);
       }
     }

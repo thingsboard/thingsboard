@@ -18,14 +18,13 @@ import { Injectable } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
-import {selectAuth, selectAuthUser, selectIsAuthenticated} from '../auth/auth.selectors';
+import { selectAuth, selectAuthUser, selectIsAuthenticated } from '../auth/auth.selectors';
 import { take } from 'rxjs/operators';
 import { HomeSection, MenuSection } from '@core/services/menu.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
-import { AuthUser } from '@shared/models/user.model';
 import { guid } from '@core/utils';
-import {AuthState} from "@core/auth/auth.models";
+import { AuthState } from "@core/auth/auth.models";
 
 @Injectable({
   providedIn: 'root'
@@ -282,14 +281,14 @@ export class MenuService {
           pages: [
             {
               id: guid(),
-              name: 'edge.edges',
+              name: 'edge.edge-instances',
               type: 'link',
               path: '/edges',
               icon: 'router'
             },
             {
               id: guid(),
-              name: 'rulechain.edge-rulechains',
+              name: 'edge.rulechain-templates',
               type: 'link',
               path: '/edges/ruleChains',
               icon: 'settings_ethernet'
@@ -398,12 +397,12 @@ export class MenuService {
           name: 'edge.management',
           places: [
             {
-              name: 'edge.edges',
+              name: 'edge.edge-instances',
               icon: 'router',
               path: '/edges'
             },
             {
-              name: 'rulechain.edge-rulechains',
+              name: 'edge.rulechain-templates',
               icon: 'settings_ethernet',
               path: '/edges/ruleChains'
             }
@@ -476,7 +475,20 @@ export class MenuService {
         type: 'link',
         path: '/entityViews',
         icon: 'view_quilt'
-      },
+      }
+    );
+    if (authState.edgesSupportEnabled) {
+      sections.push(
+        {
+          id: guid(),
+          name: 'edge.edge-instances',
+          type: 'link',
+          path: '/edges',
+          icon: 'router'
+        }
+      );
+    }
+    sections.push(
       {
         id: guid(),
         name: 'dashboard.dashboards',
@@ -489,7 +501,8 @@ export class MenuService {
   }
 
   private buildCustomerUserHome(authState: AuthState): Array<HomeSection> {
-    const homeSections: Array<HomeSection> = [
+    const homeSections: Array<HomeSection> = [];
+    homeSections.push(
       {
         name: 'asset.view-assets',
         places: [
@@ -519,7 +532,23 @@ export class MenuService {
             path: '/entityViews'
           }
         ]
-      },
+      }
+    );
+    if (authState.edgesSupportEnabled) {
+      homeSections.push(
+        {
+          name: 'edge.management',
+          places: [
+            {
+              name: 'edge.edge-instances',
+              icon: 'router',
+              path: '/edges'
+            }
+          ]
+        }
+      );
+    }
+    homeSections.push(
       {
         name: 'dashboard.view-dashboards',
         places: [
@@ -530,7 +559,7 @@ export class MenuService {
           }
         ]
       }
-    ];
+    );
     return homeSections;
   }
 

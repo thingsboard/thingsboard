@@ -250,7 +250,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
   resetSortAndFilter(update: boolean = true) {
     const entityType = this.entityIdValue.entityType;
-    if (entityType === EntityType.DEVICE || entityType === EntityType.ENTITY_VIEW || entityType === EntityType.EDGE) {
+    if (entityType === EntityType.DEVICE || entityType === EntityType.ENTITY_VIEW) {
       this.attributeScopes = Object.keys(AttributeScope);
       this.attributeScopeSelectionReadonly = false;
     } else {

@@ -34,42 +34,44 @@
           [fxShow]="!isEdit && (edgeScope === 'customer' || edgeScope === 'tenant') && isAssignedToCustomer(entity)">
     {{ (entity?.customerIsPublic ? 'edge.make-private' : 'edge.unassign-from-customer') | translate }}
   </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'openEdgeAssets')"
-          [fxShow]="!isEdit && edgeScope === 'tenant'">
-    {{'edge.manage-edge-assets' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'openEdgeDevices')"
-          [fxShow]="!isEdit && edgeScope === 'tenant'">
-    {{'edge.manage-edge-devices' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'openEdgeEntityViews')"
-          [fxShow]="!isEdit && edgeScope === 'tenant'">
-    {{'edge.manage-edge-entity-views' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'openEdgeDashboards')"
-          [fxShow]="!isEdit && edgeScope === 'tenant'">
-    {{'edge.manage-edge-dashboards' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'openEdgeRuleChains')"
-          [fxShow]="!isEdit && edgeScope === 'tenant'">
-    {{'edge.manage-edge-rulechains' | translate }}
-  </button>
   <button mat-raised-button color="primary" fxFlex.xs
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [fxShow]="!hideDelete() && !isEdit">
     {{'edge.delete' | translate }}
   </button>
+  <div fxLayout="row" fxLayout.xs="column">
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openEdgeAssets')"
+            [fxShow]="!isEdit && edgeScope === 'tenant'">
+      {{'edge.manage-edge-assets' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openEdgeDevices')"
+            [fxShow]="!isEdit && edgeScope === 'tenant'">
+      {{'edge.manage-edge-devices' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openEdgeEntityViews')"
+            [fxShow]="!isEdit && edgeScope === 'tenant'">
+      {{'edge.manage-edge-entity-views' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openEdgeDashboards')"
+            [fxShow]="!isEdit && edgeScope === 'tenant'">
+      {{'edge.manage-edge-dashboards' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openEdgeRuleChains')"
+            [fxShow]="!isEdit && edgeScope === 'tenant'">
+      {{'edge.manage-edge-rulechains' | translate }}
+    </button>
+  </div>
   <div fxLayout="row" fxLayout.xs="column">
     <button mat-raised-button
             ngxClipboard
@@ -95,7 +97,6 @@
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>edge.copy-edge-secret</span>
     </button>
-
   </div>
 </div>
 <div class="mat-padding" fxLayout="column">
@@ -123,18 +124,6 @@
         [required]="true"
         [entityType]="entityType.EDGE">
       </tb-entity-subtype-autocomplete>
-      <mat-form-field class="mat-block">
-        <mat-label translate>edge.label</mat-label>
-        <input matInput formControlName="label">
-      </mat-form-field>
-
-      <div formGroupName="additionalInfo" fxLayout="column">
-        <mat-form-field class="mat-block">
-          <mat-label translate>edge.description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
-        </mat-form-field>
-      </div>
-    </fieldset>
       <div fxLayout="row">
         <fieldset fxFlex>
           <mat-form-field class="mat-block">
@@ -163,7 +152,7 @@
             <mat-label translate>edge.edge-key</mat-label>
             <input matInput formControlName="routingKey">
           </mat-form-field>
-          </fieldset>
+        </fieldset>
       </div>
       <div fxLayout="row">
         <fieldset fxFlex disabled>
@@ -173,5 +162,16 @@
           </mat-form-field>
         </fieldset>
       </div>
+      <mat-form-field class="mat-block">
+        <mat-label translate>edge.label</mat-label>
+        <input matInput formControlName="label">
+      </mat-form-field>
+      <div formGroupName="additionalInfo" fxLayout="column">
+        <mat-form-field class="mat-block">
+          <mat-label translate>edge.description</mat-label>
+          <textarea matInput formControlName="description" rows="2"></textarea>
+        </mat-form-field>
+      </div>
+    </fieldset>
   </form>
 </div>

@@ -239,7 +239,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
       actions.push(
         {
           name: this.translate.instant('edge.unassign-from-edge'),
-          icon: 'portable_wifi_off',
+          icon: 'assignment_return',
           isEnabled: (entity) => true,
           onAction: ($event, entity) => this.unassignFromEdge($event, entity)
         }
@@ -274,7 +274,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
       actions.push(
         {
           name: this.translate.instant('entity-view.unassign-entity-views-from-edge'),
-          icon: 'portable_wifi_off',
+          icon: 'assignment_return',
           isEnabled: true,
           onAction: ($event, entities) => this.unassignEntityViewsFromEdge($event, entities)
         }

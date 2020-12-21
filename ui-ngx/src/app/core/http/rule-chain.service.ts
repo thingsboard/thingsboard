@@ -51,7 +51,8 @@ import { Edge } from "@shared/models/edge.models";
 })
 export class RuleChainService {
 
-  private ruleNodeComponents: Array<RuleNodeComponentDescriptor>;
+  private ruleNodeComponentsMap: Map<RuleChainType, Array<RuleNodeComponentDescriptor>> =
+    new Map<RuleChainType, Array<RuleNodeComponentDescriptor>>();
   private ruleNodeConfigFactories: {[directive: string]: ComponentFactory<IRuleNodeConfigurationComponent>} = {};
 
   constructor(
@@ -120,16 +121,16 @@ export class RuleChainService {
 
   public getRuleNodeComponents(ruleNodeConfigResourcesModulesMap: {[key: string]: any}, ruleChainType: RuleChainType, config?: RequestConfig):
     Observable<Array<RuleNodeComponentDescriptor>> {
-     if (this.ruleNodeComponents) {
-       return of(this.ruleNodeComponents);
+     if (this.ruleNodeComponentsMap.get(ruleChainType)) {
+       return of(this.ruleNodeComponentsMap.get(ruleChainType));
      } else {
       return this.loadRuleNodeComponents(ruleChainType, config).pipe(
         mergeMap((components) => {
           return this.resolveRuleNodeComponentsUiResources(components, ruleNodeConfigResourcesModulesMap).pipe(
             map((ruleNodeComponents) => {
-              this.ruleNodeComponents = ruleNodeComponents;
-              this.ruleNodeComponents.push(ruleChainNodeComponent);
-              this.ruleNodeComponents.sort(
+              this.ruleNodeComponentsMap.set(ruleChainType, ruleNodeComponents);
+              this.ruleNodeComponentsMap.get(ruleChainType).push(ruleChainNodeComponent);
+              this.ruleNodeComponentsMap.get(ruleChainType).sort(
                 (comp1, comp2) => {
                   let result = comp1.type.toString().localeCompare(comp2.type.toString());
                   if (result === 0) {
@@ -138,7 +139,7 @@ export class RuleChainService {
                   return result;
                 }
               );
-              return this.ruleNodeComponents;
+              return this.ruleNodeComponentsMap.get(ruleChainType);
             })
           );
         })
@@ -151,7 +152,11 @@ export class RuleChainService {
   }
 
   public getRuleNodeComponentByClazz(clazz: string): RuleNodeComponentDescriptor {
-    const found = this.ruleNodeComponents.filter((component) => component.clazz === clazz);
+    let mergedRuleNodeComponents: RuleNodeComponentDescriptor[] = [];
+    this.ruleNodeComponentsMap.forEach((value: Array<RuleNodeComponentDescriptor>, key: RuleChainType) => {
+      mergedRuleNodeComponents = mergedRuleNodeComponents.concat(value);
+    });
+    const found = mergedRuleNodeComponents.filter((component) => component.clazz === clazz);
     if (found && found.length) {
       return found[0];
     } else {

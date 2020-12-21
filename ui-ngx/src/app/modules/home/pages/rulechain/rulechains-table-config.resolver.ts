@@ -101,7 +101,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       this.config.entitySelectionEnabled = ruleChain => this.config.componentsData.edge.rootRuleChainId.id != ruleChain.id.id;
       this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(edge => {
         this.config.componentsData.edge = edge;
-        this.config.tableTitle = edge.name + ': ' + this.translate.instant('rulechain.edge-rulechains');
+        this.config.tableTitle = edge.name + ': ' + this.translate.instant('edge.rulechain-templates');
       });
       this.config.entitiesDeleteEnabled = false;
     }
@@ -128,7 +128,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       columns.push(
         new DateEntityTableColumn<RuleChain>('createdTime', 'common.created-time', this.datePipe, '150px'),
         new EntityTableColumn<RuleChain>('name', 'rulechain.name', '100%'),
-        new EntityTableColumn<RuleChain>('root', 'rulechain.default-root', '60px',
+        new EntityTableColumn<RuleChain>('root', 'rulechain.root', '60px',
           entity => {
             return checkBoxCell(entity.root);
           })
@@ -173,7 +173,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       this.config.tableTitle = this.translate.instant('rulechain.rulechains');
       this.config.entitiesFetchFunction = pageLink => this.fetchRuleChains(pageLink);
     } else if (ruleChainScope === 'edges') {
-      this.config.tableTitle = this.translate.instant('rulechain.edge-rulechains');
+      this.config.tableTitle = this.translate.instant('edge.rulechain-templates');
       this.config.entitiesFetchFunction = pageLink => this.fetchEdgeRuleChains(pageLink);
     } else if (ruleChainScope === 'edge') {
       this.config.entitiesFetchFunction = pageLink => this.ruleChainService.getEdgeRuleChains(this.config.componentsData.edgeId, pageLink);
@@ -186,7 +186,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       actions.push(
         {
           name: this.translate.instant('rulechain.unassign-rulechains'),
-          icon: 'portable_wifi_off',
+          icon: 'assignment_return',
           isEnabled: true,
           onAction: ($event, entities) => this.unassignRuleChainsFromEdge($event, entities)
         }
@@ -232,7 +232,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
           onAction: ($event, entity) => this.setDefaultRootEdgeRuleChain($event, entity)
         },
         {
-          name: this.translate.instant('rulechain.set-default-edge'),
+          name: this.translate.instant('rulechain.set-auto-assign-to-edge'),
           icon: 'bookmark_outline',
           isEnabled: (entity) => this.isNonDefaultEdgeRuleChain(entity),
           onAction: ($event, entity) => this.setDefaultEdgeRuleChain($event, entity)
@@ -255,7 +255,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         },
         {
           name: this.translate.instant('edge.unassign-from-edge'),
-          icon: 'portable_wifi_off',
+          icon: 'assignment_return',
           isEnabled: (entity) => entity.id.id != this.config.componentsData.edge.rootRuleChainId.id,
           onAction: ($event, entity) => this.unassignFromEdge($event, entity)
         }
@@ -449,8 +449,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('rulechain.set-default-edge-title', {ruleChainName: ruleChain.name}),
-      this.translate.instant('rulechain.set-default-edge-text'),
+      this.translate.instant('rulechain.set-auto-assign-to-edge-title', {ruleChainName: ruleChain.name}),
+      this.translate.instant('rulechain.set-auto-assign-to-edge-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
       true

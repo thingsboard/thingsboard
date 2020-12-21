@@ -122,10 +122,10 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
           if (parentCustomer.additionalInfo && parentCustomer.additionalInfo.isPublic) {
             this.config.tableTitle = this.translate.instant('customer.public-edges');
           } else {
-            this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('edge.edges');
+            this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('edge.edge-instances');
           }
         } else {
-          this.config.tableTitle = this.translate.instant('edge.edges');
+          this.config.tableTitle = this.translate.instant('edge.edge-instances');
         }
         this.config.columns = this.configureColumns(this.config.componentsData.edgeScope);
         this.configureEntityFunctions(this.config.componentsData.edgeScope);
@@ -166,6 +166,11 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
       this.config.deleteEntity = id => this.edgeService.deleteEdge(id.id);
     }
     if (edgeScope === 'customer') {
+      this.config.entitiesFetchFunction = pageLink =>
+        this.edgeService.getCustomerEdgeInfos(this.customerId, pageLink);
+      this.config.deleteEntity = id => this.edgeService.unassignEdgeFromCustomer(id.id);
+    }
+    if (edgeScope === 'customer_user') {
       this.config.entitiesFetchFunction = pageLink =>
         this.edgeService.getCustomerEdgeInfos(this.customerId, pageLink);
       this.config.deleteEntity = id => this.edgeService.unassignEdgeFromCustomer(id.id);

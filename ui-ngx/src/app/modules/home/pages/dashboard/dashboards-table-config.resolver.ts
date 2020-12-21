@@ -257,7 +257,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
         },
         {
           name: this.translate.instant('edge.unassign-from-edge'),
-          icon: 'portable_wifi_off',
+          icon: 'assignment_return',
           isEnabled: (entity) => true,
           onAction: ($event, entity) => this.unassignFromEdge($event, entity)
         }
@@ -301,7 +301,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       actions.push(
         {
           name: this.translate.instant('dashboard.unassign-dashboards-from-edge'),
-          icon: 'portable_wifi_off',
+          icon: 'assignment_return',
           isEnabled: true,
           onAction: ($event, entities) => this.unassignDashboardsFromEdge($event, entities)
         }

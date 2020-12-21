@@ -281,7 +281,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       actions.push(
         {
           name: this.translate.instant('edge.unassign-from-edge'),
-          icon: 'portable_wifi_off',
+          icon: 'assignment_return',
           isEnabled: (entity) => true,
           onAction: ($event, entity) => this.unassignFromEdge($event, entity)
         }
@@ -315,10 +315,10 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     if (deviceScope === 'edge') {
       actions.push(
         {
-          name: this.translate.instant('asset.unassign-assets-from-edge'),
-          icon: 'portable_wifi_off',
+          name: this.translate.instant('device.unassign-devices-from-edge'),
+          icon: 'assignment_return',
           isEnabled: true,
-          onAction: ($event, entities) => this.unassignDevicesFromCustomer($event, entities)
+          onAction: ($event, entities) => this.unassignDevicesFromEdge($event, entities)
         }
       );
     }
