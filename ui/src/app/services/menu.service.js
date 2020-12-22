@@ -194,13 +194,13 @@ function Menu(userService, $state, $rootScope) {
                                 icon: 'router',
                                 pages: [
                                     {
-                                        name: 'edge.edges',
+                                        name: 'edge.edge-instances',
                                         type: 'link',
                                         state: 'home.edges',
                                         icon: 'router'
                                     },
                                     {
-                                        name: 'rulechain.edge-rulechains',
+                                        name: 'edge.rulechain-templates',
                                         type: 'link',
                                         state: 'home.edges.edgeRuleChains',
                                         icon: 'code'
@@ -286,12 +286,12 @@ function Menu(userService, $state, $rootScope) {
                             name: 'edge.management',
                             places: [
                                 {
-                                    name: 'edge.edges',
+                                    name: 'edge.edge-instances',
                                     icon: 'router',
                                     state: 'home.edges'
                                 },
                                 {
-                                    name: 'rulechain.edge-rulechains',
+                                    name: 'edge.rulechain-templates',
                                     icon: 'code',
                                     state: 'home.edges.edgeRuleChains'
                                 }
@@ -354,7 +354,7 @@ function Menu(userService, $state, $rootScope) {
                     if (userService.isEdgesSupportEnabled()) {
                         sections.push(
                             {
-                                name: 'edge.edges',
+                                name: 'edge.edge-instances',
                                 type: 'link',
                                 state: 'home.edges',
                                 icon: 'router'
@@ -404,10 +404,10 @@ function Menu(userService, $state, $rootScope) {
                     if (userService.isEdgesSupportEnabled()) {
                         homeSections.push(
                             {
-                                name: 'edge.edges',
+                                name: 'edge.edge-instances',
                                 places: [
                                     {
-                                        name: 'edge.edges',
+                                        name: 'edge.edge-instances',
                                         icon: 'router',
                                         state: 'home.edges'
                                     }

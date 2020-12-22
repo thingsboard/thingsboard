@@ -743,7 +743,7 @@
     },
     "edge": {
         "edge": "Borde",
-        "edges": "Bordes",
+        "edge-instances": "Bordes",
         "management": "Gestión de bordes",
         "no-edges-matching": "No se encontraron bordes que coincidan con '{{entity}}'",
         "add": "Agregar borde",
@@ -1423,8 +1423,6 @@
     "rulechain": {
         "rulechain": "Cadena de reglas",
         "rulechains": "Cadenas de reglas",
-        "core-rulechains": "Cadenas de reglas centrales",
-        "edge-rulechains": "Cadenas de reglas de borde",
         "root": "Raíz",
         "delete": "Eliminar cadena de reglas",
         "name": "Nombre",

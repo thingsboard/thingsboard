@@ -139,11 +139,11 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
         },
         data: {
             searchEnabled: true,
-            pageTitle: 'rulechain.edge-rulechains',
+            pageTitle: 'edge.rulechain-templates',
             ruleChainsType: 'edges'
         },
         ncyBreadcrumb: {
-            label: '{"icon": "code", "label": "rulechain.edge-rulechains"}'
+            label: '{"icon": "code", "label": "edge.rulechain-templates"}'
         }
     }).state('home.edges.edgeRuleChains.ruleChain', {
         url: '/:ruleChainId',
@@ -177,7 +177,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
         data: {
             import: false,
             searchEnabled: false,
-            pageTitle: 'edge.rulechain'
+            pageTitle: 'edge.rulechain-template'
         },
         ncyBreadcrumb: {
             label: '{"icon": "code", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
@@ -218,7 +218,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
         data: {
             import: true,
             searchEnabled: true,
-            pageTitle: 'edge.rulechain'
+            pageTitle: 'edge.rulechain-template'
         },
         ncyBreadcrumb: {
             label: '{"icon": "code", "label": "{{ (\'rulechain.import\' | translate) + \': \'+ vm.ruleChain.name }}", "translate": "false"}'

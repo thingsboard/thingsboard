@@ -431,7 +431,7 @@
     "customer-required": "Kunde ist erforderlich",
     "select-default-customer": "Wählen Sie den Standardkunden aus.",
     "default-customer": "Standardkunde",
-    "edges": "Kunden Rand",
+    "edge-instances": "Kunden Rand",
     "default-customer-required": "Ein Standardkunde ist erforderlich, um das Dashboard auf Mandantenebene zu testen."
   },
   "datetime": {
@@ -730,7 +730,7 @@
   },
   "edge": {
     "edge": "Rand",
-    "edges": "Rand",
+    "edge-instances": "Rand",
     "management": "Rand verwalten",
     "no-edges-matching": "Keine passenden Rand '{{entity}}' gefunden.",
     "add": "Rand hinzufügen",
@@ -1355,8 +1355,6 @@
   "rulechain": {
     "rulechain": "Regelkette",
     "rulechains": "Regelketten",
-    "core-rulechains": "Kernregelketten",
-    "edge-rulechains": "Randregelketten",
     "root": "Wurzel",
     "delete": "Regelkette löschen",
     "name": "Name",
