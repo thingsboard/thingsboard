@@ -217,16 +217,16 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'now_widgets'
                         },
                         {
-                                name: 'dashboard.dashboards',
-                                type: 'link',
-                                state: 'home.dashboards',
-                                icon: 'dashboards'
-                            },
+                            name: 'dashboard.dashboards',
+                            type: 'link',
+                            state: 'home.dashboards',
+                            icon: 'dashboards'
+                        },
                         {
-                                name: 'audit-log.audit-logs',
-                                type: 'link',
-                                state: 'home.auditLogs',
-                                icon: 'track_changes'
+                            name: 'audit-log.audit-logs',
+                            type: 'link',
+                            state: 'home.auditLogs',
+                            icon: 'track_changes'
                         }
                     );
 
@@ -412,7 +412,6 @@ function Menu(userService, $state, $rootScope) {
                                         state: 'home.edges'
                                     }
                                 ]
-
                             }
                         );
                     }
