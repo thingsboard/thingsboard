@@ -54,7 +54,6 @@ import { ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entit
 import { RequestConfig } from '@core/http/http-utils';
 import { RuleChain, RuleChainImport, RuleChainMetaData } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import * as JSZip from 'jszip';
 import { FiltersInfo } from '@shared/models/query/query.models';
 
 // @dynamic
@@ -421,15 +420,17 @@ export class ImportExportService {
   }
 
   public exportJSZip(data: object, filename: string) {
-    const jsZip = new JSZip();
-    for (const keyName in data) {
-      if (data.hasOwnProperty(keyName)) {
-        const valueData = data[keyName];
-        jsZip.file(keyName, valueData);
+    import('jszip').then((JSZip) => {
+      const jsZip = new JSZip.default();
+      for (const keyName in data) {
+        if (data.hasOwnProperty(keyName)) {
+          const valueData = data[keyName];
+          jsZip.file(keyName, valueData);
+        }
       }
-    }
-    jsZip.generateAsync({type: 'blob'}).then(content => {
-      this.downloadFile(content, filename, ZIP_TYPE);
+      jsZip.generateAsync({type: 'blob'}).then(content => {
+        this.downloadFile(content, filename, ZIP_TYPE);
+      });
     });
   }
 
