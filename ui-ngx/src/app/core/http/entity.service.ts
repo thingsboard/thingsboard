@@ -869,7 +869,7 @@ export class EntityService {
           return findEntityObservable.pipe(
             mergeMap((entity) => {
               const tasks: Observable<any>[] = [];
-              const result: Device | Asset = entity as (Device | Asset);
+              const result: Device & Asset = entity as (Device | Asset);
               const additionalInfo = result.additionalInfo || {};
               if (result.label !== entityData.label ||
                  result.type !== entityData.type ||
@@ -881,6 +881,9 @@ export class EntityService {
                 result.additionalInfo.description = entityData.description;
                 if (result.id.entityType === EntityType.DEVICE) {
                   result.additionalInfo.gateway = entityData.gateway;
+                }
+                if (result.id.entityType === EntityType.DEVICE && result.deviceProfileId) {
+                  delete result.deviceProfileId;
                 }
                 switch (result.id.entityType) {
                   case EntityType.DEVICE:
