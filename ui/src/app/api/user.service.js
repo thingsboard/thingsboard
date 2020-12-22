@@ -67,8 +67,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         isUserTokenAccessEnabled: isUserTokenAccessEnabled,
         loginAsUser: loginAsUser,
         setUserCredentialsEnabled: setUserCredentialsEnabled,
-        isEdgesSupportEnabled: isEdgesSupportEnabled,
-        loadIsEdgesSupportEnabled: loadIsEdgesSupportEnabled
+        isEdgesSupportEnabled: isEdgesSupportEnabled
     }
 
     reloadUser();

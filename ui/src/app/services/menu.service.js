@@ -147,45 +147,6 @@ function Menu(userService, $state, $rootScope) {
                                 ]
                             }];
                 } else if (authority === 'TENANT_ADMIN') {
-                    let edgeMenuSection = {
-                        side: {
-                            name: 'edge.management',
-                            type: 'toggle',
-                            state: 'home.edges',
-                            height: '80px',
-                            icon: 'router',
-                            pages: [
-                                {
-                                    name: 'edge.edges',
-                                    type: 'link',
-                                    state: 'home.edges',
-                                    icon: 'router'
-                                },
-                                {
-                                    name: 'rulechain.edge-rulechains',
-                                    type: 'link',
-                                    state: 'home.edges.edgeRuleChains',
-                                    icon: 'code'
-                                }
-                            ]
-                        },
-                        home: {
-                            name: 'edge.management',
-                            places: [
-                                {
-                                    name: 'edge.edges',
-                                    icon: 'router',
-                                    state: 'home.edges'
-                                },
-                                {
-                                    name: 'rulechain.edge-rulechains',
-                                    icon: 'code',
-                                    state: 'home.edges.edgeRuleChains'
-                                }
-                            ]
-
-                        }
-                    }
                     sections = [
                         {
                             name: 'home.home',
@@ -222,7 +183,33 @@ function Menu(userService, $state, $rootScope) {
                             type: 'link',
                             state: 'home.entityViews',
                             icon: 'view_quilt'
-                        },
+                        }];
+                    if (userService.isEdgesSupportEnabled()) {
+                        sections.push(
+                            {
+                                name: 'edge.management',
+                                type: 'toggle',
+                                state: 'home.edges',
+                                height: '80px',
+                                icon: 'router',
+                                pages: [
+                                    {
+                                        name: 'edge.edges',
+                                        type: 'link',
+                                        state: 'home.edges',
+                                        icon: 'router'
+                                    },
+                                    {
+                                        name: 'rulechain.edge-rulechains',
+                                        type: 'link',
+                                        state: 'home.edges.edgeRuleChains',
+                                        icon: 'code'
+                                    }
+                                ]
+                            }
+                        );
+                    }
+                    sections.push(
                         {
                             name: 'widget.widget-library',
                             type: 'link',
@@ -230,17 +217,18 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'now_widgets'
                         },
                         {
-                            name: 'dashboard.dashboards',
-                            type: 'link',
-                            state: 'home.dashboards',
-                            icon: 'dashboards'
-                        },
+                                name: 'dashboard.dashboards',
+                                type: 'link',
+                                state: 'home.dashboards',
+                                icon: 'dashboards'
+                            },
                         {
-                            name: 'audit-log.audit-logs',
-                            type: 'link',
-                            state: 'home.auditLogs',
-                            icon: 'track_changes'
-                        }];
+                                name: 'audit-log.audit-logs',
+                                type: 'link',
+                                state: 'home.auditLogs',
+                                icon: 'track_changes'
+                        }
+                    );
 
                     homeSections =
                         [{
@@ -292,58 +280,52 @@ function Menu(userService, $state, $rootScope) {
                                         state: 'home.entityViews'
                                     }
                                 ]
-                            },
-                            {
-                                name: 'dashboard.management',
-                                places: [
-                                    {
-                                        name: 'widget.widget-library',
-                                        icon: 'now_widgets',
-                                        state: 'home.widgets-bundles'
-                                    },
-                                    {
-                                        name: 'dashboard.dashboards',
-                                        icon: 'dashboard',
-                                        state: 'home.dashboards'
-                                    }
-                                ]
-                            },
-                            {
-                                name: 'audit-log.audit',
-                                places: [
-                                    {
-                                        name: 'audit-log.audit-logs',
-                                        icon: 'track_changes',
-                                        state: 'home.auditLogs'
-                                    }
-                                ]
                             }];
-
                     if (userService.isEdgesSupportEnabled()) {
-                        sections.splice(6, 0, edgeMenuSection.side);
-                        homeSections.splice(5, 0, edgeMenuSection.home);
-                    }
-
-                } else if (authority === 'CUSTOMER_USER') {
-                    let edgeMenuSection = {
-                        side: {
-                            name: 'edge.edges',
-                            type: 'link',
-                            state: 'home.edges',
-                            icon: 'router'
-                        },
-                        home: {
-                            name: 'edge.edges',
+                        homeSections.push({
+                            name: 'edge.management',
                             places: [
                                 {
                                     name: 'edge.edges',
                                     icon: 'router',
                                     state: 'home.edges'
+                                },
+                                {
+                                    name: 'rulechain.edge-rulechains',
+                                    icon: 'code',
+                                    state: 'home.edges.edgeRuleChains'
                                 }
                             ]
 
-                        }
+                        });
                     }
+                    homeSections.push(
+                        {
+                            name: 'dashboard.management',
+                            places: [
+                                {
+                                    name: 'widget.widget-library',
+                                    icon: 'now_widgets',
+                                    state: 'home.widgets-bundles'
+                                },
+                                {
+                                    name: 'dashboard.dashboards',
+                                    icon: 'dashboard',
+                                    state: 'home.dashboards'
+                                }
+                            ]
+                        },
+                        {
+                            name: 'audit-log.audit',
+                            places: [
+                                {
+                                    name: 'audit-log.audit-logs',
+                                    icon: 'track_changes',
+                                    state: 'home.auditLogs'
+                                }
+                            ]
+                        });
+                } else if (authority === 'CUSTOMER_USER') {
                     sections = [
                         {
                             name: 'home.home',
@@ -368,13 +350,25 @@ function Menu(userService, $state, $rootScope) {
                             type: 'link',
                             state: 'home.entityViews',
                             icon: 'view_quilt'
-                        },
+                        }];
+                    if (userService.isEdgesSupportEnabled()) {
+                        sections.push(
+                            {
+                                name: 'edge.edges',
+                                type: 'link',
+                                state: 'home.edges',
+                                icon: 'router'
+                            }
+                        );
+                    }
+                    sections.push(
                         {
                             name: 'dashboard.dashboards',
                             type: 'link',
                             state: 'home.dashboards',
                             icon: 'dashboard'
-                        }];
+                        }
+                    );
 
                     homeSections =
                         [{
@@ -406,7 +400,23 @@ function Menu(userService, $state, $rootScope) {
                                     state: 'home.entityViews'
                                 }
                             ]
-                        },
+                        }];
+                    if (userService.isEdgesSupportEnabled()) {
+                        homeSections.push(
+                            {
+                                name: 'edge.edges',
+                                places: [
+                                    {
+                                        name: 'edge.edges',
+                                        icon: 'router',
+                                        state: 'home.edges'
+                                    }
+                                ]
+
+                            }
+                        );
+                    }
+                    homeSections.push(
                         {
                             name: 'dashboard.view-dashboards',
                             places: [
@@ -416,12 +426,8 @@ function Menu(userService, $state, $rootScope) {
                                     state: 'home.dashboards'
                                 }
                             ]
-                        }];
-
-                    if (userService.isEdgesSupportEnabled()) {
-                        sections.splice(4, 0, edgeMenuSection.side);
-                        homeSections.splice(3, 0, edgeMenuSection.home);
-                    }
+                        }
+                    );
                 }
             }
         }
