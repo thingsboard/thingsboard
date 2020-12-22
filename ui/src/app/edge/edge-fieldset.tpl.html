@@ -100,15 +100,24 @@
                 tb-required="true"
                 the-form="theForm"
                 ng-model="edge.type"
-                entity-type="types.entityType.edge">
+                entity-type="types.entityType.edge"
+                ng-value="defaultType">
         </tb-entity-subtype-autocomplete>
-        <md-input-container class="md-block">
+    <div layout="row">
+        <md-input-container class="md-block" flex>
             <label translate>edge.edge-license-key</label>
             <input required name="edgeLicenseKey" ng-model="edge.edgeLicenseKey">
             <div ng-messages="theForm.edgeLicenseKey.$error">
                 <div translate ng-message="required">edge.edge-license-key-required</div>
             </div>
         </md-input-container>
+        <md-button class="md-icon-button" style="margin-top: 14px;">
+            <md-tooltip md-direction="left">
+                {{ 'edge.license-key-tooltip' | translate }}
+            </md-tooltip>
+            <md-icon md-svg-icon="mdi:help"></md-icon>
+        </md-button>
+    </div>
         <md-input-container class="md-block">
             <label translate>edge.cloud-endpoint</label>
             <input required name="cloudEndpoint" ng-model="edge.cloudEndpoint">
@@ -147,7 +156,7 @@
             </md-tooltip>
         </md-button>
     </div>
-    <div layout="row">
+    <fieldset ng-disabled="$root.loading || !isEdit">
         <md-input-container class="md-block">
             <label translate>edge.label</label>
             <input name="label" ng-model="edge.label">
@@ -156,5 +165,5 @@
             <label translate>edge.description</label>
             <textarea ng-model="edge.additionalInfo.description" rows="2"></textarea>
         </md-input-container>
-    </div>
+    </fieldset>
 </md-content>

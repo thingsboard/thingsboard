@@ -29,6 +29,7 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
         scope.isAssignedToCustomer = false;
         scope.isPublic = false;
         scope.assignedCustomer = null;
+        scope.defaultType = 'default';
 
         scope.$watch('edge', function(newVal) {
             if (newVal) {
@@ -36,7 +37,6 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
                     scope.edge.routingKey = utils.guid('');
                     scope.edge.secret = generateSecret(20);
                     scope.edge.cloudEndpoint = utils.baseUrl();
-                    scope.edge.type = 'default';
                 }
                 if (scope.edge.customerId && scope.edge.customerId.id !== types.id.nullUid) {
                     scope.isAssignedToCustomer = true;

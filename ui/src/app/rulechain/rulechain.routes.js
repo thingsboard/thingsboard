@@ -143,7 +143,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
             ruleChainsType: 'edges'
         },
         ncyBreadcrumb: {
-            label: '{"icon": "code", "label": "edge.rulechain-templates"}'
+            label: '{"icon": "settings_ethernet", "label": "edge.rulechain-templates"}'
         }
     }).state('home.edges.edgeRuleChains.ruleChain', {
         url: '/:ruleChainId',
@@ -180,7 +180,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
             pageTitle: 'edge.rulechain-template'
         },
         ncyBreadcrumb: {
-            label: '{"icon": "code", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
+            label: '{"icon": "settings_ethernet", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
         }
     }).state('home.edges.edgeRuleChains.importRuleChain', {
         url: '/edges/ruleChains/import',
@@ -221,7 +221,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
             pageTitle: 'edge.rulechain-template'
         },
         ncyBreadcrumb: {
-            label: '{"icon": "code", "label": "{{ (\'rulechain.import\' | translate) + \': \'+ vm.ruleChain.name }}", "translate": "false"}'
+            label: '{"icon": "settings_ethernet", "label": "{{ (\'rulechain.import\' | translate) + \': \'+ vm.ruleChain.name }}", "translate": "false"}'
         }
     });
 }
