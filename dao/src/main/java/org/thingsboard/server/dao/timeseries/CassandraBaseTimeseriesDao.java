@@ -472,15 +472,15 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
     private ListenableFuture<Integer> doSavePartition(TenantId tenantId, EntityId entityId, String key, long ttl, long partition) {
         log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
-        BoundStatementBuilder stmtBuilder = new BoundStatementBuilder((ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt()).bind());
-        stmtBuilder.setString(0, entityId.getEntityType().name())
+        PreparedStatement preparedStatement = ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt();
+        BoundStatement stmt = preparedStatement.bind();
+        stmt = stmt.setString(0, entityId.getEntityType().name())
                 .setUuid(1, entityId.getId())
                 .setLong(2, partition)
                 .setString(3, key);
         if (ttl > 0) {
-            stmtBuilder.setInt(4, (int) ttl);
+            stmt = stmt.setInt(4, (int) ttl);
         }
-        BoundStatement stmt = stmtBuilder.build();
         return getFuture(executeAsyncWrite(tenantId, stmt), rs -> 0);
     }
 

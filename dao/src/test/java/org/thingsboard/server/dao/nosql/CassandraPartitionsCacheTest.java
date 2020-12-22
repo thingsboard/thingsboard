@@ -21,10 +21,10 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.google.common.util.concurrent.Futures;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -36,9 +36,9 @@ import org.thingsboard.server.dao.timeseries.CassandraBaseTimeseriesDao;
 import java.util.UUID;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,7 +46,14 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class CassandraPartitionsCacheTest {
 
+    @Spy
     private CassandraBaseTimeseriesDao cassandraBaseTimeseriesDao;
+
+    @Mock
+    private PreparedStatement preparedStatement;
+
+    @Mock
+    private BoundStatement boundStatement;
 
     @Mock
     private Environment environment;
@@ -60,22 +67,8 @@ public class CassandraPartitionsCacheTest {
     @Mock
     private GuavaSession session;
 
-    @Mock
-    private PreparedStatement preparedStatement;
-
-    @Mock
-    private BoundStatement boundStatement;
-
     @Before
     public void setUp() throws Exception {
-        when(cluster.getDefaultReadConsistencyLevel()).thenReturn(ConsistencyLevel.ONE);
-        when(cluster.getDefaultWriteConsistencyLevel()).thenReturn(ConsistencyLevel.ONE);
-        when(cluster.getSession()).thenReturn(session);
-        when(session.prepare(anyString())).thenReturn(preparedStatement);
-        when(preparedStatement.bind()).thenReturn(boundStatement);
-
-        cassandraBaseTimeseriesDao = spy(new CassandraBaseTimeseriesDao());
-
         ReflectionTestUtils.setField(cassandraBaseTimeseriesDao, "partitioning", "MONTHS");
         ReflectionTestUtils.setField(cassandraBaseTimeseriesDao, "partitionsCacheSize", 100000);
         ReflectionTestUtils.setField(cassandraBaseTimeseriesDao, "systemTtl", 0);
@@ -84,10 +77,20 @@ public class CassandraPartitionsCacheTest {
         ReflectionTestUtils.setField(cassandraBaseTimeseriesDao, "rateLimiter", rateLimiter);
         ReflectionTestUtils.setField(cassandraBaseTimeseriesDao, "cluster", cluster);
 
+        when(cluster.getDefaultReadConsistencyLevel()).thenReturn(ConsistencyLevel.ONE);
+        when(cluster.getDefaultWriteConsistencyLevel()).thenReturn(ConsistencyLevel.ONE);
+        when(cluster.getSession()).thenReturn(session);
+        when(session.prepare(anyString())).thenReturn(preparedStatement);
+
+        when(preparedStatement.bind()).thenReturn(boundStatement);
+
+        when(boundStatement.setString(anyInt(), anyString())).thenReturn(boundStatement);
+        when(boundStatement.setUuid(anyInt(), any(UUID.class))).thenReturn(boundStatement);
+        when(boundStatement.setLong(anyInt(), any(Long.class))).thenReturn(boundStatement);
+
         doReturn(Futures.immediateFuture(null)).when(cassandraBaseTimeseriesDao).getFuture(any(TbResultSetFuture.class), any());
     }
 
-    @Ignore
     @Test
     public void testPartitionSave() throws Exception {
         cassandraBaseTimeseriesDao.init();
@@ -96,14 +99,12 @@ public class CassandraPartitionsCacheTest {
         TenantId tenantId = new TenantId(id);
         long tsKvEntryTs = System.currentTimeMillis();
 
-//        for (int i = 0; i < 50000; i++) {
-//            cassandraBaseTimeseriesDao.savePartition(tenantId, tenantId, tsKvEntryTs, "test" + i, 0);
-//        }
-//
-//        for (int i = 0; i < 60000; i++) {
-//            cassandraBaseTimeseriesDao.savePartition(tenantId, tenantId, tsKvEntryTs, "test" + i, 0);
-//        }
-        cassandraBaseTimeseriesDao.savePartition(tenantId, tenantId, tsKvEntryTs, "test", 0);
-        verify(cassandraBaseTimeseriesDao, times(1)).executeAsyncWrite(any(TenantId.class), any(Statement.class));
+        for (int i = 0; i < 50000; i++) {
+            cassandraBaseTimeseriesDao.savePartition(tenantId, tenantId, tsKvEntryTs, "test" + i, 0);
+        }
+        for (int i = 0; i < 60000; i++) {
+            cassandraBaseTimeseriesDao.savePartition(tenantId, tenantId, tsKvEntryTs, "test" + i, 0);
+        }
+        verify(cassandraBaseTimeseriesDao, times(60000)).executeAsyncWrite(any(TenantId.class), any(Statement.class));
     }
 }
