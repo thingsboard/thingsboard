@@ -103,14 +103,6 @@
                 entity-type="types.entityType.edge">
         </tb-entity-subtype-autocomplete>
         <md-input-container class="md-block">
-            <label translate>edge.label</label>
-            <input name="label" ng-model="edge.label">
-        </md-input-container>
-        <md-input-container class="md-block">
-            <label translate>edge.description</label>
-            <textarea ng-model="edge.additionalInfo.description" rows="2"></textarea>
-        </md-input-container>
-        <md-input-container class="md-block">
             <label translate>edge.edge-license-key</label>
             <input required name="edgeLicenseKey" ng-model="edge.edgeLicenseKey">
             <div ng-messages="theForm.edgeLicenseKey.$error">
@@ -126,7 +118,6 @@
         </md-input-container>
     </fieldset>
     <div layout="row">
-
         <md-input-container class="md-block" flex>
             <label translate>edge.edge-key</label>
             <input ng-model="edge.routingKey" disabled>
@@ -155,5 +146,15 @@
                 {{ 'edge.copy-edge-secret' | translate }}
             </md-tooltip>
         </md-button>
+    </div>
+    <div layout="row">
+        <md-input-container class="md-block">
+            <label translate>edge.label</label>
+            <input name="label" ng-model="edge.label">
+        </md-input-container>
+        <md-input-container class="md-block">
+            <label translate>edge.description</label>
+            <textarea ng-model="edge.additionalInfo.description" rows="2"></textarea>
+        </md-input-container>
     </div>
 </md-content>

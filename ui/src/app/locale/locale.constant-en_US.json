@@ -457,7 +457,7 @@
         "select-default-customer": "Select default customer",
         "default-customer": "Default customer",
         "default-customer-required": "Default customer is required in order to debug dashboard on Tenant level",
-        "edges": "Customer Edges"
+        "edges": "Customer edge instances"
     },
     "datetime": {
         "date-from": "Date from",
