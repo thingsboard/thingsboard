@@ -1177,10 +1177,10 @@
       "dashboards": "Edge Dashboards",
       "manage-edge-rulechains": "Edge rule chains",
       "edge-key": "Edge key",
-      "copy-edge-key": "Copy edge key",
+      "copy-edge-key": "Copy Edge key",
       "edge-key-copied-message": "Edge key has been copied to clipboard",
       "edge-secret": "Edge secret",
-      "copy-edge-secret": "Copy edge secret",
+      "copy-edge-secret": "Copy Edge secret",
       "edge-secret-copied-message": "Edge secret has been copied to clipboard",
       "manage-edge-assets": "Edge assets",
       "manage-edge-devices": "Edge devices",
@@ -1239,7 +1239,8 @@
       "edge-event-action-type-assigned-to-edge": "Assigned to Edge",
       "edge-event-action-type-unassigned-from-edge": "Unassigned from Edge",
       "edge-event-action-type-credentials-request": "Credentials Request",
-      "edge-event-action-type-entity-merge-request": "Entity Merge Request"
+      "edge-event-action-type-entity-merge-request": "Entity Merge Request",
+      "sync-process-started-successfully": "Sync process started successfully!"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",

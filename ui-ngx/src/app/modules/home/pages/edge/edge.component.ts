@@ -93,8 +93,11 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
     this.entityForm.patchValue({edgeLicenseKey: entity.edgeLicenseKey});
     this.entityForm.patchValue({routingKey: entity.routingKey});
     this.entityForm.patchValue({secret: entity.secret});
-    this.entityForm.patchValue({additionalInfo: {
-      description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
+    this.entityForm.patchValue({
+      additionalInfo: {
+        description: entity.additionalInfo ? entity.additionalInfo.description : ''
+      }
+    });
   }
 
   onEdgeIdCopied($event) {
@@ -104,29 +107,7 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
         type: 'success',
         duration: 750,
         verticalPosition: 'bottom',
-        horizontalPosition: 'left'
-      }));
-  }
-
-  onEdgeKeyCopied($event) {
-    this.store.dispatch(new ActionNotificationShow(
-      {
-        message: this.translate.instant('edge.edge-key-copied-message'),
-        type: 'success',
-        duration: 750,
-        verticalPosition: 'bottom',
-        horizontalPosition: 'left'
-      }));
-  }
-
-  onEdgeSecretCopied($event) {
-    this.store.dispatch(new ActionNotificationShow(
-      {
-        message: this.translate.instant('edge.edge-secret-copied-message'),
-        type: 'success',
-        duration: 750,
-        verticalPosition: 'bottom',
-        horizontalPosition: 'left'
+        horizontalPosition: 'right'
       }));
   }
 
@@ -135,10 +116,23 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
       length = 1;
     }
     var l = length > 10 ? 10 : length;
-    var str =  Math.random().toString(36).substr(2, l);
+    var str = Math.random().toString(36).substr(2, l);
     if (str.length >= length) {
       return str;
     }
     return str.concat(this.generateSecret(length - str.length));
+  }
+
+  onEdgeInfoCopied(type: string) {
+    const message = type === 'key' ? 'edge.edge-key-copied-message'
+      : 'edge.edge-secret-copied-message';
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message: this.translate.instant(message),
+        type: 'success',
+        duration: 750,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }));
   }
 }

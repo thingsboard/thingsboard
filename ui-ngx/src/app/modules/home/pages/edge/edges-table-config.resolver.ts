@@ -57,6 +57,7 @@ import { EdgeComponent } from "@home/pages/edge/edge.component";
 import { EdgeTableHeaderComponent } from "@home/pages/edge/edge-table-header.component";
 import { EdgeId } from "@shared/models/id/edge-id";
 import { EdgeTabsComponent } from "@home/pages/edge/edge-tabs.component";
+import { ActionNotificationShow } from "@core/notification/notification.actions";
 
 @Injectable()
 export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeInfo>> {
@@ -182,10 +183,10 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     if (edgeScope === 'tenant') {
       actions.push(
         {
-           name: this.translate.instant('edge.make-public'),
-           icon: 'share',
-           isEnabled: (entity) => (!entity.customerId || entity.customerId.id === NULL_UUID),
-           onAction: ($event, entity) => this.makePublic($event, entity)
+          name: this.translate.instant('edge.make-public'),
+          icon: 'share',
+          isEnabled: (entity) => (!entity.customerId || entity.customerId.id === NULL_UUID),
+          onAction: ($event, entity) => this.makePublic($event, entity)
         },
         {
           name: this.translate.instant('edge.assign-to-customer'),
@@ -478,32 +479,53 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     );
   }
 
+  syncEdge($event, edge) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.edgeService.syncEdge(edge.id).subscribe(
+      () => {
+        this.store.dispatch(new ActionNotificationShow(
+          {
+            message: this.translate.instant('edge.sync-process-started-successfully'),
+            type: 'success',
+            duration: 750,
+            verticalPosition: 'bottom',
+            horizontalPosition: 'right'
+          }));
+      }
+    );
+  }
+
   onEdgeAction(action: EntityAction<EdgeInfo>): boolean {
-  switch (action.action) {
-    case 'makePublic':
-      this.makePublic(action.event, action.entity);
-    return true;
-    case 'assignToCustomer':
-      this.assignToCustomer(action.event, [action.entity.id]);
-    return true;
-    case 'unassignFromCustomer':
-      this.unassignFromCustomer(action.event, action.entity);
-    return true;
-    case 'openEdgeAssets':
-      this.openEdgeAssets(action.event, action.entity);
-    return true;
-    case 'openEdgeDevices':
-      this.openEdgeDevices(action.event, action.entity);
-    return true;
-    case 'openEdgeEntityViews':
-      this.openEdgeEntityViews(action.event, action.entity);
-    return true;
-    case 'openEdgeDashboards':
-      this.openEdgeDashboards(action.event, action.entity);
-    return true;
-    case 'openEdgeRuleChains':
-      this.openEdgeRuleChains(action.event, action.entity);
-    return true;
+    switch (action.action) {
+      case 'makePublic':
+        this.makePublic(action.event, action.entity);
+        return true;
+      case 'assignToCustomer':
+        this.assignToCustomer(action.event, [action.entity.id]);
+        return true;
+      case 'unassignFromCustomer':
+        this.unassignFromCustomer(action.event, action.entity);
+        return true;
+      case 'openEdgeAssets':
+        this.openEdgeAssets(action.event, action.entity);
+        return true;
+      case 'openEdgeDevices':
+        this.openEdgeDevices(action.event, action.entity);
+        return true;
+      case 'openEdgeEntityViews':
+        this.openEdgeEntityViews(action.event, action.entity);
+        return true;
+      case 'openEdgeDashboards':
+        this.openEdgeDashboards(action.event, action.entity);
+        return true;
+      case 'openEdgeRuleChains':
+        this.openEdgeRuleChains(action.event, action.entity);
+        return true;
+      case 'syncEdge':
+        this.syncEdge(action.event, action.entity);
+        return true;
     }
   }
 

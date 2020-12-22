@@ -83,7 +83,7 @@
     </button>
     <button mat-raised-button
             ngxClipboard
-            (cbOnSuccess)="onEdgeKeyCopied($event)"
+            (cbOnSuccess)="onEdgeInfoCopied('key')"
             [cbContent]="entity?.routingKey"
             [fxShow]="!isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
@@ -91,11 +91,19 @@
     </button>
     <button mat-raised-button
             ngxClipboard
-            (cbOnSuccess)="onEdgeSecretCopied($event)"
+            (cbOnSuccess)="onEdgeInfoCopied('secret')"
             [cbContent]="entity?.secret"
             [fxShow]="!isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>edge.copy-edge-secret</span>
+    </button>
+    <button mat-raised-button
+            ngxClipboard
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'syncEdge')"
+            [fxShow]="!isEdit">
+      <mat-icon svgIcon="mdi:sync"></mat-icon>
+      <span translate>edge.sync</span>
     </button>
   </div>
 </div>
@@ -148,19 +156,29 @@
       </div>
       <div fxLayout="row">
         <fieldset fxFlex disabled>
-          <mat-form-field class="mat-block">
+          <mat-form-field class="mat-block" fxFlex>
             <mat-label translate>edge.edge-key</mat-label>
             <input matInput formControlName="routingKey">
           </mat-form-field>
         </fieldset>
+        <button mat-button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('key')"
+                [cbContent]="entityForm?.get('routingKey').value"
+                matTooltip="{{'edge.copy-edge-key' | translate}}">
+          <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+        </button>
       </div>
       <div fxLayout="row">
         <fieldset fxFlex disabled>
-          <mat-form-field class="mat-block">
+          <mat-form-field class="mat-block" fxFlex>
             <mat-label translate>edge.edge-secret</mat-label>
             <input matInput formControlName="secret">
           </mat-form-field>
         </fieldset>
+        <button mat-button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('secret')"
+                [cbContent]="entityForm?.get('secret').value"
+                matTooltip="{{'edge.copy-edge-secret' | translate}}">
+          <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+        </button>
       </div>
       <mat-form-field class="mat-block">
         <mat-label translate>edge.label</mat-label>

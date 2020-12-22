@@ -23,6 +23,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { Edge, EdgeEvent, EdgeInfo, EdgeSearchQuery } from "@shared/models/edge.models";
 import { EntityId } from "@shared/models/id/entity-id";
+import { EdgeId } from "@shared/models/id/edge-id";
 @Injectable({
   providedIn: 'root'
 })
@@ -94,5 +95,9 @@ export class EdgeService {
                        config?: RequestConfig): Observable<PageData<EdgeEvent>> {
     return this.http.get<PageData<EdgeEvent>>(`/api/edge/${entityId.id}/events` + `${pageLink.toQuery()}`,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public syncEdge(edgeId: EdgeId, config?: RequestConfig) {
+    return this.http.post(`/api/edge/sync`, edgeId, defaultHttpOptionsFromConfig(config));
   }
 }
