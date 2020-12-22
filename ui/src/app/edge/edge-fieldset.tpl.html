@@ -15,34 +15,38 @@
     limitations under the License.
 
 -->
-<md-button ng-click="onAssignToCustomer({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant' && !isAssignedToCustomer"
-           class="md-raised md-primary">{{ 'edge.assign-to-customer' | translate }}</md-button>
-<md-button ng-click="onUnassignFromCustomer({event: $event, isPublic: isPublic})"
-           ng-show="!isEdit && (edgeScope === 'customer' || edgeScope === 'tenant') && isAssignedToCustomer"
-           class="md-raised md-primary">{{ isPublic ? 'edge.make-private' : 'edge.unassign-from-customer' | translate }}</md-button>
-<md-button ng-click="onMakePublic({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant' && !isAssignedToCustomer && !isPublic"
-           class="md-raised md-primary">{{ 'edge.make-public' | translate }}</md-button>
-<md-button ng-click="onManageEdgeAssets({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant'"
-           class="md-raised md-primary">{{ 'edge.manage-edge-assets' | translate }}</md-button>
-<md-button ng-click="onManageEdgeDevices({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant'"
-           class="md-raised md-primary">{{ 'edge.manage-edge-devices' | translate }}</md-button>
-<md-button ng-click="onManageEdgeEntityViews({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant'"
-           class="md-raised md-primary">{{ 'edge.manage-edge-entity-views' | translate }}</md-button>
-<md-button ng-click="onManageEdgeDashboards({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant'"
-           class="md-raised md-primary">{{ 'edge.manage-edge-dashboards' | translate }}</md-button>
-<md-button ng-click="onManageEdgeRuleChains({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant'"
-           class="md-raised md-primary">{{ 'edge.manage-edge-rulechains' | translate }}</md-button>
-<md-button ng-click="onDeleteEdge({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant'"
-           class="md-raised md-primary">{{ 'edge.delete' | translate }}</md-button>
+<div layout="row">
+    <md-button ng-click="onAssignToCustomer({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant' && !isAssignedToCustomer"
+               class="md-raised md-primary">{{ 'edge.assign-to-customer' | translate }}</md-button>
+    <md-button ng-click="onUnassignFromCustomer({event: $event, isPublic: isPublic})"
+               ng-show="!isEdit && (edgeScope === 'customer' || edgeScope === 'tenant') && isAssignedToCustomer"
+               class="md-raised md-primary">{{ isPublic ? 'edge.make-private' : 'edge.unassign-from-customer' | translate }}</md-button>
+    <md-button ng-click="onMakePublic({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant' && !isAssignedToCustomer && !isPublic"
+               class="md-raised md-primary">{{ 'edge.make-public' | translate }}</md-button>
+    <md-button ng-click="onDeleteEdge({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant'"
+               class="md-raised md-primary">{{ 'edge.delete' | translate }}</md-button>
+</div>
+<div layout="row">
+    <md-button ng-click="onManageEdgeAssets({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant'"
+               class="md-raised md-primary">{{ 'edge.assets' | translate }}</md-button>
+    <md-button ng-click="onManageEdgeDevices({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant'"
+               class="md-raised md-primary">{{ 'edge.devices' | translate }}</md-button>
+    <md-button ng-click="onManageEdgeEntityViews({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant'"
+               class="md-raised md-primary">{{ 'edge.entity-views' | translate }}</md-button>
+    <md-button ng-click="onManageEdgeDashboards({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant'"
+               class="md-raised md-primary">{{ 'edge.dashboards' | translate }}</md-button>
+    <md-button ng-click="onManageEdgeRuleChains({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant'"
+               class="md-raised md-primary">{{ 'edge.rulechains' | translate }}</md-button>
 
+</div>
 <div layout="row">
     <md-button ngclipboard data-clipboard-action="copy"
                ngclipboard-success="onEdgeIdCopied()"
