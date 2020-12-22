@@ -44,7 +44,6 @@ public class LwM2mServerListener {
         @Override
         public void registered(Registration registration, Registration previousReg,
                                Collection<Observation> previousObsersations) {
-
             service.onRegistered(lhServer, registration, previousObsersations);
         }
 
@@ -54,6 +53,7 @@ public class LwM2mServerListener {
         @Override
         public void updated(RegistrationUpdate update, Registration updatedRegistration,
                             Registration previousRegistration) {
+            log.info("updated");
             service.updatedReg(lhServer, updatedRegistration);
         }
 
@@ -63,6 +63,7 @@ public class LwM2mServerListener {
         @Override
         public void unregistered(Registration registration, Collection<Observation> observations, boolean expired,
                                  Registration newReg) {
+            log.info("unregistered");
             service.unReg(registration, observations);
         }
 
@@ -71,11 +72,13 @@ public class LwM2mServerListener {
     public final PresenceListener presenceListener = new PresenceListener() {
         @Override
         public void onSleeping(Registration registration) {
+            log.info("onSleeping");
             service.onSleepingDev(registration);
         }
 
         @Override
         public void onAwake(Registration registration) {
+            log.info("onAwake");
             service.onAwakeDev(registration);
         }
     };
@@ -92,8 +95,10 @@ public class LwM2mServerListener {
             if (registration != null) {
                 try {
                     service.onObservationResponse(registration, observation.getPath().toString(), response);
-                } catch (java.lang.NullPointerException e) {
-                    log.error(e.toString());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    log.error("onResponse");
+
                 }
             }
         }

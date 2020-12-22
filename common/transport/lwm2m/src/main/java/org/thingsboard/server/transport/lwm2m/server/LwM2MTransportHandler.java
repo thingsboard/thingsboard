@@ -45,15 +45,9 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -127,14 +121,19 @@ public class LwM2MTransportHandler{
 
     @PostConstruct
     public void init() {
-        LwM2mServerListener lwM2mServerListener = new LwM2mServerListener(lhServerCert, service);
-        this.lhServerCert.getRegistrationService().addListener(lwM2mServerListener.registrationListener);
-        this.lhServerCert.getPresenceService().addListener(lwM2mServerListener.presenceListener);
-        this.lhServerCert.getObservationService().addListener(lwM2mServerListener.observationListener);
-        lwM2mServerListener = new LwM2mServerListener(lhServerNoSecPskRpk, service);
-        this.lhServerNoSecPskRpk.getRegistrationService().addListener(lwM2mServerListener.registrationListener);
-        this.lhServerNoSecPskRpk.getPresenceService().addListener(lwM2mServerListener.presenceListener);
-        this.lhServerNoSecPskRpk.getObservationService().addListener(lwM2mServerListener.observationListener);
+        try {
+            LwM2mServerListener lwM2mServerListener = new LwM2mServerListener(lhServerCert, service);
+            this.lhServerCert.getRegistrationService().addListener(lwM2mServerListener.registrationListener);
+            this.lhServerCert.getPresenceService().addListener(lwM2mServerListener.presenceListener);
+            this.lhServerCert.getObservationService().addListener(lwM2mServerListener.observationListener);
+            lwM2mServerListener = new LwM2mServerListener(lhServerNoSecPskRpk, service);
+            this.lhServerNoSecPskRpk.getRegistrationService().addListener(lwM2mServerListener.registrationListener);
+            this.lhServerNoSecPskRpk.getPresenceService().addListener(lwM2mServerListener.presenceListener);
+            this.lhServerNoSecPskRpk.getObservationService().addListener(lwM2mServerListener.observationListener);
+        }
+        catch (java.lang.NullPointerException e) {
+            log.error("init [{}]", e.toString());
+        }
     }
 
     public static NetworkConfig getCoapConfig() {
@@ -150,7 +149,8 @@ public class LwM2MTransportHandler{
         return coapConfig;
     }
 
-    public static String getValueTypeToString (Object value, ResourceModel.Type type) {
+    public static String getValueTypeToString (Object value, ResourceModel.Type type, int val) {
+        try{
         switch (type) {
             case STRING:    // String
             case OBJLNK:    // ObjectLink
@@ -160,15 +160,20 @@ public class LwM2MTransportHandler{
             case BOOLEAN:   // Boolean
                 return Boolean.toString((Boolean) value);
             case FLOAT:     // Double
-                return Double.toString((Float)value);
+                return Double.toString((Double) value);
             case TIME:      // Date
-                String DATE_FORMAT = "MMM d, yyyy HH:mm a";
-                DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
-                return formatter.format(new Date(Integer.toUnsignedLong((Integer) value)));
+                return Long.toString(((Date) value).getTime());
+//                String DATE_FORMAT = "MMM d, yyyy HH:mm a";
+//                DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
+//                return formatter.format(new Date(Integer.toUnsignedLong((Integer) value)));
             case OPAQUE:    // byte[] value, base64
                 return Hex.encodeHexString((byte[])value);
             default:
                 return null;
+        }
+        } catch (Exception e) {
+            log.error(e.getStackTrace().toString());
+            return null;
         }
     }
 
@@ -303,28 +308,6 @@ public class LwM2MTransportHandler{
             log.error("Error during deserialization message, [{}]", e.getMessage());
             return Optional.empty();
         }
-    }
-
-    /**
-     * Equals to Map for values
-     * @param map1 -
-     * @param map2 -
-     * @param <V> -
-     * @return - true if equals
-     */
-    public static <V extends Comparable<V>>  boolean mapsEquals(Map<?,V> map1, Map<?,V> map2) {
-        List<V> values1 = new ArrayList<>(map1.values());
-        List<V> values2 = new ArrayList<>(map2.values());
-        Collections.sort(values1);
-        Collections.sort(values2);
-        return values1.equals(values2);
-    }
-
-    public static String convertCamelCase (String str) {
-        str = str.toLowerCase().replace("/[^a-z ]+/g", " ");
-        str = str.replace("/^(.)|\\s(.)/g", "$1");
-        str = str.replace("/[^a-zA-Z]+/g", "");
-        return str;
     }
 
     public static String splitCamelCaseString(String s){

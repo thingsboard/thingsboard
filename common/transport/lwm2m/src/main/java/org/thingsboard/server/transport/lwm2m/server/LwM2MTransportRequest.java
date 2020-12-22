@@ -20,6 +20,7 @@ import org.eclipse.californium.core.coap.Response;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.observation.Observation;
@@ -50,6 +51,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -79,15 +81,16 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 public class LwM2MTransportRequest {
     private final ExecutorService executorService;
     private static final String RESPONSE_CHANNEL = "THINGSBOARD_RESP";
+    private final LwM2mValueConverterImpl converter;
 
     @Autowired
     LwM2MTransportService service;
 
     public LwM2MTransportRequest() {
+        this.converter = new LwM2mValueConverterImpl();
         executorService = Executors.newCachedThreadPool(
                 new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
     }
-
 
     @PostConstruct
     public void init() {
@@ -115,12 +118,12 @@ public class LwM2MTransportRequest {
      */
     public void sendAllRequest(LeshanServer lwServer, Registration registration, String target, String typeOper, String contentFormatParam,
                                LwM2MClient lwM2MClient, Observation observation, Object params, long timeoutInMs, boolean isDelayedUpdate) {
-        ResultIds resultIds = new ResultIds(target);
+        LwM2mPath resultIds = new LwM2mPath(target);
         if (registration != null && resultIds.getObjectId() >= 0) {
             DownlinkRequest request = null;
             ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
-            ResourceModel resource = (resultIds.resourceId >= 0) ? (lwM2MClient != null) ?
-                    lwM2MClient.getModelObjects().get(resultIds.getObjectId()).getObjectModel().resources.get(resultIds.resourceId) : null : null;
+            ResourceModel resource = (resultIds.getResourceId() !=null && lwM2MClient != null) ?
+                    lwM2MClient.getModelObjects().get(resultIds.getObjectId()).getObjectModel().resources.get(resultIds.getResourceId()) : null;
             ResourceModel.Type resType = (resource == null) ? null : resource.type;
             boolean resMultiple = (resource == null) ? false : resource.multiple;
             timeoutInMs = timeoutInMs > 0 ? timeoutInMs : DEFAULT_TIMEOUT;
@@ -132,10 +135,10 @@ public class LwM2MTransportRequest {
                     request = new DiscoverRequest(target);
                     break;
                 case GET_TYPE_OPER_OBSERVE:
-                    if (resultIds.getResourceId() >= 0) {
-                        request = new ObserveRequest(resultIds.getObjectId(), resultIds.getInstanceId(), resultIds.getResourceId());
-                    } else if (resultIds.getInstanceId() >= 0) {
-                        request = new ObserveRequest(resultIds.getObjectId(), resultIds.getInstanceId());
+                    if (resultIds.isResource()) {
+                        request = new ObserveRequest(resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
+                    } else if (resultIds.isObjectInstance()) {
+                        request = new ObserveRequest(resultIds.getObjectId(), resultIds.getObjectInstanceId());
                     } else if (resultIds.getObjectId() >= 0) {
                         request = new ObserveRequest(resultIds.getObjectId());
                     }
@@ -145,7 +148,8 @@ public class LwM2MTransportRequest {
                     break;
                 case POST_TYPE_OPER_EXECUTE:
                     if (params != null && !resMultiple) {
-                        request = new ExecuteRequest(target, LwM2MTransportHandler.getValueTypeToString(params, resType));
+//                        request = new ExecuteRequest(target, LwM2MTransportHandler.getValueTypeToString(params, resType));
+                        request = new ExecuteRequest(target, (String) this.converter.convertValue(params, resType, ResourceModel.Type.STRING, resultIds));
                     } else {
                         request = new ExecuteRequest(target);
                     }
@@ -153,11 +157,11 @@ public class LwM2MTransportRequest {
                 case POST_TYPE_OPER_WRITE_REPLACE:
                     // Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
                     if (contentFormat.equals(ContentFormat.TLV) && !resMultiple) {
-                        request = this.getWriteRequestSingleResource(null, resultIds.getObjectId(), resultIds.getInstanceId(), resultIds.getResourceId(), params, resType, registration);
+                        request = this.getWriteRequestSingleResource(null, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resType, registration);
                     }
                     // Mode.REPLACE && Request to write a <b>String Single-Instance Resource</b> using the given content format (TEXT, TLV, JSON)
                     else if (!contentFormat.equals(ContentFormat.TLV) && !resMultiple) {
-                        request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(), resultIds.getInstanceId(), resultIds.getResourceId(), params, resType, registration);
+                        request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resType, registration);
                     }
                     break;
                 case PUT_TYPE_OPER_WRITE_UPDATE:
@@ -202,10 +206,10 @@ public class LwM2MTransportRequest {
                     Attribute pmin = new Attribute(MINIMUM_PERIOD, Integer.toUnsignedLong(Integer.valueOf("1")));
                     Attribute[] attrs = {pmin};
                     AttributeSet attrSet = new AttributeSet(attrs);
-                    if (resultIds.getResourceId() >= 0) {
-                        request = new WriteAttributesRequest(resultIds.getObjectId(), resultIds.getInstanceId(), resultIds.getResourceId(), attrSet);
-                    } else if (resultIds.getInstanceId() >= 0) {
-                        request = new WriteAttributesRequest(resultIds.getObjectId(), resultIds.getInstanceId(), attrSet);
+                    if (resultIds.isResource()) {
+                        request = new WriteAttributesRequest(resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), attrSet);
+                    } else if (resultIds.isObjectInstance()) {
+                        request = new WriteAttributesRequest(resultIds.getObjectId(), resultIds.getObjectInstanceId(), attrSet);
                     } else if (resultIds.getObjectId() >= 0) {
                         request = new WriteAttributesRequest(resultIds.getObjectId(), attrSet);
                     }
