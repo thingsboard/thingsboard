@@ -20,29 +20,24 @@ import { DatePipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
-import { EventTableConfig } from './event-table-config';
-import { EventService } from '@core/http/event.service';
+import { EdgeDownlinkTableConfig } from './edge-downlink-table-config';
 import { DialogService } from '@core/services/dialog.service';
-import { DebugEventType, EventType } from '@shared/models/event.models';
+import { RuleChainService } from "@core/http/rule-chain.service";
+import { AttributeService } from "@core/http/attribute.service";
+import { EdgeService } from "@core/http/edge.service";
+import { DeviceService } from "@core/http/device.service";
+import { AssetService } from "@core/http/asset.service";
+import { EntityViewService } from "@core/http/entity-view.service";
 
 @Component({
-  selector: 'tb-event-table',
-  templateUrl: './event-table.component.html',
-  styleUrls: ['./event-table.component.scss']
+  selector: 'tb-edge-downlink-table',
+  templateUrl: './edge-downlink-table.component.html',
+  styleUrls: ['./edge-downlink-table.component.scss']
 })
-export class EventTableComponent implements OnInit {
+export class EdgeDownlinkTableComponent implements OnInit {
 
   @Input()
   tenantId: string;
-
-  @Input()
-  defaultEventType: EventType | DebugEventType;
-
-  @Input()
-  disabledEventTypes: Array<EventType | DebugEventType>;
-
-  @Input()
-  debugEventTypes: Array<DebugEventType>;
 
   activeValue = false;
   dirtyValue = false;
@@ -62,9 +57,8 @@ export class EventTableComponent implements OnInit {
   @Input()
   set entityId(entityId: EntityId) {
     this.entityIdValue = entityId;
-    if (this.eventTableConfig && this.eventTableConfig.entityId !== entityId) {
-      this.eventTableConfig.eventType = this.defaultEventType;
-      this.eventTableConfig.entityId = entityId;
+    if (this.edgeDownlinkTableConfig && this.edgeDownlinkTableConfig.entityId !== entityId) {
+      this.edgeDownlinkTableConfig.entityId = entityId;
       this.entitiesTable.resetSortAndFilter(this.activeValue);
       if (!this.activeValue) {
         this.dirtyValue = true;
@@ -74,28 +68,35 @@ export class EventTableComponent implements OnInit {
 
   @ViewChild(EntitiesTableComponent, {static: true}) entitiesTable: EntitiesTableComponent;
 
-  eventTableConfig: EventTableConfig;
+  edgeDownlinkTableConfig: EdgeDownlinkTableConfig;
 
-  constructor(private eventService: EventService,
+  constructor(private edgeService: EdgeService,
+              private deviceService: DeviceService,
+              private assetService: AssetService,
+              private entityViewService: EntityViewService,
               private dialogService: DialogService,
               private translate: TranslateService,
+              private attributeService: AttributeService,
+              private ruleChainService: RuleChainService,
               private datePipe: DatePipe,
               private dialog: MatDialog) {
   }
 
   ngOnInit() {
     this.dirtyValue = !this.activeValue;
-    this.eventTableConfig = new EventTableConfig(
-      this.eventService,
+    this.edgeDownlinkTableConfig = new EdgeDownlinkTableConfig(
+      this.edgeService,
       this.dialogService,
       this.translate,
+      this.deviceService,
+      this.assetService,
+      this.entityViewService,
+      this.ruleChainService,
+      this.attributeService,
       this.datePipe,
       this.dialog,
       this.entityIdValue,
-      this.tenantId,
-      this.defaultEventType,
-      this.disabledEventTypes,
-      this.debugEventTypes
+      this.tenantId
     );
   }
 

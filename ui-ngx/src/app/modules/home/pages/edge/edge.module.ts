@@ -36,6 +36,9 @@ import { EdgeTabsComponent } from "@home/pages/edge/edge-tabs.component";
     HomeDialogsModule,
     HomeComponentsModule,
     EdgeRoutingModule
+  ],
+  exports: [
+    EdgeComponent
   ]
 })
 

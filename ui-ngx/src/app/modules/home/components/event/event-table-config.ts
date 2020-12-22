@@ -20,35 +20,25 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import {
-  DebugEventType,
-  Event,
-  EventType,
-  EdgeEventType,
-  EdgeEventStatus,
-  edgeEventStatusColor
-} from '@shared/models/event.models';
-import {TimePageLink} from '@shared/models/page/page-link';
-import {TranslateService} from '@ngx-translate/core';
-import {DatePipe} from '@angular/common';
-import {MatDialog} from '@angular/material/dialog';
-import {EntityId} from '@shared/models/id/entity-id';
-import {EventService} from '@app/core/http/event.service';
-import {EventTableHeaderComponent} from '@home/components/event/event-table-header.component';
-import {EntityType, EntityTypeResource} from '@shared/models/entity-type.models';
-import {Observable} from 'rxjs';
-import {PageData} from '@shared/models/page/page-data';
-import {Direction} from '@shared/models/page/sort-order';
-import {DialogService} from '@core/services/dialog.service';
-import {ContentType} from '@shared/models/constants';
+import { DebugEventType, Event, EventType } from '@shared/models/event.models';
+import { TimePageLink } from '@shared/models/page/page-link';
+import { TranslateService } from '@ngx-translate/core';
+import { DatePipe } from '@angular/common';
+import { MatDialog  } from '@angular/material/dialog';
+import { EntityId } from '@shared/models/id/entity-id';
+import { EventService } from '@app/core/http/event.service';
+import { EventTableHeaderComponent  } from '@home/components/event/event-table-header.component';
+import { EntityTypeResource } from '@shared/models/entity-type.models';
+import { Observable } from 'rxjs';
+import { PageData } from '@shared/models/page/page-data';
+import { Direction  } from '@shared/models/page/sort-order';
+import { DialogService  } from '@core/services/dialog.service';
+import { ContentType  } from '@shared/models/constants';
 import {
   EventContentDialogComponent,
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
-import {sortObjectKeys} from '@core/utils';
-import {RuleChainService} from "@core/http/rule-chain.service";
-import {AttributeService} from "@core/http/attribute.service";
-import {AttributeScope} from "@shared/models/telemetry/telemetry.models";
+import { sortObjectKeys } from '@core/utils';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -66,13 +56,10 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   }
 
   eventTypes: Array<EventType | DebugEventType>;
-  queueStartTs: number;
 
   constructor(private eventService: EventService,
               private dialogService: DialogService,
               private translate: TranslateService,
-              private ruleChainService: RuleChainService,
-              private attributeService: AttributeService,
               private datePipe: DatePipe,
               private dialog: MatDialog,
               public entityId: EntityId,
@@ -93,10 +80,6 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.headerComponent = EventTableHeaderComponent;
 
     this.eventTypes = Object.keys(EventType).map(type => EventType[type]);
-
-    if (this.entityId.entityType !== EntityType.EDGE) {
-      this.eventTypes.pop();
-    }
 
     if (disabledEventTypes && disabledEventTypes.length) {
       this.eventTypes = this.eventTypes.filter(type => disabledEventTypes.indexOf(type) === -1);
@@ -121,25 +104,15 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   }
 
   fetchEvents(pageLink: TimePageLink): Observable<PageData<Event>> {
-    if (this.eventTypeValue === EventType.EDGE_EVENT) {
-      this.loadEdgeInfo();
-      return this.eventService.getEdgeEvents(this.entityId, pageLink);
-    } else {
-      return this.eventService.getEvents(this.entityId, this.eventType, this.tenantId, pageLink);
-    }
+    return this.eventService.getEvents(this.entityId, this.eventType, this.tenantId, pageLink);
   }
 
   updateColumns(updateTableColumns: boolean = false): void {
     this.columns = [];
     this.columns.push(
       new DateEntityTableColumn<Event>('createdTime', 'event.event-time', this.datePipe, '120px'),
-    );
-    if (this.eventType !== EventType.EDGE_EVENT) {
-      this.columns.push(
-        new EntityTableColumn<Event>('server', 'event.server', '100px',
-        (entity) => entity.body.server, entity => ({}), false)
-      );
-    }
+      new EntityTableColumn<Event>('server', 'event.server', '100px',
+        (entity) => entity.body.server, entity => ({}), false));
     switch (this.eventType) {
       case EventType.ERROR:
         this.columns.push(
@@ -185,30 +158,6 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             false,
             () => ({}), () => undefined, true)
         );
-        break;
-      case EventType.EDGE_EVENT:
-        this.columns.push(
-          new EntityTableColumn<Event>('type', 'event.type', '100%',
-            (entity) => entity.type, entity => ({}), false),
-          new EntityTableColumn<Event>('action', 'edge.event-action', '100%',
-            (entity) => entity.action, entity => ({}), false),
-          new EntityTableColumn<Event>('entityId', 'edge.entity-id', '100%',
-            (entity) => entity.id.id, entity => ({}), false),   //TODO: replace this to entity.entityId because of conflict wiht entityId model
-          new EntityTableColumn<Event>('status', 'event.status', '100%',
-            (entity) => this.updateEdgeEventStatus(entity.createdTime),
-              entity => ({
-                color: this.isPending(entity.createdTime) ? edgeEventStatusColor.get(EdgeEventStatus.PENDING) : edgeEventStatusColor.get(EdgeEventStatus.DEPLOYED)
-              }), false),
-          new EntityActionTableColumn<Event>('data', 'event.data',
-            {
-              name: this.translate.instant('action.view'),
-              icon: 'more_horiz',
-              isEnabled: (entity) => this.checkEdgeEventType(entity),
-              onAction: ($event, entity) => this.showEdgeEventContent($event, this.manageEdgeEventContent(entity),
-                'event.data')
-            },
-            '40px'),
-      );
         break;
       case DebugEventType.DEBUG_RULE_NODE:
       case DebugEventType.DEBUG_RULE_CHAIN:
@@ -300,82 +249,5 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       }
     });
   }
-
-  checkEdgeEventType(entity) {
-    return !( entity.type === EdgeEventType.WIDGET_TYPE ||
-              entity.type === EdgeEventType.ADMIN_SETTINGS ||
-              entity.type === EdgeEventType.WIDGETS_BUNDLE );
-  }
-
-  manageEdgeEventContent(entity) {
-    var content: string;
-    switch (entity.type) {
-      case EdgeEventType.RELATION:
-        content = entity.body;
-        break;
-      // case EdgeEventType.RULE_CHAIN_METADATA:
-      //   this.ruleChainService.getRuleChainMetadata(entity.entityId, null).pipe(
-      //     map(ruleChainMetaData => content = ruleChainMetaData.nodes)
-      //   );
-      //   break;
-      default:
-        content = entity;
-        break;
-    }
-    return JSON.stringify(content);
-  }
-
-  showEdgeEventContent($event: MouseEvent, content: string, title: string, sortKeys = false): void {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    var contentType = ContentType.JSON;
-    if (contentType === ContentType.JSON && sortKeys) {
-      try {
-        content = JSON.stringify(sortObjectKeys(JSON.parse(content)));
-      } catch (e) {}
-    }
-    this.dialog.open<EventContentDialogComponent, EventContentDialogData>(EventContentDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        content,
-        title,
-        contentType
-      }
-    });
-  }
-
-  updateEdgeEventStatus(createdTime) {
-    if (this.queueStartTs && createdTime < this.queueStartTs) {
-      return this.translate.instant('edge.success');
-    } else {
-      return this.translate.instant('edge.failed');
-    }
-  }
-
-  isPending(createdTime) {
-    return createdTime > this.queueStartTs;
-  }
-
-  loadEdgeInfo() {
-    this.attributeService.getEntityAttributes(this.entityId, AttributeScope.SERVER_SCOPE, ['queueStartTs'])
-      .subscribe(
-        attributes => this.onUpdate(attributes)
-      );
-  }
-
-  onUpdate(attributes) {
-    this.queueStartTs = 0;
-    let edge = attributes.reduce(function (map, attribute) {
-      map[attribute.key] = attribute;
-      return map;
-    }, {});
-    if (edge.queueStartTs) {
-      this.queueStartTs = edge.queueStartTs.lastUpdateTs;
-    }
-  }
-
-
 }
 

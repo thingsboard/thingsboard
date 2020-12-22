@@ -119,6 +119,7 @@ import { SmsProviderConfigurationComponent } from '@home/components/sms/sms-prov
 import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-sns-provider-configuration.component';
 import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
 import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
+import {EdgeDownlinkTableComponent} from "@home/components/edge/edge-downlink-table.component";
 
 @NgModule({
   declarations:
@@ -132,6 +133,7 @@ import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-dev
       EventContentDialogComponent,
       EventTableHeaderComponent,
       EventTableComponent,
+      EdgeDownlinkTableComponent,
       RelationTableComponent,
       RelationDialogComponent,
       RelationFiltersComponent,
@@ -234,6 +236,7 @@ import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-dev
     EntityDetailsPanelComponent,
     AuditLogTableComponent,
     EventTableComponent,
+    EdgeDownlinkTableComponent,
     RelationTableComponent,
     RelationFiltersComponent,
     AlarmTableComponent,

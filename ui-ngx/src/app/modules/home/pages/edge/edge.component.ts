@@ -44,6 +44,7 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
               @Inject('entity') protected entityValue: EdgeInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<EdgeInfo>,
               public fb: FormBuilder,
+              // TODO: voba - discuss with Vlad how properly add window to subclass
               @Inject(WINDOW) protected window: Window) {
     super(store, fb, entityValue, entitiesTableConfigValue, window);
   }
