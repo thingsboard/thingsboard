@@ -363,31 +363,31 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void processAuthTokenConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
-        String userName = msg.payload().userName();
+    private void processAuthTokenConnect(ChannelHandlerContext ctx, MqttConnectMessage connectMessage) {
+        String userName = connectMessage.payload().userName();
         log.info("[{}] Processing connect msg for client with user name: {}!", sessionId, userName);
         if (StringUtils.isEmpty(userName)) {
-            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD, msg));
+            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD, connectMessage));
             ctx.close();
         } else {
             transportService.process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(userName).build(),
                     new TransportServiceCallback<ValidateDeviceCredentialsResponseMsg>() {
                         @Override
-                        public void onSuccess(ValidateDeviceCredentialsResponseMsg responseMsg) {
-                            onValidateDeviceResponse(responseMsg, ctx, msg);
+                        public void onSuccess(ValidateDeviceCredentialsResponseMsg msg) {
+                            onValidateDeviceResponse(msg, ctx, connectMessage);
                         }
 
                         @Override
                         public void onError(Throwable e) {
                             log.trace("[{}] Failed to process credentials: {}", address, userName, e);
-                            ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE, msg));
+                            ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE, connectMessage));
                             ctx.close();
                         }
                     });
         }
     }
 
-    private void processX509CertConnect(ChannelHandlerContext ctx, X509Certificate cert, MqttConnectMessage msg) {
+    private void processX509CertConnect(ChannelHandlerContext ctx, X509Certificate cert, MqttConnectMessage connectMessage) {
         try {
             if(!context.isSkipValidityCheckForClientCert()){
                 cert.checkValidity();
@@ -397,19 +397,19 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             transportService.process(ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
                     new TransportServiceCallback<ValidateDeviceCredentialsResponseMsg>() {
                         @Override
-                        public void onSuccess(ValidateDeviceCredentialsResponseMsg responseMsg) {
-                            onValidateDeviceResponse(responseMsg, ctx, msg);
+                        public void onSuccess(ValidateDeviceCredentialsResponseMsg msg) {
+                            onValidateDeviceResponse(msg, ctx, connectMessage);
                         }
 
                         @Override
                         public void onError(Throwable e) {
                             log.trace("[{}] Failed to process credentials: {}", address, sha3Hash, e);
-                            ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE, msg));
+                            ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE, connectMessage));
                             ctx.close();
                         }
                     });
         } catch (Exception e) {
-            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED, msg));
+            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED, connectMessage));
             ctx.close();
         }
     }
@@ -513,36 +513,36 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void onValidateDeviceResponse(ValidateDeviceCredentialsResponseMsg responseMsg, ChannelHandlerContext ctx, MqttConnectMessage msg) {
-        if (!responseMsg.hasDeviceInfo()) {
-            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED, msg));
+    private void onValidateDeviceResponse(ValidateDeviceCredentialsResponseMsg msg, ChannelHandlerContext ctx, MqttConnectMessage connectMessage) {
+        if (!msg.hasDeviceInfo()) {
+            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED, connectMessage));
             ctx.close();
         } else {
-            deviceSessionCtx.setDeviceInfo(responseMsg.getDeviceInfo());
+            deviceSessionCtx.setDeviceInfo(msg.getDeviceInfo());
             sessionInfo = SessionInfoProto.newBuilder()
                     .setNodeId(context.getNodeId())
                     .setSessionIdMSB(sessionId.getMostSignificantBits())
                     .setSessionIdLSB(sessionId.getLeastSignificantBits())
-                    .setDeviceIdMSB(responseMsg.getDeviceInfo().getDeviceIdMSB())
-                    .setDeviceIdLSB(responseMsg.getDeviceInfo().getDeviceIdLSB())
-                    .setTenantIdMSB(responseMsg.getDeviceInfo().getTenantIdMSB())
-                    .setTenantIdLSB(responseMsg.getDeviceInfo().getTenantIdLSB())
-                    .setDeviceName(responseMsg.getDeviceInfo().getDeviceName())
-                    .setDeviceType(responseMsg.getDeviceInfo().getDeviceType())
+                    .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
+                    .setDeviceIdLSB(msg.getDeviceInfo().getDeviceIdLSB())
+                    .setTenantIdMSB(msg.getDeviceInfo().getTenantIdMSB())
+                    .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
+                    .setDeviceName(msg.getDeviceInfo().getDeviceName())
+                    .setDeviceType(msg.getDeviceInfo().getDeviceType())
                     .build();
             transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), new TransportServiceCallback<Void>() {
                 @Override
                 public void onSuccess(Void response) {
                     transportService.registerAsyncSession(sessionInfo, MqttTransportHandler.this);
                     checkGatewaySession();
-                    ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED, msg));
+                    ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED, connectMessage));
                     log.info("[{}] Client connected!", sessionId);
                 }
 
                 @Override
                 public void onError(Throwable e) {
                     log.warn("[{}] Failed to submit session event", sessionId, e);
-                    ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE, msg));
+                    ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE, connectMessage));
                     ctx.close();
                 }
             });
