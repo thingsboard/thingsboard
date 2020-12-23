@@ -20,5 +20,5 @@ import { Observable } from 'rxjs';
 
 export interface DataKeysCallbacks {
   generateDataKey: (chip: any, type: DataKeyType) => DataKey;
-  fetchEntityKeys: (entityAliasId: string, query: string, types: Array<DataKeyType>) => Observable<Array<DataKey>>;
+  fetchEntityKeys: (entityAliasId: string, types: Array<DataKeyType>) => Observable<Array<DataKey>>;
 }

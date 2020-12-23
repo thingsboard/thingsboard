@@ -47,6 +47,9 @@ import moment from 'moment';
 import { isUndefined } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 
+interface dataMap {
+  [key: string] : FormattedData
+}
 
 @Component({
   // tslint:disable-next-line:component-selector
@@ -70,7 +73,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   interpolatedTimeData = [];
   widgetConfig: WidgetConfig;
   settings: TripAnimationSettings;
-  mainTooltip = '';
+  mainTooltips = [];
   visibleTooltip = false;
   activeTrip: FormattedData;
   label: string;
@@ -115,7 +118,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
       this.historicalData = parseArray(this.ctx.data).filter(arr => arr.length);
       if (this.historicalData.length) {
         this.calculateIntervals();
-        this.timeUpdated(this.currentTime && this.currentTime > this.minTime ? this.currentTime : this.minTime);
+        this.timeUpdated(this.minTime);
       }
       this.mapWidget.map.map?.invalidateSize();
       this.cd.detectChanges();
@@ -140,32 +143,39 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.currentTime = time;
     const currentPosition = this.interpolatedTimeData
       .map(dataSource => dataSource[time])
-      .filter(ds => ds);
-    if (isUndefined(currentPosition[0])) {
-      const timePoints = Object.keys(this.interpolatedTimeData[0]).map(item => parseInt(item, 10));
-      for (let i = 1; i < timePoints.length; i++) {
-        if (timePoints[i - 1] < time && timePoints[i] > time) {
-          const beforePosition = this.interpolatedTimeData[0][timePoints[i - 1]];
-          const afterPosition = this.interpolatedTimeData[0][timePoints[i]];
-          const ratio = getRatio(timePoints[i - 1], timePoints[i], time);
-          currentPosition[0] = {
-            ...beforePosition,
-            time,
-            ...interpolateOnLineSegment(beforePosition, afterPosition, this.settings.latKeyName, this.settings.lngKeyName, ratio)
+    for(let j = 0; j < this.interpolatedTimeData.length; j++) {
+      if (isUndefined(currentPosition[j])) {
+        const timePoints = Object.keys(this.interpolatedTimeData[j]).map(item => parseInt(item, 10));
+        for (let i = 1; i < timePoints.length; i++) {
+          if (timePoints[i - 1] < time && timePoints[i] > time) {
+            const beforePosition = this.interpolatedTimeData[j][timePoints[i - 1]];
+            const afterPosition = this.interpolatedTimeData[j][timePoints[i]];
+            const ratio = getRatio(timePoints[i - 1], timePoints[i], time);
+            currentPosition[j] = {
+              ...beforePosition,
+              time,
+              ...interpolateOnLineSegment(beforePosition, afterPosition, this.settings.latKeyName, this.settings.lngKeyName, ratio)
+            }
+            break;
           }
-          break;
         }
       }
     }
+    for(let j = 0; j < this.interpolatedTimeData.length; j++) {
+      if (isUndefined(currentPosition[j])) {
+        currentPosition[j] = this.calculateLastPoints(this.interpolatedTimeData[j], time);
+      }
+    }
     this.calcLabel();
-    this.calcTooltip(currentPosition.find(position => position.entityName === this.activeTrip.entityName));
+    this.calcMainTooltip(currentPosition);
     if (this.mapWidget && this.mapWidget.map && this.mapWidget.map.map) {
-      this.mapWidget.map.updatePolylines(this.interpolatedTimeData.map(ds => _.values(ds)), true, this.activeTrip);
+      const formattedInterpolatedTimeData = this.interpolatedTimeData.map(ds => _.values(ds));
+      this.mapWidget.map.updatePolylines(formattedInterpolatedTimeData, true);
       if (this.settings.showPolygon) {
         this.mapWidget.map.updatePolygons(this.interpolatedTimeData);
       }
       if (this.settings.showPoints) {
-        this.mapWidget.map.updatePoints(_.values(_.union(this.interpolatedTimeData)[0]), this.calcTooltip);
+        this.mapWidget.map.updatePoints(formattedInterpolatedTimeData.map(ds => _.union(ds)), this.calcTooltip);
       }
       this.mapWidget.map.updateMarkers(currentPosition, true, (trip) => {
         this.activeTrip = trip;
@@ -175,6 +185,23 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   setActiveTrip() {
+  }
+
+  private calculateLastPoints(dataSource: dataMap, time: number): FormattedData {
+    const timeArr = Object.keys(dataSource);
+    let index = timeArr.findIndex((dtime, index) => {
+      return Number(dtime) >= time;
+    });
+
+    if(index !== -1) {
+      if(Number(timeArr[index]) !== time && index !== 0) {
+        index--;
+      }
+    } else {
+      index = timeArr.length - 1;
+    }
+
+    return dataSource[timeArr[index]];
   }
 
   calculateIntervals() {
@@ -194,16 +221,19 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     }
   }
 
-  calcTooltip = (point?: FormattedData): string => {
+  calcTooltip = (point: FormattedData): string => {
     const data = point ? point : this.activeTrip;
     const tooltipPattern: string = this.settings.useTooltipFunction ?
       safeExecute(this.settings.tooltipFunction, [data, this.historicalData, point.dsIndex]) : this.settings.tooltipPattern;
-    const tooltipText = parseWithTranslation.parseTemplate(tooltipPattern, data, true);
-    this.mainTooltip = this.sanitizer.sanitize(
-      SecurityContext.HTML, tooltipText);
-    this.cd.detectChanges();
-    this.activeTrip = point;
-    return tooltipText;
+    return parseWithTranslation.parseTemplate(tooltipPattern, data, true);
+  }
+
+  private calcMainTooltip(points: FormattedData[]): void {
+    const tooltips = [];
+    for (let point of points) {
+      tooltips.push(this.sanitizer.sanitize(SecurityContext.HTML, this.calcTooltip(point)));
+    }
+    this.mainTooltips = tooltips;
   }
 
   calcLabel() {

@@ -22,9 +22,11 @@
         <div translate>tenant-profile.profile-configuration</div>
       </mat-panel-title>
     </mat-expansion-panel-header>
-    <tb-tenant-profile-configuration
-      formControlName="configuration"
-      required>
-    </tb-tenant-profile-configuration>
+    <ng-template matExpansionPanelContent>
+      <tb-tenant-profile-configuration
+        formControlName="configuration"
+        required>
+      </tb-tenant-profile-configuration>
+    </ng-template>
   </mat-expansion-panel>
 </form>
