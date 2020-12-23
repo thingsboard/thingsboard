@@ -853,7 +853,8 @@
         "no-edge-types-matching": "No edge types matching '{{entitySubtype}}' were found.",
         "edge-type-list-empty": "No edge types selected.",
         "edge-types": "Edge types",
-        "license-key-tooltip": "To get license key please visit www.thingsboard.io/edge"
+        "license-key-hint": "To obtain your license please navigate to the <a href='https://thingsboard.io/pricing/?active=thingsboard-edge' target='_blank'>pricing page</a> and select the best license option for your case.",
+        "cloud-endpoint-hint": "Edge requires HTTP(s) access to Cloud (ThingsBoard CE/PE) to verify the license key. Please specify Cloud URL that Edge is able to connect to."
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",
