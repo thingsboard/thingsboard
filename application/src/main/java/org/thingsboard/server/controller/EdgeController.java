@@ -92,10 +92,10 @@ public class EdgeController extends BaseController {
             edge.setTenantId(tenantId);
             boolean created = edge.getId() == null;
 
-            RuleChain defaultRootEdgeRuleChain = null;
+            RuleChain edgeTemplateRootRuleChain = null;
             if (created) {
-                defaultRootEdgeRuleChain = ruleChainService.getDefaultRootEdgeRuleChain(tenantId);
-                if (defaultRootEdgeRuleChain == null) {
+                edgeTemplateRootRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(tenantId);
+                if (edgeTemplateRootRuleChain == null) {
                     throw new DataValidationException("Root edge rule chain is not available!");
                 }
             }
@@ -108,8 +108,8 @@ public class EdgeController extends BaseController {
             Edge savedEdge = checkNotNull(edgeService.saveEdge(edge));
 
             if (created) {
-                ruleChainService.assignRuleChainToEdge(tenantId, defaultRootEdgeRuleChain.getId(), savedEdge.getId());
-                edgeNotificationService.setEdgeRootRuleChain(tenantId, savedEdge, defaultRootEdgeRuleChain.getId());
+                ruleChainService.assignRuleChainToEdge(tenantId, edgeTemplateRootRuleChain.getId(), savedEdge.getId());
+                edgeNotificationService.setEdgeRootRuleChain(tenantId, savedEdge, edgeTemplateRootRuleChain.getId());
                 edgeService.assignDefaultRuleChainsToEdge(tenantId, savedEdge.getId());
             }
 

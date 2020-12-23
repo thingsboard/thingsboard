@@ -40,10 +40,10 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         getEdgesRuleChains: getEdgesRuleChains,
         assignRuleChainToEdge: assignRuleChainToEdge,
         unassignRuleChainFromEdge: unassignRuleChainFromEdge,
-        setDefaultRootEdgeRuleChain: setDefaultRootEdgeRuleChain,
-        addDefaultEdgeRuleChain: addDefaultEdgeRuleChain,
-        removeDefaultEdgeRuleChain: removeDefaultEdgeRuleChain,
-        getDefaultEdgeRuleChains: getDefaultEdgeRuleChains
+        setEdgeTemplateRootRuleChain: setEdgeTemplateRootRuleChain,
+        setAutoAssignToEdgeRuleChain: setAutoAssignToEdgeRuleChain,
+        unsetAutoAssignToEdgeRuleChain: unsetAutoAssignToEdgeRuleChain,
+        getAutoAssignToEdgeRuleChains: getAutoAssignToEdgeRuleChains
     };
 
     return service;
@@ -350,9 +350,9 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         return deferred.promise;
     }
 
-    function setDefaultRootEdgeRuleChain(ruleChainId) {
+    function setEdgeTemplateRootRuleChain(ruleChainId) {
         var deferred = $q.defer();
-        var url = '/api/ruleChain/' + ruleChainId + '/defaultRootEdge';
+        var url = '/api/ruleChain/' + ruleChainId + '/edgeTemplateRoot';
         $http.post(url).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
@@ -361,9 +361,9 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         return deferred.promise;
     }
 
-    function addDefaultEdgeRuleChain(ruleChainId) {
+    function setAutoAssignToEdgeRuleChain(ruleChainId) {
         var deferred = $q.defer();
-        var url = '/api/ruleChain/' + ruleChainId + '/defaultEdge';
+        var url = '/api/ruleChain/' + ruleChainId + '/autoAssignToEdge';
         $http.post(url, null).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
@@ -372,9 +372,9 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         return deferred.promise;
     }
 
-    function removeDefaultEdgeRuleChain(ruleChainId) {
+    function unsetAutoAssignToEdgeRuleChain(ruleChainId) {
         var deferred = $q.defer();
-        var url = '/api/ruleChain/' + ruleChainId + '/defaultEdge';
+        var url = '/api/ruleChain/' + ruleChainId + '/autoAssignToEdge';
         $http.delete(url).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
@@ -383,9 +383,9 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         return deferred.promise;
     }
 
-    function getDefaultEdgeRuleChains(config) {
+    function getAutoAssignToEdgeRuleChains(config) {
         var deferred = $q.defer();
-        var url = '/api/ruleChain/defaultEdgeRuleChains';
+        var url = '/api/ruleChain/autoAssignToEdgeRuleChains';
         $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {

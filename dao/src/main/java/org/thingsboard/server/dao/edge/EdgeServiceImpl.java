@@ -340,7 +340,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     @Override
     public void assignDefaultRuleChainsToEdge(TenantId tenantId, EdgeId edgeId) {
         log.trace("Executing assignDefaultRuleChainsToEdge, tenantId [{}], edgeId [{}]", tenantId, edgeId);
-        ListenableFuture<List<RuleChain>> future = ruleChainService.findDefaultEdgeRuleChainsByTenantId(tenantId);
+        ListenableFuture<List<RuleChain>> future = ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId);
         Futures.addCallback(future, new FutureCallback<List<RuleChain>>() {
             @Override
             public void onSuccess(List<RuleChain> ruleChains) {

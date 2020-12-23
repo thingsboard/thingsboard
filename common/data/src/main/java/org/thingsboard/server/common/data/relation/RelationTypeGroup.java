@@ -23,6 +23,6 @@ public enum RelationTypeGroup {
     RULE_CHAIN,
     RULE_NODE,
     EDGE,
-    EDGE_DEFAULT_RULE_CHAIN
+    EDGE_AUTO_ASSIGN_RULE_CHAIN
 
 }

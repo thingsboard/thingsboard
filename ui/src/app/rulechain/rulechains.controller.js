@@ -98,7 +98,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
     vm.exportRuleChain = exportRuleChain;
     vm.setRootRuleChain = setRootRuleChain;
     vm.setDefaultEdgeRuleChain = setDefaultEdgeRuleChain;
-    vm.removeDefaultEdgeRuleChain = removeDefaultEdgeRuleChain;
+    vm.unsetAutoAssignToEdgeRuleChain = unsetAutoAssignToEdgeRuleChain;
     
     initController();
 
@@ -195,7 +195,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
 
             ruleChainActionsList.push({
                 onAction: function ($event, item) {
-                    removeDefaultEdgeRuleChain($event, item);
+                    unsetAutoAssignToEdgeRuleChain($event, item);
                 },
                 name: function() { return $translate.instant('rulechain.remove-default-edge') },
                 details: function() { return $translate.instant('rulechain.remove-default-edge') },
@@ -205,7 +205,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
 
             ruleChainActionsList.push({
                 onAction: function ($event, item) {
-                    setDefaultRootEdgeRuleChain($event, item);
+                    setEdgeTemplateRootRuleChain($event, item);
                 },
                 name: function() { return $translate.instant('rulechain.set-default-root-edge') },
                 details: function() { return $translate.instant('rulechain.set-default-root-edge') },
@@ -339,7 +339,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
 
     function mapRuleChainsWithDefaultEdges(ruleChains) {
         var deferred = $q.defer();
-        ruleChainService.getDefaultEdgeRuleChains(null).then(
+        ruleChainService.getAutoAssignToEdgeRuleChains(null).then(
             function success(response) {
                 let defaultEdgeRuleChainIds = [];
                 response.map(function (ruleChain) {
@@ -481,7 +481,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
-            ruleChainService.addDefaultEdgeRuleChain(ruleChain.id.id).then(
+            ruleChainService.setAutoAssignToEdgeRuleChain(ruleChain.id.id).then(
                     () => {
                         vm.grid.refreshList();
                     }
@@ -489,7 +489,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
         });
     }
 
-    function removeDefaultEdgeRuleChain($event, ruleChain) {
+    function unsetAutoAssignToEdgeRuleChain($event, ruleChain) {
         $event.stopPropagation();
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
@@ -499,7 +499,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
-            ruleChainService.removeDefaultEdgeRuleChain(ruleChain.id.id).then(
+            ruleChainService.unsetAutoAssignToEdgeRuleChain(ruleChain.id.id).then(
                 () => {
                     vm.grid.refreshList();
                 }
@@ -507,7 +507,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
         });
     }
 
-    function setDefaultRootEdgeRuleChain($event, ruleChain) {
+    function setEdgeTemplateRootRuleChain($event, ruleChain) {
         $event.stopPropagation();
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
@@ -517,7 +517,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
-            ruleChainService.setDefaultRootEdgeRuleChain(ruleChain.id.id).then(
+            ruleChainService.setEdgeTemplateRootRuleChain(ruleChain.id.id).then(
                 () => {
                     vm.grid.refreshList();
                 }
