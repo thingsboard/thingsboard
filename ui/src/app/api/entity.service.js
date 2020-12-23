@@ -910,7 +910,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 }
             }
         }
-        if (userService.isEdgesSupportEnabled()) {
+        if (!userService.isEdgesSupportEnabled()) {
             delete entityTypes.edge;
         }
         return entityTypes;
