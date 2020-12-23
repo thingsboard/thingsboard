@@ -608,30 +608,30 @@ export default abstract class LeafletMap {
       return polygon;
     }
 
-  updatePoints(pointsData: FormattedData[][], getTooltip: (point: FormattedData[], setTooltip?: boolean) => string) {
-    for(let i = 0; i < pointsData.length; i++) {
-      let pointsList = pointsData[i];
-      if(i === 0) {
-        if (this.points) {
-          this.map.removeLayer(this.points);
-        }
-        this.points = new FeatureGroup();
+  updatePoints(pointsData: FormattedData[][], getTooltip: (point: FormattedData) => string) {
+    if(pointsData.length) {
+      if (this.points) {
+        this.map.removeLayer(this.points);
       }
+      this.points = new FeatureGroup();
+    }
+    for(let i = 0; i < pointsData.length; i++) {
+      const pointsList = pointsData[i];
       pointsList.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
         const point = L.circleMarker(this.convertPosition(data), {
           color: this.options.pointColor,
           radius: this.options.pointSize
         });
         if (!this.options.pointTooltipOnRightPanel) {
-          point.on('click', () => getTooltip([data]));
+          point.on('click', () => getTooltip(data));
         } else {
-          createTooltip(point, this.options, data.$datasource, getTooltip([data], false));
+          createTooltip(point, this.options, data.$datasource, getTooltip(data));
         }
         this.points.addLayer(point);
       });
-      if(i === (pointsData.length - 1)) {
-        this.map.addLayer(this.points);
-      }
+    }
+    if(pointsData.length) {
+      this.map.addLayer(this.points);
     }
   }
 

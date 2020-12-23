@@ -166,8 +166,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
         currentPosition[j] = this.calculateLastPoints(this.interpolatedTimeData[j], time);
       }
     }
-    this.calcLabel(currentPosition);
-    this.calcTooltip(currentPosition, true);
+    this.calcLabel();
+    this.calcMainTooltip(currentPosition);
     if (this.mapWidget && this.mapWidget.map && this.mapWidget.map.map) {
       const formattedInterpolatedTimeData = this.interpolatedTimeData.map(ds => _.values(ds));
       this.mapWidget.map.updatePolylines(formattedInterpolatedTimeData, true);
@@ -221,33 +221,26 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     }
   }
 
-  calcTooltip = (points?: FormattedData[], isMainTooltip: boolean = false): string => {
-    let tooltipText;
-    if(isMainTooltip) {
-      this.mainTooltips = []
-    }
-    for (let point of points) {
-      const data = point ? point : this.activeTrip;
-      const tooltipPattern: string = this.settings.useTooltipFunction ?
-        safeExecute(this.settings.tooltipFunction, [data, this.historicalData, point.dsIndex]) : this.settings.tooltipPattern;
-      tooltipText = parseWithTranslation.parseTemplate(tooltipPattern, data, true);
-      if(isMainTooltip) {
-        this.mainTooltips.push(this.sanitizer.sanitize(SecurityContext.HTML, tooltipText));
-      }
-    }
-    this.cd.detectChanges();
-    return tooltipText;
+  calcTooltip = (point: FormattedData): string => {
+    const data = point ? point : this.activeTrip;
+    const tooltipPattern: string = this.settings.useTooltipFunction ?
+      safeExecute(this.settings.tooltipFunction, [data, this.historicalData, point.dsIndex]) : this.settings.tooltipPattern;
+    return parseWithTranslation.parseTemplate(tooltipPattern, data, true);
   }
 
-  calcLabel(formattedDataArr: FormattedData[]) {
-    let labelToSet = '';
-    for (let formattedData of formattedDataArr) {
-      const labelText: string = this.settings.useLabelFunction ?
-        safeExecute(this.settings.labelFunction, [formattedData, this.historicalData, formattedData.dsIndex]) : this.settings.label;
-      const label = (parseWithTranslation.parseTemplate(labelText, formattedData, true));
-      labelToSet = labelToSet.length ? labelToSet + ',' + label : label;
+  private calcMainTooltip(points: FormattedData[]): void {
+    const tooltips = [];
+    for (let point of points) {
+      tooltips.push(this.sanitizer.sanitize(SecurityContext.HTML, this.calcTooltip(point)));
     }
-    this.label = labelToSet;
+    this.mainTooltips = tooltips;
+  }
+
+  calcLabel() {
+    const data = this.activeTrip;
+    const labelText: string = this.settings.useLabelFunction ?
+      safeExecute(this.settings.labelFunction, [data, this.historicalData, data.dsIndex]) : this.settings.label;
+    this.label = (parseWithTranslation.parseTemplate(labelText, data, true));
   }
 
   interpolateArray(originData: FormattedData[]) {
