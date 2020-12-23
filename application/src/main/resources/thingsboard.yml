@@ -192,8 +192,9 @@ cassandra:
     read_consistency_level: "${CASSANDRA_READ_CONSISTENCY_LEVEL:ONE}"
     write_consistency_level: "${CASSANDRA_WRITE_CONSISTENCY_LEVEL:ONE}"
     default_fetch_size: "${CASSANDRA_DEFAULT_FETCH_SIZE:2000}"
-    # Specify partitioning size for timestamp key-value storage. Example: MINUTES, HOURS, DAYS, MONTHS,INDEFINITE
+    # Specify partitioning size for timestamp key-value storage. Example: MINUTES, HOURS, DAYS, MONTHS, INDEFINITE
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
+    ts_key_value_partitions_max_cache_size: "${TS_KV_PARTITIONS_MAX_CACHE_SIZE:100000}"
     ts_key_value_ttl: "${TS_KV_TTL:0}"
     events_ttl: "${TS_EVENTS_TTL:0}"
     # Specify TTL of debug log in seconds. The current value corresponds to one week
