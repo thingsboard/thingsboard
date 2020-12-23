@@ -97,7 +97,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
 
     vm.exportRuleChain = exportRuleChain;
     vm.setRootRuleChain = setRootRuleChain;
-    vm.setDefaultEdgeRuleChain = setDefaultEdgeRuleChain;
+    vm.setAutoAssignToEdgeRuleChain = setAutoAssignToEdgeRuleChain;
     vm.removeDefaultEdgeRuleChain = removeDefaultEdgeRuleChain;
     
     initController();
@@ -185,10 +185,10 @@ export default function RuleChainsController(ruleChainService, userService, impo
 
             ruleChainActionsList.push({
                 onAction: function ($event, item) {
-                    setDefaultEdgeRuleChain($event, item);
+                    setAutoAssignToEdgeRuleChain($event, item);
                 },
-                name: function() { return $translate.instant('rulechain.set-default-edge') },
-                details: function() { return $translate.instant('rulechain.set-default-edge') },
+                name: function() { return $translate.instant('rulechain.set-auto-assign-to-edge') },
+                details: function() { return $translate.instant('rulechain.set-auto-assign-to-edge') },
                 icon: "bookmark_outline",
                 isEnabled: isNonDefaultEdgeRuleChain
             });
@@ -197,8 +197,8 @@ export default function RuleChainsController(ruleChainService, userService, impo
                 onAction: function ($event, item) {
                     removeDefaultEdgeRuleChain($event, item);
                 },
-                name: function() { return $translate.instant('rulechain.remove-default-edge') },
-                details: function() { return $translate.instant('rulechain.remove-default-edge') },
+                name: function() { return $translate.instant('rulechain.remove-auto-assign-to-edge') },
+                details: function() { return $translate.instant('rulechain.remove-auto-assign-to-edge') },
                 icon: "bookmark",
                 isEnabled: isDefaultEdgeRuleChain
             });
@@ -471,13 +471,13 @@ export default function RuleChainsController(ruleChainService, userService, impo
         });
     }
 
-    function setDefaultEdgeRuleChain($event, ruleChain) {
+    function setAutoAssignToEdgeRuleChain($event, ruleChain) {
         $event.stopPropagation();
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
-            .title($translate.instant('rulechain.set-default-edge-title', {ruleChainName: ruleChain.name}))
-            .htmlContent($translate.instant('rulechain.set-default-edge-text'))
-            .ariaLabel($translate.instant('rulechain.set-default-edge'))
+            .title($translate.instant('rulechain.set-auto-assign-to-edge-title', {ruleChainName: ruleChain.name}))
+            .htmlContent($translate.instant('rulechain.set-auto-assign-to-edge-text'))
+            .ariaLabel($translate.instant('rulechain.set-auto-assign-to-edge'))
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
@@ -493,9 +493,9 @@ export default function RuleChainsController(ruleChainService, userService, impo
         $event.stopPropagation();
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
-            .title($translate.instant('rulechain.remove-default-edge-title', {ruleChainName: ruleChain.name}))
-            .htmlContent($translate.instant('rulechain.remove-default-edge-text'))
-            .ariaLabel($translate.instant('rulechain.remove-default-edge'))
+            .title($translate.instant('rulechain.remove-auto-assign-to-edge-title', {ruleChainName: ruleChain.name}))
+            .htmlContent($translate.instant('rulechain.remove-auto-assign-to-edge-text'))
+            .ariaLabel($translate.instant('rulechain.remove-auto-assign-to-edge'))
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {

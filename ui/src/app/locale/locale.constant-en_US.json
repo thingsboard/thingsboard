@@ -1587,7 +1587,7 @@
         "assign-rulechains": "Assign rulechains",
         "assign-new-rulechain": "Assign new rulechain",
         "delete-rulechains": "Delete rulechains",
-        "default": "Default",
+        "auto-assign-to-edge": "Auto-assign to edge(s)",
         "unassign-rulechain": "Unassign rulechain",
         "unassign-rulechains": "Unassign rulechains",
         "unassign-rulechain-title": "Are you sure you want to unassign the rulechain '{{ruleChainTitle}}'?",
@@ -1601,12 +1601,12 @@
         "set-default-root-edge-rulechain-title": "Are you sure you want to make the rule chain '{{ruleChainName}}' default edge root?",
         "set-default-root-edge-rulechain-text": "After the confirmation the rule chain will become default edge root and will handle all incoming transport messages.",
         "invalid-rulechain-type-error": "Unable to import rule chain: Invalid rule chain type. Expected type is {{expectedRuleChainType}}.",
-        "set-default-edge": "Make rule chain default",
-        "set-default-edge-title": "Are you sure you want to make the edge rule chain '{{ruleChainName}}' default?",
-        "set-default-edge-text": "After the confirmation the edge rule chain will be added to default list and assigned to newly created edge(s).",
-        "remove-default-edge": "Remove rule chain from defaults",
-        "remove-default-edge-title": "Are you sure you want to remove the edge rule chain '{{ruleChainName}}' from default list?",
-        "remove-default-edge-text": "After the confirmation the edge rule chain will not be assigned for a newly created edges."
+        "set-auto-assign-to-edge": "Auto-assign rule chain to edge(s) on creation",
+        "set-auto-assign-to-edge-title": "Are you sure you want to auto-assign the edge rule chain '{{ruleChainName}}' to edge(s) on creation?",
+        "set-auto-assign-to-edge-text": "After the confirmation the edge rule chain will be automatically assigned to edge(s) on creation.",
+        "remove-auto-assign-to-edge": "Do not assign rule chain to edge(s) on creation",
+        "remove-auto-assign-to-edge-title": "Are you sure you do not want to auto-assign the edge rule chain '{{ruleChainName}}' to edge(s) on creation?",
+        "remove-auto-assign-to-edge-text": "After the confirmation the edge rule chain won't be automatically assigned to edge(s) on creation."
     },
     "rulenode": {
         "details": "Details",
