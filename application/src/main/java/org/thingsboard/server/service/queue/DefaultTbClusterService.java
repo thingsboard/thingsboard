@@ -22,6 +22,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
@@ -32,7 +33,6 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -235,6 +235,16 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onTenantDelete(Tenant entity, TbQueueCallback callback) {
         onEntityDelete(TenantId.SYS_TENANT_ID, entity.getId(), entity.getName(), callback);
+    }
+
+    @Override
+    public void onDeviceChange(Device entity, TbQueueCallback callback) {
+        onEntityChange(entity.getTenantId(), entity.getId(), entity, callback);
+    }
+
+    @Override
+    public void onDeviceDeleted(Device entity, TbQueueCallback callback) {
+        onEntityDelete(entity.getTenantId(), entity.getId(), entity.getName(), callback);
     }
 
     public <T> void onEntityChange(TenantId tenantId, EntityId entityid, T entity, TbQueueCallback callback) {

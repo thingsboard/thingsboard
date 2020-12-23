@@ -94,34 +94,32 @@ public abstract class AbstractMqttProvisionJsonDeviceTest extends AbstractMqttIn
 
 
     protected void processTestProvisioningDisabledDevice() throws Exception {
-        super.processBeforeTest("Test Provision device", "Test Provision gateway", TransportPayloadType.JSON, null, null, DeviceProfileProvisionType.DISABLED, null, null);
+        super.processBeforeTest("Test Provision device", "Test Provision gateway", TransportPayloadType.JSON, null, null, null, null, DeviceProfileProvisionType.DISABLED, null, null);
         byte[] result = createMqttClientAndPublish().getPayloadBytes();
         JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
         Assert.assertEquals("Provision data was not found!", response.get("errorMsg").getAsString());
-        Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), response.get("provisionDeviceStatus").getAsString());
+        Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), response.get("status").getAsString());
     }
 
 
     protected void processTestProvisioningCreateNewDeviceWithoutCredentials() throws Exception {
-        super.processBeforeTest("Test Provision device3", "Test Provision gateway", TransportPayloadType.JSON, null, null, DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES, "testProvisionKey", "testProvisionSecret");
+        super.processBeforeTest("Test Provision device3", "Test Provision gateway", TransportPayloadType.JSON, null, null, null, null, DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES, "testProvisionKey", "testProvisionSecret");
         byte[] result = createMqttClientAndPublish().getPayloadBytes();
         JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
 
         Device createdDevice = deviceService.findDeviceByTenantIdAndName(savedTenant.getTenantId(), "Test Provision device");
 
         Assert.assertNotNull(createdDevice);
-        Assert.assertEquals(createdDevice.getId().toString(), response.get("deviceId").getAsString());
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedTenant.getTenantId(), createdDevice.getId());
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
-        Assert.assertEquals(deviceCredentials.getCredentialsId(), response.get("credentialsId").getAsString());
-        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("provisionDeviceStatus").getAsString());
+        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").getAsString());
     }
 
 
     protected void processTestProvisioningCreateNewDeviceWithAccessToken() throws Exception {
-        super.processBeforeTest("Test Provision device3", "Test Provision gateway", TransportPayloadType.JSON, null, null, DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES, "testProvisionKey", "testProvisionSecret");
+        super.processBeforeTest("Test Provision device3", "Test Provision gateway", TransportPayloadType.JSON, null, null, null, null, DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES, "testProvisionKey", "testProvisionSecret");
         String requestCredentials = ",\"credentialsType\": \"ACCESS_TOKEN\",\"token\": \"test_token\"";
         byte[] result = createMqttClientAndPublish(requestCredentials).getPayloadBytes();
         JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
@@ -129,20 +127,18 @@ public abstract class AbstractMqttProvisionJsonDeviceTest extends AbstractMqttIn
         Device createdDevice = deviceService.findDeviceByTenantIdAndName(savedTenant.getTenantId(), "Test Provision device");
 
         Assert.assertNotNull(createdDevice);
-        Assert.assertEquals(createdDevice.getId().toString(), response.get("deviceId").getAsString());
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedTenant.getTenantId(), createdDevice.getId());
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
-        Assert.assertEquals(deviceCredentials.getCredentialsId(), response.get("credentialsId").getAsString());
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), "ACCESS_TOKEN");
         Assert.assertEquals(deviceCredentials.getCredentialsId(), "test_token");
-        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("provisionDeviceStatus").getAsString());
+        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").getAsString());
     }
 
 
     protected void processTestProvisioningCreateNewDeviceWithCert() throws Exception {
-        super.processBeforeTest("Test Provision device3", "Test Provision gateway", TransportPayloadType.JSON, null, null, DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES, "testProvisionKey", "testProvisionSecret");
+        super.processBeforeTest("Test Provision device3", "Test Provision gateway", TransportPayloadType.JSON, null, null, null, null, DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES, "testProvisionKey", "testProvisionSecret");
         String requestCredentials = ",\"credentialsType\": \"X509_CERTIFICATE\",\"hash\": \"testHash\"";
         byte[] result = createMqttClientAndPublish(requestCredentials).getPayloadBytes();
         JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
@@ -150,12 +146,10 @@ public abstract class AbstractMqttProvisionJsonDeviceTest extends AbstractMqttIn
         Device createdDevice = deviceService.findDeviceByTenantIdAndName(savedTenant.getTenantId(), "Test Provision device");
 
         Assert.assertNotNull(createdDevice);
-        Assert.assertEquals(createdDevice.getId().toString(), response.get("deviceId").getAsString());
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedTenant.getTenantId(), createdDevice.getId());
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
-        Assert.assertEquals(deviceCredentials.getCredentialsId(), response.get("credentialsId").getAsString());
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), "X509_CERTIFICATE");
 
         String cert = EncryptionUtil.trimNewLines(deviceCredentials.getCredentialsValue());
@@ -164,12 +158,12 @@ public abstract class AbstractMqttProvisionJsonDeviceTest extends AbstractMqttIn
         Assert.assertEquals(deviceCredentials.getCredentialsId(), sha3Hash);
 
         Assert.assertEquals(deviceCredentials.getCredentialsValue(), "testHash");
-        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("provisionDeviceStatus").getAsString());
+        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").getAsString());
     }
 
 
     protected void processTestProvisioningCreateNewDeviceWithMqttBasic() throws Exception {
-        super.processBeforeTest("Test Provision device3", "Test Provision gateway", TransportPayloadType.JSON, null, null, DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES, "testProvisionKey", "testProvisionSecret");
+        super.processBeforeTest("Test Provision device3", "Test Provision gateway", TransportPayloadType.JSON, null, null, null, null, DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES, "testProvisionKey", "testProvisionSecret");
         String requestCredentials = ",\"credentialsType\": \"MQTT_BASIC\",\"clientId\": \"test_clientId\",\"username\": \"test_username\",\"password\": \"test_password\"";
         byte[] result = createMqttClientAndPublish(requestCredentials).getPayloadBytes();
         JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
@@ -177,12 +171,10 @@ public abstract class AbstractMqttProvisionJsonDeviceTest extends AbstractMqttIn
         Device createdDevice = deviceService.findDeviceByTenantIdAndName(savedTenant.getTenantId(), "Test Provision device");
 
         Assert.assertNotNull(createdDevice);
-        Assert.assertEquals(createdDevice.getId().toString(), response.get("deviceId").getAsString());
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedTenant.getTenantId(), createdDevice.getId());
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
-        Assert.assertEquals(deviceCredentials.getCredentialsId(), response.get("credentialsId").getAsString());
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), "MQTT_BASIC");
         Assert.assertEquals(deviceCredentials.getCredentialsId(), EncryptionUtil.getSha3Hash("|", "test_clientId", "test_username"));
 
@@ -192,29 +184,26 @@ public abstract class AbstractMqttProvisionJsonDeviceTest extends AbstractMqttIn
         mqttCredentials.setPassword("test_password");
 
         Assert.assertEquals(deviceCredentials.getCredentialsValue(), JacksonUtil.toString(mqttCredentials));
-        Assert.assertEquals(deviceCredentials.getCredentialsId(), response.get("credentialsId").getAsString());
-        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("provisionDeviceStatus").getAsString());
+        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").getAsString());
     }
 
     protected void processTestProvisioningCheckPreProvisionedDevice() throws Exception {
-        super.processBeforeTest("Test Provision device", "Test Provision gateway", TransportPayloadType.JSON, null, null, DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES, "testProvisionKey", "testProvisionSecret");
+        super.processBeforeTest("Test Provision device", "Test Provision gateway", TransportPayloadType.JSON, null, null, null, null, DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES, "testProvisionKey", "testProvisionSecret");
         byte[] result = createMqttClientAndPublish().getPayloadBytes();
         JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
-        Assert.assertEquals(savedDevice.getId().toString(), response.get("deviceId").getAsString());
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedTenant.getTenantId(), savedDevice.getId());
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
-        Assert.assertEquals(deviceCredentials.getCredentialsId(), response.get("credentialsId").getAsString());
-        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("provisionDeviceStatus").getAsString());
+        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").getAsString());
     }
 
     protected void processTestProvisioningWithBadKeyDevice() throws Exception {
-        super.processBeforeTest("Test Provision device", "Test Provision gateway", TransportPayloadType.JSON, null, null, DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES, "testProvisionKeyOrig", "testProvisionSecret");
+        super.processBeforeTest("Test Provision device", "Test Provision gateway", TransportPayloadType.JSON, null, null, null, null, DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES, "testProvisionKeyOrig", "testProvisionSecret");
         byte[] result = createMqttClientAndPublish().getPayloadBytes();
         JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
         Assert.assertEquals("Provision data was not found!", response.get("errorMsg").getAsString());
-        Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), response.get("provisionDeviceStatus").getAsString());
+        Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), response.get("status").getAsString());
     }
 
     protected TestMqttCallback createMqttClientAndPublish() throws Exception {

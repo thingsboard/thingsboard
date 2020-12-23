@@ -23,6 +23,7 @@ export interface MenuSection extends HasUUID{
   type: MenuSectionType;
   path: string;
   icon: string;
+  notExact?: boolean;
   isMdiIcon?: boolean;
   height?: string;
   pages?: Array<MenuSection>;

@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
@@ -390,7 +391,8 @@ public class DefaultTransportService implements TransportService {
             metaData.putValue("deviceName", sessionInfo.getDeviceName());
             metaData.putValue("deviceType", sessionInfo.getDeviceType());
             metaData.putValue("notifyDevice", "false");
-            sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData, SessionMsgType.POST_ATTRIBUTES_REQUEST, new TransportTbQueueCallback(callback));
+            sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData, SessionMsgType.POST_ATTRIBUTES_REQUEST,
+                    new TransportTbQueueCallback(new ApiStatsProxyCallback<>(tenantId, msg.getKvList().size(), callback)));
         }
     }
 
@@ -399,7 +401,7 @@ public class DefaultTransportService implements TransportService {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                    .setGetAttributes(msg).build(), callback);
+                    .setGetAttributes(msg).build(), new ApiStatsProxyCallback<>(getTenantId(sessionInfo), 1, callback));
         }
     }
 
@@ -409,7 +411,7 @@ public class DefaultTransportService implements TransportService {
             SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
             sessionMetaData.setSubscribedToAttributes(!msg.getUnsubscribe());
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                    .setSubscribeToAttributes(msg).build(), callback);
+                    .setSubscribeToAttributes(msg).build(), new ApiStatsProxyCallback<>(getTenantId(sessionInfo), 1, callback));
         }
     }
 
@@ -419,7 +421,7 @@ public class DefaultTransportService implements TransportService {
             SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
             sessionMetaData.setSubscribedToRPC(!msg.getUnsubscribe());
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                    .setSubscribeToRPC(msg).build(), callback);
+                    .setSubscribeToRPC(msg).build(), new ApiStatsProxyCallback<>(getTenantId(sessionInfo), 1, callback));
         }
     }
 
@@ -428,7 +430,7 @@ public class DefaultTransportService implements TransportService {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                    .setToDeviceRPCCallResponse(msg).build(), callback);
+                    .setToDeviceRPCCallResponse(msg).build(), new ApiStatsProxyCallback<>(getTenantId(sessionInfo), 1, callback));
         }
     }
 
@@ -507,8 +509,8 @@ public class DefaultTransportService implements TransportService {
         sessions.forEach((uuid, sessionMD) -> {
             long lastActivityTime = sessionMD.getLastActivityTime();
             TransportProtos.SessionInfoProto sessionInfo = sessionMD.getSessionInfo();
-            if (sessionInfo.getGwSessionIdMSB() > 0 &&
-                    sessionInfo.getGwSessionIdLSB() > 0) {
+            if (sessionInfo.getGwSessionIdMSB() != 0 &&
+                    sessionInfo.getGwSessionIdLSB() != 0) {
                 SessionMetaData gwMetaData = sessions.get(new UUID(sessionInfo.getGwSessionIdMSB(), sessionInfo.getGwSessionIdLSB()));
                 if (gwMetaData != null) {
                     lastActivityTime = Math.max(gwMetaData.getLastActivityTime(), lastActivityTime);
@@ -642,6 +644,9 @@ public class DefaultTransportService implements TransportService {
                         rateLimitService.update(apiUsageState.getTenantId(), apiUsageState.isTransportEnabled());
                         //TODO: if transport is disabled, we should close all sessions and not to check credentials.
                     }
+                } else if (EntityType.DEVICE.equals(entityType)) {
+                    Optional<Device> deviceOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
+                    deviceOpt.ifPresent(this::onDeviceUpdate);
                 }
             } else if (toSessionMsg.hasEntityDeleteMsg()) {
                 TransportProtos.EntityDeleteMsg msg = toSessionMsg.getEntityDeleteMsg();
@@ -667,9 +672,45 @@ public class DefaultTransportService implements TransportService {
         long deviceProfileIdMSB = deviceProfile.getId().getId().getMostSignificantBits();
         long deviceProfileIdLSB = deviceProfile.getId().getId().getLeastSignificantBits();
         sessions.forEach((id, md) -> {
+            //TODO: if transport types are different - we should close the session.
             if (md.getSessionInfo().getDeviceProfileIdMSB() == deviceProfileIdMSB
                     && md.getSessionInfo().getDeviceProfileIdLSB() == deviceProfileIdLSB) {
-                transportCallbackExecutor.submit(() -> md.getListener().onProfileUpdate(deviceProfile));
+                TransportProtos.SessionInfoProto newSessionInfo = TransportProtos.SessionInfoProto.newBuilder()
+                        .mergeFrom(md.getSessionInfo())
+                        .setDeviceProfileIdMSB(deviceProfileIdMSB)
+                        .setDeviceProfileIdLSB(deviceProfileIdLSB)
+                        .setDeviceType(deviceProfile.getName())
+                        .build();
+                md.setSessionInfo(newSessionInfo);
+                transportCallbackExecutor.submit(() -> md.getListener().onDeviceProfileUpdate(newSessionInfo, deviceProfile));
+            }
+        });
+    }
+
+    private void onDeviceUpdate(Device device) {
+        long deviceIdMSB = device.getId().getId().getMostSignificantBits();
+        long deviceIdLSB = device.getId().getId().getLeastSignificantBits();
+        long deviceProfileIdMSB = device.getDeviceProfileId().getId().getMostSignificantBits();
+        long deviceProfileIdLSB = device.getDeviceProfileId().getId().getLeastSignificantBits();
+        sessions.forEach((id, md) -> {
+            if ((md.getSessionInfo().getDeviceIdMSB() == deviceIdMSB && md.getSessionInfo().getDeviceIdLSB() == deviceIdLSB)) {
+                DeviceProfile newDeviceProfile;
+                if (md.getSessionInfo().getDeviceProfileIdMSB() != deviceProfileIdMSB
+                        && md.getSessionInfo().getDeviceProfileIdLSB() != deviceProfileIdLSB) {
+                    //TODO: if transport types are different - we should close the session.
+                    newDeviceProfile = deviceProfileCache.get(new DeviceProfileId(new UUID(deviceProfileIdMSB, deviceProfileIdLSB)));
+                } else {
+                    newDeviceProfile = null;
+                }
+                TransportProtos.SessionInfoProto newSessionInfo = TransportProtos.SessionInfoProto.newBuilder()
+                        .mergeFrom(md.getSessionInfo())
+                        .setDeviceProfileIdMSB(deviceProfileIdMSB)
+                        .setDeviceProfileIdLSB(deviceProfileIdLSB)
+                        .setDeviceName(device.getName())
+                        .setDeviceType(device.getType())
+                        .build();
+                md.setSessionInfo(newSessionInfo);
+                transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(newSessionInfo, device, Optional.ofNullable(newDeviceProfile)));
             }
         });
     }
@@ -805,7 +846,7 @@ public class DefaultTransportService implements TransportService {
 
         @Override
         public void onFailure(Throwable t) {
-            callback.onError(t);
+            DefaultTransportService.this.transportCallbackExecutor.submit(() -> callback.onError(t));
         }
     }
 

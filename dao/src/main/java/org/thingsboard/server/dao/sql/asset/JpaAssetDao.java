@@ -39,6 +39,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.asset.BaseAssetService.TB_SERVICE_QUEUE;
+
 /**
  * Created by Valerii Sosliuk on 5/19/2017.
  */
@@ -178,8 +180,7 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     }
 
     @Override
-    public Long countAssetsByTenantId(TenantId tenantId) {
-        return assetRepository.countByTenantId(tenantId.getId());
-
+    public Long countByTenantId(TenantId tenantId) {
+        return assetRepository.countByTenantIdAndTypeIsNot(tenantId.getId(), TB_SERVICE_QUEUE);
     }
 }

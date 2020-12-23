@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.session;
+package org.thingsboard.rule.engine.api;
 
-import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.UUID;
+public interface SmsService {
 
-public interface SessionContext {
+    void updateSmsConfiguration();
 
-    UUID getSessionId();
+    void sendSms(TenantId tenantId, String[] numbersTo, String message) throws ThingsboardException;;
 
-    int nextMsgId();
+    void sendTestSms(TestSmsRequest testSmsRequest) throws ThingsboardException;
 
-    void onProfileUpdate(DeviceProfile deviceProfile);
 }

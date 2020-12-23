@@ -50,9 +50,9 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
             "AND d.deviceProfileId = :profileId " +
             "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
     Page<DeviceEntity> findByTenantIdAndProfileId(@Param("tenantId") UUID tenantId,
-                                                   @Param("profileId") UUID profileId,
-                                                   @Param("searchText") String searchText,
-                                                   Pageable pageable);
+                                                  @Param("profileId") UUID profileId,
+                                                  @Param("searchText") String searchText,
+                                                  Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.DeviceInfoEntity(d, c.title, c.additionalInfo, p.name) " +
             "FROM DeviceEntity d " +
@@ -62,9 +62,9 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
             "AND d.customerId = :customerId " +
             "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
     Page<DeviceInfoEntity> findDeviceInfosByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
-                                                   @Param("customerId") UUID customerId,
-                                                   @Param("searchText") String searchText,
-                                                   Pageable pageable);
+                                                                  @Param("customerId") UUID customerId,
+                                                                  @Param("searchText") String searchText,
+                                                                  Pageable pageable);
 
     @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId")
     Page<DeviceEntity> findByTenantId(@Param("tenantId") UUID tenantId,
@@ -102,9 +102,9 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
             "AND d.type = :type " +
             "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
     Page<DeviceInfoEntity> findDeviceInfosByTenantIdAndType(@Param("tenantId") UUID tenantId,
-                                             @Param("type") String type,
-                                             @Param("textSearch") String textSearch,
-                                             Pageable pageable);
+                                                            @Param("type") String type,
+                                                            @Param("textSearch") String textSearch,
+                                                            Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.DeviceInfoEntity(d, c.title, c.additionalInfo, p.name) " +
             "FROM DeviceEntity d " +
@@ -137,10 +137,10 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
             "AND d.type = :type " +
             "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
     Page<DeviceInfoEntity> findDeviceInfosByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
-                                                          @Param("customerId") UUID customerId,
-                                                          @Param("type") String type,
-                                                          @Param("textSearch") String textSearch,
-                                                          Pageable pageable);
+                                                                         @Param("customerId") UUID customerId,
+                                                                         @Param("type") String type,
+                                                                         @Param("textSearch") String textSearch,
+                                                                         Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.DeviceInfoEntity(d, c.title, c.additionalInfo, p.name) " +
             "FROM DeviceEntity d " +

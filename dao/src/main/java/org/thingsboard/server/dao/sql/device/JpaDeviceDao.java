@@ -220,7 +220,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     }
 
     @Override
-    public Long countDevicesByTenantId(TenantId tenantId) {
+    public Long countByTenantId(TenantId tenantId) {
         return deviceRepository.countByTenantId(tenantId.getId());
     }
 
