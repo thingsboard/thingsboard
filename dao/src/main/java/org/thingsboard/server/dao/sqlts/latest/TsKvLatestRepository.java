@@ -36,4 +36,9 @@ public interface TsKvLatestRepository extends CrudRepository<TsKvLatestEntity, T
             "WHERE ts_kv_latest.entity_id IN (SELECT id FROM device WHERE tenant_id = :tenant_id limit 100) ORDER BY ts_kv_dictionary.key", nativeQuery = true)
     List<String> getKeysByTenantId(@Param("tenant_id") UUID tenantId);
 
+    @Query(value = "SELECT DISTINCT ts_kv_dictionary.key AS strKey FROM ts_kv_latest " +
+            "INNER JOIN ts_kv_dictionary ON ts_kv_latest.key = ts_kv_dictionary.key_id " +
+            "WHERE ts_kv_latest.entity_id IN :entityIds ORDER BY ts_kv_dictionary.key", nativeQuery = true)
+    List<String> findAllKeysByEntityIds(@Param("entityIds") List<UUID> entityIds);
+
 }
