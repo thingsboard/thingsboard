@@ -313,20 +313,20 @@ export class RuleChainService {
     return this.http.delete(`/api/edge/${edgeId}/ruleChain/${ruleChainId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public setDefaultRootEdgeRuleChain(ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
-    return this.http.post<RuleChain>(`/api/ruleChain/${ruleChainId}/defaultRootEdge`, defaultHttpOptionsFromConfig(config));
+  public setEdgeTemplateRootRuleChain(ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
+    return this.http.post<RuleChain>(`/api/ruleChain/${ruleChainId}/edgeTemplateRoot`, defaultHttpOptionsFromConfig(config));
   }
 
-  public addDefaultEdgeRuleChain(ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
-    return this.http.post<RuleChain>(`/api/ruleChain/${ruleChainId}/defaultEdge`, defaultHttpOptionsFromConfig(config));
+  public setAutoAssignToEdgeRuleChain(ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
+    return this.http.post<RuleChain>(`/api/ruleChain/${ruleChainId}/autoAssignToEdge`, defaultHttpOptionsFromConfig(config));
   }
 
-  public removeDefaultEdgeRuleChain(ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
-    return this.http.delete<RuleChain>(`/api/ruleChain/${ruleChainId}/defaultEdge`, defaultHttpOptionsFromConfig(config));
+  public unsetAutoAssignToEdgeRuleChain(ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
+    return this.http.delete<RuleChain>(`/api/ruleChain/${ruleChainId}/autoAssignToEdge`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getDefaultEdgeRuleChains(config?: RequestConfig): Observable<Array<RuleChain>> {
-    return this.http.get<Array<RuleChain>>(`/api/ruleChain/defaultEdgeRuleChains`, defaultHttpOptionsFromConfig(config));
+  public getAutoAssignToEdgeRuleChains(config?: RequestConfig): Observable<Array<RuleChain>> {
+    return this.http.get<Array<RuleChain>>(`/api/ruleChain/autoAssignToEdgeRuleChains`, defaultHttpOptionsFromConfig(config));
   }
 
   public setEdgeRootRuleChain(edgeId: string, ruleChainId: string, config?: RequestConfig): Observable<Edge> {

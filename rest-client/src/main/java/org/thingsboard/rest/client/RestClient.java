@@ -2676,7 +2676,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 }, params).getBody();
     }
 
-    public Optional<RuleChain> addDefaultEdgeRuleChain(RuleChainId ruleChainId) {
+    public Optional<RuleChain> setAutoAssignToEdgeRuleChain(RuleChainId ruleChainId) {
         try {
             ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/ruleChain/{ruleChainId}/defaultEdge", null, RuleChain.class, ruleChainId.getId());
             return Optional.ofNullable(ruleChain.getBody());
@@ -2689,7 +2689,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
-    public Optional<RuleChain> removeDefaultEdgeRuleChain(RuleChainId ruleChainId) {
+    public Optional<RuleChain> unsetAutoAssignToEdgeRuleChain(RuleChainId ruleChainId) {
         try {
             ResponseEntity<RuleChain> ruleChain = restTemplate.exchange(baseURL + "/api/ruleChain/{ruleChainId}/defaultEdge", HttpMethod.DELETE, HttpEntity.EMPTY, RuleChain.class, ruleChainId.getId());
             return Optional.ofNullable(ruleChain.getBody());
@@ -2702,7 +2702,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
-    public List<RuleChain> getDefaultEdgeRuleChains() {
+    public List<RuleChain> getAutoAssignToEdgeRuleChains() {
         return restTemplate.exchange(baseURL + "/api/ruleChain/defaultEdgeRuleChains",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
@@ -2710,9 +2710,9 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 }).getBody();
     }
 
-    public Optional<RuleChain> setDefaultRootEdgeRuleChain(RuleChainId ruleChainId) {
+    public Optional<RuleChain> setRootEdgeTemplateRuleChain(RuleChainId ruleChainId) {
         try {
-            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/ruleChain/{ruleChainId}/defaultRootEdge", null, RuleChain.class, ruleChainId.getId());
+            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/ruleChain/{ruleChainId}/edgeTemplateRoot", null, RuleChain.class, ruleChainId.getId());
             return Optional.ofNullable(ruleChain.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {

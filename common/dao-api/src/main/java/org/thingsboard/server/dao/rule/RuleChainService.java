@@ -79,14 +79,14 @@ public interface RuleChainService {
 
     PageData<RuleChain> findRuleChainsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
 
-    RuleChain getDefaultRootEdgeRuleChain(TenantId tenantId);
+    RuleChain getEdgeTemplateRootRuleChain(TenantId tenantId);
 
-    boolean setDefaultRootEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId);
+    boolean setEdgeTemplateRootRuleChain(TenantId tenantId, RuleChainId ruleChainId);
 
-    boolean addDefaultEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId);
+    boolean setAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId);
 
-    boolean removeDefaultEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId);
+    boolean unsetAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId);
 
-    ListenableFuture<List<RuleChain>> findDefaultEdgeRuleChainsByTenantId(TenantId tenantId);
+    ListenableFuture<List<RuleChain>> findAutoAssignToEdgeRuleChainsByTenantId(TenantId tenantId);
 
 }

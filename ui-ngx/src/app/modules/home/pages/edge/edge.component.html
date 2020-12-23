@@ -134,22 +134,24 @@
       </tb-entity-subtype-autocomplete>
       <div fxLayout="row">
         <fieldset fxFlex>
+          <div class="tb-hint" [innerHTML]="'edge.edge-license-key-hint' | translate"></div>
           <mat-form-field class="mat-block">
-            <mat-label translate>edge.cloud-endpoint</mat-label>
-            <input matInput formControlName="cloudEndpoint" required>
-            <mat-error *ngIf="entityForm.get('cloudEndpoint').hasError('required')">
-              {{ 'edge.cloud-endpoint-required' | translate }}
+            <mat-label translate>edge.edge-license-key</mat-label>
+            <input matInput formControlName="edgeLicenseKey" required>
+            <mat-error *ngIf="entityForm.get('edgeLicenseKey').hasError('required')">
+              {{ 'edge.edge-license-key-required' | translate }}
             </mat-error>
           </mat-form-field>
         </fieldset>
       </div>
       <div fxLayout="row">
         <fieldset fxFlex>
+          <div translate class="tb-hint">edge.cloud-endpoint-hint</div>
           <mat-form-field class="mat-block">
-            <mat-label translate>edge.edge-license-key</mat-label>
-            <input matInput formControlName="edgeLicenseKey" required>
-            <mat-error *ngIf="entityForm.get('edgeLicenseKey').hasError('required')">
-              {{ 'edge.edge-license-key-required' | translate }}
+            <mat-label translate>edge.cloud-endpoint</mat-label>
+            <input matInput formControlName="cloudEndpoint" required>
+            <mat-error *ngIf="entityForm.get('cloudEndpoint').hasError('required')">
+              {{ 'edge.cloud-endpoint-required' | translate }}
             </mat-error>
           </mat-form-field>
         </fieldset>

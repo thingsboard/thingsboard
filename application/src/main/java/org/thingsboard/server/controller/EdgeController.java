@@ -108,7 +108,7 @@ public class EdgeController extends BaseController {
 
             RuleChain defaultRootEdgeRuleChain = null;
             if (created) {
-                defaultRootEdgeRuleChain = ruleChainService.getDefaultRootEdgeRuleChain(tenantId);
+                defaultRootEdgeRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(tenantId);
                 if (defaultRootEdgeRuleChain == null) {
                     throw new DataValidationException("Root edge rule chain is not available!");
                 }

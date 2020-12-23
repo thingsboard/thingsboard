@@ -44,13 +44,15 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
               @Inject('entity') protected entityValue: EdgeInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<EdgeInfo>,
               public fb: FormBuilder,
-              // TODO: voba - discuss with Vlad how properly add window to subclass
               @Inject(WINDOW) protected window: Window) {
-    super(store, fb, entityValue, entitiesTableConfigValue, window);
+    super(store, fb, entityValue, entitiesTableConfigValue);
   }
 
   ngOnInit() {
     this.edgeScope = this.entitiesTableConfig.componentsData.edgeScope;
+    this.entityForm.patchValue({
+      cloudEndpoint:this.window.location.origin
+    });
     super.ngOnInit();
   }
 
@@ -70,9 +72,9 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
     return this.fb.group(
       {
         name: [entity ? entity.name : '', [Validators.required]],
-        type: [entity ? entity.type : null, [Validators.required]],
+        type: [entity?.type ? entity.type : 'default', [Validators.required]],
         label: [entity ? entity.label : ''],
-        cloudEndpoint: [this.window.location.origin, [Validators.required]],
+        cloudEndpoint: [null, [Validators.required]],
         edgeLicenseKey: ['', [Validators.required]],
         routingKey: guid(),
         secret: this.generateSecret(20),
@@ -86,14 +88,14 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
   }
 
   updateForm(entity: EdgeInfo) {
-    this.entityForm.patchValue({name: entity.name});
-    this.entityForm.patchValue({type: entity.type});
-    this.entityForm.patchValue({label: entity.label});
-    this.entityForm.patchValue({cloudEndpoint: entity.cloudEndpoint});
-    this.entityForm.patchValue({edgeLicenseKey: entity.edgeLicenseKey});
-    this.entityForm.patchValue({routingKey: entity.routingKey});
-    this.entityForm.patchValue({secret: entity.secret});
     this.entityForm.patchValue({
+      name: entity.name,
+      type: entity.type,
+      label: entity.label,
+      cloudEndpoint: entity.cloudEndpoint ? entity.cloudEndpoint : this.window.location.origin,
+      edgeLicenseKey: entity.edgeLicenseKey,
+      routingKey: entity.routingKey,
+      secret: entity.secret,
       additionalInfo: {
         description: entity.additionalInfo ? entity.additionalInfo.description : ''
       }

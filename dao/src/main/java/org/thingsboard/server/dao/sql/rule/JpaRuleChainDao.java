@@ -95,10 +95,10 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
     }
 
     @Override
-    public ListenableFuture<List<RuleChain>> findDefaultEdgeRuleChainsByTenantId(UUID tenantId) {
-        log.debug("Try to find default edge rule chains by tenantId [{}]", tenantId);
+    public ListenableFuture<List<RuleChain>> findAutoAssignToEdgeRuleChainsByTenantId(UUID tenantId) {
+        log.debug("Try to find auto assign to edge rule chains by tenantId [{}]", tenantId);
         ListenableFuture<List<EntityRelation>> relations =
-                relationDao.findAllByFromAndType(new TenantId(tenantId), new TenantId(tenantId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE_DEFAULT_RULE_CHAIN);
+                relationDao.findAllByFromAndType(new TenantId(tenantId), new TenantId(tenantId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE_AUTO_ASSIGN_RULE_CHAIN);
         return Futures.transformAsync(relations, input -> {
             if (input != null && !input.isEmpty()) {
                 List<ListenableFuture<RuleChain>> ruleChainsFutures = new ArrayList<>(input.size());

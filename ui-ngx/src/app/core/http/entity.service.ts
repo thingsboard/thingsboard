@@ -565,6 +565,8 @@ export class EntityService {
         return entityType === EntityType.ENTITY_VIEW;
       case AliasFilterType.relationsQuery:
         return true;
+      case AliasFilterType.apiUsageState:
+        return true;
       case AliasFilterType.assetSearchQuery:
         return entityType === EntityType.ASSET;
       case AliasFilterType.deviceSearchQuery:

@@ -93,45 +93,45 @@ export enum EdgeEventStatus {
 
 export const edgeEventTypeTranslations = new Map<EdgeEventType, string>(
   [
-    [EdgeEventType.DASHBOARD, 'edge.edge-event-type-dashboard'],
-    [EdgeEventType.ASSET, 'edge.edge-event-type-asset'],
-    [EdgeEventType.DEVICE, 'edge.edge-event-type-device'],
-    [EdgeEventType.DEVICE_PROFILE, 'edge.edge-event-type-device-profile'],
-    [EdgeEventType.ENTITY_VIEW, 'edge.edge-event-type-entity-view'],
-    [EdgeEventType.ALARM, 'edge.edge-event-type-alarm'],
-    [EdgeEventType.RULE_CHAIN, 'edge.edge-event-type-rule-chain'],
-    [EdgeEventType.RULE_CHAIN_METADATA, 'edge.edge-event-type-rule-chain-metadata'],
-    [EdgeEventType.EDGE, 'edge.edge-event-type-edge'],
-    [EdgeEventType.USER, 'edge.edge-event-type-user'],
-    [EdgeEventType.CUSTOMER, 'edge.edge-event-type-customer'],
-    [EdgeEventType.RELATION, 'edge.edge-event-type-relation'],
-    [EdgeEventType.WIDGETS_BUNDLE, 'edge.edge-event-type-widgets-bundle'],
-    [EdgeEventType.WIDGET_TYPE, 'edge.edge-event-type-widgets-type'],
-    [EdgeEventType.ADMIN_SETTINGS, 'edge.edge-event-type-admin-settings']
+    [EdgeEventType.DASHBOARD, 'edge-event.type-dashboard'],
+    [EdgeEventType.ASSET, 'edge-event.type-asset'],
+    [EdgeEventType.DEVICE, 'edge-event.type-device'],
+    [EdgeEventType.DEVICE_PROFILE, 'edge-event.type-device-profile'],
+    [EdgeEventType.ENTITY_VIEW, 'edge-event.type-entity-view'],
+    [EdgeEventType.ALARM, 'edge-event.type-alarm'],
+    [EdgeEventType.RULE_CHAIN, 'edge-event.type-rule-chain'],
+    [EdgeEventType.RULE_CHAIN_METADATA, 'edge-event.type-rule-chain-metadata'],
+    [EdgeEventType.EDGE, 'edge-event.type-edge'],
+    [EdgeEventType.USER, 'edge-event.type-user'],
+    [EdgeEventType.CUSTOMER, 'edge-event.type-customer'],
+    [EdgeEventType.RELATION, 'edge-event.type-relation'],
+    [EdgeEventType.WIDGETS_BUNDLE, 'edge-event.type-widgets-bundle'],
+    [EdgeEventType.WIDGET_TYPE, 'edge-event.type-widgets-type'],
+    [EdgeEventType.ADMIN_SETTINGS, 'edge-event.type-admin-settings']
   ]
 );
 
 export const edgeEventActionTypeTranslations = new Map<EdgeEventActionType, string>(
   [
-    [EdgeEventActionType.ADDED, 'edge.edge-event-action-type-added'],
-    [EdgeEventActionType.DELETED, 'edge.edge-event-action-type-deleted'],
-    [EdgeEventActionType.UPDATED, 'edge.edge-event-action-type-updated'],
-    [EdgeEventActionType.POST_ATTRIBUTES, 'edge.edge-event-action-type-post-attributes'],
-    [EdgeEventActionType.ATTRIBUTES_UPDATED, 'edge.edge-event-action-type-attributes-updated'],
-    [EdgeEventActionType.ATTRIBUTES_DELETED, 'edge.edge-event-action-type-attributes-deleted'],
-    [EdgeEventActionType.TIMESERIES_UPDATED, 'edge.edge-event-action-type-timeseries-updated'],
-    [EdgeEventActionType.CREDENTIALS_UPDATED, 'edge.edge-event-action-type-credentials-updated'],
-    [EdgeEventActionType.ASSIGNED_TO_CUSTOMER, 'edge.edge-event-action-type-assigned-to-customer'],
-    [EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER, 'edge.edge-event-action-type-unassigned-from-customer'],
-    [EdgeEventActionType.RELATION_ADD_OR_UPDATE, 'edge.edge-event-action-type-relation-add-or-update'],
-    [EdgeEventActionType.RELATION_DELETED, 'edge.edge-event-action-type-relation-deleted'],
-    [EdgeEventActionType.RPC_CALL, 'edge.edge-event-action-type-rpc-call'],
-    [EdgeEventActionType.ALARM_ACK, 'edge.edge-event-action-type-alarm-ack'],
-    [EdgeEventActionType.ALARM_CLEAR, 'edge.edge-event-action-type-alarm-clear'],
-    [EdgeEventActionType.ASSIGNED_TO_EDGE, 'edge.edge-event-action-type-assigned-to-edge'],
-    [EdgeEventActionType.UNASSIGNED_FROM_EDGE, 'edge.edge-event-action-type-unassigned-from-edge'],
-    [EdgeEventActionType.CREDENTIALS_REQUEST, 'edge.edge-event-action-type-credentials-request'],
-    [EdgeEventActionType.ENTITY_MERGE_REQUEST, 'edge.edge-event-action-type-entity-merge-request']
+    [EdgeEventActionType.ADDED, 'edge-event.action-type-added'],
+    [EdgeEventActionType.DELETED, 'edge-event.action-type-deleted'],
+    [EdgeEventActionType.UPDATED, 'edge-event.action-type-updated'],
+    [EdgeEventActionType.POST_ATTRIBUTES, 'edge-event.action-type-post-attributes'],
+    [EdgeEventActionType.ATTRIBUTES_UPDATED, 'edge-event.action-type-attributes-updated'],
+    [EdgeEventActionType.ATTRIBUTES_DELETED, 'edge-event.action-type-attributes-deleted'],
+    [EdgeEventActionType.TIMESERIES_UPDATED, 'edge-event.action-type-timeseries-updated'],
+    [EdgeEventActionType.CREDENTIALS_UPDATED, 'edge-event.action-type-credentials-updated'],
+    [EdgeEventActionType.ASSIGNED_TO_CUSTOMER, 'edge-event.action-type-assigned-to-customer'],
+    [EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER, 'edge-event.action-type-unassigned-from-customer'],
+    [EdgeEventActionType.RELATION_ADD_OR_UPDATE, 'edge-event.action-type-relation-add-or-update'],
+    [EdgeEventActionType.RELATION_DELETED, 'edge-event.action-type-relation-deleted'],
+    [EdgeEventActionType.RPC_CALL, 'edge-event.action-type-rpc-call'],
+    [EdgeEventActionType.ALARM_ACK, 'edge-event.action-type-alarm-ack'],
+    [EdgeEventActionType.ALARM_CLEAR, 'edge-event.action-type-alarm-clear'],
+    [EdgeEventActionType.ASSIGNED_TO_EDGE, 'edge-event.action-type-assigned-to-edge'],
+    [EdgeEventActionType.UNASSIGNED_FROM_EDGE, 'edge-event.action-type-unassigned-from-edge'],
+    [EdgeEventActionType.CREDENTIALS_REQUEST, 'edge-event.action-type-credentials-request'],
+    [EdgeEventActionType.ENTITY_MERGE_REQUEST, 'edge-event.action-type-entity-merge-request']
   ]
 );
 

@@ -1395,16 +1395,16 @@
     "unassign-rulechains-from-edge-text": "Nach der Bestätigung wird die Zuordnung aller ausgewählten Regelketten aufgehoben und sie sind für den Rand nicht mehr zugänglich.",
     "assign-rulechain-to-edge-title": "Regelkette(n) dem Rand zuordnen",
     "assign-rulechain-to-edge-text": "Bitte wählen Sie die Regelketten aus, die Sie dem Rand zuordnen möchten",
-    "set-default-root-edge": "Machen Sie Randregelkette zur Wurzel Standard",
-    "set-default-root-edge-rulechain-title": "Sind Sie sicher, dass Sie die Randregelkette '{{ruleChainName}}' zur Wurzel machen Standard?",
-    "set-default-root-edge-rulechain-text": "Nach der Bestätigung wird die Randregelkette zur Wurzel Standard und behandelt alle eingehenden Transportnachrichten.",
+    "set-edge-template-root-rulechain": "Erstellen Sie den Stamm der Regelkettenkantenvorlage",
+    "set-edge-template-root-rulechain-title": "Möchten Sie die Kantenvorlage der Regelkette '{{ruleChainName}}' wirklich als Root festlegen?",
+    "set-edge-template-root-rulechain-text": "Nach der Bestätigung wird die Regelkette zum Stamm der Kantenvorlage und zur Stammregelkette für neu erstellte Kanten.",
     "invalid-rulechain-type-error": "Regelkette konnte nicht importiert werden: Ungültige Regelkettentyp. Erwarteter Typ ist {{expectedRuleChainType}}.",
-    "set-auto-assign-to-edge": "Ordnen Sie die Regelkette bei der Erstellung automatisch den Kanten zu",
+    "set-auto-assign-to-edge": "Weisen Sie bei der Erstellung den Kanten die Regelkette zu",
     "set-auto-assign-to-edge-title": "Möchten Sie die Kantenregelkette '{{ruleChainName}}' bei der Erstellung automatisch den Kanten zuweisen?",
     "set-auto-assign-to-edge-text": "Nach der Bestätigung wird die Kantenregelkette bei der Erstellung automatisch den Kanten zugewiesen.",
-    "remove-default-edge": "Randregelkette Standard entfernen",
-    "remove-default-edge-title": "Sind Sie sicher, dass Sie die Randregelkette '{{ruleChainName}}' aus der Standardliste entfernen?",
-    "remove-default-edge-text": "Nach der Bestätigung wird die Randregelkette nicht für neu erstellte Rand vergeben."
+    "unset-auto-assign-to-edge": "Deaktiviert die Zuordnung der Regelkette zu Kanten bei der Erstellung",
+    "unset-auto-assign-to-edge-title": "Möchten Sie die Kantenregelkette '{{ruleChainName}}' bei der Erstellung unbedingt den Kanten zuweisen?",
+    "unset-auto-assign-to-edge-text": "Nach der Bestätigung wird die Kantenregelkette bei der Erstellung nicht mehr automatisch den Kanten zugewiesen."
   },
   "rulenode": {
     "details": "Details",

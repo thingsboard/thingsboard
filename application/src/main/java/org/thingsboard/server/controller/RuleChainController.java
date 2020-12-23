@@ -50,7 +50,6 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.DefaultRuleChainCreateRequest;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -556,14 +555,14 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/{ruleChainId}/defaultRootEdge", method = RequestMethod.POST)
+    @RequestMapping(value = "/ruleChain/{ruleChainId}/edgeTemplateRoot", method = RequestMethod.POST)
     @ResponseBody
-    public RuleChain setDefaultRootEdgeRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
+    public RuleChain setEdgeTemplateRootRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
             RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-            ruleChainService.setDefaultRootEdgeRuleChain(getTenantId(), ruleChainId);
+            ruleChainService.setEdgeTemplateRootRuleChain(getTenantId(), ruleChainId);
             return ruleChain;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.RULE_CHAIN),
@@ -575,14 +574,14 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/{ruleChainId}/defaultEdge", method = RequestMethod.POST)
+    @RequestMapping(value = "/ruleChain/{ruleChainId}/autoAssignToEdge", method = RequestMethod.POST)
     @ResponseBody
-    public RuleChain addDefaultEdgeRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
+    public RuleChain setAutoAssignToEdgeRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
             RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-            ruleChainService.addDefaultEdgeRuleChain(getTenantId(), ruleChainId);
+            ruleChainService.setAutoAssignToEdgeRuleChain(getTenantId(), ruleChainId);
             return ruleChain;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.RULE_CHAIN),
@@ -594,14 +593,14 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/{ruleChainId}/defaultEdge", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/ruleChain/{ruleChainId}/autoAssignToEdge", method = RequestMethod.DELETE)
     @ResponseBody
-    public RuleChain removeDefaultEdgeRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
+    public RuleChain unsetAutoAssignToEdgeRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
             RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-            ruleChainService.removeDefaultEdgeRuleChain(getTenantId(), ruleChainId);
+            ruleChainService.unsetAutoAssignToEdgeRuleChain(getTenantId(), ruleChainId);
             return ruleChain;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.RULE_CHAIN),
@@ -613,12 +612,12 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/defaultEdgeRuleChains", method = RequestMethod.GET)
+    @RequestMapping(value = "/ruleChain/autoAssignToEdgeRuleChains", method = RequestMethod.GET)
     @ResponseBody
-    public List<RuleChain> getDefaultEdgeRuleChains() throws ThingsboardException {
+    public List<RuleChain> getAutoAssignToEdgeRuleChains() throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(ruleChainService.findDefaultEdgeRuleChainsByTenantId(tenantId)).get();
+            return checkNotNull(ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId)).get();
         } catch (Exception e) {
             throw handleException(e);
         }
