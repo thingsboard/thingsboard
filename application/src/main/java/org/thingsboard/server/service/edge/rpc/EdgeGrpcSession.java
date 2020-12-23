@@ -160,10 +160,11 @@ public final class EdgeGrpcSession implements Closeable {
                             .build());
                     if (ConnectResponseCode.ACCEPTED != responseMsg.getResponseCode()) {
                         outputStream.onError(new RuntimeException(responseMsg.getErrorMsg()));
+                    } else {
+                        connected = true;
                     }
                 }
-                if (!connected && requestMsg.getMsgType().equals(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)) {
-                    connected = true;
+                if (connected && requestMsg.getMsgType().equals(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)) {
                     ctx.getSyncEdgeService().sync(edge);
                 }
                 if (connected) {
