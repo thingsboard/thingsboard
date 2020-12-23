@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>2.5.6-SNAPSHOT</version>
+    <version>3.2.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
