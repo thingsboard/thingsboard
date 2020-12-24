@@ -1076,6 +1076,127 @@ export default angular.module('thingsboard.types', [])
             },
             translate: {
                 customTranslationsPrefix: "custom."
-            }
+            },
+            edgeEventActionType: {
+                "ADDED": {
+                    name: "audit-log.type-added"
+                },
+                "DELETED": {
+                    name: "audit-log.type-deleted"
+                },
+                "UPDATED": {
+                    name: "audit-log.type-updated"
+                },
+                "ATTRIBUTES_UPDATED": {
+                    name: "audit-log.type-attributes-updated"
+                },
+                "ATTRIBUTES_DELETED": {
+                    name: "audit-log.type-attributes-deleted"
+                },
+                "RPC_CALL": {
+                    name: "audit-log.type-rpc-call"
+                },
+                "CREDENTIALS_UPDATED": {
+                    name: "audit-log.type-credentials-updated"
+                },
+                "RELATION_ADD_OR_UPDATE": {
+                    name: "audit-log.type-relation-add-or-update"
+                },
+                "RELATION_DELETED": {
+                    name: "audit-log.type-relation-delete"
+                },
+                "ALARM_ACK": {
+                    name: "audit-log.type-alarm-ack"
+                },
+                "ALARM_CLEAR": {
+                    name: "audit-log.type-alarm-clear"
+                },
+                "CREDENTIALS_REQUEST": {
+                    name: "edge.credentials-request"
+                },
+                "ATTRIBUTES_REQUEST": {
+                    name: "edge.attributes-request"
+                },
+                "TIMESERIES_UPDATED": {
+                    name: "edge.timeseries-updated"
+                },
+                "RELATION_REQUEST": {
+                    name: "edge.relation-request"
+                },
+                "RULE_CHAIN_METADATA_REQUEST": {
+                    name: "edge.rule-chain-metadata-request"
+                },
+                "GROUP_ENTITIES_REQUEST": {
+                    name: "edge.group_entities_request"
+                },
+                "GROUP_PERMISSIONS_REQUEST": {
+                    name: "edge.group-permissions-request"
+                },
+                "ASSIGNED_TO_EDGE": {
+                    name: "audit-log.type-assigned-to-edge"
+                },
+                "UNASSIGNED_FROM_EDGE": {
+                    name: "audit-log.type-unassigned-from-edge"
+                }
+            },
+            edgeEventTypeTranslations:{
+                "DASHBOARD": {
+                    name: "entity.type-dashboard"
+                },
+                "ASSET": {
+                    name: "entity.type-asset"
+                },
+                "DEVICE": {
+                    name: "entity.type-device"
+                },
+                "ENTITY_VIEW": {
+                    name: "entity.type-entity_view"
+                },
+                "ALARM": {
+                    name: "entity.type-alarm"
+                },
+                "RULE_CHAIN": {
+                    name: "entity.type-rulechain"
+                },
+                "RULE_CHAIN_META_DATA": {
+                    name: "entity.type-rule-chain-metadata"
+                },
+                "EDGE": {
+                    name: "entity.type-edge"
+                },
+                "USER": {
+                    name: "entity.type-user"
+                },
+                "CUSTOMER": {
+                    name: "entity.type-customer"
+                },
+                "RELATION": {
+                    name: "entity.type-relation"
+                },
+                "ENTITY_GROUP": {
+                    name: "entity.type-entity-group"
+                },
+                "SCHEDULER_EVENT": {
+                    name: "entity.type-scheduler-event"
+                },
+                "WHITE_LABELING": {
+                    name: "white-labeling.white-labeling"
+                },
+                "LOGIN_WHITE_LABELING": {
+                    name: "white-labeling.login-white-labeling"
+                },
+                "CUSTOM_TRANSLATION": {
+                    name: "custom-translation.custom-translation",
+                },
+                "WIDGETS_BUNDLE": {
+                    name: "widget.widget-bundle"
+                },
+                "WIDGET_TYPE": {
+                    name: "widget.type"
+                },
+                "ADMIN_SETTINGS": {
+                    name: "permission.resource.display-type.ADMIN_SETTINGS"
+                }
+            },
         }
     ).name;

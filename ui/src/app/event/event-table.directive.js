@@ -22,7 +22,7 @@ import eventTableTemplate from './event-table.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EventTableDirective($compile, $templateCache, $rootScope, types,
+export default function EventTableDirective($compile, $templateCache, $rootScope, $translate, types,
                                             eventService, edgeService, attributeService) {
 
     var linker = function (scope, element, attrs) {
@@ -118,7 +118,11 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
                             scope.events.pending = true;
                             promise.then(
                                 function success(events) {
-                                    scope.events.data = scope.events.data.concat(events.data);
+                                    if (scope.eventType === types.eventType.edgeEvent.value) {
+                                        scope.events.data = scope.events.data.concat(prepareEdgeEventData(events.data));
+                                    } else {
+                                        scope.events.data = scope.events.data.concat(events.data);
+                                    }
                                     scope.events.nextPageLink = events.nextPageLink;
                                     scope.events.hasNext = events.hasNext;
                                     if (scope.events.hasNext) {
@@ -265,6 +269,16 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
         scope.reload();
 
         $compile(element.contents())(scope);
+    }
+    
+    function prepareEdgeEventData(data) {
+        data.forEach(
+            edgeEvent => {
+                edgeEvent.edgeEventActionText = $translate.instant(types.edgeEventActionType[edgeEvent.action].name);
+                edgeEvent.edgeEventTypeText = $translate.instant(types.edgeEventTypeTranslations[edgeEvent.edgeId.entityType].name);
+            }
+        );
+        return data;
     }
 
     return {
