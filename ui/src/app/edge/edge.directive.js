@@ -70,7 +70,7 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
         };
 
         scope.onEdgeSync = function (edgeId) {
-            edgeService.syncEdge(edgeId).then(
+            edgeService.syncEdge(edgeId.id).then(
                 function success() {
                     toast.showSuccess($translate.instant('edge.sync-message'), 750, angular.element(element).parent().parent(), 'bottom left');
                 },

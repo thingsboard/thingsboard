@@ -114,11 +114,6 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     }
 
     @Override
-    public TimePageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
-        return edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, true);
-    }
-
-    @Override
     public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws IOException {
         edge.setRootRuleChainId(ruleChainId);
         Edge savedEdge = edgeService.saveEdge(edge);

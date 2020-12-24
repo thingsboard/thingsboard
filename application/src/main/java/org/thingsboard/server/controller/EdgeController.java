@@ -389,10 +389,12 @@ public class EdgeController extends BaseController {
         checkNotNull(query.getEdgeTypes());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
-            List<Edge> edges = checkNotNull(edgeService.findEdgesByQuery(getCurrentUser().getTenantId(), query).get());
+            SecurityUser user = getCurrentUser();
+            TenantId tenantId = user.getTenantId();
+            List<Edge> edges = checkNotNull(edgeService.findEdgesByQuery(tenantId, query).get());
             edges = edges.stream().filter(edge -> {
                 try {
-                    accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, Operation.READ, edge.getId(), edge);
+                    accessControlService.checkPermission(user, Resource.EDGE, Operation.READ, edge.getId(), edge);
                     return true;
                 } catch (ThingsboardException e) {
                     return false;
@@ -419,14 +421,18 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/sync", method = RequestMethod.POST)
-    public void syncEdge(@RequestBody EdgeId edgeId) throws ThingsboardException {
+    @RequestMapping(value = "/edge/sync/{edgeId}", method = RequestMethod.POST)
+    public void syncEdge(@PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
+        checkParameter("edgeId", strEdgeId);
         try {
-            edgeId = checkNotNull(edgeId);
             if (isEdgesEnabled()) {
-                EdgeGrpcSession session = edgeGrpcService.getEdgeGrpcSessionById(edgeId);
+                EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+                edgeId = checkNotNull(edgeId);
+                SecurityUser user = getCurrentUser();
+                TenantId tenantId = user.getTenantId();
+                EdgeGrpcSession session = edgeGrpcService.getEdgeGrpcSessionById(tenantId, edgeId);
                 Edge edge = session.getEdge();
-                syncEdgeService.sync(edge);
+                syncEdgeService.sync(tenantId, edge);
             } else {
                 throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
             }
@@ -453,6 +459,21 @@ public class EdgeController extends BaseController {
             return edgeService.activateInstance(licenseSecret, releaseDate);
         } catch (Exception e) {
             throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/missingToRelatedRuleChains/{edgeId}", method = RequestMethod.GET)
+    @ResponseBody
+    public String findMissingToRelatedRuleChains(@PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
+        try {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            edgeId = checkNotNull(edgeId);
+            SecurityUser user = getCurrentUser();
+            TenantId tenantId = user.getTenantId();
+            return edgeService.findMissingToRelatedRuleChains(tenantId, edgeId);
+        } catch (Exception e) {
+            throw handleException(e);
         }
     }
 }

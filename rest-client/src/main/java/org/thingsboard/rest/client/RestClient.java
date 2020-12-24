@@ -2384,7 +2384,9 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void syncEdge(EdgeId edgeId) {
-        restTemplate.postForEntity(baseURL + "/api/edge/sync", edgeId, EdgeId.class);
+        Map<String, String> params = new HashMap<>();
+        params.put("edgeId", edgeId.toString());
+        restTemplate.postForEntity(baseURL + "/api/edge/sync/{edgeId}", null, EdgeId.class, params);
     }
 
     @Deprecated
