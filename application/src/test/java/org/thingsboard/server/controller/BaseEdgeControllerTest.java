@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -682,7 +683,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         edgeImitator.getDownlinkMsgs().clear();
 
         edgeImitator.expectMessageAmount(4);
-        doPost("/api/edge/sync", edge.getId());
+        doPost("/api/edge/sync/" + edge.getId());
         edgeImitator.waitForMessages();
 
         Assert.assertEquals(4, edgeImitator.getDownlinkMsgs().size());

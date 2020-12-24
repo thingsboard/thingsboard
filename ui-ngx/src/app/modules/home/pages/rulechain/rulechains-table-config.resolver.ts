@@ -45,16 +45,10 @@ import {
   AddEntitiesToEdgeDialogData
 } from "@home/dialogs/add-entities-to-edge-dialog.component";
 import { MatDialog } from "@angular/material/dialog";
-import { isNotEmptyStr, isUndefined } from "@core/utils";
+import { isUndefined } from "@core/utils";
 import { PageLink } from "@shared/models/page/page-link";
 import { Edge } from "@shared/models/edge.models";
 import { mergeMap } from "rxjs/operators";
-import {
-  ConnectorType,
-  createFormConfig,
-  GatewayFormConnectorModel
-} from "@home/components/widget/lib/gateway/gateway-form.models";
-import { formattedError } from "@angular/compiler";
 
 @Injectable()
 export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {
