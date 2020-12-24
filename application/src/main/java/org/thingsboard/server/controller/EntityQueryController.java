@@ -16,18 +16,23 @@
 package org.thingsboard.server.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.query.EntityQueryService;
@@ -40,6 +45,7 @@ public class EntityQueryController extends BaseController {
     @Autowired
     private EntityQueryService entityQueryService;
 
+    private static final int MAX_PAGE_SIZE = 100;
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entitiesQuery/count", method = RequestMethod.POST)
@@ -76,4 +82,24 @@ public class EntityQueryController extends BaseController {
             throw handleException(e);
         }
     }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/entitiesQuery/find/keys", method = RequestMethod.POST)
+    @ResponseBody
+    public DeferredResult<ResponseEntity> findEntityTimeseriesAndAttributesKeysByQuery(@RequestBody EntityDataQuery query,
+                                                                                       @RequestParam("timeseries") boolean isTimeseries,
+                                                                                       @RequestParam("attributes") boolean isAttributes) throws ThingsboardException {
+        TenantId tenantId = getTenantId();
+        checkNotNull(query);
+        try {
+            EntityDataPageLink pageLink = query.getPageLink();
+            if (pageLink.getPageSize() > MAX_PAGE_SIZE) {
+                pageLink.setPageSize(MAX_PAGE_SIZE);
+            }
+            return entityQueryService.getKeysByQuery(getCurrentUser(), tenantId, query, isTimeseries, isAttributes);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
 }

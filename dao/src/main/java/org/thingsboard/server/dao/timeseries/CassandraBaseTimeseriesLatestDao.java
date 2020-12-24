@@ -87,6 +87,11 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
     }
 
     @Override
+    public List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
+        return Collections.emptyList();
+    }
+
+    @Override
     public ListenableFuture<Void> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
         BoundStatementBuilder stmtBuilder = new BoundStatementBuilder(getLatestStmt().bind());
         stmtBuilder.setString(0, entityId.getEntityType().name())
