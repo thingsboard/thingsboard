@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+FILE INFORMATION
+
+OMA Permanent Document
+   File: OMA-SUP-XML_LWM2M_DevCapMgmt-V1_0-20170308-A
+   Type: xml
+
+Public Reachable Information
+   Path: http://www.openmobilealliance.org/tech/profiles
+   Name: LWM2M_DevCapMgmt-v1_0.xml
+
+NORMATIVE INFORMATION
+
+  Information about this file can be found in the latest revision of
+
+    OMA-TS-LWM2M_DevCapMngt-V1_0
+
+  This is available at http://www.openmobilealliance.org/
+
+  Send comments to technical-comments@mail.openmobilealliance.org
+
+CHANGE HISTORY
+
+08032017 Status changed to Approved by TP, TP Ref # OMA-TP-2017-0021R01-INP_LWM2M_DevCapMgmt_1.0.2_for_Final_Approval_Notification
+	
+LEGAL DISCLAIMER
+
+  Copyright 2017 Open Mobile Alliance All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+  1. Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+  3. Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived
+  from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+  COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
+
+  The above license is used as a license under copyright only.  Please
+  reference the OMA IPR Policy for patent licensing terms:
+  http://www.openmobilealliance.org/ipr.html
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+	<Object ObjectType="MODefinition">
+		<Name>DevCapMgmt</Name>
+		<Description1><![CDATA[This LWM2M Object is dedicated to manage the device capabilities of a device e.g. sensors, communication, etc.]]></Description1>
+		<ObjectID>15</ObjectID>
+		<ObjectURN>urn:oma:lwm2m:oma:15</ObjectURN>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Resources>
+			<Item ID="0"><Name>Property</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[List of Device Capabilities inside a given Group.
+The format is a free list ASCII-represented integers separated by a semi colon. (e.g. 0;1;10)
+The list of capabilities per Group is given in Appendix B: Device Capabilities Vocabulary
+executable Resource can work with.
+]]></Description>
+			</Item>
+			<Item ID="1"><Name>Group</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>0-15</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Group name of Device Capabilities
+0: SENSOR: luminosity, presence,temp,humidity
+1: CONTROL: Light, Power, Sound
+2: CONNECTIVITY: Bluetooth, wifi, …
+3: NAVIGATION: gps, galieo
+4: STORAGE: external memory,
+5: VISION: cam, video-cam, night_cam.
+6: SOUND: speaker, buzzer
+7: ANALOG_INPUT: generic input
+8: ANALOG_OUTPUT: generic output
+9-15: reserved
+
+]]></Description>
+			</Item>
+			<Item ID="2"><Name>Description</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Device Capability Description
+(manufacturer specified string)
+]]></Description>
+			</Item>
+			<Item ID="3"><Name>Attached</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[When the resource doesn’t exist, it means the associated Device Capability is not removable.
+When this resource is “False”, it means the associated Device Capability is removable and is currently not attached to the device.
+When this resource is “True”, it means the associated Device Capability – if removable – is currently attached to the Device.
+When a Device Capability is not removable, and the “Attached” Resource is present, the “Attached” value but be set to “True”.
+]]></Description>
+			</Item>
+			<Item ID="4"><Name>Enabled</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This resource indicates whether the Device Capability is enabled regardless whether the Device Capability is attached or not. If the value of this resource is “True” the Device Capability is in Enabled State. If the value is “False” the Device Capability is in Disabled State;
+The ‘Attached’ and ‘Enabled’ resources are independent. A Device Capability MAY have ‘True’ as value for ‘Enabled’ Resource while having ‘False’ as value for the ‘Attached’ Resource. That means the Device Capability is still not available and can’t be used until it is attached to the Device, but will be useable once the Device Capability is attached.
+]]></Description>
+			</Item>
+			<Item ID="5"><Name>opEnable</Name>
+				<Operations>E</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type></Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This command is used to enable the Device Capability to transfer the Device Capability from Disabled State to Enabled state.
+In Enabled State, the Device Capability is allowed to work when it is attached to the Device.
+]]></Description>
+			</Item>
+			<Item ID="6"><Name>opDisable</Name>
+				<Operations>E</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type></Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This command is used to disable the Device Capability to transfer the Device Capability from Enabled State to Disabled State.
+In Disabled state the Device Capability is not allowed to work.
+]]></Description>
+			</Item>
+			<Item ID="7"><Name>NotifyEn</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[When the Resources “Enabled” or “Attached” are under “Observation”, this resource specifies whether the LWM2M Server MUST be notified when the value of the Resource on “Observation” changed. If the Resource “NotifyEn” is not present or the value is ‘False’, the LWM2M Server will be not notified about this change. If the “NotifyEn” Resource is present and the value is ‘True’, the LWM2M Server will be notified.]]></Description>
+			</Item></Resources>
+		<Description2 />
+	</Object>
+</LWM2M>

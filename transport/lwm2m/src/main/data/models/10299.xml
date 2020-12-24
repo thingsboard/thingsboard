@@ -1,0 +1,130 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<!-- BSD-3 Clause License
+
+Copyright 2019 Verizon Wireless.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+  <Object ObjectType="MODefinition">
+    <Name>HostDevice</Name>
+    <Description1>This LWM2M Object provides a range of host device related information which can be queried by the LWM2M Server. The host device is any integrated device with an embedded cellular radio module.</Description1>
+    <ObjectID>10299</ObjectID>
+    <ObjectURN>urn:oma:lwm2m:x:10299</ObjectURN>
+    <LWM2MVersion>1.0</LWM2MVersion>
+	<ObjectVersion>1.0</ObjectVersion>
+      <MultipleInstances>Single</MultipleInstances>
+      <Mandatory>Optional</Mandatory>
+      <Resources>
+          <Item ID="0">
+              <Name>Manufacturer</Name>
+              <Operations>R</Operations>
+              <MultipleInstances>Single</MultipleInstances>
+              <Mandatory>Mandatory</Mandatory>
+              <Type>String</Type>
+              <RangeEnumeration />
+              <Units />
+              <Description>Host device manufacturers name (OEM). </Description>
+          </Item>
+          <Item ID="1">
+              <Name>Model</Name>
+              <Operations>R</Operations>
+              <MultipleInstances>Single</MultipleInstances>
+              <Mandatory>Mandatory</Mandatory>
+              <Type>String</Type>
+              <RangeEnumeration />
+              <Units /><Description>Identifier of the model name or number determined by device manufacturer.</Description>
+          </Item><Item ID="2"><Name>UniqueID</Name>
+                     <Operations>R</Operations>
+                     <MultipleInstances>Single</MultipleInstances>
+                     <Mandatory>Mandatory</Mandatory>
+                     <Type>String</Type>
+                     <RangeEnumeration />
+                     <Units />
+                     <Description>Unique ID assigned by an manufacturer or other body. Used to uniquely identify a host device. Examples include serial # or UUID.</Description>
+                 </Item>
+          <Item ID="3">
+              <Name>FirmwareVersion</Name>
+              <Operations>R</Operations>
+              <MultipleInstances>Single</MultipleInstances>
+              <Mandatory>Mandatory</Mandatory>
+              <Type>String</Type>
+              <RangeEnumeration />
+              <Units />
+              <Description>Current Firmware version of the host device. (manufacturer specified string).</Description>
+          </Item><Item ID="4">
+                     <Name>SoftwareVersion</Name>
+                     <Operations>R</Operations>
+                     <MultipleInstances>Single</MultipleInstances>
+                     <Mandatory>Optional</Mandatory>
+                     <Type>String</Type>
+                     <RangeEnumeration />
+                     <Units />
+                     <Description>Current software version of the host device. (manufacturer specified string).</Description>
+                 </Item><Item ID="5">
+                            <Name>HardwareVersion</Name>
+                            <Operations>R</Operations>
+                            <MultipleInstances>Single</MultipleInstances>
+                            <Mandatory>Optional</Mandatory>
+                            <Type>String</Type>
+                            <RangeEnumeration />
+                            <Units />
+                            <Description>Current hardware version of the host device. (manufacturer specified string).</Description>
+                        </Item>
+          <Item ID="6">
+                                   <Name>DateStamp</Name>
+                                   <Operations>R</Operations>
+                                   <MultipleInstances>Single</MultipleInstances>
+                                   <Mandatory>Optional</Mandatory>
+              <Type>String</Type>
+                                   <RangeEnumeration />
+              <Units />
+                                   <Description>UTC value of the time and date of the last Firmware or Software update. Format:MM:DD:YYYY HH:MM:SS</Description>
+                               </Item>
+      </Resources>
+      <Description2 />
+  </Object>
+</LWM2M>

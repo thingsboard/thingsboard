@@ -29,11 +29,11 @@
         formControlName="configuration">
       </tb-mqtt-device-profile-transport-configuration>
     </ng-template>
-    <!--ng-template [ngSwitchCase]="deviceTransportType.LWM2M">
-      <tb-lwm2m-device-profile-transport-configuration
+    <ng-template [ngSwitchCase]="deviceTransportType.LWM2M">
+      <tb-profile-lwm2m-device-transport-configuration
         [required]="required"
         formControlName="configuration">
-      </tb-lwm2m-device-profile-transport-configuration>
-    </ng-template-->
+      </tb-profile-lwm2m-device-transport-configuration>
+    </ng-template>
   </div>
 </div>

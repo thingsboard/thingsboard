@@ -96,7 +96,6 @@ import { DeviceProfileTransportConfigurationComponent } from '@home/components/p
 import { DeviceProfileDialogComponent } from '@home/components/profile/device-profile-dialog.component';
 import { DeviceProfileAutocompleteComponent } from '@home/components/profile/device-profile-autocomplete.component';
 import { MqttDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/mqtt-device-profile-transport-configuration.component';
-import { Lwm2mDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/lwm2m-device-profile-transport-configuration.component';
 import { DeviceProfileAlarmsComponent } from '@home/components/profile/alarm/device-profile-alarms.component';
 import { DeviceProfileAlarmComponent } from '@home/components/profile/alarm/device-profile-alarm.component';
 import { CreateAlarmRulesComponent } from '@home/components/profile/alarm/create-alarm-rules.component';
@@ -119,7 +118,8 @@ import { SmsProviderConfigurationComponent } from '@home/components/sms/sms-prov
 import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-sns-provider-configuration.component';
 import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
 import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
-import {EdgeDownlinkTableComponent} from "@home/components/edge/edge-downlink-table.component";
+import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lwm2m/lwm2m-profile-components.module';
+import { EdgeDownlinkTableComponent } from "@home/components/edge/edge-downlink-table.component";
 
 @NgModule({
   declarations:
@@ -200,7 +200,6 @@ import {EdgeDownlinkTableComponent} from "@home/components/edge/edge-downlink-ta
       DeviceProfileConfigurationComponent,
       DefaultDeviceProfileTransportConfigurationComponent,
       MqttDeviceProfileTransportConfigurationComponent,
-      Lwm2mDeviceProfileTransportConfigurationComponent,
       DeviceProfileTransportConfigurationComponent,
       CreateAlarmRulesComponent,
       AlarmRuleComponent,
@@ -227,7 +226,8 @@ import {EdgeDownlinkTableComponent} from "@home/components/edge/edge-downlink-ta
   imports: [
     CommonModule,
     SharedModule,
-    SharedHomeComponentsModule
+    SharedHomeComponentsModule,
+    Lwm2mProfileComponentsModule
   ],
   exports: [
     EntitiesTableComponent,
@@ -290,7 +290,6 @@ import {EdgeDownlinkTableComponent} from "@home/components/edge/edge-downlink-ta
     DeviceProfileConfigurationComponent,
     DefaultDeviceProfileTransportConfigurationComponent,
     MqttDeviceProfileTransportConfigurationComponent,
-    Lwm2mDeviceProfileTransportConfigurationComponent,
     DeviceProfileTransportConfigurationComponent,
     CreateAlarmRulesComponent,
     AlarmRuleComponent,
@@ -310,6 +309,8 @@ import {EdgeDownlinkTableComponent} from "@home/components/edge/edge-downlink-ta
     AlarmScheduleDialogComponent,
     EditAlarmDetailsDialogComponent,
     DeviceProfileProvisionConfigurationComponent,
+    AlarmScheduleComponent,
+    Lwm2mProfileComponentsModule,
     SmsProviderConfigurationComponent,
     AwsSnsProviderConfigurationComponent,
     TwilioSmsProviderConfigurationComponent

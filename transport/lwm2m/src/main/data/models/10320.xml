@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+  <Object ObjectType="MODefinition">
+    <Name>CCU</Name>
+    <Description1><![CDATA[This LWM2M Object includes CCU(Central Control Unit) information and the link to CCU APPs.]]></Description1>
+    <ObjectID>10320</ObjectID>
+    <ObjectURN>urn:oma:lwm2m:x:10320</ObjectURN>
+    <LWM2MVersion>1.0</LWM2MVersion>
+    <ObjectVersion>1.0</ObjectVersion>
+    <MultipleInstances>Multiple</MultipleInstances>
+    <Mandatory>Optional</Mandatory>
+    <Resources>
+	  <Item ID="1">
+        <Name>CCU ID</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description><![CDATA[The CCU identity.]]></Description>
+      </Item>
+      <Item ID="2">
+        <Name>CCU FM Version</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description><![CDATA[The firmware version of the CCU.]]></Description>
+      </Item>
+      <Item ID="3">
+        <Name>CCU SW Version</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description><![CDATA[The software version of the CCU.]]></Description>
+      </Item>
+	  <Item ID="4">
+        <Name>CCU Memory Size</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>GB</Units>
+        <Description><![CDATA[Total Memory Size of the CCU (expressed in gigabyte).]]></Description>
+      </Item>	  
+	  <Item ID="5">
+        <Name>CCU Storage</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>GB</Units>
+        <Description><![CDATA[Total storage of the CCU.]]></Description>
+      </Item>
+	  <Item ID="6">
+        <Name>CCU Available Storage</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>GB</Units>
+        <Description><![CDATA[Available storage of the CCU.]]></Description>
+      </Item>
+	  
+	  <Item ID="5852">
+        <Name>On time</Name>
+        <Operations>RW</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>s</Units>
+        <Description><![CDATA[The time in seconds that the device has been turned on. Writing a value of 0 resets the counter.]]></Description>
+      </Item>
+	  
+     <Item ID="100">
+        <Name>Downloaded APP Packages</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description><![CDATA[Each item contains APP Name, Version info, Package Name.]]></Description>
+      </Item>	  
+	  <Item ID="101">
+		<Name>CCU APPs</Name>
+		<Operations>R</Operations>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Type>Objlnk</Type>
+		<RangeEnumeration/>
+		<Units/>
+		<Description>
+		  <![CDATA[Contains the reference to the APPs belongs to this CCU.]]>
+		</Description>
+	  </Item>
+    </Resources>
+    <Description2 />
+  </Object>
+</LWM2M>
