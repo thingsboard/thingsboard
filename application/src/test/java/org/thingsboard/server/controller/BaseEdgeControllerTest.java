@@ -682,7 +682,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         edgeImitator.getDownlinkMsgs().clear();
 
         edgeImitator.expectMessageAmount(4);
-        doPost("/api/edge/sync", edge.getId());
+        doPost("/api/edge/sync/" + edge.getId());
         edgeImitator.waitForMessages();
 
         Assert.assertEquals(4, edgeImitator.getDownlinkMsgs().size());
