@@ -45,10 +45,16 @@ import {
   AddEntitiesToEdgeDialogData
 } from "@home/dialogs/add-entities-to-edge-dialog.component";
 import { MatDialog } from "@angular/material/dialog";
-import { isUndefined } from "@core/utils";
+import { isNotEmptyStr, isUndefined } from "@core/utils";
 import { PageLink } from "@shared/models/page/page-link";
 import { Edge } from "@shared/models/edge.models";
-import { map, mergeMap } from "rxjs/operators";
+import { mergeMap } from "rxjs/operators";
+import {
+  ConnectorType,
+  createFormConfig,
+  GatewayFormConnectorModel
+} from "@home/components/widget/lib/gateway/gateway-form.models";
+import { formattedError } from "@angular/compiler";
 
 @Injectable()
 export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {
@@ -401,7 +407,28 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     }).afterClosed()
       .subscribe((res) => {
         if (res) {
-          this.config.table.updateData();
+          this.edgeService.findMissingToRelatedRuleChains(this.config.componentsData.edgeId).subscribe(
+            (missingRuleChains) => {
+              if (missingRuleChains && Object.keys(missingRuleChains).length > 0) {
+                let formattedMissingRuleChains: Array<string> = new Array<string>();
+                for (const missingRuleChain of Object.keys(missingRuleChains)) {
+                  const arrayOfMissingRuleChains = missingRuleChains[missingRuleChain];
+                  const tmp = "- '" + missingRuleChain + "': '" + arrayOfMissingRuleChains.join("', ") + "'";
+                  formattedMissingRuleChains.push(tmp);
+                }
+                const message = this.translate.instant('edge.missing-related-rule-chains-text',
+                  {missingRuleChains: formattedMissingRuleChains.join("<br>")});
+                this.dialogService.alert(this.translate.instant('edge.missing-related-rule-chains-title'),
+                  message, this.translate.instant('action.close'), true).subscribe(
+                  () => {
+                    this.config.table.updateData();
+                  }
+                );
+              } else {
+                this.config.table.updateData();
+              }
+            }
+          )
         }
       }
     )

@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.dao.edge;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -43,6 +46,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -55,10 +60,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -99,6 +106,8 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private static final int DEFAULT_LIMIT = 100;
 
@@ -581,6 +590,52 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         params.put("licenseSecret", edgeLicenseSecret);
         params.put("releaseDate", releaseDate);
         return this.restTemplate.postForEntity(EDGE_LICENSE_SERVER_ENDPOINT + "/api/license/activateInstance?licenseSecret={licenseSecret}&releaseDate={releaseDate}", (Object) null, Object.class, params);
+    }
+
+    @Override
+    public String findMissingToRelatedRuleChains(TenantId tenantId, EdgeId edgeId) {
+        List<RuleChain> edgeRuleChains = findEdgeRuleChains(tenantId, edgeId);
+        List<RuleChainId> edgeRuleChainIds = edgeRuleChains.stream().map(IdBased::getId).collect(Collectors.toList());
+        ObjectNode result = mapper.createObjectNode();
+        for (RuleChain edgeRuleChain : edgeRuleChains) {
+            List<RuleChainConnectionInfo> connectionInfos =
+                    ruleChainService.loadRuleChainMetaData(edgeRuleChain.getTenantId(), edgeRuleChain.getId()).getRuleChainConnections();
+            if (connectionInfos != null && !connectionInfos.isEmpty()) {
+                List<RuleChainId> connectedRuleChains =
+                        connectionInfos.stream().map(RuleChainConnectionInfo::getTargetRuleChainId).collect(Collectors.toList());
+                List<String> missingRuleChains = new ArrayList<>();
+                for (RuleChainId connectedRuleChain : connectedRuleChains) {
+                    if (!edgeRuleChainIds.contains(connectedRuleChain)) {
+                        RuleChain ruleChainById = ruleChainService.findRuleChainById(tenantId, connectedRuleChain);
+                        missingRuleChains.add(ruleChainById.getName());
+                    }
+                }
+                if (!missingRuleChains.isEmpty()) {
+                    ArrayNode array = mapper.createArrayNode();
+                    for (String missingRuleChain : missingRuleChains) {
+                        array.add(missingRuleChain);
+                    }
+                    result.set(edgeRuleChain.getName(), array);
+                }
+            }
+        }
+        return result.toString();
+    }
+
+    private List<RuleChain> findEdgeRuleChains(TenantId tenantId, EdgeId edgeId) {
+        List<RuleChain> result = new ArrayList<>();
+        TimePageLink pageLink = new TimePageLink(DEFAULT_LIMIT);
+        PageData<RuleChain> pageData;
+        do {
+            pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);
+            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                result.addAll(pageData.getData());
+                if (pageData.hasNext()) {
+                    pageLink = pageLink.nextPageLink();
+                }
+            }
+        } while (pageData != null && pageData.hasNext());
+        return result;
     }
 
     private void initRestTemplate() {

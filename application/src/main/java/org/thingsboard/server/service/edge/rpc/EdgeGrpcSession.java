@@ -170,7 +170,7 @@ public final class EdgeGrpcSession implements Closeable {
                     }
                 }
                 if (connected && requestMsg.getMsgType().equals(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)) {
-                    ctx.getSyncEdgeService().sync(edge);
+                    ctx.getSyncEdgeService().sync(edge.getTenantId(), edge);
                 }
                 if (connected) {
                     if (requestMsg.getMsgType().equals(RequestMsgType.UPLINK_RPC_MESSAGE) && requestMsg.hasUplinkMsg()) {
@@ -277,7 +277,7 @@ public final class EdgeGrpcSession implements Closeable {
             UUID ifOffset = null;
             boolean success = true;
             do {
-                pageData = ctx.getEdgeNotificationService().findEdgeEvents(edge.getTenantId(), edge.getId(), pageLink);
+                pageData = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), pageLink, true);
                 if (isConnected() && !pageData.getData().isEmpty()) {
                     log.trace("[{}] [{}] event(s) are going to be processed.", this.sessionId, pageData.getData().size());
                     List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(pageData.getData());
@@ -938,27 +938,27 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getRuleChainMetadataRequestMsgCount() > 0) {
                 for (RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg : uplinkMsg.getRuleChainMetadataRequestMsgList()) {
-                    result.add(ctx.getSyncEdgeService().processRuleChainMetadataRequestMsg(edge, ruleChainMetadataRequestMsg));
+                    result.add(ctx.getSyncEdgeService().processRuleChainMetadataRequestMsg(edge.getTenantId(), edge, ruleChainMetadataRequestMsg));
                 }
             }
             if (uplinkMsg.getAttributesRequestMsgCount() > 0) {
                 for (AttributesRequestMsg attributesRequestMsg : uplinkMsg.getAttributesRequestMsgList()) {
-                    result.add(ctx.getSyncEdgeService().processAttributesRequestMsg(edge, attributesRequestMsg));
+                    result.add(ctx.getSyncEdgeService().processAttributesRequestMsg(edge.getTenantId(), edge, attributesRequestMsg));
                 }
             }
             if (uplinkMsg.getRelationRequestMsgCount() > 0) {
                 for (RelationRequestMsg relationRequestMsg : uplinkMsg.getRelationRequestMsgList()) {
-                    result.add(ctx.getSyncEdgeService().processRelationRequestMsg(edge, relationRequestMsg));
+                    result.add(ctx.getSyncEdgeService().processRelationRequestMsg(edge.getTenantId(), edge, relationRequestMsg));
                 }
             }
             if (uplinkMsg.getUserCredentialsRequestMsgCount() > 0) {
                 for (UserCredentialsRequestMsg userCredentialsRequestMsg : uplinkMsg.getUserCredentialsRequestMsgList()) {
-                    result.add(ctx.getSyncEdgeService().processUserCredentialsRequestMsg(edge, userCredentialsRequestMsg));
+                    result.add(ctx.getSyncEdgeService().processUserCredentialsRequestMsg(edge.getTenantId(), edge, userCredentialsRequestMsg));
                 }
             }
             if (uplinkMsg.getDeviceCredentialsRequestMsgCount() > 0) {
                 for (DeviceCredentialsRequestMsg deviceCredentialsRequestMsg : uplinkMsg.getDeviceCredentialsRequestMsgList()) {
-                    result.add(ctx.getSyncEdgeService().processDeviceCredentialsRequestMsg(edge, deviceCredentialsRequestMsg));
+                    result.add(ctx.getSyncEdgeService().processDeviceCredentialsRequestMsg(edge.getTenantId(), edge, deviceCredentialsRequestMsg));
                 }
             }
             if (uplinkMsg.getDeviceRpcCallMsgCount() > 0) {

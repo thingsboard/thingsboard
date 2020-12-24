@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -76,7 +77,7 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
-    private EdgeNotificationService edgeNotificationService;
+    private EdgeEventService edgeEventService;
 
     @Lazy
     @Autowired

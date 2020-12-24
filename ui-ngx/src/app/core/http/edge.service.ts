@@ -97,7 +97,11 @@ export class EdgeService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public syncEdge(edgeId: EdgeId, config?: RequestConfig) {
-    return this.http.post(`/api/edge/sync`, edgeId, defaultHttpOptionsFromConfig(config));
+  public syncEdge(edgeId: string, config?: RequestConfig) {
+    return this.http.post(`/api/edge/sync/${edgeId}`, edgeId, defaultHttpOptionsFromConfig(config));
+  }
+
+  public findMissingToRelatedRuleChains(edgeId: string, config?: RequestConfig): Observable<string> {
+    return this.http.get<string>(`/api/edge/missingToRelatedRuleChains/${edgeId}`, defaultHttpOptionsFromConfig(config));
   }
 }

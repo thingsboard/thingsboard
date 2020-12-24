@@ -2678,7 +2678,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public Optional<RuleChain> setAutoAssignToEdgeRuleChain(RuleChainId ruleChainId) {
         try {
-            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/ruleChain/{ruleChainId}/defaultEdge", null, RuleChain.class, ruleChainId.getId());
+            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/ruleChain/{ruleChainId}/autoAssignToEdge", null, RuleChain.class, ruleChainId.getId());
             return Optional.ofNullable(ruleChain.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -2691,7 +2691,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public Optional<RuleChain> unsetAutoAssignToEdgeRuleChain(RuleChainId ruleChainId) {
         try {
-            ResponseEntity<RuleChain> ruleChain = restTemplate.exchange(baseURL + "/api/ruleChain/{ruleChainId}/defaultEdge", HttpMethod.DELETE, HttpEntity.EMPTY, RuleChain.class, ruleChainId.getId());
+            ResponseEntity<RuleChain> ruleChain = restTemplate.exchange(baseURL + "/api/ruleChain/{ruleChainId}/autoAssignToEdge", HttpMethod.DELETE, HttpEntity.EMPTY, RuleChain.class, ruleChainId.getId());
             return Optional.ofNullable(ruleChain.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -2703,7 +2703,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public List<RuleChain> getAutoAssignToEdgeRuleChains() {
-        return restTemplate.exchange(baseURL + "/api/ruleChain/defaultEdgeRuleChains",
+        return restTemplate.exchange(baseURL + "/api/ruleChain/autoAssignToEdgeRuleChains",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<RuleChain>>() {

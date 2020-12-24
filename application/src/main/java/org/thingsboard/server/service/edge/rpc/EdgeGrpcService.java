@@ -186,11 +186,12 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         scheduleEdgeEventsCheck(edgeGrpcSession);
     }
 
-    public EdgeGrpcSession getEdgeGrpcSessionById(EdgeId edgeId) {
+    public EdgeGrpcSession getEdgeGrpcSessionById(TenantId tenantId, EdgeId edgeId) {
         EdgeGrpcSession session = sessions.get(edgeId);
         if (session != null && session.isConnected()) {
             return session;
         } else {
+            log.error("[{}] Edge is not connected [{}]", tenantId, edgeId);
             throw new RuntimeException("Edge is not connected");
         }
     }

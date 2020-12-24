@@ -749,9 +749,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                         }
                     }
                     if (ruleChain.isRoot() && RuleChainType.EDGE.equals(ruleChain.getType())) {
-                        RuleChain defaultRootEdgeRuleChain = getEdgeTemplateRootRuleChain(ruleChain.getTenantId());
-                        if (defaultRootEdgeRuleChain != null && !defaultRootEdgeRuleChain.getId().equals(ruleChain.getId())) {
-                            throw new DataValidationException("Another default root edge rule chain is present in scope of current tenant!");
+                        RuleChain edgeTemplateRootRuleChain = getEdgeTemplateRootRuleChain(ruleChain.getTenantId());
+                        if (edgeTemplateRootRuleChain != null && !edgeTemplateRootRuleChain.getId().equals(ruleChain.getId())) {
+                            throw new DataValidationException("Another edge template root rule chain is present in scope of current tenant!");
                         }
                     }
                 }

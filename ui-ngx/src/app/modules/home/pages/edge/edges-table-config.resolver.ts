@@ -483,7 +483,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     if ($event) {
       $event.stopPropagation();
     }
-    this.edgeService.syncEdge(edge.id).subscribe(
+    this.edgeService.syncEdge(edge.id.id).subscribe(
       () => {
         this.store.dispatch(new ActionNotificationShow(
           {
