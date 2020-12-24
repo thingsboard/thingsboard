@@ -31,7 +31,7 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
 
         scope.ngModelCtrl = ngModelCtrl;
         scope.types = types;
-        if (userService.isEdgesSupportEnabled()) {
+        if (!userService.isEdgesSupportEnabled()) {
             scope.allowedEntityTypes = Object.values(types.entityType).filter(entityType => entityType !== types.entityType.edge);
         }
         scope.aliasFilterTypes = entityService.getAliasFilterTypesByEntityTypes(scope.allowedEntityTypes);
