@@ -107,6 +107,8 @@ public class LwM2MTransportHandler{
     public static final String PUT_TYPE_OPER_WRITE_ATTRIBUTES = "wright-attributes";
 
     public static final String EVENT_AWAKE = "AWAKE";
+    public static final String SERVICE_CHANNEL = "SERVICE";
+    public static final String RESPONSE_CHANNEL = "RESP";
 
     @Autowired
     @Qualifier("LeshanServerCert")

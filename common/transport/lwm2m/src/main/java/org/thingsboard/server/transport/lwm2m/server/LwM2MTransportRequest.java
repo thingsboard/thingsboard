@@ -74,26 +74,27 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.POST_TYPE_OPER_WRITE_REPLACE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_WRITE_ATTRIBUTES;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.PUT_TYPE_OPER_WRITE_UPDATE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.RESPONSE_CHANNEL;
 
 @Slf4j
 @Service("LwM2MTransportRequest")
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' ) || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportRequest {
-    private final ExecutorService executorService;
-    private static final String RESPONSE_CHANNEL = "THINGSBOARD_RESP";
-    private final LwM2mValueConverterImpl converter;
+    private ExecutorService executorResponse;
+    private ExecutorService executorResponseError;
+    private LwM2mValueConverterImpl converter;
 
     @Autowired
     LwM2MTransportService service;
 
-    public LwM2MTransportRequest() {
-        this.converter = new LwM2mValueConverterImpl();
-        executorService = Executors.newCachedThreadPool(
-                new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
-    }
 
     @PostConstruct
     public void init() {
+        this.converter = new LwM2mValueConverterImpl();
+        executorResponse = Executors.newCachedThreadPool(
+                new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
+        executorResponseError = Executors.newCachedThreadPool(
+                new NamedThreadFactory(String.format("LwM2M %s channel response Error", RESPONSE_CHANNEL)));
     }
 
     public Collection<Registration> doGetRegistrations(LeshanServer lwServer) {
@@ -306,27 +307,21 @@ public class LwM2MTransportRequest {
     }
 
     private void handleResponse(Registration registration, final String path, LwM2mResponse response, DownlinkRequest request, LwM2MClient lwM2MClient, boolean isDelayedUpdate) {
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    sendResponse(registration, path, response, request, lwM2MClient, isDelayedUpdate);
-                } catch (RuntimeException t) {
-                    log.error("[{}] endpoint [{}] path [{}] error Unable to after send response.", registration.getEndpoint(), path, t.toString());
-                }
+        executorResponse.submit(() -> {
+            try {
+                sendResponse(registration, path, response, request, lwM2MClient, isDelayedUpdate);
+            } catch (Exception e) {
+                log.error("[{}] endpoint [{}] path [{}] error Unable to after send response.", registration.getEndpoint(), path, e);
             }
         });
     }
 
     private void handleResponseError(Registration registration, final String path, LwM2MClient lwM2MClient, boolean isDelayedUpdate) {
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (isDelayedUpdate) lwM2MClient.onSuccessOrErrorDelayedRequests(path);
-                } catch (RuntimeException t) {
-                    log.error("[{}] endpoint [{}] path [{}] error Unable to after send response.", registration.getEndpoint(), path, t.toString());
-                }
+        executorResponseError.submit(() -> {
+            try {
+                if (isDelayedUpdate) lwM2MClient.onSuccessOrErrorDelayedRequests(path);
+            } catch (RuntimeException t) {
+                log.error("[{}] endpoint [{}] path [{}] error Unable to after send response.", registration.getEndpoint(), path, t.toString());
             }
         });
     }
