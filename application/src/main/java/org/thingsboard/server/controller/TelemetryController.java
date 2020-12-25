@@ -298,7 +298,6 @@ public class TelemetryController extends BaseController {
             deleteToTs = System.currentTimeMillis();
         } else {
             if (startTs == null || endTs == null) {
-                deleteToTs = endTs;
                 return getImmediateDeferredResult("When deleteAllDataForKeys is false, start and end timestamp values shouldn't be empty", HttpStatus.BAD_REQUEST);
             } else {
                 deleteFromTs = startTs;
@@ -316,13 +315,13 @@ public class TelemetryController extends BaseController {
             Futures.addCallback(future, new FutureCallback<List<Void>>() {
                 @Override
                 public void onSuccess(@Nullable List<Void> tmp) {
-                    logTimeseriesDeleted(user, entityId, keys, null);
+                    logTimeseriesDeleted(user, entityId, keys, deleteFromTs, deleteToTs, null);
                     result.setResult(new ResponseEntity<>(HttpStatus.OK));
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    logTimeseriesDeleted(user, entityId, keys, t);
+                    logTimeseriesDeleted(user, entityId, keys, deleteFromTs, deleteToTs, t);
                     result.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
                 }
             }, executor);
@@ -443,6 +442,7 @@ public class TelemetryController extends BaseController {
         if (entries.isEmpty()) {
             return getImmediateDeferredResult("No timeseries data found in request body!", HttpStatus.BAD_REQUEST);
         }
+        SecurityUser user = getCurrentUser();
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.WRITE_TELEMETRY, entityIdSrc, (result, tenantId, entityId) -> {
             long tenantTtl = ttl;
             if (!TenantId.SYS_TENANT_ID.equals(tenantId) && tenantTtl == 0) {
@@ -590,10 +590,10 @@ public class TelemetryController extends BaseController {
         };
     }
 
-    private void logTimeseriesDeleted(SecurityUser user, EntityId entityId, List<String> keys, Throwable e) {
+    private void logTimeseriesDeleted(SecurityUser user, EntityId entityId, List<String> keys, long startTs, long endTs, Throwable e) {
         try {
             logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.TIMESERIES_DELETED, toException(e),
-                    keys);
+                    keys, startTs, endTs);
         } catch (ThingsboardException te) {
             log.warn("Failed to log timeseries delete", te);
         }

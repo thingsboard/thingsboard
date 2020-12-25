@@ -716,6 +716,9 @@ public abstract class BaseController {
             case TIMESERIES_UPDATED:
                 msgType = DataConstants.TIMESERIES_UPDATED;
                 break;
+            case TIMESERIES_DELETED:
+                msgType = DataConstants.TIMESERIES_DELETED;
+                break;
         }
         if (!StringUtils.isEmpty(msgType)) {
             try {
@@ -774,6 +777,14 @@ public abstract class BaseController {
                     } else if (actionType == ActionType.TIMESERIES_UPDATED) {
                         List<TsKvEntry> timeseries = extractParameter(List.class, 0, additionalInfo);
                         addTimeseries(entityNode, timeseries);
+                    } else if (actionType == ActionType.TIMESERIES_DELETED) {
+                        List<String> keys = extractParameter(List.class, 0, additionalInfo);
+                        if (keys != null) {
+                            ArrayNode timeseriesArrayNode = entityNode.putArray("timeseries");
+                            keys.forEach(timeseriesArrayNode::add);
+                        }
+                        entityNode.put("startTs", extractParameter(Long.class, 1, additionalInfo));
+                        entityNode.put("endTs", extractParameter(Long.class, 2, additionalInfo));
                     }
                 }
                 TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
