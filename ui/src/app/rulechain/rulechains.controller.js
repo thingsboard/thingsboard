@@ -572,8 +572,32 @@ export default function RuleChainsController(ruleChainService, userService, impo
                     fullscreen: true,
                     targetEvent: $event
                 }).then(function () {
-                    vm.grid.refreshList();
-                }, function () {
+                    edgeService.findMissingToRelatedRuleChains(edgeId).then(
+                        function success(missingRuleChains) {
+                            if (missingRuleChains && Object.keys(missingRuleChains).length > 0) {
+                                let formattedMissingRuleChains = [];
+                                for (const missingRuleChain of Object.keys(missingRuleChains)) {
+                                    const arrayOfMissingRuleChains = missingRuleChains[missingRuleChain];
+                                    const tmp = "- '" + missingRuleChain + "': '" + arrayOfMissingRuleChains.join("', ") + "'";
+                                    formattedMissingRuleChains.push(tmp);
+                                }
+                                var alert = $mdDialog.alert()
+                                    .parent(angular.element($document[0].body))
+                                    .clickOutsideToClose(true)
+                                    .title($translate.instant('edge.missing-related-rule-chains-title'))
+                                    .htmlContent($translate.instant('edge.missing-related-rule-chains-text', {missingRuleChains: formattedMissingRuleChains.join("<br>")}))
+                                    .ok($translate.instant('action.close'));
+                                alert._options.fullscreen = true;
+                                $mdDialog.show(alert).then(
+                                    function () {
+                                        vm.grid.refreshList();
+                                    }
+                                );
+                            } else {
+                                vm.grid.refreshList();
+                            }
+                        }
+                    );
                 });
             },
             function fail() {
