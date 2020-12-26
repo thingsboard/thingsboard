@@ -218,7 +218,6 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     }
 
     /**
-     *
      * @param deviceProfile
      */
     public boolean addUpdateProfileParameters(DeviceProfile deviceProfile) {
