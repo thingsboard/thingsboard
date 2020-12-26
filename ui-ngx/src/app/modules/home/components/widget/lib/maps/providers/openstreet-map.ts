@@ -16,7 +16,7 @@
 
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { UnitedMapSettings } from '../map-models';
+import { DEFAULT_ZOOM_LEVEL, UnitedMapSettings } from '../map-models';
 import { WidgetContext } from '@home/models/widget-component.models';
 
 export class OpenStreetMap extends LeafletMap {
@@ -24,7 +24,7 @@ export class OpenStreetMap extends LeafletMap {
         super(ctx, $container, options);
         const map =  L.map($container, {
           editable: !!options.editablePolygon
-        }).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
+        }).setView(options?.defaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
         let tileLayer;
         if (options.useCustomProvider) {
           tileLayer = L.tileLayer(options.customProviderTileUrl);

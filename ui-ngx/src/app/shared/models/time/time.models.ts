@@ -465,3 +465,19 @@ export const defaultTimeIntervals = new Array<TimeInterval>(
     value: 30 * DAY
   }
 );
+
+export enum TimeUnit {
+  SECONDS = 'SECONDS',
+  MINUTES = 'MINUTES',
+  HOURS = 'HOURS',
+  DAYS = 'DAYS'
+}
+
+export const timeUnitTranslationMap = new Map<TimeUnit, string>(
+  [
+    [TimeUnit.SECONDS, 'timeunit.seconds'],
+    [TimeUnit.MINUTES, 'timeunit.minutes'],
+    [TimeUnit.HOURS, 'timeunit.hours'],
+    [TimeUnit.DAYS, 'timeunit.days']
+  ]
+);

@@ -68,6 +68,12 @@ export class RuleChainService {
     return this.http.get<RuleChain>(`/api/ruleChain/${ruleChainId}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public createDefaultRuleChain(ruleChainName: string, config?: RequestConfig): Observable<RuleChain> {
+    return this.http.post<RuleChain>('/api/ruleChain/device/default', {
+      name: ruleChainName
+    }, defaultHttpOptionsFromConfig(config));
+  }
+
   public saveRuleChain(ruleChain: RuleChain, config?: RequestConfig): Observable<RuleChain> {
     return this.http.post<RuleChain>('/api/ruleChain', ruleChain, defaultHttpOptionsFromConfig(config));
   }

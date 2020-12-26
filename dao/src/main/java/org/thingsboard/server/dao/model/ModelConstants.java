@@ -114,10 +114,20 @@ public class ModelConstants {
     public static final String TENANT_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String TENANT_REGION_PROPERTY = "region";
     public static final String TENANT_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
-    public static final String TENANT_ISOLATED_TB_CORE = "isolated_tb_core";
-    public static final String TENANT_ISOLATED_TB_RULE_ENGINE = "isolated_tb_rule_engine";
+    public static final String TENANT_TENANT_PROFILE_ID_PROPERTY = "tenant_profile_id";
 
     public static final String TENANT_BY_REGION_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "tenant_by_region_and_search_text";
+
+    /**
+     * Tenant profile constants.
+     */
+    public static final String TENANT_PROFILE_COLUMN_FAMILY_NAME = "tenant_profile";
+    public static final String TENANT_PROFILE_NAME_PROPERTY = "name";
+    public static final String TENANT_PROFILE_PROFILE_DATA_PROPERTY = "profile_data";
+    public static final String TENANT_PROFILE_DESCRIPTION_PROPERTY = "description";
+    public static final String TENANT_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
+    public static final String TENANT_PROFILE_ISOLATED_TB_CORE = "isolated_tb_core";
+    public static final String TENANT_PROFILE_ISOLATED_TB_RULE_ENGINE = "isolated_tb_rule_engine";
 
     /**
      * Cassandra customer constants.
@@ -141,12 +151,31 @@ public class ModelConstants {
     public static final String DEVICE_TYPE_PROPERTY = "type";
     public static final String DEVICE_LABEL_PROPERTY = "label";
     public static final String DEVICE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String DEVICE_DEVICE_PROFILE_ID_PROPERTY = "device_profile_id";
+    public static final String DEVICE_DEVICE_DATA_PROPERTY = "device_data";
+
     public static final String DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_and_search_text";
     public static final String DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_by_type_and_search_text";
     public static final String DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_customer_and_search_text";
     public static final String DEVICE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_customer_by_type_and_search_text";
     public static final String DEVICE_BY_TENANT_AND_NAME_VIEW_NAME = "device_by_tenant_and_name";
     public static final String DEVICE_TYPES_BY_TENANT_VIEW_NAME = "device_types_by_tenant";
+
+    /**
+     * Device profile constants.
+     */
+    public static final String DEVICE_PROFILE_COLUMN_FAMILY_NAME = "device_profile";
+    public static final String DEVICE_PROFILE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String DEVICE_PROFILE_NAME_PROPERTY = "name";
+    public static final String DEVICE_PROFILE_TYPE_PROPERTY = "type";
+    public static final String DEVICE_PROFILE_TRANSPORT_TYPE_PROPERTY = "transport_type";
+    public static final String DEVICE_PROFILE_PROVISION_TYPE_PROPERTY = "provision_type";
+    public static final String DEVICE_PROFILE_PROFILE_DATA_PROPERTY = "profile_data";
+    public static final String DEVICE_PROFILE_DESCRIPTION_PROPERTY = "description";
+    public static final String DEVICE_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
+    public static final String DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
+    public static final String DEVICE_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY = "default_queue_name";
+    public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
 
     /**
      * Cassandra entityView constants.
@@ -353,6 +382,76 @@ public class ModelConstants {
     public static final String RULE_NODE_TYPE_PROPERTY = "type";
     public static final String RULE_NODE_NAME_PROPERTY = "name";
     public static final String RULE_NODE_CONFIGURATION_PROPERTY = "configuration";
+
+    /**
+     * Rule node state constants.
+     */
+    public static final String RULE_NODE_STATE_TABLE_NAME = "rule_node_state";
+    public static final String RULE_NODE_STATE_NODE_ID_PROPERTY = "rule_node_id";
+    public static final String RULE_NODE_STATE_ENTITY_TYPE_PROPERTY = "entity_type";
+    public static final String RULE_NODE_STATE_ENTITY_ID_PROPERTY = "entity_id";
+    public static final String RULE_NODE_STATE_DATA_PROPERTY = "state_data";
+
+    /**
+     * OAuth2 client registration constants.
+     */
+    public static final String OAUTH2_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String OAUTH2_CLIENT_REGISTRATION_INFO_COLUMN_FAMILY_NAME = "oauth2_client_registration_info";
+    public static final String OAUTH2_CLIENT_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_client_registration";
+    public static final String OAUTH2_CLIENT_REGISTRATION_TO_DOMAIN_COLUMN_FAMILY_NAME = "oauth2_client_registration_to_domain";
+    public static final String OAUTH2_CLIENT_REGISTRATION_TEMPLATE_COLUMN_FAMILY_NAME = "oauth2_client_registration_template";
+    public static final String OAUTH2_ENABLED_PROPERTY = "enabled";
+    public static final String OAUTH2_TEMPLATE_PROVIDER_ID_PROPERTY = "provider_id";
+    public static final String OAUTH2_CLIENT_REGISTRATION_INFO_ID_PROPERTY = "client_registration_info_id";
+    public static final String OAUTH2_DOMAIN_NAME_PROPERTY = "domain_name";
+    public static final String OAUTH2_DOMAIN_SCHEME_PROPERTY = "domain_scheme";
+    public static final String OAUTH2_CLIENT_ID_PROPERTY = "client_id";
+    public static final String OAUTH2_CLIENT_SECRET_PROPERTY = "client_secret";
+    public static final String OAUTH2_AUTHORIZATION_URI_PROPERTY = "authorization_uri";
+    public static final String OAUTH2_TOKEN_URI_PROPERTY = "token_uri";
+    public static final String OAUTH2_REDIRECT_URI_TEMPLATE_PROPERTY = "redirect_uri_template";
+    public static final String OAUTH2_SCOPE_PROPERTY = "scope";
+    public static final String OAUTH2_USER_INFO_URI_PROPERTY = "user_info_uri";
+    public static final String OAUTH2_USER_NAME_ATTRIBUTE_NAME_PROPERTY = "user_name_attribute_name";
+    public static final String OAUTH2_JWK_SET_URI_PROPERTY = "jwk_set_uri";
+    public static final String OAUTH2_CLIENT_AUTHENTICATION_METHOD_PROPERTY = "client_authentication_method";
+    public static final String OAUTH2_LOGIN_BUTTON_LABEL_PROPERTY = "login_button_label";
+    public static final String OAUTH2_LOGIN_BUTTON_ICON_PROPERTY = "login_button_icon";
+    public static final String OAUTH2_ALLOW_USER_CREATION_PROPERTY = "allow_user_creation";
+    public static final String OAUTH2_ACTIVATE_USER_PROPERTY = "activate_user";
+    public static final String OAUTH2_MAPPER_TYPE_PROPERTY = "type";
+    public static final String OAUTH2_EMAIL_ATTRIBUTE_KEY_PROPERTY = "basic_email_attribute_key";
+    public static final String OAUTH2_FIRST_NAME_ATTRIBUTE_KEY_PROPERTY = "basic_first_name_attribute_key";
+    public static final String OAUTH2_LAST_NAME_ATTRIBUTE_KEY_PROPERTY = "basic_last_name_attribute_key";
+    public static final String OAUTH2_TENANT_NAME_STRATEGY_PROPERTY = "basic_tenant_name_strategy";
+    public static final String OAUTH2_TENANT_NAME_PATTERN_PROPERTY = "basic_tenant_name_pattern";
+    public static final String OAUTH2_CUSTOMER_NAME_PATTERN_PROPERTY = "basic_customer_name_pattern";
+    public static final String OAUTH2_DEFAULT_DASHBOARD_NAME_PROPERTY = "basic_default_dashboard_name";
+    public static final String OAUTH2_ALWAYS_FULL_SCREEN_PROPERTY = "basic_always_full_screen";
+    public static final String OAUTH2_MAPPER_URL_PROPERTY = "custom_url";
+    public static final String OAUTH2_MAPPER_USERNAME_PROPERTY = "custom_username";
+    public static final String OAUTH2_MAPPER_PASSWORD_PROPERTY = "custom_password";
+    public static final String OAUTH2_MAPPER_SEND_TOKEN_PROPERTY = "custom_send_token";
+    public static final String OAUTH2_TEMPLATE_COMMENT_PROPERTY = "comment";
+    public static final String OAUTH2_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String OAUTH2_TEMPLATE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String OAUTH2_TEMPLATE_LOGIN_BUTTON_ICON_PROPERTY = OAUTH2_LOGIN_BUTTON_ICON_PROPERTY;
+    public static final String OAUTH2_TEMPLATE_LOGIN_BUTTON_LABEL_PROPERTY = OAUTH2_LOGIN_BUTTON_LABEL_PROPERTY;
+    public static final String OAUTH2_TEMPLATE_HELP_LINK_PROPERTY = "help_link";
+
+    /**
+     * Usage Record constants.
+     */
+    public static final String API_USAGE_STATE_TABLE_NAME = "api_usage_state";
+    public static final String API_USAGE_STATE_TENANT_ID_COLUMN = TENANT_ID_PROPERTY;
+    public static final String API_USAGE_STATE_ENTITY_TYPE_COLUMN = ENTITY_TYPE_COLUMN;
+    public static final String API_USAGE_STATE_ENTITY_ID_COLUMN = ENTITY_ID_COLUMN;
+    public static final String API_USAGE_STATE_TRANSPORT_COLUMN = "transport";
+    public static final String API_USAGE_STATE_DB_STORAGE_COLUMN = "db_storage";
+    public static final String API_USAGE_STATE_RE_EXEC_COLUMN = "re_exec";
+    public static final String API_USAGE_STATE_JS_EXEC_COLUMN = "js_exec";
+    public static final String API_USAGE_STATE_EMAIL_EXEC_COLUMN = "email_exec";
+    public static final String API_USAGE_STATE_SMS_EXEC_COLUMN = "sms_exec";
 
     /**
      * Cassandra attributes and timeseries constants.

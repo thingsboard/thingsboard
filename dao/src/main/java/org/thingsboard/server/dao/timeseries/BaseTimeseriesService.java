@@ -15,16 +15,19 @@
  */
 package org.thingsboard.server.dao.timeseries;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -38,7 +41,6 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -55,6 +57,20 @@ public class BaseTimeseriesService implements TimeseriesService {
 
     private static final int INSERTS_PER_ENTRY = 3;
     private static final int DELETES_PER_ENTRY = INSERTS_PER_ENTRY;
+    public static final Function<List<Integer>, Integer> SUM_ALL_INTEGERS = new Function<List<Integer>, Integer>() {
+        @Override
+        public @Nullable Integer apply(@Nullable List<Integer> input) {
+            int result = 0;
+            if (input != null) {
+                for (Integer tmp : input) {
+                    if (tmp != null) {
+                        result += tmp;
+                    }
+                }
+            }
+            return result;
+        }
+    };
 
     @Value("${database.ts_max_intervals}")
     private long maxTsIntervals;
@@ -101,26 +117,36 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
-    public ListenableFuture<List<Void>> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
+    public List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
+        return timeseriesLatestDao.findAllKeysByDeviceProfileId(tenantId, deviceProfileId);
+    }
+
+    @Override
+    public List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
+        return timeseriesLatestDao.findAllKeysByEntityIds(tenantId, entityIds);
+    }
+
+    @Override
+    public ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
         validate(entityId);
         if (tsKvEntry == null) {
             throw new IncorrectParameterException("Key value entry can't be null");
         }
-        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(INSERTS_PER_ENTRY);
+        List<ListenableFuture<Integer>> futures = Lists.newArrayListWithExpectedSize(INSERTS_PER_ENTRY);
         saveAndRegisterFutures(tenantId, futures, entityId, tsKvEntry, 0L);
-        return Futures.allAsList(futures);
+        return Futures.transform(Futures.allAsList(futures), SUM_ALL_INTEGERS, MoreExecutors.directExecutor());
     }
 
     @Override
-    public ListenableFuture<List<Void>> save(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries, long ttl) {
-        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(tsKvEntries.size() * INSERTS_PER_ENTRY);
+    public ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries, long ttl) {
+        List<ListenableFuture<Integer>> futures = Lists.newArrayListWithExpectedSize(tsKvEntries.size() * INSERTS_PER_ENTRY);
         for (TsKvEntry tsKvEntry : tsKvEntries) {
             if (tsKvEntry == null) {
                 throw new IncorrectParameterException("Key value entry can't be null");
             }
             saveAndRegisterFutures(tenantId, futures, entityId, tsKvEntry, ttl);
         }
-        return Futures.allAsList(futures);
+        return Futures.transform(Futures.allAsList(futures), SUM_ALL_INTEGERS, MoreExecutors.directExecutor());
     }
 
     @Override
@@ -135,12 +161,12 @@ public class BaseTimeseriesService implements TimeseriesService {
         return Futures.allAsList(futures);
     }
 
-    private void saveAndRegisterFutures(TenantId tenantId, List<ListenableFuture<Void>> futures, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
+    private void saveAndRegisterFutures(TenantId tenantId, List<ListenableFuture<Integer>> futures, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
         if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
             throw new IncorrectParameterException("Telemetry data can't be stored for entity view. Read only");
         }
         futures.add(timeseriesDao.savePartition(tenantId, entityId, tsKvEntry.getTs(), tsKvEntry.getKey(), ttl));
-        futures.add(timeseriesLatestDao.saveLatest(tenantId, entityId, tsKvEntry));
+        futures.add(Futures.transform(timeseriesLatestDao.saveLatest(tenantId, entityId, tsKvEntry), v -> 0, MoreExecutors.directExecutor()));
         futures.add(timeseriesDao.save(tenantId, entityId, tsKvEntry, ttl));
     }
 
@@ -216,7 +242,7 @@ public class BaseTimeseriesService implements TimeseriesService {
         } else if (query.getAggregation() == null) {
             throw new IncorrectParameterException("Incorrect ReadTsKvQuery. Aggregation can't be empty");
         }
-        if(!Aggregation.NONE.equals(query.getAggregation())) {
+        if (!Aggregation.NONE.equals(query.getAggregation())) {
             long step = Math.max(query.getInterval(), 1000);
             long intervalCounts = (query.getEndTs() - query.getStartTs()) / step;
             if (intervalCounts > maxTsIntervals || intervalCounts < 0) {

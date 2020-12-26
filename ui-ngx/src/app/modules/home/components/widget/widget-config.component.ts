@@ -54,13 +54,13 @@ import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { forkJoin, Observable, of, Subscription } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { WidgetConfigCallbacks } from '@home/components/widget/widget-config.component.models';
 import {
   EntityAliasDialogComponent,
   EntityAliasDialogData
 } from '@home/components/alias/entity-alias-dialog.component';
-import { catchError, map, mergeMap, tap } from 'rxjs/operators';
+import { catchError, mergeMap, tap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
@@ -792,44 +792,18 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     );
   }
 
-  private fetchEntityKeys(entityAliasId: string, query: string, dataKeyTypes: Array<DataKeyType>): Observable<Array<DataKey>> {
-    return this.aliasController.resolveSingleEntityInfo(entityAliasId).pipe(
-      mergeMap((entity) => {
-        if (entity) {
-          const fetchEntityTasks: Array<Observable<Array<DataKey>>> = [];
-          for (const dataKeyType of dataKeyTypes) {
-            fetchEntityTasks.push(
-              this.entityService.getEntityKeys(
-                {entityType: entity.entityType, id: entity.id},
-                query,
-                dataKeyType,
-                {ignoreLoading: true, ignoreErrors: true}
-              ).pipe(
-                map((keys) => {
-                  const dataKeys: Array<DataKey> = [];
-                  for (const key of keys) {
-                    dataKeys.push({name: key, type: dataKeyType});
-                  }
-                  return dataKeys;
-                }
-                ),
-                catchError(val => of([]))
-            ));
-          }
-          return forkJoin(fetchEntityTasks).pipe(
-            map(arrayOfDataKeys => {
-              const result = new Array<DataKey>();
-              arrayOfDataKeys.forEach((dataKeyArray) => {
-                result.push(...dataKeyArray);
-              });
-              return result;
-            }
-          ));
-        } else {
-          return of([]);
-        }
+  private fetchEntityKeys(entityAliasId: string, dataKeyTypes: Array<DataKeyType>): Observable<Array<DataKey>> {
+    return this.aliasController.getAliasInfo(entityAliasId).pipe(
+      mergeMap((aliasInfo) => {
+        return this.entityService.getEntityKeysByEntityFilter(
+          aliasInfo.entityFilter,
+          dataKeyTypes,
+          {ignoreLoading: true, ignoreErrors: true}
+        ).pipe(
+          catchError(() => of([]))
+        );
       }),
-      catchError(val => of([] as Array<DataKey>))
+      catchError(() => of([] as Array<DataKey>))
     );
   }
 

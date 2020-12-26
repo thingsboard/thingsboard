@@ -26,11 +26,13 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -40,6 +42,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.objectMapper;
 
@@ -57,9 +60,11 @@ public class InstallScripts {
     public static final String JSON_DIR = "json";
     public static final String SYSTEM_DIR = "system";
     public static final String TENANT_DIR = "tenant";
+    public static final String DEVICE_PROFILE_DIR = "device_profile";
     public static final String DEMO_DIR = "demo";
     public static final String RULE_CHAINS_DIR = "rule_chains";
     public static final String WIDGET_BUNDLES_DIR = "widget_bundles";
+    public static final String OAUTH2_CONFIG_TEMPLATES_DIR = "oauth2_config_templates";
     public static final String DASHBOARDS_DIR = "dashboards";
 
     public static final String JSON_EXT = ".json";
@@ -79,8 +84,15 @@ public class InstallScripts {
     @Autowired
     private WidgetsBundleService widgetsBundleService;
 
+    @Autowired
+    private OAuth2ConfigTemplateService oAuth2TemplateService;
+
     public Path getTenantRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, RULE_CHAINS_DIR);
+    }
+
+    public Path getDeviceProfileDefaultRuleChainTemplateFilePath() {
+        return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DEVICE_PROFILE_DIR, "rule_chain_template.json");
     }
 
     public String getDataDir() {
@@ -110,15 +122,7 @@ public class InstallScripts {
             dirStream.forEach(
                     path -> {
                         try {
-                            JsonNode ruleChainJson = objectMapper.readTree(path.toFile());
-                            RuleChain ruleChain = objectMapper.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
-                            RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
-
-                            ruleChain.setTenantId(tenantId);
-                            ruleChain = ruleChainService.saveRuleChain(ruleChain);
-
-                            ruleChainMetaData.setRuleChainId(ruleChain.getId());
-                            ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), ruleChainMetaData);
+                            createRuleChainFromFile(tenantId, path, null);
                         } catch (Exception e) {
                             log.error("Unable to load rule chain from json: [{}]", path.toString());
                             throw new RuntimeException("Unable to load rule chain from json", e);
@@ -127,6 +131,28 @@ public class InstallScripts {
             );
         }
     }
+
+    public RuleChain createDefaultRuleChain(TenantId tenantId, String ruleChainName) throws IOException {
+        return createRuleChainFromFile(tenantId, getDeviceProfileDefaultRuleChainTemplateFilePath(), ruleChainName);
+    }
+
+    public RuleChain createRuleChainFromFile(TenantId tenantId, Path templateFilePath, String newRuleChainName) throws IOException {
+        JsonNode ruleChainJson = objectMapper.readTree(templateFilePath.toFile());
+        RuleChain ruleChain = objectMapper.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
+        RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
+
+        ruleChain.setTenantId(tenantId);
+        if (!StringUtils.isEmpty(newRuleChainName)) {
+            ruleChain.setName(newRuleChainName);
+        }
+        ruleChain = ruleChainService.saveRuleChain(ruleChain);
+
+        ruleChainMetaData.setRuleChainId(ruleChain.getId());
+        ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), ruleChainMetaData);
+
+        return ruleChain;
+    }
+
 
     public void loadSystemWidgets() throws Exception {
         Path widgetBundlesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
@@ -184,29 +210,35 @@ public class InstallScripts {
 
 
     public void loadDemoRuleChains(TenantId tenantId) throws Exception {
-        Path ruleChainsDir = Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, RULE_CHAINS_DIR);
         try {
-            JsonNode ruleChainJson = objectMapper.readTree(ruleChainsDir.resolve("thermostat_alarms.json").toFile());
-            RuleChain ruleChain = objectMapper.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
-            RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
-            ruleChain.setTenantId(tenantId);
-            ruleChain = ruleChainService.saveRuleChain(ruleChain);
-            ruleChainMetaData.setRuleChainId(ruleChain.getId());
-            ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), ruleChainMetaData);
-
-            JsonNode rootChainJson = objectMapper.readTree(ruleChainsDir.resolve("root_rule_chain.json").toFile());
-            RuleChain rootChain = objectMapper.treeToValue(rootChainJson.get("ruleChain"), RuleChain.class);
-            RuleChainMetaData rootChainMetaData = objectMapper.treeToValue(rootChainJson.get("metadata"), RuleChainMetaData.class);
-
-            RuleChainId thermostatsRuleChainId = ruleChain.getId();
-            rootChainMetaData.getRuleChainConnections().forEach(connection -> connection.setTargetRuleChainId(thermostatsRuleChainId));
-            rootChain.setTenantId(tenantId);
-            rootChain = ruleChainService.saveRuleChain(rootChain);
-            rootChainMetaData.setRuleChainId(rootChain.getId());
-            ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), rootChainMetaData);
+            createDefaultRuleChains(tenantId);
+            createDefaultRuleChain(tenantId, "Thermostat");
         } catch (Exception e) {
             log.error("Unable to load dashboard from json", e);
             throw new RuntimeException("Unable to load dashboard from json", e);
+        }
+    }
+
+    public void createOAuth2Templates() throws Exception {
+        Path oauth2ConfigTemplatesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, OAUTH2_CONFIG_TEMPLATES_DIR);
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(oauth2ConfigTemplatesDir, path -> path.toString().endsWith(JSON_EXT))) {
+            dirStream.forEach(
+                    path -> {
+                        try {
+                            JsonNode oauth2ConfigTemplateJson = objectMapper.readTree(path.toFile());
+                            OAuth2ClientRegistrationTemplate clientRegistrationTemplate = objectMapper.treeToValue(oauth2ConfigTemplateJson, OAuth2ClientRegistrationTemplate.class);
+                            Optional<OAuth2ClientRegistrationTemplate> existingClientRegistrationTemplate =
+                                    oAuth2TemplateService.findClientRegistrationTemplateByProviderId(clientRegistrationTemplate.getProviderId());
+                            if (existingClientRegistrationTemplate.isPresent()) {
+                                clientRegistrationTemplate.setId(existingClientRegistrationTemplate.get().getId());
+                            }
+                            oAuth2TemplateService.saveClientRegistrationTemplate(clientRegistrationTemplate);
+                        } catch (Exception e) {
+                            log.error("Unable to load oauth2 config templates from json: [{}]", path.toString());
+                            throw new RuntimeException("Unable to load oauth2 config templates from json", e);
+                        }
+                    }
+            );
         }
     }
 }

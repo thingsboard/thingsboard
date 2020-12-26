@@ -422,6 +422,12 @@ export class DashboardUtilsService {
       widgetLayout.row = row;
       widgetLayout.col = 0;
     }
+
+    widgetLayout.sizeX = Math.floor(widgetLayout.sizeX);
+    widgetLayout.sizeY = Math.floor(widgetLayout.sizeY);
+    widgetLayout.row = Math.floor(widgetLayout.row);
+    widgetLayout.col = Math.floor(widgetLayout.col);
+
     layout.widgets[widget.id] = widgetLayout;
   }
 

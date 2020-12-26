@@ -34,9 +34,6 @@ public class TbQueueRemoteJsInvokeSettings {
     @Value("${queue.js.response_poll_interval}")
     private int responsePollInterval;
 
-    @Value("${queue.js.response_auto_commit_interval}")
-    private int autoCommitInterval;
-
     @Value("${queue.js.max_requests_timeout}")
     private long maxRequestsTimeout;
 }

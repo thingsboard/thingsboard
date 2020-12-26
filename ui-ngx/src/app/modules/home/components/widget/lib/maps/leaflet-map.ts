@@ -131,10 +131,13 @@ export default abstract class LeafletMap {
                       tooltipAnchor: [16, -28],
                       shadowSize: [41, 41]
                     });
+                    const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
+                    mousePositionOnMap.lat = customLatLng[this.options.latKeyName];
+                    mousePositionOnMap.lng = customLatLng[this.options.lngKeyName];
+
                     const newMarker = L.marker(mousePositionOnMap, { icon }).addTo(this.map);
                     this.addMarkers.push(newMarker);
                     const datasourcesList = document.createElement('div');
-                    const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
                     const header = document.createElement('p');
                     header.appendChild(document.createTextNode('Select entity:'));
                     header.setAttribute('style', 'font-size: 14px; margin: 8px 0');
@@ -410,10 +413,15 @@ export default abstract class LeafletMap {
     }
 
     convertToCustomFormat(position: L.LatLng): object {
-        return {
-            [this.options.latKeyName]: position.lat % 90,
-            [this.options.lngKeyName]: position.lng % 180
-        };
+      if (position.lng > 180) {
+        position.lng = 180;
+      } else if (position.lng < -180) {
+        position.lng = -180;
+      }
+      return {
+        [this.options.latKeyName]: position.lat,
+        [this.options.lngKeyName]: position.lng
+      };
     }
 
     convertToPolygonFormat(points: Array<any>): Array<any> {
@@ -479,7 +487,8 @@ export default abstract class LeafletMap {
     }
 
     const mapBounds = this.map.getBounds();
-    if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || !this.bounds.equals(bounds) && !mapBounds.contains(bounds))) {
+    if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || !this.bounds.equals(bounds)
+        && this.options.fitMapBounds ? !mapBounds.contains(bounds) : false)) {
       this.bounds = bounds;
       this.fitBounds(bounds);
     }
@@ -599,26 +608,32 @@ export default abstract class LeafletMap {
       return polygon;
     }
 
-    updatePoints(pointsData: FormattedData[], getTooltip: (point: FormattedData, setTooltip?: boolean) => string) {
+  updatePoints(pointsData: FormattedData[][], getTooltip: (point: FormattedData) => string) {
+    if(pointsData.length) {
       if (this.points) {
-          this.map.removeLayer(this.points);
+        this.map.removeLayer(this.points);
       }
       this.points = new FeatureGroup();
-      pointsData.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
-          const point = L.circleMarker(this.convertPosition(data), {
-              color: this.options.pointColor,
-              radius: this.options.pointSize
-          });
-          if (!this.options.pointTooltipOnRightPanel) {
-              point.on('click', () => getTooltip(data));
-          }
-          else {
-              createTooltip(point, this.options, data.$datasource, getTooltip(data, false));
-          }
-          this.points.addLayer(point);
+    }
+    for(let i = 0; i < pointsData.length; i++) {
+      const pointsList = pointsData[i];
+      pointsList.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
+        const point = L.circleMarker(this.convertPosition(data), {
+          color: this.options.pointColor,
+          radius: this.options.pointSize
+        });
+        if (!this.options.pointTooltipOnRightPanel) {
+          point.on('click', () => getTooltip(data));
+        } else {
+          createTooltip(point, this.options, data.$datasource, getTooltip(data));
+        }
+        this.points.addLayer(point);
       });
+    }
+    if(pointsData.length) {
       this.map.addLayer(this.points);
     }
+  }
 
     // Polyline
 

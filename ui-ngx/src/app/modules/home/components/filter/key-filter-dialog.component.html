@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="keyFilterFormGroup" (ngSubmit)="save()" style="width: 900px;">
   <mat-toolbar color="primary">
-    <h2>{{(data.isAdd ? 'filter.add-key-filter' : 'filter.edit-key-filter') | translate}}</h2>
+    <h2>{{(data.isAdd ? 'filter.add-key-filter' : (data.readonly ? 'filter.key-filter' : 'filter.edit-key-filter')) | translate}}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -40,11 +40,19 @@
           <mat-form-field fxFlex="60" class="mat-block">
             <mat-label translate>filter.key-name</mat-label>
             <input matInput required formControlName="key"
-                   [matAutocomplete]="auto"
-                   [matAutocompleteDisabled]="keyFilterFormGroup.get('key.type').value !== entityField">
-            <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete">
-              <mat-option *ngFor="let option of filteredEntityFields | async" [value]="option">
-                {{option}}
+                   #keyNameInput
+                   (focusin)="onFocus()"
+                   [matAutocomplete]="keyName"
+                   [matAutocompleteDisabled]="!showAutocomplete">
+            <button *ngIf="keyFilterFormGroup.get('key.key').value && showAutocomplete"
+                    type="button"
+                    matSuffix mat-button mat-icon-button aria-label="Clear"
+                    (click)="clear()">
+              <mat-icon class="material-icons">close</mat-icon>
+            </button>
+            <mat-autocomplete autoActiveFirstOption #keyName="matAutocomplete">
+              <mat-option *ngFor="let keyName of filteredKeysName | async" [value]="keyName">
+                <span [innerHTML]="keyName | highlight:searchText"></span>
               </mat-option>
             </mat-autocomplete>
             <mat-error *ngIf="keyFilterFormGroup.get('key.key').hasError('required')">
@@ -70,6 +78,8 @@
         </mat-form-field>
       </section>
       <tb-filter-predicate-list *ngIf="keyFilterFormGroup.get('valueType').value"
+                                [allowUserDynamicSource]="data.allowUserDynamicSource"
+                                [displayUserParameters]="data.displayUserParameters"
                                 [valueType]="keyFilterFormGroup.get('valueType').value"
                                 [key]="keyFilterFormGroup.get('key.key').value"
                                 formControlName="predicates">
@@ -77,17 +87,18 @@
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
-    <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || keyFilterFormGroup.invalid || !keyFilterFormGroup.dirty">
-      {{ (data.isAdd ? 'action.add' : 'action.update') | translate }}
-    </button>
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()"
             cdkFocusInitial>
-      {{ 'action.cancel' | translate }}
+      {{ (data.readonly ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            *ngIf="!data.readonly"
+            [disabled]="(isLoading$ | async) || keyFilterFormGroup.invalid || !keyFilterFormGroup.dirty">
+      {{ (data.isAdd ? 'action.add' : 'action.update') | translate }}
     </button>
   </div>
 </form>

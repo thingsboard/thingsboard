@@ -48,9 +48,9 @@ import java.util.stream.Collectors;
 public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsService {
 
     public static final String TB_SERVICE_QUEUE = "TbServiceQueue";
-    public static final FutureCallback<Void> CALLBACK = new FutureCallback<Void>() {
+    public static final FutureCallback<Integer> CALLBACK = new FutureCallback<Integer>() {
         @Override
-        public void onSuccess(@Nullable Void result) {
+        public void onSuccess(@Nullable Integer result) {
 
         }
 
@@ -85,7 +85,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                             .map(kv -> new BasicTsKvEntry(ts, new LongDataEntry(kv.getKey(), (long) kv.getValue().get())))
                             .collect(Collectors.toList());
                     if (!tsList.isEmpty()) {
-                        tsService.saveAndNotify(tenantId, serviceAssetId, tsList, CALLBACK);
+                        tsService.saveAndNotifyInternal(tenantId, serviceAssetId, tsList, CALLBACK);
                     }
                 }
             } catch (DataValidationException e) {
@@ -97,7 +97,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
         ruleEngineStats.getTenantExceptions().forEach((tenantId, e) -> {
             TsKvEntry tsKv = new BasicTsKvEntry(ts, new JsonDataEntry("ruleEngineException", e.toJsonString()));
             try {
-                tsService.saveAndNotify(tenantId, getServiceAssetId(tenantId, queueName), Collections.singletonList(tsKv), CALLBACK);
+                tsService.saveAndNotifyInternal(tenantId, getServiceAssetId(tenantId, queueName), Collections.singletonList(tsKv), CALLBACK);
             } catch (DataValidationException e2) {
                 if (!e2.getMessage().equalsIgnoreCase("Asset is referencing to non-existent tenant!")) {
                     throw e2;

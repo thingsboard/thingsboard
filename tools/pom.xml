@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.1.2-SNAPSHOT</version>
+        <version>3.2.1-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>tools</artifactId>
@@ -54,7 +54,6 @@
         <dependency>
             <groupId>org.apache.cassandra</groupId>
             <artifactId>cassandra-all</artifactId>
-            <version>3.11.6</version>
         </dependency>
         <dependency>
             <groupId>com.datastax.oss</groupId>

@@ -49,6 +49,12 @@
           {{ 'tenant.title-required' | translate }}
         </mat-error>
       </mat-form-field>
+      <tb-tenant-profile-autocomplete
+        [selectDefaultProfile]="isAdd"
+        required
+        formControlName="tenantProfileId"
+        (tenantProfileUpdated)="onTenantProfileUpdated()">
+      </tb-tenant-profile-autocomplete>
       <div formGroupName="additionalInfo" fxLayout="column">
         <mat-form-field class="mat-block">
           <mat-label translate>tenant.description</mat-label>
@@ -56,16 +62,6 @@
         </mat-form-field>
       </div>
       <tb-contact [parentForm]="entityForm" [isEdit]="isEdit"></tb-contact>
-      <div fxLayout="column">
-        <mat-checkbox class="hinted-checkbox" formControlName="isolatedTbCore">
-          <div>{{ 'tenant.isolated-tb-core' | translate }}</div>
-          <div class="tb-hint">{{'tenant.isolated-tb-core-details' | translate}}</div>
-        </mat-checkbox>
-        <mat-checkbox class="hinted-checkbox" formControlName="isolatedTbRuleEngine">
-          <div>{{ 'tenant.isolated-tb-rule-engine' | translate }}</div>
-          <div class="tb-hint">{{'tenant.isolated-tb-rule-engine-details' | translate}}</div>
-        </mat-checkbox>
-      </div>
     </fieldset>
   </form>
 </div>

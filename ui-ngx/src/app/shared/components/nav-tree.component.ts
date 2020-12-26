@@ -150,13 +150,13 @@ export class NavTreeComponent implements OnInit {
     this.treeElement.on('changed.jstree', (e: any, data) => {
       const node: NavTreeNode = data.instance.get_selected(true)[0];
       if (this.onNodeSelected) {
-        this.onNodeSelected(node, e as Event);
+        this.ngZone.run(() => this.onNodeSelected(node, e as Event));
       }
     });
 
     this.treeElement.on('model.jstree', (e: any, data) => {
       if (this.onNodesInserted) {
-        this.onNodesInserted(data.nodes, data.parent);
+        this.ngZone.run(() => this.onNodesInserted(data.nodes, data.parent));
       }
     });
 

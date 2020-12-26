@@ -1,20 +1,45 @@
-/*
-  This is a "Solution Style" tsconfig.json file, and is used by editors and TypeScript’s language server to improve development experience.
-  It is not intended to be used to perform a compilation.
-
-  To learn more about this file see: https://angular.io/config/solution-tsconfig.
-*/
 {
-  "files": [],
-  "references": [
-    {
-      "path": "./src/tsconfig.app.json"
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "sourceMap": true,
+    "declaration": false,
+    "module": "es2020",
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "importHelpers": true,
+    "target": "es5",
+    "jsx": "react",
+    "typeRoots": [
+      "node_modules/@types",
+      "src/typings/rawloader.typings.d.ts",
+      "src/typings/jquery.typings.d.ts",
+      "src/typings/jquery.flot.typings.d.ts",
+      "src/typings/jquery.jstree.typings.d.ts",
+      "src/typings/split.js.typings.d.ts",
+      "src/typings/add-marker.d.ts",
+      "src/typings/leaflet-editable.d.ts"
+    ],
+    "paths": {
+      "@app/*": ["src/app/*"],
+      "@env/*": [
+        "src/environments/*"
+      ],
+      "@core/*": ["src/app/core/*"],
+      "@modules/*": ["src/app/modules/*"],
+      "@shared/*": ["src/app/shared/*"],
+      "@home/*": ["src/app/modules/home/*"],
+      "jszip": [
+        "node_modules/jszip/dist/jszip.min.js"
+      ]
     },
-    {
-      "path": "./src/tsconfig.spec.json"
-    },
-    {
-      "path": "./e2e/tsconfig.e2e.json"
-    }
-  ]
+    "lib": [
+      "es2018",
+      "es2019",
+      "dom"
+    ]
+  }
 }

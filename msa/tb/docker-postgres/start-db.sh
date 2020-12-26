@@ -27,5 +27,9 @@ fi
 exec setsid nohup postgres >> ${PGLOG}/postgres.log 2>&1 &
 
 if [ ! -f ${firstlaunch} ]; then
-    psql -U ${pkg.user} -d postgres -c "CREATE DATABASE thingsboard"
+    sleep 2
+    while ! psql -U ${pkg.user} -d postgres -c "CREATE DATABASE thingsboard"
+    do
+      sleep 1
+    done
 fi

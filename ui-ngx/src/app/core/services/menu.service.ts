@@ -90,6 +90,14 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'tenant-profile.tenant-profiles',
+        type: 'link',
+        path: '/tenantProfiles',
+        icon: 'mdi:alpha-t-box',
+        isMdiIcon: true
+      },
+      {
+        id: guid(),
         name: 'widget.widget-library',
         type: 'link',
         path: '/widgets-bundles',
@@ -100,7 +108,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '120px',
+        height: '200px',
         icon: 'settings',
         pages: [
           {
@@ -119,9 +127,23 @@ export class MenuService {
           },
           {
             id: guid(),
+            name: 'admin.sms-provider',
+            type: 'link',
+            path: '/settings/sms-provider',
+            icon: 'sms'
+          },
+          {
+            id: guid(),
             name: 'admin.security-settings',
             type: 'link',
             path: '/settings/security-settings',
+            icon: 'security'
+          },
+          {
+            id: guid(),
+            name: 'admin.oauth2.oauth2',
+            type: 'link',
+            path: '/settings/oauth2',
             icon: 'security'
           }
         ]
@@ -140,7 +162,13 @@ export class MenuService {
             name: 'tenant.tenants',
             icon: 'supervisor_account',
             path: '/tenants'
-          }
+          },
+          {
+            name: 'tenant-profile.tenant-profiles',
+            icon: 'mdi:alpha-t-box',
+            isMdiIcon: true,
+            path: '/tenantProfiles'
+          },
         ]
       },
       {
@@ -167,9 +195,19 @@ export class MenuService {
             path: '/settings/outgoing-mail'
           },
           {
+            name: 'admin.sms-provider',
+            icon: 'sms',
+            path: '/settings/sms-provider'
+          },
+          {
             name: 'admin.security-settings',
             icon: 'security',
             path: '/settings/security-settings'
+          },
+          {
+            name: 'admin.oauth2.oauth2',
+            icon: 'security',
+            path: '/settings/oauth2'
           }
         ]
       }
@@ -217,6 +255,14 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'device-profile.device-profiles',
+        type: 'link',
+        path: '/deviceProfiles',
+        icon: 'mdi:alpha-d-box',
+        isMdiIcon: true
+      },
+      {
+        id: guid(),
         name: 'entity-view.entity-views',
         type: 'link',
         path: '/entityViews',
@@ -242,6 +288,14 @@ export class MenuService {
         type: 'link',
         path: '/auditLogs',
         icon: 'track_changes'
+      },
+      {
+        id: guid(),
+        name: 'api-usage.api-usage',
+        type: 'link',
+        path: '/usage',
+        icon: 'insert_chart',
+        notExact: true
       }
     );
     return sections;
@@ -287,6 +341,12 @@ export class MenuService {
             name: 'device.devices',
             icon: 'devices_other',
             path: '/devices'
+          },
+          {
+            name: 'device-profile.device-profiles',
+            icon: 'mdi:alpha-d-box',
+            isMdiIcon: true,
+            path: '/deviceProfiles'
           }
         ]
       },
@@ -322,6 +382,11 @@ export class MenuService {
             name: 'audit-log.audit-logs',
             icon: 'track_changes',
             path: '/auditLogs'
+          },
+          {
+            name: 'api-usage.api-usage',
+            icon: 'insert_chart',
+            path: '/usage'
           }
         ]
       }

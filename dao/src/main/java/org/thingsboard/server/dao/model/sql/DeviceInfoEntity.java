@@ -30,10 +30,12 @@ public class DeviceInfoEntity extends AbstractDeviceEntity<DeviceInfo> {
     public static final Map<String,String> deviceInfoColumnMap = new HashMap<>();
     static {
         deviceInfoColumnMap.put("customerTitle", "c.title");
+        deviceInfoColumnMap.put("deviceProfileName", "p.name");
     }
 
     private String customerTitle;
     private boolean customerIsPublic;
+    private String deviceProfileName;
 
     public DeviceInfoEntity() {
         super();
@@ -41,7 +43,8 @@ public class DeviceInfoEntity extends AbstractDeviceEntity<DeviceInfo> {
 
     public DeviceInfoEntity(DeviceEntity deviceEntity,
                             String customerTitle,
-                            Object customerAdditionalInfo) {
+                            Object customerAdditionalInfo,
+                            String deviceProfileName) {
         super(deviceEntity);
         this.customerTitle = customerTitle;
         if (customerAdditionalInfo != null && ((JsonNode)customerAdditionalInfo).has("isPublic")) {
@@ -49,10 +52,11 @@ public class DeviceInfoEntity extends AbstractDeviceEntity<DeviceInfo> {
         } else {
             this.customerIsPublic = false;
         }
+        this.deviceProfileName = deviceProfileName;
     }
 
     @Override
     public DeviceInfo toData() {
-        return new DeviceInfo(super.toDevice(), customerTitle, customerIsPublic);
+        return new DeviceInfo(super.toDevice(), customerTitle, customerIsPublic, deviceProfileName);
     }
 }

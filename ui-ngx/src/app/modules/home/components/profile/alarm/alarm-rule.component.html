@@ -1,0 +1,38 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="column" [formGroup]="alarmRuleFormGroup">
+  <tb-alarm-rule-condition formControlName="condition" [deviceProfileId]="deviceProfileId">
+  </tb-alarm-rule-condition>
+  <tb-alarm-schedule-info formControlName="schedule">
+  </tb-alarm-schedule-info>
+  <div *ngIf="!disabled || alarmRuleFormGroup.get('alarmDetails').value" fxLayout="row" fxLayoutAlign="start center">
+    <span class="tb-alarm-rule-details title" (click)="openEditDetailsDialog($event)">
+      {{ alarmRuleFormGroup.get('alarmDetails').value ? ('device-profile.alarm-rule-details' | translate) + ': '  : ('device-profile.add-alarm-rule-details' | translate) }}
+    </span>
+    <span *ngIf="alarmRuleFormGroup.get('alarmDetails').value" class="tb-alarm-rule-details"
+          (click)="openEditDetailsDialog($event)"
+          [innerHTML]="alarmRuleFormGroup.get('alarmDetails').value"></span>
+    <button mat-icon-button color="primary"
+       type="button"
+       (click)="openEditDetailsDialog($event)"
+       matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
+       matTooltipPosition="above">
+      <mat-icon>{{ disabled ? 'visibility' : (alarmRuleFormGroup.get('alarmDetails').value ? 'edit' : 'add') }}</mat-icon>
+    </button>
+  </div>
+</div>

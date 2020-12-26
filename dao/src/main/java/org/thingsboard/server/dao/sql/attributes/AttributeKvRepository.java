@@ -46,5 +46,18 @@ public interface AttributeKvRepository extends CrudRepository<AttributeKvEntity,
                 @Param("entityId") UUID entityId,
                 @Param("attributeType") String attributeType,
                 @Param("attributeKey") String attributeKey);
+
+    @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE entity_type = 'DEVICE' " +
+            "AND entity_id in (SELECT id FROM device WHERE tenant_id = :tenantId and device_profile_id = :deviceProfileId limit 100) ORDER BY attribute_key", nativeQuery = true)
+    List<String> findAllKeysByDeviceProfileId(@Param("tenantId") UUID tenantId,
+                                              @Param("deviceProfileId") UUID deviceProfileId);
+
+    @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE entity_type = 'DEVICE' " +
+            "AND entity_id in (SELECT id FROM device WHERE tenant_id = :tenantId limit 100) ORDER BY attribute_key", nativeQuery = true)
+    List<String> findAllKeysByTenantId(@Param("tenantId") UUID tenantId);
+
+    @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE entity_type = :entityType " +
+            "AND entity_id in :entityIds ORDER BY attribute_key", nativeQuery = true)
+    List<String> findAllKeysByEntityIds(@Param("entityType") String entityType, @Param("entityIds") List<UUID> entityIds);
 }
 

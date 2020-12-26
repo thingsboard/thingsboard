@@ -1,0 +1,123 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-expansion-panel class="device-profile-alarm" fxFlex [formGroup]="alarmFormGroup" [(expanded)]="expanded">
+  <mat-expansion-panel-header>
+    <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+      <mat-panel-title>
+        <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+          {{ alarmFormGroup.get('alarmType').value }}
+        </div>
+      </mat-panel-title>
+      <span fxFlex></span>
+      <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
+              type="button"
+              (click)="removeAlarm.emit()"
+              matTooltip="{{ 'action.remove' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </mat-expansion-panel-header>
+  <ng-template matExpansionPanelContent>
+    <div fxLayout="column" fxLayoutGap="0.5em">
+      <mat-divider></mat-divider>
+      <mat-form-field fxFlex floatLabel="always">
+        <mat-label>{{'device-profile.alarm-type' | translate}}</mat-label>
+        <input required matInput formControlName="alarmType" placeholder="Enter alarm type">
+        <mat-error *ngIf="alarmFormGroup.get('alarmType').hasError('required')">
+          {{ 'device-profile.alarm-type-required' | translate }}
+        </mat-error>
+        <mat-error *ngIf="alarmFormGroup.get('alarmType').hasError('unique')">
+          {{ 'device-profile.alarm-type-unique' | translate }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <mat-expansion-panel class="advanced-settings" [expanded]="false">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <div fxFlex fxLayout="row" fxLayoutAlign="end center">
+            <div class="tb-small" translate>device-profile.advanced-settings</div>
+          </div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <mat-checkbox formControlName="propagate" style="display: block; padding-bottom: 16px;">
+          {{ 'device-profile.propagate-alarm' | translate }}
+        </mat-checkbox>
+        <section *ngIf="alarmFormGroup.get('propagate').value === true" style="padding-bottom: 1em;">
+          <mat-form-field floatLabel="always" class="mat-block">
+            <mat-label translate>device-profile.alarm-rule-relation-types-list</mat-label>
+            <mat-chip-list #relationTypesChipList [disabled]="disabled">
+              <mat-chip
+                *ngFor="let key of alarmFormGroup.get('propagateRelationTypes').value;"
+                (removed)="removeRelationType(key)">
+                {{key}}
+                <mat-icon matChipRemove>close</mat-icon>
+              </mat-chip>
+              <input matInput type="text" placeholder="{{'device-profile.alarm-rule-relation-types-list' | translate}}"
+                     style="max-width: 200px;"
+                     [matChipInputFor]="relationTypesChipList"
+                     [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                     (matChipInputTokenEnd)="addRelationType($event)"
+                     [matChipInputAddOnBlur]="true">
+            </mat-chip-list>
+            <mat-hint innerHTML="{{ 'device-profile.alarm-rule-relation-types-list-hint' | translate }}"></mat-hint>
+          </mat-form-field>
+        </section>
+      </ng-template>
+    </mat-expansion-panel>
+    <div fxFlex fxLayout="column">
+      <div translate class="tb-small" style="padding-bottom: 8px;">device-profile.create-alarm-rules</div>
+      <tb-create-alarm-rules formControlName="createRules"
+                             style="padding-bottom: 16px;"
+                             [deviceProfileId]="deviceProfileId">
+      </tb-create-alarm-rules>
+      <div translate class="tb-small" style="padding-bottom: 8px;">device-profile.clear-alarm-rule</div>
+      <div fxLayout="row" fxLayoutGap="8px;" fxLayoutAlign="start center"
+           [fxShow]="alarmFormGroup.get('clearRule').value"
+           style="padding-bottom: 8px;">
+        <div class="clear-alarm-rule" fxFlex fxLayout="row">
+          <tb-alarm-rule formControlName="clearRule" fxFlex [deviceProfileId]="deviceProfileId">
+          </tb-alarm-rule>
+        </div>
+        <button *ngIf="!disabled"
+                mat-icon-button color="primary" style="min-width: 40px;"
+                type="button"
+                (click)="removeClearAlarmRule()"
+                matTooltip="{{ 'action.remove' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>remove_circle_outline</mat-icon>
+        </button>
+      </div>
+      <div *ngIf="disabled && !alarmFormGroup.get('clearRule').value">
+        <span translate fxLayoutAlign="center center" style="margin: 16px 0"
+              class="tb-prompt">device-profile.no-clear-alarm-rule</span>
+      </div>
+      <div *ngIf="!disabled" [fxShow]="!alarmFormGroup.get('clearRule').value">
+        <button mat-stroked-button color="primary"
+                type="button"
+                (click)="addClearAlarmRule()"
+                matTooltip="{{ 'device-profile.add-clear-alarm-rule' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon class="button-icon">add_circle_outline</mat-icon>
+          {{ 'device-profile.add-clear-alarm-rule' | translate }}
+        </button>
+      </div>
+    </div>
+  </ng-template>
+</mat-expansion-panel>

@@ -54,24 +54,24 @@ public class EntityKeyMapping {
     private static final Map<String, String> entityFieldColumnMap = new HashMap<>();
     private static final Map<EntityType, Map<String, String>> aliases = new HashMap<>();
 
-    private static final String CREATED_TIME = "createdTime";
-    private static final String ENTITY_TYPE = "entityType";
-    private static final String NAME = "name";
-    private static final String TYPE = "type";
-    private static final String LABEL = "label";
-    private static final String FIRST_NAME = "firstName";
-    private static final String LAST_NAME = "lastName";
-    private static final String EMAIL = "email";
-    private static final String TITLE = "title";
-    private static final String REGION = "region";
-    private static final String COUNTRY = "country";
-    private static final String STATE = "state";
-    private static final String CITY = "city";
-    private static final String ADDRESS = "address";
-    private static final String ADDRESS_2 = "address2";
-    private static final String ZIP = "zip";
-    private static final String PHONE = "phone";
-    private static final String ADDITIONAL_INFO = "additionalInfo";
+    public static final String CREATED_TIME = "createdTime";
+    public static final String ENTITY_TYPE = "entityType";
+    public static final String NAME = "name";
+    public static final String TYPE = "type";
+    public static final String LABEL = "label";
+    public static final String FIRST_NAME = "firstName";
+    public static final String LAST_NAME = "lastName";
+    public static final String EMAIL = "email";
+    public static final String TITLE = "title";
+    public static final String REGION = "region";
+    public static final String COUNTRY = "country";
+    public static final String STATE = "state";
+    public static final String CITY = "city";
+    public static final String ADDRESS = "address";
+    public static final String ADDRESS_2 = "address2";
+    public static final String ZIP = "zip";
+    public static final String PHONE = "phone";
+    public static final String ADDITIONAL_INFO = "additionalInfo";
 
     public static final List<String> typedEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, ADDITIONAL_INFO);
     public static final List<String> widgetEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME);
@@ -80,6 +80,7 @@ public class EntityKeyMapping {
     public static final List<String> labeledEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL, ADDITIONAL_INFO);
     public static final List<String> contactBasedEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, EMAIL, TITLE, COUNTRY, STATE, CITY, ADDRESS, ADDRESS_2, ZIP, PHONE, ADDITIONAL_INFO);
 
+    public static final Set<String> apiUsageStateEntityFields =  new HashSet<>(Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME));
     public static final Set<String> commonEntityFieldsSet = new HashSet<>(commonEntityFields);
     public static final Set<String> relationQueryEntityFieldsSet = new HashSet<>(Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL, FIRST_NAME, LAST_NAME, EMAIL, REGION, TITLE, COUNTRY, STATE, CITY, ADDRESS, ADDRESS_2, ZIP, PHONE, ADDITIONAL_INFO));
 
@@ -99,6 +100,7 @@ public class EntityKeyMapping {
         allowedEntityFieldMap.put(EntityType.RULE_NODE, new HashSet<>(commonEntityFields));
         allowedEntityFieldMap.put(EntityType.WIDGET_TYPE, new HashSet<>(widgetEntityFields));
         allowedEntityFieldMap.put(EntityType.WIDGETS_BUNDLE, new HashSet<>(widgetEntityFields));
+        allowedEntityFieldMap.put(EntityType.API_USAGE_STATE, apiUsageStateEntityFields);
 
         entityFieldColumnMap.put(CREATED_TIME, ModelConstants.CREATED_TIME_PROPERTY);
         entityFieldColumnMap.put(ENTITY_TYPE, ModelConstants.ENTITY_TYPE_PROPERTY);

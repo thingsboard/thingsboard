@@ -16,6 +16,7 @@
 
 import { EntityType } from '@shared/models/entity-type.models';
 import { AttributeData } from './telemetry/telemetry.models';
+import { EntityId } from '@shared/models/id/entity-id';
 
 export interface EntityInfo {
   name?: string;
@@ -23,6 +24,11 @@ export interface EntityInfo {
   entityType?: EntityType;
   id?: string;
   entityDescription?: string;
+}
+
+export interface EntityInfoData {
+  id: EntityId;
+  name: string;
 }
 
 export interface ImportEntityData {
@@ -56,6 +62,12 @@ export interface EntityField {
   value: string;
   name: string;
   time?: boolean;
+}
+
+export interface EntitiesKeysByQuery {
+  attribute: Array<string>;
+  timeseries: Array<string>;
+  entityTypes: EntityType[];
 }
 
 export const entityFields: {[fieldName: string]: EntityField} = {
