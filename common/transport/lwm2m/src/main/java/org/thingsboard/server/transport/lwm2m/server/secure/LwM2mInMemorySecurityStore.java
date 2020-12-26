@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server.secure;
 
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.InMemorySecurityStore;
@@ -69,7 +70,8 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         readLock.lock();
         try {
             String registrationId = this.getByRegistrationId(endPoint, null);
-            return (registrationId != null && sessions.size() > 0 && sessions.get(registrationId) != null) ? sessions.get(registrationId).getInfo() : this.add(endPoint);
+            SecurityInfo info = (registrationId != null && sessions.size() > 0 && sessions.get(registrationId) != null) ? sessions.get(registrationId).getInfo() : this.add(endPoint);
+            return info;
         } finally {
             readLock.unlock();
         }
@@ -182,7 +184,15 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         } else {
             if (store.getSecurityMode() == NO_SEC.code && profileUuid != null)
                 sessions.put(identity, new LwM2MClient(identity, null, null, store.getMsg(), null, null, profileUuid));
-            else log.error("Registration failed: FORBIDDEN/profileUuid [{}] , endpointId: [{}]", profileUuid, identity);
+            else {
+                log.error("Registration failed: FORBIDDEN/profileUuid/device [{}] , endpointId: [{}]", profileUuid, identity);
+                /**
+                 * Return Error securityInfo
+                 */
+                byte[] preSharedKey = Hex.decodeHex("0A0B".toCharArray());
+                SecurityInfo info = SecurityInfo.newPreSharedKeyInfo("error", "error_identity", preSharedKey);
+                return info;
+            }
         }
         return store.getSecurityInfo();
     }
