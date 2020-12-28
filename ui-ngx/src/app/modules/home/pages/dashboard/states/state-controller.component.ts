@@ -98,7 +98,7 @@ export abstract class StateControllerComponent implements IStateControllerCompon
 
   ngOnInit(): void {
     this.rxSubscriptions.push(this.route.queryParamMap.subscribe((paramMap) => {
-      const dashboardId = this.route.snapshot.params.dashboardId;
+      const dashboardId = this.route.snapshot.params.dashboardId || '';
       if (this.dashboardId === dashboardId) {
         const newState = this.decodeStateParam(paramMap.get('state'));
         if (this.currentState !== newState) {

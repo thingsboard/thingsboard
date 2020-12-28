@@ -20,8 +20,10 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -29,12 +31,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.ApiFeature;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageStateMailMessage;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.PostConstruct;
 import javax.mail.MessagingException;
@@ -51,18 +59,28 @@ public class DefaultMailService implements MailService {
     public static final String MAIL_PROP = "mail.";
     public static final String TARGET_EMAIL = "targetEmail";
     public static final String UTF_8 = "UTF-8";
-    @Autowired
-    private MessageSource messages;
+    public static final int _10K = 10000;
+    public static final int _1M = 1000000;
 
+    private final MessageSource messages;
+    private final Configuration freemarkerConfig;
+    private final AdminSettingsService adminSettingsService;
+    private final TbApiUsageClient apiUsageClient;
+
+    @Lazy
     @Autowired
-    private Configuration freemarkerConfig;
+    private TbApiUsageStateService apiUsageStateService;
 
     private JavaMailSenderImpl mailSender;
 
     private String mailFrom;
 
-    @Autowired
-    private AdminSettingsService adminSettingsService;
+    public DefaultMailService(MessageSource messages, Configuration freemarkerConfig, AdminSettingsService adminSettingsService, TbApiUsageClient apiUsageClient) {
+        this.messages = messages;
+        this.freemarkerConfig = freemarkerConfig;
+        this.adminSettingsService = adminSettingsService;
+        this.apiUsageClient = apiUsageClient;
+    }
 
     @PostConstruct
     private void init() {
@@ -141,7 +159,7 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendEmail(String email, String subject, String message) throws ThingsboardException {
+    public void sendEmail(TenantId tenantId, String email, String subject, String message) throws ThingsboardException {
         sendMail(mailSender, mailFrom, email, subject, message);
     }
 
@@ -216,20 +234,25 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void send(String from, String to, String cc, String bcc, String subject, String body) throws MessagingException {
-        MimeMessage mailMsg = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mailMsg, "UTF-8");
-        helper.setFrom(StringUtils.isBlank(from) ? mailFrom : from);
-        helper.setTo(to.split("\\s*,\\s*"));
-        if (!StringUtils.isBlank(cc)) {
-            helper.setCc(cc.split("\\s*,\\s*"));
+    public void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body) throws MessagingException {
+        if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
+            MimeMessage mailMsg = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mailMsg, "UTF-8");
+            helper.setFrom(StringUtils.isBlank(from) ? mailFrom : from);
+            helper.setTo(to.split("\\s*,\\s*"));
+            if (!StringUtils.isBlank(cc)) {
+                helper.setCc(cc.split("\\s*,\\s*"));
+            }
+            if (!StringUtils.isBlank(bcc)) {
+                helper.setBcc(bcc.split("\\s*,\\s*"));
+            }
+            helper.setSubject(subject);
+            helper.setText(body);
+            mailSender.send(helper.getMimeMessage());
+            apiUsageClient.report(tenantId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
+        } else {
+            throw new RuntimeException("Email sending is disabled due to API limits!");
         }
-        if (!StringUtils.isBlank(bcc)) {
-            helper.setBcc(bcc.split("\\s*,\\s*"));
-        }
-        helper.setSubject(subject);
-        helper.setText(body);
-        mailSender.send(helper.getMimeMessage());
     }
 
     @Override
@@ -244,6 +267,122 @@ public class DefaultMailService implements MailService {
         String message = mergeTemplateIntoString("account.lockout.ftl", model);
 
         sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
+    @Override
+    public void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageStateMailMessage msg) throws ThingsboardException {
+        String subject = messages.getMessage("api.usage.state", null, Locale.US);
+
+        Map<String, Object> model = new HashMap<>();
+        model.put("apiFeature", apiFeature.getLabel());
+        model.put(TARGET_EMAIL, email);
+
+        String message = null;
+
+        switch (stateValue) {
+            case ENABLED:
+                model.put("apiLabel", toEnabledValueLabel(apiFeature));
+                message = mergeTemplateIntoString("state.enabled.ftl", model);
+                break;
+            case WARNING:
+                model.put("apiValueLabel", toDisabledValueLabel(apiFeature) + " " + toWarningValueLabel(msg.getKey(), msg.getValue(), msg.getThreshold()));
+                message = mergeTemplateIntoString("state.warning.ftl", model);
+                break;
+            case DISABLED:
+                model.put("apiLimitValueLabel", toDisabledValueLabel(apiFeature) + " " + toDisabledValueLabel(msg.getKey(), msg.getThreshold()));
+                message = mergeTemplateIntoString("state.disabled.ftl", model);
+                break;
+        }
+        sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
+    private String toEnabledValueLabel(ApiFeature apiFeature) {
+        switch (apiFeature) {
+            case DB:
+                return "save";
+            case TRANSPORT:
+                return "receive";
+            case JS:
+                return "invoke";
+            case RE:
+                return "process";
+            case EMAIL:
+            case SMS:
+                return "send";
+            default:
+                throw new RuntimeException("Not implemented!");
+        }
+    }
+
+    private String toDisabledValueLabel(ApiFeature apiFeature) {
+        switch (apiFeature) {
+            case DB:
+                return "saved";
+            case TRANSPORT:
+                return "received";
+            case JS:
+                return "invoked";
+            case RE:
+                return "processed";
+            case EMAIL:
+            case SMS:
+                return "sent";
+            default:
+                throw new RuntimeException("Not implemented!");
+        }
+    }
+
+    private String toWarningValueLabel(ApiUsageRecordKey key, long value, long threshold) {
+        String valueInM = getValueAsString(value);
+        String thresholdInM = getValueAsString(threshold);
+        switch (key) {
+            case STORAGE_DP_COUNT:
+            case TRANSPORT_DP_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed data points";
+            case TRANSPORT_MSG_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed messages";
+            case JS_EXEC_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed JavaScript functions";
+            case RE_EXEC_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed Rule Engine messages";
+            case EMAIL_EXEC_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed Email messages";
+            case SMS_EXEC_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed SMS messages";
+            default:
+                throw new RuntimeException("Not implemented!");
+        }
+    }
+
+    private String toDisabledValueLabel(ApiUsageRecordKey key, long value) {
+        switch (key) {
+            case STORAGE_DP_COUNT:
+            case TRANSPORT_DP_COUNT:
+                return getValueAsString(value) + " data points";
+            case TRANSPORT_MSG_COUNT:
+                return getValueAsString(value) + " messages";
+            case JS_EXEC_COUNT:
+                return "JavaScript functions " + getValueAsString(value) + " times";
+            case RE_EXEC_COUNT:
+                return getValueAsString(value) + " Rule Engine messages";
+            case EMAIL_EXEC_COUNT:
+                return getValueAsString(value) + " Email messages";
+            case SMS_EXEC_COUNT:
+                return getValueAsString(value) + " SMS messages";
+            default:
+                throw new RuntimeException("Not implemented!");
+        }
+    }
+
+    @NotNull
+    private String getValueAsString(long value) {
+        if (value > _1M && value % _1M < _10K) {
+            return value / _1M + "M";
+        } else if (value > _10K) {
+            return String.format("%.2fM", ((double) value) / 1000000);
+        } else {
+            return value + "";
+        }
     }
 
     private void sendMail(JavaMailSenderImpl mailSender,

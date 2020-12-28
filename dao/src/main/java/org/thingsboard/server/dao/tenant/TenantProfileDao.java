@@ -37,4 +37,5 @@ public interface TenantProfileDao extends Dao<TenantProfile> {
     TenantProfile findDefaultTenantProfile(TenantId tenantId);
 
     EntityInfo findDefaultTenantProfileInfo(TenantId tenantId);
+
 }

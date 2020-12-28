@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -45,6 +47,9 @@ public class AdminController extends BaseController {
 
     @Autowired
     private MailService mailService;
+
+    @Autowired
+    private SmsService smsService;
 
     @Autowired
     private AdminSettingsService adminSettingsService;
@@ -84,6 +89,8 @@ public class AdminController extends BaseController {
             if (adminSettings.getKey().equals("mail")) {
                 mailService.updateMailConfiguration();
                 ((ObjectNode) adminSettings.getJsonValue()).put("password", "");
+            } else if (adminSettings.getKey().equals("sms")) {
+                smsService.updateSmsConfiguration();
             }
             return adminSettings;
         } catch (Exception e) {
@@ -126,6 +133,17 @@ public class AdminController extends BaseController {
                 String email = getCurrentUser().getEmail();
                 mailService.sendTestMail(adminSettings.getJsonValue(), email);
             }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/settings/testSms", method = RequestMethod.POST)
+    public void sendTestSms(@RequestBody TestSmsRequest testSmsRequest) throws ThingsboardException {
+        try {
+            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+            smsService.sendTestSms(testSmsRequest);
         } catch (Exception e) {
             throw handleException(e);
         }

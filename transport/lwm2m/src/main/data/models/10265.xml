@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+    <Object ObjectType="MODefinition">
+        <Name>Leakage Detection Configuration</Name>
+        <Description1><![CDATA[The leakage detection configuration object provides a means for configuring the timing and sampling frequency of a vibration based network leak detector]]></Description1>
+        <ObjectID>10265</ObjectID>
+        <ObjectURN>urn:oma:lwm2m:x:10265</ObjectURN>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Resources>
+            <Item ID="0">
+                <Name>Sample Times</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Multiple</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[Sample Times is a readable and writable multi value resource used to control when leak detection vibration sampling should occur. This is an integer value representing seconds since midnight]]></Description>
+            </Item>
+            <Item ID="1">
+                <Name>Sample UTC Offset</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>String</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[The Sample UTC Offset resource is a readable and writable resource representing the time zone offset for this Leakage Detection Schedule instance. If this resource is empty, the application should use the UTC offset provided in the Device [/3/0/14] object instance resource or UTC if not provided.]]></Description>
+            </Item>
+            <Item ID="2">
+                <Name>Detection Mode</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration>0..3</RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[Detection Mode is a readable and writeable resource used to indicate which mode to run the leak detection sensor. Values are one of:-
+0. Disabled
+1. Alarm Only (default)
+2. Top Frequency Values
+3. All Frequency Values
+
+Disabled (0)  the leak detection function should be disabled.
+Alarm Only (1)  for this mode no detailed frequency data is provided to the LwM2M server and an alarm is raised if the Leakage Detection Daughter board indicates that leak was detected. 
+Top Frequency Values (2)  for this mode, only the top (Top Frequency Count) values will be delivered to the LwM2M server via the Frequency Value Resource
+All Frequency Values(3)  for this mode, all frequency values for all frequency bands will be provided to the LwM2M server via the Frequency Value Resource
+]]></Description>
+            </Item>
+            <Item ID="3">
+                <Name>Top Frequency Count</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[Top Frequency Count is a readable and writeable resource used represent the number of samples to provide if the Detection Mode is set to Mode 2 (Top Frequency Values). If not provided, this value should default to 3]]></Description>
+            </Item>
+            <Item ID="4">
+                <Name>Frequency Thresholds</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Multiple</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration>0..999</RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[Frequency Thresholds is a multiple value readable and writeable resource used to represent upper bound thresholds for each of the frequency bands configured on the daughter board. Being a multiple value resource, this resource only needs to contain the values that are required to override the default values provided by the daughter board firmware.  As an example if the frequency threshold for band 7 and band 52 needs to be overridden, then this resource should just contain those two values:-
+/TBD/0/4/7 = 123
+/TBD/0/4/52 = 345
+]]></Description>
+            </Item>
+            <Item ID="5">
+                <Name>Frequency Values</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Multiple</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[Frequency Values is a multiple value readonly resource used represent the latest frequency values recorded by the daughter board. In Detection Mode 2 (Top Frequency Values) only the number of values configured in Top Frequency Count will be provided. As an example, if the Top Frequency Count is 3 and the top three frequency threshold deviations were on band 8, 44 and 101, this resource would present:-
+/TBD/0/5/8 = 434
+/TBD/0/5/44 = 39
+/TBD/0/5/101 = 349
+In Detection Mode 3, this resource would present all frequency readings from 1 through to the number of bands measured by the board.
+This resource can either be observed by the LwM2M server (and subsequently notified by the Client daily) or Read adhoc from the LwM2M server.
+]]></Description>
+            </Item>
+            <Item ID="7">
+                <Name>Firmware Version</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>String</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[Firmware Version is a readonly resource representing the current firmware version of the Daughter Board.]]></Description>
+            </Item>
+        </Resources>
+        <Description2></Description2>
+    </Object>
+</LWM2M>
+

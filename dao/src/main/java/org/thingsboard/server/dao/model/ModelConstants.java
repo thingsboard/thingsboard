@@ -174,6 +174,7 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_DESCRIPTION_PROPERTY = "description";
     public static final String DEVICE_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
     public static final String DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
+    public static final String DEVICE_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY = "default_queue_name";
     public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
 
     /**
@@ -437,6 +438,20 @@ public class ModelConstants {
     public static final String OAUTH2_TEMPLATE_LOGIN_BUTTON_ICON_PROPERTY = OAUTH2_LOGIN_BUTTON_ICON_PROPERTY;
     public static final String OAUTH2_TEMPLATE_LOGIN_BUTTON_LABEL_PROPERTY = OAUTH2_LOGIN_BUTTON_LABEL_PROPERTY;
     public static final String OAUTH2_TEMPLATE_HELP_LINK_PROPERTY = "help_link";
+
+    /**
+     * Usage Record constants.
+     */
+    public static final String API_USAGE_STATE_TABLE_NAME = "api_usage_state";
+    public static final String API_USAGE_STATE_TENANT_ID_COLUMN = TENANT_ID_PROPERTY;
+    public static final String API_USAGE_STATE_ENTITY_TYPE_COLUMN = ENTITY_TYPE_COLUMN;
+    public static final String API_USAGE_STATE_ENTITY_ID_COLUMN = ENTITY_ID_COLUMN;
+    public static final String API_USAGE_STATE_TRANSPORT_COLUMN = "transport";
+    public static final String API_USAGE_STATE_DB_STORAGE_COLUMN = "db_storage";
+    public static final String API_USAGE_STATE_RE_EXEC_COLUMN = "re_exec";
+    public static final String API_USAGE_STATE_JS_EXEC_COLUMN = "js_exec";
+    public static final String API_USAGE_STATE_EMAIL_EXEC_COLUMN = "email_exec";
+    public static final String API_USAGE_STATE_SMS_EXEC_COLUMN = "sms_exec";
 
     /**
      * Cassandra attributes and timeseries constants.

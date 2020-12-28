@@ -38,6 +38,7 @@ import {
 } from '@shared/models/device.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
+import { ServiceType } from '@shared/models/queue.models';
 
 @Component({
   selector: 'tb-device-profile',
@@ -63,6 +64,8 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
 
   displayTransportConfiguration: boolean;
 
+  serviceType = ServiceType.TB_RULE_ENGINE;
+
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               @Optional() @Inject('entity') protected entityValue: DeviceProfile,
@@ -85,7 +88,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     this.displayTransportConfiguration = entity && entity.transportType &&
       deviceTransportTypeConfigurationInfoMap.get(entity.transportType).hasProfileConfiguration;
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = {
-      type: entity?.provisionType ? entity?.provisionType : DeviceProvisionType.DISABLED,
+      type: entity?.provisionType ? entity.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,
       provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret
     };
@@ -101,6 +104,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
           provisionConfiguration: [deviceProvisionConfiguration, Validators.required]
         }),
         defaultRuleChainId: [entity && entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null, []],
+        defaultQueueName: [entity ? entity.defaultQueueName : '', []],
         description: [entity ? entity.description : '', []],
       }
     );
@@ -158,7 +162,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     this.displayTransportConfiguration = entity.transportType &&
       deviceTransportTypeConfigurationInfoMap.get(entity.transportType).hasProfileConfiguration;
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = {
-      type: entity?.provisionType ? entity?.provisionType : DeviceProvisionType.DISABLED,
+      type: entity?.provisionType ? entity.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,
       provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret
     };
@@ -172,9 +176,10 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
       transportConfiguration: entity.profileData?.transportConfiguration,
       alarms: entity.profileData?.alarms,
       provisionConfiguration: deviceProvisionConfiguration
-    }});
-    this.entityForm.patchValue({defaultRuleChainId: entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null});
-    this.entityForm.patchValue({description: entity.description});
+    }}, {emitEvent: false});
+    this.entityForm.patchValue({defaultRuleChainId: entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null}, {emitEvent: false});
+    this.entityForm.patchValue({defaultQueueName: entity.defaultQueueName}, {emitEvent: false});
+    this.entityForm.patchValue({description: entity.description}, {emitEvent: false});
   }
 
   prepareFormValue(formValue: any): any {

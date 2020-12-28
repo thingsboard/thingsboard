@@ -97,5 +97,4 @@ export class DeviceProfileDialogComponent extends
       );
     }
   }
-
 }

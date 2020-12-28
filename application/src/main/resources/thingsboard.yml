@@ -281,8 +281,12 @@ actors:
     js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:50}"
     # Specify thread pool size for mail sender executor service
     mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:50}"
+    # Specify thread pool size for sms sender executor service
+    sms_thread_pool_size: "${ACTORS_RULE_SMS_THREAD_POOL_SIZE:50}"
     # Whether to allow usage of system mail service for rules
     allow_system_mail_service: "${ACTORS_RULE_ALLOW_SYSTEM_MAIL_SERVICE:true}"
+    # Whether to allow usage of system sms service for rules
+    allow_system_sms_service: "${ACTORS_RULE_ALLOW_SYSTEM_SMS_SERVICE:true}"
     # Specify thread pool size for external call service
     external_call_thread_pool_size: "${ACTORS_RULE_EXTERNAL_CALL_THREAD_POOL_SIZE:50}"
     chain:
@@ -434,7 +438,7 @@ spring:
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard_ce_3_2_2}"
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:
@@ -489,7 +493,7 @@ js:
   # Built-in JVM JavaScript environment properties
   local:
     # Use Sandboxed (secured) JVM JavaScript environment
-    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:true}"
+    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:false}"
     # Specify thread pool size for JavaScript sandbox resource monitor
     monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
     # Maximum CPU time in milliseconds allowed for script execution
@@ -566,6 +570,74 @@ transport:
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     timeout: "${COAP_TIMEOUT:10000}"
+  # Local LwM2M transport parameters
+  lwm2m:
+    # Enable/disable lvm2m transport protocol.
+    enabled: "${LWM2M_ENABLED:true}"
+    #   We choose a default timeout a bit higher to the MAX_TRANSMIT_WAIT(62-93s) which is the time from starting to
+    #   send a Confirmable message to the time when an acknowledgement is no longer expected.
+    #   DEFAULT_TIMEOUT = 2 * 60 * 1000l; 2 min in ms
+    timeout: "${LWM2M_TIMEOUT:120000}"
+#    model_path_file: "${LWM2M_MODEL_PATH_FILE:./common/transport/lwm2m/src/main/resources/models/}"
+    model_path_file: "${LWM2M_MODEL_PATH_FILE:}"
+    support_deprecated_ciphers_enable: "${LWM2M_SUPPORT_DEPRECATED_CIPHERS_ENABLED:true}"
+    secure:
+      # Only Certificate_x509:
+      # To get helps about files format and how to generate it, see: https://github.com/eclipse/leshan/wiki/Credential-files-format
+      # Create new X509 Certificates: common/transport/lwm2m/src/main/resources/credentials/shell/lwM2M_credentials.sh
+      key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
+      # key_store_type: "${LWM2M_KEYSTORE_TYPE:PKCS12}"
+#      key_store_path_file: "${KEY_STORE_PATH_FILE:/usr/share/thingsboard/conf/credentials/serverKeyStore.jks}"
+      key_store_path_file: "${KEY_STORE_PATH_FILE:}"
+      key_store_password: "${LWM2M_KEYSTORE_PASSWORD_SERVER:server_ks_password}"
+      root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
+      enable_gen_psk_rpk: "${ENABLE_GEN_PSK_RPK:true}"
+    server:
+      bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
+      bind_port: "${LWM2M_BIND_PORT:5685}"
+      bind_port_cert: "${LWM2M_BIND_PORT_CERT:5687}"
+      secure:
+        start_all: "${START_SERVER_ALL:true}"
+        #leshan.core (V1_1)
+        #DTLS security modes:
+        #0: Pre-Shared Key mode
+        #1: Raw Public Key mode
+        #2: Certificate mode X509
+        #3: NoSec mode  *
+        #OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A (add)
+        #4: Certificate mode X509 with EST
+        # If only startAll == false
+        dtls_mode: "${LWM2M_SECURITY_MODE:1}"
+        bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
+        bind_port: "${LWM2M_BIND_PORT_SEC:5686}"
+        bind_port_cert: "${LWM2M_BIND_PORT_SEC_CERT:5688}"
+        # Only RPK: Public & Private Key
+#        create_rpk: "${CREATE_RPK:}"
+        public_x: "${LWM2M_SERVER_PUBLIC_X:405354ea8893471d9296afbc8b020a5c6201b0bb25812a53b849d4480fa5f069}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y:30c9237e946a3a1692c1cafaa01a238a077f632c99371348337512363f28212b}"
+        private_s: "${LWM2M_SERVER_PRIVATE_S:274671fe40ce937b8a6352cf0a418e8a39e4bf0bb9bf74c910db953c20c73802}"
+        # Only Certificate_x509:
+        alias: "${LWM2M_KEYSTORE_ALIAS_SERVER:server}"
+    bootstrap:
+      enable: "${BOOTSTRAP:true}"
+      bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
+      bind_port: "${LWM2M_BIND_PORT_BS:5689}"
+      bind_port_cert: "${LWM2M_BIND_PORT_SER_BS:5691}"
+      secure:
+        start_all: "${START_BOOTSTRAP_ALL:true}"
+        # If only startAll == false
+        dtls_mode: "${LWM2M_SECURITY_MODE_BS:1}"
+        bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
+        bind_port: "${LWM2M_BIND_PORT_SEC_BS:5690}"
+        bind_port_cert: "${LWM2M_BIND_PORT_SEC_CERT_BS:5692}"
+        # Only RPK: Public & Private Key
+        public_x: "${LWM2M_SERVER_PUBLIC_X_BS:993ef2b698c6a9c0c1d8be78b13a9383c0854c7c7c7a504d289b403794648183}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:267412d5fc4e5ceb2257cb7fd7f76ebdac2fa9aa100afb162e990074cc0bfaa2}"
+        private_s: "${LWM2M_SERVER_PRIVATE_S_BS:9dbdbb073fc63570693a9aaf1013414e261c571f27e27fc6a8c1c2ad9347875a}"
+        # Only Certificate_x509:
+        alias: "${LWM2M_KEYSTORE_ALIAS_BOOTSTRAP:bootstrap}"
+      # Redis
+    redis_url: "${LWM2M_REDIS_URL:''}"
 
 swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"
@@ -596,6 +668,7 @@ queue:
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
     replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
+    max_poll_interval_ms: "${TB_QUEUE_KAFKA_MAX_POLL_INTERVAL_MS:0}"
     max_poll_records: "${TB_QUEUE_KAFKA_MAX_POLL_RECORDS:8192}"
     max_partition_fetch_bytes: "${TB_QUEUE_KAFKA_MAX_PARTITION_FETCH_BYTES:16777216}"
     fetch_max_bytes: "${TB_QUEUE_KAFKA_FETCH_MAX_BYTES:134217728}"
@@ -678,6 +751,7 @@ queue:
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
     pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
+    usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
     stats:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
@@ -769,7 +843,6 @@ metrics:
   timer:
     # Metrics percentiles returned by actuator for timer metrics. List of double values (divided by ,).
     percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
-
 
 management:
   endpoints:

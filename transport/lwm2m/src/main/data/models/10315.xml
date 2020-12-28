@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+  <Object ObjectType="MODefinition">
+    <Name>Robot</Name>
+    <Description1><![CDATA[This LWM2M Object includes robot information and links to the location object.]]></Description1>
+    <ObjectID>10315</ObjectID>
+    <ObjectURN>urn:oma:lwm2m:x:10315</ObjectURN>
+    <LWM2MVersion>1.0</LWM2MVersion>
+    <ObjectVersion>1.0</ObjectVersion>
+    <MultipleInstances>Single</MultipleInstances>
+    <Mandatory>Mandatory</Mandatory>
+    <Resources>
+      <Item ID="1">
+        <Name>Robot ID</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration>0..255</RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[The Robot identity.]]></Description>
+      </Item>
+      <Item ID="2">
+        <Name>Robot Type</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration>0..63</RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Robot Type, for example: Ginger, CloudCleanX, CloudPepper.]]></Description>
+      </Item>
+      <Item ID="3">
+        <Name>Robot Serial Number</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>String</Type>
+        <RangeEnumeration>0..63</RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Robot Type, for example: Ginger, CloudCleanX, CloudPepper.]]></Description>
+      </Item>
+      <Item ID="51">
+        <Name>Battery Level</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration>0..100</RangeEnumeration>
+        <Units>%</Units>
+        <Description><![CDATA[Current Battery Level of the robot.]]></Description>
+      </Item>
+	  <Item ID="4">
+        <Name>Charging</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Boolean</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description><![CDATA[If the robot is charging or not,the setting of which is a Boolean value (1,0) where 1 is Yes and 0 is No.]]></Description>
+      </Item>
+	  <Item ID="5852">
+        <Name>On time</Name>
+        <Operations>RW</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>s</Units>
+        <Description><![CDATA[The time in seconds that the device has been turned on. Writing a value of 0 resets the counter.]]></Description>
+      </Item>
+	  <Item ID="5">
+        <Name>Positioning</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Boolean</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description><![CDATA[If the robot is needed to be positioned, the setting of which is a Boolean value (1,0) where 1 is Yes and 0 is No.]]></Description>
+      </Item>
+	  <Item ID="6">
+		<Name>Location</Name>
+		<Operations>R</Operations>
+		<MultipleInstances>Single</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Type>Objlnk</Type>
+		<RangeEnumeration/>
+		<Units/>
+		<Description>
+		  <![CDATA[The location of the robot, contains the reference to the Location object(6).]]>
+		</Description>
+	  </Item>
+    </Resources>
+    <Description2 />
+  </Object>
+</LWM2M>

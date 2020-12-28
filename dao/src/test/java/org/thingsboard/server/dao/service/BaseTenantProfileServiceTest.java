@@ -21,13 +21,13 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.TenantProfileData;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -188,8 +188,8 @@ public class BaseTenantProfileServiceTest extends AbstractServiceTest {
         Assert.assertTrue(pageData.getData().isEmpty());
         tenantProfiles.addAll(pageData.getData());
 
-        for (int i=0;i<28;i++) {
-            TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile"+i);
+        for (int i = 0; i < 28; i++) {
+            TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile" + i);
             tenantProfiles.add(tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile));
         }
 
@@ -224,8 +224,8 @@ public class BaseTenantProfileServiceTest extends AbstractServiceTest {
 
         List<TenantProfile> tenantProfiles = new ArrayList<>();
 
-        for (int i=0;i<28;i++) {
-            TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile"+i);
+        for (int i = 0; i < 28; i++) {
+            TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile" + i);
             tenantProfiles.add(tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile));
         }
 
@@ -263,7 +263,9 @@ public class BaseTenantProfileServiceTest extends AbstractServiceTest {
         TenantProfile tenantProfile = new TenantProfile();
         tenantProfile.setName(name);
         tenantProfile.setDescription(name + " Test");
-        tenantProfile.setProfileData(new TenantProfileData());
+        TenantProfileData profileData = new TenantProfileData();
+        profileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        tenantProfile.setProfileData(profileData);
         tenantProfile.setDefault(false);
         tenantProfile.setIsolatedTbCore(false);
         tenantProfile.setIsolatedTbRuleEngine(false);

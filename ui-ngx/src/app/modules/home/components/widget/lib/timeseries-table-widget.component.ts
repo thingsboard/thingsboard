@@ -366,8 +366,16 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     return header.index;
   }
 
-  public trackByRowIndex(index: number) {
+  public trackByRowTimestamp(index: number) {
     return index;
+  }
+
+  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
+    return action.id;
+  }
+
+  public trackBySourcesIndex(index: number, source: TimeseriesTableSource) {
+    return source.datasource.entityId;
   }
 
   public cellStyle(source: TimeseriesTableSource, index: number, value: any): any {
@@ -524,16 +532,22 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
       });
     }
 
-    const rows: TimeseriesRow[]  = [];
-
-    for (const value of Object.values(rowsMap)) {
-      if (this.hideEmptyLines && isDefinedAndNotNull(value[1])) {
-        rows.push(value);
-      } else {
-        rows.push(value);
+    let rows: TimeseriesRow[]  = [];
+    if (this.hideEmptyLines) {
+      for (const t of Object.keys(rowsMap)) {
+        let hideLine = true;
+        for (let c = 0; (c < data.length) && hideLine; c++) {
+          if (rowsMap[t][c + 1]) {
+            hideLine = false;
+          }
+        }
+        if (!hideLine) {
+          rows.push(rowsMap[t]);
+        }
       }
+    } else {
+      rows = Object.values(rowsMap);
     }
-
     return rows;
   }
 

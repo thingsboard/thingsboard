@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.2.0-SNAPSHOT</version>
+    <version>3.3.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -36,12 +36,11 @@
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
-        <spring-boot.version>2.2.6.RELEASE</spring-boot.version>
-        <spring-oauth2.version>2.1.2.RELEASE</spring-oauth2.version>
-        <spring.version>5.2.6.RELEASE</spring.version>
-        <spring-security.version>5.2.3.RELEASE</spring-security.version>
-        <spring-data-redis.version>2.2.4.RELEASE</spring-data-redis.version>
-        <jedis.version>3.1.0</jedis.version>
+        <spring-boot.version>2.3.5.RELEASE</spring-boot.version>
+        <spring.version>5.2.10.RELEASE</spring.version>
+        <spring-security.version>5.4.1</spring-security.version>
+        <spring-data-redis.version>2.4.1</spring-data-redis.version>
+        <jedis.version>3.3.0</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
         <json-path.version>2.2.0</json-path.version>
         <junit.version>4.12</junit.version>
@@ -52,17 +51,20 @@
         <cassandra.version>4.6.0</cassandra.version>
         <metrics.version>4.0.5</metrics.version>
         <cassandra-unit.version>4.3.1.0</cassandra-unit.version>
+        <cassandra-all.version>3.11.9</cassandra-all.version>
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version>
         <guava.version>28.2-jre</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
         <commons-lang3.version>3.4</commons-lang3.version>
         <commons-io.version>2.5</commons-io.version>
         <commons-csv.version>1.4</commons-csv.version>
-        <jackson.version>2.10.2</jackson.version>
-        <jackson-annotations.version>2.10.2</jackson-annotations.version>
-        <jackson-core.version>2.10.2</jackson-core.version>
+        <jackson.version>2.11.3</jackson.version>
+        <jackson-annotations.version>2.11.3</jackson-annotations.version>
+        <jackson-core.version>2.11.3</jackson-core.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
-        <californium.version>1.0.2</californium.version>
+        <californium.version>2.2.3</californium.version>
+        <leshan-server.version>1.0.1</leshan-server.version>
+        <leshan-client.version>1.0.0</leshan-client.version>
         <gson.version>2.6.2</gson.version>
         <freemarker.version>2.3.30</freemarker.version>
         <mail.version>1.6.2</mail.version>
@@ -72,7 +74,7 @@
         <grpc.version>1.22.1</grpc.version>
         <lombok.version>1.16.18</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
-        <netty.version>4.1.49.Final</netty.version>
+        <netty.version>4.1.53.Final</netty.version>
         <os-maven-plugin.version>1.5.0</os-maven-plugin.version>
         <rabbitmq.version>4.8.0</rabbitmq.version>
         <surfire.version>2.19.1</surfire.version>
@@ -96,8 +98,8 @@
         <bucket4j.version>4.1.1</bucket4j.version>
         <fst.version>2.57</fst.version>
         <antlr.version>2.7.7</antlr.version>
-        <snakeyaml.version>1.25</snakeyaml.version>
-        <amazonaws.sqs.version>1.11.747</amazonaws.sqs.version>
+        <snakeyaml.version>1.27</snakeyaml.version>
+        <aws.sdk.version>1.11.747</aws.sdk.version>
         <pubsub.client.version>1.105.0</pubsub.client.version>
         <azure-servicebus.version>3.2.0</azure-servicebus.version>
         <passay.version>1.5.0</passay.version>
@@ -106,6 +108,9 @@
         <commons-collections.version>3.2.2</commons-collections.version>
         <java-websocket.version>1.5.0</java-websocket.version>
         <micrometer.version>1.5.2</micrometer.version>
+        <protobuf-dynamic.version>1.0.2TB</protobuf-dynamic.version>
+        <wire-schema.version>3.4.0</wire-schema.version>
+        <twilio.version>7.54.2</twilio.version>
     </properties>
 
     <modules>
@@ -251,7 +256,8 @@
                                             </resource>
                                         </resources>
                                         <filters>
-                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties</filter>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties
+                                            </filter>
                                         </filters>
                                     </configuration>
                                 </execution>
@@ -312,7 +318,8 @@
                                             </resource>
                                         </resources>
                                         <filters>
-                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties</filter>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties
+                                            </filter>
                                         </filters>
                                     </configuration>
                                 </execution>
@@ -334,7 +341,8 @@
                                             </resource>
                                         </resources>
                                         <filters>
-                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties</filter>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties
+                                            </filter>
                                         </filters>
                                     </configuration>
                                 </execution>
@@ -358,9 +366,39 @@
                                                 </includes>
                                                 <filtering>false</filtering>
                                             </resource>
+                                            <resource>
+                                                <directory>../common/transport/lwm2m/src/main/resources</directory>
+                                                <includes>
+                                                    <include>**/*.xml</include>
+                                                    <include>**/*.jks</include>
+                                                </includes>
+                                                <filtering>false</filtering>
+                                            </resource>
                                         </resources>
                                     </configuration>
                                 </execution>
+                                <execution>
+                                    <id>copy-lwm2m-resources</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>../transport/lwm2m/src/main/data</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>../common/transport/lwm2m/src/main/resources</directory>
+                                                <includes>
+                                                    <include>**/*.xml</include>
+                                                    <include>**/*.jks</include>
+                                                </includes>
+                                                <filtering>false</filtering>
+                                            </resource>
+                                        </resources>
+
+                                    </configuration>
+                                </execution>
+
                                 <execution>
                                     <id>copy-docker-config</id>
                                     <phase>${pkg.process-resources.phase}</phase>
@@ -725,10 +763,15 @@
                             <exclude>**/*.proto.js</exclude>
                             <exclude>docker/haproxy/**</exclude>
                             <exclude>docker/tb-node/**</exclude>
+                            <exclude>src/main/resources/models/*.xml</exclude>
+                            <exclude>src/main/resources/credentials/*.jks</exclude>
+                            <exclude>src/main/resources/credentials/shell/*.jks</exclude>
+                            <exclude>src/main/resources/credentials/shell/*.jks.old</exclude>
                             <exclude>ui/**</exclude>
                             <exclude>src/browserslist</exclude>
                             <exclude>**/*.raw</exclude>
                             <exclude>**/apache/cassandra/io/**</exclude>
+                            <exclude>.run/**</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>
@@ -834,6 +877,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.thingsboard.common.transport</groupId>
+                <artifactId>lwm2m</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>dao</artifactId>
                 <version>${project.version}</version>
@@ -871,11 +919,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-security</artifactId>
                 <version>${spring-boot.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-starter-oauth2</artifactId>
-                <version>${spring-oauth2.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.security</groupId>
@@ -1103,6 +1146,21 @@
                 </exclusions>
             </dependency>
             <dependency>
+                <groupId>org.eclipse.leshan</groupId>
+                <artifactId>leshan-server-cf</artifactId>
+                <version>${leshan-server.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.leshan</groupId>
+                <artifactId>leshan-client-cf</artifactId>
+                <version>${leshan-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.leshan</groupId>
+                <artifactId>leshan-server-redis</artifactId>
+                <version>${leshan-server.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.eclipse.californium</groupId>
                 <artifactId>californium-core</artifactId>
                 <version>${californium.version}</version>
@@ -1199,6 +1257,11 @@
                 <artifactId>cassandra-unit</artifactId>
                 <version>${cassandra-unit.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.cassandra</groupId>
+                <artifactId>cassandra-all</artifactId>
+                <version>${cassandra-all.version}</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>
@@ -1316,7 +1379,12 @@
             <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-java-sdk-sqs</artifactId>
-                <version>${amazonaws.sqs.version}</version>
+                <version>${aws.sdk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-java-sdk-sns</artifactId>
+                <version>${aws.sdk.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.cloud</groupId>
@@ -1368,6 +1436,35 @@
                 <groupId>io.micrometer</groupId>
                 <artifactId>micrometer-registry-prometheus</artifactId>
                 <version>${micrometer.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>protobuf-dynamic</artifactId>
+                <version>${protobuf-dynamic.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.wire</groupId>
+                <artifactId>wire-schema</artifactId>
+                <version>${wire-schema.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.twilio.sdk</groupId>
+                <artifactId>twilio</artifactId>
+                <version>${twilio.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.jsonwebtoken</groupId>
+                        <artifactId>jjwt-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.jsonwebtoken</groupId>
+                        <artifactId>jjwt-jackson</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.jsonwebtoken</groupId>
+                        <artifactId>jjwt-impl</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>

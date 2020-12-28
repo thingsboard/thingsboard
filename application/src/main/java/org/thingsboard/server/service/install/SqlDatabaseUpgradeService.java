@@ -28,6 +28,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
 import java.nio.charset.Charset;
@@ -95,6 +96,9 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
     @Autowired
     private DeviceProfileService deviceProfileService;
+
+    @Autowired
+    private ApiUsageStateService apiUsageStateService;
 
 
     @Override
@@ -352,6 +356,24 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         } catch (Exception e) {
                         }
 
+                        try {
+                            conn.createStatement().execute("CREATE TABLE IF NOT EXISTS api_usage_state (" +
+                                    " id uuid NOT NULL CONSTRAINT usage_record_pkey PRIMARY KEY," +
+                                    " created_time bigint NOT NULL," +
+                                    " tenant_id uuid," +
+                                    " entity_type varchar(32)," +
+                                    " entity_id uuid," +
+                                    " transport varchar(32)," +
+                                    " db_storage varchar(32)," +
+                                    " re_exec varchar(32)," +
+                                    " js_exec varchar(32)," +
+                                    " email_exec varchar(32)," +
+                                    " sms_exec varchar(32)," +
+                                    " CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)\n" +
+                                    ");");
+                        } catch (Exception e) {
+                        }
+
                         schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.1.1", "schema_update_before.sql");
                         loadSql(schemaUpdateFile, conn);
 
@@ -367,6 +389,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         do {
                             pageData = tenantService.findTenants(pageLink);
                             for (Tenant tenant : pageData.getData()) {
+                                try {
+                                    apiUsageStateService.createDefaultApiUsageState(tenant.getId());
+                                } catch (Exception e) {
+                                }
                                 List<EntitySubtype> deviceTypes = deviceService.findDeviceTypesByTenantId(tenant.getId()).get();
                                 try {
                                     deviceProfileService.createDefaultDeviceProfile(tenant.getId());

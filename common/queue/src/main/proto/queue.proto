@@ -183,9 +183,51 @@ message GetEntityProfileRequestMsg {
   int64 entityIdLSB = 3;
 }
 
+message LwM2MRegistrationRequestMsg {
+  string tenantId = 1;
+  string endpoint = 2;
+}
+
+message LwM2MRegistrationResponseMsg {
+  DeviceInfoProto deviceInfo = 1;
+}
+
+message LwM2MRequestMsg {
+  LwM2MRegistrationRequestMsg registrationMsg = 1;
+}
+
+message LwM2MResponseMsg {
+  LwM2MRegistrationResponseMsg registrationMsg = 1;
+}
+
+message ValidateDeviceLwM2MCredentialsRequestMsg {
+  string credentialsId = 1;
+}
+
+message ToTransportUpdateCredentialsProto {
+  repeated string credentialsId = 1;
+  repeated string credentialsValue = 2;
+}
+
+message GetTenantRoutingInfoRequestMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+}
+
+message GetTenantRoutingInfoResponseMsg {
+  bool isolatedTbCore = 1;
+  bool isolatedTbRuleEngine = 2;
+}
+
+message GetDeviceProfileRequestMsg {
+  int64 profileIdMSB = 1;
+  int64 profileIdLSB = 2;
+}
+
 message GetEntityProfileResponseMsg {
   string entityType = 1;
   bytes data = 2;
+  bytes apiState = 3;
 }
 
 message EntityUpdateMsg {
@@ -268,8 +310,9 @@ message ProvisionDeviceCredentialsMsg {
 }
 
 message ProvisionDeviceResponseMsg {
-  DeviceCredentialsProto deviceCredentials = 1;
-  ProvisionResponseStatus provisionResponseStatus = 2;
+  ProvisionResponseStatus status = 1;
+  CredentialsType credentialsType = 2;
+  string credentialsValue = 3;
 }
 
 enum ProvisionResponseStatus {
@@ -477,8 +520,10 @@ message TransportApiRequestMsg {
   ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
   GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
   GetEntityProfileRequestMsg entityProfileRequestMsg = 4;
+  LwM2MRequestMsg lwM2MRequestMsg = 5;
   ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 6;
   ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 7;
+  ValidateDeviceLwM2MCredentialsRequestMsg validateDeviceLwM2MCredentialsRequestMsg = 8;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -487,6 +532,7 @@ message TransportApiResponseMsg {
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
   GetEntityProfileResponseMsg entityProfileResponseMsg = 3;
   ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 4;
+  LwM2MResponseMsg lwM2MResponseMsg = 6;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */
@@ -529,8 +575,21 @@ message ToTransportMsg {
   AttributeUpdateNotificationMsg attributeUpdateNotification = 5;
   ToDeviceRpcRequestMsg toDeviceRequest = 6;
   ToServerRpcResponseMsg toServerResponse = 7;
-  /* For Tenant, TenantProfile and DeviceProfile */
   EntityUpdateMsg entityUpdateMsg = 8;
   EntityDeleteMsg entityDeleteMsg = 9;
   ProvisionDeviceResponseMsg provisionResponse = 10;
+  ToTransportUpdateCredentialsProto toTransportUpdateCredentialsNotification = 11;
+}
+
+message UsageStatsKVProto{
+  string key = 1;
+  int64 value = 2;
+}
+
+message ToUsageStatsServiceMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+  repeated UsageStatsKVProto values = 5;
 }

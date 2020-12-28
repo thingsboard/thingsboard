@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- BSD-3 Clause License
+
+Copyright 2019 Odins. 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd" >
+<Object ObjectType="MODefinition">
+    <Name>Single-Phase Power Meter</Name>
+    <Description1>
+        <![CDATA[This Object provides the information to represent a generic Single-Phase Power Meter.]]>
+    </Description1>
+    <ObjectID>10243</ObjectID>
+    <ObjectURN>urn:oma:lwm2m:x:10243</ObjectURN>
+    <LWM2MVersion>1.0</LWM2MVersion>
+	<ObjectVersion>1.0</ObjectVersion>
+    <MultipleInstances>Multiple</MultipleInstances>
+    <Mandatory>Optional</Mandatory>
+    <Resources>
+        <Item ID="0">
+            <Name>Manufacturer</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>String</Type>
+            <RangeEnumeration/>
+            <Units/>
+            <Description>
+                <![CDATA[Human readable manufacturer name]]>
+            </Description>
+        </Item>
+        <Item ID="1">
+            <Name>Model Number</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>String</Type>
+            <RangeEnumeration/>
+            <Units/>
+            <Description>
+                <![CDATA[A model identifier (manufacturer specified string)]]>
+            </Description>
+        </Item>
+        <Item ID="2">
+            <Name>Serial Number</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>String</Type>
+            <RangeEnumeration/>
+            <Units/>
+            <Description>
+                <![CDATA[Serial number of the meter]]>
+            </Description>
+        </Item>
+        <Item ID="3">
+            <Name>Description</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>String</Type>
+            <RangeEnumeration/>
+            <Units/>
+            <Description>
+                <![CDATA[Description of the meter]]>
+            </Description>
+        </Item>
+        <Item ID="4">
+            <Name>Tension</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Mandatory</Mandatory>
+            <Type>String</Type>
+            <RangeEnumeration/>
+            <Units>V</Units>
+            <Description>
+                <![CDATA[Voltage]]>
+            </Description>
+        </Item>
+        <Item ID="5">
+            <Name>Current</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Mandatory</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>A</Units>
+            <Description>
+                <![CDATA[Current]]>
+            </Description>
+        </Item>
+        <Item ID="6">
+            <Name>Active Power</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kW</Units>
+            <Description>
+                <![CDATA[Active Power]]>
+            </Description>
+        </Item>
+        <Item ID="7">
+            <Name>Reactive Power</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[Reactive Power]]>
+            </Description>
+        </Item>
+        <Item ID="8">
+            <Name>Inductive Reactive Power</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[Inductive Reactive Power]]>
+            </Description>
+        </Item>
+        <Item ID="9">
+            <Name>Capacitive Reactive Power</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvar</Units>
+            <Description>
+                <![CDATA[Capacitive Reactive Power]]>
+            </Description>
+        </Item>
+        <Item ID="10">
+            <Name>Apparent Power</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kVA</Units>
+            <Description>
+                <![CDATA[Apparent Power]]>
+            </Description>
+        </Item>
+        <Item ID="11">
+            <Name>Power Factor</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration>-1..1</RangeEnumeration>
+            <Units/>
+            <Description>
+                <![CDATA[Power Factor]]>
+            </Description>
+        </Item>
+        <Item ID="12">
+            <Name>THD-V</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>/100</Units>
+            <Description>
+                <![CDATA[Total Harmonic Distortion (Tension)]]>
+            </Description>
+        </Item>
+        <Item ID="13">
+            <Name>THD-A</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>/100</Units>
+            <Description>
+                <![CDATA[Total Harmonic Distortion (Current)]]>
+            </Description>
+        </Item>
+        <Item ID="14">
+            <Name>Active Energy</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kWh</Units>
+            <Description>
+                <![CDATA[Active Energy]]>
+            </Description>
+        </Item>
+        <Item ID="15">
+            <Name>Reactive Energy</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kvarh</Units>
+            <Description>
+                <![CDATA[Reactive Energy]]>
+            </Description>
+        </Item>
+        <Item ID="16">
+            <Name>Apparent Energy</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>kVAh</Units>
+            <Description>
+                <![CDATA[Apparent Energy]]>
+            </Description>
+        </Item>
+        <Item ID="17">
+            <Name>Frequency</Name>
+            <Operations>R</Operations>
+            <MultipleInstances>Single</MultipleInstances>
+            <Mandatory>Optional</Mandatory>
+            <Type>Float</Type>
+            <RangeEnumeration/>
+            <Units>Hz</Units>
+            <Description>
+                <![CDATA[Frequency]]>
+            </Description>
+        </Item>
+    </Resources>
+    <Description2/>
+</Object>
+</LWM2M>
