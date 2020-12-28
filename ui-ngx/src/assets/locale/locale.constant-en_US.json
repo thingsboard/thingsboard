@@ -527,7 +527,9 @@
         "type-assigned-from-tenant": "Assigned from Tenant",
         "type-assigned-to-tenant": "Assigned to Tenant",
         "type-provision-success": "Device provisioned",
-        "type-provision-failure": "Device provisioning was failed"
+        "type-provision-failure": "Device provisioning was failed",
+        "type-timeseries-updated": "Telemetry updated",
+        "type-timeseries-deleted": "Telemetry deleted"
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
