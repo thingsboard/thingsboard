@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.aware.EntityAwareMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 
@@ -34,7 +33,7 @@ import java.util.Optional;
  * @author Andrew Shvayka
  */
 @ToString
-public class ComponentLifecycleMsg implements TenantAwareMsg, EntityAwareMsg, ToAllNodesMsg {
+public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
     @Getter
     private final TenantId tenantId;
     @Getter

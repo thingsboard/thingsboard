@@ -21,7 +21,6 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.aware.EntityAwareMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 
@@ -31,7 +30,7 @@ import java.util.Set;
 
 @ToString
 @EqualsAndHashCode
-public class AttributesCacheUpdatedMsg implements TenantAwareMsg, EntityAwareMsg, ToAllNodesMsg {
+public class AttributesCacheUpdatedMsg implements TenantAwareMsg, ToAllNodesMsg {
     public static final AttributesCacheUpdatedMsg INVALIDATE_ALL_CACHE_MSG = new AttributesCacheUpdatedMsg(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID,
             null, Collections.emptyList());
     @Getter
