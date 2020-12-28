@@ -65,9 +65,11 @@ public class CachedAttributesService implements AttributesService {
 
 
     @Override
-    public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, String attributeKey) {
+    public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId userTenantId, EntityId entityId, String scope, String attributeKey) {
         validate(entityId, scope);
         Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
+
+        TenantId tenantId = updateTenantIdInCaseSysAdmin(userTenantId, entityId);
 
         if (LOCAL_ENTITIES.contains(entityId.getEntityType())) {
             TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, entityId);
@@ -84,9 +86,11 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
+    public ListenableFuture<List<AttributeKvEntry>> find(TenantId userTenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
         validate(entityId, scope);
         attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
+
+        TenantId tenantId = updateTenantIdInCaseSysAdmin(userTenantId, entityId);
 
         if (LOCAL_ENTITIES.contains(entityId.getEntityType())) {
             TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, entityId);
@@ -148,16 +152,18 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String scope) {
+    public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId userTenantId, EntityId entityId, String scope) {
         validate(entityId, scope);
+        TenantId tenantId = updateTenantIdInCaseSysAdmin(userTenantId, entityId);
         return daoAttributesService.findAll(tenantId, entityId, scope);
     }
 
     @Override
-    public ListenableFuture<List<Void>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+    public ListenableFuture<List<Void>> save(TenantId userTenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
         attributes.forEach(attribute -> validate(attribute));
 
+        TenantId tenantId = updateTenantIdInCaseSysAdmin(userTenantId, entityId);
         return Futures.transform(daoAttributesService.save(tenantId, entityId, scope, attributes),
                 result -> {
                     try {
@@ -192,8 +198,9 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
+    public ListenableFuture<List<Void>> removeAll(TenantId userTenantId, EntityId entityId, String scope, List<String> attributeKeys) {
         validate(entityId, scope);
+        TenantId tenantId = updateTenantIdInCaseSysAdmin(userTenantId, entityId);
         return Futures.transform(daoAttributesService.removeAll(tenantId, entityId, scope, attributeKeys),
                 result -> {
                     try {
@@ -214,5 +221,13 @@ public class CachedAttributesService implements AttributesService {
                     return result;
                 },
                 MoreExecutors.directExecutor());
+    }
+
+    private TenantId updateTenantIdInCaseSysAdmin(TenantId tenantId, EntityId entityId) {
+        if (tenantId.isNullUid() && EntityType.TENANT.equals(entityId.getEntityType())) {
+            return new TenantId(entityId.getId());
+        } else {
+            return tenantId;
+        }
     }
 }
