@@ -546,7 +546,7 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
         }
       }
     } else {
-      rows = Object.values(rowsMap);
+      rows = Object.keys(rowsMap).map(itm => rowsMap[itm]);
     }
     return rows;
   }

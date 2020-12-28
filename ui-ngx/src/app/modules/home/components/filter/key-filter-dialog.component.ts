@@ -220,7 +220,7 @@ export class KeyFilterDialogComponent extends
       let keyNameObservable: Observable<Array<string>>;
       switch (this.keyFilterFormGroup.get('key.type').value) {
         case EntityKeyType.ENTITY_FIELD:
-          keyNameObservable = of(Object.values(entityFields).map(entityField => entityField.keyName).sort());
+          keyNameObservable = of(Object.keys(entityFields).map(itm => entityFields[itm]).map(entityField => entityField.keyName).sort());
           break;
         case EntityKeyType.ATTRIBUTE:
           keyNameObservable = this.deviceProfileService.getDeviceProfileDevicesAttributesKeys(

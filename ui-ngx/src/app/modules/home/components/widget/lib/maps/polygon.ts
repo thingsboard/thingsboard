@@ -15,7 +15,8 @@
 ///
 
 import L, { LatLngExpression, LeafletMouseEvent } from 'leaflet';
-import { createTooltip, functionValueCalculator, parseWithTranslation, safeExecute } from './maps-utils';
+import { createTooltip } from './maps-utils';
+import { functionValueCalculator, parseWithTranslation, safeExecute } from './common-maps-utils';
 import 'leaflet-editable/src/Leaflet.Editable';
 import { FormattedData, PolygonSettings } from './map-models';
 

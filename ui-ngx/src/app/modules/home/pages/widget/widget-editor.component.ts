@@ -32,7 +32,8 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { Hotkey } from 'angular2-hotkeys';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentIsLoading } from '@app/core/interceptors/load.selectors';
-import * as ace from 'ace-builds';
+import { Ace } from 'ace-builds';
+import { getAce, Range } from '@shared/models/ace/ace.models';
 import { css_beautify, html_beautify } from 'js-beautify';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { WINDOW } from '@core/services/window.service';
@@ -44,10 +45,12 @@ import {
   SaveWidgetTypeAsDialogComponent,
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
-import { Subscription } from 'rxjs';
+import { forkJoin, from, Subscription } from 'rxjs';
 import { ResizeObserver } from '@juggle/resize-observer';
 import Timeout = NodeJS.Timeout;
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
+import { Observable } from 'rxjs/internal/Observable';
+import { map, tap } from 'rxjs/operators';
 
 // @dynamic
 @Component({
@@ -119,13 +122,13 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   javascriptFullscreen = false;
   iFrameFullscreen = false;
 
-  aceEditors: ace.Ace.Editor[] = [];
+  aceEditors: Ace.Editor[] = [];
   editorsResizeCafs: {[editorId: string]: CancelAnimationFrame} = {};
-  htmlEditor: ace.Ace.Editor;
-  cssEditor: ace.Ace.Editor;
-  jsonSettingsEditor: ace.Ace.Editor;
-  dataKeyJsonSettingsEditor: ace.Ace.Editor;
-  jsEditor: ace.Ace.Editor;
+  htmlEditor: Ace.Editor;
+  cssEditor: Ace.Editor;
+  jsonSettingsEditor: Ace.Editor;
+  dataKeyJsonSettingsEditor: Ace.Editor;
+  jsEditor: Ace.Editor;
   aceResize$: ResizeObserver;
 
   onWindowMessageListener = this.onWindowMessage.bind(this);
@@ -277,51 +280,85 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
         this.onAceEditorResize(editor);
       });
     });
-    this.htmlEditor = this.createAceEditor(this.htmlInputElmRef, 'html');
-    this.htmlEditor.on('input', () => {
-      const editorValue = this.htmlEditor.getValue();
-      if (this.widget.templateHtml !== editorValue) {
-        this.widget.templateHtml = editorValue;
-        this.isDirty = true;
+
+    const editorsObservables: Observable<any>[] = [];
+
+
+    editorsObservables.push(this.createAceEditor(this.htmlInputElmRef, 'html').pipe(
+      tap((editor) => {
+        this.htmlEditor = editor;
+        this.htmlEditor.on('input', () => {
+          const editorValue = this.htmlEditor.getValue();
+          if (this.widget.templateHtml !== editorValue) {
+            this.widget.templateHtml = editorValue;
+            this.isDirty = true;
+          }
+        });
+      })
+    ));
+
+    editorsObservables.push(this.createAceEditor(this.cssInputElmRef, 'css').pipe(
+      tap((editor) => {
+        this.cssEditor = editor;
+        this.cssEditor.on('input', () => {
+          const editorValue = this.cssEditor.getValue();
+          if (this.widget.templateCss !== editorValue) {
+            this.widget.templateCss = editorValue;
+            this.isDirty = true;
+          }
+        });
+      })
+    ));
+
+    editorsObservables.push(this.createAceEditor(this.settingsJsonInputElmRef, 'json').pipe(
+      tap((editor) => {
+        this.jsonSettingsEditor = editor;
+        this.jsonSettingsEditor.on('input', () => {
+          const editorValue = this.jsonSettingsEditor.getValue();
+          if (this.widget.settingsSchema !== editorValue) {
+            this.widget.settingsSchema = editorValue;
+            this.isDirty = true;
+          }
+        });
+      })
+    ));
+
+    editorsObservables.push(this.createAceEditor(this.dataKeySettingsJsonInputElmRef, 'json').pipe(
+      tap((editor) => {
+        this.dataKeyJsonSettingsEditor = editor;
+        this.dataKeyJsonSettingsEditor.on('input', () => {
+          const editorValue = this.dataKeyJsonSettingsEditor.getValue();
+          if (this.widget.dataKeySettingsSchema !== editorValue) {
+            this.widget.dataKeySettingsSchema = editorValue;
+            this.isDirty = true;
+          }
+        });
+      })
+    ));
+
+    editorsObservables.push(this.createAceEditor(this.javascriptInputElmRef, 'javascript').pipe(
+      tap((editor) => {
+        this.jsEditor = editor;
+        this.jsEditor.on('input', () => {
+          const editorValue = this.jsEditor.getValue();
+          if (this.widget.controllerScript !== editorValue) {
+            this.widget.controllerScript = editorValue;
+            this.isDirty = true;
+          }
+        });
+        this.jsEditor.on('change', () => {
+          this.cleanupJsErrors();
+        });
+        this.jsEditor.completers = [widgetEditorCompleter, ...(this.jsEditor.completers || [])];
+      })
+    ));
+
+    forkJoin(editorsObservables).subscribe(
+      () => {
+        this.setAceEditorValues();
       }
-    });
-    this.cssEditor = this.createAceEditor(this.cssInputElmRef, 'css');
-    this.cssEditor.on('input', () => {
-      const editorValue = this.cssEditor.getValue();
-      if (this.widget.templateCss !== editorValue) {
-        this.widget.templateCss = editorValue;
-        this.isDirty = true;
-      }
-    });
-    this.jsonSettingsEditor = this.createAceEditor(this.settingsJsonInputElmRef, 'json');
-    this.jsonSettingsEditor.on('input', () => {
-      const editorValue = this.jsonSettingsEditor.getValue();
-      if (this.widget.settingsSchema !== editorValue) {
-        this.widget.settingsSchema = editorValue;
-        this.isDirty = true;
-      }
-    });
-    this.dataKeyJsonSettingsEditor = this.createAceEditor(this.dataKeySettingsJsonInputElmRef, 'json');
-    this.dataKeyJsonSettingsEditor.on('input', () => {
-      const editorValue = this.dataKeyJsonSettingsEditor.getValue();
-      if (this.widget.dataKeySettingsSchema !== editorValue) {
-        this.widget.dataKeySettingsSchema = editorValue;
-        this.isDirty = true;
-      }
-    });
-    this.jsEditor = this.createAceEditor(this.javascriptInputElmRef, 'javascript');
-    this.jsEditor.on('input', () => {
-      const editorValue = this.jsEditor.getValue();
-      if (this.widget.controllerScript !== editorValue) {
-        this.widget.controllerScript = editorValue;
-        this.isDirty = true;
-      }
-    });
-    this.jsEditor.on('change', () => {
-      this.cleanupJsErrors();
-    });
-    this.jsEditor.completers = [widgetEditorCompleter, ...(this.jsEditor.completers || [])];
-    this.setAceEditorValues();
+    );
+
   }
 
   private setAceEditorValues() {
@@ -332,9 +369,9 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.jsEditor.setValue(this.widget.controllerScript ? this.widget.controllerScript : '', -1);
   }
 
-  private createAceEditor(editorElementRef: ElementRef, mode: string): ace.Ace.Editor {
+  private createAceEditor(editorElementRef: ElementRef, mode: string): Observable<Ace.Editor> {
     const editorElement = editorElementRef.nativeElement;
-    let editorOptions: Partial<ace.Ace.EditorOptions> = {
+    let editorOptions: Partial<Ace.EditorOptions> = {
       mode: `ace/mode/${mode}`,
       showGutter: true,
       showPrintMargin: true
@@ -345,14 +382,18 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       enableLiveAutocompletion: true
     };
     editorOptions = {...editorOptions, ...advancedOptions};
-    const aceEditor = ace.edit(editorElement, editorOptions);
-    aceEditor.session.setUseWrapMode(true);
-    this.aceEditors.push(aceEditor);
-    this.aceResize$.observe(editorElement);
-    return aceEditor;
+    return getAce().pipe(
+      map((ace) => {
+        const aceEditor = ace.edit(editorElement, editorOptions);
+        aceEditor.session.setUseWrapMode(true);
+        this.aceEditors.push(aceEditor);
+        this.aceResize$.observe(editorElement);
+        return aceEditor;
+      })
+    );
   }
 
-  private onAceEditorResize(aceEditor: ace.Ace.Editor) {
+  private onAceEditorResize(aceEditor: Ace.Editor) {
     if (this.editorsResizeCafs[aceEditor.id]) {
       this.editorsResizeCafs[aceEditor.id]();
       delete this.editorsResizeCafs[aceEditor.id];
@@ -443,11 +484,11 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
         if (details.columnNumber) {
           column = details.columnNumber;
         }
-        const errorMarkerId = this.jsEditor.session.addMarker(new ace.Range(line, 0, line, Infinity),
+        const errorMarkerId = this.jsEditor.session.addMarker(new Range(line, 0, line, Infinity),
           'ace_active-line', 'screenLine');
         this.errorMarkers.push(errorMarkerId);
         const annotations = this.jsEditor.session.getAnnotations();
-        const errorAnnotation: ace.Ace.Annotation = {
+        const errorAnnotation: Ace.Annotation = {
           row: line,
           column,
           text: details.message,

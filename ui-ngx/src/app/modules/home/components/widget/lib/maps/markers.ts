@@ -17,14 +17,16 @@
 import L, { Icon, LeafletMouseEvent } from 'leaflet';
 import { FormattedData, MarkerSettings } from './map-models';
 import {
-  aspectCache,
   bindPopupActions,
   createTooltip,
+} from './maps-utils';
+import {
+  aspectCache,
   fillPattern,
   parseWithTranslation,
   processPattern,
   safeExecute
-} from './maps-utils';
+} from './common-maps-utils';
 import tinycolor from 'tinycolor2';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import LeafletMap from './leaflet-map';

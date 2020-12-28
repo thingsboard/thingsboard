@@ -27,28 +27,28 @@ import {
   SecurityContext,
   ViewChild
 } from '@angular/core';
-import { MapWidgetController, TbMapWidgetV2 } from '../lib/maps/map-widget2';
-import { FormattedData, MapProviders, TripAnimationSettings } from '../lib/maps/map-models';
+import { FormattedData, MapProviders, TripAnimationSettings } from '@home/components/widget/lib/maps/map-models';
 import { addCondition, addGroupInfo, addToSchema, initSchema } from '@app/core/schema-utils';
-import { mapPolygonSchema, pathSchema, pointSchema, tripAnimationSchema } from '../lib/maps/schemes';
+import { mapPolygonSchema, pathSchema, pointSchema, tripAnimationSchema } from '@home/components/widget/lib/maps/schemes';
 import { DomSanitizer } from '@angular/platform-browser';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import {
-  findAngle,
+  findAngle, getProviderSchema,
   getRatio,
   interpolateOnLineSegment,
   parseArray,
   parseFunction,
   parseWithTranslation,
   safeExecute
-} from '../lib/maps/maps-utils';
+} from '@home/components/widget/lib/maps/common-maps-utils';
 import { JsonSettingsSchema, WidgetConfig } from '@shared/models/widget.models';
 import moment from 'moment';
 import { isUndefined } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { MapWidgetInterface } from '@home/components/widget/lib/maps/map-widget.interface';
 
-interface dataMap {
-  [key: string] : FormattedData
+interface DataMap {
+  [key: string]: FormattedData;
 }
 
 @Component({
@@ -67,7 +67,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   @ViewChild('map') mapContainer;
 
-  mapWidget: MapWidgetController;
+  mapWidget: MapWidgetInterface;
   historicalData: FormattedData[][];
   normalizationStep: number;
   interpolatedTimeData = [];
@@ -85,7 +85,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   static getSettingsSchema(): JsonSettingsSchema {
     const schema = initSchema();
-    addToSchema(schema, TbMapWidgetV2.getProvidersSchema(null, true));
+    addToSchema(schema, getProviderSchema(null, true));
     addGroupInfo(schema, 'Map Provider Settings');
     addToSchema(schema, tripAnimationSchema);
     addGroupInfo(schema, 'Trip Animation Settings');
@@ -106,7 +106,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
       buttonColor: tinycolor(this.widgetConfig.color).setAlpha(0.54).toRgbString(),
       disabledButtonColor: tinycolor(this.widgetConfig.color).setAlpha(0.3).toRgbString(),
       rotationAngle: 0
-    }
+    };
     this.settings = { ...settings, ...this.ctx.settings };
     this.useAnchors = this.settings.showPoints && this.settings.usePointAsAnchor;
     this.settings.pointAsAnchorFunction = parseFunction(this.settings.pointAsAnchorFunction, ['data', 'dsData', 'dsIndex']);
@@ -122,15 +122,19 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
       }
       this.mapWidget.map.map?.invalidateSize();
       this.cd.detectChanges();
-    }
+    };
   }
 
   ngAfterViewInit() {
-    this.mapWidget = new MapWidgetController(MapProviders.openstreet, false, this.ctx, this.mapContainer.nativeElement);
-    this.mapResize$ = new ResizeObserver(() => {
-      this.mapWidget.resize();
-    });
-    this.mapResize$.observe(this.mapContainer.nativeElement);
+    import('@home/components/widget/lib/maps/map-widget2').then(
+      (mod) => {
+        this.mapWidget = new mod.MapWidgetController(MapProviders.openstreet, false, this.ctx, this.mapContainer.nativeElement);
+        this.mapResize$ = new ResizeObserver(() => {
+          this.mapWidget.resize();
+        });
+        this.mapResize$.observe(this.mapContainer.nativeElement);
+      }
+    );
   }
 
   ngOnDestroy() {
@@ -142,8 +146,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   timeUpdated(time: number) {
     this.currentTime = time;
     const currentPosition = this.interpolatedTimeData
-      .map(dataSource => dataSource[time])
-    for(let j = 0; j < this.interpolatedTimeData.length; j++) {
+      .map(dataSource => dataSource[time]);
+    for (let j = 0; j < this.interpolatedTimeData.length; j++) {
       if (isUndefined(currentPosition[j])) {
         const timePoints = Object.keys(this.interpolatedTimeData[j]).map(item => parseInt(item, 10));
         for (let i = 1; i < timePoints.length; i++) {
@@ -155,13 +159,13 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
               ...beforePosition,
               time,
               ...interpolateOnLineSegment(beforePosition, afterPosition, this.settings.latKeyName, this.settings.lngKeyName, ratio)
-            }
+            };
             break;
           }
         }
       }
     }
-    for(let j = 0; j < this.interpolatedTimeData.length; j++) {
+    for (let j = 0; j < this.interpolatedTimeData.length; j++) {
       if (isUndefined(currentPosition[j])) {
         currentPosition[j] = this.calculateLastPoints(this.interpolatedTimeData[j], time);
       }
@@ -179,7 +183,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
       }
       this.mapWidget.map.updateMarkers(currentPosition, true, (trip) => {
         this.activeTrip = trip;
-        this.timeUpdated(this.currentTime)
+        this.timeUpdated(this.currentTime);
       });
     }
   }
@@ -187,14 +191,14 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   setActiveTrip() {
   }
 
-  private calculateLastPoints(dataSource: dataMap, time: number): FormattedData {
+  private calculateLastPoints(dataSource: DataMap, time: number): FormattedData {
     const timeArr = Object.keys(dataSource);
-    let index = timeArr.findIndex((dtime, index) => {
+    let index = timeArr.findIndex((dtime) => {
       return Number(dtime) >= time;
     });
 
-    if(index !== -1) {
-      if(Number(timeArr[index]) !== time && index !== 0) {
+    if (index !== -1) {
+      if (Number(timeArr[index]) !== time && index !== 0) {
         index--;
       }
     } else {
@@ -210,7 +214,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
       this.maxTime = dataSource[dataSource.length - 1]?.time || -Infinity;
       this.interpolatedTimeData[index] = this.interpolateArray(dataSource);
     });
-    if(!this.activeTrip){
+    if (!this.activeTrip) {
       this.activeTrip = this.interpolatedTimeData.map(dataSource => dataSource[this.minTime]).filter(ds => ds)[0];
     }
     if (this.useAnchors) {
@@ -230,7 +234,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   private calcMainTooltip(points: FormattedData[]): void {
     const tooltips = [];
-    for (let point of points) {
+    for (const point of points) {
       tooltips.push(this.sanitizer.sanitize(SecurityContext.HTML, this.calcTooltip(point)));
     }
     this.mainTooltips = tooltips;
@@ -259,7 +263,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     }
     const timeStamp = Object.keys(result);
     for (let i = 0; i < timeStamp.length - 1; i++) {
-      result[timeStamp[i]].rotationAngle += findAngle(result[timeStamp[i]], result[timeStamp[i + 1]], latKeyName, lngKeyName)
+      result[timeStamp[i]].rotationAngle += findAngle(result[timeStamp[i]], result[timeStamp[i + 1]], latKeyName, lngKeyName);
     }
     return result;
   }

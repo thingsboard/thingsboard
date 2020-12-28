@@ -16,10 +16,20 @@
 import * as React from 'react';
 import ThingsboardBaseComponent from './json-form-base-component';
 import reactCSS from 'reactcss';
-import ReactAce from 'react-ace';
 import Button from '@material-ui/core/Button';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 import { IEditorProps } from 'react-ace/src/types';
+import { map, mergeMap } from 'rxjs/operators';
+import { loadAceDependencies } from '@shared/models/ace/ace.models';
+import { from } from 'rxjs';
+
+const ReactAce = React.lazy(() => {
+  return loadAceDependencies().pipe(
+    mergeMap(() => {
+      return from(import('react-ace'));
+    })
+  ).toPromise();
+});
 
 interface ThingsboardAceEditorProps extends JsonFormFieldProps {
   mode: string;
@@ -153,22 +163,24 @@ class ThingsboardAceEditor extends React.Component<ThingsboardAceEditorProps, Th
                               'Exit fullscreen' : 'Fullscreen'}
                           </Button>
                       </div>
-                      <ReactAce  mode={this.props.mode}
-                                 height={this.state.isFull ? '100%' : '150px'}
-                                 width={this.state.isFull ? '100%' : '300px'}
-                                 theme='github'
-                                 onChange={this.onValueChanged}
-                                 onFocus={this.onFocus}
-                                 onBlur={this.onBlur}
-                                 onLoad={this.onLoad}
-                                 name={this.props.form.title}
-                                 value={this.state.value}
-                                 readOnly={this.props.form.readonly}
-                                 editorProps={{$blockScrolling: Infinity}}
-                                 enableBasicAutocompletion={true}
-                                 enableSnippets={true}
-                                 enableLiveAutocompletion={true}
-                                 style={style}/>
+                      <React.Suspense fallback={<div>Loading...</div>}>
+                        <ReactAce  mode={this.props.mode}
+                                   height={this.state.isFull ? '100%' : '150px'}
+                                   width={this.state.isFull ? '100%' : '300px'}
+                                   theme='github'
+                                   onChange={this.onValueChanged}
+                                   onFocus={this.onFocus}
+                                   onBlur={this.onBlur}
+                                   onLoad={this.onLoad}
+                                   name={this.props.form.title}
+                                   value={this.state.value}
+                                   readOnly={this.props.form.readonly}
+                                   editorProps={{$blockScrolling: Infinity}}
+                                   enableBasicAutocompletion={true}
+                                   enableSnippets={true}
+                                   enableLiveAutocompletion={true}
+                                   style={style}/>
+                      </React.Suspense>
                   </div>
                   <div className='json-form-error'
                        style={{opacity: this.props.valid ? '0' : '1'}}>{this.props.error}</div>

@@ -19,10 +19,11 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
-import * as ace from 'ace-builds';
+import { Ace } from 'ace-builds';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { ContentType, contentTypesMap } from '@shared/models/constants';
+import { getAce } from '@shared/models/ace/ace.models';
 
 export interface EventContentDialogData {
   content: string;
@@ -39,7 +40,6 @@ export class EventContentDialogComponent extends DialogComponent<EventContentDia
 
   @ViewChild('eventContentEditor', {static: true})
   eventContentEditorElmRef: ElementRef;
-  private eventContentEditor: ace.Ace.Editor;
 
   content: string;
   title: string;
@@ -58,10 +58,10 @@ export class EventContentDialogComponent extends DialogComponent<EventContentDia
     this.title = this.data.title;
     this.contentType = this.data.contentType;
 
-    this.eventContentEditor = this.createEditor(this.eventContentEditorElmRef, this.content);
+    this.createEditor(this.eventContentEditorElmRef, this.content);
   }
 
-  createEditor(editorElementRef: ElementRef, content: string): ace.Ace.Editor {
+  createEditor(editorElementRef: ElementRef, content: string) {
     const editorElement = editorElementRef.nativeElement;
     let mode = 'java';
     if (this.contentType) {
@@ -70,7 +70,7 @@ export class EventContentDialogComponent extends DialogComponent<EventContentDia
         content = js_beautify(content, {indent_size: 4});
       }
     }
-    let editorOptions: Partial<ace.Ace.EditorOptions> = {
+    let editorOptions: Partial<Ace.EditorOptions> = {
       mode: `ace/mode/${mode}`,
       theme: 'ace/theme/github',
       showGutter: false,
@@ -85,14 +85,17 @@ export class EventContentDialogComponent extends DialogComponent<EventContentDia
     };
 
     editorOptions = {...editorOptions, ...advancedOptions};
-    const editor = ace.edit(editorElement, editorOptions);
-    editor.session.setUseWrapMode(false);
-    editor.setValue(content, -1);
-    this.updateEditorSize(editorElement, content, editor);
-    return editor;
+    getAce().subscribe(
+      (ace) => {
+        const editor = ace.edit(editorElement, editorOptions);
+        editor.session.setUseWrapMode(false);
+        editor.setValue(content, -1);
+        this.updateEditorSize(editorElement, content, editor);
+      }
+    );
   }
 
-  updateEditorSize(editorElement: any, content: string, editor: ace.Ace.Editor) {
+  updateEditorSize(editorElement: any, content: string, editor: Ace.Editor) {
     let newHeight = 400;
     let newWidth = 600;
     if (content && content.length > 0) {

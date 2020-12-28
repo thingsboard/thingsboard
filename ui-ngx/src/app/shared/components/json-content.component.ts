@@ -26,7 +26,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
-import * as ace from 'ace-builds';
+import { Ace } from 'ace-builds';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
 import { Store } from '@ngrx/store';
@@ -35,6 +35,7 @@ import { ContentType, contentTypesMap } from '@shared/models/constants';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { guid } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { getAce } from '@shared/models/ace/ace.models';
 
 @Component({
   selector: 'tb-json-content',
@@ -58,7 +59,7 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
   @ViewChild('jsonEditor', {static: true})
   jsonEditorElmRef: ElementRef;
 
-  private jsonEditor: ace.Ace.Editor;
+  private jsonEditor: Ace.Editor;
   private editorsResizeCaf: CancelAnimationFrame;
   private editorResize$: ResizeObserver;
   private ignoreChange = false;
@@ -123,7 +124,7 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
     if (this.contentType) {
       mode = contentTypesMap.get(this.contentType).code;
     }
-    let editorOptions: Partial<ace.Ace.EditorOptions> = {
+    let editorOptions: Partial<Ace.EditorOptions> = {
       mode: `ace/mode/${mode}`,
       showGutter: true,
       showPrintMargin: false,
@@ -137,22 +138,27 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
     };
 
     editorOptions = {...editorOptions, ...advancedOptions};
-    this.jsonEditor = ace.edit(editorElement, editorOptions);
-    this.jsonEditor.session.setUseWrapMode(true);
-    this.jsonEditor.setValue(this.contentBody ? this.contentBody : '', -1);
-    this.jsonEditor.on('change', () => {
-      if (!this.ignoreChange) {
-        this.cleanupJsonErrors();
-        this.updateView();
+    getAce().subscribe(
+      (ace) => {
+        this.jsonEditor = ace.edit(editorElement, editorOptions);
+        this.jsonEditor.session.setUseWrapMode(true);
+        this.jsonEditor.setValue(this.contentBody ? this.contentBody : '', -1);
+        this.jsonEditor.setReadOnly(this.disabled || this.readonly);
+        this.jsonEditor.on('change', () => {
+          if (!this.ignoreChange) {
+            this.cleanupJsonErrors();
+            this.updateView();
+          }
+        });
+        this.jsonEditor.on('blur', () => {
+          this.contentValid = !this.validateContent || this.doValidate(true);
+        });
+        this.editorResize$ = new ResizeObserver(() => {
+          this.onAceEditorResize();
+        });
+        this.editorResize$.observe(editorElement);
       }
-    });
-    this.jsonEditor.on('blur', () => {
-      this.contentValid = !this.validateContent || this.doValidate(true);
-    });
-    this.editorResize$ = new ResizeObserver(() => {
-      this.onAceEditorResize();
-    });
-    this.editorResize$.observe(editorElement);
+    );
   }
 
   ngOnDestroy(): void {

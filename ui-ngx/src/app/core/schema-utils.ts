@@ -69,16 +69,19 @@ export function addCondition(schema: JsonSettingsSchema, condition: string, excl
                 return {
                     key: element,
                     condition
-                }
+                };
             }
             if (typeof element === 'object') {
                 if (element.condition) {
-                    element.condition += ' && ' + condition
+                    element.condition += ' && ' + condition;
                 }
-                else element.condition = condition;
+                else {
+                  element.condition = condition;
+                }
             }
         }
         return element;
     });
     return schema;
 }
+
