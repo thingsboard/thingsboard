@@ -18,10 +18,6 @@ package org.thingsboard.server.service.attributes;
 import com.google.common.base.Ticker;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -30,7 +26,6 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -38,21 +33,14 @@ import java.util.stream.Collectors;
 @ConditionalOnProperty(prefix = "cache.attributes", value = "enabled", havingValue = "true")
 @Service
 public class GoogleTbAttributesCache implements TbAttributesCache {
-    private static final String CACHE_STATS_NAME = "attributes";
-    private static final String GUAVA_CACHE_MANAGER = "GuavaCache";
-
     private final Map<TenantId, Cache<AttributesKey, AttributeCacheEntry>> tenantsCache = new ConcurrentHashMap<>();
 
     private final AttributesCacheConfiguration cacheConfiguration;
+    private final TbCacheStatsService<Cache<AttributesKey, AttributeCacheEntry>> cacheStatsService;
 
-    @Autowired
-    private MeterRegistry meterRegistry;
-
-    @Value("${metrics.enabled:false}")
-    private Boolean metricsEnabled;
-
-    public GoogleTbAttributesCache(AttributesCacheConfiguration cacheConfiguration) {
+    public GoogleTbAttributesCache(AttributesCacheConfiguration cacheConfiguration, TbCacheStatsService<Cache<AttributesKey, AttributeCacheEntry>> cacheStatsService) {
         this.cacheConfiguration = cacheConfiguration;
+        this.cacheStatsService = cacheStatsService;
     }
 
     private Cache<AttributesKey, AttributeCacheEntry> getTenantCache(TenantId tenantId) {
@@ -64,15 +52,13 @@ public class GoogleTbAttributesCache implements TbAttributesCache {
                     if (customTicker != null){
                         cacheBuilder.ticker(customTicker);
                     }
-                    if (metricsEnabled && cacheConfiguration.isRecordStats()) {
+                    if (cacheStatsService.areCacheStatsEnabled()) {
                         cacheBuilder.recordStats();
                     }
                     Cache<AttributesKey, AttributeCacheEntry> cache = cacheBuilder.build();
 
-                    if (metricsEnabled && cacheConfiguration.isRecordStats()) {
-                        GuavaCacheMetrics.monitor(meterRegistry, cache, CACHE_STATS_NAME,
-                                "cacheManager", GUAVA_CACHE_MANAGER,
-                                "name", tenantId.getId().toString());
+                    if (cacheStatsService.areCacheStatsEnabled()) {
+                        cacheStatsService.registerCacheStats(cache, tenantId);
                     }
                     return cache;
                 }

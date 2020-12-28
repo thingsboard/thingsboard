@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.attributes;
 
+import com.google.common.cache.Cache;
 import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -61,10 +62,13 @@ public class CachedAttributesServiceTest {
 
     @Before
     public void before(){
-        AttributesCacheConfiguration cacheConfiguration = new AttributesCacheConfiguration();
-        cacheConfiguration.setExpireAfterAccessInMinutes(1);
-        cacheConfiguration.setMaxSizePerTenant(10);
-        this.attributesCache = new GoogleTbAttributesCache(cacheConfiguration);
+        AttributesCacheConfiguration cacheConfiguration =  AttributesCacheConfiguration.builder()
+                .expireAfterAccessInMinutes(1)
+                .maxSizePerTenant(10)
+                .build();
+        TbCacheStatsService<Cache<AttributesKey, AttributeCacheEntry>> mockedStatsService = mock(TbCacheStatsService.class);
+        when(mockedStatsService.areCacheStatsEnabled()).thenReturn(false);
+        this.attributesCache = new GoogleTbAttributesCache(cacheConfiguration, mockedStatsService);
 
         this.clusterService = mock(TbClusterService.class);
         this.partitionService = mock(PartitionService.class);

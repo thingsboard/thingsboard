@@ -17,8 +17,11 @@ package org.thingsboard.server.service.attributes;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Ticker;
+import com.google.common.cache.Cache;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -30,16 +33,26 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
 public class GoogleTbAttributesCacheTest {
+
+    private static TbCacheStatsService<Cache<AttributesKey, AttributeCacheEntry>> mockedStatsService = mock(TbCacheStatsService.class);
+
+    @BeforeClass
+    public static void initStatsMock(){
+        when(mockedStatsService.areCacheStatsEnabled()).thenReturn(false);
+    }
 
     @Test
     public void testCacheExpiration() {
         AttributesCacheConfiguration cacheConfiguration = new AttributesCacheConfiguration();
         cacheConfiguration.setExpireAfterAccessInMinutes(1);
         cacheConfiguration.setMaxSizePerTenant(10);
-        GoogleTbAttributesCache attributesCache = new GoogleTbAttributesCache(cacheConfiguration);
+        GoogleTbAttributesCache attributesCache = new GoogleTbAttributesCache(cacheConfiguration, mockedStatsService);
         CustomTicker customTicker = new CustomTicker();
         attributesCache.setCustomTicker(customTicker);
         TenantId tenantId = new TenantId(UUID.randomUUID());
@@ -60,7 +73,7 @@ public class GoogleTbAttributesCacheTest {
         AttributesCacheConfiguration cacheConfiguration = new AttributesCacheConfiguration();
         cacheConfiguration.setExpireAfterAccessInMinutes(10);
         cacheConfiguration.setMaxSizePerTenant(5);
-        GoogleTbAttributesCache attributesCache = new GoogleTbAttributesCache(cacheConfiguration);
+        GoogleTbAttributesCache attributesCache = new GoogleTbAttributesCache(cacheConfiguration, mockedStatsService);
         TenantId tenantId = new TenantId(UUID.randomUUID());
         DeviceId entityId = new DeviceId(UUID.randomUUID());
         String scope = "scope";

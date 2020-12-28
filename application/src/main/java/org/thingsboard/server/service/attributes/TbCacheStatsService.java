@@ -15,22 +15,9 @@
  */
 package org.thingsboard.server.service.attributes;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@Configuration
-@ConditionalOnProperty(prefix = "cache.attributes", value = "enabled", havingValue = "true")
-@ConfigurationProperties(prefix = "cache.attributes")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class AttributesCacheConfiguration {
-    private int maxSizePerTenant;
-    private int expireAfterAccessInMinutes;
+public interface TbCacheStatsService<C> {
+    boolean areCacheStatsEnabled();
+    void registerCacheStats(C cache, TenantId tenantId);
 }
