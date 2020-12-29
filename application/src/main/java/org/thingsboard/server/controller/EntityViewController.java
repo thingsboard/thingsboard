@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -258,7 +259,7 @@ public class EntityViewController extends BaseController {
     private ListenableFuture<List<Void>> copyLatestFromEntityToEntityView(EntityView entityView, SecurityUser user) {
         EntityViewId entityId = entityView.getId();
         List<String> keys = entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null ?
-             entityView.getKeys().getTimeseries() : Collections.emptyList();
+                entityView.getKeys().getTimeseries() : Collections.emptyList();
         long startTs = entityView.getStartTimeMs();
         long endTs = entityView.getEndTimeMs() == 0 ? Long.MAX_VALUE : entityView.getEndTimeMs();
         ListenableFuture<List<String>> keysFuture;
@@ -673,7 +674,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/{edgeId}/entityViews", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<EntityView> getEdgeEntityViews(
@@ -692,11 +693,25 @@ public class EntityViewController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             checkEdgeId(edgeId, Operation.READ);
             TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
+            PageData<EntityView> nonFilteredResult;
             if (type != null && type.trim().length() > 0) {
-                return checkNotNull(entityViewService.findEntityViewsByTenantIdAndEdgeIdAndType(tenantId, edgeId, type, pageLink));
+                nonFilteredResult = entityViewService.findEntityViewsByTenantIdAndEdgeIdAndType(tenantId, edgeId, type, pageLink);
             } else {
-                return checkNotNull(entityViewService.findEntityViewsByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
+                nonFilteredResult = entityViewService.findEntityViewsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);
             }
+            List<EntityView> filteredEntityViews = nonFilteredResult.getData().stream().filter(entityView -> {
+                try {
+                    accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.READ, entityView.getId(), entityView);
+                    return true;
+                } catch (ThingsboardException e) {
+                    return false;
+                }
+            }).collect(Collectors.toList());
+            PageData<EntityView> filteredResult = new PageData<>(filteredEntityViews,
+                    nonFilteredResult.getTotalPages(),
+                    nonFilteredResult.getTotalElements(),
+                    nonFilteredResult.hasNext());
+            return checkNotNull(filteredResult);
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -44,25 +44,25 @@
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeAssets')"
-            [fxShow]="!isEdit && edgeScope === 'tenant'">
+            [fxShow]="!isEdit && (edgeScope === 'tenant' || edgeScope === 'customer_user')">
       {{'edge.manage-edge-assets' | translate }}
     </button>
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeDevices')"
-            [fxShow]="!isEdit && edgeScope === 'tenant'">
+            [fxShow]="!isEdit && (edgeScope === 'tenant' || edgeScope === 'customer_user')">
       {{'edge.manage-edge-devices' | translate }}
     </button>
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeEntityViews')"
-            [fxShow]="!isEdit && edgeScope === 'tenant'">
+            [fxShow]="!isEdit && (edgeScope === 'tenant' || edgeScope === 'customer_user')">
       {{'edge.manage-edge-entity-views' | translate }}
     </button>
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeDashboards')"
-            [fxShow]="!isEdit && edgeScope === 'tenant'">
+            [fxShow]="!isEdit && (edgeScope === 'tenant' || edgeScope === 'customer_user')">
       {{'edge.manage-edge-dashboards' | translate }}
     </button>
     <button mat-raised-button color="primary"

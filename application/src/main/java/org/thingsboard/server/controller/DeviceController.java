@@ -711,13 +711,14 @@ public class DeviceController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/{edgeId}/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<Device> getEdgeDevices(
             @PathVariable(EDGE_ID) String strEdgeId,
             @RequestParam int pageSize,
             @RequestParam int page,
+            @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
             @RequestParam(required = false) String sortOrder,
@@ -729,7 +730,25 @@ public class DeviceController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             checkEdgeId(edgeId, Operation.READ);
             TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-            return checkNotNull(deviceService.findDevicesByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
+            PageData<Device> nonFilteredResult;
+            if (type != null && type.trim().length() > 0) {
+                nonFilteredResult = deviceService.findDevicesByTenantIdAndEdgeIdAndType(tenantId, edgeId, type, pageLink);
+            } else {
+                nonFilteredResult = deviceService.findDevicesByTenantIdAndEdgeId(tenantId, edgeId, pageLink);
+            }
+            List<Device> filteredDevices = nonFilteredResult.getData().stream().filter(device -> {
+                try {
+                    accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ, device.getId(), device);
+                    return true;
+                } catch (ThingsboardException e) {
+                    return false;
+                }
+            }).collect(Collectors.toList());
+            PageData<Device> filteredResult = new PageData<>(filteredDevices,
+                    nonFilteredResult.getTotalPages(),
+                    nonFilteredResult.getTotalElements(),
+                    nonFilteredResult.hasNext());
+            return checkNotNull(filteredResult);
         } catch (Exception e) {
             throw handleException(e);
         }

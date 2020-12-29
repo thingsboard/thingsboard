@@ -254,6 +254,34 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
         },
       );
     }
+    if (edgeScope === 'customer_user') {
+      actions.push(
+        {
+          name: this.translate.instant('edge.manage-edge-assets'),
+          icon: 'domain',
+          isEnabled: (entity) => true,
+          onAction: ($event, entity) => this.openEdgeAssets($event, entity)
+        },
+        {
+          name: this.translate.instant('edge.manage-edge-devices'),
+          icon: 'devices_other',
+          isEnabled: (entity) => true,
+          onAction: ($event, entity) => this.openEdgeDevices($event, entity)
+        },
+        {
+          name: this.translate.instant('edge.manage-edge-entity-views'),
+          icon: 'view_quilt',
+          isEnabled: (entity) => true,
+          onAction: ($event, entity) => this.openEdgeEntityViews($event, entity)
+        },
+        {
+          name: this.translate.instant('edge.manage-edge-dashboards'),
+          icon: 'dashboard',
+          isEnabled: (entity) => true,
+          onAction: ($event, entity) => this.openEdgeDashboards($event, entity)
+        }
+      );
+    }
     return actions;
   }
 

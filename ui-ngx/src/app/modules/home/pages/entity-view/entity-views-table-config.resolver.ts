@@ -121,7 +121,11 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
       tap((authUser) => {
         if (authUser.authority === Authority.CUSTOMER_USER) {
-          this.config.componentsData.entityViewScope = 'customer_user';
+          if (route.data.entityViewsType === 'edge') {
+            this.config.componentsData.entityViewScope = 'edge_customer_user';
+          } else {
+            this.config.componentsData.entityViewScope = 'customer_user';
+          }
           this.customerId = authUser.customerId;
         }
       }),
@@ -179,7 +183,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
       this.config.entitiesFetchFunction = pageLink =>
         this.entityViewService.getTenantEntityViewInfos(pageLink, this.config.componentsData.entityViewType);
       this.config.deleteEntity = id => this.entityViewService.deleteEntityView(id.id);
-    } else if (entityViewScope === 'edge') {
+    } else if (entityViewScope === 'edge' || entityViewScope === 'edge_customer_user') {
       this.config.entitiesFetchFunction = pageLink =>
         this.entityViewService.getEdgeEntityViews(this.config.componentsData.edgeId, pageLink, this.config.componentsData.entityViewType);
     } else {
