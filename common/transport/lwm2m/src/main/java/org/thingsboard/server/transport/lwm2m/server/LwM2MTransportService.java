@@ -177,6 +177,7 @@ public class LwM2MTransportService {
     }
 
     /**
+     * if sessionInfo removed from sessions, then new registerAsyncSession
      * @param lwServer     - LeshanServer
      * @param registration - Registration LwM2M Client
      */
@@ -185,8 +186,7 @@ public class LwM2MTransportService {
             try {
                 SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration.getId());
                 if (sessionInfo != null) {
-//                    transportService.reportActivity(sessionInfo);
-//                    transportService.registerAsyncSession(sessionInfo, new LwM2MSessionMsgListener(this, sessionInfo));
+                    this.checkInactivity(sessionInfo);
                     log.info("Client: [{}] updatedReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
                 } else {
                     log.error("Client: [{}] updatedReg [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), null);
@@ -196,6 +196,7 @@ public class LwM2MTransportService {
             }
         });
     }
+
 
     /**
      * @param registration - Registration LwM2M Client
@@ -691,11 +692,11 @@ public class LwM2MTransportService {
             ResourceValue resValueOld = lwM2MClient.getResources().get(path);
             // #2
             if (resValueOld.isMultiInstances() && !values.toString().equals(resValueOld.getResourceValue().toString())) {
-                ResourceValue resourceValue =  new ResourceValue (  values, null, true);
+                ResourceValue resourceValue = new ResourceValue(values, null, true);
                 lwM2MClient.getResources().put(path, resourceValue);
                 isChange = true;
             } else if (!LwM2MTransportHandler.equalsResourceValue(resValueOld.getValue(), value, resModelType, pathIds)) {
-                ResourceValue resourceValue =  new ResourceValue (  null, value, false);
+                ResourceValue resourceValue = new ResourceValue(null, value, false);
                 lwM2MClient.getResources().put(path, resourceValue);
                 isChange = true;
             }
@@ -739,7 +740,7 @@ public class LwM2MTransportService {
                 String value = de.getValue().getAsString();
                 LwM2MClient lwM2MClient = lwM2mInMemorySecurityStore.getSession(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB())).entrySet().iterator().next().getValue();
                 AttrTelemetryObserveValue profile = lwM2mInMemorySecurityStore.getProfile(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
-                ResourceModel  resourceModel = context.getCtxServer().getResourceModel(new LwM2mPath(path));
+                ResourceModel resourceModel = context.getCtxServer().getResourceModel(new LwM2mPath(path));
                 if (path != null && (this.validatePathInAttrProfile(profile, path) || this.validatePathInTelemetryProfile(profile, path))) {
                     if (resourceModel != null && resourceModel.operations.isWritable()) {
                         lwM2MTransportRequest.sendAllRequest(lwM2MClient.getLwServer(), lwM2MClient.getRegistration(), path, POST_TYPE_OPER_WRITE_REPLACE,
@@ -1125,7 +1126,17 @@ public class LwM2MTransportService {
     }
 
     private void checkInactivityAndReportActivity() {
-        lwM2mInMemorySecurityStore.getSessions().forEach((key, value) -> transportService.reportActivity(this.getValidateSessionInfo(key)));
+        lwM2mInMemorySecurityStore.getSessions().forEach((key, value) -> this.checkInactivity(this.getValidateSessionInfo(key)));
+    }
+
+    /**
+     * if sessionInfo removed from sessions, then new registerAsyncSession
+     * @param sessionInfo
+     */
+    private void checkInactivity(SessionInfoProto sessionInfo) {
+        if (transportService.reportActivity(sessionInfo) == null) {
+            transportService.registerAsyncSession(sessionInfo, new LwM2MSessionMsgListener(this, sessionInfo));
+        }
     }
 
     public void sentLogsToThingsboard(String msg, String registrationId) {

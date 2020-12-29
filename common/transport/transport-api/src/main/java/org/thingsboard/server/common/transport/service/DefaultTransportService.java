@@ -509,8 +509,8 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
-        reportActivityInternal(sessionInfo);
+    public SessionMetaData reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
+        return reportActivityInternal(sessionInfo);
     }
 
     private SessionMetaData reportActivityInternal(TransportProtos.SessionInfoProto sessionInfo) {
