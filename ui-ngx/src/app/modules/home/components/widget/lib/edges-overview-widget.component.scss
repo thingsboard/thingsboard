@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 :host-context(.tb-has-timewindow) {
-  .tb-edge-instances-overview {
+  .tb-edges-overview {
     mat-toolbar {
       height: 60px;
       max-height: 60px;
@@ -27,7 +27,7 @@
 }
 
 :host {
-  .tb-edge-instances-overview {
+  .tb-edges-overview {
     mat-toolbar.mat-table-toolbar:not([color="primary"]) {
       background: transparent;
     }
@@ -40,7 +40,7 @@
       }
     }
 
-    .tb-edges-nav-tree-panel {
+    .tb-entities-nav-tree-panel {
       overflow-x: auto;
       overflow-y: auto;
     }

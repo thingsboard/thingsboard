@@ -35,7 +35,7 @@ import { TripAnimationComponent } from './trip-animation/trip-animation.componen
 import { PhotoCameraInputWidgetComponent } from './lib/photo-camera-input.component';
 import { GatewayFormComponent } from './lib/gateway/gateway-form.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
-import { EdgeInstancesOverviewWidgetComponent } from "@home/components/widget/lib/edge-instances-overview-widget.component";
+import { EdgesOverviewWidgetComponent } from "@home/components/widget/lib/edges-overview-widget.component";
 
 @NgModule({
   declarations:
@@ -46,7 +46,7 @@ import { EdgeInstancesOverviewWidgetComponent } from "@home/components/widget/li
       AlarmsTableWidgetComponent,
       TimeseriesTableWidgetComponent,
       EntitiesHierarchyWidgetComponent,
-      EdgeInstancesOverviewWidgetComponent,
+      EdgesOverviewWidgetComponent,
       DateRangeNavigatorWidgetComponent,
       DateRangeNavigatorPanelComponent,
       MultipleInputWidgetComponent,
@@ -65,7 +65,7 @@ import { EdgeInstancesOverviewWidgetComponent } from "@home/components/widget/li
     AlarmsTableWidgetComponent,
     TimeseriesTableWidgetComponent,
     EntitiesHierarchyWidgetComponent,
-    EdgeInstancesOverviewWidgetComponent,
+    EdgesOverviewWidgetComponent,
     RpcWidgetsModule,
     DateRangeNavigatorWidgetComponent,
     MultipleInputWidgetComponent,

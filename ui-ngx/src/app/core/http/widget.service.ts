@@ -126,7 +126,7 @@ export class WidgetService {
     return this.getBundleWidgetTypes(bundleAlias, isSystem, config).pipe(
       map((types) => {
         if (!getCurrentAuthState(this.store).edgesSupportEnabled) {
-          types = types.filter(type => type.alias !== 'edges_hierarchy')
+          types = types.filter(type => type.alias !== 'edges_overview')
         }
         types = types.sort((a, b) => {
           let result = widgetType[b.descriptor.type].localeCompare(widgetType[a.descriptor.type]);

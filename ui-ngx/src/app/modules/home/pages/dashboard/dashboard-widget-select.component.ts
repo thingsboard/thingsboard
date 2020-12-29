@@ -117,7 +117,7 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
               break;
           }
           if (!getCurrentAuthState(this.store).edgesSupportEnabled) {
-            this.latestWidgetTypes = this.latestWidgetTypes.filter(type => type.typeAlias !== 'edges_instances_overview')
+            this.staticWidgetTypes = this.staticWidgetTypes.filter(type => type.typeAlias !== 'edges_instances_overview')
           }
           top += widget.sizeY;
         });
