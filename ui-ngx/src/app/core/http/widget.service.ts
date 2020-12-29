@@ -30,6 +30,9 @@ import { filter, map, mergeMap, tap } from 'rxjs/operators';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActivationEnd, Router } from '@angular/router';
+import { getCurrentAuthState } from "@core/auth/auth.selectors";
+import { Store } from "@ngrx/store";
+import { AppState } from "@core/core.state";
 
 @Injectable({
   providedIn: 'root'
@@ -50,6 +53,7 @@ export class WidgetService {
     private utils: UtilsService,
     private resources: ResourcesService,
     private translate: TranslateService,
+    private store: Store<AppState>,
     private router: Router
   ) {
     this.router.events.pipe(filter(event => event instanceof ActivationEnd)).subscribe(
@@ -121,6 +125,9 @@ export class WidgetService {
                                   config?: RequestConfig): Observable<Array<Widget>> {
     return this.getBundleWidgetTypes(bundleAlias, isSystem, config).pipe(
       map((types) => {
+        if (!getCurrentAuthState(this.store).edgesSupportEnabled) {
+          types = types.filter(type => type.alias !== 'edges_hierarchy')
+        }
         types = types.sort((a, b) => {
           let result = widgetType[b.descriptor.type].localeCompare(widgetType[a.descriptor.type]);
           if (result === 0) {

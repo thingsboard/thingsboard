@@ -71,6 +71,7 @@ import { alarmFields } from '@shared/models/alarm.models';
 import { EdgeService } from "@core/http/edge.service";
 import { ruleChainType } from "@shared/models/rule-chain.models";
 import { Router } from "@angular/router";
+import { NavTreeNode } from "@shared/components/nav-tree.component";
 
 @Injectable({
   providedIn: 'root'
@@ -1156,5 +1157,28 @@ export class EntityService {
       const dataKey = this.utils.createKey(keyInfo, type);
       datasource.dataKeys.push(dataKey);
     });
+  }
+
+  public getAssignedToEdgeEntitiesByType(node: NavTreeNode, pageLink: PageLink): Observable<PageData<any>> {
+    let edgeId = node.data.edge.id.id;
+    let entitiesObservable: Observable<PageData<any>>;
+    switch (node.data.entityType) {
+      case (EntityType.ASSET):
+        entitiesObservable = this.assetService.getEdgeAssets(edgeId, pageLink, null);
+        break;
+      case (EntityType.DEVICE):
+        entitiesObservable = this.deviceService.getEdgeDevices(edgeId, pageLink, null);
+        break;
+      case (EntityType.ENTITY_VIEW):
+        entitiesObservable = this.entityViewService.getEdgeEntityViews(edgeId, pageLink, null);
+        break;
+      case (EntityType.DASHBOARD):
+        entitiesObservable = this.dashboardService.getEdgeDashboards(edgeId, pageLink, null);
+        break;
+      case (EntityType.RULE_CHAIN):
+        entitiesObservable = this.ruleChainService.getEdgeRuleChains(edgeId, pageLink, null);
+        break;
+    }
+    return entitiesObservable;
   }
 }
