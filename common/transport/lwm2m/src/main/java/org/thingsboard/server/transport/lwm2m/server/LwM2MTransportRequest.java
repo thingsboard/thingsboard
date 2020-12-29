@@ -311,7 +311,7 @@ public class LwM2MTransportRequest {
             try {
                 sendResponse(registration, path, response, request, lwM2MClient, isDelayedUpdate);
             } catch (Exception e) {
-                log.error("[{}] endpoint [{}] path [{}] error Unable to after send response.", registration.getEndpoint(), path, e);
+                log.error("[{}] endpoint [{}] path [{}] Exception Unable to after send response.", registration.getEndpoint(), path, e);
             }
         });
     }
@@ -321,7 +321,7 @@ public class LwM2MTransportRequest {
             try {
                 if (isDelayedUpdate) lwM2MClient.onSuccessOrErrorDelayedRequests(path);
             } catch (RuntimeException t) {
-                log.error("[{}] endpoint [{}] path [{}] error Unable to after send response.", registration.getEndpoint(), path, t.toString());
+                log.error("[{}] endpoint [{}] path [{}] RuntimeException Unable to after send response.", registration.getEndpoint(), path, t);
             }
         });
     }

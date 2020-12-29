@@ -104,7 +104,6 @@ public class LwM2MClient implements Cloneable {
                 if (objectModel != null) {
                     ((LwM2mObjectInstance)((ReadResponse)resp).getContent()).getResources().forEach((k, v) -> {
                         String rez = pathIds.toString() + "/" + k;
-                        boolean ismulti = objectModel.resources.get(k).multiple;
                         if (objectModel.resources.get(k).multiple){
                             this.resources.put(rez, new ResourceValue(v.getValues(), null, true));
                         }

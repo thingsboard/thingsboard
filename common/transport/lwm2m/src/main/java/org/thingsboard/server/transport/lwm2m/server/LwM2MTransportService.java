@@ -415,7 +415,6 @@ public class LwM2MTransportService {
                 List listV = new ArrayList<TransportProtos.KeyValueProto>();
                 listV.add(v.getKv());
                 this.putDelayedUpdateResourcesClient(lwM2MClient, this.getResourceValueToString(lwM2MClient, k), getJsonObject(listV).get(v.getKv().getKey()), k);
-                System.out.printf("    k: %s, v: %s%n, v1: %s%n", k, v.getKv().getStringV(), this.getResourceValueToString(lwM2MClient, k));
             });
             lwM2MClient.getDelayedRequestsId().remove(attributesResponse.getRequestId());
             if (lwM2MClient.getDelayedRequests().size() == 0) {
@@ -425,7 +424,7 @@ public class LwM2MTransportService {
     }
 
     private void putDelayedUpdateResourcesClient(LwM2MClient lwM2MClient, Object valueOld, Object valueNew, String path) {
-        if (!valueOld.toString().equals(valueNew.toString())) {
+        if (valueNew != null && !valueNew.toString().equals(valueOld.toString())) {
             lwM2MTransportRequest.sendAllRequest(lwM2MClient.getLwServer(), lwM2MClient.getRegistration(), path, POST_TYPE_OPER_WRITE_REPLACE,
                     ContentFormat.TLV.getName(), lwM2MClient, null, valueNew, this.context.getCtxServer().getTimeout(),
                     true);
@@ -1160,7 +1159,7 @@ public class LwM2MTransportService {
     public String getResourceValueToString(LwM2MClient lwM2MClient, String path) {
         LwM2mPath pathIds = new LwM2mPath(path);
         ResourceValue resourceValue = this.getResourceValue(lwM2MClient, pathIds);
-        return (String) this.converter.convertValue(resourceValue.getResourceValue(), this.context.getCtxServer().getResourceModelType(pathIds), ResourceModel.Type.STRING, pathIds);
+        return (resourceValue == null) ? null :
+                (String) this.converter.convertValue(resourceValue.getResourceValue(), this.context.getCtxServer().getResourceModelType(pathIds), ResourceModel.Type.STRING, pathIds);
     }
-
 }
