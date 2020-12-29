@@ -27,7 +27,9 @@ import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mNode;
 import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
+import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
@@ -53,7 +55,7 @@ import java.util.Optional;
 @Slf4j
 @Component("LwM2MTransportHandler")
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-public class LwM2MTransportHandler{
+public class LwM2MTransportHandler {
 
     // We choose a default timeout a bit higher to the MAX_TRANSMIT_WAIT(62-93s) which is the time from starting to
     // send a Confirmable message to the time when an acknowledgement is no longer expected.
@@ -132,8 +134,7 @@ public class LwM2MTransportHandler{
             this.lhServerNoSecPskRpk.getRegistrationService().addListener(lwM2mServerListener.registrationListener);
             this.lhServerNoSecPskRpk.getPresenceService().addListener(lwM2mServerListener.presenceListener);
             this.lhServerNoSecPskRpk.getObservationService().addListener(lwM2mServerListener.observationListener);
-        }
-        catch (java.lang.NullPointerException e) {
+        } catch (java.lang.NullPointerException e) {
             log.error("init [{}]", e.toString());
         }
     }
@@ -151,31 +152,49 @@ public class LwM2MTransportHandler{
         return coapConfig;
     }
 
-    public static String getValueTypeToString (Object value, ResourceModel.Type type, int val) {
-        try{
+//    public static String getValueTypeToString (Object value, ResourceModel.Type type, int val) {
+//        try{
+//        switch (type) {
+//            case STRING:    // String
+//            case OBJLNK:    // ObjectLink
+//                return value.toString();
+//            case INTEGER:   // Long
+//                return Long.toString((long) value);
+//            case BOOLEAN:   // Boolean
+//                return Boolean.toString((Boolean) value);
+//            case FLOAT:     // Double
+//                return Double.toString((Double) value);
+//            case TIME:      // Date
+//                return Long.toString(((Date) value).getTime());
+////                String DATE_FORMAT = "MMM d, yyyy HH:mm a";
+////                DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
+////                return formatter.format(new Date(Integer.toUnsignedLong((Integer) value)));
+//            case OPAQUE:    // byte[] value, base64
+//                return Hex.encodeHexString((byte[])value);
+//            default:
+//                return null;
+//        }
+//        } catch (Exception e) {
+//            log.error(e.getStackTrace().toString());
+//            return null;
+//        }
+//    }
+
+    public static boolean equalsResourceValue(Object valueOld, Object valueNew, ResourceModel.Type type, LwM2mPath resourcePath) throws CodecException {
         switch (type) {
-            case STRING:    // String
-            case OBJLNK:    // ObjectLink
-                return value.toString();
-            case INTEGER:   // Long
-                return Long.toString((long) value);
-            case BOOLEAN:   // Boolean
-                return Boolean.toString((Boolean) value);
-            case FLOAT:     // Double
-                return Double.toString((Double) value);
-            case TIME:      // Date
-                return Long.toString(((Date) value).getTime());
-//                String DATE_FORMAT = "MMM d, yyyy HH:mm a";
-//                DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
-//                return formatter.format(new Date(Integer.toUnsignedLong((Integer) value)));
-            case OPAQUE:    // byte[] value, base64
-                return Hex.encodeHexString((byte[])value);
+            case BOOLEAN:
+            case INTEGER:
+            case FLOAT:
+                return String.valueOf(valueOld).equals(String.valueOf(valueNew));
+            case TIME:
+                return ((Date) valueOld).getTime() == ((Date) valueNew).getTime();
+            case STRING:
+            case OBJLNK:
+                return valueOld.equals(valueNew);
+            case OPAQUE:
+                return Hex.decodeHex(((String) valueOld).toCharArray()).equals(Hex.decodeHex(((String) valueNew).toCharArray()));
             default:
-                return null;
-        }
-        } catch (Exception e) {
-            log.error(e.getStackTrace().toString());
-            return null;
+                throw new CodecException("Invalid value type for resource %s, type %s", resourcePath, type);
         }
     }
 
@@ -198,19 +217,18 @@ public class LwM2MTransportHandler{
         attrTelemetryObserveValue.setPostAttributeProfile(profilesConfigData.get(ATTRIBUTE).getAsJsonArray());
         attrTelemetryObserveValue.setPostTelemetryProfile(profilesConfigData.get(TELEMETRY).getAsJsonArray());
         attrTelemetryObserveValue.setPostObserveProfile(profilesConfigData.get(OBSERVE).getAsJsonArray());
-        return  attrTelemetryObserveValue;
+        return attrTelemetryObserveValue;
     }
 
     /**
-
      * @return deviceProfileBody with Observe&Attribute&Telemetry From Thingsboard
      * Example: with pathResource (use only pathResource)
      * property: "observeAttr"
      * {"keyName": {
-     *       "/3/0/1": "modelNumber",
-     *       "/3/0/0": "manufacturer",
-     *       "/3/0/2": "serialNumber"
-     *       },
+     * "/3/0/1": "modelNumber",
+     * "/3/0/0": "manufacturer",
+     * "/3/0/2": "serialNumber"
+     * },
      * "attribute":["/2/0/1","/3/0/9"],
      * "telemetry":["/1/0/1","/2/0/1","/6/0/1"],
      * "observe":["/2/0","/2/0/0","/4/0/2"]}
@@ -312,12 +330,12 @@ public class LwM2MTransportHandler{
         }
     }
 
-    public static String splitCamelCaseString(String s){
+    public static String splitCamelCaseString(String s) {
         LinkedList<String> linkedListOut = new LinkedList<>();
         LinkedList<String> linkedList = new LinkedList<String>((Arrays.asList(s.split(" "))));
-        linkedList.forEach(str-> {
+        linkedList.forEach(str -> {
             String strOut = str.replaceAll("\\W", "").replaceAll("_", "").toUpperCase();
-            if (strOut.length()>1) linkedListOut.add(strOut.charAt(0) + strOut.substring(1).toLowerCase());
+            if (strOut.length() > 1) linkedListOut.add(strOut.charAt(0) + strOut.substring(1).toLowerCase());
             else linkedListOut.add(strOut);
         });
         linkedListOut.set(0, (linkedListOut.get(0).substring(0, 1).toLowerCase() + linkedListOut.get(0).substring(1)));

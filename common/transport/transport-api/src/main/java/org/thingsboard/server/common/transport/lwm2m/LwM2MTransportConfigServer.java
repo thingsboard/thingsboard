@@ -20,6 +20,8 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mPath;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
@@ -33,6 +35,8 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
@@ -173,6 +177,10 @@ public class LwM2MTransportConfigServer {
     @Value("${transport.lwm2m.secure.redis_url:}")
     private String redisUrl;
 
+    @Getter
+    @Setter
+    private Map<Integer, ObjectModel> objectModels;
+
     @PostConstruct
     public void init() {
         modelsValue = ObjectLoader.loadDefault();
@@ -188,6 +196,7 @@ public class LwM2MTransportConfigServer {
             log.error(" [{}] Read Models", path.getAbsoluteFile());
         }
         getInKeyStore();
+        this.objectModels = new ConcurrentHashMap<Integer, ObjectModel>();
     }
 
     private File getPathModels() {
@@ -238,4 +247,22 @@ public class LwM2MTransportConfigServer {
         }
         return FULL_FILE_PATH.toUri().getPath();
     }
+
+    public ResourceModel getResourceModel(LwM2mPath pathIds) {
+        return (this.objectModels.size()>0 &&
+                this.objectModels.containsKey(pathIds.getObjectId()) &&
+                this.objectModels.get(pathIds.getObjectId()).resources.containsKey(pathIds.getResourceId())) ?
+                this.objectModels.get(pathIds.getObjectId()).resources.get(pathIds.getResourceId()) : null;
+    }
+    
+    public ResourceModel.Type getResourceModelType(LwM2mPath pathIds) {
+        ResourceModel resource = this.getResourceModel(pathIds);
+        return (resource == null) ? null : resource.type;
+    }
+
+    public ResourceModel.Operations getOperation(LwM2mPath pathIds) {
+        ResourceModel resource = this.getResourceModel(pathIds);
+        return (resource == null) ? ResourceModel.Operations.NONE : resource.operations;
+    }
+    
 }

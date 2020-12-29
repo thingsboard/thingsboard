@@ -123,10 +123,7 @@ public class LwM2MTransportRequest {
         if (registration != null && resultIds.getObjectId() >= 0) {
             DownlinkRequest request = null;
             ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
-            ResourceModel resource = (resultIds.getResourceId() !=null && lwM2MClient != null) ?
-                    lwM2MClient.getModelObjects().get(resultIds.getObjectId()).getObjectModel().resources.get(resultIds.getResourceId()) : null;
-            ResourceModel.Type resType = (resource == null) ? null : resource.type;
-            boolean resMultiple = (resource == null) ? false : resource.multiple;
+            ResourceModel resource = service.context.getCtxServer().getResourceModel(resultIds);
             timeoutInMs = timeoutInMs > 0 ? timeoutInMs : DEFAULT_TIMEOUT;
             switch (typeOper) {
                 case GET_TYPE_OPER_READ:
@@ -148,21 +145,23 @@ public class LwM2MTransportRequest {
                     request = new CancelObservationRequest(observation);
                     break;
                 case POST_TYPE_OPER_EXECUTE:
-                    if (params != null && !resMultiple) {
+                    if (params != null && resource != null && !resource.multiple) {
 //                        request = new ExecuteRequest(target, LwM2MTransportHandler.getValueTypeToString(params, resType));
-                        request = new ExecuteRequest(target, (String) this.converter.convertValue(params, resType, ResourceModel.Type.STRING, resultIds));
+                        request = new ExecuteRequest(target, (String) this.converter.convertValue(params, resource.type, ResourceModel.Type.STRING, resultIds));
                     } else {
                         request = new ExecuteRequest(target);
                     }
                     break;
                 case POST_TYPE_OPER_WRITE_REPLACE:
                     // Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
-                    if (contentFormat.equals(ContentFormat.TLV) && !resMultiple) {
-                        request = this.getWriteRequestSingleResource(null, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resType, registration);
-                    }
-                    // Mode.REPLACE && Request to write a <b>String Single-Instance Resource</b> using the given content format (TEXT, TLV, JSON)
-                    else if (!contentFormat.equals(ContentFormat.TLV) && !resMultiple) {
-                        request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resType, registration);
+                    if (resource != null) {
+                        if (contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
+                            request = this.getWriteRequestSingleResource(null, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resource.type, registration);
+                        }
+                        // Mode.REPLACE && Request to write a <b>String Single-Instance Resource</b> using the given content format (TEXT, TLV, JSON)
+                        else if (!contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
+                            request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resource.type, registration);
+                        }
                     }
                     break;
                 case PUT_TYPE_OPER_WRITE_UPDATE:
@@ -217,10 +216,10 @@ public class LwM2MTransportRequest {
                     break;
                 default:
             }
+
             if (request != null) {
                 this.sendRequest(lwServer, registration, request, lwM2MClient, timeoutInMs, isDelayedUpdate);
-            }
-            else if (request == null && isDelayedUpdate) {
+            } else if (request == null && isDelayedUpdate) {
                 String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: Resource path - %s msg  No  SendRequest to Client", target);
                 service.sentLogsToThingsboard(msg, registration.getId());
                 log.error("[{}] - [{}] No SendRequest", target);

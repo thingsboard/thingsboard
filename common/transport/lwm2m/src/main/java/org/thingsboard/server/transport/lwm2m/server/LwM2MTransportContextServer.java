@@ -58,7 +58,7 @@ public class LwM2MTransportContextServer extends TransportContext {
     private LwM2MTransportConfigServer ctxServer;
 
     @Autowired
-    LwM2MTransportConfigServer lwM2MTransportConfigServer;
+    protected LwM2MTransportConfigServer lwM2MTransportConfigServer;
 
     @Autowired
     private TransportService transportService;

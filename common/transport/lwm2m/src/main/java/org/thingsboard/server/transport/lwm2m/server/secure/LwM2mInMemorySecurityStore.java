@@ -179,11 +179,13 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         if (store.getSecurityInfo() != null) {
             if (store.getSecurityMode() < DEFAULT_MODE.code) {
                 String endpoint = store.getSecurityInfo().getEndpoint();
-                sessions.put(endpoint, new LwM2MClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getMsg(), null, null, profileUuid));
+//                sessions.put(endpoint, new LwM2MClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getMsg(), null, null, profileUuid));
+                sessions.put(endpoint, new LwM2MClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getMsg(), null, profileUuid));
             }
         } else {
             if (store.getSecurityMode() == NO_SEC.code && profileUuid != null)
-                sessions.put(identity, new LwM2MClient(identity, null, null, store.getMsg(), null, null, profileUuid));
+//                sessions.put(identity, new LwM2MClient(identity, null, null, store.getMsg(), null, null, profileUuid));
+                sessions.put(identity, new LwM2MClient(identity, null, null, store.getMsg(), null, profileUuid));
             else {
                 log.error("Registration failed: FORBIDDEN/profileUuid/device [{}] , endpointId: [{}]", profileUuid, identity);
                 /**
