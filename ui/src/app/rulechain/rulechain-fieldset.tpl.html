@@ -15,32 +15,31 @@
     limitations under the License.
 
 -->
-<md-button ng-click="onExportRuleChain({event: $event})"
-           ng-show="!isEdit"
-           class="md-raised md-primary">{{ 'rulechain.export' | translate }}</md-button>
+<div layout="row">
+    <md-button ng-click="onExportRuleChain({event: $event})"
+               ng-show="!isEdit"
+               class="md-raised md-primary">{{ 'rulechain.export' | translate }}</md-button>
+    <md-button ng-click="onDeleteRuleChain({event: $event})"
+               ng-show="!isEdit && !ruleChain.root && ruleChainsScope != 'edge'"
+               class="md-raised md-primary">{{ 'rulechain.delete' | translate }}</md-button>
+</div>
+<div layout="row"><md-button ng-click="onSetRootRuleChain({event: $event})"
+                             ng-show="!isEdit && !ruleChain.root && ruleChainsScope == 'tenant'"
+                             class="md-raised md-primary">{{ 'rulechain.set-root' | translate }}</md-button>
+    <md-button ng-click="onSetRootRuleChain({event: $event})"
+               ng-show="!isEdit && !ruleChain.root && ruleChainsScope == 'edges'"
+               class="md-raised md-primary">{{ 'rulechain.set-edge-template-root-rulechain' | translate }}</md-button>
+    <md-button ng-click="onSetAutoAssignToEdgeRuleChain({event: $event})"
+               ng-show="!isEdit && !ruleChain.root && !ruleChain.isDefault && ruleChainsScope == 'edges'"
+               class="md-raised md-primary">{{ 'rulechain.set-auto-assign-to-edge' | translate }}</md-button>
+    <md-button ng-click="onUnsetAutoAssignToEdgeRuleChain({event: $event})"
+               ng-show="!isEdit && !ruleChain.root && ruleChain.isDefault && ruleChainsScope == 'edges'"
+               class="md-raised md-primary">{{ 'rulechain.unset-auto-assign-to-edge' | translate }}</md-button>
 
-<md-button ng-click="onSetRootRuleChain({event: $event})"
-           ng-show="!isEdit && !ruleChain.root && ruleChainsScope == 'tenant'"
-           class="md-raised md-primary">{{ 'rulechain.set-root' | translate }}</md-button>
-
-<md-button ng-click="onSetRootRuleChain({event: $event})"
-           ng-show="!isEdit && !ruleChain.root && ruleChainsScope == 'edges'"
-           class="md-raised md-primary">{{ 'rulechain.set-default-root-edge' | translate }}</md-button>
-<md-button ng-click="onSetDefaultEdgeRuleChain({event: $event})"
-           ng-show="!isEdit && !ruleChain.root && !ruleChain.isDefault && ruleChainsScope == 'edges'"
-           class="md-raised md-primary">{{ 'rulechain.set-default-edge' | translate }}</md-button>
-<md-button ng-click="onRemoveDefaultEdgeRuleChain({event: $event})"
-           ng-show="!isEdit && !ruleChain.root && ruleChain.isDefault && ruleChainsScope == 'edges'"
-           class="md-raised md-primary">{{ 'rulechain.remove-default-edge' | translate }}</md-button>
-
-<md-button ng-click="onSetRootRuleChain({event: $event})"
-           ng-show="!isEdit && ruleChainsScope == 'edge' && edge.rootRuleChainId.id !== ruleChain.id.id"
-           class="md-raised md-primary">{{ 'rulechain.set-root' | translate }}</md-button>
-
-<md-button ng-click="onDeleteRuleChain({event: $event})"
-           ng-show="!isEdit && !ruleChain.root && ruleChainsScope != 'edge'"
-           class="md-raised md-primary">{{ 'rulechain.delete' | translate }}</md-button>
-
+    <md-button ng-click="onSetRootRuleChain({event: $event})"
+               ng-show="!isEdit && ruleChainsScope == 'edge' && edge.rootRuleChainId.id !== ruleChain.id.id"
+               class="md-raised md-primary">{{ 'rulechain.set-root' | translate }}</md-button>
+</div>
 <div layout="row">
     <md-button ngclipboard data-clipboard-action="copy"
                ngclipboard-success="onRuleChainIdCopied(e)"

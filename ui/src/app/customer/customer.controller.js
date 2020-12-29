@@ -81,7 +81,7 @@ export default function CustomerController(customerService, $state, $stateParams
             onAction: function ($event, item) {
                 openCustomerEdges($event, item);
             },
-            name: function() { return $translate.instant('edge.edges') },
+            name: function() { return $translate.instant('edge.edge-instances') },
             details: function(customer) {
                 if (customer && customer.additionalInfo && customer.additionalInfo.isPublic) {
                     return $translate.instant('customer.manage-public-edges')

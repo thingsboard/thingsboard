@@ -15,34 +15,38 @@
     limitations under the License.
 
 -->
-<md-button ng-click="onAssignToCustomer({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant' && !isAssignedToCustomer"
-           class="md-raised md-primary">{{ 'edge.assign-to-customer' | translate }}</md-button>
-<md-button ng-click="onUnassignFromCustomer({event: $event, isPublic: isPublic})"
-           ng-show="!isEdit && (edgeScope === 'customer' || edgeScope === 'tenant') && isAssignedToCustomer"
-           class="md-raised md-primary">{{ isPublic ? 'edge.make-private' : 'edge.unassign-from-customer' | translate }}</md-button>
-<md-button ng-click="onMakePublic({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant' && !isAssignedToCustomer && !isPublic"
-           class="md-raised md-primary">{{ 'edge.make-public' | translate }}</md-button>
-<md-button ng-click="onManageEdgeAssets({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant'"
-           class="md-raised md-primary">{{ 'edge.manage-edge-assets' | translate }}</md-button>
-<md-button ng-click="onManageEdgeDevices({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant'"
-           class="md-raised md-primary">{{ 'edge.manage-edge-devices' | translate }}</md-button>
-<md-button ng-click="onManageEdgeEntityViews({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant'"
-           class="md-raised md-primary">{{ 'edge.manage-edge-entity-views' | translate }}</md-button>
-<md-button ng-click="onManageEdgeDashboards({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant'"
-           class="md-raised md-primary">{{ 'edge.manage-edge-dashboards' | translate }}</md-button>
-<md-button ng-click="onManageEdgeRuleChains({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant'"
-           class="md-raised md-primary">{{ 'edge.manage-edge-rulechains' | translate }}</md-button>
-<md-button ng-click="onDeleteEdge({event: $event})"
-           ng-show="!isEdit && edgeScope === 'tenant'"
-           class="md-raised md-primary">{{ 'edge.delete' | translate }}</md-button>
+<div layout="row">
+    <md-button ng-click="onAssignToCustomer({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant' && !isAssignedToCustomer"
+               class="md-raised md-primary">{{ 'edge.assign-to-customer' | translate }}</md-button>
+    <md-button ng-click="onUnassignFromCustomer({event: $event, isPublic: isPublic})"
+               ng-show="!isEdit && (edgeScope === 'customer' || edgeScope === 'tenant') && isAssignedToCustomer"
+               class="md-raised md-primary">{{ isPublic ? 'edge.make-private' : 'edge.unassign-from-customer' | translate }}</md-button>
+    <md-button ng-click="onMakePublic({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant' && !isAssignedToCustomer && !isPublic"
+               class="md-raised md-primary">{{ 'edge.make-public' | translate }}</md-button>
+    <md-button ng-click="onDeleteEdge({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant'"
+               class="md-raised md-primary">{{ 'edge.delete' | translate }}</md-button>
+</div>
+<div layout="row">
+    <md-button ng-click="onManageEdgeAssets({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant'"
+               class="md-raised md-primary">{{ 'edge.assets' | translate }}</md-button>
+    <md-button ng-click="onManageEdgeDevices({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant'"
+               class="md-raised md-primary">{{ 'edge.devices' | translate }}</md-button>
+    <md-button ng-click="onManageEdgeEntityViews({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant'"
+               class="md-raised md-primary">{{ 'edge.entity-views' | translate }}</md-button>
+    <md-button ng-click="onManageEdgeDashboards({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant'"
+               class="md-raised md-primary">{{ 'edge.dashboards' | translate }}</md-button>
+    <md-button ng-click="onManageEdgeRuleChains({event: $event})"
+               ng-show="!isEdit && edgeScope === 'tenant'"
+               class="md-raised md-primary">{{ 'edge.rulechain-templates' | translate }}</md-button>
 
+</div>
 <div layout="row">
     <md-button ngclipboard data-clipboard-action="copy"
                ngclipboard-success="onEdgeIdCopied()"
@@ -98,14 +102,7 @@
                 ng-model="edge.type"
                 entity-type="types.entityType.edge">
         </tb-entity-subtype-autocomplete>
-        <md-input-container class="md-block">
-            <label translate>edge.label</label>
-            <input name="label" ng-model="edge.label">
-        </md-input-container>
-        <md-input-container class="md-block">
-            <label translate>edge.description</label>
-            <textarea ng-model="edge.additionalInfo.description" rows="2"></textarea>
-        </md-input-container>
+        <div translate class="tb-hint">edge.license-key-hint</div>
         <md-input-container class="md-block">
             <label translate>edge.edge-license-key</label>
             <input required name="edgeLicenseKey" ng-model="edge.edgeLicenseKey">
@@ -113,6 +110,7 @@
                 <div translate ng-message="required">edge.edge-license-key-required</div>
             </div>
         </md-input-container>
+        <div translate class="tb-hint">edge.cloud-endpoint-hint</div>
         <md-input-container class="md-block">
             <label translate>edge.cloud-endpoint</label>
             <input required name="cloudEndpoint" ng-model="edge.cloudEndpoint">
@@ -122,7 +120,6 @@
         </md-input-container>
     </fieldset>
     <div layout="row">
-
         <md-input-container class="md-block" flex>
             <label translate>edge.edge-key</label>
             <input ng-model="edge.routingKey" disabled>
@@ -152,4 +149,14 @@
             </md-tooltip>
         </md-button>
     </div>
+    <fieldset ng-disabled="$root.loading || !isEdit">
+        <md-input-container class="md-block">
+            <label translate>edge.label</label>
+            <input name="label" ng-model="edge.label">
+        </md-input-container>
+        <md-input-container class="md-block">
+            <label translate>edge.description</label>
+            <textarea ng-model="edge.additionalInfo.description" rows="2"></textarea>
+        </md-input-container>
+    </fieldset>
 </md-content>

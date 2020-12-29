@@ -156,24 +156,9 @@ function Menu(userService, $state, $rootScope) {
                         },
                         {
                             name: 'rulechain.rulechains',
-                            type: 'toggle',
+                            type: 'link',
                             state: 'home.ruleChains',
-                            height: '80px',
-                            icon: 'settings_ethernet',
-                            pages: [
-                                {
-                                    name: 'rulechain.core-rulechains',
-                                    type: 'link',
-                                    state: 'home.ruleChains.core',
-                                    icon: 'settings_ethernet'
-                                },
-                                {
-                                    name: 'rulechain.edge-rulechains',
-                                    type: 'link',
-                                    state: 'home.ruleChains.edge',
-                                    icon: 'code'
-                                }
-                            ]
+                            icon: 'settings_ethernet'
                         },
                         {
                             name: 'customer.customers',
@@ -198,13 +183,33 @@ function Menu(userService, $state, $rootScope) {
                             type: 'link',
                             state: 'home.entityViews',
                             icon: 'view_quilt'
-                        },
-                        {
-                            name: 'edge.edges',
-                            type: 'link',
-                            state: 'home.edges',
-                            icon: 'router'
-                        },
+                        }];
+                    if (userService.isEdgesSupportEnabled()) {
+                        sections.push(
+                            {
+                                name: 'edge.management',
+                                type: 'toggle',
+                                state: 'home.edges',
+                                height: '80px',
+                                icon: 'router',
+                                pages: [
+                                    {
+                                        name: 'edge.edge-instances',
+                                        type: 'link',
+                                        state: 'home.edges',
+                                        icon: 'router'
+                                    },
+                                    {
+                                        name: 'edge.rulechain-templates',
+                                        type: 'link',
+                                        state: 'home.edges.edgeRuleChains',
+                                        icon: 'settings_ethernet'
+                                    }
+                                ]
+                            }
+                        );
+                    }
+                    sections.push(
                         {
                             name: 'widget.widget-library',
                             type: 'link',
@@ -222,21 +227,17 @@ function Menu(userService, $state, $rootScope) {
                             type: 'link',
                             state: 'home.auditLogs',
                             icon: 'track_changes'
-                        }];
+                        }
+                    );
 
                     homeSections =
                         [{
-                            name: 'rulechain.management',
+                            name: 'rulechain.rulechains',
                             places: [
                                 {
-                                    name: 'rulechain.core-rulechains',
+                                    name: 'rulechain.rulechains',
                                     icon: 'settings_ethernet',
-                                    state: 'home.ruleChains.core'
-                                },
-                                {
-                                    name: 'rulechain.edge-rulechains',
-                                    icon: 'code',
-                                    state: 'home.ruleChains.edge'
+                                    state: 'home.ruleChains'
                                 }
                             ]
                         },
@@ -279,43 +280,51 @@ function Menu(userService, $state, $rootScope) {
                                         state: 'home.entityViews'
                                     }
                                 ]
-                            },
-                            {
-                                name: 'edge.management',
-                                places: [
-                                    {
-                                        name: 'edge.edges',
-                                        icon: 'router',
-                                        state: 'home.edges'
-                                    }
-                                ]
-                            },
-                            {
-                                name: 'dashboard.management',
-                                places: [
-                                    {
-                                        name: 'widget.widget-library',
-                                        icon: 'now_widgets',
-                                        state: 'home.widgets-bundles'
-                                    },
-                                    {
-                                        name: 'dashboard.dashboards',
-                                        icon: 'dashboard',
-                                        state: 'home.dashboards'
-                                    }
-                                ]
-                            },
-                            {
-                                name: 'audit-log.audit',
-                                places: [
-                                    {
-                                        name: 'audit-log.audit-logs',
-                                        icon: 'track_changes',
-                                        state: 'home.auditLogs'
-                                    }
-                                ]
                             }];
+                    if (userService.isEdgesSupportEnabled()) {
+                        homeSections.push({
+                            name: 'edge.management',
+                            places: [
+                                {
+                                    name: 'edge.edge-instances',
+                                    icon: 'router',
+                                    state: 'home.edges'
+                                },
+                                {
+                                    name: 'edge.rulechain-templates',
+                                    icon: 'settings_ethernet',
+                                    state: 'home.edges.edgeRuleChains'
+                                }
+                            ]
 
+                        });
+                    }
+                    homeSections.push(
+                        {
+                            name: 'dashboard.management',
+                            places: [
+                                {
+                                    name: 'widget.widget-library',
+                                    icon: 'now_widgets',
+                                    state: 'home.widgets-bundles'
+                                },
+                                {
+                                    name: 'dashboard.dashboards',
+                                    icon: 'dashboard',
+                                    state: 'home.dashboards'
+                                }
+                            ]
+                        },
+                        {
+                            name: 'audit-log.audit',
+                            places: [
+                                {
+                                    name: 'audit-log.audit-logs',
+                                    icon: 'track_changes',
+                                    state: 'home.auditLogs'
+                                }
+                            ]
+                        });
                 } else if (authority === 'CUSTOMER_USER') {
                     sections = [
                         {
@@ -341,19 +350,25 @@ function Menu(userService, $state, $rootScope) {
                             type: 'link',
                             state: 'home.entityViews',
                             icon: 'view_quilt'
-                        },
-                        {
-                            name: 'edge.edges',
-                            type: 'link',
-                            state: 'home.edges',
-                            icon: 'router'
-                        },
+                        }];
+                    if (userService.isEdgesSupportEnabled()) {
+                        sections.push(
+                            {
+                                name: 'edge.edge-instances',
+                                type: 'link',
+                                state: 'home.edges',
+                                icon: 'router'
+                            }
+                        );
+                    }
+                    sections.push(
                         {
                             name: 'dashboard.dashboards',
                             type: 'link',
                             state: 'home.dashboards',
                             icon: 'dashboard'
-                        }];
+                        }
+                    );
 
                     homeSections =
                         [{
@@ -385,17 +400,22 @@ function Menu(userService, $state, $rootScope) {
                                     state: 'home.entityViews'
                                 }
                             ]
-                        },
-                        {
-                            name: 'edge.management',
-                            places: [
-                                {
-                                    name: 'edge.edges',
-                                    icon: 'router',
-                                    state: 'home.edges'
-                                }
-                            ]
-                        },
+                        }];
+                    if (userService.isEdgesSupportEnabled()) {
+                        homeSections.push(
+                            {
+                                name: 'edge.edge-instances',
+                                places: [
+                                    {
+                                        name: 'edge.edge-instances',
+                                        icon: 'router',
+                                        state: 'home.edges'
+                                    }
+                                ]
+                            }
+                        );
+                    }
+                    homeSections.push(
                         {
                             name: 'dashboard.view-dashboards',
                             places: [
@@ -405,7 +425,8 @@ function Menu(userService, $state, $rootScope) {
                                     state: 'home.dashboards'
                                 }
                             ]
-                        }];
+                        }
+                    );
                 }
             }
         }

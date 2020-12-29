@@ -457,7 +457,7 @@
         "select-default-customer": "Select default customer",
         "default-customer": "Default customer",
         "default-customer-required": "Default customer is required in order to debug dashboard on Tenant level",
-        "edges": "Customer Edges"
+        "edges": "Customer edge instances"
     },
     "datetime": {
         "date-from": "Date from",
@@ -764,7 +764,7 @@
     },
     "edge": {
         "edge": "Edge",
-        "edges": "Edges",
+        "edge-instances": "Edge instances",
         "edge-file": "Edge file",
         "management": "Edge management",
         "no-edges-matching": "No edges matching '{{entity}}' were found.",
@@ -828,8 +828,8 @@
         "unassign-from-edge": "Unassign from edge",
         "dashboards": "Edge Dashboards",
         "manage-edge-rulechains": "Manage edge rule chains",
-        "rulechains": "Edge Rule Chains",
-        "rulechain": "Edge Rule Chain",
+        "rulechain-templates": "Rule chain templates",
+        "rulechain-template": "Rule chain template",
         "edge-key": "Edge key",
         "copy-edge-key": "Copy edge key",
         "edge-key-copied-message": "Edge key has been copied to clipboard",
@@ -852,7 +852,11 @@
         "enter-edge-type": "Enter edge type",
         "no-edge-types-matching": "No edge types matching '{{entitySubtype}}' were found.",
         "edge-type-list-empty": "No edge types selected.",
-        "edge-types": "Edge types"
+        "edge-types": "Edge types",
+        "license-key-hint": "To obtain your license please navigate to the <a href='https://thingsboard.io/pricing/?active=thingsboard-edge' target='_blank'>pricing page</a> and select the best license option for your case.",
+        "cloud-endpoint-hint": "Edge requires HTTP(s) access to Cloud (ThingsBoard CE/PE) to verify the license key. Please specify Cloud URL that Edge is able to connect to.",
+        "missing-related-rule-chains-title": "Edge has missing related rule chain(s)",
+        "missing-related-rule-chains-text": "Assigned to edge rule chain(s) use rule nodes that forward message(s) to rule chain(s) that are not assigned to this edge. <br><br> List of missing rule chain(s): <br> {{missingRuleChains}}"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",
@@ -1549,9 +1553,6 @@
     "rulechain": {
         "rulechain": "Rule chain",
         "rulechains": "Rule chains",
-        "core-rulechains": "Core Rule chains",
-        "edge-rulechains": "Edge Rule chains",
-        "default-root": "Default root",
         "root": "Root",
         "delete": "Delete rule chain",
         "name": "Name",
@@ -1588,7 +1589,7 @@
         "assign-rulechains": "Assign rulechains",
         "assign-new-rulechain": "Assign new rulechain",
         "delete-rulechains": "Delete rulechains",
-        "default": "Default",
+        "set-auto-assign-to-edge-card": "Assign to edge(s) on creation",
         "unassign-rulechain": "Unassign rulechain",
         "unassign-rulechains": "Unassign rulechains",
         "unassign-rulechain-title": "Are you sure you want to unassign the rulechain '{{ruleChainTitle}}'?",
@@ -1601,13 +1602,17 @@
         "set-default-root-edge": "Make rule chain default root",
         "set-default-root-edge-rulechain-title": "Are you sure you want to make the rule chain '{{ruleChainName}}' default edge root?",
         "set-default-root-edge-rulechain-text": "After the confirmation the rule chain will become default edge root and will handle all incoming transport messages.",
+        "set-edge-template-root-rulechain": "Make rule chain as edge template root",
+        "set-edge-template-root-rulechain-title": "Are you sure you want to make the rule chain '{{ruleChainName}}' edge template root?",
+        "set-edge-template-root-rulechain-text": "After the confirmation the rule chain will become edge template root and will be root rule chain for a newly created edges.",
         "invalid-rulechain-type-error": "Unable to import rule chain: Invalid rule chain type. Expected type is {{expectedRuleChainType}}.",
-        "set-default-edge": "Make rule chain default",
-        "set-default-edge-title": "Are you sure you want to make the edge rule chain '{{ruleChainName}}' default?",
-        "set-default-edge-text": "After the confirmation the edge rule chain will be added to default list and assigned to newly created edge(s).",
-        "remove-default-edge": "Remove rule chain from defaults",
-        "remove-default-edge-title": "Are you sure you want to remove the edge rule chain '{{ruleChainName}}' from default list?",
-        "remove-default-edge-text": "After the confirmation the edge rule chain will not be assigned for a newly created edges."
+        "set-auto-assign-to-edge": "Assign rule chain to edge(s) on creation",
+        "set-auto-assign-to-edge-title": "Are you sure you want to assign the edge rule chain '{{ruleChainName}}' to edge(s) on creation?",
+        "set-auto-assign-to-edge-text": "After the confirmation the edge rule chain will be automatically assigned to edge(s) on creation.",
+        "unset-auto-assign-to-edge": "Do not assign rule chain to edge(s) on creation",
+        "unset-auto-assign-to-edge-title": "Are you sure you do not want to assign the edge rule chain '{{ruleChainName}}' to edge(s) on creation?",
+        "unset-auto-assign-to-edge-text": "After the confirmation the edge rule chain will no longer be automatically assigned to edge(s) on creation.",
+        "edge-template-root": "Template Root"
     },
     "rulenode": {
         "details": "Details",

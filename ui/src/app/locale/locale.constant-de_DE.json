@@ -431,7 +431,7 @@
     "customer-required": "Kunde ist erforderlich",
     "select-default-customer": "Wählen Sie den Standardkunden aus.",
     "default-customer": "Standardkunde",
-    "edges": "Kunden Rand",
+    "edge-instances": "Kunden Rand",
     "default-customer-required": "Ein Standardkunde ist erforderlich, um das Dashboard auf Mandantenebene zu testen."
   },
   "datetime": {
@@ -730,7 +730,7 @@
   },
   "edge": {
     "edge": "Rand",
-    "edges": "Rand",
+    "edge-instances": "Rand",
     "management": "Rand verwalten",
     "no-edges-matching": "Keine passenden Rand '{{entity}}' gefunden.",
     "add": "Rand hinzufügen",
@@ -1355,8 +1355,6 @@
   "rulechain": {
     "rulechain": "Regelkette",
     "rulechains": "Regelketten",
-    "core-rulechains": "Kernregelketten",
-    "edge-rulechains": "Randregelketten",
     "root": "Wurzel",
     "delete": "Regelkette löschen",
     "name": "Name",
@@ -1393,7 +1391,6 @@
     "assign-rulechains": "Regelketten zuweisen",
     "assign-new-rulechain": "Neues Regelkette zuweisen",
     "delete-rulechains": "Regelketten löschen",
-    "default": "Standard",
     "unassign-rulechain": "Nicht zugeordnete Regelkette",
     "unassign-rulechains": "Nicht zugeordnete Regelketten",
     "unassign-rulechain-title": "Möchten Sie die Zuordnung die Regelkette '{{ruleChainTitle}}' wirklich aufheben?",
@@ -1403,16 +1400,17 @@
     "unassign-rulechains-from-edge-text": "Nach der Bestätigung wird die Zuordnung aller ausgewählten Regelketten aufgehoben und sie sind für den Rand nicht mehr zugänglich.",
     "assign-rulechain-to-edge": "Regelkette(n) dem Rand zuordnen",
     "assign-rulechain-to-edge-text": "Bitte wählen Sie die Regelketten aus, die Sie dem Rand zuordnen möchten",
-    "set-default-root-edge": "Machen Sie Randregelkette zur Wurzel Standard",
-    "set-default-root-edge-rulechain-title": "Sind Sie sicher, dass Sie die Randregelkette '{{ruleChainName}}' zur Wurzel machen Standard?",
-    "set-default-root-edge-rulechain-text": "Nach der Bestätigung wird die Randregelkette zur Wurzel Standard und behandelt alle eingehenden Transportnachrichten.",
+    "set-edge-template-root-rulechain": "Regelkette als Rand der Kantenvorlage erstellen",
+    "set-edge-template-root-rulechain-title": "Möchten Sie die Kantenvorlage der Regelkette '{{ruleChainName}}' wirklich als Root festlegen?",
+    "set-edge-template-root-rulechain-text": "Nach der Bestätigung wird die Regelkette zum Stamm der Kantenvorlage und zur Stammregelkette für neu erstellte Kanten.",
     "invalid-rulechain-type-error": "Regelkette konnte nicht importiert werden: Ungültige Regelkettentyp. Erwarteter Typ ist {{expectedRuleChainType}}.",
-    "set-default-edge": "Machen Sie Regelkette Standard",
-    "set-default-edge-title": "Sind Sie sicher, dass Sie die Randregelkette '{{ruleChainName}}' machen Standard?",
-    "set-default-edge-text": "Nach der Bestätigung wird die Randregelkette für neu erstellte Rand vergeben.",
-    "remove-default-edge": "Randregelkette Standard entfernen",
-    "remove-default-edge-title": "Sind Sie sicher, dass Sie die Randregelkette '{{ruleChainName}}' aus der Standardliste entfernen?",
-    "remove-default-edge-text": "Nach der Bestätigung wird die Randregelkette nicht für neu erstellte Rand vergeben."
+    "set-auto-assign-to-edge": "Weisen Sie den Kanten bei der Erstellung eine Regelkette zu",
+    "set-auto-assign-to-edge-title": "Sind Sie sicher, dass Sie die Kantenregelkette '{{ruleChainName}}' bei der Erstellung den Kanten zuweisen möchten? ",
+    "set-auto-assign-to-edge-text": "Nach der Bestätigung wird die Kantenregelkette bei der Erstellung automatisch den Kanten zugewiesen.",
+    "unset-auto-assign-to-edge": "Weisen Sie Kanten bei der Erstellung keine Regelkette zu",
+    "unset-auto-assign-to-edge-title": "Sind Sie sicher, dass Sie die Kantenregelkette '{{ruleChainName}}' bei der Erstellung nicht den Kanten zuweisen möchten?",
+    "unset-auto-assign-to-edge-text": "Nach der Bestätigung wird die Kantenregelkette bei der Erstellung nicht mehr automatisch den Kanten zugewiesen.",
+    "edge-template-root": "Vorlagenstamm"
   },
   "rulenode": {
     "details": "Details",

@@ -1270,9 +1270,9 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                             vm.isImport = false;
                             $mdUtil.nextTick(() => {
                                 if (vm.ruleChain.type === vm.types.ruleChainType.core) {
-                                    $state.go('home.ruleChains.core.ruleChain', {ruleChainId: vm.ruleChain.id.id});
+                                    $state.go('home.ruleChains.ruleChain', {ruleChainId: vm.ruleChain.id.id});
                                 } else {
-                                    $state.go('home.ruleChains.edge.ruleChain', {ruleChainId: vm.ruleChain.id.id});
+                                    $state.go('home.edges.edgeRuleChains.ruleChain', {ruleChainId: vm.ruleChain.id.id});
                                 }
                             });
                         } else {

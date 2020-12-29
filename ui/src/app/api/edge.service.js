@@ -36,7 +36,8 @@ function EdgeService($http, $q, customerService) {
         makeEdgePublic: makeEdgePublic,
         setRootRuleChain: setRootRuleChain,
         getEdgeEvents: getEdgeEvents,
-        syncEdge: syncEdge
+        syncEdge: syncEdge,
+        findMissingToRelatedRuleChains: findMissingToRelatedRuleChains
     };
 
     return service;
@@ -300,6 +301,17 @@ function EdgeService($http, $q, customerService) {
         var url = '/api/edge/sync/' + edgeId;
         $http.post(url, null).then(function success(response) {
             deferred.resolve(response);
+        }, function fail(response) {
+            deferred.reject(response.data);
+        });
+        return deferred.promise;
+    }
+
+    function findMissingToRelatedRuleChains(edgeId) {
+        var deferred = $q.defer();
+        var url = '/api/edge/missingToRelatedRuleChains/' + edgeId;
+        $http.get(url, null).then(function success(response) {
+            deferred.resolve(response.data);
         }, function fail(response) {
             deferred.reject(response.data);
         });

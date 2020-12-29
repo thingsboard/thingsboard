@@ -97,7 +97,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
 
     vm.exportRuleChain = exportRuleChain;
     vm.setRootRuleChain = setRootRuleChain;
-    vm.setDefaultEdgeRuleChain = setDefaultEdgeRuleChain;
+    vm.setAutoAssignToEdgeRuleChain = setAutoAssignToEdgeRuleChain;
     vm.unsetAutoAssignToEdgeRuleChain = unsetAutoAssignToEdgeRuleChain;
     
     initController();
@@ -185,10 +185,10 @@ export default function RuleChainsController(ruleChainService, userService, impo
 
             ruleChainActionsList.push({
                 onAction: function ($event, item) {
-                    setDefaultEdgeRuleChain($event, item);
+                    setAutoAssignToEdgeRuleChain($event, item);
                 },
-                name: function() { return $translate.instant('rulechain.set-default-edge') },
-                details: function() { return $translate.instant('rulechain.set-default-edge') },
+                name: function() { return $translate.instant('rulechain.set-auto-assign-to-edge') },
+                details: function() { return $translate.instant('rulechain.set-auto-assign-to-edge') },
                 icon: "bookmark_outline",
                 isEnabled: isNonDefaultEdgeRuleChain
             });
@@ -197,8 +197,8 @@ export default function RuleChainsController(ruleChainService, userService, impo
                 onAction: function ($event, item) {
                     unsetAutoAssignToEdgeRuleChain($event, item);
                 },
-                name: function() { return $translate.instant('rulechain.remove-default-edge') },
-                details: function() { return $translate.instant('rulechain.remove-default-edge') },
+                name: function() { return $translate.instant('rulechain.unset-auto-assign-to-edge') },
+                details: function() { return $translate.instant('rulechain.unset-auto-assign-to-edge') },
                 icon: "bookmark",
                 isEnabled: isDefaultEdgeRuleChain
             });
@@ -207,8 +207,8 @@ export default function RuleChainsController(ruleChainService, userService, impo
                 onAction: function ($event, item) {
                     setEdgeTemplateRootRuleChain($event, item);
                 },
-                name: function() { return $translate.instant('rulechain.set-default-root-edge') },
-                details: function() { return $translate.instant('rulechain.set-default-root-edge') },
+                name: function() { return $translate.instant('rulechain.set-edge-template-root-rulechain') },
+                details: function() { return $translate.instant('rulechain.set-edge-template-root-rulechain') },
                 icon: "flag",
                 isEnabled: isNonRootRuleChain
             });
@@ -247,7 +247,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
                 onAction: function ($event) {
                     importExport.importRuleChain($event, types.ruleChainType.edge).then(
                         function(ruleChainImport) {
-                            $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport, ruleChainType: types.ruleChainType.edge});
+                            $state.go('home.edges.edgeRuleChains.importRuleChain', {ruleChainImport:ruleChainImport, ruleChainType: types.ruleChainType.edge});
                         }
                     );
                 },
@@ -401,9 +401,9 @@ export default function RuleChainsController(ruleChainService, userService, impo
         if (vm.ruleChainsScope === 'edge') {
             $state.go('home.edges.ruleChains.ruleChain', Object.assign(ruleChainParams, edgeId = vm.edge.id.id));
         } else if (vm.ruleChainsScope === 'edges') {
-            $state.go('home.ruleChains.edge.ruleChain', ruleChainParams);
+            $state.go('home.edges.edgeRuleChains.ruleChain', ruleChainParams);
         } else {
-            $state.go('home.ruleChains.core.ruleChain', ruleChainParams);
+            $state.go('home.ruleChains.ruleChain', ruleChainParams);
         }
     }
 
@@ -471,13 +471,13 @@ export default function RuleChainsController(ruleChainService, userService, impo
         });
     }
 
-    function setDefaultEdgeRuleChain($event, ruleChain) {
+    function setAutoAssignToEdgeRuleChain($event, ruleChain) {
         $event.stopPropagation();
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
-            .title($translate.instant('rulechain.set-default-edge-title', {ruleChainName: ruleChain.name}))
-            .htmlContent($translate.instant('rulechain.set-default-edge-text'))
-            .ariaLabel($translate.instant('rulechain.set-default-edge'))
+            .title($translate.instant('rulechain.set-auto-assign-to-edge-title', {ruleChainName: ruleChain.name}))
+            .htmlContent($translate.instant('rulechain.set-auto-assign-to-edge-text'))
+            .ariaLabel($translate.instant('rulechain.set-auto-assign-to-edge'))
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
@@ -493,9 +493,9 @@ export default function RuleChainsController(ruleChainService, userService, impo
         $event.stopPropagation();
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
-            .title($translate.instant('rulechain.remove-default-edge-title', {ruleChainName: ruleChain.name}))
-            .htmlContent($translate.instant('rulechain.remove-default-edge-text'))
-            .ariaLabel($translate.instant('rulechain.remove-default-edge'))
+            .title($translate.instant('rulechain.unset-auto-assign-to-edge-title', {ruleChainName: ruleChain.name}))
+            .htmlContent($translate.instant('rulechain.unset-auto-assign-to-edge-text'))
+            .ariaLabel($translate.instant('rulechain.unset-auto-assign-to-edge'))
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
@@ -511,8 +511,8 @@ export default function RuleChainsController(ruleChainService, userService, impo
         $event.stopPropagation();
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
-            .title($translate.instant('rulechain.set-default-root-edge-rulechain-title', {ruleChainName: ruleChain.name}))
-            .htmlContent($translate.instant('rulechain.set-default-root-edge-rulechain-text'))
+            .title($translate.instant('rulechain.set-edge-template-root-rulechain-title', {ruleChainName: ruleChain.name}))
+            .htmlContent($translate.instant('rulechain.set-edge-template-root-rulechain-text'))
             .ariaLabel($translate.instant('rulechain.set-root-rulechain-text'))
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
@@ -572,8 +572,32 @@ export default function RuleChainsController(ruleChainService, userService, impo
                     fullscreen: true,
                     targetEvent: $event
                 }).then(function () {
-                    vm.grid.refreshList();
-                }, function () {
+                    edgeService.findMissingToRelatedRuleChains(edgeId).then(
+                        function success(missingRuleChains) {
+                            if (missingRuleChains && Object.keys(missingRuleChains).length > 0) {
+                                let formattedMissingRuleChains = [];
+                                for (const missingRuleChain of Object.keys(missingRuleChains)) {
+                                    const arrayOfMissingRuleChains = missingRuleChains[missingRuleChain];
+                                    const tmp = "- '" + missingRuleChain + "': '" + arrayOfMissingRuleChains.join("', ") + "'";
+                                    formattedMissingRuleChains.push(tmp);
+                                }
+                                var alert = $mdDialog.alert()
+                                    .parent(angular.element($document[0].body))
+                                    .clickOutsideToClose(true)
+                                    .title($translate.instant('edge.missing-related-rule-chains-title'))
+                                    .htmlContent($translate.instant('edge.missing-related-rule-chains-text', {missingRuleChains: formattedMissingRuleChains.join("<br>")}))
+                                    .ok($translate.instant('action.close'));
+                                alert._options.fullscreen = true;
+                                $mdDialog.show(alert).then(
+                                    function () {
+                                        vm.grid.refreshList();
+                                    }
+                                );
+                            } else {
+                                vm.grid.refreshList();
+                            }
+                        }
+                    );
                 });
             },
             function fail() {

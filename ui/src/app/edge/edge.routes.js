@@ -46,10 +46,10 @@ export default function EdgeRoutes($stateProvider, types) {
                 searchEnabled: true,
                 searchByEntitySubtype: true,
                 searchEntityType: types.entityType.edge,
-                pageTitle: 'edge.edges'
+                pageTitle: 'edge.edge-instances'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "router", "label": "edge.edges"}'
+                label: '{"icon": "router", "label": "edge.edge-instances"}'
             }
         }).state('home.edges.entityViews', {
             url: '/:edgeId/entityViews',
@@ -194,11 +194,11 @@ export default function EdgeRoutes($stateProvider, types) {
             },
             data: {
                 searchEnabled: true,
-                pageTitle: 'edge.rulechains',
+                pageTitle: 'edge.rulechain-templates',
                 ruleChainsType: 'edge'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "code", "label": "rulechain.edge-rulechains"}'
+                label: '{"icon": "settings_ethernet", "label": "edge.rulechain-templates"}'
             }
         }).state('home.edges.ruleChains.ruleChain', {
             url: '/:ruleChainId',
@@ -232,10 +232,10 @@ export default function EdgeRoutes($stateProvider, types) {
             data: {
                 import: false,
                 searchEnabled: false,
-                pageTitle: 'edge.rulechain'
+                pageTitle: 'edge.rulechain-templates'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "code", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
+                label: '{"icon": "settings_ethernet", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
             }
         });
 }

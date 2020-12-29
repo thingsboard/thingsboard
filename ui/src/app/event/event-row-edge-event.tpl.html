@@ -16,9 +16,9 @@
 
 -->
 <div class="tb-cell" flex="20">{{ event.createdTime | date :  'yyyy-MM-dd HH:mm:ss' }}</div>
-<div class="tb-cell" flex="20">{{ event.type }}</div>
-<div class="tb-cell" flex="40">{{ event.action }}</div>
-<div class="tb-cell" flex="20">{{ event.entityId }}</div>
+<div class="tb-cell" flex="10">{{ event.edgeEventTypeText }}</div>
+<div class="tb-cell" flex="15">{{ event.edgeEventActionText }}</div>
+<div class="tb-cell" flex="30">{{ event.entityId }}</div>
 <div class="tb-cell" flex="15" ng-style="{'color': statusColor}">{{ updateStatus(event.createdTime) }}</div>
 <div class="tb-cell" flex="10">
     <md-button ng-if="checkEdgeEventType(event.type)" class="md-icon-button md-primary"

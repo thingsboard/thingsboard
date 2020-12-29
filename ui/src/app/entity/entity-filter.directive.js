@@ -22,7 +22,7 @@ import entityFilterTemplate from './entity-filter.tpl.html';
 import './entity-filter.scss';
 
 /*@ngInject*/
-export default function EntityFilterDirective($compile, $templateCache, $q, $document, $mdDialog, types, entityService) {
+export default function EntityFilterDirective($compile, $templateCache, $q, $document, $mdDialog, types, entityService, userService) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -31,6 +31,9 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
 
         scope.ngModelCtrl = ngModelCtrl;
         scope.types = types;
+        if (!userService.isEdgesSupportEnabled()) {
+            scope.allowedEntityTypes = Object.values(types.entityType).filter(entityType => entityType !== types.entityType.edge);
+        }
         scope.aliasFilterTypes = entityService.getAliasFilterTypesByEntityTypes(scope.allowedEntityTypes);
 
         scope.$watch('filter.type', function (newType, prevType) {
