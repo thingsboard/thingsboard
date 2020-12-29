@@ -55,7 +55,7 @@ export default function EdgeRoutes($stateProvider, types) {
             url: '/:edgeId/entityViews',
             params: {'topIndex': 0},
             module: 'private',
-            auth: ['TENANT_ADMIN'],
+            auth: ['TENANT_ADMIN', 'CUSTOMER_USER'],
             views: {
                 "content@home": {
                     templateUrl: entityViewsTemplate,
@@ -77,7 +77,7 @@ export default function EdgeRoutes($stateProvider, types) {
             url: '/:edgeId/devices',
             params: {'topIndex': 0},
             module: 'private',
-            auth: ['TENANT_ADMIN'],
+            auth: ['TENANT_ADMIN', 'CUSTOMER_USER'],
             views: {
                 "content@home": {
                     templateUrl: devicesTemplate,
@@ -99,7 +99,7 @@ export default function EdgeRoutes($stateProvider, types) {
             url: '/:edgeId/assets',
             params: {'topIndex': 0},
             module: 'private',
-            auth: ['TENANT_ADMIN'],
+            auth: ['TENANT_ADMIN', 'CUSTOMER_USER'],
             views: {
                 "content@home": {
                     templateUrl: assetsTemplate,
@@ -121,7 +121,7 @@ export default function EdgeRoutes($stateProvider, types) {
             url: '/:edgeId/dashboards',
             params: {'topIndex': 0},
             module: 'private',
-            auth: ['TENANT_ADMIN'],
+            auth: ['TENANT_ADMIN', 'CUSTOMER_USER'],
             views: {
                 "content@home": {
                     templateUrl: dashboardsTemplate,

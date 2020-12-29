@@ -162,9 +162,9 @@ public class EdgeController extends BaseController {
     @RequestMapping(value = "/edges", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TextPageData<Edge> getEdges(@RequestParam int limit,
-                                               @RequestParam(required = false) String textSearch,
-                                               @RequestParam(required = false) String idOffset,
-                                               @RequestParam(required = false) String textOffset) throws ThingsboardException {
+                                       @RequestParam(required = false) String textSearch,
+                                       @RequestParam(required = false) String idOffset,
+                                       @RequestParam(required = false) String textOffset) throws ThingsboardException {
         try {
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
             TenantId tenantId = getCurrentUser().getTenantId();

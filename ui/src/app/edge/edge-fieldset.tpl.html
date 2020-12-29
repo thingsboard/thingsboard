@@ -31,16 +31,16 @@
 </div>
 <div layout="row">
     <md-button ng-click="onManageEdgeAssets({event: $event})"
-               ng-show="!isEdit && edgeScope === 'tenant'"
+               ng-show="!isEdit && (edgeScope === 'tenant' || edgeScope === 'customer_user')"
                class="md-raised md-primary">{{ 'edge.assets' | translate }}</md-button>
     <md-button ng-click="onManageEdgeDevices({event: $event})"
-               ng-show="!isEdit && edgeScope === 'tenant'"
+               ng-show="!isEdit && (edgeScope === 'tenant' || edgeScope === 'customer_user')"
                class="md-raised md-primary">{{ 'edge.devices' | translate }}</md-button>
     <md-button ng-click="onManageEdgeEntityViews({event: $event})"
-               ng-show="!isEdit && edgeScope === 'tenant'"
+               ng-show="!isEdit && (edgeScope === 'tenant' || edgeScope === 'customer_user')"
                class="md-raised md-primary">{{ 'edge.entity-views' | translate }}</md-button>
     <md-button ng-click="onManageEdgeDashboards({event: $event})"
-               ng-show="!isEdit && edgeScope === 'tenant'"
+               ng-show="!isEdit && (edgeScope === 'tenant' || edgeScope === 'customer_user')"
                class="md-raised md-primary">{{ 'edge.dashboards' | translate }}</md-button>
     <md-button ng-click="onManageEdgeRuleChains({event: $event})"
                ng-show="!isEdit && edgeScope === 'tenant'"

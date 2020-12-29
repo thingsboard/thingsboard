@@ -141,7 +141,11 @@ export function DashboardsController(userService, dashboardService, customerServ
         var user = userService.getCurrentUser();
 
         if (user.authority === 'CUSTOMER_USER') {
-            vm.dashboardsScope = 'customer_user';
+            if (vm.dashboardsScope === 'edge') {
+                vm.dashboardsScope = 'edge_customer_user';
+            } else {
+                vm.dashboardsScope = 'customer_user';
+            }
             customerId = user.customerId;
         }
 
@@ -381,60 +385,80 @@ export function DashboardsController(userService, dashboardService, customerServ
             } else if (vm.dashboardsScope === 'customer_user') {
                 vm.dashboardGridConfig.addItemAction = {};
             }
-        } else if (vm.dashboardsScope === 'edge') {
+        } else if (vm.dashboardsScope === 'edge' || vm.dashboardsScope === 'edge_customer_user') {
             fetchDashboardsFunction = function (pageLink) {
                 return dashboardService.getEdgeDashboards(edgeId, pageLink, null);
             };
-            deleteDashboardFunction = function (dashboardId) {
-                return dashboardService.unassignDashboardFromEdge(edgeId, dashboardId);
-            };
-            refreshDashboardsParamsFunction = function () {
-                return {"edgeId": edgeId, "topIndex": vm.topIndex};
-            };
 
-            dashboardActionsList.push(
-                {
-                    onAction: function ($event, item) {
-                        exportDashboard($event, item);
-                    },
-                    name: function() { $translate.instant('action.export') },
-                    details: function() { return $translate.instant('dashboard.export') },
-                    icon: "file_download"
-                }
-            );
+            if (vm.dashboardsScope === 'edge') {
+                deleteDashboardFunction = function (dashboardId) {
+                    return dashboardService.unassignDashboardFromEdge(edgeId, dashboardId);
+                };
+                refreshDashboardsParamsFunction = function () {
+                    return {"edgeId": edgeId, "topIndex": vm.topIndex};
+                };
 
-            dashboardActionsList.push(
-                {
-                    onAction: function ($event, item) {
-                        unassignFromEdge($event, item, edgeId);
-                    },
-                    name: function() { return $translate.instant('action.unassign') },
-                    details: function() { return $translate.instant('edge.unassign-from-edge') },
-                    icon: "assignment_return"
-                }
-            );
+                dashboardActionsList.push(
+                    {
+                        onAction: function ($event, item) {
+                            exportDashboard($event, item);
+                        },
+                        name: function () {
+                            $translate.instant('action.export')
+                        },
+                        details: function () {
+                            return $translate.instant('dashboard.export')
+                        },
+                        icon: "file_download"
+                    }
+                );
 
-            dashboardGroupActionsList.push(
-                {
-                    onAction: function ($event, items) {
-                        unassignDashboardsFromEdge($event, items, edgeId);
-                    },
-                    name: function() { return $translate.instant('dashboard.unassign-dashboards') },
-                    details: function(selectedCount) {
-                        return $translate.instant('dashboard.unassign-dashboards-from-edge-action-title', {count: selectedCount}, "messageformat");
-                    },
-                    icon: "assignment_return"
-                }
-            );
+                dashboardActionsList.push(
+                    {
+                        onAction: function ($event, item) {
+                            unassignFromEdge($event, item, edgeId);
+                        },
+                        name: function () {
+                            return $translate.instant('action.unassign')
+                        },
+                        details: function () {
+                            return $translate.instant('edge.unassign-from-edge')
+                        },
+                        icon: "assignment_return"
+                    }
+                );
 
-            vm.dashboardGridConfig.addItemAction = {
-                onAction: function ($event) {
-                    addDashboardsToEdge($event);
-                },
-                name: function() { return $translate.instant('dashboard.assign-dashboards') },
-                details: function() { return $translate.instant('dashboard.assign-new-dashboard') },
-                icon: "add"
-            };
+                dashboardGroupActionsList.push(
+                    {
+                        onAction: function ($event, items) {
+                            unassignDashboardsFromEdge($event, items, edgeId);
+                        },
+                        name: function () {
+                            return $translate.instant('dashboard.unassign-dashboards')
+                        },
+                        details: function (selectedCount) {
+                            return $translate.instant('dashboard.unassign-dashboards-from-edge-action-title', {count: selectedCount}, "messageformat");
+                        },
+                        icon: "assignment_return"
+                    }
+                );
+
+                vm.dashboardGridConfig.addItemAction = {
+                    onAction: function ($event) {
+                        addDashboardsToEdge($event);
+                    },
+                    name: function () {
+                        return $translate.instant('dashboard.assign-dashboards')
+                    },
+                    details: function () {
+                        return $translate.instant('dashboard.assign-new-dashboard')
+                    },
+                    icon: "add"
+                };
+            } else if (vm.dashboardsScope === 'edge_customer_user') {
+                vm.dashboardGridConfig.addItemAction = {};
+                vm.dashboardGridConfig.addItemActions = [];
+            }
         }
 
         vm.dashboardGridConfig.refreshParamsFunc = refreshDashboardsParamsFunction;

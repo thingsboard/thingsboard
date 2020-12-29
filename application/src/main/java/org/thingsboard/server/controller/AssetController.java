@@ -415,7 +415,7 @@ public class AssetController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/{edgeId}/assets", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TimePageData<Asset> getEdgeAssets(
@@ -431,7 +431,16 @@ public class AssetController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             checkEdgeId(edgeId, Operation.READ);
             TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
-            return checkNotNull(assetService.findAssetsByTenantIdAndEdgeId(tenantId, edgeId, pageLink).get());
+            TimePageData<Asset> nonFilteredResult = assetService.findAssetsByTenantIdAndEdgeId(tenantId, edgeId, pageLink).get();
+            List<Asset> filteredAssets = nonFilteredResult.getData().stream().filter(asset -> {
+                try {
+                    accessControlService.checkPermission(getCurrentUser(), Resource.ASSET, Operation.READ, asset.getId(), asset);
+                    return true;
+                } catch (ThingsboardException e) {
+                    return false;
+                }
+            }).collect(Collectors.toList());
+            return checkNotNull(new TimePageData<>(filteredAssets, nonFilteredResult.getNextPageLink(), nonFilteredResult.hasNext()));
         } catch (Exception e) {
             throw handleException(e);
         }

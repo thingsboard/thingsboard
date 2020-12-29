@@ -50,6 +50,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @TbCoreComponent
@@ -554,7 +555,7 @@ public class DashboardController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/{edgeId}/dashboards", params = { "limit" }, method = RequestMethod.GET)
     @ResponseBody
     public TimePageData<DashboardInfo> getEdgeDashboards(
@@ -570,7 +571,16 @@ public class DashboardController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             checkEdgeId(edgeId, Operation.READ);
             TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
-            return checkNotNull(dashboardService.findDashboardsByTenantIdAndEdgeId(tenantId, edgeId, pageLink).get());
+            TimePageData<DashboardInfo> nonFilteredResult = dashboardService.findDashboardsByTenantIdAndEdgeId(tenantId, edgeId, pageLink).get();
+            List<DashboardInfo> filteredDashboards = nonFilteredResult.getData().stream().filter(dashboard -> {
+                try {
+                    accessControlService.checkPermission(getCurrentUser(), Resource.DASHBOARD, Operation.READ, dashboard.getId(), dashboard);
+                    return true;
+                } catch (ThingsboardException e) {
+                    return false;
+                }
+            }).collect(Collectors.toList());
+            return checkNotNull(new TimePageData<>(filteredDashboards, nonFilteredResult.getNextPageLink(), nonFilteredResult.hasNext()));
         } catch (Exception e) {
             throw handleException(e);
         }

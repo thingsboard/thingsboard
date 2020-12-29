@@ -399,9 +399,59 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
 
             } else if (vm.edgesScope === 'customer_user') {
                 vm.edgeGridConfig.addItemAction = {};
+                edgeActionsList.push(
+                    {
+                        onAction: function ($event, item) {
+                            openEdgeAssets($event, item);
+                        },
+                        name: function() { return $translate.instant('asset.assets') },
+                        details: function() {
+                            return $translate.instant('edge.manage-edge-assets');
+                        },
+                        icon: "domain"
+                    }
+                );
+
+                edgeActionsList.push(
+                    {
+                        onAction: function ($event, item) {
+                            openEdgeDevices($event, item);
+                        },
+                        name: function() { return $translate.instant('device.devices') },
+                        details: function() {
+                            return $translate.instant('edge.manage-edge-devices');
+                        },
+                        icon: "devices_other"
+                    }
+                );
+
+                edgeActionsList.push(
+                    {
+                        onAction: function ($event, item) {
+                            openEdgeEntityViews($event, item);
+                        },
+                        name: function() { return $translate.instant('entity-view.entity-views') },
+                        details: function() {
+                            return $translate.instant('edge.manage-edge-entity-views');
+                        },
+                        icon: "view_quilt"
+                    }
+                );
+
+                edgeActionsList.push(
+                    {
+                        onAction: function ($event, item) {
+                            openEdgeDashboards($event, item);
+                        },
+                        name: function() { return $translate.instant('dashboard.dashboards') },
+                        details: function() {
+                            return $translate.instant('edge.manage-edge-dashboards');
+                        },
+                        icon: "dashboard"
+                    }
+                );
             }
             vm.edgeGridConfig.addItemActions = [];
-
         }
 
         vm.edgeGridConfig.refreshParamsFunc = refreshEdgesParamsFunction;

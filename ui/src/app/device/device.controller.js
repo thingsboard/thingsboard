@@ -143,7 +143,11 @@ export function DeviceController($rootScope, userService, deviceService, custome
         var user = userService.getCurrentUser();
 
         if (user.authority === 'CUSTOMER_USER') {
-            vm.devicesScope = 'customer_user';
+            if (vm.devicesScope === 'edge') {
+                vm.devicesScope = 'edge_customer_user';
+            } else {
+                vm.devicesScope = 'customer_user';
+            }
             customerId = user.customerId;
         }
         if (customerId) {
@@ -356,49 +360,64 @@ export function DeviceController($rootScope, userService, deviceService, custome
             }
             vm.deviceGridConfig.addItemActions = [];
 
-        } else if (vm.devicesScope === 'edge') {
+        } else if (vm.devicesScope === 'edge' || vm.devicesScope === 'edge_customer_user') {
             fetchDevicesFunction = function (pageLink) {
                 return deviceService.getEdgeDevices(edgeId, pageLink, null);
             };
-            deleteDeviceFunction = function (deviceId) {
-                return deviceService.unassignDeviceFromEdge(edgeId, deviceId);
-            };
-            refreshDevicesParamsFunction = function () {
-                return {"edgeId": edgeId, "topIndex": vm.topIndex};
-            };
 
-            deviceActionsList.push(
-                {
-                    onAction: function ($event, item) {
-                        unassignFromEdge($event, item, false);
-                    },
-                    name: function() { return $translate.instant('action.unassign') },
-                    details: function() { return $translate.instant('edge.unassign-from-edge') },
-                    icon: "assignment_return"
-                }
-            );
+            if (vm.devicesScope === 'edge') {
+                deleteDeviceFunction = function (deviceId) {
+                    return deviceService.unassignDeviceFromEdge(edgeId, deviceId);
+                };
+                refreshDevicesParamsFunction = function () {
+                    return {"edgeId": edgeId, "topIndex": vm.topIndex};
+                };
 
-            deviceGroupActionsList.push(
-                {
-                    onAction: function ($event, items) {
-                        unassignDevicesFromEdge($event, items);
-                    },
-                    name: function() { return $translate.instant('device.unassign-devices') },
-                    details: function(selectedCount) {
-                        return $translate.instant('device.unassign-devices-from-edge-action-title', {count: selectedCount}, "messageformat");
-                    },
-                    icon: "assignment_return"
-                }
-            );
+                deviceActionsList.push(
+                    {
+                        onAction: function ($event, item) {
+                            unassignFromEdge($event, item, false);
+                        },
+                        name: function() { return $translate.instant('action.unassign') },
+                        details: function() { return $translate.instant('edge.unassign-from-edge') },
+                        icon: "assignment_return"
+                    }
+                );
 
-            vm.deviceGridConfig.addItemAction = {
-                onAction: function ($event) {
-                    addDevicesToEdge($event);
-                },
-                name: function() { return $translate.instant('device.assign-devices') },
-                details: function() { return $translate.instant('device.assign-new-device') },
-                icon: "add"
-            };
+                deviceGroupActionsList.push(
+                    {
+                        onAction: function ($event, items) {
+                            unassignDevicesFromEdge($event, items);
+                        },
+                        name: function() { return $translate.instant('device.unassign-devices') },
+                        details: function(selectedCount) {
+                            return $translate.instant('device.unassign-devices-from-edge-action-title', {count: selectedCount}, "messageformat");
+                        },
+                        icon: "assignment_return"
+                    }
+                );
+
+                vm.deviceGridConfig.addItemAction = {
+                    onAction: function ($event) {
+                        addDevicesToEdge($event);
+                    },
+                    name: function() { return $translate.instant('device.assign-devices') },
+                    details: function() { return $translate.instant('device.assign-new-device') },
+                    icon: "add"
+                };
+            } else if (vm.devicesScope === 'edge_customer_user') {
+                deviceActionsList.push(
+                    {
+                        onAction: function ($event, item) {
+                            manageCredentials($event, item);
+                        },
+                        name: function() { return $translate.instant('device.credentials') },
+                        details: function() { return $translate.instant('device.view-credentials') },
+                        icon: "security"
+                    }
+                );
+                vm.deviceGridConfig.addItemAction = {};
+            }
             vm.deviceGridConfig.addItemActions = [];
         }
 

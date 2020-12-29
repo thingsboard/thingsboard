@@ -449,7 +449,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/{edgeId}/entityViews", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TimePageData<EntityView> getEdgeEntityViews(
@@ -465,7 +465,16 @@ public class EntityViewController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             checkEdgeId(edgeId, Operation.READ);
             TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
-            return checkNotNull(entityViewService.findEntityViewsByTenantIdAndEdgeId(tenantId, edgeId, pageLink).get());
+            TimePageData<EntityView> nonFilteredResult = entityViewService.findEntityViewsByTenantIdAndEdgeId(tenantId, edgeId, pageLink).get();
+            List<EntityView> filteredEntityViews = nonFilteredResult.getData().stream().filter(entityView -> {
+                try {
+                    accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.READ, entityView.getId(), entityView);
+                    return true;
+                } catch (ThingsboardException e) {
+                    return false;
+                }
+            }).collect(Collectors.toList());
+            return checkNotNull(new TimePageData<>(filteredEntityViews, nonFilteredResult.getNextPageLink(), nonFilteredResult.hasNext()));
         } catch (Exception e) {
             throw handleException(e);
         }

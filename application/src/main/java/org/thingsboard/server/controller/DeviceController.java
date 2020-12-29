@@ -631,7 +631,7 @@ public class DeviceController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/{edgeId}/devices", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TimePageData<Device> getEdgeDevices(
@@ -647,7 +647,16 @@ public class DeviceController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             checkEdgeId(edgeId, Operation.READ);
             TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
-            return checkNotNull(deviceService.findDevicesByTenantIdAndEdgeId(tenantId, edgeId, pageLink).get());
+            TimePageData<Device> nonFilteredResult = deviceService.findDevicesByTenantIdAndEdgeId(tenantId, edgeId, pageLink).get();
+            List<Device> filteredDevices = nonFilteredResult.getData().stream().filter(device -> {
+                try {
+                    accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ, device.getId(), device);
+                    return true;
+                } catch (ThingsboardException e) {
+                    return false;
+                }
+            }).collect(Collectors.toList());
+            return checkNotNull(new TimePageData<>(filteredDevices, nonFilteredResult.getNextPageLink(), nonFilteredResult.hasNext()));
         } catch (Exception e) {
             throw handleException(e);
         }
