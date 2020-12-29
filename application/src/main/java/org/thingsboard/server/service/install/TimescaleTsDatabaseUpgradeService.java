@@ -179,7 +179,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                 break;
             case "3.1.1":
                 break;
-            case "2.5.5":
+            case "3.2.0":
                 break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);

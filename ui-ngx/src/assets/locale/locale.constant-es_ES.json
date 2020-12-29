@@ -1575,7 +1575,8 @@
         "set-auto-assign-to-edge-text": "Después de la confirmación, la cadena de reglas de borde se asignará automáticamente a los bordes en la creación.",
         "unset-auto-assign-to-edge": "Desmarcar asignar cadena de reglas a los bordes en la creación",
         "unset-auto-assign-to-edge-title": "¿Está seguro de que desea anular la asignación de la cadena de reglas de borde '{{ruleChainName}}' a los bordes en la creación?",
-        "unset-auto-assign-to-edge-text": "Después de la confirmación, la cadena de reglas de borde ya no se asignará automáticamente a los bordes en la creación."
+        "unset-auto-assign-to-edge-text": "Después de la confirmación, la cadena de reglas de borde ya no se asignará automáticamente a los bordes en la creación.",
+        "edge-template-root": "Raíz de plantilla"
     },
     "rulenode": {
         "details": "Detalles",
