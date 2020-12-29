@@ -20,6 +20,7 @@ import org.eclipse.californium.core.coap.Response;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mNode;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.ObjectLink;
@@ -146,7 +147,6 @@ public class LwM2MTransportRequest {
                     break;
                 case POST_TYPE_OPER_EXECUTE:
                     if (params != null && resource != null && !resource.multiple) {
-//                        request = new ExecuteRequest(target, LwM2MTransportHandler.getValueTypeToString(params, resType));
                         request = new ExecuteRequest(target, (String) this.converter.convertValue(params, resource.type, ResourceModel.Type.STRING, resultIds));
                     } else {
                         request = new ExecuteRequest(target);
@@ -168,7 +168,8 @@ public class LwM2MTransportRequest {
                     if (resultIds.getResourceId() >= 0) {
                         ResourceModel resourceModel = lwServer.getModelProvider().getObjectModel(registration).getObjectModel(resultIds.getObjectId()).resources.get(resultIds.getResourceId());
                         ResourceModel.Type typeRes = resourceModel.type;
-//                        request = getWriteRequestResource(resultIds.getObjectId(), resultIds.getInstanceId(), resultIds.getResourceId(), params, typeRes);
+                        LwM2mNode node = LwM2mSingleResource.newStringResource(resultIds.getResourceId(), (String) this.converter.convertValue(params, resource.type, ResourceModel.Type.STRING, resultIds));
+                        request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, target, node);
                     }
                     break;
                 case PUT_TYPE_OPER_WRITE_ATTRIBUTES:

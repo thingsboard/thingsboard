@@ -515,7 +515,6 @@ public class LwM2MTransportService {
     private void getParametersFromProfile(JsonObject attributes, JsonObject telemetry, Registration registration, Set<String> path) {
         AttrTelemetryObserveValue attrTelemetryObserveValue = lwM2mInMemorySecurityStore.getProfiles().get(lwM2mInMemorySecurityStore.getSessions().get(registration.getId()).getProfileUuid());
         attrTelemetryObserveValue.getPostAttributeProfile().forEach(p -> {
-//            ResultIds pathIds = new ResultIds(p.getAsString().toString());
             LwM2mPath pathIds = new LwM2mPath(p.getAsString().toString());
             if (pathIds.isResource()) {
                 if (path == null || path.contains(p.getAsString())) {
@@ -524,7 +523,6 @@ public class LwM2MTransportService {
             }
         });
         attrTelemetryObserveValue.getPostTelemetryProfile().forEach(p -> {
-//            ResultIds pathIds = new ResultIds(p.getAsString().toString());
             LwM2mPath pathIds = new LwM2mPath(p.getAsString().toString());
             if (pathIds.isResource()) {
                 if (path == null || path.contains(p.getAsString())) {
@@ -545,10 +543,8 @@ public class LwM2MTransportService {
         if (resName != null && !resName.isEmpty()) {
             String resValue = null;
             try {
-//                resValue = lwM2mInMemorySecurityStore.getSessions().get(registration.getId()).getResourceValueString(path);
                 resValue = this.getResourceValueToString(lwM2MClient, path);
                 if (resValue != null) {
-//                    log.info("addParameters Path: [{}] ResValue : [{}] nameParam [{}]", path, lwM2mInMemorySecurityStore.getSessions().get(registration.getId()).getResourceValue(path), nameParam);
                     parameters.addProperty(resName, resValue);
                 }
             } catch (Exception e) {
@@ -1061,10 +1057,7 @@ public class LwM2MTransportService {
      */
     private void updateResourceValueObserve(LeshanServer lwServer, Registration registration, LwM2MClient lwM2MClient, Set<String> targets, String typeOper) {
         targets.forEach(target -> {
-//            ResultIds pathIds = new ResultIds(target);
             LwM2mPath pathIds = new LwM2mPath(target);
-//            if (pathIds.isResource() && lwM2MClient.getModelObjects().get(pathIds.getObjectId())
-//                    .getInstances().get(pathIds.getObjectInstanceId()).getResource(pathIds.getResourceId()).getValue() != null) {
             if (pathIds.isResource()) {
                 if (GET_TYPE_OPER_READ.equals(typeOper)) {
                     lwM2MTransportRequest.sendAllRequest(lwServer, registration, target, typeOper,

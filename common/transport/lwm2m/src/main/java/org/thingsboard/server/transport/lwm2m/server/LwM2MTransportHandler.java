@@ -99,11 +99,13 @@ public class LwM2MTransportHandler {
     /**
      * Replaces the Object Instance or the Resource(s) with the new value provided in the “Write” operation. (see
      * section 5.3.3 of the LW M2M spec).
+     * if all resources are to be replaced
      */
     public static final String POST_TYPE_OPER_WRITE_REPLACE = "replace";
     /**
      * Adds or updates Resources provided in the new value and leaves other existing Resources unchanged. (see section
      * 5.3.3 of the LW M2M spec).
+     * if this is a partial update request
      */
     public static final String PUT_TYPE_OPER_WRITE_UPDATE = "update";
     public static final String PUT_TYPE_OPER_WRITE_ATTRIBUTES = "wright-attributes";
@@ -151,34 +153,6 @@ public class LwM2MTransportHandler {
         }
         return coapConfig;
     }
-
-//    public static String getValueTypeToString (Object value, ResourceModel.Type type, int val) {
-//        try{
-//        switch (type) {
-//            case STRING:    // String
-//            case OBJLNK:    // ObjectLink
-//                return value.toString();
-//            case INTEGER:   // Long
-//                return Long.toString((long) value);
-//            case BOOLEAN:   // Boolean
-//                return Boolean.toString((Boolean) value);
-//            case FLOAT:     // Double
-//                return Double.toString((Double) value);
-//            case TIME:      // Date
-//                return Long.toString(((Date) value).getTime());
-////                String DATE_FORMAT = "MMM d, yyyy HH:mm a";
-////                DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
-////                return formatter.format(new Date(Integer.toUnsignedLong((Integer) value)));
-//            case OPAQUE:    // byte[] value, base64
-//                return Hex.encodeHexString((byte[])value);
-//            default:
-//                return null;
-//        }
-//        } catch (Exception e) {
-//            log.error(e.getStackTrace().toString());
-//            return null;
-//        }
-//    }
 
     public static boolean equalsResourceValue(Object valueOld, Object valueNew, ResourceModel.Type type, LwM2mPath resourcePath) throws CodecException {
         switch (type) {
