@@ -45,7 +45,7 @@ public class EdgeEventController extends BaseController {
 
     public static final String EDGE_ID = "edgeId";
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/events", method = RequestMethod.GET)
     @ResponseBody
     public TimePageData<EdgeEvent> getEdgeEvents(
