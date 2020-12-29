@@ -203,7 +203,7 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                 break;
             case "2.5.5":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                    log.info("Load TTL functions ...");
+                    log.info("Load Edge TTL functions ...");
                     loadSql(conn, "2.6.0", LOAD_TTL_FUNCTIONS_SQL);
                 }
                 break;

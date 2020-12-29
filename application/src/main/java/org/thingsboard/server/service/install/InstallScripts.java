@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -36,7 +35,6 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -64,6 +62,8 @@ public class InstallScripts {
     public static final String WIDGET_BUNDLES_DIR = "widget_bundles";
     public static final String DASHBOARDS_DIR = "dashboards";
 
+    public static final String EDGE_MANAGEMENT = "edge_management";
+
     public static final String JSON_EXT = ".json";
 
     @Value("${install.data_dir:}")
@@ -81,8 +81,12 @@ public class InstallScripts {
     @Autowired
     private WidgetsBundleService widgetsBundleService;
 
-    public Path getTenantRuleChainsDir() {
+    private Path getTenantRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, RULE_CHAINS_DIR);
+    }
+
+    private Path getEdgeRuleChainsDir() {
+        return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, EDGE_MANAGEMENT, RULE_CHAINS_DIR);
     }
 
     public String getDataDir() {
@@ -108,16 +112,20 @@ public class InstallScripts {
 
     public void createDefaultRuleChains(TenantId tenantId) throws IOException {
         Path tenantChainsDir = getTenantRuleChainsDir();
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(tenantChainsDir, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
+        loadRuleChainsFromPath(tenantId, tenantChainsDir);
+    }
+
+    public void createDefaultEdgeRuleChains(TenantId tenantId) throws IOException {
+        Path edgeChainsDir = getEdgeRuleChainsDir();
+        loadRuleChainsFromPath(tenantId, edgeChainsDir);
+    }
+
+    private void loadRuleChainsFromPath(TenantId tenantId, Path ruleChainsPath) throws IOException {
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(ruleChainsPath, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
             dirStream.forEach(
                     path -> loadRuleChainFromFile(tenantId, path)
             );
         }
-    }
-
-    public void createDefaultEdgeRuleChains(TenantId tenantId) {
-        Path tenantChainsDir = getTenantRuleChainsDir();
-        loadRuleChainFromFile(tenantId, tenantChainsDir.resolve("edge_root_rule_chain.json"));
     }
 
     public void loadSystemWidgets() throws Exception {
@@ -174,7 +182,6 @@ public class InstallScripts {
         }
     }
 
-
     public void loadDemoRuleChains(TenantId tenantId) throws Exception {
         Path ruleChainsDir = Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, RULE_CHAINS_DIR);
         try {
@@ -196,8 +203,17 @@ public class InstallScripts {
             rootChain = ruleChainService.saveRuleChain(rootChain);
             rootChainMetaData.setRuleChainId(rootChain.getId());
             ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), rootChainMetaData);
+        } catch (Exception e) {
+            log.error("Unable to load dashboard from json", e);
+            throw new RuntimeException("Unable to load dashboard from json", e);
+        }
+        loadEdgeDemoRuleChains(tenantId);
+    }
 
-            loadRuleChainFromFile(tenantId, ruleChainsDir.resolve("edge_root_rule_chain.json"));
+    private void loadEdgeDemoRuleChains(TenantId tenantId) throws Exception {
+        Path edgeRuleChainsDir = Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, EDGE_MANAGEMENT, RULE_CHAINS_DIR);
+        try {
+            loadRuleChainFromFile(tenantId, edgeRuleChainsDir.resolve("edge_root_rule_chain.json"));
         } catch (Exception e) {
             log.error("Unable to load dashboard from json", e);
             throw new RuntimeException("Unable to load dashboard from json", e);
