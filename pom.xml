@@ -690,7 +690,7 @@
                         </lifecycleMappingMetadata>
                     </configuration>
                 </plugin>
-                <plugin>
+                <!--<plugin>
                     <groupId>com.mycila</groupId>
                     <artifactId>license-maven-plugin</artifactId>
                     <version>3.0</version>
@@ -752,14 +752,14 @@
                             </goals>
                         </execution>
                     </executions>
-                </plugin>
+                </plugin>-->
             </plugins>
         </pluginManagement>
         <plugins>
-            <plugin>
+            <!--<plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
-            </plugin>
+            </plugin>-->
         </plugins>
     </build>
 
