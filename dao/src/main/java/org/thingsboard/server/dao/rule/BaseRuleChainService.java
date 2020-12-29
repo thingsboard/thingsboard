@@ -105,7 +105,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
             } catch (Exception e) {
                 log.warn("[{}] Failed to create tenant to root rule chain relation. from: [{}], to: [{}]",
-                        savedRuleChain.getTenantId(), savedRuleChain.getId());
+                        savedRuleChain.getTenantId(), savedRuleChain.getTenantId(), savedRuleChain.getId(), e);
                 throw new RuntimeException(e);
             }
         }

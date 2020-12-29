@@ -106,10 +106,10 @@ public class EdgeController extends BaseController {
             edge.setTenantId(tenantId);
             boolean created = edge.getId() == null;
 
-            RuleChain defaultRootEdgeRuleChain = null;
+            RuleChain edgeTemplateRootRuleChain = null;
             if (created) {
-                defaultRootEdgeRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(tenantId);
-                if (defaultRootEdgeRuleChain == null) {
+                edgeTemplateRootRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(tenantId);
+                if (edgeTemplateRootRuleChain == null) {
                     throw new DataValidationException("Root edge rule chain is not available!");
                 }
             }
@@ -122,8 +122,8 @@ public class EdgeController extends BaseController {
             Edge savedEdge = checkNotNull(edgeService.saveEdge(edge));
 
             if (created) {
-                ruleChainService.assignRuleChainToEdge(tenantId, defaultRootEdgeRuleChain.getId(), savedEdge.getId());
-                edgeNotificationService.setEdgeRootRuleChain(tenantId, savedEdge, defaultRootEdgeRuleChain.getId());
+                ruleChainService.assignRuleChainToEdge(tenantId, edgeTemplateRootRuleChain.getId(), savedEdge.getId());
+                edgeNotificationService.setEdgeRootRuleChain(tenantId, savedEdge, edgeTemplateRootRuleChain.getId());
                 edgeService.assignDefaultRuleChainsToEdge(tenantId, savedEdge.getId());
             }
 
@@ -456,10 +456,12 @@ public class EdgeController extends BaseController {
         checkNotNull(query.getEdgeTypes());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
-            List<Edge> edges = checkNotNull(edgeService.findEdgesByQuery(getCurrentUser().getTenantId(), query).get());
+            SecurityUser user = getCurrentUser();
+            TenantId tenantId = user.getTenantId();
+            List<Edge> edges = checkNotNull(edgeService.findEdgesByQuery(tenantId, query).get());
             edges = edges.stream().filter(edge -> {
                 try {
-                    accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, Operation.READ, edge.getId(), edge);
+                    accessControlService.checkPermission(user, Resource.EDGE, Operation.READ, edge.getId(), edge);
                     return true;
                 } catch (ThingsboardException e) {
                     return false;

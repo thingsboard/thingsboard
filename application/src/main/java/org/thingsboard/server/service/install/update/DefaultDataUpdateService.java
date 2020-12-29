@@ -79,10 +79,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 1.4.0 to 2.0.0 ...");
                 tenantsDefaultRuleChainUpdater.updateEntities(null);
                 break;
-            case "2.5.5":
-                log.info("Updating data from version 2.5.5 to 2.6.0 ...");
-                tenantsDefaultEdgeRuleChainUpdater.updateEntities(null);
-                break;
             case "3.0.1":
                 log.info("Updating data from version 3.0.1 to 3.1.0 ...");
                 tenantsEntityViewsUpdater.updateEntities(null);
@@ -90,6 +86,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
             case "3.1.1":
                 log.info("Updating data from version 3.1.1 to 3.2.0 ...");
                 tenantsRootRuleChainUpdater.updateEntities(null);
+                break;
+            case "3.2.0":
+                log.info("Updating data from version 3.2.0 to 3.3.0 ...");
+                tenantsDefaultEdgeRuleChainUpdater.updateEntities(null);
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);

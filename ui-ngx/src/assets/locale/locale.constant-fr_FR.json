@@ -1449,7 +1449,8 @@
         "set-auto-assign-to-edge-text": "Après la confirmation, la chaîne de règles d'arête sera automatiquement affectée à l'arête (s) lors de la création.",
         "unset-auto-assign-to-edge": "Non défini, attribuer une chaîne de règles aux arêtes lors de la création",
         "unset-auto-assign-to-edge-title": "Voulez-vous vraiment annuler l'attribution de la chaîne de règles d'arête \"{{ruleChainName}}\" aux arêtes lors de la création?",
-        "unset-auto-assign-to-edge-text": "Après la confirmation, la chaîne de règles d'arêtes ne sera plus automatiquement affectée aux arêtes lors de la création."
+        "unset-auto-assign-to-edge-text": "Après la confirmation, la chaîne de règles d'arêtes ne sera plus automatiquement affectée aux arêtes lors de la création.",
+        "edge-template-root": "Racine du modèle"
     },
     "rulenode": {
         "add": "Ajouter un noeud de règle",

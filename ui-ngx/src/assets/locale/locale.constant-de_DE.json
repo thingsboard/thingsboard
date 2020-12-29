@@ -431,7 +431,7 @@
     "customer-required": "Kunde ist erforderlich",
     "select-default-customer": "Wählen Sie den Standardkunden aus.",
     "default-customer": "Standardkunde",
-    "edges": "Kunden Rand",
+    "edge-instances": "Kunden Rand",
     "default-customer-required": "Ein Standardkunde ist erforderlich, um das Dashboard auf Mandantenebene zu testen."
   },
   "datetime": {
@@ -1404,7 +1404,8 @@
     "set-auto-assign-to-edge-text": "Nach der Bestätigung wird die Kantenregelkette bei der Erstellung automatisch den Kanten zugewiesen.",
     "unset-auto-assign-to-edge": "Deaktiviert die Zuordnung der Regelkette zu Kanten bei der Erstellung",
     "unset-auto-assign-to-edge-title": "Möchten Sie die Kantenregelkette '{{ruleChainName}}' bei der Erstellung unbedingt den Kanten zuweisen?",
-    "unset-auto-assign-to-edge-text": "Nach der Bestätigung wird die Kantenregelkette bei der Erstellung nicht mehr automatisch den Kanten zugewiesen."
+    "unset-auto-assign-to-edge-text": "Nach der Bestätigung wird die Kantenregelkette bei der Erstellung nicht mehr automatisch den Kanten zugewiesen.",
+    "edge-template-root": "Vorlagenstamm"
   },
   "rulenode": {
     "details": "Details",

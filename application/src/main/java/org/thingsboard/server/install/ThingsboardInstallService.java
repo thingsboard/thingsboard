@@ -192,6 +192,13 @@ public class ThingsboardInstallService {
                             }
                             databaseEntitiesUpgradeService.upgradeDatabase("3.1.1");
                             dataUpdateService.updateData("3.1.1");
+                        case "3.2.0":
+                            log.info("Upgrading ThingsBoard from version 3.2.0 to 3.3.0 ...");
+                            if (databaseTsUpgradeService != null) {
+                                databaseTsUpgradeService.upgradeDatabase("3.2.0");
+                            }
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.2.0");
+                            dataUpdateService.updateData("3.2.0");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             systemDataLoaderService.createOAuth2Templates();
