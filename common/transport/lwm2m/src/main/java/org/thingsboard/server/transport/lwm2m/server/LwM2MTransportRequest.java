@@ -124,7 +124,7 @@ public class LwM2MTransportRequest {
         if (registration != null && resultIds.getObjectId() >= 0) {
             DownlinkRequest request = null;
             ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
-            ResourceModel resource = service.context.getCtxServer().getResourceModel(resultIds);
+            ResourceModel resource = service.context.getCtxServer().getResourceModel(registration, resultIds);
             timeoutInMs = timeoutInMs > 0 ? timeoutInMs : DEFAULT_TIMEOUT;
             switch (typeOper) {
                 case GET_TYPE_OPER_READ:
@@ -222,7 +222,7 @@ public class LwM2MTransportRequest {
                 this.sendRequest(lwServer, registration, request, lwM2MClient, timeoutInMs, isDelayedUpdate);
             } else if (request == null && isDelayedUpdate) {
                 String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: Resource path - %s msg  No  SendRequest to Client", target);
-                service.sentLogsToThingsboard(msg, registration.getId());
+                service.sentLogsToThingsboard(msg, registration);
                 log.error("[{}] - [{}] No SendRequest", target);
                 this.handleResponseError(registration, target, lwM2MClient, isDelayedUpdate);
 
@@ -251,14 +251,14 @@ public class LwM2MTransportRequest {
                     String msg = String.format(LOG_LW2M_INFO + ": sendRequest Replace%s: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
                             delayedUpdateStr, ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString(),
                             ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue().toString());
-                    service.sentLogsToThingsboard(msg, registration.getId());
+                    service.sentLogsToThingsboard(msg, registration);
                     log.info("[{}] - [{}] [{}] [{}] Update SendRequest[{}]", ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString(),
                             ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue(), delayedUpdateStr);
                 }
             } else {
                 String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: CoapCode - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client",
                         ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString());
-                service.sentLogsToThingsboard(msg, registration.getId());
+                service.sentLogsToThingsboard(msg, registration);
                 log.error("[{}] - [{}] [{}] error SendRequest", ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString());
                 if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest() && isDelayedUpdate) {
                     this.handleResponseError(registration, request.getPath().toString(), lwM2MClient, isDelayedUpdate);
@@ -268,7 +268,7 @@ public class LwM2MTransportRequest {
         }, e -> {
             String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: Resource path - %s msg error - %s  SendRequest to Client",
                     request.getPath().toString(), e.toString());
-            service.sentLogsToThingsboard(msg, registration.getId());
+            service.sentLogsToThingsboard(msg, registration);
             log.error("[{}] - [{}] error SendRequest", request.getPath().toString(), e.toString());
             if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest() && isDelayedUpdate) {
                 this.handleResponseError(registration, request.getPath().toString(), lwM2MClient, isDelayedUpdate);
@@ -300,7 +300,7 @@ public class LwM2MTransportRequest {
             String patn = "/" + objectId + "/" + instanceId + "/" + resourceId;
             String msg = String.format(LOG_LW2M_ERROR + ": NumberFormatException: Resource path - %s type - %s value - %s msg error - %s  SendRequest to Client",
                     patn, type, value, e.toString());
-            service.sentLogsToThingsboard(msg, registration.getId());
+            service.sentLogsToThingsboard(msg, registration);
             log.error("Path: [{}] type: [{}] value: [{}] errorMsg: [{}]]", patn, type, value, e.toString());
             return null;
         }

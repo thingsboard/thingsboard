@@ -114,8 +114,11 @@
         <dependency>
             <groupId>org.eclipse.leshan</groupId>
             <artifactId>leshan-core</artifactId>
-            <version>1.0.1</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.leshan</groupId>
+            <artifactId>leshan-server-cf</artifactId>
         </dependency>
     </dependencies>
 

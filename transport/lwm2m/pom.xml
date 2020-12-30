@@ -78,14 +78,10 @@
         <dependency>
             <groupId>org.eclipse.californium</groupId>
             <artifactId>californium-core</artifactId>
-            <version>${californium.version}</version>
-            <type>test-jar</type>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.californium</groupId>
             <artifactId>element-connector</artifactId>
-            <version>${californium.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>

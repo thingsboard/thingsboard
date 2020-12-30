@@ -129,8 +129,12 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         return (modelClients != null) ? modelClients.getValue() : null;
     }
 
-    public LwM2MClient getLwM2MClient(String registrationId) {
-        return this.sessions.get(registrationId);
+    public LwM2MClient getLwM2MClientWithReg(Registration registration, String registrationId) {
+        return registrationId != null ?
+                this.sessions.get(registrationId) :
+                this.sessions.containsKey(registration.getId()) ?
+                        this.sessions.get(registration.getId()) :
+                        this.sessions.get(registration.getEndpoint());
     }
 
     public LwM2MClient getLwM2MClient(TransportProtos.SessionInfoProto sessionInfo) {

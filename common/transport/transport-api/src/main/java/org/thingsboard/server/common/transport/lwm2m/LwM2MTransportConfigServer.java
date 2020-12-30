@@ -22,21 +22,25 @@ import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -177,10 +181,6 @@ public class LwM2MTransportConfigServer {
     @Value("${transport.lwm2m.secure.redis_url:}")
     private String redisUrl;
 
-    @Getter
-    @Setter
-    private Map<Integer, ObjectModel> objectModels;
-
     @PostConstruct
     public void init() {
         modelsValue = ObjectLoader.loadDefault();
@@ -196,7 +196,6 @@ public class LwM2MTransportConfigServer {
             log.error(" [{}] Read Models", path.getAbsoluteFile());
         }
         getInKeyStore();
-        this.objectModels = new ConcurrentHashMap<Integer, ObjectModel>();
     }
 
     private File getPathModels() {
@@ -248,21 +247,25 @@ public class LwM2MTransportConfigServer {
         return FULL_FILE_PATH.toUri().getPath();
     }
 
-    public ResourceModel getResourceModel(LwM2mPath pathIds) {
-        return (this.objectModels.size()>0 &&
-                this.objectModels.containsKey(pathIds.getObjectId()) &&
-                this.objectModels.get(pathIds.getObjectId()).resources.containsKey(pathIds.getResourceId())) ?
-                this.objectModels.get(pathIds.getObjectId()).resources.get(pathIds.getResourceId()) : null;
+    public ResourceModel getResourceModel(Registration registration, LwM2mPath pathIds) {
+        String pathLink = "/" + pathIds.getObjectId() + "/" + pathIds.getObjectInstanceId();
+        return (Arrays.stream(registration.getObjectLinks()).filter(p-> p.getUrl().equals(pathLink)).findFirst().isPresent() &&
+                this.modelsValue.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).size() > 0) &&
+                this.modelsValue.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0).resources.containsKey(pathIds.getResourceId()) ?
+                this.modelsValue.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0).resources.get(pathIds.getResourceId()) :
+                null;
     }
     
-    public ResourceModel.Type getResourceModelType(LwM2mPath pathIds) {
-        ResourceModel resource = this.getResourceModel(pathIds);
+    public ResourceModel.Type getResourceModelType(Registration registration, LwM2mPath pathIds) {
+        ResourceModel resource = this.getResourceModel(registration, pathIds);
         return (resource == null) ? null : resource.type;
     }
 
-    public ResourceModel.Operations getOperation(LwM2mPath pathIds) {
-        ResourceModel resource = this.getResourceModel(pathIds);
+    public ResourceModel.Operations getOperation(Registration registration, LwM2mPath pathIds) {
+        ResourceModel resource = this.getResourceModel(registration, pathIds);
         return (resource == null) ? ResourceModel.Operations.NONE : resource.operations;
     }
+
+
     
 }
