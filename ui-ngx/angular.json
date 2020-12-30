@@ -22,6 +22,7 @@
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
             "tsConfig": "src/tsconfig.app.json",
+            "aot": true,
             "assets": [
               "src/thingsboard.ico",
               "src/assets",
@@ -161,6 +162,7 @@
         "serve": {
           "builder": "@angular-builders/custom-webpack:dev-server",
           "options": {
+            "aot": true,
             "browserTarget": "thingsboard:build",
             "proxyConfig": "proxy.conf.js"
           },

@@ -154,7 +154,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private alarmsTitlePattern: string;
 
   private displayDetails = true;
-  private allowAcknowledgment = true;
+  public allowAcknowledgment = true;
   private allowClear = true;
 
   private defaultPageSize = 10;

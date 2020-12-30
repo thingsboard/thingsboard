@@ -38,7 +38,7 @@ export interface AlarmRuleConditionDialogData {
   selector: 'tb-alarm-rule-condition-dialog',
   templateUrl: './alarm-rule-condition-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: AlarmRuleConditionDialogComponent}],
-  styleUrls: ['/alarm-rule-condition-dialog.component.scss']
+  styleUrls: ['./alarm-rule-condition-dialog.component.scss']
 })
 export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRuleConditionDialogComponent, AlarmCondition>
   implements OnInit, ErrorStateMatcher {

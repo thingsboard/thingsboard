@@ -186,11 +186,16 @@ export type TripAnimationSettings = {
     usePointAsAnchor: boolean;
     normalizationStep: number;
     showPolygon: boolean;
+    showLabel: boolean;
+    showTooltip: boolean;
     latKeyName: string;
     lngKeyName: string;
     rotationAngle: number;
     label: string;
     tooltipPattern: string;
+    tooltipColor: string;
+    tooltipOpacity: number;
+    tooltipFontColor: string;
     useTooltipFunction: boolean;
     useLabelFunction: boolean;
     pointAsAnchorFunction: GenericFunction;
