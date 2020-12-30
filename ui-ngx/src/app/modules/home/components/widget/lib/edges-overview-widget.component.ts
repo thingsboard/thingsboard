@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -23,8 +23,8 @@ import { DatasourceData, DatasourceType, WidgetConfig, widgetType } from '@share
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import cssjs from '@core/css/css';
-import { fromEvent } from 'rxjs';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+import { fromEvent, Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, mergeMap, tap } from 'rxjs/operators';
 import { constructTableCssString } from '@home/components/widget/lib/table-widget.models';
 import { Overlay } from '@angular/cdk/overlay';
 import {
@@ -71,6 +71,8 @@ import { TranslateService } from "@ngx-translate/core";
 import { Direction, SortOrder } from "@shared/models/page/sort-order";
 import { PageLink } from "@shared/models/page/page-link";
 import { Edge, EdgeInfo } from "@shared/models/edge.models";
+import { BaseData } from "@shared/models/base-data";
+import { EntityId } from "@shared/models/id/entity-id";
 
 @Component({
   selector: 'tb-edges-overview-widget',
@@ -88,12 +90,15 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
 
   public textSearchMode = false;
   public textSearch = null;
+  public customerTitle: string = null;
 
   public nodeEditCallbacks: NavTreeEditCallbacks = {};
 
   private settings: EdgesOverviewWidgetSettings;
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
+  private datasources: Array<HierarchyNodeDatasource>;
+  private data: Array<Array<DatasourceData>>;
 
   private nodesMap: {[nodeId: string]: HierarchyNavTreeNode} = {};
   private pendingUpdateNodeTasks: {[nodeId: string]: () => void} = {};
@@ -113,7 +118,7 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
 
   private searchAction: WidgetAction = {
     name: 'action.search',
-    show: true,
+    show: false,
     icon: 'search',
     onAction: () => {
       this.enterFilterMode();
@@ -127,7 +132,8 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
               private translateService: TranslateService,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
-              private utils: UtilsService) {
+              private utils: UtilsService,
+              private cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -136,6 +142,10 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
     this.settings = this.ctx.settings;
     this.widgetConfig = this.ctx.widgetConfig;
     this.subscription = this.ctx.defaultSubscription;
+    this.datasources = this.subscription.datasources as Array<HierarchyNodeDatasource>;
+    this.data = this.subscription.dataPages[0].data;
+    this.ctx.widgetTitle = this.datasources[0].entity.name;
+    this.getCustomerTitle(this.datasources[0].entity.id.id);
     this.initializeConfig();
     this.ctx.updateWidgetParams();
   }
@@ -265,16 +275,10 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
 
   public loadNodes: LoadNodesCallback = (node, cb) => {
     if (node.id === '#') {
-      const sortOrder: SortOrder = { property: 'name', direction: Direction.ASC };
-      const pageLink = new PageLink(100, 0, null, sortOrder);
-      this.edgeService.getTenantEdgeInfos(pageLink).subscribe(
-        (edges) => {
-            cb(this.edgesToNodes(node.id, edges.data))
-          });
-      } else if (node.data.type === 'edge') {
-      const edge = node.data.entity;
-      cb(this.loadNodesForEdge(node.id, edge));
-    } else if (node.data.type === 'edgeGroups') {
+      const edge: BaseData<EntityId> = this.datasources[0].entity;
+      cb(this.loadNodesForEdge(edge.id.id, edge));
+      }
+    else if (node.data.type === 'edgeGroups') {
       const pageLink = new PageLink(100);
       this.entityService.getAssignedToEdgeEntitiesByType(node, pageLink).subscribe(
         (entities) => {
@@ -288,7 +292,7 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
     }
   }
 
-  private loadNodesForEdge(parentNodeId: string, edge: EdgeInfo): EdgeOverviewNode[] {
+  private loadNodesForEdge(parentNodeId: string, edge: any): EdgeOverviewNode[] {
     const nodes: EdgeOverviewNode[] = [];
     const nodesMap = {};
     this.edgeGroupsNodesMap[parentNodeId] = nodesMap;
@@ -408,12 +412,6 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
     }
   }
 
-  private prepareNodes(nodes: HierarchyNavTreeNode[]): HierarchyNavTreeNode[] {
-    nodes = nodes.filter((node) => node !== null);
-    nodes.sort((node1, node2) => this.nodesSortFunction(node1.data.nodeCtx, node2.data.nodeCtx));
-    return nodes;
-  }
-
   private prepareNodeText(node: HierarchyNavTreeNode): string {
     const nodeIcon = this.prepareNodeIcon(node.data.nodeCtx);
     const nodeText = this.nodeTextFunction(node.data.nodeCtx);
@@ -441,110 +439,15 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
     }
   }
 
-  private datasourceToNode(datasource: HierarchyNodeDatasource,
-                             data: DatasourceData[],
-                             parentNodeCtx?: HierarchyNodeContext): HierarchyNavTreeNode {
-    const node: HierarchyNavTreeNode = {
-      id: (++this.nodeIdCounter) + ''
-    };
-    this.nodesMap[node.id] = node;
-    datasource.nodeId = node.id;
-    node.icon = false;
-    const nodeCtx: HierarchyNodeContext = {
-      parentNodeCtx,
-      entity: {
-        id: {
-          id: datasource.entityId,
-          entityType: datasource.entityType
-        },
-        name: datasource.entityName,
-        label: datasource.entityLabel ? datasource.entityLabel : datasource.entityName
-      },
-      data: {}
-    };
-    datasource.dataKeys.forEach((dataKey, index) => {
-      const keyData = data[index].data;
-      if (keyData && keyData.length && keyData[0].length > 1) {
-        nodeCtx.data[dataKey.label] = keyData[0][1];
-      } else {
-        nodeCtx.data[dataKey.label] = '';
-      }
-    });
-    nodeCtx.level = parentNodeCtx ? parentNodeCtx.level + 1 : 1;
-    node.data = {
-      datasource,
-      nodeCtx
-    };
-    node.state = {
-      disabled: this.nodeDisabledFunction(node.data.nodeCtx),
-      opened: this.nodeOpenedFunction(node.data.nodeCtx)
-    };
-    node.text = this.prepareNodeText(node);
-    node.children = this.nodeHasChildrenFunction(node.data.nodeCtx);
-    return node;
-  }
-
-  private loadChildren(parentNode: HierarchyNavTreeNode, datasource: HierarchyNodeDatasource, childrenNodesLoadCb: NodesCallback) {
-    const nodeCtx = parentNode.data.nodeCtx;
-    nodeCtx.childrenNodesLoaded = false;
-    const entityFilter = this.prepareNodeRelationsQueryFilter(nodeCtx);
-    const childrenDatasource = {
-      dataKeys: datasource.dataKeys,
-      type: DatasourceType.entity,
-      filterId: datasource.filterId,
-      entityFilter
-    } as HierarchyNodeDatasource;
-    const subscriptionOptions: WidgetSubscriptionOptions = {
-      type: widgetType.latest,
-      datasources: [childrenDatasource],
-      callbacks: {
-        onSubscriptionMessage: (subscription, message) => {
-          this.ctx.showToast(message.severity, message.message, undefined,
-            'bottom', 'left', this.toastTargetId);
-        },
-        onInitialPageDataChanged: (subscription) => {
-          this.ctx.subscriptionApi.removeSubscription(subscription.id);
-          this.nodeEditCallbacks.refreshNode(parentNode.id);
-        },
-        onDataUpdated: subscription => {
-          if (nodeCtx.childrenNodesLoaded) {
-            this.updateNodeData(subscription.data);
-          } else {
-            const datasourcesPageData = subscription.datasourcePages[0];
-            const dataPageData = subscription.dataPages[0];
-            const childNodes: HierarchyNavTreeNode[] = [];
-            datasourcesPageData.data.forEach((childDatasource, index) => {
-              childNodes.push(this.datasourceToNode(childDatasource as HierarchyNodeDatasource, dataPageData.data[index]));
-            });
-            nodeCtx.childrenNodesLoaded = true;
-            childrenNodesLoadCb(this.prepareNodes(childNodes));
-          }
+  private getCustomerTitle(edgeId) {
+    this.edgeService.getEdgeInfo(edgeId).subscribe(
+      (edge) => {
+        if (edge.customerTitle) {
+          this.customerTitle = this.translateService.instant('edge.assigned-to-customer') + ': ' + edge.customerTitle;
+        } else {
+          this.customerTitle = null;
         }
-      }
-    };
-    this.ctx.subscriptionApi.createSubscription(subscriptionOptions, true);
-  }
-
-  private prepareNodeRelationQuery(nodeCtx: HierarchyNodeContext): EntityRelationsQuery {
-    let relationQuery = this.nodeRelationQueryFunction(nodeCtx);
-    if (relationQuery && relationQuery === 'default') {
-      relationQuery = defaultNodeRelationQueryFunction(nodeCtx);
-    }
-    return relationQuery as EntityRelationsQuery;
-  }
-
-  private prepareNodeRelationsQueryFilter(nodeCtx: HierarchyNodeContext): EntityFilter {
-    const relationQuery = this.prepareNodeRelationQuery(nodeCtx);
-    return {
-      rootEntity: {
-        id: relationQuery.parameters.rootId,
-        entityType: relationQuery.parameters.rootType
-      },
-      direction: relationQuery.parameters.direction,
-      filters: relationQuery.filters,
-      maxLevel: relationQuery.parameters.maxLevel,
-      fetchLastLevelOnly: relationQuery.parameters.fetchLastLevelOnly,
-      type: AliasFilterType.relationsQuery
-    } as RelationsQueryFilter;
+        this.cd.detectChanges();
+      });
   }
 }
