@@ -20,13 +20,16 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.script.ScriptException;
+import java.util.List;
 import java.util.Set;
 
 public interface ScriptEngine {
 
     TbMsg executeUpdate(TbMsg msg) throws ScriptException;
 
-    ListenableFuture<TbMsg> executeUpdateAsync(TbMsg msg);
+    ListenableFuture<List<TbMsg>> executeUpdateAsync(TbMsg msg);
+
+//    ListenableFuture<List<TbMsg>> executeUpdateAsync(TbMsg msg, Boolean allowedArrayInResult);
 
     TbMsg executeGenerate(TbMsg prevMsg) throws ScriptException;
 

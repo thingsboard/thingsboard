@@ -33,7 +33,10 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
 @Slf4j
 @RuleNode(
@@ -65,13 +68,13 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
     }
 
     @Override
-    protected ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg) {
+    protected ListenableFuture<List<TbMsg>> transform(TbContext ctx, TbMsg msg) {
         ListenableFuture<? extends EntityId> newOriginator = getNewOriginator(ctx, msg.getOriginator());
-        return Futures.transform(newOriginator, (Function<EntityId, TbMsg>) n -> {
+        return Futures.transform(newOriginator, n -> {
             if (n == null || n.isNullUid()) {
                 return null;
             }
-            return ctx.transformMsg(msg, msg.getType(), n, msg.getMetaData(), msg.getData());
+            return Collections.singletonList((ctx.transformMsg(msg, msg.getType(), n, msg.getMetaData(), msg.getData())));
         }, ctx.getDbCallbackExecutor());
     }
 

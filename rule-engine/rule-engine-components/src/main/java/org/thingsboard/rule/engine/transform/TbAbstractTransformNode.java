@@ -17,16 +17,17 @@ package org.thingsboard.rule.engine.transform;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.msg.TbMsg;
+
+import java.util.List;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 /**
  * Created by ashvayka on 19.01.18.
@@ -61,7 +62,15 @@ public abstract class TbAbstractTransformNode implements TbNode {
         }
     }
 
-    protected abstract ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg);
+    protected void transformSuccess(TbContext ctx, TbMsg msg, List<TbMsg> msgs) {
+        if (msgs != null && !msgs.isEmpty()) {
+            msgs.forEach(ctx::tellSuccess);
+        } else {
+            ctx.tellNext(msg, FAILURE);
+        }
+    }
+
+    protected abstract ListenableFuture<List<TbMsg>> transform(TbContext ctx, TbMsg msg);
 
     public void setConfig(TbTransformNodeConfiguration config) {
         this.config = config;
