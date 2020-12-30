@@ -148,7 +148,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     public void sync(TenantId tenantId, Edge edge) {
         log.trace("[{}][{}] Staring edge sync process", tenantId, edge.getId());
         try {
-            syncWidgetsBundleAndWidgetTypes(tenantId, edge);
+            syncWidgetsBundles(tenantId, edge);
             syncAdminSettings(tenantId, edge);
             syncRuleChains(tenantId, edge, new TimePageLink(DEFAULT_LIMIT));
             syncUsers(tenantId, edge, new TextPageLink(DEFAULT_LIMIT));
@@ -156,6 +156,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
             syncAssets(tenantId, edge, new TimePageLink(DEFAULT_LIMIT));
             syncEntityViews(tenantId, edge, new TimePageLink(DEFAULT_LIMIT));
             syncDashboards(tenantId, edge, new TimePageLink(DEFAULT_LIMIT));
+            syncWidgetsTypes(tenantId, edge);
         } catch (Exception e) {
             log.error("[{}][{}] Exception during sync process", tenantId, edge.getId(), e);
         }
@@ -344,22 +345,35 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         }
     }
 
-    private void syncWidgetsBundleAndWidgetTypes(TenantId tenantId, Edge edge) {
-        log.trace("[{}] syncWidgetsBundleAndWidgetTypes [{}]", tenantId, edge.getName());
+    private void syncWidgetsBundles(TenantId tenantId, Edge edge) {
+        log.trace("[{}] syncWidgetsBundles [{}]", tenantId, edge.getName());
         List<WidgetsBundle> widgetsBundlesToPush = new ArrayList<>();
-        List<WidgetType> widgetTypesToPush = new ArrayList<>();
         widgetsBundlesToPush.addAll(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(tenantId));
         widgetsBundlesToPush.addAll(widgetsBundleService.findSystemWidgetsBundles(tenantId));
         try {
             for (WidgetsBundle widgetsBundle: widgetsBundlesToPush) {
                 saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.WIDGETS_BUNDLE, EdgeEventActionType.ADDED, widgetsBundle.getId(), null);
-                widgetTypesToPush.addAll(widgetTypeService.findWidgetTypesByTenantIdAndBundleAlias(widgetsBundle.getTenantId(), widgetsBundle.getAlias()));
-            }
-            for (WidgetType widgetType: widgetTypesToPush) {
-                saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.WIDGET_TYPE, EdgeEventActionType.ADDED, widgetType.getId(), null);
             }
         } catch (Exception e) {
-            log.error("Exception during loading widgets bundle(s) and widget type(s) on sync!", e);
+            log.error("Exception during loading widgets bundle(s) on sync!", e);
+        }
+    }
+
+    private void syncWidgetsTypes(TenantId tenantId, Edge edge) {
+        log.trace("[{}] syncWidgetsTypes [{}]", tenantId, edge.getName());
+        List<WidgetsBundle> widgetsBundlesToPush = new ArrayList<>();
+        widgetsBundlesToPush.addAll(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(tenantId));
+        widgetsBundlesToPush.addAll(widgetsBundleService.findSystemWidgetsBundles(tenantId));
+        try {
+            for (WidgetsBundle widgetsBundle: widgetsBundlesToPush) {
+                List<WidgetType> widgetTypesToPush =
+                        widgetTypeService.findWidgetTypesByTenantIdAndBundleAlias(widgetsBundle.getTenantId(), widgetsBundle.getAlias());
+                for (WidgetType widgetType: widgetTypesToPush) {
+                    saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.WIDGET_TYPE, EdgeEventActionType.ADDED, widgetType.getId(), null);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Exception during loading widgets type(s) on sync!", e);
         }
     }
 
