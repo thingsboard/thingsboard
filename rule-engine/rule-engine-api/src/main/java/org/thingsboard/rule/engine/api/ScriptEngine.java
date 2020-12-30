@@ -29,8 +29,6 @@ public interface ScriptEngine {
 
     ListenableFuture<List<TbMsg>> executeUpdateAsync(TbMsg msg);
 
-//    ListenableFuture<List<TbMsg>> executeUpdateAsync(TbMsg msg, Boolean allowedArrayInResult);
-
     TbMsg executeGenerate(TbMsg prevMsg) throws ScriptException;
 
     boolean executeFilter(TbMsg msg) throws ScriptException;
