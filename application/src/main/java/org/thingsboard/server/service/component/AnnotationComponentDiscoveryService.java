@@ -115,11 +115,24 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     }
 
     private void putComponentIntoMaps(ComponentType type, RuleNode ruleNodeAnnotation, ComponentDescriptor component) {
-        if (ruleChainTypeContainsArray(RuleChainType.CORE, ruleNodeAnnotation.ruleChainTypes())) {
-            coreComponentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
+        boolean ruleChainTypesMethodAvailable;
+        try {
+            ruleNodeAnnotation.getClass().getMethod("ruleChainTypes");
+            ruleChainTypesMethodAvailable = true;
+        } catch (NoSuchMethodException exception) {
+            log.warn("[{}] does not have ruleChainTypes. Probably extension class compiled before 3.3 release. " +
+                    "Please update your extensions and compile using latest 3.3 release dependency", ruleNodeAnnotation.name());
+            ruleChainTypesMethodAvailable = false;
         }
-        if (ruleChainTypeContainsArray(RuleChainType.EDGE, ruleNodeAnnotation.ruleChainTypes())) {
-            edgeComponentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
+        if (ruleChainTypesMethodAvailable) {
+            if (ruleChainTypeContainsArray(RuleChainType.CORE, ruleNodeAnnotation.ruleChainTypes())) {
+                coreComponentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
+            }
+            if (ruleChainTypeContainsArray(RuleChainType.EDGE, ruleNodeAnnotation.ruleChainTypes())) {
+                edgeComponentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
+            }
+        } else {
+            coreComponentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
         }
     }
 
