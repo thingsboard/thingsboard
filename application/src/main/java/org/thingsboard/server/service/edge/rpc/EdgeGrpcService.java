@@ -161,7 +161,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     public void deleteEdge(EdgeId edgeId) {
         EdgeGrpcSession session = sessions.get(edgeId);
         if (session != null && session.isConnected()) {
-            log.debug("Closing and removing session for edge [{}]", edgeId);
+            log.info("Closing and removing session for edge [{}]", edgeId);
             session.close();
             sessions.remove(edgeId);
             sessionNewEvents.remove(edgeId);
@@ -179,11 +179,12 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private void onEdgeConnect(EdgeId edgeId, EdgeGrpcSession edgeGrpcSession) {
-        log.debug("[{}] onEdgeConnect [{}]", edgeId, edgeGrpcSession.getSessionId());
+        log.info("[{}] edge [{}] connected successfully.", edgeGrpcSession.getSessionId(), edgeId);
         sessions.put(edgeId, edgeGrpcSession);
         sessionNewEvents.put(edgeId, false);
         save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, true);
         save(edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, System.currentTimeMillis());
+        cancelScheduleEdgeEventsCheck(edgeId);
         scheduleEdgeEventsCheck(edgeGrpcSession);
     }
 
@@ -214,7 +215,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 scheduleEdgeEventsCheck(session);
             }, ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval(), TimeUnit.MILLISECONDS);
             sessionEdgeEventChecks.put(edgeId, schedule);
-            log.trace("[{}] Check edge event was scheduler for edge [{}]", tenantId, edgeId.getId());
+            log.trace("[{}] Check edge event scheduled for edge [{}]", tenantId, edgeId.getId());
         } else {
             log.debug("[{}] Session was removed and edge event check schedule must not be started [{}]",
                     tenantId, edgeId.getId());
@@ -222,6 +223,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private void cancelScheduleEdgeEventsCheck(EdgeId edgeId) {
+        log.trace("[{}] cancelling edge event check for edge", edgeId);
         if (sessionEdgeEventChecks.containsKey(edgeId)) {
             ScheduledFuture<?> sessionEdgeEventCheck = sessionEdgeEventChecks.get(edgeId);
             if (sessionEdgeEventCheck != null && !sessionEdgeEventCheck.isCancelled() && !sessionEdgeEventCheck.isDone()) {
@@ -232,7 +234,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private void onEdgeDisconnect(EdgeId edgeId) {
-        log.debug("[{}] onEdgeDisconnect", edgeId);
+        log.info("[{}] edge disconnected!", edgeId);
         sessions.remove(edgeId);
         sessionNewEvents.remove(edgeId);
         save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, false);
