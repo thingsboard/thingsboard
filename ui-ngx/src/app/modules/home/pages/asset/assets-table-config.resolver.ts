@@ -121,7 +121,11 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
       tap((authUser) => {
         if (authUser.authority === Authority.CUSTOMER_USER) {
-          this.config.componentsData.assetScope = 'customer_user';
+          if (route.data.assetsType === 'edge') {
+            this.config.componentsData.assetScope = 'edge_customer_user';
+          } else {
+            this.config.componentsData.assetScope = 'customer_user';
+          }
           this.customerId = authUser.customerId;
         }
       }),
@@ -179,7 +183,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
       this.config.entitiesFetchFunction = pageLink =>
         this.assetService.getTenantAssetInfos(pageLink, this.config.componentsData.assetType);
       this.config.deleteEntity = id => this.assetService.deleteAsset(id.id);
-    } else if (assetScope === 'edge') {
+    } else if (assetScope === 'edge' || assetScope === 'edge_customer_user') {
       this.config.entitiesFetchFunction = pageLink =>
         this.assetService.getEdgeAssets(this.config.componentsData.edgeId, pageLink, this.config.componentsData.assetType);
     } else {

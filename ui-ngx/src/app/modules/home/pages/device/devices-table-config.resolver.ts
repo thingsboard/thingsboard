@@ -131,7 +131,11 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
       tap((authUser) => {
         if (authUser.authority === Authority.CUSTOMER_USER) {
-          this.config.componentsData.deviceScope = 'customer_user';
+          if (route.data.devicesType === 'edge') {
+            this.config.componentsData.deviceScope = 'edge_customer_user';
+          } else {
+            this.config.componentsData.deviceScope = 'customer_user';
+          }
           this.customerId = authUser.customerId;
         }
       }),
@@ -197,7 +201,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           this.config.componentsData.deviceProfileId !== null ?
             this.config.componentsData.deviceProfileId.id : '');
       this.config.deleteEntity = id => this.deviceService.deleteDevice(id.id);
-    } else if (deviceScope === 'edge') {
+    } else if (deviceScope === 'edge' || deviceScope === 'edge_customer_user') {
       this.config.entitiesFetchFunction = pageLink =>
         this.deviceService.getEdgeDevices(this.config.componentsData.edgeId, pageLink, this.config.componentsData.edgeType);
     } else {
@@ -267,7 +271,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           }
         );
     }
-    if (deviceScope === 'customer_user') {
+    if (deviceScope === 'customer_user' || deviceScope === 'edge_customer_user') {
       actions.push(
         {
           name: this.translate.instant('device.view-credentials'),

@@ -116,7 +116,11 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
       tap((authUser) => {
         if (authUser.authority === Authority.CUSTOMER_USER) {
-          this.config.componentsData.dashboardScope = 'customer_user';
+          if (route.data.dashboardsType === 'edge') {
+            this.config.componentsData.dashboardScope = 'edge_customer_user';
+          } else {
+            this.config.componentsData.dashboardScope = 'customer_user';
+          }
           this.config.componentsData.customerId = authUser.customerId;
         }
       }),
@@ -176,7 +180,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       this.config.entitiesFetchFunction = pageLink =>
         this.dashboardService.getTenantDashboards(pageLink);
       this.config.deleteEntity = id => this.dashboardService.deleteDashboard(id.id);
-    } else if (dashboardScope === 'edge') {
+    } else if (dashboardScope === 'edge' || dashboardScope === 'edge_customer_user') {
       this.config.entitiesFetchFunction = pageLink =>
         this.dashboardService.getEdgeDashboards(this.config.componentsData.edgeId, pageLink, this.config.componentsData.dashboardsType);
     } else {

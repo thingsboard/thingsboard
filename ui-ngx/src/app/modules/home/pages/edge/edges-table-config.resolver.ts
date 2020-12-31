@@ -173,7 +173,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     }
     if (edgeScope === 'customer_user') {
       this.config.entitiesFetchFunction = pageLink =>
-        this.edgeService.getCustomerEdgeInfos(this.customerId, pageLink);
+        this.edgeService.getCustomerEdgeInfos(this.customerId, pageLink, this.config.componentsData.edgeType);
       this.config.deleteEntity = id => this.edgeService.unassignEdgeFromCustomer(id.id);
     }
   }
@@ -252,6 +252,34 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
           isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && entity.customerIsPublic),
           onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
         },
+      );
+    }
+    if (edgeScope === 'customer_user') {
+      actions.push(
+        {
+          name: this.translate.instant('edge.manage-edge-assets'),
+          icon: 'domain',
+          isEnabled: (entity) => true,
+          onAction: ($event, entity) => this.openEdgeAssets($event, entity)
+        },
+        {
+          name: this.translate.instant('edge.manage-edge-devices'),
+          icon: 'devices_other',
+          isEnabled: (entity) => true,
+          onAction: ($event, entity) => this.openEdgeDevices($event, entity)
+        },
+        {
+          name: this.translate.instant('edge.manage-edge-entity-views'),
+          icon: 'view_quilt',
+          isEnabled: (entity) => true,
+          onAction: ($event, entity) => this.openEdgeEntityViews($event, entity)
+        },
+        {
+          name: this.translate.instant('edge.manage-edge-dashboards'),
+          icon: 'dashboard',
+          isEnabled: (entity) => true,
+          onAction: ($event, entity) => this.openEdgeDashboards($event, entity)
+        }
       );
     }
     return actions;
