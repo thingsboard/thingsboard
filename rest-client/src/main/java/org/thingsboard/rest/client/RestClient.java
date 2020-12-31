@@ -1456,7 +1456,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("relationTypeGroup", relationTypeGroup.name());
 
         return restTemplate.exchange(
-                baseURL + "/api/relations?toId={toId}&toType={toType}&relationTypeGroup={relationTypeGroup}",
+                baseURL + "/api/relations/info?toId={toId}&toType={toType}&relationTypeGroup={relationTypeGroup}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntityRelationInfo>>() {
@@ -1491,7 +1491,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public List<EntityRelationInfo> findInfoByQuery(EntityRelationsQuery query) {
         return restTemplate.exchange(
-                baseURL + "/api/relations",
+                baseURL + "/api/relations/info",
                 HttpMethod.POST,
                 new HttpEntity<>(query),
                 new ParameterizedTypeReference<List<EntityRelationInfo>>() {

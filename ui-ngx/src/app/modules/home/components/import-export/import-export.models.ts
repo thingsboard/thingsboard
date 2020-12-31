@@ -146,7 +146,7 @@ function splitCSV(str: string, sep: string): string[] {
 
 function isNumeric(str: any): boolean {
   str = str.replace(',', '.');
-  return !isNaN(parseFloat(str)) && isFinite(str);
+  return (str - parseFloat(str) + 1) >= 0 && Number(str).toString() === str;
 }
 
 function convertStringToJSType(str: string): any {

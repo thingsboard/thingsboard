@@ -19,7 +19,7 @@ import LeafletMap from '../leaflet-map';
 import { MapImage, PosFuncton, UnitedMapSettings } from '../map-models';
 import { Observable, ReplaySubject } from 'rxjs';
 import { filter, map, mergeMap } from 'rxjs/operators';
-import { aspectCache, calculateNewPointCoordinate, parseFunction } from '@home/components/widget/lib/maps/maps-utils';
+import { aspectCache, calculateNewPointCoordinate, parseFunction } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';

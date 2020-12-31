@@ -122,6 +122,11 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
+    public List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
+        return timeseriesLatestDao.findAllKeysByEntityIds(tenantId, entityIds);
+    }
+
+    @Override
     public ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
         validate(entityId);
         if (tsKvEntry == null) {

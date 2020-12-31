@@ -59,37 +59,40 @@ export class DynamicComponentFactoryService {
                      template: string,
                      modules?: Type<any>[]): Observable<ComponentFactory<T>> {
     const dymamicComponentFactorySubject = new ReplaySubject<ComponentFactory<T>>();
-    const comp = this.createDynamicComponent(componentType, template);
-    let moduleImports: Type<any>[] = [CommonModule];
-    if (modules) {
-      moduleImports = [...moduleImports, ...modules];
-    }
-    // noinspection AngularInvalidImportedOrDeclaredSymbol
-    @NgModule({
-      declarations: [comp],
-      imports: moduleImports
-    })
-    class DynamicComponentInstanceModule extends DynamicComponentModule {}
-    try {
-      this.compiler.compileModuleAsync(DynamicComponentInstanceModule).then(
-        (module) => {
-          const moduleRef = module.create(this.injector);
-          const factory = moduleRef.componentFactoryResolver.resolveComponentFactory(comp);
-          this.dynamicComponentModulesMap.set(factory, {
-            moduleRef,
-            moduleType: module.moduleType
-          });
-          dymamicComponentFactorySubject.next(factory);
-          dymamicComponentFactorySubject.complete();
+    import('@angular/compiler').then(
+      () => {
+        const comp = this.createDynamicComponent(componentType, template);
+        let moduleImports: Type<any>[] = [CommonModule];
+        if (modules) {
+          moduleImports = [...moduleImports, ...modules];
         }
-      ).catch(
-        (e) => {
+        // noinspection AngularInvalidImportedOrDeclaredSymbol
+        const dynamicComponentInstanceModule = NgModule({
+          declarations: [comp],
+          imports: moduleImports
+        })(class DynamicComponentInstanceModule extends DynamicComponentModule {});
+        try {
+          this.compiler.compileModuleAsync(dynamicComponentInstanceModule).then(
+            (module) => {
+              const moduleRef = module.create(this.injector);
+              const factory = moduleRef.componentFactoryResolver.resolveComponentFactory(comp);
+              this.dynamicComponentModulesMap.set(factory, {
+                moduleRef,
+                moduleType: module.moduleType
+              });
+              dymamicComponentFactorySubject.next(factory);
+              dymamicComponentFactorySubject.complete();
+            }
+          ).catch(
+            (e) => {
+              dymamicComponentFactorySubject.error(e);
+            }
+          );
+        } catch (e) {
           dymamicComponentFactorySubject.error(e);
         }
-      );
-    } catch (e) {
-      dymamicComponentFactorySubject.error(e);
-    }
+      }
+    );
     return dymamicComponentFactorySubject.asObservable();
   }
 

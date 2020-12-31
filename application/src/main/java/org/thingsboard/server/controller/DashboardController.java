@@ -212,7 +212,7 @@ public class DashboardController extends BaseController {
     @RequestMapping(value = "/dashboard/{dashboardId}/customers", method = RequestMethod.POST)
     @ResponseBody
     public Dashboard updateDashboardCustomers(@PathVariable(DASHBOARD_ID) String strDashboardId,
-                                              @RequestBody String[] strCustomerIds) throws ThingsboardException {
+                                              @RequestBody(required = false) String[] strCustomerIds) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         try {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));

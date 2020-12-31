@@ -15,9 +15,10 @@
 ///
 
 import { JsonSettingsSchema } from '@shared/models/widget.models';
-import { MapProviders } from './map-models';
+import { MapProviders } from '@home/components/widget/lib/maps/map-models';
 
 export interface MapWidgetInterface {
+    map?: any;
     resize();
     update();
     onInit();

@@ -14,7 +14,6 @@
 /// limitations under the License.
 ///
 
-import { LatLngTuple } from 'leaflet';
 import { Datasource } from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import tinycolor from 'tinycolor2';
@@ -47,7 +46,7 @@ export type MapSettings = {
     provider?: MapProviders;
     credentials?: any; // declare credentials format
     gmApiKey?: string;
-    defaultCenterPosition?: LatLngTuple;
+    defaultCenterPosition?: [number, number];
     markerClusteringSetting?;
     useDefaultCenterPosition?: boolean;
     gmDefaultMapType?: string;
@@ -187,11 +186,16 @@ export type TripAnimationSettings = {
     usePointAsAnchor: boolean;
     normalizationStep: number;
     showPolygon: boolean;
+    showLabel: boolean;
+    showTooltip: boolean;
     latKeyName: string;
     lngKeyName: string;
     rotationAngle: number;
     label: string;
     tooltipPattern: string;
+    tooltipColor: string;
+    tooltipOpacity: number;
+    tooltipFontColor: string;
     useTooltipFunction: boolean;
     useLabelFunction: boolean;
     pointAsAnchorFunction: GenericFunction;

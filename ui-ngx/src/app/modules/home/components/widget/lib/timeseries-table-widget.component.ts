@@ -126,7 +126,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   private defaultPageSize = 10;
   private defaultSortOrder = '-0';
   private hideEmptyLines = false;
-  private showTimestamp = true;
+  public showTimestamp = true;
   private dateFormatFilter: string;
 
   private searchAction: WidgetAction = {
@@ -546,7 +546,7 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
         }
       }
     } else {
-      rows = Object.values(rowsMap);
+      rows = Object.keys(rowsMap).map(itm => rowsMap[itm]);
     }
     return rows;
   }

@@ -14,6 +14,8 @@
 /// limitations under the License.
 ///
 
+import { JsonSettingsSchema } from '@shared/models/widget.models';
+
 export const googleMapSettingsSchema =
 {
     schema: {
@@ -1095,4 +1097,32 @@ export const tripAnimationSchema = {
             }
         ]
     }]
+};
+
+interface IProvider {
+  schema: JsonSettingsSchema;
+  name: string;
+}
+
+export const providerSets: { [key: string]: IProvider } = {
+  'openstreet-map': {
+    schema: openstreetMapSettingsSchema,
+    name: 'openstreet-map'
+  },
+  'tencent-map': {
+    schema: tencentMapSettingsSchema,
+    name: 'tencent-map'
+  },
+  'google-map': {
+    schema: googleMapSettingsSchema,
+    name: 'google-map'
+  },
+  here: {
+    schema: hereMapSettingsSchema,
+    name: 'here'
+  },
+  'image-map': {
+    schema: imageMapSettingsSchema,
+    name: 'image-map'
+  }
 };

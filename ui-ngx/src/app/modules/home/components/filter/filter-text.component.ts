@@ -59,7 +59,7 @@ export class FilterTextComponent implements ControlValueAccessor, OnInit {
 
   requiredClass = false;
 
-  private filterText: string;
+  public filterText: string;
 
   private propagateChange = (v: any) => { };
 

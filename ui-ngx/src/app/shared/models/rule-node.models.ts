@@ -348,7 +348,9 @@ export enum MessageType {
   ENTITY_ASSIGNED = 'ENTITY_ASSIGNED',
   ENTITY_UNASSIGNED = 'ENTITY_UNASSIGNED',
   ATTRIBUTES_UPDATED = 'ATTRIBUTES_UPDATED',
-  ATTRIBUTES_DELETED = 'ATTRIBUTES_DELETED'
+  ATTRIBUTES_DELETED = 'ATTRIBUTES_DELETED',
+  TIMESERIES_UPDATED = 'TIMESERIES_UPDATED',
+  TIMESERIES_DELETED = 'TIMESERIES_DELETED'
 }
 
 export const messageTypeNames = new Map<MessageType, string>(
@@ -367,7 +369,9 @@ export const messageTypeNames = new Map<MessageType, string>(
     [MessageType.ENTITY_ASSIGNED, 'Entity Assigned'],
     [MessageType.ENTITY_UNASSIGNED, 'Entity Unassigned'],
     [MessageType.ATTRIBUTES_UPDATED, 'Attributes Updated'],
-    [MessageType.ATTRIBUTES_DELETED, 'Attributes Deleted']
+    [MessageType.ATTRIBUTES_DELETED, 'Attributes Deleted'],
+    [MessageType.TIMESERIES_UPDATED, 'Timeseries Updated'],
+    [MessageType.TIMESERIES_DELETED, 'Timeseries Deleted']
   ]
 );
 

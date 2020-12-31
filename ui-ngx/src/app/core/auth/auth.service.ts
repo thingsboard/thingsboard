@@ -446,8 +446,12 @@ export class AuthService {
         const refreshTokenValid = AuthService.isTokenValid('refresh_token');
         this.setUserFromJwtToken(null, null, false);
         if (!refreshTokenValid) {
-          this.refreshTokenSubject.error(new Error(this.translate.instant('access.refresh-token-expired')));
-          this.refreshTokenSubject = null;
+          this.translate.get('access.refresh-token-expired').subscribe(
+            (translation) => {
+              this.refreshTokenSubject.error(new Error(translation));
+              this.refreshTokenSubject = null;
+            }
+          );
         } else {
           const refreshTokenRequest = {
             refreshToken

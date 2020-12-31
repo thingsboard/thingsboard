@@ -34,6 +34,9 @@
       "@home/*": ["src/app/modules/home/*"],
       "jszip": [
         "node_modules/jszip/dist/jszip.min.js"
+      ],
+      "ace": [
+        "node_modules/ace-builds/src-noconflict/ace.js"
       ]
     },
     "lib": [

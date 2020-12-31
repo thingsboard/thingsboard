@@ -148,7 +148,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         consumerBuilder.settings(kafkaSettings);
         consumerBuilder.topic(coreSettings.getTopic());
         consumerBuilder.clientId("tb-core-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.groupId("tb-core-node-" + serviceInfoProvider.getServiceId());
+        consumerBuilder.groupId("tb-core-node");
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(coreAdmin);
         return consumerBuilder.build();
@@ -227,7 +227,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         consumerBuilder.settings(kafkaSettings);
         consumerBuilder.topic(coreSettings.getUsageStatsTopic());
         consumerBuilder.clientId("tb-core-us-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.groupId("tb-core-us-consumer-" + serviceInfoProvider.getServiceId());
+        consumerBuilder.groupId("tb-core-us-consumer");
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToUsageStatsServiceMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(coreAdmin);
         return consumerBuilder.build();

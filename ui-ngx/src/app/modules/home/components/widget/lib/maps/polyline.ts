@@ -18,7 +18,7 @@ import L, { PolylineDecoratorOptions } from 'leaflet';
 import 'leaflet-polylinedecorator';
 
 import { FormattedData, PolylineSettings } from './map-models';
-import { functionValueCalculator, safeExecute } from '@home/components/widget/lib/maps/maps-utils';
+import { functionValueCalculator } from '@home/components/widget/lib/maps/common-maps-utils';
 
 export class Polyline {
 

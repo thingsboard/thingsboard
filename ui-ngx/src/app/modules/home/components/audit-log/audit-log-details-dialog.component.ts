@@ -19,10 +19,10 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionStatus, AuditLog } from '@shared/models/audit-log.models';
-
-import * as ace from 'ace-builds';
+import { Ace } from 'ace-builds';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
+import { getAce } from '@shared/models/ace/ace.models';
 
 export interface AuditLogDetailsDialogData {
   auditLog: AuditLog;
@@ -37,11 +37,9 @@ export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDeta
 
   @ViewChild('actionDataEditor', {static: true})
   actionDataEditorElmRef: ElementRef;
-  private actionDataEditor: ace.Ace.Editor;
 
   @ViewChild('failureDetailsEditor', {static: true})
   failureDetailsEditorElmRef: ElementRef;
-  private failureDetailsEditor: ace.Ace.Editor;
 
   auditLog: AuditLog;
   displayFailureDetails: boolean;
@@ -62,15 +60,15 @@ export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDeta
     this.actionData = this.auditLog.actionData ? JSON.stringify(this.auditLog.actionData, null, 2) : '';
     this.actionFailureDetails = this.auditLog.actionFailureDetails;
 
-    this.actionDataEditor = this.createEditor(this.actionDataEditorElmRef, this.actionData);
+    this.createEditor(this.actionDataEditorElmRef, this.actionData);
     if (this.displayFailureDetails) {
-      this.failureDetailsEditor = this.createEditor(this.failureDetailsEditorElmRef, this.actionFailureDetails);
+      this.createEditor(this.failureDetailsEditorElmRef, this.actionFailureDetails);
     }
   }
 
-  createEditor(editorElementRef: ElementRef, content: string): ace.Ace.Editor {
+  createEditor(editorElementRef: ElementRef, content: string): void {
     const editorElement = editorElementRef.nativeElement;
-    let editorOptions: Partial<ace.Ace.EditorOptions> = {
+    let editorOptions: Partial<Ace.EditorOptions> = {
       mode: 'ace/mode/java',
       theme: 'ace/theme/github',
       showGutter: false,
@@ -85,14 +83,17 @@ export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDeta
     };
 
     editorOptions = {...editorOptions, ...advancedOptions};
-    const editor = ace.edit(editorElement, editorOptions);
-    editor.session.setUseWrapMode(false);
-    editor.setValue(content, -1);
-    this.updateEditorSize(editorElement, content, editor);
-    return editor;
+    getAce().subscribe(
+      (ace) => {
+        const editor = ace.edit(editorElement, editorOptions);
+        editor.session.setUseWrapMode(false);
+        editor.setValue(content, -1);
+        this.updateEditorSize(editorElement, content, editor);
+      }
+    );
   }
 
-  updateEditorSize(editorElement: any, content: string, editor: ace.Ace.Editor) {
+  updateEditorSize(editorElement: any, content: string, editor: Ace.Editor) {
     let newHeight = 200;
     let newWidth = 600;
     if (content && content.length > 0) {

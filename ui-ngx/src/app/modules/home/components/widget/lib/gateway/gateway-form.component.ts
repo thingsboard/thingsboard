@@ -103,7 +103,7 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
   gatewayType: string;
   gatewayConfigurationGroup: FormGroup;
   securityTypes = SecurityTypeTranslationMap;
-  gatewayLogLevels = Object.values(GatewayLogLevel);
+  gatewayLogLevels = Object.keys(GatewayLogLevel).map(itm => GatewayLogLevel[itm]);
   connectorTypes = Object.keys(ConnectorType);
   storageTypes = StorageTypeTranslationMap;
 

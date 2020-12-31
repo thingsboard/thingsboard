@@ -43,12 +43,14 @@ import { Observable, of } from 'rxjs';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
 import {
-  createLoadingDiv,
   createTooltip,
+} from '@home/components/widget/lib/maps/maps-utils';
+import {
+  createLoadingDiv,
   parseArray,
   parseData,
   safeExecute
-} from '@home/components/widget/lib/maps/maps-utils';
+} from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { deepClone, isDefinedAndNotNull, isEmptyStr, isString } from '@core/utils';
 
@@ -141,7 +143,7 @@ export default abstract class LeafletMap {
                     const header = document.createElement('p');
                     header.appendChild(document.createTextNode('Select entity:'));
                     header.setAttribute('style', 'font-size: 14px; margin: 8px 0');
-                    datasourcesList.append(header);
+                    datasourcesList.appendChild(header);
                     this.datasources.forEach(ds => {
                         const dsItem = document.createElement('p');
                         dsItem.appendChild(document.createTextNode(ds.entityName));
@@ -158,9 +160,9 @@ export default abstract class LeafletMap {
                               this.createMarker(ds.entityName, updatedEnttity, this.datasources, this.options);
                             });
                         };
-                        datasourcesList.append(dsItem);
+                        datasourcesList.appendChild(dsItem);
                     });
-                    datasourcesList.append(document.createElement('br'));
+                    datasourcesList.appendChild(document.createElement('br'));
                     const deleteBtn = document.createElement('a');
                     deleteBtn.appendChild(document.createTextNode('Discard changes'));
                     deleteBtn.onclick = () => {
@@ -170,7 +172,7 @@ export default abstract class LeafletMap {
                           this.addMarkers.splice(markerIndex, 1);
                         }
                     };
-                    datasourcesList.append(deleteBtn);
+                    datasourcesList.appendChild(deleteBtn);
                     const popup = L.popup();
                     popup.setContent(datasourcesList);
                     newMarker.bindPopup(popup).openPopup();
@@ -222,7 +224,7 @@ export default abstract class LeafletMap {
           const header = document.createElement('p');
           header.appendChild(document.createTextNode('Select entity:'));
           header.setAttribute('style', 'font-size: 14px; margin: 8px 0');
-          datasourcesList.append(header);
+          datasourcesList.appendChild(header);
           this.datasources.forEach(ds => {
             const dsItem = document.createElement('p');
             dsItem.appendChild(document.createTextNode(ds.entityName));
@@ -238,9 +240,9 @@ export default abstract class LeafletMap {
                 this.deletePolygon(ds.entityName);
               });
             };
-            datasourcesList.append(dsItem);
+            datasourcesList.appendChild(dsItem);
           });
-          datasourcesList.append(document.createElement('br'));
+          datasourcesList.appendChild(document.createElement('br'));
           const deleteBtn = document.createElement('a');
           deleteBtn.appendChild(document.createTextNode('Discard changes'));
           deleteBtn.onclick = () => {
@@ -250,7 +252,7 @@ export default abstract class LeafletMap {
               this.addPolygons.splice(polygonIndex, 1);
             }
           };
-          datasourcesList.append(deleteBtn);
+          datasourcesList.appendChild(deleteBtn);
           const popup = L.popup();
           popup.setContent(datasourcesList);
           newPolygon.bindPopup(popup).openPopup();
@@ -289,7 +291,7 @@ export default abstract class LeafletMap {
           if (!this.loadingDiv) {
             this.loadingDiv = createLoadingDiv(this.ctx.translate.instant('common.loading'));
           }
-          this.$container.append(this.loadingDiv[0]);
+          this.$container.appendChild(this.loadingDiv[0]);
         } else {
           if (this.loadingDiv) {
             this.loadingDiv.remove();
@@ -608,26 +610,31 @@ export default abstract class LeafletMap {
       return polygon;
     }
 
-    updatePoints(pointsData: FormattedData[], getTooltip: (point: FormattedData, setTooltip?: boolean) => string) {
+  updatePoints(pointsData: FormattedData[][], getTooltip: (point: FormattedData) => string) {
+    if (pointsData.length) {
       if (this.points) {
-          this.map.removeLayer(this.points);
+        this.map.removeLayer(this.points);
       }
       this.points = new FeatureGroup();
-      pointsData.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
-          const point = L.circleMarker(this.convertPosition(data), {
-              color: this.options.pointColor,
-              radius: this.options.pointSize
-          });
-          if (!this.options.pointTooltipOnRightPanel) {
-              point.on('click', () => getTooltip(data));
-          }
-          else {
-              createTooltip(point, this.options, data.$datasource, getTooltip(data, false));
-          }
-          this.points.addLayer(point);
+    }
+    for (const pointsList of pointsData) {
+      pointsList.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
+        const point = L.circleMarker(this.convertPosition(data), {
+          color: this.options.pointColor,
+          radius: this.options.pointSize
+        });
+        if (!this.options.pointTooltipOnRightPanel) {
+          point.on('click', () => getTooltip(data));
+        } else {
+          createTooltip(point, this.options, data.$datasource, getTooltip(data));
+        }
+        this.points.addLayer(point);
       });
+    }
+    if (pointsData.length) {
       this.map.addLayer(this.points);
     }
+  }
 
     // Polyline
 

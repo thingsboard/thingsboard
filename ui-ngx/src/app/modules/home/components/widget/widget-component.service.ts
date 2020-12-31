@@ -17,7 +17,7 @@
 import { Inject, Injectable, Optional, Type } from '@angular/core';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { WidgetService } from '@core/http/widget.service';
-import { forkJoin, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
+import { forkJoin, from, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
 import {
   ErrorWidgetType,
   MissingWidgetType,
@@ -30,7 +30,7 @@ import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
 import { ResourcesService } from '@core/services/resources.service';
 import { Widget, widgetActionSources, WidgetControllerDescriptor, WidgetType } from '@shared/models/widget.models';
-import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { isFunction, isUndefined } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { DynamicWidgetComponent } from '@home/components/widget/dynamic-widget.component';
@@ -42,6 +42,10 @@ import { WidgetTypeId } from '@app/shared/models/id/widget-type-id';
 import { TenantId } from '@app/shared/models/id/tenant-id';
 import { SharedModule } from '@shared/shared.module';
 import { MODULES_MAP } from '@shared/public-api';
+import * as tinycolor_ from 'tinycolor2';
+import moment from 'moment';
+
+const tinycolor = tinycolor_;
 
 // @dynamic
 @Injectable()
@@ -106,20 +110,77 @@ export class WidgetComponentService {
       }
       const initSubject = new ReplaySubject();
       this.init$ = initSubject.asObservable();
-      const loadDefaultWidgetInfoTasks = [
-        this.loadWidgetResources(this.missingWidgetType, 'global-widget-missing-type', [SharedModule, WidgetComponentsModule]),
-        this.loadWidgetResources(this.errorWidgetType, 'global-widget-error-type', [SharedModule, WidgetComponentsModule]),
-      ];
-      forkJoin(loadDefaultWidgetInfoTasks).subscribe(
+
+      (window as any).tinycolor = tinycolor;
+      (window as any).cssjs = cssjs;
+      (window as any).moment = moment;
+
+      const widgetModulesTasks: Observable<any>[] = [];
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/flot-widget')).pipe(
+        tap((mod) => {
+          (window as any).TbFlot = mod.TbFlot;
+        }))
+      );
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/analogue-compass')).pipe(
+        tap((mod) => {
+          (window as any).TbAnalogueCompass = mod.TbAnalogueCompass;
+        }))
+      );
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/analogue-radial-gauge')).pipe(
+        tap((mod) => {
+          (window as any).TbAnalogueRadialGauge = mod.TbAnalogueRadialGauge;
+        }))
+      );
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/analogue-linear-gauge')).pipe(
+        tap((mod) => {
+          (window as any).TbAnalogueLinearGauge = mod.TbAnalogueLinearGauge;
+        }))
+      );
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/digital-gauge')).pipe(
+        tap((mod) => {
+          (window as any).TbCanvasDigitalGauge = mod.TbCanvasDigitalGauge;
+        }))
+      );
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/maps/map-widget2')).pipe(
+        tap((mod) => {
+          (window as any).TbMapWidgetV2 = mod.TbMapWidgetV2;
+        }))
+      );
+      widgetModulesTasks.push(from(import('@home/components/widget/trip-animation/trip-animation.component')).pipe(
+        tap((mod) => {
+          (window as any).TbTripAnimationWidget = mod.TbTripAnimationWidget;
+        }))
+      );
+
+      forkJoin(widgetModulesTasks).subscribe(
         () => {
-          initSubject.next();
+          const loadDefaultWidgetInfoTasks = [
+            this.loadWidgetResources(this.missingWidgetType, 'global-widget-missing-type', [SharedModule, WidgetComponentsModule]),
+            this.loadWidgetResources(this.errorWidgetType, 'global-widget-error-type', [SharedModule, WidgetComponentsModule]),
+          ];
+          forkJoin(loadDefaultWidgetInfoTasks).subscribe(
+            () => {
+              initSubject.next();
+            },
+            (e) => {
+              let errorMessages = ['Failed to load default widget types!'];
+              if (e && e.length) {
+                errorMessages = errorMessages.concat(e);
+              }
+              console.error('Failed to load default widget types!');
+              initSubject.error({
+                widgetInfo: this.errorWidgetType,
+                errorMessages
+              });
+            }
+          );
         },
         (e) => {
-          let errorMessages = ['Failed to load default widget types!'];
+          let errorMessages = ['Failed to load widget modules!'];
           if (e && e.length) {
             errorMessages = errorMessages.concat(e);
           }
-          console.error('Failed to load default widget types!');
+          console.error('Failed to load widget modules!');
           initSubject.error({
             widgetInfo: this.errorWidgetType,
             errorMessages
