@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+FILE INFORMATION
+
+OMA Permanent Document
+   File: OMA-SUP-XML_LWM2M_WLAN_connectivity4_V1_0-20170314-A
+   Type: xml
+
+Public Reachable Information
+   Path: http://www.openmobilealliance.org/tech/profiles
+   Name: LWM2M_WLAN_connectivity4-v1_0.xml
+
+NORMATIVE INFORMATION
+
+  Information about this file can be found in the latest revision of
+
+    OMA-TS-LWM2M_ConnMgmt-V1_0
+
+  This is available at http://www.openmobilealliance.org/
+
+  Send comments to technical-comments@mail.openmobilealliance.org
+
+CHANGE HISTORY
+
+14032017 Status changed to Approved by TP, TP Ref # OMA-TP-2017-0019-INP_LWM2M_CONNMGMT-V1_0_RRP_for_Final_Approval
+	
+LEGAL DISCLAIMER
+
+  Copyright 2017 Open Mobile Alliance All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+  1. Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+  3. Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived
+  from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+  COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
+
+  The above license is used as a license under copyright only.  Please
+  reference the OMA IPR Policy for patent licensing terms:
+  http://www.openmobilealliance.org/ipr.html
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+	<Object ObjectType="MODefinition">
+		<Name>WLAN connectivity</Name>
+		<Description1><![CDATA[This object specifies resources to enable a device to connect to a WLAN bearer.
+]]></Description1>
+		<ObjectID>12</ObjectID>
+		<ObjectURN>urn:oma:lwm2m:oma:12</ObjectURN>
+		<LWM2MVersion />
+		<ObjectVersion />
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Resources>
+			<Item ID="0"><Name>Interface name</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Human-readable identifier
+eg. wlan0]]></Description>
+			</Item>
+			<Item ID="1"><Name>Enable</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[0: Disabled
+1: Enabled
+Enable / Disable interface
+When disabled radio must also be disabled]]></Description>
+			</Item>
+			<Item ID="2"><Name>Radio Enabled</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[0: Disabled
+1: 2.4 GHz
+2: 5 GHz
+3: 0.9 GHz
+4: 3.7 GHz
+5: 45 GHz
+6: 60 GHz]]></Description>
+			</Item>
+			<Item ID="3"><Name>Status</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[0: Disabled
+1: UP (OK)
+2: Error]]></Description>
+			</Item>
+			<Item ID="4"><Name>BSSID</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>12 bytes </RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The MAC address of the interface, in hexadecimal form.]]></Description>
+			</Item>
+			<Item ID="5"><Name>SSID</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>1-32 Bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The Service Set Identifier for this interface.]]></Description>
+			</Item>
+			<Item ID="6"><Name>Broadcast SSID</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[0: Do not broadcast SSID
+1: Broadcast SSID
+]]></Description>
+			</Item>
+			<Item ID="7"><Name>Beacon Enabled</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[0: Do not broadcast beacons
+1: Broadcast beacons]]></Description>
+			</Item>
+			<Item ID="8"><Name>Mode</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[0: Access Point
+1: Client (Station)
+2: Bridge
+3: Repeater]]></Description>
+			</Item>
+			<Item ID="9"><Name>Channel</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>0-255</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The current radio channel in use by this interface.
+0: Disabled
+1: Enabled
+]]></Description>
+			</Item>
+			<Item ID="10"><Name>Auto Channel</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[0: Disabled
+1: Enabled]]></Description>
+			</Item>
+			<Item ID="11"><Name>Supported Channels</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Array of supported radio channels.]]></Description>
+			</Item>
+			<Item ID="12"><Name>Channels In Use</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Array of channels which the access point has determined are ‘in use’.
+Including any channels in-use by access point itself.]]></Description>
+			</Item>
+			<Item ID="13"><Name>Regulatory Domain</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>3 Bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[802.11d Regulatory Domain String. 
+First two octets are ISO/IEC 3166-1 two-character country code. 
+The third octet is either “ ” (all environments), “O” (outside) or “I” (inside).]]></Description>
+			</Item>
+			<Item ID="14"><Name>Standard</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[0: 802.11a
+1: 802.11b
+2: 802.11bg 
+3: 802.11g
+4: 802.11n
+5: 802.11bgn
+6: 802.11ac
+7: 802.11ah]]></Description>
+			</Item>
+			<Item ID="15"><Name>Authentication Mode</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[0: None (Open)
+1: PSK
+2: EAP
+3: EAP+PSK
+4: EAPSIM]]></Description>
+			</Item>
+			<Item ID="16"><Name>Encryption Mode</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[0: AES (WPA2)
+1: TKIP (WPA)
+2: WEP (1)]]></Description>
+			</Item>
+			<Item ID="17"><Name>WPA Pre Shared Key</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>64 Bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[WPA/WPA2 Key expressed as a hex string.
+Write – Only.]]></Description>
+			</Item>
+			<Item ID="18"><Name>WPA Key Phrase</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>1-64 Bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[WPA/WPA2 Key Phrase.
+Write Only.]]></Description>
+			</Item>
+			<Item ID="19"><Name>WEP Encryption Type</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Description.0: None
+1: 40-bit
+2: 104-bit]]></Description>
+			</Item>
+			<Item ID="20"><Name>WEP Key Index</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>[1:4]</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Index of the default WEP key.]]></Description>
+			</Item>
+			<Item ID="21"><Name>WEP Key Phrase</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>1-64 Bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[WPA/WPA2 Key Phrase.
+Write Only.]]></Description>
+			</Item>
+			<Item ID="22"><Name>WEP Key 1</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>0 or 26 Bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[WEP Key 1 expressed as a hexadecimal string.
+10 Bytes for a 40 Bit key
+26 Bytes for a 104 Bit key]]></Description>
+			</Item>
+			<Item ID="23"><Name>WEP Key 2</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>0 or 26 Bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[WEP Key 2 expressed as a hexadecimal string.
+10 Bytes for a 40 Bit key
+26 Bytes for a 104 Bit key]]></Description>
+			</Item>
+			<Item ID="24"><Name>WEP Key 3</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>10 or 26 Bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[WEP Key 3 expressed as a hexadecimal string.
+10 Bytes for a 40 Bit key
+26 Bytes for a 104 Bit key]]></Description>
+			</Item>
+			<Item ID="25"><Name>WEP Key 4</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>10 or 26 Bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[WEP Key 4 expressed as a hexadecimal string.
+10 Bytes for a 40 Bit key
+26 Bytes for a 104 Bit key]]></Description>
+			</Item>
+			<Item ID="26"><Name>RADIUS Server</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>1-256 Bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[RADIUS Authentication Server Address]]></Description>
+			</Item>
+			<Item ID="27"><Name>RADIUS Server Port</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[RADIUS Authentication Server Port Number]]></Description>
+			</Item>
+			<Item ID="28"><Name>RADIUS Secret</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>1-256 Bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[RADIUS Shared Secret]]></Description>
+			</Item>
+			<Item ID="29"><Name>WMM Supported</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[0: WMM NOT Supported
+1: WMM Wupported]]></Description>
+			</Item>
+			<Item ID="30"><Name>WMM Enabled</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[0: Disabled
+1: Enabled]]></Description>
+			</Item>
+			<Item ID="31"><Name>MAC Control Enabled</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[0: Any Client MAC Address accepted
+1: Client MAC address must exist in MACAddressList]]></Description>
+			</Item>
+			<Item ID="32"><Name>MAC Address List</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>12 Bytes </RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Array of allowed client MAC addresses, in hexadecimal form.]]></Description>
+			</Item>
+			<Item ID="33"><Name>Total Bytes Sent</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Total number of bytes sent via this interface]]></Description>
+			</Item>
+			<Item ID="34"><Name>Total Bytes Received</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Total number of bytes received via this interface]]></Description>
+			</Item>
+			<Item ID="35"><Name>Total Packets Sent</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Total packets sent via this interface]]></Description>
+			</Item>
+			<Item ID="36"><Name>Total Packets Received</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Total packets received via this interface]]></Description>
+			</Item>
+			<Item ID="37"><Name>Transmit Errors</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Total number of packets which could not be transmitted because of errors.]]></Description>
+			</Item>
+			<Item ID="38"><Name>Receive Errors</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Total number of packets received with errors which prevented those packets from being delivered.]]></Description>
+			</Item>
+			<Item ID="39"><Name>Unicast Packets Sent</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Count of Unicast Packets Sent]]></Description>
+			</Item>
+			<Item ID="40"><Name>Unicast Packets Received</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Count of Unicast Packets Received]]></Description>
+			</Item>
+			<Item ID="41"><Name>Multicast Packets  Received</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Count of Multicast Packets Sent]]></Description>
+			</Item>
+			<Item ID="42"><Name>Multicast Packets  Received</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Count of Multicast Packets Received]]></Description>
+			</Item>
+			<Item ID="43"><Name>Broadcast Packets Sent</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Count of Broadcast Packets Sent]]></Description>
+			</Item>
+			<Item ID="44"><Name>44 Broadcast Packets Received</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Count of Broadcast Packets Received]]></Description>
+			</Item>
+			<Item ID="45"><Name>Discard Packets Sent</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Count of valid outbound packets intentionally discarded without transmission, for example a packet may be discarded to manage buffer space.]]></Description>
+			</Item>
+			<Item ID="46"><Name>Discard Packets Received</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Count of valid packets received and intentionally discarded without delivery to the system, for example a packet may be discarded to manage buffer space.]]></Description>
+			</Item>
+			<Item ID="47"><Name>Unknown Packets Received</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Count of Unknown Packets Received]]></Description>
+			</Item>
+			<Item ID="48"><Name>Vendor specific extensions</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Objlnk</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Links to a vendor specific object.]]></Description>
+			</Item></Resources>
+		<Description2 />
+	</Object>
+</LWM2M>

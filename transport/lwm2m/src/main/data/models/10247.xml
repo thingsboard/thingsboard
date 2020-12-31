@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+    <Object ObjectType="MODefinition">
+        <Name>Neighbour Cell Report</Name>
+        <Description1>This LWM2M Object provides the neighbour cell report. The CrowdBox Measurements Object and the Connected UE Report Object have both Objlnk Resources pointing to this Object.</Description1>
+        <ObjectID>10247</ObjectID>
+        <ObjectURN>urn:oma:lwm2m:x:10247</ObjectURN>
+        <LWM2MVersion/>
+        <ObjectVersion/>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Resources>
+            <Item ID="0">
+                <Name>Neighbour PCI</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration>0..503</RangeEnumeration>
+                <Units></Units>
+                <Description>Physical Cell ID of neighbouring LTE cell, as defined in TS 36.211</Description>
+            </Item>
+            <Item ID="1">
+                <Name>Neighbour Cell ID</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration>0..2^32-1</RangeEnumeration>
+                <Units></Units>
+                <Description>Neighbour cell ID as specified by the cellIdentity field broadcast in SIB1 of the neighbour cell (see TS 36.331).</Description>
+            </Item>
+            <Item ID="2">
+                <Name>Neighbour Cell Rank</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration>0..255</RangeEnumeration>
+                <Units></Units>
+                <Description>Current neighbour cell rank. Neighbour cells should be ordered (ranked) by the CrowdBox according to neighbour cell RSRP, with a higher RSRP corresponding to a lower index. Hence the neighbouring cell with the highest RSRP should be neighbour cell 0, the second neighbour cell 1, and so on.</Description>
+            </Item>
+            <Item ID="3">
+                <Name>Neighbour Cell RSRP</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration>0..97</RangeEnumeration>
+                <Units></Units>
+                <Description>Neighbour cell RSRP, as defined in TS 36.133, Section 9.1.4. Range: RSRP_00; RSRP_01 .. RSRP_97</Description>
+            </Item>
+            <Item ID="4">
+                <Name>Neighbour Cell RSRQ</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration>-30..46</RangeEnumeration>
+                <Units></Units>
+                <Description>Neighbour cell RSRQ, as defined in TS 36.133, Section 9.1.7. Range: RSRQ_-30; RSRQ_-29 .. RSRQ_46</Description>
+            </Item>
+        </Resources>
+      <Description2></Description2>
+    </Object>
+</LWM2M>

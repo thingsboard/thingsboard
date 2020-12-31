@@ -1,0 +1,722 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--BSD 3-Clause License
+
+Copyright (c) 2019, Cloudminds
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+  <Object ObjectType="MODefinition">
+    <Name>Robot PM</Name>
+    <Description1><![CDATA[This LWM2M Object includes PM(counter and gauge) supported by all robots.]]></Description1>
+    <ObjectID>10326</ObjectID>
+    <ObjectURN>urn:oma:lwm2m:x:10326</ObjectURN>
+    <LWM2MVersion>1.0</LWM2MVersion>
+    <ObjectVersion>1.0</ObjectVersion>
+    <MultipleInstances>Single</MultipleInstances>
+    <Mandatory>Mandatory</Mandatory>
+    <Resources>
+	  <Item ID="51">
+        <Name>Battery Level</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration>0..100</RangeEnumeration>
+        <Units>/100</Units>
+        <Description><![CDATA[Referrence to a PM item, similar with Corelnk in LwM2M 1.1, 
+			&lt;/object ID/object instance ID/resoure ID&gt;, for example:&lt;/10315/0/2&gt;]]></Description>
+      </Item>
+
+      <Item ID="300">
+        <Name>Battery Temperature</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>Cel</Units>
+        <Description><![CDATA[Battery Temperature.]]></Description>
+      </Item>	  
+	  <Item ID="301">
+        <Name>Temperature</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration/>
+        <Units>Cel</Units>
+        <Description><![CDATA[Environment Temperature.]]></Description>
+      </Item>
+      <Item ID="302">
+        <Name>Humidity</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration>0..100</RangeEnumeration>
+        <Units>/100</Units>
+        <Description><![CDATA[Environment Humidity.]]></Description>
+      </Item>
+      <Item ID="303">
+        <Name>PM2.5</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>ug/m3</Units>
+        <Description><![CDATA[PM2.5 of the environment.]]></Description>
+      </Item>
+      <Item ID="304">
+        <Name>Smog</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration/>
+        <Units>ug/m3</Units>
+        <Description><![CDATA[Smoke concentration of the environment.]]></Description>
+      </Item>
+      <Item ID="305">
+        <Name>CO</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration/>
+        <Units>ppm</Units>
+        <Description><![CDATA[CO concentration of the environment.]]></Description>
+      </Item>
+      <Item ID="306">
+        <Name>CO2</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration/>
+        <Units>ppm</Units>
+        <Description><![CDATA[CO2 concentration of the environment.]]></Description>
+      </Item>
+      <Item ID="307">
+        <Name>PM10</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>ug/m3</Units>
+        <Description><![CDATA[PM10 of the environment.]]></Description>
+      </Item>
+      <Item ID="601">
+        <Name>Speed</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration/>
+        <Units>m/h</Units>
+        <Description><![CDATA[The speed of the robot.]]></Description>
+      </Item>
+	  <Item ID="602">
+        <Name>Water Used</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration>0..100</RangeEnumeration>
+        <Units>/100</Units>
+        <Description><![CDATA[The percentage of water used for CloudCleanX.]]></Description>
+      </Item>
+	  <Item ID="603">
+        <Name>Dust Box Used</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration>0..100</RangeEnumeration>
+        <Units>/100</Units>
+        <Description><![CDATA[The percentage of Dust Box Space used for CloudCleanX.]]></Description>
+      </Item>
+	  <Item ID="604">
+        <Name>Obstacle Distance</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>cm</Units>
+        <Description><![CDATA[The distance between the robot and the obstacle.]]></Description>
+      </Item>
+	  
+	  <Item ID="607">
+        <Name>Robot Temperate</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration/>
+        <Units>Cel</Units>
+        <Description><![CDATA[Robot surface temperature, for example: the RCU temperature.]]></Description>
+      </Item>
+	  <Item ID="608">
+        <Name>Confidence Index</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration>0..100</RangeEnumeration>
+        <Units>/100</Units>
+        <Description><![CDATA[The Confidence Index of the robot.]]></Description>
+      </Item>	  
+	  
+	  <Item ID="1101">
+        <Name>Data Traffic Used</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration/>
+        <Units>Mbit/s</Units>
+        <Description><![CDATA[Data Traffic Used by the robot.]]></Description>
+      </Item>
+      <Item ID="1102">
+        <Name>Images Handled</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description><![CDATA[How many images have been handled by the robot.]]></Description>
+      </Item>
+      <Item ID="1103">
+        <Name>HARI S-Voice Requests</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description><![CDATA[HARI S-Voice Requests number by the robot.]]></Description>
+      </Item>
+      <Item ID="1104">
+        <Name>HARI S-Vision Requests</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[HARI S-Vision Requests number by the robot.]]></Description>
+      </Item>
+      <Item ID="1105">
+        <Name>HARI S-Motion Requests</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[HARI S-Motion Requests number by the robot.]]></Description>
+      </Item>
+      <Item ID="1106">
+        <Name>HARI S-Map Requests</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[HARI S-Map Requests number by the robot.]]></Description>
+      </Item>	  
+      <Item ID="1107">
+        <Name>Successful HARI S-Voice Requests</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Successful HARI S-Voice Requests number by the robot.]]></Description>
+      </Item>
+      <Item ID="1108">
+        <Name>Successful HARI S-Vision Requests</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Successful HARI S-Vision Requests number by the robot.]]></Description>
+      </Item>
+      <Item ID="1109">
+        <Name>Successful HARI S-Motion Requests</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Successful HARI S-Motion Requests number by the robot.]]></Description>
+      </Item>
+      <Item ID="1110">
+        <Name>Successful HARI S-Map Requests</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Successful HARI S-Map Requests number by the robot.]]></Description>
+      </Item>	  
+      <Item ID="1111">
+        <Name>Questions Answered</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[How many questions have been answered by the robot.]]></Description>
+      </Item>
+      <Item ID="1112">
+        <Name>Unknown Questions</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[How many questions can't be answered by the robot.]]></Description>
+      </Item>
+	  <Item ID="1113">
+        <Name>Mileage</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>m</Units>
+        <Description><![CDATA[How long has the robot gone, for CloudCleanX and CloudPatrol.]]></Description>
+      </Item>
+	  <Item ID="1114">
+        <Name>Cleaned Times</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description><![CDATA[Cleaned Times by the robot, for CloudCleanX.]]></Description>
+      </Item>
+	  <Item ID="1115">
+        <Name>Cleaned Area</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Float</Type>
+        <RangeEnumeration/>
+        <Units>m2</Units>
+        <Description><![CDATA[Space cleaned by the robot, for CloudCleanX.]]></Description>
+      </Item>
+	  <Item ID="1116">
+        <Name>Cleaned Time</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>s</Units>
+        <Description><![CDATA[How long has the robot cleaned, for CloudCleanX.]]></Description>
+      </Item>
+      <Item ID="1117">
+        <Name>ASR Recognized</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[How many bytes of ASRs have been recognized by the robot.]]></Description>
+      </Item>
+      <Item ID="1118">
+        <Name>Incorrect ASR Recognitions</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[How many bytes of ASRs have been recognized incorrectly by the robot.]]></Description>
+      </Item>	  
+      <Item ID="1119">
+        <Name>Tried TTS Texts</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Tried TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1120">
+        <Name>Successful TTS Texts</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Successful TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1121">
+        <Name>ASR Recognized (CH)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[How many bytes of (CH) ASRs have been recognized by the robot.]]></Description>
+      </Item>
+      <Item ID="1122">
+        <Name>Tried TTS Texts (CH)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Tried (CH) TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1123">
+        <Name>Successful TTS Texts (CH)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Successful (CH) TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1124">
+        <Name>ASR Recognized (EN)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[How many bytes of (EN) ASRs have been recognized by the robot.]]></Description>
+      </Item>
+      <Item ID="1125">
+        <Name>Tried TTS Texts (EN)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Tried (EN) TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1126">
+        <Name>Successful TTS Texts (EN)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Successful (EN) TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1127">
+        <Name>ASR Recognized (ES)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[How many bytes of (ES) ASRs have been recognized by the robot.]]></Description>
+      </Item>
+      <Item ID="1128">
+        <Name>Tried TTS Texts (ES)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Tried (ES) TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1129">
+        <Name>Successful TTS Texts (ES)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Successful(ES) TTS Texts number in bytes.]]></Description>
+      </Item>	  
+      <Item ID="1130">
+        <Name>ASR Recognized (JA)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[How many bytes of (JA) ASRs have been recognized by the robot.]]></Description>
+      </Item>
+      <Item ID="1131">
+        <Name>Tried TTS Texts (JA)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Tried (JA) TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1132">
+        <Name>Successful TTS Texts (JA)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Successful (JA) TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1133">
+        <Name>ASR Recognized (SCCH)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[How many bytes of (SCCH) ASRs have been recognized by the robot.]]></Description>
+      </Item>
+      <Item ID="1134">
+        <Name>Tried TTS Texts (SCCH)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Tried (SCCH) TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1135">
+        <Name>Successful TTS Texts (SCCH)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Successful (SCCH) TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1136">
+        <Name>ASR Recognized (GDCH)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[How many bytes of (GDCH) ASRs have been recognized by the robot.]]></Description>
+      </Item>
+      <Item ID="1137">
+        <Name>Tried TTS Texts (GDCH)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Tried (GDCH) TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1138">
+        <Name>Successful TTS Texts (GDCH)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Successful (GDCH) TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1139">
+        <Name>ASR Recognized (TCH)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[How many bytes of (TCH) ASRs have been recognized by the robot.]]></Description>
+      </Item>
+      <Item ID="1140">
+        <Name>Tried TTS Texts (TCH)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Tried  (TCH)TTS Texts number in bytes.]]></Description>
+      </Item>
+      <Item ID="1141">
+        <Name>Successful TTS Texts (TCH)</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units>B</Units>
+        <Description><![CDATA[Successful (TCH) TTS Texts number in bytes.]]></Description>
+      </Item>
+	  
+	  <Item ID="1501">
+        <Name>Objects Recognition Tries</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Objects Recognition Tries by the robot.]]></Description>
+      </Item>
+	  <Item ID="1502">
+        <Name>Successful Object Recognition</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Successful Objects Recognition Tries by the robot.]]></Description>
+      </Item>
+	  <Item ID="1503">
+        <Name>Face Recognition Tries</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Face Recognition Tries by the robot.]]></Description>
+      </Item>	  
+	  <Item ID="1504">
+        <Name>Successful Face Recognitions</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Successful Face Recognition Tries by the robot.]]></Description>
+      </Item>	  
+	  <Item ID="1505">
+        <Name>Vehicle Plate Recognition Tries</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Vehicle Plate Recognition Tries by the robot.]]></Description>
+      </Item>	  
+	  <Item ID="1506">
+        <Name>Successful Vehicle Plate Recognitions</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Successful Vehicle Plate Recognitions by the robot.]]></Description>
+      </Item>	  
+	  <Item ID="1507">
+        <Name>Tasks Assigned</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Tasks number assigned to the robot.]]></Description>
+      </Item>	  
+	  <Item ID="1508">
+        <Name>Successful Tasks Executed</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Tasks successfully executed by the robot.]]></Description>
+      </Item>	  
+	  <Item ID="1509">
+        <Name>Images Uploaded</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Images Uploaded by the robot.]]></Description>
+      </Item>
+	  <Item ID="1510">
+        <Name>Videos Uploaded</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Videos Uploaded by the robot.]]></Description>
+      </Item>
+	  <Item ID="1511">
+        <Name>Images Matted</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Type>Integer</Type>
+        <RangeEnumeration></RangeEnumeration>
+        <Units/>
+        <Description><![CDATA[Images Matted by the robot.]]></Description>
+      </Item>	  
+    </Resources>
+    <Description2 />
+  </Object>
+</LWM2M>

@@ -333,6 +333,7 @@ public class DeviceApiController {
         public void onDeviceDeleted(EntityDeleteMsg entityDeleteMsg) {
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(entityDeleteMsg).toString(), HttpStatus.OK));
         }
+
     }
 
     private void reportActivity(SessionInfoProto sessionInfo) {
