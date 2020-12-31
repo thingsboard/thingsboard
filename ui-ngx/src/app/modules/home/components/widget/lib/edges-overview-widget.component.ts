@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -22,12 +22,8 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
-import cssjs from '@core/css/css';
-import { constructTableCssString } from '@home/components/widget/lib/table-widget.models';
-import { Overlay } from '@angular/cdk/overlay';
 import { LoadNodesCallback } from '@shared/components/nav-tree.component';
 import { EntityType } from '@shared/models/entity-type.models';
-import { hashCode } from '@core/utils';
 import {
   EdgeGroupNodeData,
   edgeGroupsNodeText,
@@ -57,8 +53,6 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
   @Input()
   ctx: WidgetContext;
 
-  @ViewChild('searchInput') searchInputField: ElementRef;
-
   public toastTargetId = 'edges-overview-' + this.utils.guid();
   public customerTitle: string = null;
 
@@ -72,12 +66,9 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
   private edgeGroupsNodesMap: {[edgeNodeId: string]: {[groupType: string]: string}} = {};
 
   constructor(protected store: Store<AppState>,
-              private elementRef: ElementRef,
               private edgeService: EdgeService,
               private entityService: EntityService,
               private translateService: TranslateService,
-              private overlay: Overlay,
-              private viewContainerRef: ViewContainerRef,
               private utils: UtilsService,
               private cd: ChangeDetectorRef) {
     super(store);
@@ -92,18 +83,7 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
       this.getCustomerTitle(selectedEdge.id.id);
       this.ctx.widgetTitle = selectedEdge.name;
     }
-    this.initializeConfig();
     this.ctx.updateWidgetParams();
-  }
-
-  private initializeConfig() {
-    const cssString = constructTableCssString(this.widgetConfig);
-    const cssParser = new cssjs();
-    cssParser.testMode = false;
-    const namespace = 'edges-overview-' + hashCode(cssString);
-    cssParser.cssPreviewNamespace = namespace;
-    cssParser.createStyleElement(namespace, cssString);
-    $(this.elementRef.nativeElement).addClass(namespace);
   }
 
   public loadNodes: LoadNodesCallback = (node, cb) => {
