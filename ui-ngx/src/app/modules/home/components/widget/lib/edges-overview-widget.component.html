@@ -17,37 +17,13 @@
 -->
 <div class="tb-edges-overview tb-absolute-fill" tb-toast toastTarget="{{ toastTargetId }}">
   <div fxFlex fxLayout="column" class="tb-absolute-fill">
-    <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
-      <div class="mat-toolbar-tools">
-        <button mat-button mat-icon-button
-                matTooltip="{{ 'action.search' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>search</mat-icon>
-        </button>
-        <mat-form-field fxFlex>
-          <mat-label>&nbsp;</mat-label>
-          <input #searchInput matInput
-                 [(ngModel)]="textSearch"
-                 placeholder="{{ 'entity.search' | translate }}"/>
-        </mat-form-field>
-        <button mat-button mat-icon-button (click)="exitFilterMode()"
-                matTooltip="{{ 'action.close' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>close</mat-icon>
-        </button>
-      </div>
-    </mat-toolbar>
     <div *ngIf="customerTitle" fxLayout="row" class="customer-info">
       <span>{{ customerTitle }}</span>
     </div>
     <div fxFlex class="tb-entities-nav-tree-panel">
       <tb-nav-tree
         [loadNodes]="loadNodes"
-        [onNodeSelected]="onNodeSelected"
-        [onNodesInserted]="onNodesInserted"
-        [editCallbacks]="nodeEditCallbacks"
         enableSearch="true"
-        [searchCallback]="searchCallback"
       ></tb-nav-tree>
     </div>
   </div>

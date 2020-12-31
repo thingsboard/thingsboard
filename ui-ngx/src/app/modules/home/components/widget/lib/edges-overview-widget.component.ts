@@ -14,63 +14,46 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  OnInit,
+  ViewChild,
+  ViewContainerRef
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetAction, WidgetContext } from '@home/models/widget-component.models';
-import { DatasourceData, DatasourceType, WidgetConfig, widgetType } from '@shared/models/widget.models';
-import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
+import { WidgetConfig } from '@shared/models/widget.models';
+import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import cssjs from '@core/css/css';
-import { fromEvent, Observable } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, mergeMap, tap } from 'rxjs/operators';
+import { fromEvent } from 'rxjs';
+import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { constructTableCssString } from '@home/components/widget/lib/table-widget.models';
 import { Overlay } from '@angular/cdk/overlay';
 import {
   LoadNodesCallback,
-  NavTreeEditCallbacks,
-  NodesCallback,
-  NodeSearchCallback,
-  NodeSelectedCallback,
-  NodesInsertedCallback
+  NavTreeEditCallbacks
 } from '@shared/components/nav-tree.component';
 import { EntityType } from '@shared/models/entity-type.models';
-import { deepClone, hashCode } from '@core/utils';
+import { hashCode } from '@core/utils';
 import {
-  defaultNodeIconFunction,
-  defaultNodeOpenedFunction,
-  defaultNodeRelationQueryFunction,
-  defaultNodesSortFunction,
-  EdgeGroupsNodeData,
+  EdgeGroupNodeData,
   edgeGroupsNodeText,
-  edgeGroupsTypes,
-  EdgeNodeData,
+  edgeGroupsTypes, EntityNodeData,
   edgeNodeText,
-  EdgeOverviewNode, EdgesOverviewWidgetSettings,
-  HierarchyNavTreeNode,
-  HierarchyNodeContext,
-  HierarchyNodeDatasource,
-  iconUrlHtml,
-  loadNodeCtxFunction,
-  materialIconHtml,
-  NodeDisabledFunction,
-  NodeHasChildrenFunction,
-  NodeIconFunction,
-  NodeOpenedFunction,
-  NodeRelationQueryFunction,
-  NodesSortFunction,
-  NodeTextFunction
+  EdgeOverviewNode, EntityNodeDatasource
 } from '@home/components/widget/lib/edges-overview-widget.models';
-import { EntityRelationsQuery } from '@shared/models/relation.models';
-import { AliasFilterType, RelationsQueryFilter } from '@shared/models/alias.models';
-import { EntityFilter } from '@shared/models/query/query.models';
 import { EdgeService } from "@core/http/edge.service";
 import { EntityService } from "@core/http/entity.service";
 import { TranslateService } from "@ngx-translate/core";
-import { Direction, SortOrder } from "@shared/models/page/sort-order";
 import { PageLink } from "@shared/models/page/page-link";
-import { Edge, EdgeInfo } from "@shared/models/edge.models";
+import { Edge } from "@shared/models/edge.models";
 import { BaseData } from "@shared/models/base-data";
 import { EntityId } from "@shared/models/id/entity-id";
 
@@ -79,7 +62,7 @@ import { EntityId } from "@shared/models/id/entity-id";
   templateUrl: './edges-overview-widget.component.html',
   styleUrls: ['./edges-overview-widget.component.scss']
 })
-export class EdgesOverviewWidgetComponent extends PageComponent implements OnInit, AfterViewInit {
+export class EdgesOverviewWidgetComponent extends PageComponent implements OnInit {
 
   @Input()
   ctx: WidgetContext;
@@ -87,43 +70,16 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
   @ViewChild('searchInput') searchInputField: ElementRef;
 
   public toastTargetId = 'edges-overview-' + this.utils.guid();
-
-  public textSearchMode = false;
-  public textSearch = null;
   public customerTitle: string = null;
 
-  public nodeEditCallbacks: NavTreeEditCallbacks = {};
-
-  private settings: EdgesOverviewWidgetSettings;
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
-  private datasources: Array<HierarchyNodeDatasource>;
-  private data: Array<Array<DatasourceData>>;
+  private datasources: Array<EntityNodeDatasource>;
 
-  private nodesMap: {[nodeId: string]: HierarchyNavTreeNode} = {};
-  private pendingUpdateNodeTasks: {[nodeId: string]: () => void} = {};
   private nodeIdCounter = 0;
-
-  private nodeRelationQueryFunction: NodeRelationQueryFunction;
-  private nodeIconFunction: NodeIconFunction;
-  private nodeTextFunction: NodeTextFunction;
-  private nodeDisabledFunction: NodeDisabledFunction;
-  private nodeOpenedFunction: NodeOpenedFunction;
-  private nodeHasChildrenFunction: NodeHasChildrenFunction;
-  private nodesSortFunction: NodesSortFunction;
 
   private edgeNodesMap: {[parentNodeId: string]: {[edgeId: string]: string}} = {};
   private edgeGroupsNodesMap: {[edgeNodeId: string]: {[groupType: string]: string}} = {};
-
-
-  private searchAction: WidgetAction = {
-    name: 'action.search',
-    show: false,
-    icon: 'search',
-    onAction: () => {
-      this.enterFilterMode();
-    }
-  };
 
   constructor(protected store: Store<AppState>,
               private elementRef: ElementRef,
@@ -138,72 +94,19 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
   }
 
   ngOnInit(): void {
-    this.ctx.$scope.edgesOverviewWidget = this;
-    this.settings = this.ctx.settings;
     this.widgetConfig = this.ctx.widgetConfig;
     this.subscription = this.ctx.defaultSubscription;
-    this.datasources = this.subscription.datasources as Array<HierarchyNodeDatasource>;
-    this.data = this.subscription.dataPages[0].data;
-    this.ctx.widgetTitle = this.datasources[0].entity.name;
-    this.getCustomerTitle(this.datasources[0].entity.id.id);
+    this.datasources = this.subscription.datasources as Array<EntityNodeDatasource>;
+    if (this.datasources.length > 0 && this.datasources[0].entity.id.entityType === EntityType.EDGE) {
+      let selectedEdge = this.datasources[0].entity;
+      this.getCustomerTitle(selectedEdge.id.id);
+      this.ctx.widgetTitle = selectedEdge.name;
+    }
     this.initializeConfig();
     this.ctx.updateWidgetParams();
   }
 
-  ngAfterViewInit(): void {
-    fromEvent(this.searchInputField.nativeElement, 'keyup')
-      .pipe(
-        debounceTime(150),
-        distinctUntilChanged(),
-        tap(() => {
-          this.updateSearchNodes();
-        })
-      )
-      .subscribe();
-  }
-
-  public onDataUpdated() {
-    this.updateNodeData(this.subscription.data);
-  }
-
   private initializeConfig() {
-    this.ctx.widgetActions = [this.searchAction];
-
-    const testNodeCtx: HierarchyNodeContext = {
-      entity: {
-        id: {
-          entityType: EntityType.DEVICE,
-          id: '123'
-        },
-        name: 'TEST DEV1'
-      },
-      data: {},
-      level: 2
-    };
-    const parentNodeCtx = deepClone(testNodeCtx);
-    parentNodeCtx.level = 1;
-    testNodeCtx.parentNodeCtx = parentNodeCtx;
-
-    this.nodeRelationQueryFunction = loadNodeCtxFunction(this.settings.nodeRelationQueryFunction, 'nodeCtx', testNodeCtx);
-    this.nodeIconFunction = loadNodeCtxFunction(this.settings.nodeIconFunction, 'nodeCtx', testNodeCtx);
-    this.nodeTextFunction = loadNodeCtxFunction(this.settings.nodeTextFunction, 'nodeCtx', testNodeCtx);
-    this.nodeDisabledFunction = loadNodeCtxFunction(this.settings.nodeDisabledFunction, 'nodeCtx', testNodeCtx);
-    this.nodeOpenedFunction = loadNodeCtxFunction(this.settings.nodeOpenedFunction, 'nodeCtx', testNodeCtx);
-    this.nodeHasChildrenFunction = loadNodeCtxFunction(this.settings.nodeHasChildrenFunction, 'nodeCtx', testNodeCtx);
-
-    const testNodeCtx2 = deepClone(testNodeCtx);
-    testNodeCtx2.entity.name = 'TEST DEV2';
-
-    this.nodesSortFunction = loadNodeCtxFunction(this.settings.nodesSortFunction, 'nodeCtx1,nodeCtx2', testNodeCtx, testNodeCtx2);
-
-    this.nodeRelationQueryFunction = this.nodeRelationQueryFunction || defaultNodeRelationQueryFunction;
-    this.nodeIconFunction = this.nodeIconFunction || defaultNodeIconFunction;
-    this.nodeTextFunction = this.nodeTextFunction || ((nodeCtx) => nodeCtx.entity.name);
-    this.nodeDisabledFunction = this.nodeDisabledFunction || (() => false);
-    this.nodeOpenedFunction = this.nodeOpenedFunction || defaultNodeOpenedFunction;
-    this.nodeHasChildrenFunction = this.nodeHasChildrenFunction || (() => true);
-    this.nodesSortFunction = this.nodesSortFunction || defaultNodesSortFunction;
-
     const cssString = constructTableCssString(this.widgetConfig);
     const cssParser = new cssjs();
     cssParser.testMode = false;
@@ -213,72 +116,14 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
     $(this.elementRef.nativeElement).addClass(namespace);
   }
 
-  private enterFilterMode() {
-    this.textSearchMode = true;
-    this.textSearch = '';
-    this.ctx.hideTitlePanel = true;
-    this.ctx.detectChanges(true);
-    setTimeout(() => {
-      this.searchInputField.nativeElement.focus();
-      this.searchInputField.nativeElement.setSelectionRange(0, 0);
-    }, 10);
-  }
-
-  exitFilterMode() {
-    this.textSearchMode = false;
-    this.textSearch = null;
-    this.updateSearchNodes();
-    this.ctx.hideTitlePanel = false;
-    this.ctx.detectChanges(true);
-  }
-
-  private updateSearchNodes() {
-    if (this.textSearch != null) {
-      this.nodeEditCallbacks.search(this.textSearch);
-    } else {
-      this.nodeEditCallbacks.clearSearch();
-    }
-  }
-
-  private updateNodeData(subscriptionData: Array<DatasourceData>) {
-    const affectedNodes: string[] = [];
-    if (subscriptionData) {
-      subscriptionData.forEach((datasourceData) => {
-        const datasource = datasourceData.datasource as HierarchyNodeDatasource;
-        if (datasource.nodeId) {
-          const node = this.nodesMap[datasource.nodeId];
-          const key = datasourceData.dataKey.label;
-          let value;
-          if (datasourceData.data && datasourceData.data.length) {
-            value = datasourceData.data[0][1];
-          }
-          if (node.data.nodeCtx.data[key] !== value) {
-            if (affectedNodes.indexOf(datasource.nodeId) === -1) {
-              affectedNodes.push(datasource.nodeId);
-            }
-            node.data.nodeCtx.data[key] = value;
-          }
-        }
-      });
-    }
-    affectedNodes.forEach((nodeId) => {
-      const node: HierarchyNavTreeNode = this.nodeEditCallbacks.getNode(nodeId);
-      if (node) {
-        this.updateNodeStyle(this.nodesMap[nodeId]);
-      } else {
-        this.pendingUpdateNodeTasks[nodeId] = () => {
-          this.updateNodeStyle(this.nodesMap[nodeId]);
-        };
-      }
-    });
-  }
-
   public loadNodes: LoadNodesCallback = (node, cb) => {
-    if (node.id === '#') {
-      const edge: BaseData<EntityId> = this.datasources[0].entity;
-      cb(this.loadNodesForEdge(edge.id.id, edge));
-      }
-    else if (node.data.type === 'edgeGroups') {
+    var selectedEdge: BaseData<EntityId> = null;
+    if (this.datasources.length > 0 && this.datasources[0].entity && this.datasources[0].entity.id.entityType === EntityType.EDGE) {
+      selectedEdge = this.datasources[0].entity;
+    }
+    if (node.id === '#' && selectedEdge) {
+      cb(this.loadNodesForEdge(selectedEdge.id.id, selectedEdge));
+    } else if (node.data && node.data.type === 'edgeGroup') {
       const pageLink = new PageLink(100);
       this.entityService.getAssignedToEdgeEntitiesByType(node, pageLink).subscribe(
         (entities) => {
@@ -289,6 +134,8 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
           }
         }
       )
+    } else {
+      cb([]);
     }
   }
 
@@ -303,11 +150,11 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
         text: edgeGroupsNodeText(this.translateService, entityType),
         children: true,
         data: {
-          type: 'edgeGroups',
+          type: 'edgeGroup',
           entityType,
           edge,
           internalId: edge.id.id + '_' + entityType
-        } as EdgeGroupsNodeData
+        } as EdgeGroupNodeData
       };
       nodes.push(node);
       nodesMap[entityType] = node.id;
@@ -330,10 +177,10 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
         disabled: false
       },
       data: {
-        type: 'edge',
+        type: 'entity',
         entity: edge,
         internalId: edge.id.id
-      } as EdgeNodeData
+      } as EntityNodeData
     };
     nodesMap[edge.id.id] = node.id;
     return node;
@@ -349,94 +196,6 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
       });
     }
     return nodes;
-  }
-
-  public onNodeSelected: NodeSelectedCallback = (node, event) => {
-    let nodeId;
-    if (!node) {
-      nodeId = -1;
-    } else {
-      nodeId = node.id;
-    }
-    if (nodeId !== -1) {
-      const selectedNode = this.nodesMap[nodeId];
-      if (selectedNode) {
-        const descriptors = this.ctx.actionsApi.getActionDescriptors('nodeSelected');
-        if (descriptors.length) {
-          const entity = selectedNode.data.nodeCtx.entity;
-          this.ctx.actionsApi.handleWidgetAction(event, descriptors[0], entity.id, entity.name, { nodeCtx: selectedNode.data.nodeCtx });
-        }
-      }
-    }
-  }
-
-  public onNodesInserted: NodesInsertedCallback = (nodes) => {
-    if (nodes) {
-      nodes.forEach((nodeId) => {
-        const task = this.pendingUpdateNodeTasks[nodeId];
-        if (task) {
-          task();
-          delete this.pendingUpdateNodeTasks[nodeId];
-        }
-      });
-    }
-  }
-
-  public searchCallback: NodeSearchCallback = (searchText, node) => {
-    const theNode = this.nodesMap[node.id];
-    if (theNode && theNode.data.searchText) {
-      return theNode.data.searchText.includes(searchText.toLowerCase());
-    }
-    return false;
-  }
-
-  private updateNodeStyle(node: HierarchyNavTreeNode) {
-    const newText = this.prepareNodeText(node);
-    if (node.text !== newText) {
-      node.text = newText;
-      this.nodeEditCallbacks.updateNode(node.id, node.text);
-    }
-    const newDisabled = this.nodeDisabledFunction(node.data.nodeCtx);
-    if (node.state.disabled !== newDisabled) {
-      node.state.disabled = newDisabled;
-      if (node.state.disabled) {
-        this.nodeEditCallbacks.disableNode(node.id);
-      } else {
-        this.nodeEditCallbacks.enableNode(node.id);
-      }
-    }
-    const newHasChildren = this.nodeHasChildrenFunction(node.data.nodeCtx);
-    if (node.children !== newHasChildren) {
-      node.children = newHasChildren;
-      this.nodeEditCallbacks.setNodeHasChildren(node.id, node.children);
-    }
-  }
-
-  private prepareNodeText(node: HierarchyNavTreeNode): string {
-    const nodeIcon = this.prepareNodeIcon(node.data.nodeCtx);
-    const nodeText = this.nodeTextFunction(node.data.nodeCtx);
-    node.data.searchText = nodeText ? nodeText.replace(/<[^>]+>/g, '').toLowerCase() : '';
-    return nodeIcon + nodeText;
-  }
-
-  private prepareNodeIcon(nodeCtx: HierarchyNodeContext): string {
-    let iconInfo = this.nodeIconFunction(nodeCtx);
-    if (iconInfo) {
-      if (iconInfo === 'default') {
-        iconInfo = defaultNodeIconFunction(nodeCtx);
-      }
-      if (iconInfo && iconInfo !== 'default' && (iconInfo.iconUrl || iconInfo.materialIcon)) {
-        if (iconInfo.materialIcon) {
-          return materialIconHtml(iconInfo.materialIcon);
-        } else {
-          return iconUrlHtml(iconInfo.iconUrl);
-        }
-      } else {
-        return '';
-      }
-    } else {
-      return '';
-    }
   }
 
   private getCustomerTitle(edgeId) {
