@@ -14,40 +14,28 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterViewInit,
-  ChangeDetectorRef,
-  Component,
-  ElementRef,
-  Input,
-  OnInit,
-  ViewChild,
-  ViewContainerRef
-} from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { WidgetAction, WidgetContext } from '@home/models/widget-component.models';
+import { WidgetContext } from '@home/models/widget-component.models';
 import { WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import cssjs from '@core/css/css';
-import { fromEvent } from 'rxjs';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { constructTableCssString } from '@home/components/widget/lib/table-widget.models';
 import { Overlay } from '@angular/cdk/overlay';
-import {
-  LoadNodesCallback,
-  NavTreeEditCallbacks
-} from '@shared/components/nav-tree.component';
+import { LoadNodesCallback } from '@shared/components/nav-tree.component';
 import { EntityType } from '@shared/models/entity-type.models';
 import { hashCode } from '@core/utils';
 import {
   EdgeGroupNodeData,
   edgeGroupsNodeText,
-  edgeGroupsTypes, EntityNodeData,
+  edgeGroupsTypes,
   edgeNodeText,
-  EdgeOverviewNode, EntityNodeDatasource
+  EdgeOverviewNode,
+  EntityNodeData,
+  EntityNodeDatasource
 } from '@home/components/widget/lib/edges-overview-widget.models';
 import { EdgeService } from "@core/http/edge.service";
 import { EntityService } from "@core/http/entity.service";
@@ -56,6 +44,8 @@ import { PageLink } from "@shared/models/page/page-link";
 import { Edge } from "@shared/models/edge.models";
 import { BaseData } from "@shared/models/base-data";
 import { EntityId } from "@shared/models/id/entity-id";
+import { getCurrentAuthUser } from "@core/auth/auth.selectors";
+import { Authority } from "@shared/models/authority.enum";
 
 @Component({
   selector: 'tb-edges-overview-widget',
@@ -143,7 +133,12 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
     const nodes: EdgeOverviewNode[] = [];
     const nodesMap = {};
     this.edgeGroupsNodesMap[parentNodeId] = nodesMap;
-    edgeGroupsTypes.forEach((entityType) => {
+    const authUser = getCurrentAuthUser(this.store);
+    var allowedGroupTypes: EntityType[] = edgeGroupsTypes;
+    if (authUser.authority === Authority.CUSTOMER_USER) {
+      allowedGroupTypes = edgeGroupsTypes.filter(type => type !== EntityType.RULE_CHAIN);
+    }
+    allowedGroupTypes.forEach((entityType) => {
       const node: EdgeOverviewNode = {
         id: (++this.nodeIdCounter)+'',
         icon: false,
