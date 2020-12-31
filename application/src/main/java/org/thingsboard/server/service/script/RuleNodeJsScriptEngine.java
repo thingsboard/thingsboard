@@ -117,19 +117,6 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
         return unbindMsg(result, msg);
     }
 
-//    @Override
-//    public ListenableFuture<TbMsg> executeUpdateAsync(TbMsg msg) {
-//        ListenableFuture<JsonNode> result = executeScriptAsync(msg);
-//        return Futures.transformAsync(result, json -> {
-//            if (!json.isObject()) {
-//                log.warn("Wrong result type: {}", json.getNodeType());
-//                return Futures.immediateFailedFuture(new ScriptException("Wrong result type: " + json.getNodeType()));
-//            } else {
-//                return Futures.immediateFuture(unbindMsg(json, msg));
-//            }
-//        }, MoreExecutors.directExecutor());
-//    }
-
     @Override
     public ListenableFuture<List<TbMsg>> executeUpdateAsync(TbMsg msg) {
         ListenableFuture<JsonNode> result = executeScriptAsync(msg);
