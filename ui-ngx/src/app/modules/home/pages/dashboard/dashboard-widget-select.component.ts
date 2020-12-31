@@ -22,9 +22,6 @@ import { WidgetService } from '@core/http/widget.service';
 import { Widget, widgetType } from '@shared/models/widget.models';
 import { toWidgetInfo } from '@home/models/widget-component.models';
 import { DashboardCallbacks } from '../../models/dashboard-component.models';
-import { getCurrentAuthState } from "@core/auth/auth.selectors";
-import { Store } from "@ngrx/store";
-import { AppState } from "@core/core.state";
 
 @Component({
   selector: 'tb-dashboard-widget-select',
@@ -52,8 +49,7 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
     onWidgetClicked: this.onWidgetClicked.bind(this)
   };
 
-  constructor(private widgetsService: WidgetService,
-              private store: Store<AppState>) {
+  constructor(private widgetsService: WidgetService) {
   }
 
   ngOnInit(): void {
@@ -115,9 +111,6 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
             case widgetType.static:
               this.staticWidgetTypes.push(widget);
               break;
-          }
-          if (!getCurrentAuthState(this.store).edgesSupportEnabled) {
-            this.staticWidgetTypes = this.staticWidgetTypes.filter(type => type.typeAlias !== 'edges_instances_overview')
           }
           top += widget.sizeY;
         });
