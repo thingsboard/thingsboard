@@ -180,13 +180,20 @@ public final class EdgeGrpcSession implements Closeable {
             @Override
             public void onError(Throwable t) {
                 log.error("Failed to deliver message from client!", t);
+                closeSession();
             }
 
             @Override
             public void onCompleted() {
+                closeSession();
+            }
+
+            private void closeSession() {
                 connected = false;
                 if (edge != null) {
-                    sessionCloseListener.accept(edge.getId());
+                    try {
+                        sessionCloseListener.accept(edge.getId());
+                    } catch (Exception ignored) {}
                 }
                 try {
                     outputStream.onCompleted();
