@@ -58,7 +58,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "Pushes messages to edge",
         nodeDetails = "Pushes messages to edge, if Message Originator assigned to particular edge or is EDGE entity. This node is used only on Cloud instances to push messages from Cloud to Edge. Supports only DEVICE, ENTITY_VIEW, ASSET, ENTITY_VIEW, DASHBOARD, TENANT, CUSTOMER and EDGE Message Originator(s).",
-        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
         icon = "cloud_download",
         ruleChainTypes = RuleChainType.CORE
