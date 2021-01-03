@@ -47,7 +47,9 @@ var ruleNodeClazzHelpLinkMap = {
     'org.thingsboard.rule.engine.mqtt.azure.TbAzureIotHubNode': 'ruleNodeAzureIotHub',
     'org.thingsboard.rule.engine.rabbitmq.TbRabbitMqNode': 'ruleNodeRabbitMq',
     'org.thingsboard.rule.engine.rest.TbRestApiCallNode': 'ruleNodeRestApiCall',
-    'org.thingsboard.rule.engine.mail.TbSendEmailNode': 'ruleNodeSendEmail'
+    'org.thingsboard.rule.engine.mail.TbSendEmailNode': 'ruleNodeSendEmail',
+    'org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode': 'ruleNodePushToCloud',
+    'org.thingsboard.rule.engine.edge.TbMsgPushToEdgeNode': 'ruleNodePushToEdge'
 };
 
 var helpBaseUrl = "https://thingsboard.io";
@@ -109,7 +111,9 @@ export default angular.module('thingsboard.help', [])
                 widgetsConfigRpc: helpBaseUrl +  "/docs/user-guide/ui/dashboards#rpc",
                 widgetsConfigAlarm: helpBaseUrl +  "/docs/user-guide/ui/dashboards#alarm",
                 widgetsConfigStatic: helpBaseUrl +  "/docs/user-guide/ui/dashboards#static",
-                edges: helpBaseUrl + "/docs/user-guide/ui/edges"
+                edges: helpBaseUrl + "/docs/user-guide/ui/edges",
+                ruleNodePushToCloud: helpBaseUrl + "/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-cloud",
+                ruleNodePushToEdge: helpBaseUrl + "/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-edge",
             },
             getRuleNodeLink: function(ruleNode) {
                 if (ruleNode && ruleNode.component) {
