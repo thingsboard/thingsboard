@@ -177,7 +177,7 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
     this.edgeService.getEdgeInfo(edgeId).subscribe(
       (edge) => {
         if (edge.customerTitle) {
-          this.customerTitle = this.translateService.instant('edge.assigned-to-customer') + ': ' + edge.customerTitle;
+          this.customerTitle = this.translateService.instant('edge.assigned-to-customer', {customerTitle: edge.customerTitle});
         } else {
           this.customerTitle = null;
         }
