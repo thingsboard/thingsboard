@@ -84,7 +84,7 @@ public class DefaultTbClusterService implements TbClusterService {
     public DefaultTbClusterService(TbQueueProducerProvider producerProvider,
                                    PartitionService partitionService,
                                    DataDecodingEncodingService encodingService,
-                                    TbDeviceProfileCache deviceProfileCache,
+                                   TbDeviceProfileCache deviceProfileCache,
                                    NotificationsTopicService notificationsTopicService) {
         this.producerProvider = producerProvider;
         this.partitionService = partitionService;

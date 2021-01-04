@@ -16,7 +16,9 @@
 package org.thingsboard.server.queue.usagestats;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -48,13 +50,16 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
     private int interval;
 
     private final ConcurrentMap<TenantId, AtomicLong>[] values = new ConcurrentMap[ApiUsageRecordKey.values().length];
-    private final PartitionService partitionService;
     private final SchedulerComponent scheduler;
     private final TbQueueProducerProvider producerProvider;
+
+    @Autowired
+    @Lazy
+    private PartitionService partitionService;
+
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> msgProducer;
 
-    public DefaultTbApiUsageClient(PartitionService partitionService, SchedulerComponent scheduler, TbQueueProducerProvider producerProvider) {
-        this.partitionService = partitionService;
+    public DefaultTbApiUsageClient(SchedulerComponent scheduler, TbQueueProducerProvider producerProvider) {
         this.scheduler = scheduler;
         this.producerProvider = producerProvider;
     }
