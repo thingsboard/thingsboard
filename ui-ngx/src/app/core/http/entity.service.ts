@@ -1160,23 +1160,23 @@ export class EntityService {
   }
 
   public getAssignedToEdgeEntitiesByType(node: NavTreeNode, pageLink: PageLink): Observable<PageData<any>> {
-    let edgeId = node.data.edge.id.id;
+    let edgeId = node.data.entity.id.id;
     let entitiesObservable: Observable<PageData<any>>;
     switch (node.data.entityType) {
       case (EntityType.ASSET):
-        entitiesObservable = this.assetService.getEdgeAssets(edgeId, pageLink, null);
+        entitiesObservable = this.assetService.getEdgeAssets(edgeId, pageLink);
         break;
       case (EntityType.DEVICE):
-        entitiesObservable = this.deviceService.getEdgeDevices(edgeId, pageLink, null);
+        entitiesObservable = this.deviceService.getEdgeDevices(edgeId, pageLink);
         break;
       case (EntityType.ENTITY_VIEW):
-        entitiesObservable = this.entityViewService.getEdgeEntityViews(edgeId, pageLink, null);
+        entitiesObservable = this.entityViewService.getEdgeEntityViews(edgeId, pageLink);
         break;
       case (EntityType.DASHBOARD):
-        entitiesObservable = this.dashboardService.getEdgeDashboards(edgeId, pageLink, null);
+        entitiesObservable = this.dashboardService.getEdgeDashboards(edgeId, pageLink);
         break;
       case (EntityType.RULE_CHAIN):
-        entitiesObservable = this.ruleChainService.getEdgeRuleChains(edgeId, pageLink, null);
+        entitiesObservable = this.ruleChainService.getEdgeRuleChains(edgeId, pageLink);
         break;
     }
     return entitiesObservable;

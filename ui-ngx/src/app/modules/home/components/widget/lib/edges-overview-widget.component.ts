@@ -28,7 +28,7 @@ import {
   EdgeGroupNodeData,
   edgeGroupsNodeText,
   edgeGroupsTypes,
-  edgeNodeText,
+  entityNodeText,
   EdgeOverviewNode,
   EntityNodeData,
   EntityNodeDatasource
@@ -37,11 +37,11 @@ import { EdgeService } from "@core/http/edge.service";
 import { EntityService } from "@core/http/entity.service";
 import { TranslateService } from "@ngx-translate/core";
 import { PageLink } from "@shared/models/page/page-link";
-import { Edge } from "@shared/models/edge.models";
-import { BaseData } from "@shared/models/base-data";
+import { BaseData, HasId } from "@shared/models/base-data";
 import { EntityId } from "@shared/models/id/entity-id";
 import { getCurrentAuthUser } from "@core/auth/auth.selectors";
 import { Authority } from "@shared/models/authority.enum";
+import { Direction } from "@shared/models/page/sort-order";
 
 @Component({
   selector: 'tb-edges-overview-widget',
@@ -62,8 +62,8 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
 
   private nodeIdCounter = 0;
 
-  private edgeNodesMap: {[parentNodeId: string]: {[edgeId: string]: string}} = {};
-  private edgeGroupsNodesMap: {[edgeNodeId: string]: {[groupType: string]: string}} = {};
+  private entityNodesMap: {[parentNodeId: string]: {[edgeId: string]: string}} = {};
+  private entityGroupsNodesMap: {[edgeNodeId: string]: {[groupType: string]: string}} = {};
 
   constructor(protected store: Store<AppState>,
               private edgeService: EdgeService,
@@ -87,18 +87,23 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
   }
 
   public loadNodes: LoadNodesCallback = (node, cb) => {
-    var selectedEdge: BaseData<EntityId> = null;
-    if (this.datasources.length > 0 && this.datasources[0].entity && this.datasources[0].entity.id.entityType === EntityType.EDGE) {
-      selectedEdge = this.datasources[0].entity;
-    }
-    if (node.id === '#' && selectedEdge) {
-      cb(this.loadNodesForEdge(selectedEdge.id.id, selectedEdge));
-    } else if (node.data && node.data.type === 'edgeGroup') {
-      const pageLink = new PageLink(100);
+    if (node.id === '#' && this.datasources.length > 0) {
+      var selectedEdge: BaseData<EntityId> = null;
+      if (this.datasources[0].entity.id.entityType === EntityType.EDGE) {
+        selectedEdge = this.datasources[0].entity;
+      }
+      if (selectedEdge) {
+        cb(this.loadNodesForEdge(selectedEdge.id.id, selectedEdge));
+      } else {
+        cb(this.loadNodesForEdge(this.datasources[0].entityId, this.datasources[0].entity));
+      }
+    } else if (node.data && node.data.entity.id.entityType === EntityType.EDGE) {
+      const sortOrder = { property: 'createdTime', direction: Direction.DESC };
+      const pageLink = new PageLink(10, 0, null, sortOrder);
       this.entityService.getAssignedToEdgeEntitiesByType(node, pageLink).subscribe(
         (entities) => {
           if (entities.data.length > 0) {
-            cb(this.edgesToNodes(node.id, entities.data));
+            cb(this.entitiesToNodes(node.id, entities.data));
           } else {
             cb([]);
           }
@@ -109,10 +114,10 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
     }
   }
 
-  private loadNodesForEdge(parentNodeId: string, edge: any): EdgeOverviewNode[] {
+  private loadNodesForEdge(parentNodeId: string, entity: BaseData<HasId>): EdgeOverviewNode[] {
     const nodes: EdgeOverviewNode[] = [];
     const nodesMap = {};
-    this.edgeGroupsNodesMap[parentNodeId] = nodesMap;
+    this.entityGroupsNodesMap[parentNodeId] = nodesMap;
     const authUser = getCurrentAuthUser(this.store);
     var allowedGroupTypes: EntityType[] = edgeGroupsTypes;
     if (authUser.authority === Authority.CUSTOMER_USER) {
@@ -125,10 +130,9 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
         text: edgeGroupsNodeText(this.translateService, entityType),
         children: true,
         data: {
-          type: 'edgeGroup',
           entityType,
-          edge,
-          internalId: edge.id.id + '_' + entityType
+          entity,
+          internalId: entity.id.id + '_' + entityType
         } as EdgeGroupNodeData
       };
       nodes.push(node);
@@ -137,43 +141,42 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
     return nodes;
   }
 
-  private createEdgeNode(parentNodeId: string, edge: Edge): EdgeOverviewNode {
-    let nodesMap = this.edgeNodesMap[parentNodeId];
+  private createEntityNode(parentNodeId: string, entity: BaseData<HasId>): EdgeOverviewNode {
+    let nodesMap = this.entityNodesMap[parentNodeId];
     if (!nodesMap) {
       nodesMap = {};
-      this.edgeNodesMap[parentNodeId] = nodesMap;
+      this.entityNodesMap[parentNodeId] = nodesMap;
     }
     const node: EdgeOverviewNode = {
       id: (++this.nodeIdCounter)+'',
       icon: false,
-      text: edgeNodeText(edge),
-      children: parentNodeId === '#',
+      text: entityNodeText(entity),
+      children: false,
       state: {
         disabled: false
       },
       data: {
-        type: 'entity',
-        entity: edge,
-        internalId: edge.id.id
+        entity: entity,
+        internalId: entity.id.id
       } as EntityNodeData
     };
-    nodesMap[edge.id.id] = node.id;
+    nodesMap[entity.id.id] = node.id;
     return node;
   }
 
-  private edgesToNodes(parentNodeId: string, edges: Array<Edge>): EdgeOverviewNode[] {
+  private entitiesToNodes(parentNodeId: string, entities: BaseData<HasId>[]): EdgeOverviewNode[] {
     const nodes: EdgeOverviewNode[] = [];
-    this.edgeNodesMap[parentNodeId] = {};
-    if (edges) {
-      edges.forEach((edge) => {
-        const node = this.createEdgeNode(parentNodeId, edge);
+    this.entityNodesMap[parentNodeId] = {};
+    if (entities) {
+      entities.forEach((entity) => {
+        const node = this.createEntityNode(parentNodeId, entity);
         nodes.push(node);
       });
     }
     return nodes;
   }
 
-  private getCustomerTitle(edgeId) {
+  private getCustomerTitle(edgeId: string) {
     this.edgeService.getEdgeInfo(edgeId).subscribe(
       (edge) => {
         if (edge.customerTitle) {

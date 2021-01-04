@@ -17,8 +17,8 @@
 import { NavTreeNode } from '@shared/components/nav-tree.component';
 import { Datasource } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { Edge } from "@shared/models/edge.models";
 import { TranslateService } from "@ngx-translate/core";
+import { BaseData, HasId } from "@shared/models/base-data";
 
 export interface EntityNodeDatasource extends Datasource {
   nodeId: string;
@@ -30,9 +30,9 @@ export function edgeGroupsNodeText(translate: TranslateService, entityType: Enti
   return nodeIcon + nodeText;
 }
 
-export function edgeNodeText(edge: Edge): string {
-  const nodeIcon = materialIconByEntityType(edge.id.entityType);
-  const nodeText = edge.name;
+export function entityNodeText(entity: any): string {
+  const nodeIcon = materialIconByEntityType(entity.id.entityType);
+  const nodeText = entity.name;
   return nodeIcon + nodeText;
 }
 
@@ -95,19 +95,14 @@ export interface EdgeOverviewNode extends NavTreeNode {
 export type EdgeOverviewNodeData = EdgeGroupNodeData | EntityNodeData;
 
 export interface EdgeGroupNodeData extends BaseEdgeOverviewNodeData {
-  type: 'edgeGroup';
   entityType: EntityType;
-  edge: Edge;
+  entity: BaseData<HasId>;
 }
 
 export interface EntityNodeData extends BaseEdgeOverviewNodeData {
-  type: 'entity';
-  entity: Edge;
+  entity: BaseData<HasId>;
 }
 
 export interface BaseEdgeOverviewNodeData {
-  type: EdgeOverviewNodeType;
   internalId: string;
 }
-
-export type EdgeOverviewNodeType = 'entity' | 'edgeGroup';
