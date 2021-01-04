@@ -71,7 +71,6 @@ import { alarmFields } from '@shared/models/alarm.models';
 import { EdgeService } from "@core/http/edge.service";
 import { ruleChainType } from "@shared/models/rule-chain.models";
 import { Router } from "@angular/router";
-import { NavTreeNode } from "@shared/components/nav-tree.component";
 
 @Injectable({
   providedIn: 'root'
