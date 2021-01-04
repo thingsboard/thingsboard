@@ -54,7 +54,7 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
 
   public toastTargetId = 'edges-overview-' + this.utils.guid();
   public customerTitle: string = null;
-  public isDatasourceEdgeType: boolean = true;
+  public edgeIsDatasource: boolean = true;
 
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
@@ -92,7 +92,7 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
       } else if (datasource.type === DatasourceType.function) {
         cb(this.loadNodesForEdge(datasource.entityId, datasource.entity));
       } else {
-        this.isDatasourceEdgeType = false;
+        this.edgeIsDatasource = false;
         cb([]);
       }
     }

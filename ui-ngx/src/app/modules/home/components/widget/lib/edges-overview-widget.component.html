@@ -17,12 +17,8 @@
 -->
 <div class="tb-edges-overview tb-absolute-fill" tb-toast toastTarget="{{ toastTargetId }}">
   <div fxFlex fxLayout="column" class="tb-absolute-fill">
-    <div *ngIf="customerTitle" fxLayout="row">
-      <span class="mat-subheader">{{ customerTitle }}</span>
-    </div>
-    <div *ngIf="!isDatasourceEdgeType" fxLayout="row">
-      <span class="mat-subheader" translate>edge.widget-datasource-error</span>
-    </div>
+    <span class="mat-subheader" *ngIf="customerTitle" fxLayout="row">{{ customerTitle }}</span>
+    <span class="mat-subheader" *ngIf="!edgeIsDatasource" fxLayout="row" translate>edge.widget-datasource-error</span>
     <div fxFlex class="tb-entities-nav-tree-panel">
       <tb-nav-tree
         [loadNodes]="loadNodes"
