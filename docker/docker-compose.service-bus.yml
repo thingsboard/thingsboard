@@ -67,5 +67,8 @@ services:
   tb-coap-transport:
     env_file:
       - queue-service-bus.env
+  tb-lwm2m-transport:
+    env_file:
+      - queue-service-bus.env
     depends_on:
       - zookeeper

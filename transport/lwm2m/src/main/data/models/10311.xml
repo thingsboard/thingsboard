@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+    <Object ObjectType="MODefinition">
+        <Name>Solar Radiation</Name>
+        <Description1>
+            This object is used to report solar irradiance (SI), i.e. power per unit area received from the Sun in the form of electromagnetic radiation, on a planar surface measured by a pyranometer or similar instrument. A pyranometer measures solar irradiance from the hemisphere above within a wavelength range 0.3 μm to 3 μm. For example, the application of solar radiation measurement can be meteorological networks and solar energy applications.
+        </Description1>
+        <ObjectID>10311</ObjectID>
+        <ObjectURN>urn:oma:lwm2m:x:10311</ObjectURN>
+		<LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Resources>
+            <Item ID="5601">
+                <Name>Min Measured Value</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Float</Type>
+                <RangeEnumeration/>
+                <Units/>
+                <Description>
+                    The minimum value measured by the sensor since it is ON or Reset, expressed in the unit defined by the "Sensor Units" resource if present.
+                </Description>
+            </Item>
+            <Item ID="5602">
+                <Name>Max Measured Value</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Float</Type>
+                <RangeEnumeration/>
+                <Units/>
+                <Description>
+                    The maximum value measured by the sensor since it is ON or Reset, expressed in the unit defined by the "Sensor Units" resource if present.
+                </Description>
+            </Item>
+            <Item ID="5603">
+                <Name>Min Range Value</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Float</Type>
+                <RangeEnumeration/>
+                <Units/>
+                <Description>
+                    The minimum value that can be measured by the sensor, expressed in the unit defined by the "Sensor Units" resource if present.
+                </Description>
+            </Item>
+            <Item ID="5604">
+                <Name>Max Range Value</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Float</Type>
+                <RangeEnumeration/>
+                <Units/>
+                <Description>
+                    The maximum value that can be measured by the sensor, expressed in the unit defined by the "Sensor Units" resource if present.
+                </Description>
+            </Item>
+            <Item ID="5605">
+                <Name>Reset Min and Max Measured Values</Name>
+                <Operations>E</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type/>
+                <RangeEnumeration/>
+                <Units/>
+                <Description>
+                    Reset the Min and Max Measured Values to current value.
+                </Description>
+            </Item>
+            <Item ID="5518">
+                <Name>Timestamp</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Time</Type>
+                <RangeEnumeration/>
+                <Units/>
+                <Description>The timestamp of when the measurement was performed.</Description>
+            </Item>
+            <Item ID="5700">
+                <Name>Sensor Value</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Float</Type>
+                <RangeEnumeration/>
+                <Units/>
+                <Description>Last or Current Measured Value from the Sensor expressed in the unit defined by the "Sensor Units" resource if present.</Description>
+            </Item>
+            <Item ID="5701">
+                <Name>Sensor Units</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>String</Type>
+                <RangeEnumeration/>
+                <Units/>
+                <Description>
+                    Measurement Units Definition.
+                </Description>
+            </Item>
+            <Item ID="5750">
+                <Name>Application Type</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>String</Type>
+                <RangeEnumeration/>
+                <Units/>
+                <Description>
+                    The application type of the sensor or actuator as a string, for instance "Air Pressure".
+                </Description>
+            </Item>
+            <Item ID="5821">
+                <Name>Current Calibration</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Float</Type>
+                <RangeEnumeration/>
+                <Units/>
+                <Description>Read or Write the current calibration coefficient</Description>
+            </Item>
+        </Resources>
+        <Description2/>
+    </Object>
+</LWM2M>

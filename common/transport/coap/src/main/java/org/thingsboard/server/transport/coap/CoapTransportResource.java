@@ -16,14 +16,15 @@
 package org.thingsboard.server.transport.coap;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResource;
+import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.CoAP.ResponseCode;
 import org.eclipse.californium.core.coap.Request;
+import org.eclipse.californium.core.network.Endpoint;
 import org.eclipse.californium.core.network.Exchange;
-import org.eclipse.californium.core.network.ExchangeObserver;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
-import org.springframework.util.ReflectionUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
@@ -41,26 +42,26 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 @Slf4j
 public class CoapTransportResource extends CoapResource {
-    // coap://localhost:port/api/v1/DEVICE_TOKEN/[attributes|telemetry|rpc[/requestId]]
     private static final int ACCESS_TOKEN_POSITION = 3;
     private static final int FEATURE_TYPE_POSITION = 4;
     private static final int REQUEST_ID_POSITION = 5;
 
     private final CoapTransportContext transportContext;
     private final TransportService transportService;
-    private final Field observerField;
     private final long timeout;
     private final ConcurrentMap<String, TransportProtos.SessionInfoProto> tokenToSessionIdMap = new ConcurrentHashMap<>();
     private final Set<UUID> rpcSubscriptions = ConcurrentHashMap.newKeySet();
@@ -74,9 +75,20 @@ public class CoapTransportResource extends CoapResource {
         // This is important to turn off existing observable logic in
         // CoapResource. We will have our own observe monitoring due to 1:1
         // observe relationship.
-        this.setObservable(false);
-        observerField = ReflectionUtils.findField(Exchange.class, "observer");
-        observerField.setAccessible(true);
+        this.setObservable(true); // enable observing
+        this.setObserveType(CoAP.Type.CON); // configure the notification type to CONs
+        this.getAttributes().setObservable(); // mark observable in the Link-Format
+        // schedule a periodic update task, otherwise let events call changed()
+        Timer timer = new Timer();
+        timer.schedule(new UpdateTask(), 0, 5000);
+    }
+
+    private class UpdateTask extends TimerTask {
+        @Override
+        public void run() {
+            // .. periodic update of the resource
+            changed(); // notify all observers
+        }
     }
 
     @Override
@@ -188,9 +200,7 @@ public class CoapTransportResource extends CoapResource {
                                         new CoapOkCallback(exchange));
                                 break;
                             case SUBSCRIBE_ATTRIBUTES_REQUEST:
-                                attributeSubscriptions.add(sessionId);
-                                advanced.setObserver(new CoapExchangeObserverProxy((ExchangeObserver) observerField.get(advanced),
-                                        registerAsyncCoapSession(exchange, request, sessionInfo, sessionId)));
+                                transportService.registerSyncSession(sessionInfo, new CoapSessionListener(sessionId, exchange), transportContext.getTimeout());
                                 transportService.process(sessionInfo,
                                         TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(),
                                         new CoapNoOpCallback(exchange));
@@ -207,8 +217,6 @@ public class CoapTransportResource extends CoapResource {
                                 break;
                             case SUBSCRIBE_RPC_COMMANDS_REQUEST:
                                 rpcSubscriptions.add(sessionId);
-                                advanced.setObserver(new CoapExchangeObserverProxy((ExchangeObserver) observerField.get(advanced),
-                                        registerAsyncCoapSession(exchange, request, sessionInfo, sessionId)));
                                 transportService.process(sessionInfo,
                                         TransportProtos.SubscribeToRPCMsg.getDefaultInstance(),
                                         new CoapNoOpCallback(exchange));
@@ -244,9 +252,6 @@ public class CoapTransportResource extends CoapResource {
                     } catch (AdaptorException e) {
                         log.trace("[{}] Failed to decode message: ", sessionId, e);
                         exchange.respond(ResponseCode.BAD_REQUEST);
-                    } catch (IllegalAccessException e) {
-                        log.trace("[{}] Failed to process message: ", sessionId, e);
-                        exchange.respond(ResponseCode.INTERNAL_SERVER_ERROR);
                     }
                 }));
     }
@@ -465,24 +470,17 @@ public class CoapTransportResource extends CoapResource {
         }
     }
 
-    public class CoapExchangeObserverProxy implements ExchangeObserver {
+    public class CoapExchangeObserverProxy extends CoapObserveRelation {
 
-        private final ExchangeObserver proxy;
-        private final String token;
-
-        CoapExchangeObserverProxy(ExchangeObserver proxy, String token) {
-            super();
-            this.proxy = proxy;
-            this.token = token;
-        }
-
-        @Override
-        public void completed(Exchange exchange) {
-            proxy.completed(exchange);
-            TransportProtos.SessionInfoProto session = tokenToSessionIdMap.remove(token);
-            if (session != null) {
-                closeAndDeregister(session);
-            }
+        /**
+         * Constructs a new CoapObserveRelation with the specified request.
+         *
+         * @param request  the request
+         * @param endpoint the endpoint
+         * @param executor
+         */
+        protected CoapExchangeObserverProxy(Request request, Endpoint endpoint, ScheduledThreadPoolExecutor executor) {
+            super(request, endpoint, executor);
         }
     }
 

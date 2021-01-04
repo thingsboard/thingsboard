@@ -24,6 +24,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 
 import java.util.Optional;
@@ -43,7 +44,9 @@ public interface SessionMsgListener {
 
     void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse);
 
-    void onDeviceDeleted(EntityDeleteMsg entityDeleteMsg);
+    default void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto toTransportUpdateCredentials){}
+
+    default void onDeviceDeleted(EntityDeleteMsg entityDeleteMsg){}
 
     default void onDeviceProfileUpdate(TransportProtos.SessionInfoProto newSessionInfo, DeviceProfile deviceProfile) {
     }
