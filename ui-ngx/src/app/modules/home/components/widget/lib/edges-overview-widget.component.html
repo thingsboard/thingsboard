@@ -20,6 +20,9 @@
     <div *ngIf="customerTitle" fxLayout="row">
       <span class="mat-subheader">{{ customerTitle }}</span>
     </div>
+    <div *ngIf="!isDatasourceEdgeType" fxLayout="row">
+      <span class="mat-subheader" translate>edge.widget-datasource-error</span>
+    </div>
     <div fxFlex class="tb-entities-nav-tree-panel">
       <tb-nav-tree
         [loadNodes]="loadNodes"

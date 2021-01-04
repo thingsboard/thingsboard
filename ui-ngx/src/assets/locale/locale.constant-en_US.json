@@ -1288,7 +1288,7 @@
         "sync-process-started-successfully": "Sync process started successfully!",
         "missing-related-rule-chains-title": "Edge has missing related rule chain(s)",
         "missing-related-rule-chains-text": "Assigned to edge rule chain(s) use rule nodes that forward message(s) to rule chain(s) that are not assigned to this edge. <br><br> List of missing rule chain(s): <br> {{missingRuleChains}}",
-        "widget-datasource-error": "This widget supports only EDGE entity"
+        "widget-datasource-error": "This widget supports only EDGE entity datasource"
     },
     "edge-event": {
         "type-dashboard": "Dashboard",
