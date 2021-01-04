@@ -132,56 +132,50 @@
         [required]="true"
         [entityType]="entityType.EDGE">
       </tb-entity-subtype-autocomplete>
-      <div fxLayout="row" [fxShow]="edgeScope === 'tenant'">
-        <fieldset fxFlex>
-          <div class="tb-hint" [innerHTML]="'edge.edge-license-key-hint' | translate"></div>
-          <mat-form-field class="mat-block">
-            <mat-label translate>edge.edge-license-key</mat-label>
-            <input matInput formControlName="edgeLicenseKey" required>
-            <mat-error *ngIf="entityForm.get('edgeLicenseKey').hasError('required')">
-              {{ 'edge.edge-license-key-required' | translate }}
-            </mat-error>
-          </mat-form-field>
-        </fieldset>
+      <div [fxShow]="edgeScope === 'tenant'">
+        <div class="tb-hint" [innerHTML]="'edge.edge-license-key-hint' | translate"></div>
+        <mat-form-field class="mat-block">
+          <mat-label translate>edge.edge-license-key</mat-label>
+          <input matInput formControlName="edgeLicenseKey" required>
+          <mat-error *ngIf="entityForm.get('edgeLicenseKey').hasError('required')">
+            {{ 'edge.edge-license-key-required' | translate }}
+          </mat-error>
+        </mat-form-field>
       </div>
-      <div fxLayout="row" [fxShow]="edgeScope === 'tenant'">
-        <fieldset fxFlex>
-          <div translate class="tb-hint">edge.cloud-endpoint-hint</div>
-          <mat-form-field class="mat-block">
-            <mat-label translate>edge.cloud-endpoint</mat-label>
-            <input matInput formControlName="cloudEndpoint" required>
-            <mat-error *ngIf="entityForm.get('cloudEndpoint').hasError('required')">
-              {{ 'edge.cloud-endpoint-required' | translate }}
-            </mat-error>
-          </mat-form-field>
-        </fieldset>
+      <div [fxShow]="edgeScope === 'tenant'">
+        <div translate class="tb-hint">edge.cloud-endpoint-hint</div>
+        <mat-form-field class="mat-block">
+          <mat-label translate>edge.cloud-endpoint</mat-label>
+          <input matInput formControlName="cloudEndpoint" required>
+          <mat-error *ngIf="entityForm.get('cloudEndpoint').hasError('required')">
+            {{ 'edge.cloud-endpoint-required' | translate }}
+          </mat-error>
+        </mat-form-field>
       </div>
-      <div fxLayout="row" [fxShow]="edgeScope === 'tenant'">
-        <fieldset fxFlex disabled>
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>edge.edge-key</mat-label>
-            <input matInput formControlName="routingKey">
-          </mat-form-field>
-        </fieldset>
-        <button mat-button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('key')"
-                [cbContent]="entityForm?.get('routingKey').value"
-                matTooltip="{{'edge.copy-edge-key' | translate}}">
-          <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-        </button>
-      </div>
-      <div fxLayout="row" [fxShow]="edgeScope === 'tenant'">
-        <fieldset fxFlex disabled>
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>edge.edge-secret</mat-label>
-            <input matInput formControlName="secret">
-          </mat-form-field>
-        </fieldset>
-        <button mat-button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('secret')"
-                [cbContent]="entityForm?.get('secret').value"
-                matTooltip="{{'edge.copy-edge-secret' | translate}}">
-          <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-        </button>
-      </div>
+    </fieldset>
+    <div fxLayout="row" [fxShow]="edgeScope === 'tenant'">
+        <mat-form-field class="mat-block" fxFlex>
+          <mat-label translate>edge.edge-key</mat-label>
+          <input matInput formControlName="routingKey">
+        </mat-form-field>
+      <button mat-button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('key')"
+              [cbContent]="entityForm?.get('routingKey').value"
+              matTooltip="{{'edge.copy-edge-key' | translate}}">
+        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      </button>
+    </div>
+    <div fxLayout="row" [fxShow]="edgeScope === 'tenant'">
+        <mat-form-field class="mat-block" fxFlex>
+          <mat-label translate>edge.edge-secret</mat-label>
+          <input matInput formControlName="secret">
+        </mat-form-field>
+      <button mat-button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('secret')"
+              [cbContent]="entityForm?.get('secret').value"
+              matTooltip="{{'edge.copy-edge-secret' | translate}}">
+        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      </button>
+    </div>
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
         <mat-label translate>edge.label</mat-label>
         <input matInput formControlName="label">

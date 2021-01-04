@@ -69,15 +69,15 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
   }
 
   buildForm(entity: EdgeInfo): FormGroup {
-    return this.fb.group(
+    const form = this.fb.group(
       {
         name: [entity ? entity.name : '', [Validators.required]],
         type: [entity?.type ? entity.type : 'default', [Validators.required]],
         label: [entity ? entity.label : ''],
         cloudEndpoint: [null, [Validators.required]],
         edgeLicenseKey: ['', [Validators.required]],
-        routingKey: guid(),
-        secret: this.generateSecret(20),
+        routingKey: this.fb.control({ value: entity ? entity.routingKey : null, disabled: true }),
+        secret: this.fb.control({ value: entity ? entity.secret : null, disabled: true }),
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : '']
@@ -85,6 +85,8 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
         )
       }
     );
+    this.checkIsNewEdge(entity, form);
+    return form;
   }
 
   updateForm(entity: EdgeInfo) {
@@ -100,6 +102,20 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
         description: entity.additionalInfo ? entity.additionalInfo.description : ''
       }
     });
+    this.checkIsNewEdge(entity, this.entityForm);
+  }
+
+  updateFormState() {
+    super.updateFormState();
+    this.entityForm.get('routingKey').disable({ emitEvent: false });
+    this.entityForm.get('secret').disable({ emitEvent: false });
+  }
+
+  private checkIsNewEdge(entity: EdgeInfo, form: FormGroup) {
+    if (entity && !entity.id) {
+      form.get('routingKey').patchValue(guid(), { emitEvent: false });
+      form.get('secret').patchValue(this.generateSecret(20), { emitEvent: false });
+    }
   }
 
   onEdgeIdCopied($event) {

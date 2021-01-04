@@ -98,6 +98,7 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
         if (edge.getId() != null) {
             this.setUuid(edge.getId().getId());
         }
+        this.setCreatedTime(edge.getCreatedTime());
         if (edge.getTenantId() != null) {
             this.tenantId = edge.getTenantId().getId();
         }
@@ -119,6 +120,7 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
 
     public AbstractEdgeEntity(EdgeEntity edgeEntity) {
         this.setId(edgeEntity.getId());
+        this.setCreatedTime(edgeEntity.getCreatedTime());
         this.tenantId = edgeEntity.getTenantId();
         this.customerId = edgeEntity.getCustomerId();
         this.rootRuleChainId = edgeEntity.getRootRuleChainId();
@@ -149,7 +151,7 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
 
     protected Edge toEdge() {
         Edge edge = new Edge(new EdgeId(getUuid()));
-        edge.setCreatedTime(Uuids.unixTimestamp(getUuid()));
+        edge.setCreatedTime(createdTime);
         if (tenantId != null) {
             edge.setTenantId(new TenantId(tenantId));
         }
