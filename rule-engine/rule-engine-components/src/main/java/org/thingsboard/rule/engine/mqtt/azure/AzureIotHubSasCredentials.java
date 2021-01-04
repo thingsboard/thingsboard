@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.thingsboard.common.util.AzureIotHubUtil;
-import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.rule.engine.mqtt.credentials.MqttClientCredentials;
 
 import javax.net.ssl.TrustManagerFactory;
@@ -57,10 +56,6 @@ public class AzureIotHubSasCredentials implements MqttClientCredentials {
             log.error("[{}] Creating TLS factory failed!", caCert, e);
             throw new RuntimeException("Creating TLS factory failed!", e);
         }
-    }
-
-    @Override
-    public void configure(MqttClientConfig config) {
     }
 
     private TrustManagerFactory createAndInitTrustManagerFactory() throws Exception {

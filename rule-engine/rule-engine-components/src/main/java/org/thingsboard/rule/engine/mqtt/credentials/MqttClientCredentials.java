@@ -36,6 +36,7 @@ public interface MqttClientCredentials {
 
     Optional<SslContext> initSslContext();
 
-    void configure(MqttClientConfig config);
+    default void configure(MqttClientConfig config) {
+    }
 }
 

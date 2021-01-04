@@ -29,7 +29,6 @@ import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.springframework.util.StringUtils;
-import org.thingsboard.mqtt.MqttClientConfig;
 
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
@@ -78,11 +77,6 @@ public class CertPemClientCredentials implements MqttClientCredentials {
             log.error("[{}:{}] Creating TLS factory failed!", caCert, cert, e);
             throw new RuntimeException("Creating TLS factory failed!", e);
         }
-    }
-
-    @Override
-    public void configure(MqttClientConfig config) {
-
     }
 
     private KeyManagerFactory createAndInitKeyManagerFactory() throws Exception {
