@@ -1159,10 +1159,9 @@ export class EntityService {
     });
   }
 
-  public getAssignedToEdgeEntitiesByType(node: NavTreeNode, pageLink: PageLink): Observable<PageData<any>> {
-    let edgeId = node.data.entity.id.id;
+  public getAssignedToEdgeEntitiesByType(edgeId: string, entityType: EntityType, pageLink: PageLink): Observable<PageData<any>> {
     let entitiesObservable: Observable<PageData<any>>;
-    switch (node.data.entityType) {
+    switch (entityType) {
       case (EntityType.ASSET):
         entitiesObservable = this.assetService.getEdgeAssets(edgeId, pageLink);
         break;

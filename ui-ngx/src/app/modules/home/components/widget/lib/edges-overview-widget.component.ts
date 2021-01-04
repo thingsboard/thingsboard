@@ -19,7 +19,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { WidgetConfig } from '@shared/models/widget.models';
+import { Datasource, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { LoadNodesCallback } from '@shared/components/nav-tree.component';
@@ -41,7 +41,6 @@ import { BaseData, HasId } from "@shared/models/base-data";
 import { EntityId } from "@shared/models/id/entity-id";
 import { getCurrentAuthUser } from "@core/auth/auth.selectors";
 import { Authority } from "@shared/models/authority.enum";
-import { Direction } from "@shared/models/page/sort-order";
 
 @Component({
   selector: 'tb-edges-overview-widget',
@@ -78,29 +77,29 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
     this.widgetConfig = this.ctx.widgetConfig;
     this.subscription = this.ctx.defaultSubscription;
     this.datasources = this.subscription.datasources as Array<EntityNodeDatasource>;
-    if (this.datasources.length > 0 && this.datasources[0].entity.id.entityType === EntityType.EDGE) {
-      let selectedEdge = this.datasources[0].entity;
-      this.getCustomerTitle(selectedEdge.id.id);
-      this.ctx.widgetTitle = selectedEdge.name;
-    }
     this.ctx.updateWidgetParams();
   }
 
   public loadNodes: LoadNodesCallback = (node, cb) => {
-    if (node.id === '#' && this.datasources.length > 0) {
-      var selectedEdge: BaseData<EntityId> = null;
-      if (this.datasources[0].entity.id.entityType === EntityType.EDGE) {
-        selectedEdge = this.datasources[0].entity;
-      }
-      if (selectedEdge) {
+    const datasource: Datasource = this.datasources[0];
+    if (node.id === '#' && datasource) {
+      if (datasource.type === DatasourceType.entity && datasource.entity.id.entityType === EntityType.EDGE) {
+        var selectedEdge: BaseData<EntityId> = datasource.entity;
+        this.getCustomerTitle(selectedEdge.id.id);
+        this.ctx.widgetTitle = selectedEdge.name;
         cb(this.loadNodesForEdge(selectedEdge.id.id, selectedEdge));
+      } else if (datasource.type === DatasourceType.function) {
+        cb(this.loadNodesForEdge(datasource.entityId, datasource.entity));
       } else {
-        cb(this.loadNodesForEdge(this.datasources[0].entityId, this.datasources[0].entity));
+        this.ctx.showErrorToast(this.translateService.instant('edge.widget-datasource-error'));
+        cb([]);
       }
-    } else if (node.data && node.data.entity.id.entityType === EntityType.EDGE) {
-      const sortOrder = { property: 'createdTime', direction: Direction.DESC };
-      const pageLink = new PageLink(10, 0, null, sortOrder);
-      this.entityService.getAssignedToEdgeEntitiesByType(node, pageLink).subscribe(
+    }
+    else if (node.data && node.data.entity.id.entityType === EntityType.EDGE) {
+      const edgeId = node.data.entity.id.id;
+      const entityType = node.data.entityType;
+      const pageLink = new PageLink(datasource.pageLink.pageSize);
+      this.entityService.getAssignedToEdgeEntitiesByType(edgeId, entityType, pageLink).subscribe(
         (entities) => {
           if (entities.data.length > 0) {
             cb(this.entitiesToNodes(node.id, entities.data));
