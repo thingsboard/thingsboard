@@ -19,7 +19,7 @@ import { deepClone, isDefined, isUndefined } from '@app/core/utils';
 import * as moment_ from 'moment';
 import { Observable } from 'rxjs/internal/Observable';
 import { from, of } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, mergeMap, tap } from 'rxjs/operators';
 
 const moment = moment_;
 
@@ -518,14 +518,22 @@ export function getTimezones(): Observable<TimezoneInfo[]> {
   }
 }
 
-export function getTimezoneInfo(timezoneId: string, defaultTimezoneId?: string): Observable<TimezoneInfo> {
+export function getTimezoneInfo(timezoneId: string, defaultTimezoneId?: string, userTimezoneByDefault?: boolean): Observable<TimezoneInfo> {
   return getTimezones().pipe(
-    map((timezoneList) => {
+    mergeMap((timezoneList) => {
       let foundTimezone = timezoneList.find(timezoneInfo => timezoneInfo.id === timezoneId);
-      if (!foundTimezone && defaultTimezoneId) {
-        foundTimezone = timezoneList.find(timezoneInfo => timezoneInfo.id === defaultTimezoneId);
+      if (!foundTimezone) {
+        if (userTimezoneByDefault) {
+          return getDefaultTimezone().pipe(
+            map((userTimezone) => {
+              return timezoneList.find(timezoneInfo => timezoneInfo.id === userTimezone);
+            })
+          );
+        } else if (defaultTimezoneId) {
+          foundTimezone = timezoneList.find(timezoneInfo => timezoneInfo.id === defaultTimezoneId);
+        }
       }
-      return foundTimezone;
+      return of(foundTimezone);
     })
   );
 }

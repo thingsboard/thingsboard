@@ -63,6 +63,15 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
     this.requiredValue = coerceBooleanProperty(value);
   }
 
+  private userTimezoneByDefaultValue: boolean;
+  get userTimezoneByDefault(): boolean {
+    return this.userTimezoneByDefaultValue;
+  }
+  @Input()
+  set userTimezoneByDefault(value: boolean) {
+    this.userTimezoneByDefaultValue = coerceBooleanProperty(value);
+  }
+
   @Input()
   disabled: boolean;
 
@@ -129,28 +138,23 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
 
   writeValue(value: string | null): void {
     this.searchText = '';
-    if (value !== null) {
-      getTimezoneInfo(value, this.defaultTimezoneId).subscribe(
-        (foundTimezone) => {
-          if (foundTimezone !== null) {
-            this.selectTimezoneFormGroup.get('timezone').patchValue(foundTimezone, {emitEvent: false});
-            if (foundTimezone.id !== value) {
-              setTimeout(() => {
-                this.updateView(foundTimezone.id);
-              }, 0);
-            } else {
-              this.modelValue = value;
-            }
+    getTimezoneInfo(value, this.defaultTimezoneId, this.userTimezoneByDefaultValue).subscribe(
+      (foundTimezone) => {
+        if (foundTimezone !== null) {
+          this.selectTimezoneFormGroup.get('timezone').patchValue(foundTimezone, {emitEvent: false});
+          if (foundTimezone.id !== value) {
+            setTimeout(() => {
+              this.updateView(foundTimezone.id);
+            }, 0);
           } else {
-            this.modelValue = null;
-            this.selectTimezoneFormGroup.get('timezone').patchValue('', {emitEvent: false});
+            this.modelValue = value;
           }
+        } else {
+          this.modelValue = null;
+          this.selectTimezoneFormGroup.get('timezone').patchValue('', {emitEvent: false});
         }
-      );
-    } else {
-      this.modelValue = null;
-      this.selectTimezoneFormGroup.get('timezone').patchValue('', {emitEvent: false});
-    }
+      }
+    );
     this.dirty = true;
   }
 
@@ -165,8 +169,8 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
     if (this.ignoreClosePanel) {
       this.ignoreClosePanel = false;
     } else {
-      if (!this.modelValue && this.defaultTimezoneId) {
-        getTimezoneInfo(this.defaultTimezoneId).subscribe(
+      if (!this.modelValue && (this.defaultTimezoneId || this.userTimezoneByDefaultValue)) {
+        getTimezoneInfo(this.defaultTimezoneId, this.defaultTimezoneId, this.userTimezoneByDefaultValue).subscribe(
           (defaultTimezoneInfo) => {
             if (defaultTimezoneInfo !== null) {
               this.ngZone.run(() => {
