@@ -31,7 +31,7 @@ import {
   CoapDeviceProfileTransportConfiguration, coapDeviceTypeTranslationMap,
   CoapTransportDeviceType,
   DeviceProfileTransportConfiguration,
-  DeviceTransportType,
+  DeviceTransportType, TransportPayloadType, transportPayloadTypeTranslationMap,
 } from '@shared/models/device.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
@@ -51,9 +51,47 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
 
   coapTransportDeviceTypeTranslations = coapDeviceTypeTranslationMap;
 
+  transportPayloadTypes = Object.keys(TransportPayloadType);
+
+  transportPayloadTypeTranslations = transportPayloadTypeTranslationMap;
+
   coapDeviceProfileTransportConfigurationFormGroup: FormGroup;
 
   private requiredValue: boolean;
+
+  private defaultTelemetrySchema =
+    'syntax ="proto3";\n' +
+    'package telemetry;\n' +
+    '\n' +
+    'message SensorDataReading {\n' +
+    '\n' +
+    '  double temperature = 1;\n' +
+    '  double humidity = 2;\n' +
+    '  InnerObject innerObject = 3;\n' +
+    '\n' +
+    '  message InnerObject {\n' +
+    '    string key1 = 1;\n' +
+    '    bool key2 = 2;\n' +
+    '    double key3 = 3;\n' +
+    '    int32 key4 = 4;\n' +
+    '    string key5 = 5;\n' +
+    '  }\n' +
+    '}\n';
+
+  private defaultAttributesSchema =
+    'syntax ="proto3";\n' +
+    'package attributes;\n' +
+    '\n' +
+    'message SensorConfiguration {\n' +
+    '  string firmwareVersion = 1;\n' +
+    '  string serialNumber = 2;\n' +
+    '}';
+
+  private transportPayloadTypeConfiguration = this.fb.group({
+    transportPayloadType: [TransportPayloadType.JSON, Validators.required],
+    deviceTelemetryProtoSchema: [this.defaultTelemetrySchema, Validators.required],
+    deviceAttributesProtoSchema: [this.defaultAttributesSchema, Validators.required]
+  });
 
   get required(): boolean {
     return this.requiredValue;
@@ -81,16 +119,47 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
   }
 
   ngOnInit() {
-    console.log("init coap");
     this.coapDeviceProfileTransportConfigurationFormGroup = this.fb.group({
       coapDeviceTypeConfiguration: this.fb.group({
           coapDeviceType: [CoapTransportDeviceType.DEFAULT, Validators.required],
+          transportPayloadTypeConfiguration: this.transportPayloadTypeConfiguration
         })
       }
     );
+    this.coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType')
+      .valueChanges.subscribe(coapDeviceType => {
+      this.updateCoapDeviceTypeBasedControls(coapDeviceType, true);
+    });
     this.coapDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
+  }
+
+  get coapDeviceTypeDefault(): boolean {
+    const coapDeviceType = this.coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType').value;
+    return coapDeviceType === CoapTransportDeviceType.DEFAULT;
+  }
+
+  get protoPayloadType(): boolean {
+    const transportPayloadTypePath = 'coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.transportPayloadType';
+    const transportPayloadType = this.coapDeviceProfileTransportConfigurationFormGroup.get(transportPayloadTypePath).value;
+    return transportPayloadType === TransportPayloadType.PROTOBUF;
+  }
+
+
+  private updateCoapDeviceTypeBasedControls(type: CoapTransportDeviceType, forceUpdated = false) {
+    const coapDeviceTypeConfigurationFormGroup = this.coapDeviceProfileTransportConfigurationFormGroup
+      .get('coapDeviceTypeConfiguration') as FormGroup;
+    if (forceUpdated) {
+      coapDeviceTypeConfigurationFormGroup.patchValue({
+        transportPayloadTypeConfiguration: this.transportPayloadTypeConfiguration
+      }, {emitEvent: false});
+    }
+    if (type === CoapTransportDeviceType.DEFAULT && !this.disabled) {
+      coapDeviceTypeConfigurationFormGroup.get('transportPayloadTypeConfiguration').enable({emitEvent: false});
+    } else {
+      coapDeviceTypeConfigurationFormGroup.get('transportPayloadTypeConfiguration').disable({emitEvent: false});
+    }
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -103,9 +172,9 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
   }
 
   writeValue(value: CoapDeviceProfileTransportConfiguration | null): void {
-    console.log("[writeValue] CoapDeviceProfileTransportConfiguration: ", value);
     if (isDefinedAndNotNull(value)) {
       this.coapDeviceProfileTransportConfigurationFormGroup.patchValue(value, {emitEvent: false});
+      this.updateCoapDeviceTypeBasedControls(value.coapDeviceTypeConfiguration?.coapDeviceType);
     }
   }
 

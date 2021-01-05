@@ -31,8 +31,8 @@ import {
   DeviceProfileTransportConfiguration,
   DeviceTransportType,
   MqttDeviceProfileTransportConfiguration,
-  MqttTransportPayloadType,
-  mqttTransportPayloadTypeTranslationMap
+  TransportPayloadType,
+  transportPayloadTypeTranslationMap
 } from '@shared/models/device.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
@@ -48,9 +48,9 @@ import { isDefinedAndNotNull } from '@core/utils';
 })
 export class MqttDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit {
 
-  mqttTransportPayloadTypes = Object.keys(MqttTransportPayloadType);
+  transportPayloadTypes = Object.keys(TransportPayloadType);
 
-  mqttTransportPayloadTypeTranslations = mqttTransportPayloadTypeTranslationMap;
+  transportPayloadTypeTranslations = transportPayloadTypeTranslationMap;
 
   mqttDeviceProfileTransportConfigurationFormGroup: FormGroup;
 
@@ -114,7 +114,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
         deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         transportPayloadTypeConfiguration: this.fb.group({
-          transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required],
+          transportPayloadType: [TransportPayloadType.JSON, Validators.required],
           deviceTelemetryProtoSchema: [this.defaultTelemetrySchema, Validators.required],
           deviceAttributesProtoSchema: [this.defaultAttributesSchema, Validators.required]
         })
@@ -140,7 +140,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   get protoPayloadType(): boolean {
     const transportPayloadType = this.mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.transportPayloadType').value;
-    return transportPayloadType === MqttTransportPayloadType.PROTOBUF;
+    return transportPayloadType === TransportPayloadType.PROTOBUF;
   }
 
   writeValue(value: MqttDeviceProfileTransportConfiguration | null): void {
@@ -159,7 +159,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     this.propagateChange(configuration);
   }
 
-  private updateTransportPayloadBasedControls(type: MqttTransportPayloadType, forceUpdated = false) {
+  private updateTransportPayloadBasedControls(type: TransportPayloadType, forceUpdated = false) {
     const transportPayloadTypeForm = this.mqttDeviceProfileTransportConfigurationFormGroup
       .get('transportPayloadTypeConfiguration') as FormGroup;
     if (forceUpdated) {
@@ -168,7 +168,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
         deviceAttributesProtoSchema: this.defaultAttributesSchema
       }, {emitEvent: false});
     }
-    if (type === MqttTransportPayloadType.PROTOBUF && !this.disabled) {
+    if (type === TransportPayloadType.PROTOBUF && !this.disabled) {
       transportPayloadTypeForm.get('deviceTelemetryProtoSchema').enable({emitEvent: false});
       transportPayloadTypeForm.get('deviceAttributesProtoSchema').enable({emitEvent: false});
     } else {

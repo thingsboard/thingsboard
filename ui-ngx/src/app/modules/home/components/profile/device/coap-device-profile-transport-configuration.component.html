@@ -32,5 +32,38 @@
         </mat-form-field>
       </div>
     </fieldset>
+    <div *ngIf="coapDeviceTypeDefault" formGroupName="transportPayloadTypeConfiguration">
+      <fieldset class="fields-group">
+        <legend class="group-title" translate>device-profile.coap-device-payload-type</legend>
+        <div fxLayoutGap="8px" fxLayout="column">
+          <mat-form-field class="mat-block">
+            <mat-select formControlName="transportPayloadType" required>
+              <mat-option *ngFor="let type of transportPayloadTypes" [value]="type">
+                {{transportPayloadTypeTranslations.get(type) | translate}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.transportPayloadType').hasError('required')">
+              {{ 'device-profile.mqtt-payload-type-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <div *ngIf="protoPayloadType" fxLayout="column">
+            <mat-form-field fxFlex>
+              <mat-label translate>device-profile.telemetry-proto-schema</mat-label>
+              <textarea matInput required formControlName="deviceTelemetryProtoSchema" rows="5"></textarea>
+              <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceTelemetryProtoSchema').hasError('required')">
+                {{ 'device-profile.telemetry-proto-schema-required' | translate}}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field fxFlex>
+              <mat-label translate>device-profile.attributes-proto-schema</mat-label>
+              <textarea matInput required formControlName="deviceAttributesProtoSchema" rows="5"></textarea>
+              <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceAttributesProtoSchema').hasError('required')">
+                {{ 'device-profile.attributes-proto-schema-required' | translate}}
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+      </fieldset>
+    </div>
   </section>
 </form>
