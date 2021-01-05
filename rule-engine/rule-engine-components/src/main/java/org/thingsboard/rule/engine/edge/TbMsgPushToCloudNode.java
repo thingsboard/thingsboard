@@ -32,8 +32,27 @@ import org.thingsboard.server.common.msg.TbMsg;
         type = ComponentType.ACTION,
         name = "push to cloud",
         configClazz = EmptyNodeConfiguration.class,
-        nodeDescription = "Pushes messages to cloud",
-        nodeDetails = "Pushes messages to cloud. This node is used only on Edge instances to push messages from Edge to Cloud.",
+        nodeDescription = "Pushes messages from edge to cloud",
+        nodeDetails = "Push messages from edge to cloud. " +
+                "This node used only on edge to push messages from edge to cloud. " +
+                "Once message arrived into this node it’s going to be converted into cloud event and saved to the local database. " +
+                "Node doesn't push messages directly to cloud, but stores event(s) in the cloud queue. " +
+                "<br>Supports next originator types:" +
+                "<br><code>DEVICE</code>" +
+                "<br><code>ASSET</code>" +
+                "<br><code>ENTITY_VIEW</code>" +
+                "<br><code>DASHBOARD</code>" +
+                "<br><code>TENANT</code>" +
+                "<br><code>CUSTOMER</code>" +
+                "<br><code>EDGE</code><br><br>" +
+                "As well node supports next message types:" +
+                "<br><code>POST_TELEMETRY_REQUEST</code>" +
+                "<br><code>POST_ATTRIBUTES_REQUEST</code>" +
+                "<br><code>ATTRIBUTES_UPDATED</code>" +
+                "<br><code>ATTRIBUTES_DELETED</code>" +
+                "<br><code>ALARM</code><br><br>" +
+                "Message will be routed via <b>Failure</b> route if node was not able to save cloud event to database or unsupported originator type/message type arrived. " +
+                "In case successful storage cloud event to database message will be routed via <b>Success</b> route.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
         icon = "cloud_upload",
