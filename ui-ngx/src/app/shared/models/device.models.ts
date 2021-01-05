@@ -39,7 +39,7 @@ export enum DeviceTransportType {
   COAP = 'COAP'
 }
 
-export enum MqttTransportPayloadType {
+export enum TransportPayloadType {
   JSON = 'JSON',
   PROTOBUF = 'PROTOBUF'
 }
@@ -105,10 +105,10 @@ export const deviceTransportTypeHintMap = new Map<DeviceTransportType, string>(
   ]
 );
 
-export const mqttTransportPayloadTypeTranslationMap = new Map<MqttTransportPayloadType, string>(
+export const transportPayloadTypeTranslationMap = new Map<TransportPayloadType, string>(
   [
-    [MqttTransportPayloadType.JSON, 'device-profile.mqtt-device-payload-type-json'],
-    [MqttTransportPayloadType.PROTOBUF, 'device-profile.mqtt-device-payload-type-proto']
+    [TransportPayloadType.JSON, 'device-profile.transport-device-payload-type-json'],
+    [TransportPayloadType.PROTOBUF, 'device-profile.transport-device-payload-type-proto']
   ]
 );
 
@@ -171,7 +171,7 @@ export interface MqttDeviceProfileTransportConfiguration {
   deviceTelemetryTopic?: string;
   deviceAttributesTopic?: string;
   transportPayloadTypeConfiguration?: {
-    transportPayloadType?: MqttTransportPayloadType;
+    transportPayloadType?: TransportPayloadType;
   };
   [key: string]: any;
 }
@@ -179,6 +179,10 @@ export interface MqttDeviceProfileTransportConfiguration {
 export interface CoapDeviceProfileTransportConfiguration {
   coapDeviceTypeConfiguration?: {
     coapDeviceType?: CoapTransportDeviceType;
+    transportPayloadTypeConfiguration?: {
+      transportPayloadType?: TransportPayloadType;
+      [key: string]: any;
+    };
   };
 }
 
@@ -239,7 +243,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {
           deviceTelemetryTopic: 'v1/devices/me/telemetry',
           deviceAttributesTopic: 'v1/devices/me/attributes',
-          transportPayloadTypeConfiguration: {transportPayloadType: MqttTransportPayloadType.JSON}
+          transportPayloadTypeConfiguration: {transportPayloadType: TransportPayloadType.JSON}
         };
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
@@ -249,7 +253,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         break;
       case DeviceTransportType.COAP:
         const coapTransportConfiguration: CoapDeviceProfileTransportConfiguration = {
-          coapDeviceTypeConfiguration: {coapDeviceType: CoapTransportDeviceType.DEFAULT}
+          coapDeviceTypeConfiguration: {coapDeviceType: CoapTransportDeviceType.DEFAULT, transportPayloadTypeConfiguration: {transportPayloadType: TransportPayloadType.JSON}}
         };
         transportConfiguration = {...coapTransportConfiguration, type: DeviceTransportType.COAP};
         break;

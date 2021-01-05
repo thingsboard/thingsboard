@@ -65,8 +65,8 @@
       <div fxLayoutGap="8px" fxLayout="column">
         <mat-form-field class="mat-block">
           <mat-select formControlName="transportPayloadType" required>
-            <mat-option *ngFor="let type of mqttTransportPayloadTypes" [value]="type">
-              {{mqttTransportPayloadTypeTranslations.get(type) | translate}}
+            <mat-option *ngFor="let type of transportPayloadTypes" [value]="type">
+              {{transportPayloadTypeTranslations.get(type) | translate}}
             </mat-option>
           </mat-select>
           <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.transportPayloadType').hasError('required')">
