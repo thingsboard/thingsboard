@@ -27,7 +27,7 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportService;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportServiceImpl;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.util.Map;
@@ -48,7 +48,7 @@ public class LwM2MClient implements Cloneable {
     private UUID sessionUuid;
     private UUID profileUuid;
     private LeshanServer lwServer;
-    private LwM2MTransportService lwM2MTransportService;
+    private LwM2MTransportServiceImpl lwM2MTransportServiceImpl;
     private Registration registration;
     private ValidateDeviceCredentialsResponseMsg credentialsResponse;
     private Map<String, String> attributes;
@@ -92,7 +92,7 @@ public class LwM2MClient implements Cloneable {
         this.pendingRequests.remove(path);
         if (this.pendingRequests.size() == 0) {
             this.initValue();
-            this.lwM2MTransportService.putDelayedUpdateResourcesThingsboard(this);
+            this.lwM2MTransportServiceImpl.putDelayedUpdateResourcesThingsboard(this);
         }
     }
 
@@ -123,7 +123,7 @@ public class LwM2MClient implements Cloneable {
     public void onSuccessOrErrorDelayedRequests(String path) {
         if (path != null) this.delayedRequests.remove(path);
         if (this.delayedRequests.size() == 0 && this.getDelayedRequestsId().size() == 0) {
-            this.lwM2MTransportService.updatesAndSentModelParameter(this);
+            this.lwM2MTransportServiceImpl.updatesAndSentModelParameter(this);
         }
     }
 

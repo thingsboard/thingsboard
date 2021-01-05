@@ -31,20 +31,14 @@ import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.util.Hex;
-import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.nustaq.serialization.FSTConfiguration;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.transport.lwm2m.server.client.AttrTelemetryObserveValue;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -53,8 +47,8 @@ import java.util.LinkedList;
 import java.util.Optional;
 
 @Slf4j
-@Component("LwM2MTransportHandler")
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
+//@Component("LwM2MTransportHandler")
+//@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportHandler {
 
     // We choose a default timeout a bit higher to the MAX_TRANSMIT_WAIT(62-93s) which is the time from starting to
@@ -114,32 +108,38 @@ public class LwM2MTransportHandler {
     public static final String SERVICE_CHANNEL = "SERVICE";
     public static final String RESPONSE_CHANNEL = "RESP";
 
-    @Autowired
-    @Qualifier("LeshanServerCert")
-    private LeshanServer lhServerCert;
+//    @Autowired
+//    @Qualifier("LeshanServerCert")
+//    private LeshanServer lhServerCert;
+//
+//    @Autowired
+//    @Qualifier("LeshanServerNoSecPskRpk")
+//    private LeshanServer lhServerNoSecPskRpk;
 
-    @Autowired
-    @Qualifier("leshanServerNoSecPskRpk")
-    private LeshanServer lhServerNoSecPskRpk;
+//    @Autowired
+//    @Qualifier("ServerListenerCert")
+//    private LwM2mServerListener serverListenerCert;
+//
+//    @Autowired
+//    @Qualifier("ServerListenerNoSecPskRpk")
+//    private LwM2mServerListener serverListenerNoSecPskRpk;
 
-    @Autowired
-    private LwM2MTransportService service;
 
-    @PostConstruct
-    public void init() {
-        try {
-            LwM2mServerListener lwM2mServerListener = new LwM2mServerListener(lhServerCert, service);
-            this.lhServerCert.getRegistrationService().addListener(lwM2mServerListener.registrationListener);
-            this.lhServerCert.getPresenceService().addListener(lwM2mServerListener.presenceListener);
-            this.lhServerCert.getObservationService().addListener(lwM2mServerListener.observationListener);
-            lwM2mServerListener = new LwM2mServerListener(lhServerNoSecPskRpk, service);
-            this.lhServerNoSecPskRpk.getRegistrationService().addListener(lwM2mServerListener.registrationListener);
-            this.lhServerNoSecPskRpk.getPresenceService().addListener(lwM2mServerListener.presenceListener);
-            this.lhServerNoSecPskRpk.getObservationService().addListener(lwM2mServerListener.observationListener);
-        } catch (java.lang.NullPointerException e) {
-            log.error("init [{}]", e.toString());
-        }
-    }
+//    @PostConstruct
+//    public void init() {
+//        try {
+//            serverListenerCert.init(lhServerCert);
+//            this.lhServerCert.getRegistrationService().addListener(serverListenerCert.registrationListener);
+//            this.lhServerCert.getPresenceService().addListener(serverListenerCert.presenceListener);
+//            this.lhServerCert.getObservationService().addListener(serverListenerCert.observationListener);
+//            serverListenerNoSecPskRpk.init(lhServerNoSecPskRpk);
+//            this.lhServerNoSecPskRpk.getRegistrationService().addListener(serverListenerNoSecPskRpk.registrationListener);
+//            this.lhServerNoSecPskRpk.getPresenceService().addListener(serverListenerNoSecPskRpk.presenceListener);
+//            this.lhServerNoSecPskRpk.getObservationService().addListener(serverListenerNoSecPskRpk.observationListener);
+//        } catch (Exception e) {
+//            log.error("init [{}]", e.toString());
+//        }
+//    }
 
     public static NetworkConfig getCoapConfig() {
         NetworkConfig coapConfig;
@@ -217,7 +217,7 @@ public class LwM2MTransportHandler {
                 JsonObject objectMsg = (observeAttrStr != null) ? validateJson(observeAttrStr) : null;
                 return (getValidateCredentialsBodyFromThingsboard(objectMsg)) ? objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject() : null;
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("", e);
             }
         }
         return null;
@@ -232,7 +232,7 @@ public class LwM2MTransportHandler {
                 JsonObject objectMsg = (bootstrapStr != null) ? validateJson(bootstrapStr) : null;
                 return (getValidateBootstrapProfileFromThingsboard(objectMsg)) ? objectMsg.get(BOOTSTRAP).getAsJsonObject() : null;
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("", e);
             }
         }
         return null;

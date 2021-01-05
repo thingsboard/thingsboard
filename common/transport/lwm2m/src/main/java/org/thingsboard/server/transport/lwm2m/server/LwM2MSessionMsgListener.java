@@ -33,10 +33,10 @@ import java.util.Optional;
 
 @Slf4j
 public class LwM2MSessionMsgListener implements GenericFutureListener<Future<? super Void>>, SessionMsgListener {
-    private LwM2MTransportService service;
+    private LwM2MTransportServiceImpl service;
     private TransportProtos.SessionInfoProto sessionInfo;
 
-    public LwM2MSessionMsgListener(LwM2MTransportService service, TransportProtos.SessionInfoProto sessionInfo) {
+    public LwM2MSessionMsgListener(LwM2MTransportServiceImpl service, TransportProtos.SessionInfoProto sessionInfo) {
         this.service = service;
         this.sessionInfo = sessionInfo;
     }

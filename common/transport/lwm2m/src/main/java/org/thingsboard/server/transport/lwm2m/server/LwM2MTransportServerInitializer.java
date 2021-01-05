@@ -20,14 +20,15 @@ import org.eclipse.leshan.server.californium.LeshanServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 @Slf4j
-@Service("LwM2MTransportServerInitializer")
+@Component("LwM2MTransportServerInitializer")
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' ) || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportServerInitializer {
 
@@ -36,8 +37,18 @@ public class LwM2MTransportServerInitializer {
     private LeshanServer lhServerCert;
 
     @Autowired
-    @Qualifier("leshanServerNoSecPskRpk")
+    @Qualifier("LeshanServerNoSecPskRpk")
     private LeshanServer lhServerNoSecPskRpk;
+//
+//    @Autowired
+//    @Qualifier("LeshanServerListener")
+//    private LwM2mServerListener lwM2mServerListener;
+
+    @Autowired
+    private LwM2mServerListener lwM2mServerListenerNoSecPskRpk;
+
+    @Autowired
+    private LwM2mServerListener lwM2mServerListenerCert;
 
     @Autowired
     private LwM2MTransportContextServer context;
@@ -46,17 +57,31 @@ public class LwM2MTransportServerInitializer {
     public void init() {
         if (this.context.getCtxServer().getEnableGenPskRpk()) new LWM2MGenerationPSkRPkECC();
         if (this.context.getCtxServer().isServerStartAll()) {
-            this.lhServerCert.start();
-            this.lhServerNoSecPskRpk.start();
-        }
-        else {
+            this.startLhServerCert();
+            this.startLhServerNoSecPskRpk();
+        } else {
             if (this.context.getCtxServer().getServerDtlsMode() == LwM2MSecurityMode.X509.code) {
-                this.lhServerCert.start();
-            }
-            else {
-                this.lhServerNoSecPskRpk.start();
+                this.startLhServerCert();
+            } else {
+                this.startLhServerNoSecPskRpk();
             }
         }
+    }
+
+    private void startLhServerCert() {
+        this.lhServerCert.start();
+        LwM2mServerListener serverListenerCert = this.lwM2mServerListenerCert.init(this.lhServerCert);
+        this.lhServerCert.getRegistrationService().addListener(serverListenerCert.registrationListener);
+        this.lhServerCert.getPresenceService().addListener(serverListenerCert.presenceListener);
+        this.lhServerCert.getObservationService().addListener(serverListenerCert.observationListener);
+    }
+
+    private void startLhServerNoSecPskRpk() {
+        this.lhServerNoSecPskRpk.start();
+        LwM2mServerListener serverListenerNoSecPskRpk = this.lwM2mServerListenerNoSecPskRpk.init(this.lhServerNoSecPskRpk);
+        this.lhServerNoSecPskRpk.getRegistrationService().addListener(serverListenerNoSecPskRpk.registrationListener);
+        this.lhServerNoSecPskRpk.getPresenceService().addListener(serverListenerNoSecPskRpk.presenceListener);
+        this.lhServerNoSecPskRpk.getObservationService().addListener(serverListenerNoSecPskRpk.observationListener);
     }
 
     @PreDestroy

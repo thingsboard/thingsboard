@@ -24,17 +24,25 @@ import org.eclipse.leshan.server.queue.PresenceListener;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationListener;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 
 @Slf4j
+@Component()
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2mServerListener {
-    private LeshanServer lhServer;
-    private LwM2MTransportService service;
 
-    public LwM2mServerListener(LeshanServer lhServer, LwM2MTransportService service) {
+    private LeshanServer lhServer;
+
+    @Autowired
+    private LwM2MTransportServiceImpl service;
+
+    public LwM2mServerListener init(LeshanServer lhServer) {
         this.lhServer = lhServer;
-        this.service = service;
+        return  this;
     }
 
     public final RegistrationListener registrationListener = new RegistrationListener() {
@@ -96,8 +104,7 @@ public class LwM2mServerListener {
                 try {
                     service.onObservationResponse(registration, observation.getPath().toString(), response);
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    log.error("onResponse");
+                    log.error("[{}] onResponse", e.toString());
 
                 }
             }

@@ -129,7 +129,6 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                     case FLOAT:
                         return String.valueOf(value);
                     case TIME:
-//                        return Long.toString(((Date) value).getTime());
                         String DATE_FORMAT = "MMM d, yyyy HH:mm a";
                         Long timeValue = ((Date) value).getTime();
                         DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);

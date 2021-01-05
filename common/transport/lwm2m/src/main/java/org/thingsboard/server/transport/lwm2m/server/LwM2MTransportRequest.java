@@ -86,7 +86,7 @@ public class LwM2MTransportRequest {
     private LwM2mValueConverterImpl converter;
 
     @Autowired
-    LwM2MTransportService service;
+    LwM2MTransportServiceImpl service;
 
 
     @PostConstruct
