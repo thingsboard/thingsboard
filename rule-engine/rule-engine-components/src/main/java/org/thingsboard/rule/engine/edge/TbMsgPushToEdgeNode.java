@@ -56,8 +56,28 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         type = ComponentType.ACTION,
         name = "push to edge",
         configClazz = EmptyNodeConfiguration.class,
-        nodeDescription = "Pushes messages to edge",
-        nodeDetails = "Pushes messages to edge, if Message Originator assigned to particular edge or is EDGE entity. This node is used only on Cloud instances to push messages from Cloud to Edge. Supports only DEVICE, ENTITY_VIEW, ASSET, ENTITY_VIEW, DASHBOARD, TENANT, CUSTOMER and EDGE Message Originator(s).",
+        nodeDescription = "Push messages from cloud to edge",
+        nodeDetails = "Push messages from cloud to edge. " +
+                "Message originator must be assigned to particular edge or message originator is <b>EDGE</b> entity itself. " +
+                "This node used only on cloud instances to push messages from cloud to edge. " +
+                "Once message arrived into this node it’s going to be converted into edge event and saved to the database. " +
+                "Node doesn't push messages directly to edge, but stores event(s) in the edge queue. " +
+                "<br>Supports next originator types:" +
+                "<br><code>DEVICE</code>" +
+                "<br><code>ASSET</code>" +
+                "<br><code>ENTITY_VIEW</code>" +
+                "<br><code>DASHBOARD</code>" +
+                "<br><code>TENANT</code>" +
+                "<br><code>CUSTOMER</code>" +
+                "<br><code>EDGE</code><br><br>" +
+                "As well node supports next message types:" +
+                "<br><code>POST_TELEMETRY_REQUEST</code>" +
+                "<br><code>POST_ATTRIBUTES_REQUEST</code>" +
+                "<br><code>ATTRIBUTES_UPDATED</code>" +
+                "<br><code>ATTRIBUTES_DELETED</code>" +
+                "<br><code>ALARM</code><br><br>" +
+                "Message will be routed via <b>Failure</b> route if node was not able to save edge event to database or unsupported originator type/message type arrived. " +
+                "In case successful storage edge event to database message will be routed via <b>Success</b> route.",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbNodeEmptyConfig",
         icon = "cloud_download",
