@@ -33,11 +33,12 @@ import { WidgetsBundleComponent } from '@modules/home/pages/widget/widgets-bundl
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { Direction } from "@shared/models/page/sort-order";
+import { map } from "rxjs/operators";
 
 @Injectable()
 export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableConfig<WidgetsBundle>> {
@@ -106,7 +107,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     this.config.deleteEntitiesTitle = count => this.translate.instant('widgets-bundle.delete-widgets-bundles-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('widgets-bundle.delete-widgets-bundles-text');
 
-    this.config.entitiesFetchFunction = pageLink => this.widgetsService.getWidgetBundles(pageLink);
+
     this.config.loadEntity = id => this.widgetsService.getWidgetsBundle(id.id);
     this.config.saveEntity = widgetsBundle => this.widgetsService.saveWidgetsBundle(widgetsBundle);
     this.config.deleteEntity = id => this.widgetsService.deleteWidgetsBundle(id.id);
@@ -119,6 +120,17 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     this.config.deleteEnabled = (widgetsBundle) => this.isWidgetsBundleEditable(widgetsBundle, authUser.authority);
     this.config.entitySelectionEnabled = (widgetsBundle) => this.isWidgetsBundleEditable(widgetsBundle, authUser.authority);
     this.config.detailsReadonly = (widgetsBundle) => !this.isWidgetsBundleEditable(widgetsBundle, authUser.authority);
+    const authState = getCurrentAuthState(this.store);
+    if (!authState.edgesSupportEnabled) {
+      this.config.entitiesFetchFunction = pageLink => this.widgetsService.getWidgetBundles(pageLink).pipe(
+        map((widgetBundles) => {
+          widgetBundles.data = widgetBundles.data.filter(widgetBundle => widgetBundle.alias !== 'edge_widgets');
+          return widgetBundles;
+        })
+      );
+    } else {
+      this.config.entitiesFetchFunction = pageLink => this.widgetsService.getWidgetBundles(pageLink);
+    }
     return this.config;
   }
 
