@@ -123,7 +123,7 @@ public class LwM2MTransportService {
                 new NamedThreadFactory(String.format("LwM2M %s channel update registered", SERVICE_CHANNEL)));
         this.executorUnRegistered = Executors.newCachedThreadPool(
                 new NamedThreadFactory(String.format("LwM2M %s channel un registered", SERVICE_CHANNEL)));
-        this.converter = new LwM2mValueConverterImpl();
+        this.converter = LwM2mValueConverterImpl.getInstance();
     }
 
     /**

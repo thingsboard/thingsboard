@@ -73,7 +73,7 @@ public class LwM2MTransportServerConfiguration {
         builder.setEncoder(new DefaultLwM2mNodeEncoder());
         LwM2mNodeDecoder decoder = new DefaultLwM2mNodeDecoder();
         builder.setDecoder(decoder);
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(new LwM2mValueConverterImpl()));
+        builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
 
         /** Create CoAP Config */
         builder.setCoapConfig(getCoapConfig());
@@ -89,7 +89,7 @@ public class LwM2MTransportServerConfiguration {
         builder.setDtlsConfig(dtlsConfig);
 
         /** Use a magic converter to support bad type send by the UI. */
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(new LwM2mValueConverterImpl()));
+        builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
 
         /**  Create DTLS security mode
          * There can be only one DTLS security mode

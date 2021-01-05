@@ -78,7 +78,7 @@ public class LwM2MClient implements Cloneable {
          * Key <objectId>, response<Value -> instance -> resources: value...>
          */
         this.responses = new ConcurrentHashMap<>();
-        this.converter = new LwM2mValueConverterImpl();
+        this.converter = LwM2mValueConverterImpl.getInstance();
     }
 
     /**
