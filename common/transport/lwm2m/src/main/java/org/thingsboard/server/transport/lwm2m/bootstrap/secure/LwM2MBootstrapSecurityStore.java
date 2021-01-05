@@ -32,7 +32,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2mValidateCredentialsSecurityInfo;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MSessionMsgListener;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
@@ -60,7 +60,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     private final EditableBootstrapConfigStore bootstrapConfigStore;
 
     @Autowired
-    LwM2mValidateCredentialsSecurityInfo lwM2MValidateCredentialsSecurityInfo;
+    LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator;
 
     @Autowired
     public LwM2MTransportContextServer context;
@@ -72,7 +72,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     @Override
     public List<SecurityInfo> getAllByEndpoint(String endPoint) {
         String endPointKey = endPoint;
-        ReadResultSecurityStore store = lwM2MValidateCredentialsSecurityInfo.validateCredentialsSecurityInfo(endPointKey, TypeServer.BOOTSTRAP);
+        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(endPointKey, TypeServer.BOOTSTRAP);
         if (store.getBootstrapJsonCredential() != null && store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             /** add value to store  from BootstrapJson */
             this.setBootstrapConfigScurityInfo(store);
@@ -96,7 +96,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Override
     public SecurityInfo getByIdentity(String identity) {
-        ReadResultSecurityStore store = lwM2MValidateCredentialsSecurityInfo.validateCredentialsSecurityInfo(identity, TypeServer.BOOTSTRAP);
+        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, TypeServer.BOOTSTRAP);
         if (store.getBootstrapJsonCredential() != null && store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             /** add value to store  from BootstrapJson */
             this.setBootstrapConfigScurityInfo(store);

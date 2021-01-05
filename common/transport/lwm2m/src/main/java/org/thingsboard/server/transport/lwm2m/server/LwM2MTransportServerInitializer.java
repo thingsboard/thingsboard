@@ -32,6 +32,10 @@ import javax.annotation.PreDestroy;
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' ) || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportServerInitializer {
 
+
+    @Autowired
+    private LwM2MTransportServiceImpl service;
+
     @Autowired
     @Qualifier("LeshanServerCert")
     private LeshanServer lhServerCert;
@@ -39,16 +43,6 @@ public class LwM2MTransportServerInitializer {
     @Autowired
     @Qualifier("LeshanServerNoSecPskRpk")
     private LeshanServer lhServerNoSecPskRpk;
-//
-//    @Autowired
-//    @Qualifier("LeshanServerListener")
-//    private LwM2mServerListener lwM2mServerListener;
-
-    @Autowired
-    private LwM2mServerListener lwM2mServerListenerNoSecPskRpk;
-
-    @Autowired
-    private LwM2mServerListener lwM2mServerListenerCert;
 
     @Autowired
     private LwM2MTransportContextServer context;
@@ -70,28 +64,25 @@ public class LwM2MTransportServerInitializer {
 
     private void startLhServerCert() {
         this.lhServerCert.start();
-        LwM2mServerListener serverListenerCert = this.lwM2mServerListenerCert.init(this.lhServerCert);
-        this.lhServerCert.getRegistrationService().addListener(serverListenerCert.registrationListener);
-        this.lhServerCert.getPresenceService().addListener(serverListenerCert.presenceListener);
-        this.lhServerCert.getObservationService().addListener(serverListenerCert.observationListener);
+        LwM2mServerListener lhServerCertListener = new LwM2mServerListener(this.lhServerCert, service);
+        this.lhServerCert.getRegistrationService().addListener(lhServerCertListener.registrationListener);
+        this.lhServerCert.getPresenceService().addListener(lhServerCertListener.presenceListener);
+        this.lhServerCert.getObservationService().addListener(lhServerCertListener.observationListener);
     }
 
     private void startLhServerNoSecPskRpk() {
         this.lhServerNoSecPskRpk.start();
-        LwM2mServerListener serverListenerNoSecPskRpk = this.lwM2mServerListenerNoSecPskRpk.init(this.lhServerNoSecPskRpk);
-        this.lhServerNoSecPskRpk.getRegistrationService().addListener(serverListenerNoSecPskRpk.registrationListener);
-        this.lhServerNoSecPskRpk.getPresenceService().addListener(serverListenerNoSecPskRpk.presenceListener);
-        this.lhServerNoSecPskRpk.getObservationService().addListener(serverListenerNoSecPskRpk.observationListener);
+        LwM2mServerListener lhServerNoSecPskRpkListener = new LwM2mServerListener(this.lhServerNoSecPskRpk, service);
+        this.lhServerNoSecPskRpk.getRegistrationService().addListener(lhServerNoSecPskRpkListener.registrationListener);
+        this.lhServerNoSecPskRpk.getPresenceService().addListener(lhServerNoSecPskRpkListener.presenceListener);
+        this.lhServerNoSecPskRpk.getObservationService().addListener(lhServerNoSecPskRpkListener.observationListener);
     }
 
     @PreDestroy
     public void shutdown() {
         log.info("Stopping LwM2M transport Server!");
-        try {
-            lhServerCert.destroy();
-            lhServerNoSecPskRpk.destroy();
-        } finally {
-        }
+        lhServerCert.destroy();
+        lhServerNoSecPskRpk.destroy();
         log.info("LwM2M transport Server stopped!");
     }
 }

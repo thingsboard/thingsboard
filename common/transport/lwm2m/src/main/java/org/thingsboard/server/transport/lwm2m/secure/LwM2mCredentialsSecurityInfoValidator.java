@@ -47,7 +47,7 @@ import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.X5
 @Slf4j
 @Component("LwM2MGetSecurityInfo")
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' ) || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-public class LwM2mValidateCredentialsSecurityInfo {
+public class LwM2mCredentialsSecurityInfoValidator {
 
     @Autowired
     public LwM2MTransportContextServer contextS;
@@ -62,7 +62,7 @@ public class LwM2mValidateCredentialsSecurityInfo {
      * @param keyValue -
      * @return ValidateDeviceCredentialsResponseMsg and SecurityInfo
      */
-    public ReadResultSecurityStore validateCredentialsSecurityInfo(String endPoint, TypeServer keyValue) {
+    public ReadResultSecurityStore createAndValidateCredentialsSecurityInfo(String endPoint, TypeServer keyValue) {
         CountDownLatch latch = new CountDownLatch(1);
         final ReadResultSecurityStore[] resultSecurityStore = new ReadResultSecurityStore[1];
         contextS.getTransportService().process(ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(endPoint).build(),
@@ -79,7 +79,7 @@ public class LwM2mValidateCredentialsSecurityInfo {
 
                     @Override
                     public void onError(Throwable e) {
-                        log.trace("[{}] [{}] Failed to process credentials PSK ", endPoint, e.toString());
+                        log.trace("[{}] [{}] Failed to process credentials ", endPoint, e);
                         resultSecurityStore[0] = createSecurityInfo(endPoint, null, null);
                         latch.countDown();
                     }
@@ -87,7 +87,7 @@ public class LwM2mValidateCredentialsSecurityInfo {
         try {
             latch.await(contextS.getCtxServer().getTimeout(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            log.error("", e);
+            log.error("Failed to await credentials!", e);
         }
         return resultSecurityStore[0];
     }

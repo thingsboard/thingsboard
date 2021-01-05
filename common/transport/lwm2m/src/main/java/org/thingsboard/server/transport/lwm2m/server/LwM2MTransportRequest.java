@@ -88,13 +88,12 @@ public class LwM2MTransportRequest {
     @Autowired
     LwM2MTransportServiceImpl service;
 
-
     @PostConstruct
     public void init() {
         this.converter = LwM2mValueConverterImpl.getInstance();
-        executorResponse = Executors.newCachedThreadPool(
+        executorResponse = Executors.newFixedThreadPool(10,
                 new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
-        executorResponseError = Executors.newCachedThreadPool(
+        executorResponseError =  Executors.newFixedThreadPool(10,
                 new NamedThreadFactory(String.format("LwM2M %s channel response Error", RESPONSE_CHANNEL)));
     }
 
@@ -220,7 +219,7 @@ public class LwM2MTransportRequest {
 
             if (request != null) {
                 this.sendRequest(lwServer, registration, request, lwM2MClient, timeoutInMs, isDelayedUpdate);
-            } else if (request == null && isDelayedUpdate) {
+            } else if (isDelayedUpdate) {
                 String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: Resource path - %s msg  No  SendRequest to Client", target);
                 service.sentLogsToThingsboard(msg, registration);
                 log.error("[{}] - [{}] No SendRequest", target);

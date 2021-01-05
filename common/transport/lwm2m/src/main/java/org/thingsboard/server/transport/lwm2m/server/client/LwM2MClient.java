@@ -63,12 +63,12 @@ public class LwM2MClient implements Cloneable {
         return super.clone();
     }
 
-    public LwM2MClient(String endPoint, String identity, SecurityInfo info, ValidateDeviceCredentialsResponseMsg credentialsResponse, Map<String, String> attributes, UUID profileUuid) {
+    public LwM2MClient(String endPoint, String identity, SecurityInfo info, ValidateDeviceCredentialsResponseMsg credentialsResponse, UUID profileUuid) {
         this.endPoint = endPoint;
         this.identity = identity;
         this.info = info;
         this.credentialsResponse = credentialsResponse;
-        this.attributes = (attributes != null && attributes.size() > 0) ? attributes : new ConcurrentHashMap<String, String>();
+        this.attributes = new ConcurrentHashMap<>();
         this.pendingRequests = ConcurrentHashMap.newKeySet();
         this.delayedRequests = new ConcurrentHashMap<>();
         this.resources = new ConcurrentHashMap<>();

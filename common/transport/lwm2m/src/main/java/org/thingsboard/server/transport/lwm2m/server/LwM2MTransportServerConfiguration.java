@@ -82,16 +82,6 @@ public class LwM2MTransportServerConfiguration {
     @Autowired
     private LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
 
-    @Bean
-    public LwM2mServerListener lwM2mServerListenerCert() {
-        return new LwM2mServerListener();
-    }
-
-    @Bean
-    public LwM2mServerListener lwM2mServerListenerNoSecPskRpk() {
-        return new LwM2mServerListener();
-    }
-
     @Primary
     @Bean(name = "LeshanServerCert")
     public LeshanServer getLeshanServerCert() {

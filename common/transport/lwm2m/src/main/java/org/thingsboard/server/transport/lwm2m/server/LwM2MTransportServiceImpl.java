@@ -20,6 +20,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.Link;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mObject;
@@ -56,7 +57,6 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -68,7 +68,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -80,7 +79,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.transport.util.JsonUtils.getJsonObject;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.CLIENT_NOT_AUTHORIZED;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEFAULT_TIMEOUT;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEVICE_ATTRIBUTES_REQUEST;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEVICE_ATTRIBUTES_TOPIC;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC;
@@ -122,11 +120,11 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
     @PostConstruct
     public void init() {
         this.context.getScheduler().scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) context.getCtxServer().getSessionReportTimeout()), context.getCtxServer().getSessionReportTimeout(), TimeUnit.MILLISECONDS);
-        this.executorRegistered = Executors.newCachedThreadPool(
+        this.executorRegistered = Executors.newFixedThreadPool(10,
                 new NamedThreadFactory(String.format("LwM2M %s channel registered", SERVICE_CHANNEL)));
-        this.executorUpdateRegistered = Executors.newCachedThreadPool(
+        this.executorUpdateRegistered = Executors.newFixedThreadPool(10,
                 new NamedThreadFactory(String.format("LwM2M %s channel update registered", SERVICE_CHANNEL)));
-        this.executorUnRegistered = Executors.newCachedThreadPool(
+        this.executorUnRegistered = Executors.newFixedThreadPool(10,
                 new NamedThreadFactory(String.format("LwM2M %s channel un registered", SERVICE_CHANNEL)));
         this.converter = LwM2mValueConverterImpl.getInstance();
     }
@@ -149,7 +147,7 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
     public void onRegistered(LeshanServer lwServer, Registration registration, Collection<Observation> previousObsersations) {
         executorRegistered.submit(() -> {
             try {
-                log.info("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
+                log.warn("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
                 LwM2MClient lwM2MClient = lwM2mInMemorySecurityStore.updateInSessionsLwM2MClient(lwServer, registration);
                 if (lwM2MClient != null) {
                     lwM2MClient.setLwM2MTransportServiceImpl(this);
@@ -180,6 +178,7 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
 
     /**
      * if sessionInfo removed from sessions, then new registerAsyncSession
+     *
      * @param lwServer     - LeshanServer
      * @param registration - Registration LwM2M Client
      */
@@ -280,20 +279,38 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
      * @param lwM2MClient  - object with All parameters off client
      */
     private void setLwM2MClient(LeshanServer lwServer, Registration registration, LwM2MClient lwM2MClient) {
-        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+        // #1
+        for (Link url : registration.getObjectLinks()) {
             LwM2mPath pathIds = new LwM2mPath(url.getUrl());
             if (pathIds.isObjectInstance() && !pathIds.isResource()) {
                 lwM2MClient.getPendingRequests().add(url.getUrl());
             }
-        });
+        }
         // #2
-        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+        for (Link url : registration.getObjectLinks()) {
             LwM2mPath pathIds = new LwM2mPath(url.getUrl());
             if (pathIds.isObjectInstance() && !pathIds.isResource()) {
                 lwM2MTransportRequest.sendAllRequest(lwServer, registration, url.getUrl(), GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
                         lwM2MClient, null, null, this.context.getCtxServer().getTimeout(), false);
             }
-        });
+        }
+
+        // #1
+//        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+//            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
+//            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
+//                lwM2MClient.getPendingRequests().add(url.getUrl());
+//            }
+//        });
+        // #2
+
+//        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+//            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
+//            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
+//                lwM2MTransportRequest.sendAllRequest(lwServer, registration, url.getUrl(), GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
+//                        lwM2MClient, null, null, this.context.getCtxServer().getTimeout(), false);
+//            }
+//        });
     }
 
     /**
@@ -302,18 +319,17 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
      */
     private SessionInfoProto getValidateSessionInfo(Registration registration) {
         LwM2MClient lwM2MClient = lwM2mInMemorySecurityStore.getLwM2MClientWithReg(registration, null);
-        return  getNewSessionInfoProto(lwM2MClient);
+        return getNewSessionInfoProto(lwM2MClient);
 
     }
 
     /**
-     *
      * @param registrationId -
      * @return -
      */
     private SessionInfoProto getValidateSessionInfo(String registrationId) {
         LwM2MClient lwM2MClient = lwM2mInMemorySecurityStore.getLwM2MClientWithReg(null, registrationId);
-        return  getNewSessionInfoProto(lwM2MClient);
+        return getNewSessionInfoProto(lwM2MClient);
     }
 
     private SessionInfoProto getNewSessionInfoProto(LwM2MClient lwM2MClient) {
@@ -437,6 +453,7 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
 
     /**
      * Get names and keyNames from profile shared!!!! attr resources IsWritable
+     *
      * @param lwM2MClient -
      * @return ArrayList  keyNames from profile attr resources shared!!!! && IsWritable
      */
@@ -479,13 +496,13 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
             }
         }
         // #1.2
-        CountDownLatch cancelLatch = new CountDownLatch(1);
-        this.getParametersFromProfile(attributes, telemetries, registration, paths);
-        cancelLatch.countDown();
         try {
-            cancelLatch.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            log.error("[{}] updateAttrTelemetry", e.toString());
+            writeLock.lock();
+            this.getParametersFromProfile(attributes, telemetries, registration, paths);
+        } catch (Exception e) {
+            log.error("UpdateAttrTelemetry", e);
+        } finally {
+            writeLock.unlock();
         }
         if (attributes.getAsJsonObject().entrySet().size() > 0)
             this.updateParametersOnThingsboard(attributes, DEVICE_ATTRIBUTES_TOPIC, registration);
@@ -559,8 +576,8 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
     /**
      * Prepare Sent to Thigsboard callback - Attribute or Telemetry
      *
-     * @param msg            - JsonArray: [{name: value}]
-     * @param topicName      - Api Attribute or Telemetry
+     * @param msg          - JsonArray: [{name: value}]
+     * @param topicName    - Api Attribute or Telemetry
      * @param registration - Id of Registration LwM2M Client
      */
     public void updateParametersOnThingsboard(JsonElement msg, String topicName, Registration registration) {
@@ -618,14 +635,7 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
      * {@code ObservationService#cancelObservation()}
      */
     public void setCancelObservationRecourse(LeshanServer lwServer, Registration registration, String path) {
-        CountDownLatch cancelLatch = new CountDownLatch(1);
         lwServer.getObservationService().cancelObservations(registration, path);
-        cancelLatch.countDown();
-        try {
-            cancelLatch.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            log.error("", e);
-        }
     }
 
     /**
@@ -685,30 +695,28 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
         boolean isChange = false;
         try {
             writeLock.lock();
-            try {
-                // #1
-                LwM2MClient lwM2MClient = lwM2mInMemorySecurityStore.getLwM2MClientWithReg(registration, null);
-                LwM2mPath pathIds = new LwM2mPath(path);
-                log.warn("#0 nameDevice: [{}] resultIds: [{}] value: [{}], values: [{}] ", lwM2MClient.getDeviceName(), pathIds, value, values);
-                ResourceModel.Type resModelType = context.getCtxServer().getResourceModelType(registration, pathIds);
-                ResourceValue resValueOld = lwM2MClient.getResources().get(path);
-                // #2
-                if (resValueOld.isMultiInstances() && !values.toString().equals(resValueOld.getResourceValue().toString())) {
-                    ResourceValue resourceValue = new ResourceValue(values, null, true);
-                    lwM2MClient.getResources().put(path, resourceValue);
-                    isChange = true;
-                } else if (!LwM2MTransportHandler.equalsResourceValue(resValueOld.getValue(), value, resModelType, pathIds)) {
-                    ResourceValue resourceValue = new ResourceValue(null, value, false);
-                    lwM2MClient.getResources().put(path, resourceValue);
-                    isChange = true;
-                }
-            } finally {
-                writeLock.unlock();
+            // #1
+            LwM2MClient lwM2MClient = lwM2mInMemorySecurityStore.getLwM2MClientWithReg(registration, null);
+            LwM2mPath pathIds = new LwM2mPath(path);
+            log.warn("#0 nameDevice: [{}] resultIds: [{}] value: [{}], values: [{}] ", lwM2MClient.getDeviceName(), pathIds, value, values);
+            ResourceModel.Type resModelType = context.getCtxServer().getResourceModelType(registration, pathIds);
+            ResourceValue resValueOld = lwM2MClient.getResources().get(path);
+            // #2
+            if (resValueOld.isMultiInstances() && !values.toString().equals(resValueOld.getResourceValue().toString())) {
+                ResourceValue resourceValue = new ResourceValue(values, null, true);
+                lwM2MClient.getResources().put(path, resourceValue);
+                isChange = true;
+            } else if (!LwM2MTransportHandler.equalsResourceValue(resValueOld.getValue(), value, resModelType, pathIds)) {
+                ResourceValue resourceValue = new ResourceValue(null, value, false);
+                lwM2MClient.getResources().put(path, resourceValue);
+                isChange = true;
             }
+        } catch (Exception e) {
+            log.error("#1_1 Update ResourcesValue after Observation is unsuccessfully  path: [{}] value: [{}] [{}]", path, value, e.toString());
+        } finally {
+            writeLock.unlock();
         }
-         catch (Exception e) {
-            log.error("#1_1 Update ResourcesValue after Observation in CountDownLatch is unsuccessfully  path: [{}] value: [{}] [{}]", path, value, e.toString());
-        }
+
         if (isChange) {
             Set<String> paths = new HashSet<>();
             paths.add(path);
@@ -1103,6 +1111,7 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
 
     /**
      * if sessionInfo removed from sessions, then new registerAsyncSession
+     *
      * @param sessionInfo -
      */
     private void checkInactivity(SessionInfoProto sessionInfo) {

@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2mValidateCredentialsSecurityInfo;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.AttrTelemetryObserveValue;
@@ -53,17 +53,18 @@ import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO
 @Service("LwM2mInMemorySecurityStore")
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
+    private static final boolean INFOS_ARE_COMPROMISED = false;
+
     // lock for the two maps
-    protected final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-    protected final Lock readLock = readWriteLock.readLock();
-    protected final Lock writeLock = readWriteLock.writeLock();
-    private final boolean infosAreCompromised = false;
-    protected Map<String /** registrationId */, LwM2MClient> sessions = new ConcurrentHashMap<>();
-    protected Map<UUID /** profileUUid */, AttrTelemetryObserveValue> profiles = new ConcurrentHashMap<>();
+    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private final Lock readLock = readWriteLock.readLock();
+    private final Lock writeLock = readWriteLock.writeLock();
+    private final Map<String /** registrationId */, LwM2MClient> sessions = new ConcurrentHashMap<>();
+    private Map<UUID /** profileUUid */, AttrTelemetryObserveValue> profiles = new ConcurrentHashMap<>();
     private SecurityStoreListener listener;
 
     @Autowired
-    LwM2mValidateCredentialsSecurityInfo lwM2MValidateCredentialsSecurityInfo;
+    LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator;
 
     /**
      * Start after DefaultAuthorizer or LwM2mPskStore
@@ -75,8 +76,8 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         readLock.lock();
         try {
             String registrationId = this.getByRegistrationId(endPoint, null);
-            SecurityInfo info = (registrationId != null && sessions.size() > 0 && sessions.get(registrationId) != null) ? sessions.get(registrationId).getInfo() : this.addLwM2MClientToSession(endPoint);
-            return info;
+            return (registrationId != null && sessions.size() > 0 && sessions.get(registrationId) != null) ?
+                    sessions.get(registrationId).getInfo() : this.addLwM2MClientToSession(endPoint);
         } finally {
             readLock.unlock();
         }
@@ -102,7 +103,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     public Collection<SecurityInfo> getAll() {
         readLock.lock();
         try {
-            return Collections.unmodifiableCollection(this.sessions.entrySet().stream().map(model -> model.getValue().getInfo()).collect(Collectors.toList()));
+            return Collections.unmodifiableCollection(this.sessions.values().stream().map(LwM2MClient::getInfo).collect(Collectors.toList()));
         } finally {
             readLock.unlock();
         }
@@ -118,7 +119,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
             LwM2MClient lwM2MClient = (sessions.get(registrationId) != null) ? sessions.get(registrationId) : null;
             if (lwM2MClient != null) {
                 if (listener != null) {
-                    listener.securityInfoRemoved(infosAreCompromised, lwM2MClient.getInfo());
+                    listener.securityInfoRemoved(INFOS_ARE_COMPROMISED, lwM2MClient.getInfo());
                 }
                 sessions.remove(registrationId);
             }
@@ -198,14 +199,14 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
      * - device - if the thingsboard does not have a device with a name equal to the identity
      */
     private SecurityInfo addLwM2MClientToSession(String identity) {
-        ReadResultSecurityStore store = lwM2MValidateCredentialsSecurityInfo.validateCredentialsSecurityInfo(identity, TypeServer.CLIENT);
+        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, TypeServer.CLIENT);
         if (store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             UUID profileUuid = (store.getDeviceProfile() != null && addUpdateProfileParameters(store.getDeviceProfile())) ? store.getDeviceProfile().getUuidId() : null;
             if (store.getSecurityInfo() != null && profileUuid != null) {
                 String endpoint = store.getSecurityInfo().getEndpoint();
-                sessions.put(endpoint, new LwM2MClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getMsg(), null, profileUuid));
+                sessions.put(endpoint, new LwM2MClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getMsg(), profileUuid));
             } else if (store.getSecurityMode() == NO_SEC.code && profileUuid != null) {
-                sessions.put(identity, new LwM2MClient(identity, null, null, store.getMsg(), null, profileUuid));
+                sessions.put(identity, new LwM2MClient(identity, null, null, store.getMsg(), profileUuid));
             } else {
                     log.error("Registration failed: FORBIDDEN/profileUuid/device [{}] , endpointId: [{}]", profileUuid, identity);
                     /**
