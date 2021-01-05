@@ -87,8 +87,10 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
 
     private Queue createQueue(Queue queue) {
         Queue createdQueue = queueDao.save(queue.getTenantId(), queue);
-        for (int i = 0; i < queue.getPartitions(); i++) {
-            tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
+        if (tbQueueAdmin != null) {
+            for (int i = 0; i < queue.getPartitions(); i++) {
+                tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
+            }
         }
         return createdQueue;
     }
