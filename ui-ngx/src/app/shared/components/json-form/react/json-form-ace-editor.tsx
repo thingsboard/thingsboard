@@ -22,6 +22,7 @@ import { IEditorProps } from 'react-ace/src/types';
 import { map, mergeMap } from 'rxjs/operators';
 import { loadAceDependencies } from '@shared/models/ace/ace.models';
 import { from } from 'rxjs';
+import { Observable } from 'rxjs/internal/Observable';
 
 const ReactAce = React.lazy(() => {
   return loadAceDependencies().pipe(
@@ -33,7 +34,7 @@ const ReactAce = React.lazy(() => {
 
 interface ThingsboardAceEditorProps extends JsonFormFieldProps {
   mode: string;
-  onTidy: (value: string) => string;
+  onTidy: (value: string) => Observable<string>;
 }
 
 interface ThingsboardAceEditorState extends JsonFormFieldState {
@@ -84,15 +85,18 @@ class ThingsboardAceEditor extends React.Component<ThingsboardAceEditorProps, Th
     onTidy() {
         if (!this.props.form.readonly) {
             let value = this.state.value;
-            value = this.props.onTidy(value);
-            this.setState({
-                value
-            });
-            this.props.onChangeValidate({
-                target: {
-                    value
-                }
-            });
+            this.props.onTidy(value).subscribe(
+              (processedValue) => {
+                this.setState({
+                  value: processedValue
+                });
+                this.props.onChangeValidate({
+                  target: {
+                    value: processedValue
+                  }
+                });
+              }
+            );
         }
     }
 

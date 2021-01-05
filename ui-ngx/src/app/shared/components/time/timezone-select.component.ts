@@ -16,21 +16,14 @@
 
 import { AfterViewInit, Component, forwardRef, Input, NgZone, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { map, mergeMap, share, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import * as _moment from 'moment-timezone';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-
-interface TimezoneInfo {
-  id: string;
-  name: string;
-  offset: string;
-  nOffset: number;
-}
+import { getTimezoneInfo, getTimezones, TimezoneInfo } from '@shared/models/time/time.models';
 
 @Component({
   selector: 'tb-timezone-select',
@@ -50,28 +43,14 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
 
   defaultTimezoneId: string = null;
 
-  defaultTimezoneInfo: TimezoneInfo = null;
-
-  timezones: TimezoneInfo[] = _moment.tz.names().map((zoneName) => {
-    const tz = _moment.tz(zoneName);
-    return {
-      id: zoneName,
-      name: zoneName.replace(/_/g, ' '),
-      offset: `UTC${tz.format('Z')}`,
-      nOffset: tz.utcOffset()
-    }
-  });
+  timezones$ = getTimezones().pipe(
+    share()
+  );
 
   @Input()
   set defaultTimezone(timezone: string) {
     if (this.defaultTimezoneId !== timezone) {
       this.defaultTimezoneId = timezone;
-      if (this.defaultTimezoneId) {
-        this.defaultTimezoneInfo =
-          this.timezones.find((timezoneInfo) => timezoneInfo.id === this.defaultTimezoneId);
-      } else {
-        this.defaultTimezoneInfo = null;
-      }
     }
   }
 
@@ -150,23 +129,27 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
 
   writeValue(value: string | null): void {
     this.searchText = '';
-    let foundTimezone: TimezoneInfo = null;
     if (value !== null) {
-      foundTimezone = this.timezones.find(timezoneInfo => timezoneInfo.id === value);
-    }
-    if (foundTimezone !== null) {
-      this.modelValue = value;
-      this.selectTimezoneFormGroup.get('timezone').patchValue(foundTimezone, {emitEvent: false});
+      getTimezoneInfo(value, this.defaultTimezoneId).subscribe(
+        (foundTimezone) => {
+          if (foundTimezone !== null) {
+            this.selectTimezoneFormGroup.get('timezone').patchValue(foundTimezone, {emitEvent: false});
+            if (foundTimezone.id !== value) {
+              setTimeout(() => {
+                this.updateView(foundTimezone.id);
+              }, 0);
+            } else {
+              this.modelValue = value;
+            }
+          } else {
+            this.modelValue = null;
+            this.selectTimezoneFormGroup.get('timezone').patchValue('', {emitEvent: false});
+          }
+        }
+      );
     } else {
-      if (this.defaultTimezoneInfo) {
-        this.selectTimezoneFormGroup.get('timezone').patchValue(this.defaultTimezoneInfo, {emitEvent: false});
-        setTimeout(() => {
-          this.updateView(this.defaultTimezoneInfo.id);
-        }, 0);
-      } else {
-        this.modelValue = null;
-        this.selectTimezoneFormGroup.get('timezone').patchValue('', {emitEvent: false});
-      }
+      this.modelValue = null;
+      this.selectTimezoneFormGroup.get('timezone').patchValue('', {emitEvent: false});
     }
     this.dirty = true;
   }
@@ -182,10 +165,15 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
     if (this.ignoreClosePanel) {
       this.ignoreClosePanel = false;
     } else {
-      if (!this.modelValue && this.defaultTimezoneInfo) {
-        this.ngZone.run(() => {
-          this.selectTimezoneFormGroup.get('timezone').reset(this.defaultTimezoneInfo, {emitEvent: true});
-        });
+      if (!this.modelValue && this.defaultTimezoneId) {
+        getTimezoneInfo(this.defaultTimezoneId).subscribe(
+          (defaultTimezoneInfo) => {
+            if (defaultTimezoneInfo !== null) {
+              this.ngZone.run(() => {
+                this.selectTimezoneFormGroup.get('timezone').reset(defaultTimezoneInfo, {emitEvent: true});
+              });
+            }
+       });
       }
     }
   }
@@ -203,12 +191,13 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
 
   fetchTimezones(searchText?: string): Observable<Array<TimezoneInfo>> {
     this.searchText = searchText;
-    let result = this.timezones;
     if (searchText && searchText.length) {
-      result = this.timezones.filter((timezoneInfo) =>
-       timezoneInfo.name.toLowerCase().includes(searchText.toLowerCase()));
+      return getTimezones().pipe(
+        map((timezones) => timezones.filter((timezoneInfo) =>
+          timezoneInfo.name.toLowerCase().includes(searchText.toLowerCase())))
+      );
     }
-    return of(result);
+    return getTimezones();
   }
 
   clear() {

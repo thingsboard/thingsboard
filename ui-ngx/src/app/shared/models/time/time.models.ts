@@ -17,6 +17,9 @@
 import { TimeService } from '@core/services/time.service';
 import { deepClone, isDefined, isUndefined } from '@app/core/utils';
 import * as moment_ from 'moment';
+import { Observable } from 'rxjs/internal/Observable';
+import { from, of } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 
 const moment = moment_;
 
@@ -481,3 +484,63 @@ export const timeUnitTranslationMap = new Map<TimeUnit, string>(
     [TimeUnit.DAYS, 'timeunit.days']
   ]
 );
+
+export interface TimezoneInfo {
+  id: string;
+  name: string;
+  offset: string;
+  nOffset: number;
+}
+
+let timezones: TimezoneInfo[] = null;
+let defaultTimezone: string = null;
+
+export function getTimezones(): Observable<TimezoneInfo[]> {
+  if (timezones) {
+    return of(timezones);
+  } else {
+    return from(import('moment-timezone')).pipe(
+      map((monentTz) => {
+        return monentTz.tz.names().map((zoneName) => {
+          const tz = monentTz.tz(zoneName);
+          return {
+            id: zoneName,
+            name: zoneName.replace(/_/g, ' '),
+            offset: `UTC${tz.format('Z')}`,
+            nOffset: tz.utcOffset()
+          };
+        });
+      }),
+      tap((zones) => {
+        timezones = zones;
+      })
+    );
+  }
+}
+
+export function getTimezoneInfo(timezoneId: string, defaultTimezoneId?: string): Observable<TimezoneInfo> {
+  return getTimezones().pipe(
+    map((timezoneList) => {
+      let foundTimezone = timezoneList.find(timezoneInfo => timezoneInfo.id === timezoneId);
+      if (!foundTimezone && defaultTimezoneId) {
+        foundTimezone = timezoneList.find(timezoneInfo => timezoneInfo.id === defaultTimezoneId);
+      }
+      return foundTimezone;
+    })
+  );
+}
+
+export function getDefaultTimezone(): Observable<string> {
+  if (defaultTimezone) {
+    return of(defaultTimezone);
+  } else {
+    return from(import('moment-timezone')).pipe(
+      map((monentTz) => {
+        return monentTz.tz.guess();
+      }),
+      tap((zone) => {
+        defaultTimezone = zone;
+      })
+    );
+  }
+}
