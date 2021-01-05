@@ -29,7 +29,7 @@
   </mat-form-field>
   <div *ngIf="alarmScheduleForm.get('type').value !== alarmScheduleType.ANY_TIME">
     <tb-timezone-select
-      [defaultTimezone]="defaultTimezone$ | async"
+      userTimezoneByDefault
       required
       formControlName="timezone">
     </tb-timezone-select>
