@@ -35,7 +35,7 @@ function EdgeService($http, $q, customerService) {
         unassignEdgeFromCustomer: unassignEdgeFromCustomer,
         makeEdgePublic: makeEdgePublic,
         setRootRuleChain: setRootRuleChain,
-        getEdgeEvents: getEdgeEvents,
+        getEdgeDownlinks: getEdgeDownlinks,
         syncEdge: syncEdge,
         findMissingToRelatedRuleChains: findMissingToRelatedRuleChains
     };
@@ -276,7 +276,7 @@ function EdgeService($http, $q, customerService) {
         return deferred.promise;
     }
 
-    function getEdgeEvents(edgeId, pageLink) {
+    function getEdgeDownlinks(edgeId, pageLink) {
         var deferred = $q.defer();
         var url = '/api/edge/' + edgeId + '/events' + '?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.startTime) && pageLink.startTime != null) {

@@ -661,10 +661,6 @@ export default angular.module('thingsboard.types', [])
                 stats: {
                     value: "STATS",
                     name: "event.type-stats"
-                },
-                edgeEvent: {
-                    value: "EDGE_EVENT",
-                    name: "event.type-edge-event"
                 }
             },
             debugEventType: {
@@ -1197,6 +1193,14 @@ export default angular.module('thingsboard.types', [])
                 "ADMIN_SETTINGS": {
                     name: "permission.resource.display-type.ADMIN_SETTINGS"
                 }
+            },
+            edgeEvent: {
+                value: "EDGE_EVENT",
+                name: "edge.downlink"
+            },
+            edgeDownlinks: {
+                value: "EDGE_DOWNLINKS",
+                name: "edge.downlinks"
             }
         }
     ).name;

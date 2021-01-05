@@ -49,7 +49,7 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
                 case types.debugEventType.debugRuleChain.value:
                     template = eventRowDebugRuleNodeTemplate;
                     break;
-                case types.eventType.edgeEvent.value:
+                case types.edgeDownlinks.value:
                     template = eventRowEdgeEventTemplate;
                     break;
             }

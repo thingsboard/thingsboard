@@ -46,7 +46,7 @@ export default function EventHeaderDirective($compile, $templateCache, types) {
                 case types.debugEventType.debugRuleChain.value:
                     template = eventHeaderDebugRuleNodeTemplate;
                     break;
-                case types.eventType.edgeEvent.value:
+                case types.edgeDownlinks.value:
                     template = eventHeaderEdgeEventTemplate;
                     break;
             }

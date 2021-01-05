@@ -17,16 +17,17 @@ import './event.scss';
 
 /* eslint-disable import/no-unresolved, import/default */
 
-import eventTableTemplate from './event-table.tpl.html';
+import edgeDownlinksTableTemplate from './edge-downlinks-table.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EventTableDirective($compile, $templateCache, $rootScope, types, eventService) {
+export default function EdgeDownlinksDirective($compile, $templateCache, $rootScope, $translate, types,
+                                            eventService, edgeService, attributeService) {
 
     var linker = function (scope, element, attrs) {
 
-        var template = $templateCache.get(eventTableTemplate);
+        var template = $templateCache.get(edgeDownlinksTableTemplate);
 
         element.html(template);
 
@@ -100,27 +101,22 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
             fetchMoreItems_: function () {
                 if (scope.events.hasNext && !scope.events.pending) {
                     if (scope.entityType && scope.entityId && scope.eventType && scope.tenantId) {
-                        var promise = eventService.getEvents(scope.entityType, scope.entityId,
-                            scope.eventType, scope.tenantId, scope.events.nextPageLink);
-                        if (promise) {
-                            scope.events.pending = true;
-                            promise.then(
-                                function success(events) {
-                                    scope.events.data = scope.events.data.concat(events.data);
-                                    scope.events.nextPageLink = events.nextPageLink;
-                                    scope.events.hasNext = events.hasNext;
-                                    if (scope.events.hasNext) {
-                                        scope.events.nextPageLink.limit = pageSize;
-                                    }
-                                    scope.events.pending = false;
-                                },
-                                function fail() {
-                                    scope.events.hasNext = false;
-                                    scope.events.pending = false;
-                                });
-                        } else {
-                            scope.events.hasNext = false;
-                        }
+                        scope.loadEdgeInfo();
+                        scope.events.pending = true;
+                        edgeService.getEdgeDownlinks(scope.entityId, scope.events.nextPageLink).then(
+                            function success(events) {
+                                scope.events.data = scope.events.data.concat(prepareEdgeEventData(events.data));
+                                scope.events.nextPageLink = events.nextPageLink;
+                                scope.events.hasNext = events.hasNext;
+                                if (scope.events.hasNext) {
+                                    scope.events.nextPageLink.limit = pageSize;
+                                }
+                                scope.events.pending = false;
+                            },
+                            function fail() {
+                                scope.events.hasNext = false;
+                                scope.events.pending = false;
+                            });
                     } else {
                         scope.events.hasNext = false;
                     }
@@ -153,7 +149,6 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
                     timewindowMs: 24 * 60 * 60 * 1000 // 1 day
                 }
             };
-            scope.eventType = attrs.defaultEventType;
         }
 
         scope.updateTimeWindowRange = function() {
@@ -207,10 +202,64 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
             return false;
         }
 
+        scope.subscriptionId = null;
+
+        scope.loadEdgeInfo = function() {
+            attributeService.getEntityAttributesValues(
+                scope.entityType,
+                scope.entityId,
+                types.attributesScope.server.value,
+                types.edgeAttributeKeys.queueStartTs,
+                null).then(
+                    function success(attributes) {
+                        attributes.length > 0 ? scope.onEdgeAttributesUpdate(attributes) : scope.queueStartTs = 0;
+                    });
+            scope.checkSubscription();
+        }
+
+        scope.onEdgeAttributesUpdate = function(attributes) {
+            let edgeAttributes = attributes.reduce(function (map, attribute) {
+                map[attribute.key] = attribute;
+                return map;
+            }, {});
+            if (edgeAttributes.queueStartTs) {
+                scope.queueStartTs = edgeAttributes.queueStartTs.lastUpdateTs;
+            }
+        }
+
+        scope.checkSubscription = function() {
+            var newSubscriptionId = null;
+            if (scope.entityId && scope.entityType && types.attributesScope.server.value) {
+                newSubscriptionId =
+                    attributeService.subscribeForEntityAttributes(scope.entityType, scope.entityId, types.attributesScope.server.value);
+            }
+            if (scope.subscriptionId && scope.subscriptionId != newSubscriptionId) {
+                attributeService.unsubscribeForEntityAttributes(scope.subscriptionId);
+            }
+            scope.subscriptionId = newSubscriptionId;
+        }
+
+        scope.$on('$destroy', function () {
+            if (scope.subscriptionId) {
+                attributeService.unsubscribeForEntityAttributes(scope.subscriptionId);
+            }
+        });
+
         scope.reload();
 
         $compile(element.contents())(scope);
     }
+    function prepareEdgeEventData(data) {
+
+        data.forEach(
+            edgeEvent => {
+                edgeEvent.edgeEventActionText = $translate.instant(types.edgeEventActionType[edgeEvent.action].name);
+                edgeEvent.edgeEventTypeText = $translate.instant(types.edgeEventTypeTranslations[edgeEvent.edgeId.entityType].name);
+            }
+        );
+        return data;
+    }
+
     return {
         restrict: "E",
         link: linker,
