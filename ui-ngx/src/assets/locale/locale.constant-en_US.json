@@ -1233,7 +1233,7 @@
         "assign-to-customer-text": "Please select the customer to assign the edge(s)",
         "assign-edge-to-customer": "Assign Edge(s) To Customer",
         "assign-edge-to-customer-text": "Please select the edges to assign to the customer",
-        "assigned-to-customer": "Assigned to customer",
+        "assigned-to-customer": "Assigned to: {{customerTitle}}",
         "unassign-from-customer": "Unassign from customer",
         "assign-edges-text": "Assign { count, plural, 1 {1 edge} other {# edges} } to customer",
         "unassign-edge-title": "Are you sure you want to unassign the edge '{{edgeName}}'?",
@@ -1287,7 +1287,8 @@
         "no-downlinks-prompt": "No downlinks found",
         "sync-process-started-successfully": "Sync process started successfully!",
         "missing-related-rule-chains-title": "Edge has missing related rule chain(s)",
-        "missing-related-rule-chains-text": "Assigned to edge rule chain(s) use rule nodes that forward message(s) to rule chain(s) that are not assigned to this edge. <br><br> List of missing rule chain(s): <br> {{missingRuleChains}}"
+        "missing-related-rule-chains-text": "Assigned to edge rule chain(s) use rule nodes that forward message(s) to rule chain(s) that are not assigned to this edge. <br><br> List of missing rule chain(s): <br> {{missingRuleChains}}",
+        "widget-datasource-error": "This widget supports only EDGE entity datasource"
     },
     "edge-event": {
         "type-dashboard": "Dashboard",

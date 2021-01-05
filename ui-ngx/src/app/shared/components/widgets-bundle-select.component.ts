@@ -17,7 +17,7 @@
 import { Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { share, tap } from 'rxjs/operators';
+import { map, share, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -25,6 +25,7 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { WidgetService } from '@core/http/widget.service';
 import { isDefined } from '@core/utils';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { getCurrentAuthState } from "@core/auth/auth.selectors";
 
 @Component({
   selector: 'tb-widgets-bundle-select',
@@ -93,6 +94,13 @@ export class WidgetsBundleSelectComponent implements ControlValueAccessor, OnIni
             }
           }
         }
+      }),
+      map((widgetsBundles) => {
+        const authState = getCurrentAuthState(this.store);
+        if (!authState.edgesSupportEnabled) {
+          widgetsBundles = widgetsBundles.filter(widgetsBundle => widgetsBundle.alias !== 'edge_widgets');
+        }
+        return widgetsBundles;
       }),
       share()
     );

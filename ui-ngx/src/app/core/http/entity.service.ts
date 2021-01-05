@@ -1157,4 +1157,26 @@ export class EntityService {
       datasource.dataKeys.push(dataKey);
     });
   }
+
+  public getAssignedToEdgeEntitiesByType(edgeId: string, entityType: EntityType, pageLink: PageLink): Observable<PageData<any>> {
+    let entitiesObservable: Observable<PageData<any>>;
+    switch (entityType) {
+      case (EntityType.ASSET):
+        entitiesObservable = this.assetService.getEdgeAssets(edgeId, pageLink);
+        break;
+      case (EntityType.DEVICE):
+        entitiesObservable = this.deviceService.getEdgeDevices(edgeId, pageLink);
+        break;
+      case (EntityType.ENTITY_VIEW):
+        entitiesObservable = this.entityViewService.getEdgeEntityViews(edgeId, pageLink);
+        break;
+      case (EntityType.DASHBOARD):
+        entitiesObservable = this.dashboardService.getEdgeDashboards(edgeId, pageLink);
+        break;
+      case (EntityType.RULE_CHAIN):
+        entitiesObservable = this.ruleChainService.getEdgeRuleChains(edgeId, pageLink);
+        break;
+    }
+    return entitiesObservable;
+  }
 }
