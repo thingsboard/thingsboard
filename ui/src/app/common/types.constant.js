@@ -1197,6 +1197,6 @@ export default angular.module('thingsboard.types', [])
                 "ADMIN_SETTINGS": {
                     name: "permission.resource.display-type.ADMIN_SETTINGS"
                 }
-            },
+            }
         }
     ).name;
