@@ -718,6 +718,10 @@ export class TbFlot {
 
   public destroy() {
     this.cleanup();
+    if (this.tooltip) {
+      this.tooltip.stop(true);
+      this.tooltip.hide();
+    }
     if (this.plot) {
       this.plot.destroy();
       this.plot = null;
@@ -1170,7 +1174,7 @@ export class TbFlot {
     if (!this.plot) {
       return;
     }
-    if (!this.tooltipIndividual || item) {
+    if ((!this.tooltipIndividual || item) && !this.ctx.isEdit) {
       const multipleModeTooltip = !this.tooltipIndividual;
       if (multipleModeTooltip) {
         this.plot.unhighlight();
