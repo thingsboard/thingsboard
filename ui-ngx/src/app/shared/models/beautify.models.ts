@@ -58,7 +58,7 @@ function loadCssBeautify(): Observable<any> {
   }
 }
 
-export function beautifyJs(source: string, options?: JSBeautifyOptions): Observable<string> {
+export function beautifyJs(source: string, options?: any): Observable<string> {
   return loadJsBeautify().pipe(
     map((mod) => {
       return mod.js_beautify(source, options);
@@ -66,13 +66,13 @@ export function beautifyJs(source: string, options?: JSBeautifyOptions): Observa
   );
 }
 
-export function beautifyCss(source: string, options?: CSSBeautifyOptions): Observable<string> {
+export function beautifyCss(source: string, options?: any): Observable<string> {
   return loadCssBeautify().pipe(
     map((mod) => mod.css_beautify(source, options))
   );
 }
 
-export function beautifyHtml(source: string, options?: HTMLBeautifyOptions): Observable<string> {
+export function beautifyHtml(source: string, options?: any): Observable<string> {
   return loadHtmlBeautify().pipe(
     map((mod) => mod.html_beautify(source, options))
   );
