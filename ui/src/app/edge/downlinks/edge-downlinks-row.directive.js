@@ -43,11 +43,11 @@ export default function EdgeDownlinksRowDirective($compile, $templateCache, $mdD
             }
             var content = '';
             switch(scope.downlink.type) {
-                case types.edgeDownlinksType.relation:
+                case types.edgeEventType.relation:
                     content = angular.toJson(scope.downlink.body);
                     showDialog();
                     break;
-                case types.edgeDownlinksType.ruleChainMetaData:
+                case types.edgeEventType.ruleChainMetaData:
                     content = ruleChainService.getRuleChainMetaData(scope.downlink.entityId, {ignoreErrors: true}).then(
                         function success(info) {
                             showDialog();
@@ -87,9 +87,9 @@ export default function EdgeDownlinksRowDirective($compile, $templateCache, $mdD
         }
 
         scope.checkEdgeDownlinksType = function (type) {
-            return !(type === types.edgeDownlinksType.widgetType ||
-                type === types.edgeDownlinksType.adminSettings ||
-                type === types.edgeDownlinksType.widgetsBundle );
+            return !(type === types.edgeEventType.widgetType ||
+                type === types.edgeEventType.adminSettings ||
+                type === types.edgeEventType.widgetsBundle );
         }
 
         scope.checkTooltip = function($event) {
@@ -105,11 +105,11 @@ export default function EdgeDownlinksRowDirective($compile, $templateCache, $mdD
         scope.updateStatus = function(downlinkCreatedTime) {
             var status;
             if (downlinkCreatedTime < scope.queueStartTs) {
-                status = $translate.instant(types.edgeDownlinksStatus.DEPLOYED.name);
-                scope.statusColor = types.edgeDownlinksStatus.DEPLOYED.color;
+                status = $translate.instant(types.getEdgeStatus.DEPLOYED.name);
+                scope.statusColor = types.getEdgeStatus.DEPLOYED.color;
             } else {
-                status = $translate.instant(types.edgeDownlinksStatus.PENDING.name);
-                scope.statusColor = types.edgeDownlinksStatus.PENDING.color;
+                status = $translate.instant(types.getEdgeStatus.PENDING.name);
+                scope.statusColor = types.getEdgeStatus.PENDING.color;
             }
             return status;
         }

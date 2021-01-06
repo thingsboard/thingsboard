@@ -384,7 +384,7 @@ export default angular.module('thingsboard.types', [])
                 entityView: "ENTITY_VIEW",
                 edge: "EDGE"
             },
-            edgeDownlinksType:{
+            edgeEventType:{
                 dashboard: "DASHBOARD",
                 asset: "ASSET",
                 device: "DEVICE",
@@ -405,7 +405,7 @@ export default angular.module('thingsboard.types', [])
                 widgetType: "WIDGET_TYPE",
                 adminSettings: "ADMIN_SETTINGS"
             },
-            edgeDownlinksStatus: {
+            getEdgeStatus: {
                 "DEPLOYED": {
                     name: "edge.deployed",
                     color: grey900

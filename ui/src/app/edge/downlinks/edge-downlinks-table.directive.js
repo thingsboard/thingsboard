@@ -211,8 +211,8 @@ export default function EdgeDownlinksDirective($compile, $templateCache, $rootSc
 
         data.forEach(
             edgeDownlink => {
-                edgeDownlink.edgeDownlinksActionText = $translate.instant(types.edgeEventActionTypeTranslations[edgeDownlink.action].name);
-                edgeDownlink.edgeDownlinksTypeText = $translate.instant(types.edgeEventTypeTranslations[edgeDownlink.type].name);
+                edgeDownlink.edgeEventActionText = $translate.instant(types.edgeEventActionTypeTranslations[edgeDownlink.action].name);
+                edgeDownlink.edgeEventTypeText = $translate.instant(types.edgeEventTypeTranslations[edgeDownlink.type].name);
             }
         );
         return data;
