@@ -95,7 +95,7 @@ class ProfileState {
             case BOOLEAN:
                 DynamicValue value = ((SimpleKeyFilterPredicate) predicate).getValue().getDynamicValue();
                 if (value != null && value.getSourceType() == DynamicValueSourceType.CURRENT_DEVICE) {
-                    EntityKey entityKey = new EntityKey(EntityKeyType.ATTRIBUTE, value.getSourceAttribute());
+                    EntityKey entityKey = new EntityKey(EntityKeyType.ATTRIBUTE, value.getSourceAttribute(), false);
                     entityKeys.add(entityKey);
                     ruleKeys.add(entityKey);
                 }

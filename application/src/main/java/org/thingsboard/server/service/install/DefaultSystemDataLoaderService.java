@@ -291,7 +291,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         temperatureCondition.setSpec(new SimpleAlarmConditionSpec());
 
         KeyFilter temperatureAlarmFlagAttributeFilter = new KeyFilter();
-        temperatureAlarmFlagAttributeFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperatureAlarmFlag"));
+        temperatureAlarmFlagAttributeFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperatureAlarmFlag", false));
         temperatureAlarmFlagAttributeFilter.setValueType(EntityKeyValueType.BOOLEAN);
         BooleanFilterPredicate temperatureAlarmFlagAttributePredicate = new BooleanFilterPredicate();
         temperatureAlarmFlagAttributePredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
@@ -299,7 +299,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         temperatureAlarmFlagAttributeFilter.setPredicate(temperatureAlarmFlagAttributePredicate);
 
         KeyFilter temperatureTimeseriesFilter = new KeyFilter();
-        temperatureTimeseriesFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
+        temperatureTimeseriesFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature", false));
         temperatureTimeseriesFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate temperatureTimeseriesFilterPredicate = new NumericFilterPredicate();
         temperatureTimeseriesFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
@@ -318,7 +318,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         clearTemperatureCondition.setSpec(new SimpleAlarmConditionSpec());
 
         KeyFilter clearTemperatureTimeseriesFilter = new KeyFilter();
-        clearTemperatureTimeseriesFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
+        clearTemperatureTimeseriesFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature", false));
         clearTemperatureTimeseriesFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate clearTemperatureTimeseriesFilterPredicate = new NumericFilterPredicate();
         clearTemperatureTimeseriesFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS_OR_EQUAL);
@@ -341,7 +341,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         humidityCondition.setSpec(new SimpleAlarmConditionSpec());
 
         KeyFilter humidityAlarmFlagAttributeFilter = new KeyFilter();
-        humidityAlarmFlagAttributeFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "humidityAlarmFlag"));
+        humidityAlarmFlagAttributeFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "humidityAlarmFlag", false));
         humidityAlarmFlagAttributeFilter.setValueType(EntityKeyValueType.BOOLEAN);
         BooleanFilterPredicate humidityAlarmFlagAttributePredicate = new BooleanFilterPredicate();
         humidityAlarmFlagAttributePredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
@@ -349,7 +349,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         humidityAlarmFlagAttributeFilter.setPredicate(humidityAlarmFlagAttributePredicate);
 
         KeyFilter humidityTimeseriesFilter = new KeyFilter();
-        humidityTimeseriesFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "humidity"));
+        humidityTimeseriesFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "humidity", false));
         humidityTimeseriesFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate humidityTimeseriesFilterPredicate = new NumericFilterPredicate();
         humidityTimeseriesFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
@@ -369,7 +369,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         clearHumidityCondition.setSpec(new SimpleAlarmConditionSpec());
 
         KeyFilter clearHumidityTimeseriesFilter = new KeyFilter();
-        clearHumidityTimeseriesFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "humidity"));
+        clearHumidityTimeseriesFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "humidity", false));
         clearHumidityTimeseriesFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate clearHumidityTimeseriesFilterPredicate = new NumericFilterPredicate();
         clearHumidityTimeseriesFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER_OR_EQUAL);

@@ -68,7 +68,7 @@ public class EntityDataAdapter {
                     strValue = value != null ? value.toString() : "";
                     ts = System.currentTimeMillis();
                 } else {
-                    strValue = convertValue(value);
+                    strValue = convertValue(value, entityKey.isRestrictConversion());
                     Object tsObject = row.get(mapping.getTsAlias());
                     ts = tsObject != null ? Long.parseLong(tsObject.toString()) : 0;
                 }
@@ -79,11 +79,11 @@ public class EntityDataAdapter {
         return entityData;
     }
 
-    private static String convertValue(Object value) {
+    private static String convertValue(Object value, boolean restrictConversion) {
         if (value != null) {
             String strVal = value.toString();
             // check number
-            if (strVal.length() > 0 && NumberUtils.isParsable(strVal)) {
+            if (!restrictConversion && strVal.length() > 0 && NumberUtils.isParsable(strVal)) {
                 try {
                     long longVal = Long.parseLong(strVal);
                     return Long.toString(longVal);

@@ -110,6 +110,6 @@ class DataSnapshot {
     }
 
     private EntityKey getAttrKey(EntityKey key, EntityKeyType clientAttribute) {
-        return new EntityKey(clientAttribute, key.getKey());
+        return new EntityKey(clientAttribute, key.getKey(), false);
     }
 }

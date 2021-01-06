@@ -257,7 +257,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         dtf.setDeviceNameFilter("D");
         dtf.setDeviceType("default");
         EntityDataQuery edq = new EntityDataQuery(dtf, new EntityDataPageLink(1, 0, null, null), Collections.emptyList(),
-                Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "temperature")), Collections.emptyList());
+                Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "temperature", false)), Collections.emptyList());
 
         EntityDataCmd cmd = new EntityDataCmd(1, edq, null, null, null);
 
@@ -283,7 +283,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         Thread.sleep(100);
 
         LatestValueCmd latestCmd = new LatestValueCmd();
-        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "temperature")));
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "temperature", false)));
         cmd = new EntityDataCmd(1, null, null, latestCmd, null);
         wrapper = new TelemetryPluginCmdsWrapper();
         wrapper.setEntityDataCmds(Collections.singletonList(cmd));
@@ -348,7 +348,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         EntityDataQuery edq = new EntityDataQuery(dtf, new EntityDataPageLink(1, 0, null, null), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
         LatestValueCmd latestCmd = new LatestValueCmd();
-        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "temperature")));
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "temperature", false)));
         EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
 
         TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
@@ -437,7 +437,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
                 Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
         LatestValueCmd latestCmd = new LatestValueCmd();
-        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "serverAttributeKey")));
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "serverAttributeKey", false)));
         EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
 
         TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
@@ -529,10 +529,10 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
 
         LatestValueCmd latestCmd = new LatestValueCmd();
         List<EntityKey> keys = new ArrayList<>();
-        keys.add(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "serverAttributeKey"));
-        keys.add(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, "clientAttributeKey"));
-        keys.add(new EntityKey(EntityKeyType.SHARED_ATTRIBUTE, "sharedAttributeKey"));
-        keys.add(new EntityKey(EntityKeyType.ATTRIBUTE, "anyAttributeKey"));
+        keys.add(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "serverAttributeKey", false));
+        keys.add(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, "clientAttributeKey", false));
+        keys.add(new EntityKey(EntityKeyType.SHARED_ATTRIBUTE, "sharedAttributeKey", false));
+        keys.add(new EntityKey(EntityKeyType.ATTRIBUTE, "anyAttributeKey", false));
         latestCmd.setKeys(keys);
         EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
 

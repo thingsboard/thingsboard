@@ -180,7 +180,7 @@ class DeviceState {
         }
         if (!keys.isEmpty()) {
             EntityKeyType keyType = getKeyTypeFromScope(scope);
-            keys.forEach(key -> latestValues.removeValue(new EntityKey(keyType, key)));
+            keys.forEach(key -> latestValues.removeValue(new EntityKey(keyType, key, false)));
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
                 AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
                         a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
@@ -233,7 +233,7 @@ class DeviceState {
     private SnapshotUpdate merge(DataSnapshot latestValues, Long newTs, List<KvEntry> data) {
         Set<EntityKey> keys = new HashSet<>();
         for (KvEntry entry : data) {
-            EntityKey entityKey = new EntityKey(EntityKeyType.TIME_SERIES, entry.getKey());
+            EntityKey entityKey = new EntityKey(EntityKeyType.TIME_SERIES, entry.getKey(), false);
             if (latestValues.putValue(entityKey, newTs, toEntityValue(entry))) {
                 keys.add(entityKey);
             }
@@ -247,7 +247,7 @@ class DeviceState {
         Set<EntityKey> keys = new HashSet<>();
         for (AttributeKvEntry entry : attributes) {
             newTs = Math.max(newTs, entry.getLastUpdateTs());
-            EntityKey entityKey = new EntityKey(getKeyTypeFromScope(scope), entry.getKey());
+            EntityKey entityKey = new EntityKey(getKeyTypeFromScope(scope), entry.getKey(), false);
             if (latestValues.putValue(entityKey, newTs, toEntityValue(entry))) {
                 keys.add(entityKey);
             }
@@ -332,7 +332,7 @@ class DeviceState {
             List<TsKvEntry> data = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), originator, latestTsKeys).get();
             for (TsKvEntry entry : data) {
                 if (entry.getValue() != null) {
-                    result.putValue(new EntityKey(EntityKeyType.TIME_SERIES, entry.getKey()), entry.getTs(), toEntityValue(entry));
+                    result.putValue(new EntityKey(EntityKeyType.TIME_SERIES, entry.getKey(), false), entry.getTs(), toEntityValue(entry));
                 }
             }
         }
@@ -354,9 +354,9 @@ class DeviceState {
         for (AttributeKvEntry entry : data) {
             if (entry.getValue() != null) {
                 EntityKeyValue value = toEntityValue(entry);
-                snapshot.putValue(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, entry.getKey()), entry.getLastUpdateTs(), value);
+                snapshot.putValue(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, entry.getKey(), false), entry.getLastUpdateTs(), value);
                 if (commonAttributeKeys.contains(entry.getKey())) {
-                    snapshot.putValue(new EntityKey(EntityKeyType.ATTRIBUTE, entry.getKey()), entry.getLastUpdateTs(), value);
+                    snapshot.putValue(new EntityKey(EntityKeyType.ATTRIBUTE, entry.getKey(), false), entry.getLastUpdateTs(), value);
                 }
             }
         }

@@ -383,7 +383,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             }
             wsService.sendWsMsg(ctx.getSessionId(), update);
             if (subscribe) {
-                ctx.createSubscriptions(keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()), false);
+                ctx.createSubscriptions(keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key, false)).collect(Collectors.toList()), false);
             }
             ctx.getData().getData().forEach(ed -> ed.getTimeseries().clear());
             return ctx;

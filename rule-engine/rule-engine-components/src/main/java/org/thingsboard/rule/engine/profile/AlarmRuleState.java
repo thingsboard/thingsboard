@@ -101,7 +101,7 @@ class AlarmRuleState {
         for (EntityKey key : changedKeys) {
             EntityKeyType keyType = key.getType();
             if (EntityKeyType.CLIENT_ATTRIBUTE.equals(keyType) || EntityKeyType.SERVER_ATTRIBUTE.equals(keyType) || EntityKeyType.SHARED_ATTRIBUTE.equals(keyType)) {
-                key = new EntityKey(EntityKeyType.ATTRIBUTE, key.getKey());
+                key = new EntityKey(EntityKeyType.ATTRIBUTE, key.getKey(), false);
             }
             if (entityKeys.contains(key)) {
                 return true;
@@ -385,13 +385,13 @@ class AlarmRuleState {
     private <T> EntityKeyValue getDynamicPredicateValue(DataSnapshot data, FilterPredicateValue<T> value) {
         EntityKeyValue ekv = null;
         if (value.getDynamicValue() != null) {
-            ekv = data.getValue(new EntityKey(EntityKeyType.ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+            ekv = data.getValue(new EntityKey(EntityKeyType.ATTRIBUTE, value.getDynamicValue().getSourceAttribute(), false));
             if (ekv == null) {
-                ekv = data.getValue(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+                ekv = data.getValue(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, value.getDynamicValue().getSourceAttribute(), false));
                 if (ekv == null) {
-                    ekv = data.getValue(new EntityKey(EntityKeyType.SHARED_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+                    ekv = data.getValue(new EntityKey(EntityKeyType.SHARED_ATTRIBUTE, value.getDynamicValue().getSourceAttribute(), false));
                     if (ekv == null) {
-                        ekv = data.getValue(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+                        ekv = data.getValue(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, value.getDynamicValue().getSourceAttribute(), false));
                     }
                 }
             }

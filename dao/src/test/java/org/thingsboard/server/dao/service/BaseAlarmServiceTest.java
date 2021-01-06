@@ -256,7 +256,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         AlarmDataPageLink pageLink = new AlarmDataPageLink();
         pageLink.setPage(0);
         pageLink.setPageSize(10);
-        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime", false)));
 
         pageLink.setStartTs(0L);
         pageLink.setEndTs(System.currentTimeMillis());
@@ -332,7 +332,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         AlarmDataPageLink pageLink = new AlarmDataPageLink();
         pageLink.setPage(0);
         pageLink.setPageSize(10);
-        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime", false)));
 
         pageLink.setStartTs(0L);
         pageLink.setEndTs(System.currentTimeMillis());
@@ -380,7 +380,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         AlarmDataPageLink pageLink = new AlarmDataPageLink();
         pageLink.setPage(0);
         pageLink.setPageSize(10);
-        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime", false)));
 
         pageLink.setStartTs(0L);
         pageLink.setEndTs(System.currentTimeMillis());
@@ -396,7 +396,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
         pageLink.setPage(0);
         pageLink.setPageSize(10);
-        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime")));
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false)));
 
         pageLink.setStartTs(0L);
         pageLink.setEndTs(System.currentTimeMillis());
@@ -423,7 +423,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         // Check child relation
         pageLink.setPage(0);
         pageLink.setPageSize(10);
-        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime", false)));
 
         pageLink.setStartTs(0L);
         pageLink.setEndTs(System.currentTimeMillis());
@@ -439,7 +439,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         // Check parent relation
         pageLink.setPage(0);
         pageLink.setPageSize(10);
-        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime", false)));
 
         pageLink.setStartTs(0L);
         pageLink.setEndTs(System.currentTimeMillis());
@@ -484,7 +484,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
         pageLink.setPage(0);
         pageLink.setPageSize(10);
-        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime")));
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false)));
 
         pageLink.setStartTs(0L);
         pageLink.setEndTs(System.currentTimeMillis());
@@ -502,7 +502,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
         pageLink.setPage(0);
         pageLink.setPageSize(10);
-        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime", false)));
 
         pageLink.setStartTs(0L);
         pageLink.setEndTs(System.currentTimeMillis());
