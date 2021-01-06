@@ -661,10 +661,6 @@ export default angular.module('thingsboard.types', [])
                 stats: {
                     value: "STATS",
                     name: "event.type-stats"
-                },
-                edgeEvent: {
-                    value: "EDGE_EVENT",
-                    name: "event.type-edge-event"
                 }
             },
             debugEventType: {
@@ -1077,126 +1073,126 @@ export default angular.module('thingsboard.types', [])
             translate: {
                 customTranslationsPrefix: "custom."
             },
-            edgeEventActionType: {
+            edgeEventActionTypeTranslations: {
                 "ADDED": {
-                    name: "audit-log.type-added"
+                    name: "edge-event.action-type-added"
                 },
                 "DELETED": {
-                    name: "audit-log.type-deleted"
+                    name: "edge-event.action-type-deleted"
                 },
                 "UPDATED": {
-                    name: "audit-log.type-updated"
+                    name: "edge-event.action-type-updated"
                 },
-                "ATTRIBUTES_UPDATED": {
-                    name: "audit-log.type-attributes-updated"
-                },
-                "ATTRIBUTES_DELETED": {
-                    name: "audit-log.type-attributes-deleted"
-                },
-                "RPC_CALL": {
-                    name: "audit-log.type-rpc-call"
-                },
-                "CREDENTIALS_UPDATED": {
-                    name: "audit-log.type-credentials-updated"
-                },
-                "RELATION_ADD_OR_UPDATE": {
-                    name: "audit-log.type-relation-add-or-update"
-                },
-                "RELATION_DELETED": {
-                    name: "audit-log.type-relation-delete"
-                },
-                "ALARM_ACK": {
-                    name: "audit-log.type-alarm-ack"
-                },
-                "ALARM_CLEAR": {
-                    name: "audit-log.type-alarm-clear"
-                },
-                "CREDENTIALS_REQUEST": {
-                    name: "edge.credentials-request"
-                },
-                "ATTRIBUTES_REQUEST": {
-                    name: "edge.attributes-request"
+                "POST_ATTRIBUTES": {
+                    name: "edge-event.action-type-post-attributes"
                 },
                 "TIMESERIES_UPDATED": {
-                    name: "edge.timeseries-updated"
+                    name: "edge-event.action-type-timeseries-updated"
                 },
-                "RELATION_REQUEST": {
-                    name: "edge.relation-request"
+                "ATTRIBUTES_UPDATED": {
+                    name: "edge-event.action-type-attributes-updated"
                 },
-                "RULE_CHAIN_METADATA_REQUEST": {
-                    name: "edge.rule-chain-metadata-request"
+                "ATTRIBUTES_DELETED": {
+                    name: "edge-event.action-type-attributes-deleted"
                 },
-                "GROUP_ENTITIES_REQUEST": {
-                    name: "edge.group_entities_request"
+                "CREDENTIALS_UPDATED": {
+                    name: "edge-event.action-type-credentials-updated"
                 },
-                "GROUP_PERMISSIONS_REQUEST": {
-                    name: "edge.group-permissions-request"
+                "ASSIGNED_TO_CUSTOMER": {
+                  name: "edge-event.action-type-assigned-to-customer"
+                },
+                "UNASSIGNED_FROM_CUSTOMER": {
+                    name: "edge-event.action-type-unassigned-from-customer"
+                },
+                "RELATION_ADD_OR_UPDATE": {
+                    name: "edge-event.action-type-relation-add-or-update"
+                },
+                "RELATION_DELETED": {
+                    name: "edge-event.action-type-relation-deleted"
+                },
+                "RPC_CALL": {
+                    name: "edge-event.action-type-rpc-call"
+                },
+                "ALARM_ACK": {
+                    name: "edge-event.action-type-alarm-ack"
+                },
+                "ALARM_CLEAR": {
+                    name: "edge-event.action-type-alarm-clear"
+                },
+                "CREDENTIALS_REQUEST": {
+                    name: "edge-event.action-type-credentials-request"
                 },
                 "ASSIGNED_TO_EDGE": {
-                    name: "audit-log.type-assigned-to-edge"
+                    name: "edge-event.action-type-assigned-to-edge"
                 },
                 "UNASSIGNED_FROM_EDGE": {
-                    name: "audit-log.type-unassigned-from-edge"
+                    name: "edge-event.action-type-unassigned-from-edge"
+                },
+                "ENTITY_MERGE_REQUEST": {
+                    name: "edge-event.action-type-entity-merge-request"
                 }
             },
             edgeEventTypeTranslations:{
                 "DASHBOARD": {
-                    name: "entity.type-dashboard"
+                    name: "edge-event.type-dashboard"
                 },
                 "ASSET": {
-                    name: "entity.type-asset"
+                    name: "edge-event.type-asset"
                 },
                 "DEVICE": {
-                    name: "entity.type-device"
+                    name: "edge-event.type-device"
                 },
                 "ENTITY_VIEW": {
-                    name: "entity.type-entity_view"
+                    name: "edge-event.type-entity-view"
                 },
                 "ALARM": {
-                    name: "entity.type-alarm"
+                    name: "edge-event.type-alarm"
                 },
                 "RULE_CHAIN": {
-                    name: "entity.type-rulechain"
+                    name: "edge-event.type-rule-chain"
                 },
-                "RULE_CHAIN_META_DATA": {
-                    name: "entity.type-rule-chain-metadata"
+                "RULE_CHAIN_METADATA": {
+                    name: "edge-event.type-rule-chain-metadata"
                 },
                 "EDGE": {
-                    name: "entity.type-edge"
+                    name: "edge-event.type-edge"
                 },
                 "USER": {
-                    name: "entity.type-user"
+                    name: "edge-event.type-user"
+                },
+                "TENANT": {
+                    name: "edge-event.type-tenant"
                 },
                 "CUSTOMER": {
-                    name: "entity.type-customer"
+                    name: "edge-event.type-customer"
                 },
                 "RELATION": {
-                    name: "entity.type-relation"
-                },
-                "ENTITY_GROUP": {
-                    name: "entity.type-entity-group"
-                },
-                "SCHEDULER_EVENT": {
-                    name: "entity.type-scheduler-event"
-                },
-                "WHITE_LABELING": {
-                    name: "white-labeling.white-labeling"
-                },
-                "LOGIN_WHITE_LABELING": {
-                    name: "white-labeling.login-white-labeling"
-                },
-                "CUSTOM_TRANSLATION": {
-                    name: "custom-translation.custom-translation",
+                    name: "edge-event.type-relation"
                 },
                 "WIDGETS_BUNDLE": {
-                    name: "widget.widget-bundle"
+                    name: "edge-event.type-widgets-bundle"
                 },
                 "WIDGET_TYPE": {
-                    name: "widget.type"
+                    name: "edge-event.type-widgets-type"
                 },
                 "ADMIN_SETTINGS": {
-                    name: "permission.resource.display-type.ADMIN_SETTINGS"
+                    name: "edge-event.type-admin-settings"
+                },
+                "ENTITY_GROUP": {
+                    name: "edge-event.type-entity-group"
+                },
+                "SCHEDULER_EVENT": {
+                    name: "edge-event.type-scheduler-event"
+                },
+                "WHITE_LABELING": {
+                    name: "edge-event.type-white-labeling"
+                },
+                "LOGIN_WHITE_LABELING": {
+                    name: "edge-event.type-login-white-labeling"
+                },
+                "CUSTOM_TRANSLATION": {
+                    name: "edge-event.custom-translation",
                 }
-            },
+            }
         }
     ).name;
