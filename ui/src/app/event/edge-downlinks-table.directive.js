@@ -25,45 +25,13 @@ import edgeDownlinksTableTemplate from './edge-downlinks-table.tpl.html';
 export default function EdgeDownlinksDirective($compile, $templateCache, $rootScope, $translate, types,
                                             eventService, edgeService, attributeService) {
 
-    var linker = function (scope, element, attrs) {
+    var linker = function (scope, element) {
 
         var template = $templateCache.get(edgeDownlinksTableTemplate);
 
         element.html(template);
 
-        if (attrs.disabledEventTypes) {
-            var disabledEventTypes = attrs.disabledEventTypes.split(',');
-            scope.eventTypes = {};
-            for (var type in types.eventType) {
-                var eventType = types.eventType[type];
-                var enabled = true;
-                for (var i=0;i<disabledEventTypes.length;i++) {
-                    if (eventType.value === disabledEventTypes[i]) {
-                        enabled = false;
-                        break;
-                    }
-                }
-                if (enabled) {
-                    scope.eventTypes[type] = eventType;
-                }
-            }
-        } else {
-            scope.eventTypes = angular.copy(types.eventType);
-        }
-
-        if (attrs.debugEventTypes) {
-            var debugEventTypes = attrs.debugEventTypes.split(',');
-            for (i=0;i<debugEventTypes.length;i++) {
-                for (type in types.debugEventType) {
-                    eventType = types.debugEventType[type];
-                    if (eventType.value === debugEventTypes[i]) {
-                        scope.eventTypes[type] = eventType;
-                    }
-                }
-            }
-        }
-
-        scope.eventType = attrs.defaultEventType;
+        scope.eventType = types.edgeDownlinks.value;
 
         var pageSize = 20;
         var startTime = 0;
@@ -127,12 +95,6 @@ export default function EdgeDownlinksDirective($compile, $templateCache, $rootSc
         scope.$watch("entityId", function(newVal, prevVal) {
             if (newVal && !angular.equals(newVal, prevVal)) {
                 scope.resetFilter();
-                scope.reload();
-            }
-        });
-
-        scope.$watch("eventType", function(newVal, prevVal) {
-            if (newVal && !angular.equals(newVal, prevVal)) {
                 scope.reload();
             }
         });

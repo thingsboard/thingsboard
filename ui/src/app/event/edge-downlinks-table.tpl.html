@@ -34,7 +34,7 @@
         <md-divider></md-divider>
         <span translate layout-align="center center"
               style="margin-top: 25px;"
-              class="tb-prompt" ng-show="noData()">event.no-events-prompt</span>
+              class="tb-prompt" ng-show="noData()">edge.no-downlinks-prompt</span>
         <md-virtual-repeat-container ng-show="hasData()" flex md-top-index="topIndex" tb-scope-element="repeatContainer">
            <md-list-item md-virtual-repeat="event in theEvents" md-on-demand flex ng-style="hasScroll() ? {'margin-right':'-15px'} : {}">
                <md-list class="tb-row" flex layout="row" layout-align="start center" tb-event-row event-type="{{eventType}}" event="{{event}}">

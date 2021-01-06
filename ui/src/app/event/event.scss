@@ -85,76 +85,8 @@ md-list.tb-event-table {
   }
 }
 
-md-list.tb-edge-downlinks-table {
-  padding: 0;
-
-  md-list-item {
-    padding: 0;
-  }
-
-  .tb-row {
-    height: 48px;
-    padding: 0;
-    overflow: hidden;
-
-    .tb-cell {
-      text-overflow: ellipsis;
-
-      &.tb-scroll {
-        overflow-x: auto;
-        overflow-y: hidden;
-        white-space: nowrap;
-      }
-
-      &.tb-nowrap {
-        white-space: nowrap;
-      }
-    }
-  }
-
-  .tb-row:hover {
-    background-color: #eee;
-  }
-
-  .tb-header:hover {
-    background: none;
-  }
-
-  .tb-header {
-    .tb-cell {
-      font-size: 12px;
-      font-weight: 700;
-      color: rgba(0, 0, 0, .54);
-      white-space: nowrap;
-      background: none;
-    }
-  }
-
-  .tb-cell {
-    &:first-child {
-      padding-left: 14px;
-    }
-
-    &:last-child {
-      padding-right: 14px;
-    }
-    padding: 0 6px;
-    margin: auto 0;
-    overflow: hidden;
-    font-size: 13px;
-    color: rgba(0, 0, 0, .87);
-    text-align: left;
-    vertical-align: middle;
-
-    .md-button {
-      padding: 0;
-      margin: 0;
-    }
-  }
-
-  .tb-cell.tb-number {
-    text-align: right;
-  }
+.tb-edge-downlinks-table {
+  @extend .tb-event-table;
 }
 
 #tb-event-content {

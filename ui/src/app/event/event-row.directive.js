@@ -21,7 +21,7 @@ import eventRowLcEventTemplate from './event-row-lc-event.tpl.html';
 import eventRowStatsTemplate from './event-row-stats.tpl.html';
 import eventRowErrorTemplate from './event-row-error.tpl.html';
 import eventRowDebugRuleNodeTemplate from './event-row-debug-rulenode.tpl.html';
-import eventRowEdgeEventTemplate from './event-row-edge-event.tpl.html';
+import edgeDownlinlsRowTemplate from './event-row-edge-event.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -50,7 +50,7 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
                     template = eventRowDebugRuleNodeTemplate;
                     break;
                 case types.edgeDownlinks.value:
-                    template = eventRowEdgeEventTemplate;
+                    template = edgeDownlinlsRowTemplate;
                     break;
             }
             return $templateCache.get(template);

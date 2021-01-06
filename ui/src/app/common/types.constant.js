@@ -1194,10 +1194,6 @@ export default angular.module('thingsboard.types', [])
                     name: "permission.resource.display-type.ADMIN_SETTINGS"
                 }
             },
-            edgeEvent: {
-                value: "EDGE_EVENT",
-                name: "edge.downlink"
-            },
             edgeDownlinks: {
                 value: "EDGE_DOWNLINKS",
                 name: "edge.downlinks"
