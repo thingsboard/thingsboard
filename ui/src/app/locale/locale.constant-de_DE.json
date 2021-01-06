@@ -808,7 +808,6 @@
     "deployed": "Bereitgestellt",
     "pending": "Steht aus",
     "entity-id": "Entität ID",
-    "entity-info": "Entitätsinfo",
     "event-action": "Ereignisaktion",
     "load-entity-error": "Entität nicht gefunden. Fehler beim Laden der Informationen",
     "unassign-edges-text": "Nach der Bestätigung werden alle ausgewählten Kanten nicht zugewiesen und sind für den Kunden nicht zugänglich.",

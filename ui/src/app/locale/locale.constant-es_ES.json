@@ -821,7 +821,6 @@
         "deployed": "Desplegada",
         "pending": "Pendiente",
         "entity-id": "ID de entidad",
-        "entity-info": "Entity info",
         "event-action": "Información de la entidad",
         "load-entity-error": "Entidad no encontrada. No se pudo cargar la información",
         "unassign-edges-text": "Después de la confirmación de todos los bordes seleccionados, se anulará la asignación y el cliente no podrá acceder a ellos.",
