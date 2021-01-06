@@ -28,5 +28,5 @@ export default angular.module('thingsboard.event', [
     .directive('tbEventHeader', EventHeaderDirective)
     .directive('tbEventRow', EventRowDirective)
     .directive('tbEventTable', EventTableDirective)
-    .directive('tbEdgeDownlinksTable', EdgeDownlinksDirective)
+    .directive('tbEdgeDownlinksTableOld', EdgeDownlinksDirective)
     .name;

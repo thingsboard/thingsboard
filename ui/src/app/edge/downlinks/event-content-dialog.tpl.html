@@ -1,0 +1,42 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-dialog aria-label="{{ vm.title | translate }}">
+        <md-toolbar>
+            <div class="md-toolbar-tools">
+                <h2 translate>{{ vm.title }}</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="vm.close()">
+                    <ng-md-icon icon="close" aria-label="{{ 'dialog.close' | translate }}"></ng-md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-dialog-content>
+            <div class="md-dialog-content">
+                <div flex id="tb-event-content" readonly
+                     ui-ace="vm.contentOptions"
+                     ng-model="vm.content">
+                </div>
+            </div>
+        </md-dialog-content>
+        <md-dialog-actions layout="row">
+            <span flex></span>
+            <md-button ng-disabled="$root.loading" ng-click="vm.close()" style="margin-right:20px;">{{ 'action.close' |
+                translate }}
+            </md-button>
+        </md-dialog-actions>
+</md-dialog>
