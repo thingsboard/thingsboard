@@ -53,6 +53,7 @@ export interface SubscriptionDataKey {
   type: DataKeyType;
   funcBody: string;
   func?: DataKeyFunction;
+  restrictConversion: boolean;
   postFuncBody: string;
   postFunc?: DataKeyPostFunction;
   index?: number;

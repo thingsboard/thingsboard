@@ -137,7 +137,8 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
       decimals: [null, [Validators.min(0), Validators.max(15), Validators.pattern(/^\d*$/)]],
       funcBody: [null, []],
       usePostProcessing: [null, []],
-      postFuncBody: [null, []]
+      postFuncBody: [null, []],
+      restrictConversion: [null, []]
     });
 
     this.dataKeyFormGroup.valueChanges.subscribe(() => {
