@@ -76,7 +76,7 @@ export default function EdgeDownlinksContentDialogController($mdDialog, types, c
             }
             newWidth = 8 * maxLineLength + 16;
         }
-        $('#tb-event-content', element).height(newHeight.toString() + "px")
+        $('#tb-edge-downlinks-content', element).height(newHeight.toString() + "px")
             .width(newWidth.toString() + "px");
         vm.editor.resize();
     }

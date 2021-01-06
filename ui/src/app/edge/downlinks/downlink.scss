@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-md-list.tb-event-table {
+md-list.tb-edge-downlinks-table {
   padding: 0;
 
   md-list-item {
@@ -85,11 +85,7 @@ md-list.tb-event-table {
   }
 }
 
-.tb-edge-downlinks-table-2 {
-  @extend .tb-event-table;
-}
-
-#tb-event-content {
+#tb-edge-downlinks-content {
   width: 100%;
   min-width: 400px;
   height: 100%;

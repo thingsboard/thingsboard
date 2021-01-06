@@ -384,7 +384,7 @@ export default angular.module('thingsboard.types', [])
                 entityView: "ENTITY_VIEW",
                 edge: "EDGE"
             },
-            edgeEventType:{
+            edgeDownlinksType:{
                 dashboard: "DASHBOARD",
                 asset: "ASSET",
                 device: "DEVICE",
@@ -405,7 +405,7 @@ export default angular.module('thingsboard.types', [])
                 widgetType: "WIDGET_TYPE",
                 adminSettings: "ADMIN_SETTINGS"
             },
-            edgeEventStatus: {
+            edgeDownlinksStatus: {
                 "DEPLOYED": {
                     name: "edge.deployed",
                     color: grey900
@@ -1073,7 +1073,7 @@ export default angular.module('thingsboard.types', [])
             translate: {
                 customTranslationsPrefix: "custom."
             },
-            edgeEventActionType: {
+            edgeDownlinksActionType: {
                 "ADDED": {
                     name: "audit-log.type-added"
                 },
@@ -1135,7 +1135,7 @@ export default angular.module('thingsboard.types', [])
                     name: "audit-log.type-unassigned-from-edge"
                 }
             },
-            edgeEventTypeTranslations:{
+            edgeDownlinksTypeTranslations:{
                 "DASHBOARD": {
                     name: "entity.type-dashboard"
                 },
@@ -1193,10 +1193,6 @@ export default angular.module('thingsboard.types', [])
                 "ADMIN_SETTINGS": {
                     name: "permission.resource.display-type.ADMIN_SETTINGS"
                 }
-            },
-            edgeDownlinks: {
-                value: "EDGE_DOWNLINKS",
-                name: "edge.downlinks"
             }
         }
     ).name;

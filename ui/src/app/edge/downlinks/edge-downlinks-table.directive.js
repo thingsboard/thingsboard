@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './event.scss';
+import './downlink.scss';
 
 /* eslint-disable import/no-unresolved, import/default */
 
@@ -22,16 +22,12 @@ import edgeDownlinksTableTemplate from './edge-downlinks-table.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EdgeDownlinksDirective2($compile, $templateCache, $rootScope, $translate, types,
-                                            eventService, edgeService, attributeService) {
+export default function EdgeDownlinksDirective($compile, $templateCache, $rootScope, $translate, types, edgeService, attributeService) {
 
     var linker = function (scope, element) {
 
         var template = $templateCache.get(edgeDownlinksTableTemplate);
-
         element.html(template);
-
-        scope.eventType = types.edgeDownlinks.value;
 
         var pageSize = 20;
         var startTime = 0;
@@ -45,13 +41,13 @@ export default function EdgeDownlinksDirective2($compile, $templateCache, $rootS
 
         scope.topIndex = 0;
 
-        scope.theEvents = {
+        scope.theDownlinks = {
             getItemAtIndex: function (index) {
-                if (index > scope.events.data.length) {
-                    scope.theEvents.fetchMoreItems_(index);
+                if (index > scope.downlinks.data.length) {
+                    scope.theDownlinks.fetchMoreItems_(index);
                     return null;
                 }
-                var item = scope.events.data[index];
+                var item = scope.downlinks.data[index];
                 if (item) {
                     item.indexNumber = index + 1;
                 }
@@ -59,34 +55,34 @@ export default function EdgeDownlinksDirective2($compile, $templateCache, $rootS
             },
 
             getLength: function () {
-                if (scope.events.hasNext) {
-                    return scope.events.data.length + scope.events.nextPageLink.limit;
+                if (scope.downlinks.hasNext) {
+                    return scope.downlinks.data.length + scope.downlinks.nextPageLink.limit;
                 } else {
-                    return scope.events.data.length;
+                    return scope.downlinks.data.length;
                 }
             },
 
             fetchMoreItems_: function () {
-                if (scope.events.hasNext && !scope.events.pending) {
-                    if (scope.entityType && scope.entityId && scope.eventType && scope.tenantId) {
+                if (scope.downlinks.hasNext && !scope.downlinks.pending) {
+                    if (scope.entityType && scope.entityId && scope.tenantId) {
                         scope.loadEdgeInfo();
-                        scope.events.pending = true;
-                        edgeService.getEdgeDownlinks(scope.entityId, scope.events.nextPageLink).then(
-                            function success(events) {
-                                scope.events.data = scope.events.data.concat(prepareEdgeEventData(events.data));
-                                scope.events.nextPageLink = events.nextPageLink;
-                                scope.events.hasNext = events.hasNext;
-                                if (scope.events.hasNext) {
-                                    scope.events.nextPageLink.limit = pageSize;
+                        scope.downlinks.pending = true;
+                        edgeService.getEdgeDownlinks(scope.entityId, scope.downlinks.nextPageLink).then(
+                            function success(downlinks) {
+                                scope.downlinks.data = scope.downlinks.data.concat(prepareEdgeDownlinksData(downlinks.data));
+                                scope.downlinks.nextPageLink = downlinks.nextPageLink;
+                                scope.downlinks.hasNext = downlinks.hasNext;
+                                if (scope.downlinks.hasNext) {
+                                    scope.downlinks.nextPageLink.limit = pageSize;
                                 }
-                                scope.events.pending = false;
+                                scope.downlinks.pending = false;
                             },
                             function fail() {
-                                scope.events.hasNext = false;
-                                scope.events.pending = false;
+                                scope.downlinks.hasNext = false;
+                                scope.downlinks.pending = false;
                             });
                     } else {
-                        scope.events.hasNext = false;
+                        scope.downlinks.hasNext = false;
                     }
                 }
             }
@@ -128,7 +124,7 @@ export default function EdgeDownlinksDirective2($compile, $templateCache, $rootS
             scope.topIndex = 0;
             scope.selected = [];
             scope.updateTimeWindowRange();
-            scope.events = {
+            scope.downlinks = {
                 data: [],
                 nextPageLink: {
                     limit: pageSize,
@@ -138,15 +134,15 @@ export default function EdgeDownlinksDirective2($compile, $templateCache, $rootS
                 hasNext: true,
                 pending: false
             };
-            scope.theEvents.getItemAtIndex(pageSize);
+            scope.theDownlinks.getItemAtIndex(pageSize);
         }
 
         scope.noData = function() {
-            return scope.events.data.length == 0 && !scope.events.hasNext;
+            return scope.downlinks.data.length == 0 && !scope.downlinks.hasNext;
         }
 
         scope.hasData = function() {
-            return scope.events.data.length > 0;
+            return scope.downlinks.data.length > 0;
         }
 
         scope.loading = function() {
@@ -211,12 +207,12 @@ export default function EdgeDownlinksDirective2($compile, $templateCache, $rootS
 
         $compile(element.contents())(scope);
     }
-    function prepareEdgeEventData(data) {
+    function prepareEdgeDownlinksData(data) {
 
         data.forEach(
-            edgeEvent => {
-                edgeEvent.edgeEventActionText = $translate.instant(types.edgeEventActionType[edgeEvent.action].name);
-                edgeEvent.edgeEventTypeText = $translate.instant(types.edgeEventTypeTranslations[edgeEvent.edgeId.entityType].name);
+            edgeDownlink => {
+                edgeDownlink.edgeDownlinksActionText = $translate.instant(types.edgeDownlinksActionType[edgeDownlink.action].name);
+                edgeDownlink.edgeDownlinksTypeText = $translate.instant(types.edgeDownlinksTypeTranslations[edgeDownlink.edgeId.entityType].name);
             }
         );
         return data;

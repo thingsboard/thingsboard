@@ -85,10 +85,6 @@ md-list.tb-event-table {
   }
 }
 
-.tb-edge-downlinks-table {
-  @extend .tb-event-table;
-}
-
 #tb-event-content {
   width: 100%;
   min-width: 400px;

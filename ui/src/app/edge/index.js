@@ -45,7 +45,7 @@ export default angular.module('thingsboard.edge', [
     .controller('SetRootRuleChainToEdgesController', SetRootRuleChainToEdgesController)
     .controller('EdgeDownlinksContentDialogController', EdgeDownlinksContentDialogController)
     .directive('tbEdge', EdgeDirective)
+    .directive('tbEdgeDownlinksTable', EdgeDownlinksDirective)
     .directive('tbEdgeDownlinksHeader', EdgeDownlinksHeaderDirective)
     .directive('tbEdgeDownlinksRow', EdgeDownlinksRowDirective)
-    .directive('tbEdgeDownlinksTable', EdgeDownlinksDirective)
     .name;

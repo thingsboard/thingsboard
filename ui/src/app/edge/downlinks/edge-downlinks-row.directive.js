@@ -15,40 +15,24 @@
  */
 /* eslint-disable import/no-unresolved, import/default */
 
-import eventErrorDialogTemplate from './event-content-dialog.tpl.html';
-
-import edgeDownlinlsRowTemplate from './event-row-edge-event.tpl.html';
+import edgeDownlinksContentTemplate from './edge-downlinks-content-dialog.tpl.html';
+import edgeDownlinlsRowTemplate from './edge-downlinks-row.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EventRowDirective2($compile, $templateCache, $mdDialog, $document, $translate,
+export default function EdgeDownlinksRowDirective($compile, $templateCache, $mdDialog, $document, $translate,
                                           types, utils, toast, entityService, ruleChainService) {
 
     var linker = function (scope, element, attrs) {
 
-        var getTemplate = function(eventType) {
-            var template = '';
-            switch(eventType) {
-                case types.edgeDownlinks.value:
-                    template = edgeDownlinlsRowTemplate;
-                    break;
-            }
-            return $templateCache.get(template);
-        }
+        var template = edgeDownlinlsRowTemplate;
 
-        scope.loadTemplate = function() {
-            element.html(getTemplate(attrs.eventType));
-            $compile(element.contents())(scope);
-        }
-
-        attrs.$observe('eventType', function() {
-            scope.loadTemplate();
-        });
+        element.html($templateCache.get(template));
+        $compile(element.contents())(scope);
 
         scope.types = types;
-
-        scope.event = attrs.event;
+        scope.downlink = attrs.downlink;
 
         scope.showEdgeEntityContent = function($event, title, contentType) {
             var onShowingCallback = {
@@ -58,13 +42,13 @@ export default function EventRowDirective2($compile, $templateCache, $mdDialog, 
                 contentType = null;
             }
             var content = '';
-            switch(scope.event.type) {
-                case types.edgeEventType.relation:
-                    content = angular.toJson(scope.event.body);
+            switch(scope.downlink.type) {
+                case types.edgeDownlinksType.relation:
+                    content = angular.toJson(scope.downlink.body);
                     showDialog();
                     break;
-                case types.edgeEventType.ruleChainMetaData:
-                    content = ruleChainService.getRuleChainMetaData(scope.event.entityId, {ignoreErrors: true}).then(
+                case types.edgeDownlinksType.ruleChainMetaData:
+                    content = ruleChainService.getRuleChainMetaData(scope.downlink.entityId, {ignoreErrors: true}).then(
                         function success(info) {
                             showDialog();
                             return angular.toJson(info);
@@ -73,7 +57,7 @@ export default function EventRowDirective2($compile, $templateCache, $mdDialog, 
                         });
                     break;
                 default:
-                    content = entityService.getEntity(scope.event.type, scope.event.entityId, {ignoreErrors: true}).then(
+                    content = entityService.getEntity(scope.downlink.type, scope.downlink.entityId, {ignoreErrors: true}).then(
                         function success(info) {
                             showDialog();
                             return angular.toJson(info);
@@ -84,9 +68,9 @@ export default function EventRowDirective2($compile, $templateCache, $mdDialog, 
             }
             function showDialog() {
                 $mdDialog.show({
-                    controller: 'EventContentDialogController2',
+                    controller: 'EdgeDownlinksContentDialogController',
                     controllerAs: 'vm',
-                    templateUrl: eventErrorDialogTemplate,
+                    templateUrl: edgeDownlinksContentTemplate,
                     locals: {content: content, title: title, contentType: contentType, showingCallback: onShowingCallback},
                     parent: angular.element($document[0].body),
                     fullscreen: true,
@@ -102,10 +86,10 @@ export default function EventRowDirective2($compile, $templateCache, $mdDialog, 
             }
         }
 
-        scope.checkEdgeEventType = function (type) {
-            return !(type === types.edgeEventType.widgetType ||
-                type === types.edgeEventType.adminSettings ||
-                type === types.edgeEventType.widgetsBundle );
+        scope.checkEdgeDownlinksType = function (type) {
+            return !(type === types.edgeDownlinksType.widgetType ||
+                type === types.edgeDownlinksType.adminSettings ||
+                type === types.edgeDownlinksType.widgetsBundle );
         }
 
         scope.checkTooltip = function($event) {
@@ -118,14 +102,14 @@ export default function EventRowDirective2($compile, $templateCache, $mdDialog, 
 
         $compile(element.contents())(scope);
 
-        scope.updateStatus = function(eventCreatedTime) {
+        scope.updateStatus = function(downlinkCreatedTime) {
             var status;
-            if (eventCreatedTime < scope.queueStartTs) {
-                status = $translate.instant(types.edgeEventStatus.DEPLOYED.name);
-                scope.statusColor = types.edgeEventStatus.DEPLOYED.color;
+            if (downlinkCreatedTime < scope.queueStartTs) {
+                status = $translate.instant(types.edgeDownlinksStatus.DEPLOYED.name);
+                scope.statusColor = types.edgeDownlinksStatus.DEPLOYED.color;
             } else {
-                status = $translate.instant(types.edgeEventStatus.PENDING.name);
-                scope.statusColor = types.edgeEventStatus.PENDING.color;
+                status = $translate.instant(types.edgeDownlinksStatus.PENDING.name);
+                scope.statusColor = types.edgeDownlinksStatus.PENDING.color;
             }
             return status;
         }

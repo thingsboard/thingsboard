@@ -15,34 +15,19 @@
  */
 /* eslint-disable import/no-unresolved, import/default */
 
-import edgeDownlinksHeaderTemplate from './event-header-edge-event.tpl.html'
+import edgeDownlinksHeaderTemplate from './edge-downlinks-header.tpl.html'
 
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EventHeaderDirective2($compile, $templateCache, types) {
+export default function EdgeDownlinksHeaderDirective($compile, $templateCache) {
 
-    var linker = function (scope, element, attrs) {
+    var linker = function (scope, element) {
 
-        var getTemplate = function(eventType) {
-            var template = '';
-            switch(eventType) {
-                case types.edgeDownlinks.value:
-                    template = edgeDownlinksHeaderTemplate;
-                    break;
-            }
-            return $templateCache.get(template);
-        }
+        var template = edgeDownlinksHeaderTemplate;
 
-        scope.loadTemplate = function() {
-            element.html(getTemplate(attrs.eventType));
-            $compile(element.contents())(scope);
-        }
-
-        attrs.$observe('eventType', function() {
-            scope.loadTemplate();
-        });
-
+        element.html($templateCache.get(template));
+        $compile(element.contents())(scope);
     }
 
     return {

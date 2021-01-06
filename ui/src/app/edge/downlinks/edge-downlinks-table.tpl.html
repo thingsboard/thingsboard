@@ -27,7 +27,7 @@
         </md-button>
     </section>
     <md-list flex layout="column" class="md-whiteframe-z1 tb-edge-downlinks-table">
-           <md-list class="tb-row tb-header" layout="row" layout-align="start center" tb-edge-downlinks-header event-type="{{eventType}}">
+           <md-list class="tb-row tb-header" layout="row" layout-align="start center" tb-edge-downlinks-header>
            </md-list>
         <md-progress-linear style="max-height: 0px;" md-mode="indeterminate" ng-disabled="!$root.loading"
                             ng-show="$root.loading"></md-progress-linear>
@@ -36,8 +36,8 @@
               style="margin-top: 25px;"
               class="tb-prompt" ng-show="noData()">edge.no-downlinks-prompt</span>
         <md-virtual-repeat-container ng-show="hasData()" flex md-top-index="topIndex" tb-scope-element="repeatContainer">
-           <md-list-item md-virtual-repeat="event in theEvents" md-on-demand flex ng-style="hasScroll() ? {'margin-right':'-15px'} : {}">
-               <md-list class="tb-row" flex layout="row" layout-align="start center" tb-edge-downlinks-row event-type="{{eventType}}" event="{{event}}">
+           <md-list-item md-virtual-repeat="downlink in theDownlinks" md-on-demand flex ng-style="hasScroll() ? {'margin-right':'-15px'} : {}">
+               <md-list class="tb-row" flex layout="row" layout-align="start center" tb-edge-downlinks-row downlink="{{downlink}}">
                </md-list>
                <md-divider flex></md-divider>
            </md-list-item>
