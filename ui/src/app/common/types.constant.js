@@ -1086,6 +1086,9 @@ export default angular.module('thingsboard.types', [])
                 "POST_ATTRIBUTES": {
                     name: "edge-event.action-type-post-attributes"
                 },
+                "TIMESERIES_UPDATED": {
+                    name: "edge-event.action-type-timeseries-updated"
+                },
                 "ATTRIBUTES_UPDATED": {
                     name: "edge-event.action-type-attributes-updated"
                 },
@@ -1098,7 +1101,7 @@ export default angular.module('thingsboard.types', [])
                 "ASSIGNED_TO_CUSTOMER": {
                   name: "edge-event.action-type-assigned-to-customer"
                 },
-                "UNASSIGNED_TO_CUSTOMER": {
+                "UNASSIGNED_FROM_CUSTOMER": {
                     name: "edge-event.action-type-unassigned-from-customer"
                 },
                 "RELATION_ADD_OR_UPDATE": {
@@ -1119,14 +1122,14 @@ export default angular.module('thingsboard.types', [])
                 "CREDENTIALS_REQUEST": {
                     name: "edge-event.action-type-credentials-request"
                 },
-                "TIMESERIES_UPDATED": {
-                    name: "edge-event.action-type-timeseries-updated"
-                },
                 "ASSIGNED_TO_EDGE": {
                     name: "edge-event.action-type-assigned-to-edge"
                 },
                 "UNASSIGNED_FROM_EDGE": {
                     name: "edge-event.action-type-unassigned-from-edge"
+                },
+                "ENTITY_MERGE_REQUEST": {
+                    name: "edge-event.action-type-entity-merge-request"
                 }
             },
             edgeEventTypeTranslations:{
@@ -1166,6 +1169,15 @@ export default angular.module('thingsboard.types', [])
                 "RELATION": {
                     name: "edge-event.type-relation"
                 },
+                "WIDGETS_BUNDLE": {
+                    name: "edge-event.type-widgets-bundle"
+                },
+                "WIDGET_TYPE": {
+                    name: "edge-event.type-widgets-type"
+                },
+                "ADMIN_SETTINGS": {
+                    name: "edge-event.type-admin-settings"
+                },
                 "ENTITY_GROUP": {
                     name: "edge-event.type-entity-group"
                 },
@@ -1180,15 +1192,6 @@ export default angular.module('thingsboard.types', [])
                 },
                 "CUSTOM_TRANSLATION": {
                     name: "edge-event.custom-translation",
-                },
-                "WIDGETS_BUNDLE": {
-                    name: "edge-event.type-widgets-bundle"
-                },
-                "WIDGET_TYPE": {
-                    name: "edge-event.type-widgets-type"
-                },
-                "ADMIN_SETTINGS": {
-                    name: "edge-event.type-admin-settings"
                 }
             }
         }
