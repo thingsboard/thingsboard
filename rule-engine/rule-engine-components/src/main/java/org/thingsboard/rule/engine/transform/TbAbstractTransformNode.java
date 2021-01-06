@@ -23,6 +23,8 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.List;
 
@@ -67,7 +69,17 @@ public abstract class TbAbstractTransformNode implements TbNode {
             if (msgs.size() == 1) {
                 ctx.tellSuccess(msgs.get(0));
             } else {
-                TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(msgs.size(), msg.getCallback());
+                TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(msgs.size(), new TbMsgCallback() {
+                    @Override
+                    public void onSuccess() {
+                        ctx.ack(msg);
+                    }
+
+                    @Override
+                    public void onFailure(RuleEngineException e) {
+                        ctx.tellFailure(msg, e);
+                    }
+                });
                 msgs.forEach(newMsg -> ctx.enqueueForTellNext(newMsg, "Success", wrapper::onSuccess, wrapper::onFailure));
             }
         } else {
