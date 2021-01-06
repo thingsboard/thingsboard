@@ -64,7 +64,12 @@ public abstract class TbAbstractTransformNode implements TbNode {
 
     protected void transformSuccess(TbContext ctx, TbMsg msg, List<TbMsg> msgs) {
         if (msgs != null && !msgs.isEmpty()) {
-            msgs.forEach(ctx::tellSuccess);
+            if (msgs.size() == 1) {
+                ctx.tellSuccess(msgs.get(0));
+            } else {
+                TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(msgs.size(), msg.getCallback());
+                msgs.forEach(newMsg -> ctx.enqueueForTellNext(newMsg, "Success", wrapper::onSuccess, wrapper::onFailure));
+            }
         } else {
             ctx.tellNext(msg, FAILURE);
         }

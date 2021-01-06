@@ -124,7 +124,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
             if (json.isObject()) {
                 return Futures.immediateFuture(Collections.singletonList(unbindMsg(json, msg)));
             } else if (json.isArray()){
-                List<TbMsg> res = new ArrayList<>();
+                List<TbMsg> res = new ArrayList<>(json.size());
                 json.forEach(jsonObject -> res.add(unbindMsg(jsonObject, msg)));
                 return Futures.immediateFuture(res);
             }
