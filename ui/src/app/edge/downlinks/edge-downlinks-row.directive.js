@@ -105,11 +105,11 @@ export default function EdgeDownlinksRowDirective($compile, $templateCache, $mdD
         scope.updateStatus = function(downlinkCreatedTime) {
             var status;
             if (downlinkCreatedTime < scope.queueStartTs) {
-                status = $translate.instant(types.getEdgeStatus.DEPLOYED.name);
-                scope.statusColor = types.getEdgeStatus.DEPLOYED.color;
+                status = $translate.instant(types.edgeEventStatus.DEPLOYED.name);
+                scope.statusColor = types.edgeEventStatus.DEPLOYED.color;
             } else {
-                status = $translate.instant(types.getEdgeStatus.PENDING.name);
-                scope.statusColor = types.getEdgeStatus.PENDING.color;
+                status = $translate.instant(types.edgeEventStatus.PENDING.name);
+                scope.statusColor = types.edgeEventStatus.PENDING.color;
             }
             return status;
         }

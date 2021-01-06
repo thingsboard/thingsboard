@@ -405,7 +405,7 @@ export default angular.module('thingsboard.types', [])
                 widgetType: "WIDGET_TYPE",
                 adminSettings: "ADMIN_SETTINGS"
             },
-            getEdgeStatus: {
+            edgeEventStatus: {
                 "DEPLOYED": {
                     name: "edge.deployed",
                     color: grey900
