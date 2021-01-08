@@ -20,7 +20,7 @@ import edgeFieldsetTemplate from './edge-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EdgeDirective($compile, $templateCache, $translate, $mdDialog, $document, utils, toast, types, customerService, edgeService) {
+export default function EdgeDirective($compile, $templateCache, $translate, $mdDialog, $document, utils, toast, types, customerService, edgeService, userService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(edgeFieldsetTemplate);
         element.html(template);
@@ -29,6 +29,7 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
         scope.isAssignedToCustomer = false;
         scope.isPublic = false;
         scope.assignedCustomer = null;
+        scope.isTenantAdmin = userService.getCurrentUser().authority === 'TENANT_ADMIN';
 
         scope.$watch('edge', function(newVal) {
             if (newVal) {
