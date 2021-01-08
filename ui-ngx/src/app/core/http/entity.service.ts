@@ -70,7 +70,6 @@ import {
 import { alarmFields } from '@shared/models/alarm.models';
 import { EdgeService } from "@core/http/edge.service";
 import { ruleChainType } from "@shared/models/rule-chain.models";
-import { Router } from "@angular/router";
 
 @Injectable({
   providedIn: 'root'
@@ -91,8 +90,7 @@ export class EntityService {
     private dashboardService: DashboardService,
     private entityRelationService: EntityRelationService,
     private attributeService: AttributeService,
-    private utils: UtilsService,
-    private router: Router
+    private utils: UtilsService
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -322,9 +320,10 @@ export class EntityService {
         break;
       case EntityType.RULE_CHAIN:
         pageLink.sortOrder.property = 'name';
-        if (this.router.url.includes('edge')) {
-          entitiesObservable = this.ruleChainService.getRuleChains(pageLink, ruleChainType.edge, config);
+        if (subType) {
+          entitiesObservable = this.ruleChainService.getRuleChains(pageLink, subType, config);
         } else {
+          // safe fallback to default core type
           entitiesObservable = this.ruleChainService.getRuleChains(pageLink, ruleChainType.core, config);
         }
         break;

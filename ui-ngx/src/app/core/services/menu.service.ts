@@ -230,7 +230,7 @@ export class MenuService {
         name: 'rulechain.rulechains',
         type: 'link',
         path: '/ruleChains',
-        icon: 'settings_ethernet',
+        icon: 'settings_ethernet'
       },
       {
         id: guid(),

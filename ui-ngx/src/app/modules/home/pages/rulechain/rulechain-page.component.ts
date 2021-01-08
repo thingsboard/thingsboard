@@ -1305,13 +1305,15 @@ export class RuleChainPageComponent extends PageComponent
     ruleNode.configuration = deepClone(ruleNode.component.configurationDescriptor.nodeDefinition.defaultConfiguration);
     const ruleChainId = this.ruleChain.id ? this.ruleChain.id.id : null;
     this.enableHotKeys = false;
+    const ruleChainType = this.ruleChainType;
     this.dialog.open<AddRuleNodeDialogComponent, AddRuleNodeDialogData,
       FcRuleNode>(AddRuleNodeDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         ruleNode,
-        ruleChainId
+        ruleChainId,
+        ruleChainType
       }
     }).afterClosed().subscribe(
       (addedRuleNode) => {
@@ -1510,6 +1512,7 @@ export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeL
 export interface AddRuleNodeDialogData {
   ruleNode: FcRuleNode;
   ruleChainId: string;
+  ruleChainType: string;
 }
 
 @Component({
@@ -1525,6 +1528,7 @@ export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialo
 
   ruleNode: FcRuleNode;
   ruleChainId: string;
+  ruleChainType: string;
 
   submitted = false;
 
@@ -1537,6 +1541,7 @@ export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialo
 
     this.ruleNode = this.data.ruleNode;
     this.ruleChainId = this.data.ruleChainId;
+    this.ruleChainType = this.data.ruleChainType;
   }
 
   ngOnInit(): void {

@@ -45,7 +45,6 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
 import { OAuth2ClientInfo } from '@shared/models/oauth2.models';
-import { EdgeService } from "@core/http/edge.service";
 
 @Injectable({
     providedIn: 'root'

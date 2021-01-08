@@ -29,6 +29,7 @@ import { EntityService } from '@core/http/entity.service';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { ruleChainType } from '@app/shared/models/rule-chain.models';
 
 @Component({
   selector: 'tb-rule-chain-autocomplete',
@@ -187,8 +188,9 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
 
   fetchRuleChain(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;
+    // voba: at the moment device profiles are not supported by edge, so 'core' hardcoded
     return this.entityService.getEntitiesByNameFilter(EntityType.RULE_CHAIN, searchText,
-      50, null, {ignoreLoading: true});
+      50, ruleChainType.core, {ignoreLoading: true});
   }
 
   clear() {
