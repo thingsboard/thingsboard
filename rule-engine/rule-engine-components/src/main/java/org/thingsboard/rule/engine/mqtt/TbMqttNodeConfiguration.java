@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.mqtt;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.rule.engine.mqtt.credentials.AnonymousCredentials;
+import org.thingsboard.rule.engine.mqtt.credentials.MqttAnonymousCredentials;
 import org.thingsboard.rule.engine.mqtt.credentials.MqttClientCredentials;
 
 @Data
@@ -42,7 +42,7 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
         configuration.setConnectTimeoutSec(10);
         configuration.setCleanSession(true);
         configuration.setSsl(false);
-        configuration.setCredentials(new AnonymousCredentials());
+        configuration.setCredentials(new MqttAnonymousCredentials());
         return configuration;
     }
 

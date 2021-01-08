@@ -23,18 +23,16 @@ import org.thingsboard.rule.engine.mqtt.azure.AzureIotHubSasCredentials;
 
 import java.util.Optional;
 
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
-        property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = AnonymousCredentials.class, name = "anonymous"),
-        @JsonSubTypes.Type(value = BasicCredentials.class, name = "basic"),
+        @JsonSubTypes.Type(value = MqttAnonymousCredentials.class, name = "anonymous"),
+        @JsonSubTypes.Type(value = MqttBasicCredentials.class, name = "basic"),
         @JsonSubTypes.Type(value = AzureIotHubSasCredentials.class, name = "sas"),
-        @JsonSubTypes.Type(value = CertPemClientCredentials.class, name = "cert.PEM")})
+        @JsonSubTypes.Type(value = MqttCertPemCredentials.class, name = "cert.PEM")})
 public interface MqttClientCredentials {
-
-    Optional<SslContext> initSslContext();
+    default Optional<SslContext> initSslContext() {
+        return Optional.empty();
+    }
 
     default void configure(MqttClientConfig config) {
     }

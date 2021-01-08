@@ -13,30 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.mqtt.credentials;
+package org.thingsboard.rule.engine.rest.credentials;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.netty.handler.ssl.SslContext;
-import lombok.Data;
-import org.thingsboard.mqtt.MqttClientConfig;
 
 import java.util.Optional;
 
-@Data
-public class BasicCredentials implements MqttClientCredentials {
-
-    private String username;
-    private String password;
-
-    @Override
-    public Optional<SslContext> initSslContext() {
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = HttpAnonymousCredentials.class, name = "anonymous"),
+        @JsonSubTypes.Type(value = HttpBasicCredentials.class, name = "basic"),
+        @JsonSubTypes.Type(value = HttpCertPemCredentials.class, name = "cert.PEM")})
+public interface HttpClientCredentials {
+    default Optional<SslContext> initSslContext() {
         return Optional.empty();
     }
 
-    @Override
-    public void configure(MqttClientConfig config) {
-        config.setUsername(username);
-        config.setPassword(password);
+    default Optional<String> getBasicAuthHeaderValue() {
+        return Optional.empty();
     }
-
 }
 

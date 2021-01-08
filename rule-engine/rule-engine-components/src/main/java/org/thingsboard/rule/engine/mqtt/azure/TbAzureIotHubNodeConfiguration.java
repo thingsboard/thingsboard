@@ -16,10 +16,7 @@
 package org.thingsboard.rule.engine.mqtt.azure;
 
 import lombok.Data;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
-import org.thingsboard.rule.engine.mqtt.credentials.AnonymousCredentials;
-import org.thingsboard.rule.engine.mqtt.credentials.MqttClientCredentials;
 
 @Data
 public class TbAzureIotHubNodeConfiguration extends TbMqttNodeConfiguration {

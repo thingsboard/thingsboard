@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -133,13 +134,18 @@ public class TbHttpClient {
             } else {
                 this.eventLoopGroup = new NioEventLoopGroup();
                 Netty4ClientHttpRequestFactory nettyFactory = new Netty4ClientHttpRequestFactory(this.eventLoopGroup);
-                nettyFactory.setSslContext(SslContextBuilder.forClient().build());
+                nettyFactory.setSslContext(initSslContext());
                 nettyFactory.setReadTimeout(config.getReadTimeoutMs());
                 httpClient = new AsyncRestTemplate(nettyFactory);
             }
         } catch (SSLException | NoSuchAlgorithmException e) {
             throw new TbNodeException(e);
         }
+    }
+
+    private SslContext initSslContext() throws SSLException {
+        return this.config.getCredentials().initSslContext()
+                .orElse(SslContextBuilder.forClient().build());
     }
 
     private void checkSystemProxyProperties() throws TbNodeException {
@@ -226,6 +232,7 @@ public class TbHttpClient {
     private HttpHeaders prepareHeaders(TbMsgMetaData metaData) {
         HttpHeaders headers = new HttpHeaders();
         config.getHeaders().forEach((k, v) -> headers.add(TbNodeUtils.processPattern(k, metaData), TbNodeUtils.processPattern(v, metaData)));
+        config.getCredentials().getBasicAuthHeaderValue().ifPresent(v -> headers.add("Authorization", v));
         return headers;
     }
 

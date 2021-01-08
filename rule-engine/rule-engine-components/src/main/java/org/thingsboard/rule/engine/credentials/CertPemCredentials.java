@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.mqtt.credentials;
+package org.thingsboard.rule.engine.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.netty.handler.ssl.ClientAuth;
@@ -55,8 +55,7 @@ import java.util.Optional;
 @Data
 @Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CertPemClientCredentials implements MqttClientCredentials {
-
+public class CertPemCredentials {
     private static final String TLS_VERSION = "TLSv1.2";
 
     private String caCert;
@@ -64,7 +63,6 @@ public class CertPemClientCredentials implements MqttClientCredentials {
     private String privateKey;
     private String password;
 
-    @Override
     public Optional<SslContext> initSslContext() {
         try {
             Security.addProvider(new BouncyCastleProvider());

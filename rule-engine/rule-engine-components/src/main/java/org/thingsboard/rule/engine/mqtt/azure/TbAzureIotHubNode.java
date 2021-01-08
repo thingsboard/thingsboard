@@ -27,7 +27,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.mqtt.TbMqttNode;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
-import org.thingsboard.rule.engine.mqtt.credentials.CertPemClientCredentials;
+import org.thingsboard.rule.engine.mqtt.credentials.MqttCertPemCredentials;
 import org.thingsboard.rule.engine.mqtt.credentials.MqttClientCredentials;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 
@@ -59,8 +59,8 @@ public class TbAzureIotHubNode extends TbMqttNode {
                         if (sasCredentials.getCaCert() == null || sasCredentials.getCaCert().isEmpty()) {
                             sasCredentials.setCaCert(AzureIotHubUtil.getDefaultCaCert());
                         }
-                    } else if (credentials instanceof CertPemClientCredentials) {
-                        CertPemClientCredentials pemCredentials = (CertPemClientCredentials) credentials;
+                    } else if (credentials instanceof MqttCertPemCredentials) {
+                        MqttCertPemCredentials pemCredentials = (MqttCertPemCredentials) credentials;
                         if (pemCredentials.getCaCert() == null || pemCredentials.getCaCert().isEmpty()) {
                             pemCredentials.setCaCert(AzureIotHubUtil.getDefaultCaCert());
                         }
