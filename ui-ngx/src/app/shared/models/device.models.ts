@@ -25,7 +25,7 @@ import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { EntityInfoData } from '@shared/models/entity.models';
 import { KeyFilter } from '@shared/models/query/query.models';
 import { TimeUnit } from '@shared/models/time/time.models';
-import * as _moment from 'moment-timezone';
+import * as _moment from 'moment';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 
 export enum DeviceProfileType {

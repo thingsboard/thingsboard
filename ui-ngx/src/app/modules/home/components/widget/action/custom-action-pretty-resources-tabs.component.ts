@@ -34,13 +34,13 @@ import { AppState } from '@core/core.state';
 import { CustomActionDescriptor } from '@shared/models/widget.models';
 import { Ace } from 'ace-builds';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { css_beautify, html_beautify } from 'js-beautify';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { CustomPrettyActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
 import { Observable } from 'rxjs/internal/Observable';
 import { forkJoin, from } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { getAce } from '@shared/models/ace/ace.models';
+import { beautifyCss, beautifyHtml } from '@shared/models/beautify.models';
 
 @Component({
   selector: 'tb-custom-action-pretty-resources-tabs',
@@ -140,21 +140,27 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   }
 
   public beautifyCss(): void {
-    const res = css_beautify(this.action.customCss, {indent_size: 4});
-    if (this.action.customCss !== res) {
-      this.action.customCss = res;
-      this.cssEditor.setValue(this.action.customCss ? this.action.customCss : '', -1);
-      this.notifyActionUpdated();
-    }
+    beautifyCss(this.action.customCss, {indent_size: 4}).subscribe(
+      (res) => {
+        if (this.action.customCss !== res) {
+          this.action.customCss = res;
+          this.cssEditor.setValue(this.action.customCss ? this.action.customCss : '', -1);
+          this.notifyActionUpdated();
+        }
+      }
+    );
   }
 
   public beautifyHtml(): void {
-    const res = html_beautify(this.action.customHtml, {indent_size: 4, wrap_line_length: 60});
-    if (this.action.customHtml !== res) {
-      this.action.customHtml = res;
-      this.htmlEditor.setValue(this.action.customHtml ? this.action.customHtml : '', -1);
-      this.notifyActionUpdated();
-    }
+    beautifyHtml(this.action.customHtml, {indent_size: 4, wrap_line_length: 60}).subscribe(
+      (res) => {
+        if (this.action.customHtml !== res) {
+          this.action.customHtml = res;
+          this.htmlEditor.setValue(this.action.customHtml ? this.action.customHtml : '', -1);
+          this.notifyActionUpdated();
+        }
+      }
+    );
   }
 
   private initAceEditors(): Observable<any> {

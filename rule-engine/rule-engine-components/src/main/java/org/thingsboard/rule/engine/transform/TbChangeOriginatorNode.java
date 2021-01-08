@@ -15,16 +15,15 @@
  */
 package org.thingsboard.rule.engine.transform;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesAlarmOriginatorIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
@@ -33,7 +32,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
 @Slf4j
 @RuleNode(
@@ -65,13 +66,13 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
     }
 
     @Override
-    protected ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg) {
+    protected ListenableFuture<List<TbMsg>> transform(TbContext ctx, TbMsg msg) {
         ListenableFuture<? extends EntityId> newOriginator = getNewOriginator(ctx, msg.getOriginator());
-        return Futures.transform(newOriginator, (Function<EntityId, TbMsg>) n -> {
+        return Futures.transform(newOriginator, n -> {
             if (n == null || n.isNullUid()) {
                 return null;
             }
-            return ctx.transformMsg(msg, msg.getType(), n, msg.getMetaData(), msg.getData());
+            return Collections.singletonList((ctx.transformMsg(msg, msg.getType(), n, msg.getMetaData(), msg.getData())));
         }, ctx.getDbCallbackExecutor());
     }
 

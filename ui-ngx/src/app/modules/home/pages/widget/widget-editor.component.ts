@@ -34,7 +34,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { getCurrentIsLoading } from '@app/core/interceptors/load.selectors';
 import { Ace } from 'ace-builds';
 import { getAce, Range } from '@shared/models/ace/ace.models';
-import { css_beautify, html_beautify } from 'js-beautify';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { WINDOW } from '@core/services/window.service';
 import { WindowMessage } from '@shared/models/window-message.model';
@@ -51,6 +50,7 @@ import Timeout = NodeJS.Timeout;
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
 import { map, tap } from 'rxjs/operators';
+import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
 
 // @dynamic
 @Component({
@@ -618,48 +618,63 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   beautifyCss(): void {
-    const res = css_beautify(this.widget.templateCss, {indent_size: 4});
-    if (this.widget.templateCss !== res) {
-      this.isDirty = true;
-      this.widget.templateCss = res;
-      this.cssEditor.setValue(this.widget.templateCss ? this.widget.templateCss : '', -1);
-    }
+    beautifyCss(this.widget.templateCss, {indent_size: 4}).subscribe(
+      (res) => {
+        if (this.widget.templateCss !== res) {
+          this.isDirty = true;
+          this.widget.templateCss = res;
+          this.cssEditor.setValue(this.widget.templateCss ? this.widget.templateCss : '', -1);
+        }
+      }
+    );
   }
 
   beautifyHtml(): void {
-    const res = html_beautify(this.widget.templateHtml, {indent_size: 4, wrap_line_length: 60});
-    if (this.widget.templateHtml !== res) {
-      this.isDirty = true;
-      this.widget.templateHtml = res;
-      this.htmlEditor.setValue(this.widget.templateHtml ? this.widget.templateHtml : '', -1);
-    }
+    beautifyHtml(this.widget.templateHtml, {indent_size: 4, wrap_line_length: 60}).subscribe(
+      (res) => {
+        if (this.widget.templateHtml !== res) {
+          this.isDirty = true;
+          this.widget.templateHtml = res;
+          this.htmlEditor.setValue(this.widget.templateHtml ? this.widget.templateHtml : '', -1);
+        }
+      }
+    );
   }
 
   beautifyJson(): void {
-    const res = js_beautify(this.widget.settingsSchema, {indent_size: 4});
-    if (this.widget.settingsSchema !== res) {
-      this.isDirty = true;
-      this.widget.settingsSchema = res;
-      this.jsonSettingsEditor.setValue(this.widget.settingsSchema ? this.widget.settingsSchema : '', -1);
-    }
+    beautifyJs(this.widget.settingsSchema, {indent_size: 4}).subscribe(
+      (res) => {
+        if (this.widget.settingsSchema !== res) {
+          this.isDirty = true;
+          this.widget.settingsSchema = res;
+          this.jsonSettingsEditor.setValue(this.widget.settingsSchema ? this.widget.settingsSchema : '', -1);
+        }
+      }
+    );
   }
 
   beautifyDataKeyJson(): void {
-    const res = js_beautify(this.widget.dataKeySettingsSchema, {indent_size: 4});
-    if (this.widget.dataKeySettingsSchema !== res) {
-      this.isDirty = true;
-      this.widget.dataKeySettingsSchema = res;
-      this.dataKeyJsonSettingsEditor.setValue(this.widget.dataKeySettingsSchema ? this.widget.dataKeySettingsSchema : '', -1);
-    }
+    beautifyJs(this.widget.dataKeySettingsSchema, {indent_size: 4}).subscribe(
+      (res) => {
+        if (this.widget.dataKeySettingsSchema !== res) {
+          this.isDirty = true;
+          this.widget.dataKeySettingsSchema = res;
+          this.dataKeyJsonSettingsEditor.setValue(this.widget.dataKeySettingsSchema ? this.widget.dataKeySettingsSchema : '', -1);
+        }
+      }
+    );
   }
 
   beautifyJs(): void {
-    const res = js_beautify(this.widget.controllerScript, {indent_size: 4, wrap_line_length: 60});
-    if (this.widget.controllerScript !== res) {
-      this.isDirty = true;
-      this.widget.controllerScript = res;
-      this.jsEditor.setValue(this.widget.controllerScript ? this.widget.controllerScript : '', -1);
-    }
+    beautifyJs(this.widget.controllerScript, {indent_size: 4, wrap_line_length: 60}).subscribe(
+      (res) => {
+        if (this.widget.controllerScript !== res) {
+          this.isDirty = true;
+          this.widget.controllerScript = res;
+          this.jsEditor.setValue(this.widget.controllerScript ? this.widget.controllerScript : '', -1);
+        }
+      }
+    );
   }
 
   removeResource(index: number) {

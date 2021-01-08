@@ -16,6 +16,8 @@
 import * as React from 'react';
 import ThingsboardAceEditor from './json-form-ace-editor';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
+import { Observable } from 'rxjs/internal/Observable';
+import { beautifyJs } from '@shared/models/beautify.models';
 
 class ThingsboardJavaScript extends React.Component<JsonFormFieldProps, JsonFormFieldState> {
 
@@ -24,8 +26,8 @@ class ThingsboardJavaScript extends React.Component<JsonFormFieldProps, JsonForm
         this.onTidyJavascript = this.onTidyJavascript.bind(this);
     }
 
-    onTidyJavascript(javascript: string): string {
-        return js_beautify(javascript, {indent_size: 4, wrap_line_length: 60});
+    onTidyJavascript(javascript: string): Observable<string> {
+        return beautifyJs(javascript, {indent_size: 4, wrap_line_length: 60});
     }
 
     render() {

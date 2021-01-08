@@ -46,6 +46,7 @@ const tinycolor = tinycolor_;
 
 const digitalGaugeSettingsSchemaValue = digitalGaugeSettingsSchema;
 
+// @dynamic
 export class TbCanvasDigitalGauge {
 
   static get settingsSchema(): JsonSettingsSchema {

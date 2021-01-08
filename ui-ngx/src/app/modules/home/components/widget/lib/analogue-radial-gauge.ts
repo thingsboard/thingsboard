@@ -28,6 +28,7 @@ import BaseGauge = CanvasGauges.BaseGauge;
 
 const analogueRadialGaugeSettingsSchemaValue = getAnalogueRadialGaugeSettingsSchema();
 
+// @dynamic
 export class TbAnalogueRadialGauge extends TbAnalogueGauge<AnalogueRadialGaugeSettings, RadialGaugeOptions>{
 
   static get settingsSchema(): JsonSettingsSchema {

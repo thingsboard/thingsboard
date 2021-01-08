@@ -37,6 +37,18 @@
       ],
       "ace": [
         "node_modules/ace-builds/src-noconflict/ace.js"
+      ],
+      "jquery": [
+        "node_modules/jquery/dist/jquery.min.js"
+      ],
+      "jquery.terminal": [
+        "node_modules/jquery.terminal/js/jquery.terminal.js"
+      ],
+      "tooltipster": [
+        "node_modules/tooltipster/dist/js/tooltipster.bundle.min.js"
+      ],
+      "jstree": [
+        "node_modules/jstree/dist/jstree.min.js"
       ]
     },
     "lib": [

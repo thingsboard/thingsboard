@@ -36,6 +36,7 @@ import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { guid } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { getAce } from '@shared/models/ace/ace.models';
+import { beautifyJs } from '@shared/models/beautify.models';
 
 @Component({
   selector: 'tb-json-content',
@@ -286,9 +287,12 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
   }
 
   beautifyJSON() {
-    const res = js_beautify(this.contentBody, {indent_size: 4, wrap_line_length: 60});
-    this.jsonEditor.setValue(res ? res : '', -1);
-    this.updateView();
+    beautifyJs(this.contentBody, {indent_size: 4, wrap_line_length: 60}).subscribe(
+      (res) => {
+        this.jsonEditor.setValue(res ? res : '', -1);
+        this.updateView();
+      }
+    );
   }
 
   minifyJSON() {
