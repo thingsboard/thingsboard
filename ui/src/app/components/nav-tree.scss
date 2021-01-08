@@ -131,6 +131,18 @@
           content: "supervisor_account";
         }
       }
+
+      &.tb-edge-group {
+        &::before {
+          content: "router";
+        }
+      }
+
+      &.tb-rule-chain-group {
+        &::before {
+          content: "settings_ethernet";
+        }
+      }
     }
   }
 }
