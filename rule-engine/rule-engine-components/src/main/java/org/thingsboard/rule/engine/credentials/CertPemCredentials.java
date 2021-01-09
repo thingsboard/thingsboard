@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import lombok.Data;
@@ -66,11 +65,14 @@ public class CertPemCredentials {
     public Optional<SslContext> initSslContext() {
         try {
             Security.addProvider(new BouncyCastleProvider());
-            return Optional.of(SslContextBuilder.forClient()
-                    .keyManager(createAndInitKeyManagerFactory())
-                    .trustManager(createAndInitTrustManagerFactory())
-                    .clientAuth(ClientAuth.REQUIRE)
-                    .build());
+            SslContextBuilder builder = SslContextBuilder.forClient();
+            if (StringUtils.hasLength(caCert)) {
+                builder.trustManager(createAndInitTrustManagerFactory());
+            }
+            if (StringUtils.hasLength(cert) && StringUtils.hasLength(privateKey)) {
+                builder.keyManager(createAndInitKeyManagerFactory());
+            }
+            return Optional.of(builder.build());
         } catch (Exception e) {
             log.error("[{}:{}] Creating TLS factory failed!", caCert, cert, e);
             throw new RuntimeException("Creating TLS factory failed!", e);
