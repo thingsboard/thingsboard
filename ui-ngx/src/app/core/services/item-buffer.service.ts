@@ -292,6 +292,7 @@ export class ItemBufferService {
         y: origNode.y,
         name: origNode.name,
         componentClazz: origNode.component.clazz,
+        ruleChainType: origNode.ruleChainType
       };
       if (origNode.targetRuleChainId) {
         node.targetRuleChainId = origNode.targetRuleChainId;

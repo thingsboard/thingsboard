@@ -313,6 +313,7 @@ export interface FcRuleNode extends FcRuleNodeType {
   error?: string;
   highlighted?: boolean;
   componentClazz?: string;
+  ruleChainType?: string;
 }
 
 export interface FcRuleEdge extends FcEdge {

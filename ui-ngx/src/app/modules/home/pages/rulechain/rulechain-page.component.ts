@@ -537,7 +537,8 @@ export class RuleChainPageComponent extends PageComponent
         nodeClass: descriptor.nodeClass,
         icon,
         iconUrl,
-        connectors: []
+        connectors: [],
+        ruleChainType: this.ruleChainType
       };
       if (component.configurationDescriptor.nodeDefinition.inEnabled) {
         node.connectors.push(
@@ -626,7 +627,8 @@ export class RuleChainPageComponent extends PageComponent
                   type: FlowchartConstants.leftConnectorType,
                   id: (this.nextConnectorID++) + ''
                 }
-              ]
+              ],
+              ruleChainType: this.ruleChainType
             };
             ruleChainNodesMap[ruleChainConnection.additionalInfo.ruleChainNodeId] = ruleChainNode;
             this.ruleChainModel.nodes.push(ruleChainNode);
