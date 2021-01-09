@@ -60,6 +60,9 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   @Input()
   entityType: EntityType;
 
+  @Input()
+  subType: string;
+
   private requiredValue: boolean;
   get required(): boolean {
     return this.requiredValue;
@@ -216,8 +219,9 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
   fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;
+
     return this.entityService.getEntitiesByNameFilter(this.entityType, searchText,
-      50, '', {ignoreLoading: true}).pipe(
+      50, this.subType ? this.subType : '', {ignoreLoading: true}).pipe(
       map((data) => data ? data : []));
   }
 
