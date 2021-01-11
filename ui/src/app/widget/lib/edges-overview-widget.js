@@ -16,7 +16,6 @@
 import './edges-overview-widget.scss';
 
 /* eslint-disable import/no-unresolved, import/default */
-
 import edgesOverviewWidgetTemplate from './edges-overview-widget.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
@@ -41,8 +40,7 @@ function EdgesOverviewWidget() {
 }
 
 /*@ngInject*/
-function EdgesOverviewWidgetController($element, $scope, $q, $timeout, toast, types, entityService, userService, entityRelationService,
-                                        assetService, deviceService, entityViewService, dashboardService, ruleChainService /*$filter, $mdMedia, $mdPanel, $document, $translate, $timeout, utils, types*/) {
+function EdgesOverviewWidgetController($element, $scope, $q, $timeout, $translate, toast, types, utils, entityService, edgeService, customerService, userService /*$filter, $mdMedia, $mdPanel, $document, $timeout, utils, types*/) {
     var vm = this;
 
     vm.showData = true;
@@ -52,6 +50,7 @@ function EdgesOverviewWidgetController($element, $scope, $q, $timeout, toast, ty
     vm.nodeIdCounter = 0;
 
     vm.nodesMap = {};
+    vm.entityNodesMap = {};
     vm.entityGroupsNodesMap = {};
     vm.pendingUpdateNodeTasks = {};
 
@@ -59,7 +58,18 @@ function EdgesOverviewWidgetController($element, $scope, $q, $timeout, toast, ty
         search: null
     };
 
-    vm.edgeGroupsTypes = [
+    vm.searchAction = {
+        name: 'action.search',
+        show: true,
+        onAction: function() {
+            vm.enterFilterMode();
+        },
+        icon: 'search'
+    };
+
+    vm.customerTitle = null;
+
+    var edgeGroupsTypes = [
         types.entityType.asset,
         types.entityType.device,
         types.entityType.entityView,
@@ -69,6 +79,9 @@ function EdgesOverviewWidgetController($element, $scope, $q, $timeout, toast, ty
 
     vm.onNodesInserted = onNodesInserted;
     vm.onNodeSelected = onNodeSelected;
+    vm.enterFilterMode = enterFilterMode;
+    vm.exitFilterMode = exitFilterMode;
+    vm.searchCallback = searchCallback;
 
     $scope.$watch('vm.ctx', function() {
         if (vm.ctx && vm.ctx.defaultSubscription) {
@@ -76,7 +89,14 @@ function EdgesOverviewWidgetController($element, $scope, $q, $timeout, toast, ty
             vm.widgetConfig = vm.ctx.widgetConfig;
             vm.subscription = vm.ctx.defaultSubscription;
             vm.datasources = vm.subscription.datasources;
+            initializeConfig();
             updateDatasources();
+        }
+    });
+
+    $scope.$watch("vm.query.search", function(newVal, prevVal) {
+        if (!angular.equals(newVal, prevVal) && vm.query.search != null) {
+            updateSearchNodes();
         }
     });
 
@@ -88,8 +108,94 @@ function EdgesOverviewWidgetController($element, $scope, $q, $timeout, toast, ty
         }
     });
 
+    function initializeConfig() {
+
+        vm.ctx.widgetActions = [ vm.searchAction ];
+
+        var testNodeCtx = {
+            entity: {
+                id: {
+                    entityType: 'DEVICE',
+                    id: '123'
+                },
+                name: 'TEST DEV1'
+            },
+            data: {},
+            level: 2
+        };
+        var parentNodeCtx = angular.copy(testNodeCtx);
+        parentNodeCtx.level = 1;
+        testNodeCtx.parentNodeCtx = parentNodeCtx;
+
+        var nodeRelationQueryFunction = loadNodeCtxFunction(vm.settings.nodeRelationQueryFunction, 'nodeCtx', testNodeCtx);
+        var nodeIconFunction = loadNodeCtxFunction(vm.settings.nodeIconFunction, 'nodeCtx', testNodeCtx);
+        var nodeTextFunction = loadNodeCtxFunction(vm.settings.nodeTextFunction, 'nodeCtx', testNodeCtx);
+        var nodeDisabledFunction = loadNodeCtxFunction(vm.settings.nodeDisabledFunction, 'nodeCtx', testNodeCtx);
+        var nodeOpenedFunction = loadNodeCtxFunction(vm.settings.nodeOpenedFunction, 'nodeCtx', testNodeCtx);
+        var nodeHasChildrenFunction = loadNodeCtxFunction(vm.settings.nodeHasChildrenFunction, 'nodeCtx', testNodeCtx);
+
+        var testNodeCtx2 = angular.copy(testNodeCtx);
+        testNodeCtx2.entity.name = 'TEST DEV2';
+
+        var nodesSortFunction = loadNodeCtxFunction(vm.settings.nodesSortFunction, 'nodeCtx1,nodeCtx2', testNodeCtx, testNodeCtx2);
+
+        vm.nodeRelationQueryFunction = nodeRelationQueryFunction || defaultNodeRelationQueryFunction;
+        vm.nodeIconFunction = nodeIconFunction || defaultNodeIconFunction;
+        vm.nodeTextFunction = nodeTextFunction || ((nodeCtx) => nodeCtx.entity.name);
+        vm.nodeDisabledFunction = nodeDisabledFunction || (() => false);
+        vm.nodeOpenedFunction = nodeOpenedFunction || defaultNodeOpenedFunction;
+        vm.nodeHasChildrenFunction = nodeHasChildrenFunction || (() => true);
+        vm.nodesSortFunction = nodesSortFunction || defaultSortFunction;
+    }
+
+    function loadNodeCtxFunction(functionBody, argNames, ...args) {
+        var nodeCtxFunction = null;
+        if (angular.isDefined(functionBody) && functionBody.length) {
+            try {
+                nodeCtxFunction = new Function(argNames, functionBody);
+                var res = nodeCtxFunction.apply(null, args);
+                if (angular.isUndefined(res)) {
+                    nodeCtxFunction = null;
+                }
+            } catch (e) {
+                nodeCtxFunction = null;
+            }
+        }
+        return nodeCtxFunction;
+    }
+
+    function enterFilterMode () {
+        vm.query.search = '';
+        vm.ctx.hideTitlePanel = true;
+        $timeout(()=>{
+            angular.element(vm.ctx.$container).find('.searchInput').focus();
+        })
+    }
+
+    function exitFilterMode () {
+        vm.query.search = null;
+        updateSearchNodes();
+        vm.ctx.hideTitlePanel = false;
+    }
+
+    function searchCallback (searchText, node) {
+        var theNode = vm.nodesMap[node.id];
+        if (theNode && theNode.data.searchText) {
+            return theNode.data.searchText.includes(searchText.toLowerCase());
+        }
+        return false;
+    }
+
     function updateDatasources() {
         vm.loadNodes = loadNodes;
+    }
+
+    function updateSearchNodes() {
+        if (vm.query.search != null) {
+            vm.nodeEditCallbacks.search(vm.query.search);
+        } else {
+            vm.nodeEditCallbacks.clearSearch();
+        }
     }
 
     function onNodesInserted(nodes/*, parent*/) {
@@ -185,64 +291,109 @@ function EdgesOverviewWidgetController($element, $scope, $q, $timeout, toast, ty
         return nodeIcon + nodeText;
     }
 
-    function prepareEgeGroupText(node) {
-        var nodeIcon = prepareNodeIcon(node.data.nodeCtx);
-        var nodeText = "Edge rule chains";
-        node.data.searchText = nodeText ? nodeText.replace(/<[^>]+>/g, '').toLowerCase() : "";
-        return nodeIcon + nodeText;
-    }
-
     function loadNodes(node, cb) {
         var datasource = vm.datasources[0];
         if (node.id === '#' && datasource) {
-            if (datasource.type === 'entity' && datasource.entity.id.entityType === types.entityType.edge) {
+            if (datasource.type === types.datasourceType.entity && datasource.entity.id.entityType === types.entityType.edge) {
                 var selectedEdge = datasource.entity;
+                getCustomerTitle(selectedEdge.id.id);
                 vm.ctx.widgetTitle = selectedEdge.name;
-                cb(loadNodesForEdge(selectedEdge.id.id, selectedEdge))
-            }
-        } else {
+                cb(loadNodesForEdge(selectedEdge.id.id, selectedEdge));
+            } else if (datasource.type === types.datasourceType.function) {
+                cb(loadNodesForEdge(null, null));
+            } else {
+                vm.edgeIsDatasource = false;
                 cb([]);
+            }
+        } else if (node.data && node.data.entity && node.data.entity.id.entityType === types.entityType.edge) {
+            var edgeId = node.data.entity.id.id;
+            var entityType = node.data.entityType;
+            var pageLink = {limit: 100};
+            entityService.getAssignedToEdgeEntitiesByType(edgeId, entityType, pageLink).then(
+                (entities) => {
+                    if (entities.data.length > 0) {
+                        cb(entitiesToNodes(node.id, entities.data));
+                    } else {
+                        cb([]);
+                    }
+                }
+            )
+        } else {
+            cb([]);
         }
+    }
+
+    function entitiesToNodes(parentNodeId, entities) {
+        var nodes = [];
+        vm.entityNodesMap[parentNodeId] = {};
+        if (entities) {
+            entities.forEach(
+                (entity) => {
+                    var node = createEntityNode(parentNodeId, entity, entity.id.entityType);
+                    nodes.push(node);
+                }
+            );
+        }
+        return nodes;
+    }
+
+    function createEntityNode(parentNodeId, entity, entityType) {
+        var nodesMap = vm.entityNodesMap[parentNodeId];
+        if (!nodesMap) {
+            nodesMap = {};
+            vm.entityNodesMap[parentNodeId] = nodesMap;
+        }
+        var node = {
+            id: ++vm.nodeIdCounter,
+            icon: 'material-icons ' + iconForGroupType(entityType),
+            text: entity.name,
+            children: false,
+            data: {
+                entity,
+                internalId: entity.id.id
+            }
+        };
+        nodesMap[entity.id.id] = node.id;
+        return node;
     }
 
     function loadNodesForEdge(parentNodeId, entity) {
         var nodes = [];
-        var nodesMap = {};
-        vm.entityGroupsNodesMap[parentNodeId] = nodesMap;
-        var user = userService.getCurrentUser();
-        var allowedGroupTypes = vm.edgeGroupsTypes;
-        if (user.authority === 'CUSTOMER_USER') {
-            allowedGroupTypes = vm.edgeGroupsTypes.filter(type => type !== types.entityType.rulechain)
+        vm.entityGroupsNodesMap[parentNodeId] = {};
+        var allowedGroupTypes = edgeGroupsTypes;
+        if (userService.getAuthority() === 'CUSTOMER_USER') {
+            allowedGroupTypes = edgeGroupsTypes.filter(type => type !== types.entityType.rulechain);
         }
-        allowedGroupTypes.forEach((groupType) => {
-            var node = {
-                id: ++vm.nodeIdCounter,
-                icon: 'material-icons ' + iconForGroupType(groupType),
-                text: textForGroupType(groupType),
-                children: true,
-                data: {
-                    groupType,
-                    entity,
-                    internalId: entity.id.id + '_' + groupType
-                }
-            };
-            nodes.push(node);
-            nodesMap[groupType] = node.id;
-        });
+        allowedGroupTypes.forEach(
+            (entityType) => {
+                var node = {
+                    id: ++vm.nodeIdCounter,
+                    icon: 'material-icons ' + iconForGroupType(entityType),
+                    text: textForGroupType(entityType),
+                    children: true,
+                    data: {
+                        entityType,
+                        entity,
+                        internalId: entity ? entity.id.id + '_' + entityType : utils.guid()
+                    }
+                };
+                nodes.push(node);
+            }
+        )
         return nodes;
     }
 
     function iconForGroupType(groupType) {
         switch (groupType) {
-            case vm.types.entityType.asset:
+            case types.entityType.asset:
                 return 'tb-asset-group';
-            case vm.types.entityType.device:
+            case types.entityType.device:
                 return 'tb-device-group';
-            case vm.types.entityType.entityView:
+            case types.entityType.entityView:
                 return 'tb-entity-view-group';
-            case vm.types.entityType.dashboard:
+            case types.entityType.dashboard:
                 return 'tb-dashboard-group';
-            case vm.types.entityType.rulechain:
+            case types.entityType.rulechain:
                 return 'tb-rule-chain-group';
         }
         return '';
@@ -250,22 +401,35 @@ function EdgesOverviewWidgetController($element, $scope, $q, $timeout, toast, ty
 
     function textForGroupType(groupType) {
         switch (groupType) {
-            case vm.types.entityType.asset:
+            case types.entityType.asset:
                 return $translate.instant('asset.assets');
-            case vm.types.entityType.device:
+            case types.entityType.device:
                 return $translate.instant('device.devices');
-            case vm.types.entityType.entityView:
+            case types.entityType.entityView:
                 return $translate.instant('entity-view.entity-views');
-            case vm.types.entityType.rulechain:
+            case types.entityType.rulechain:
                 return $translate.instant('rulechain.rulechains');
-            case vm.types.entityType.dashboard:
+            case types.entityType.dashboard:
                 return $translate.instant('dashboard.dashboards');
         }
         return '';
     }
 
-    function edgeGroupsNodeText(entityType) {
+    function getCustomerTitle(edgeId) {
+        edgeService.getEdge(edgeId, true).then(
+            function success(edge) {
+                customerService.getShortCustomerInfo(edge.customerId.id).then(
+                    function success(customer) {
+                        vm.customerTitle = $translate.instant('edge.assigned-to-customer-widget', {customerTitle: customer.title});
+                    }
+                );
+            }
+        )
+    }
 
+    function showError(errorText) {
+        var toastParent = angular.element('.tb-entities-hierarchy', $element);
+        toast.showError(errorText, toastParent, 'bottom left');
     }
 
     function prepareNodes(nodes) {
@@ -310,52 +474,7 @@ function EdgesOverviewWidgetController($element, $scope, $q, $timeout, toast, ty
         return deferred.promise;
     }
 
-    function edgeGroupToNode(entityType, parentDatasource, parentNodeCtx) {
-        var deferred = $q.defer();
-        deferred.resolve(getEdgeGroupNode(entityType, parentDatasource, parentNodeCtx));
-        return deferred.promise;
-    }
-
-    function getEdgeGroupNode(entityType, parentDatasource, parentNodeCtx) {
-        var datasource = {
-            dataKeys: parentDatasource.dataKeys,
-            entityId: parentDatasource.entity.id.id + '_' + entityType,
-            type: "edgeGroup",
-            entityType: entityType
-        };
-
-        var node = {
-            id: ++vm.nodeIdCounter
-        };
-        vm.nodesMap[node.id] = node;
-        datasource.nodeId = node.id;
-        node.icon = false;
-        var nodeCtx = {
-            parentNodeCtx: 3,
-            data: {},
-            entity: {
-                id: {
-                    id: parentDatasource.entity.id.id + '_' + entityType,
-                    entityType: 'group'
-                },
-                name: "Edge Group RC"
-            }
-        };
-        nodeCtx.level = parentNodeCtx ? parentNodeCtx.level + 1 : 1;
-        node.data = {
-            datasource: datasource,
-            nodeCtx: nodeCtx
-        };
-        node.state = {
-            disabled: vm.nodeDisabledFunction(node.data.nodeCtx),
-            opened: vm.nodeOpenedFunction(node.data.nodeCtx)
-        };
-        node.text = prepareEgeGroupText(node);
-        node.children = vm.nodeHasChildrenFunction(node.data.nodeCtx);
-        return node;
-    }
-
-    function entityIdToEdgeGroupNode(entityType, entityId, parentDatasource, parentNodeCtx) {
+    function entityIdToNode(entityType, entityId, parentDatasource, parentNodeCtx) {
         var deferred = $q.defer();
         var datasource = {
             dataKeys: parentDatasource.dataKeys,
@@ -409,6 +528,35 @@ function EdgesOverviewWidgetController($element, $scope, $q, $timeout, toast, ty
             );
         }
         return deferred.promise;
+    }
+
+
+    function prepareNodeRelationQuery(nodeCtx) {
+        var relationQuery = vm.nodeRelationQueryFunction(nodeCtx);
+        if (relationQuery && relationQuery === 'default') {
+            relationQuery = defaultNodeRelationQueryFunction(nodeCtx);
+        }
+        return relationQuery;
+    }
+
+    function defaultNodeRelationQueryFunction(nodeCtx) {
+        var entity = nodeCtx.entity;
+        var query = {
+            parameters: {
+                rootId: entity.id.id,
+                rootType: entity.id.entityType,
+                direction: types.entitySearchDirection.from,
+                relationTypeGroup: "COMMON",
+                maxLevel: 1
+            },
+            filters: [
+                {
+                    relationType: "Contains",
+                    entityTypes: []
+                }
+            ]
+        };
+        return query;
     }
 
     function prepareNodeIcon(nodeCtx) {
@@ -470,9 +618,6 @@ function EdgesOverviewWidgetController($element, $scope, $q, $timeout, toast, ty
                 case types.entityType.edge:
                     materialIcon = 'router';
                     break;
-                case types.entityType.rulechain:
-                    materialIcon = 'settings_ethernet';
-                    break;
             }
         }
         return {
@@ -480,4 +625,15 @@ function EdgesOverviewWidgetController($element, $scope, $q, $timeout, toast, ty
         };
     }
 
+    function defaultNodeOpenedFunction(nodeCtx) {
+        return nodeCtx.level <= 4;
+    }
+
+    function defaultSortFunction(nodeCtx1, nodeCtx2) {
+        var result = nodeCtx1.entity.id.entityType.localeCompare(nodeCtx2.entity.id.entityType);
+        if (result === 0) {
+            result = nodeCtx1.entity.name.localeCompare(nodeCtx2.entity.name);
+        }
+        return result;
+    }
 }
