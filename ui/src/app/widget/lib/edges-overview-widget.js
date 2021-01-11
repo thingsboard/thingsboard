@@ -30,7 +30,6 @@ function EdgesOverviewWidget() {
         restrict: "E",
         scope: true,
         bindToController: {
-            hierarchyId: '=',
             ctx: '='
         },
         controller: EdgesOverviewWidgetController,
@@ -49,7 +48,6 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
 
     vm.entityNodesMap = {};
     vm.entityGroupsNodesMap = {};
-    vm.pendingUpdateNodeTasks = {};
 
     vm.customerTitle = null;
     vm.edgeIsDatasource = true;
@@ -150,16 +148,16 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
             allowedGroupTypes = edgeGroupsTypes.filter(type => type !== types.entityType.rulechain);
         }
         allowedGroupTypes.forEach(
-            (groupType) => {
+            (entityType) => {
                 var node = {
                     id: ++vm.nodeIdCounter,
-                    icon: 'material-icons ' + iconForGroupType(groupType),
-                    text: textForGroupType(groupType),
+                    icon: 'material-icons ' + iconForGroupType(entityType),
+                    text: textForGroupType(entityType),
                     children: true,
                     data: {
-                        groupType,
+                        entityType,
                         entity,
-                        internalId: entity ? entity.id.id + '_' + groupType : utils.guid()
+                        internalId: entity ? entity.id.id + '_' + entityType : utils.guid()
                     }
                 };
                 nodes.push(node);
@@ -168,8 +166,8 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
         return nodes;
     }
 
-    function iconForGroupType(groupType) {
-        switch (groupType) {
+    function iconForGroupType(entityType) {
+        switch (entityType) {
             case types.entityType.asset:
                 return 'tb-asset-group';
             case types.entityType.device:
@@ -184,8 +182,8 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
         return '';
     }
 
-    function textForGroupType(groupType) {
-        switch (groupType) {
+    function textForGroupType(entityType) {
+        switch (entityType) {
             case types.entityType.asset:
                 return $translate.instant('asset.assets');
             case types.entityType.device:
