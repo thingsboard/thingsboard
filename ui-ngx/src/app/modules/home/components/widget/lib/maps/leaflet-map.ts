@@ -16,12 +16,12 @@
 
 import L, {
   FeatureGroup,
-  Icon,
+  Icon, LatLng,
   LatLngBounds,
   LatLngTuple,
   markerClusterGroup,
   MarkerClusterGroup,
-  MarkerClusterGroupOptions
+  MarkerClusterGroupOptions, Projection
 } from 'leaflet';
 import tinycolor from 'tinycolor2';
 import 'leaflet-providers';
@@ -208,14 +208,52 @@ export default abstract class LeafletMap {
     if (this.options.showPolygon && this.options.editablePolygon) {
       let mousePositionOnMap: L.LatLng[];
       let addPolygon: L.Control;
+      let latlng1: LatLng;
       this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
-        const polygonOffset = this.options.provider === MapProviders.image ? 10 : 0.01;
-        const latlng1 = e.latlng;
-        const latlng2 = L.latLng(e.latlng.lat, e.latlng.lng + polygonOffset);
-        const latlng3 = L.latLng(e.latlng.lat - polygonOffset, e.latlng.lng);
-        mousePositionOnMap = [latlng1, latlng2, latlng3];
+        latlng1 = e.latlng;
       });
+
       const dragListener = (e: L.DragEndEvent) => {
+        const polygonOffset = this.options.provider === MapProviders.image ? 10 : 0.01;
+
+        if(this.options.provider !== MapProviders.image) {
+          if (latlng1.lng > 180-polygonOffset) {
+            latlng1.lng = 180-polygonOffset;
+          } else if (latlng1.lng < -180) {
+            latlng1.lng = -180;
+          }
+
+          const maxLatitude = Projection.SphericalMercator['MAX_LATITUDE'];
+          if(latlng1.lat > maxLatitude){
+            latlng1.lat = maxLatitude;
+          }else if(latlng1.lat < -maxLatitude + polygonOffset){
+            latlng1.lat = -maxLatitude + polygonOffset;
+          }
+        }
+
+        const latlng2 = L.latLng(latlng1.lat, latlng1.lng + polygonOffset);
+        const latlng3 = L.latLng(latlng1.lat - polygonOffset, latlng1.lng);
+        mousePositionOnMap = [latlng1, latlng2, latlng3];
+
+        if(this.options.provider === MapProviders.image) {
+          for (let i = 0; i < mousePositionOnMap.length; i++) {
+            let convert = this.convertToCustomFormat(mousePositionOnMap[i])
+            mousePositionOnMap[i].lat = convert['latitude'];
+            mousePositionOnMap[i].lng = convert['longitude'];
+            if (convert['xPos']== 1 && (i == 0 || i == 2)) {
+              mousePositionOnMap[i].lng -= 10;
+            } else if (convert['xPos'] == 0 && i == 1) {
+              mousePositionOnMap[i].lng += 10;
+            }
+            if (convert['yPos']== 0 && i == 2) {
+              mousePositionOnMap[i].lat -= 10;
+            } else if (convert['yPos'] == 1 && (i == 0 || i == 1)) {
+              mousePositionOnMap[i].lat += 10;
+            }
+          }
+        }
+
+
         if (e.type === 'dragend' && mousePositionOnMap) {
           const newPolygon = L.polygon(mousePositionOnMap).addTo(this.map);
           this.addPolygons.push(newPolygon);
