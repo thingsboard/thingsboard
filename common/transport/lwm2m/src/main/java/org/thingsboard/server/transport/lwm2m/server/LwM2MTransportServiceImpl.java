@@ -20,7 +20,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.Link;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mObject;
@@ -57,6 +56,7 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -120,11 +120,11 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
     @PostConstruct
     public void init() {
         this.context.getScheduler().scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) context.getCtxServer().getSessionReportTimeout()), context.getCtxServer().getSessionReportTimeout(), TimeUnit.MILLISECONDS);
-        this.executorRegistered = Executors.newFixedThreadPool(10,
+        this.executorRegistered = Executors.newFixedThreadPool(this.context.getCtxServer().getRegisteredPoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel registered", SERVICE_CHANNEL)));
-        this.executorUpdateRegistered = Executors.newFixedThreadPool(10,
+        this.executorUpdateRegistered = Executors.newFixedThreadPool(this.context.getCtxServer().getUpdateRegisteredPoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel update registered", SERVICE_CHANNEL)));
-        this.executorUnRegistered = Executors.newFixedThreadPool(10,
+        this.executorUnRegistered = Executors.newFixedThreadPool(this.context.getCtxServer().getUnRegisteredPoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel un registered", SERVICE_CHANNEL)));
         this.converter = LwM2mValueConverterImpl.getInstance();
     }
@@ -147,13 +147,13 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
     public void onRegistered(LeshanServer lwServer, Registration registration, Collection<Observation> previousObsersations) {
         executorRegistered.submit(() -> {
             try {
-                log.warn("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
+//                log.warn("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
                 LwM2MClient lwM2MClient = lwM2mInMemorySecurityStore.updateInSessionsLwM2MClient(lwServer, registration);
                 if (lwM2MClient != null) {
                     lwM2MClient.setLwM2MTransportServiceImpl(this);
                     lwM2MClient.setSessionUuid(UUID.randomUUID());
                     this.sentLogsToThingsboard(LOG_LW2M_INFO + ": Client  Registered", registration);
-                    this.setLwM2MClient(lwServer, registration, lwM2MClient);
+//                    this.setLwM2MClient(lwServer, registration, lwM2MClient);
                     SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration);
                     if (sessionInfo != null) {
                         lwM2MClient.setDeviceUuid(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
@@ -204,9 +204,10 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
      * @param observations - All paths observations before unReg
      *                     !!! Warn: if have not finishing unReg, then this operation will be finished on next Client`s connect
      */
-    public void unReg(Registration registration, Collection<Observation> observations) {
+    public void unReg(LeshanServer lwServer, Registration registration, Collection<Observation> observations) {
         executorUnRegistered.submit(() -> {
             try {
+                this.setCancelObservations(lwServer, registration);
                 this.sentLogsToThingsboard(LOG_LW2M_INFO + ": Client unRegistration", registration);
                 this.closeClientSession(registration);
             } catch (Throwable t) {
@@ -279,38 +280,49 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
      * @param lwM2MClient  - object with All parameters off client
      */
     private void setLwM2MClient(LeshanServer lwServer, Registration registration, LwM2MClient lwM2MClient) {
-        // #1
-        for (Link url : registration.getObjectLinks()) {
-            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
-            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
-                lwM2MClient.getPendingRequests().add(url.getUrl());
-            }
-        }
-        // #2
-        for (Link url : registration.getObjectLinks()) {
-            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
-            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
-                lwM2MTransportRequest.sendAllRequest(lwServer, registration, url.getUrl(), GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
-                        lwM2MClient, null, null, this.context.getCtxServer().getTimeout(), false);
-            }
-        }
-
-        // #1
 //        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+//            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
+//            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
+//                // #1
+//                lwM2MClient.getPendingRequests().add(url.getUrl());
+//                // #2
+//                lwM2MTransportRequest.sendAllRequest(lwServer, registration, url.getUrl(), GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
+//                        lwM2MClient, null, null, this.context.getCtxServer().getTimeout(), false);
+//            }
+//        });
+
+//        // #1
+//        for (Link url : registration.getObjectLinks()) {
 //            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
 //            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
 //                lwM2MClient.getPendingRequests().add(url.getUrl());
 //            }
-//        });
-        // #2
-
-//        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+//        }
+//        // #2
+//        for (Link url : registration.getObjectLinks()) {
 //            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
 //            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
 //                lwM2MTransportRequest.sendAllRequest(lwServer, registration, url.getUrl(), GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
 //                        lwM2MClient, null, null, this.context.getCtxServer().getTimeout(), false);
 //            }
-//        });
+//        }
+
+        // #1
+        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
+            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
+                lwM2MClient.getPendingRequests().add(url.getUrl());
+            }
+        });
+
+        // #2
+        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
+            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
+                lwM2MTransportRequest.sendAllRequest(lwServer, registration, url.getUrl(), GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
+                        lwM2MClient, null, null, this.context.getCtxServer().getTimeout(), false);
+            }
+        });
     }
 
     /**
@@ -691,24 +703,29 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
      * @param values       - LwM2mSingleResource response.getContent()
      * @param path         - resource
      */
-    private void onObservationSetResourcesValue(Registration registration, Object value, Map<Integer, ?> values, String path) {
+    private void onObservationSetResourcesValue(Registration registration, Object value, Map<Integer, ?>  values, String path) {
         boolean isChange = false;
         try {
             writeLock.lock();
             // #1
             LwM2MClient lwM2MClient = lwM2mInMemorySecurityStore.getLwM2MClientWithReg(registration, null);
             LwM2mPath pathIds = new LwM2mPath(path);
-            log.warn("#0 nameDevice: [{}] resultIds: [{}] value: [{}], values: [{}] ", lwM2MClient.getDeviceName(), pathIds, value, values);
+//            log.warn("#0 nameDevice: [{}] resultIds: [{}] value: [{}], values: [{}] ", lwM2MClient.getDeviceName(), pathIds, value, values);
             ResourceModel.Type resModelType = context.getCtxServer().getResourceModelType(registration, pathIds);
             ResourceValue resValueOld = lwM2MClient.getResources().get(path);
             // #2
             if (resValueOld.isMultiInstances() && !values.toString().equals(resValueOld.getResourceValue().toString())) {
-                ResourceValue resourceValue = new ResourceValue(values, null, true);
-                lwM2MClient.getResources().put(path, resourceValue);
+                lwM2MClient.getResources().get(path).setValues(values);
+//                ResourceValue resourceValue = new ResourceValue(values, null, true);
+//                lwM2MClient.getResources().put(path, resourceValue);
                 isChange = true;
             } else if (!LwM2MTransportHandler.equalsResourceValue(resValueOld.getValue(), value, resModelType, pathIds)) {
-                ResourceValue resourceValue = new ResourceValue(null, value, false);
-                lwM2MClient.getResources().put(path, resourceValue);
+                lwM2MClient.getResources().get(path).setValue(value);
+//                ResourceValue resourceValueOld = lwM2MClient.getResources().get(path);
+//                lwM2MClient.getResources().remove(resourceValueOld);
+//                ResourceValue resourceValue = new ResourceValue(null, value, false);
+//                lwM2MClient.getResources().put(path, resourceValue);
+                log.warn("upDateResize: [{}] [{}] [{}] [{}]", lwM2MClient.getEndPoint(), lwM2MClient.getResources().size(), value, path);
                 isChange = true;
             }
         } catch (Exception e) {

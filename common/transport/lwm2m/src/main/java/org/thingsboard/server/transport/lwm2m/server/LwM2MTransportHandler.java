@@ -141,7 +141,7 @@ public class LwM2MTransportHandler {
 //        }
 //    }
 
-    public static NetworkConfig getCoapConfig() {
+    public static NetworkConfig getCoapConfig(Integer serverPortNoSec, Integer serverSecurePort) {
         NetworkConfig coapConfig;
         File configFile = new File(NetworkConfig.DEFAULT_FILE_NAME);
         if (configFile.isFile()) {
@@ -151,6 +151,8 @@ public class LwM2MTransportHandler {
             coapConfig = LeshanServerBuilder.createDefaultNetworkConfig();
             coapConfig.store(configFile);
         }
+        coapConfig.setString("COAP_PORT", Integer.toString(serverPortNoSec));
+        coapConfig.setString("COAP_SECURE_PORT", Integer.toString(serverSecurePort));
         return coapConfig;
     }
 

@@ -101,6 +101,14 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.californium</groupId>
+            <artifactId>californium-core</artifactId>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.eclipse.californium</groupId>-->
+<!--            <artifactId>scandium</artifactId>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>org.eclipse.californium</groupId>
             <artifactId>element-connector</artifactId>
             <type>test-jar</type>
             <scope>test</scope>

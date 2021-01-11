@@ -16,12 +16,11 @@
 
 import { Component, Inject, OnInit } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { ControlValueAccessor, FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { TranslateService } from '@ngx-translate/core';
 
 export interface Lwm2mObjectAddInstancesData {
   instancesIds: Set<number>;

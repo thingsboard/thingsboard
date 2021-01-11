@@ -52,7 +52,9 @@ import java.security.spec.ECPublicKeySpec;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.PSK;
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.RPK;
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.X509;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getCoapConfig;
@@ -76,27 +78,32 @@ public class LwM2MTransportBootstrapServerConfiguration {
     @Autowired
     private LwM2MInMemoryBootstrapConfigStore lwM2MInMemoryBootstrapConfigStore;
 
-
     @Primary
-    @Bean(name = "leshanBootstrapCert")
-    public LeshanBootstrapServer getLeshanBootstrapServerCert() {
-        log.info("Prepare and start BootstrapServerCert... PostConstruct");
-        return getLeshanBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPortCert(), this.contextBs.getCtxBootStrap().getBootstrapSecurePortCert(), X509);
+    @Bean(name = "leshanBootstrapX509")
+    public LeshanBootstrapServer getLeshanBootstrapServerX509() {
+        log.info("Prepare and start BootstrapServerX509... PostConstruct");
+        return getLeshanBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPortNoSecX509(), this.contextBs.getCtxBootStrap().getBootstrapSecurePortX509(), X509);
     }
 
-    @Bean(name = "leshanBootstrapRPK")
-    public LeshanBootstrapServer getLeshanBootstrapServerRPK() {
-        log.info("Prepare and start BootstrapServerRPK... PostConstruct");
-        return getLeshanBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPort(), this.contextBs.getCtxBootStrap().getBootstrapSecurePort(), RPK);
+    @Bean(name = "leshanBootstrapPsk")
+    public LeshanBootstrapServer getLeshanBootstrapServerPsk() {
+        log.info("Prepare and start BootstrapServerRsk... PostConstruct");
+        return getLeshanBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPortNoSecPsk(), this.contextBs.getCtxBootStrap().getBootstrapSecurePortPsk(), PSK);
     }
 
-    public LeshanBootstrapServer getLeshanBootstrapServer(Integer bootstrapPort, Integer bootstrapSecurePort, LwM2MSecurityMode dtlsMode) {
+    @Bean(name = "leshanBootstrapRpk")
+    public LeshanBootstrapServer getLeshanBootstrapServerRpk() {
+        log.info("Prepare and start BootstrapServerRpk... PostConstruct");
+        return getLeshanBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPortNoSecRpk(), this.contextBs.getCtxBootStrap().getBootstrapSecurePortRpk(), RPK);
+    }
+
+    public LeshanBootstrapServer getLeshanBootstrapServer(Integer bootstrapPortNoSec, Integer bootstrapSecurePort, LwM2MSecurityMode dtlsMode) {
         LeshanBootstrapServerBuilder builder = new LeshanBootstrapServerBuilder();
-        builder.setLocalAddress(this.contextBs.getCtxBootStrap().getBootstrapHost(), bootstrapPort);
+        builder.setLocalAddress(this.contextBs.getCtxBootStrap().getBootstrapHost(), bootstrapPortNoSec);
         builder.setLocalSecureAddress(this.contextBs.getCtxBootStrap().getBootstrapSecureHost(), bootstrapSecurePort);
 
         /** Create CoAP Config */
-        builder.setCoapConfig(getCoapConfig ());
+        builder.setCoapConfig(getCoapConfig (bootstrapPortNoSec, bootstrapSecurePort));
 
         /**  ConfigStore */
         builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);
@@ -107,13 +114,22 @@ public class LwM2MTransportBootstrapServerConfiguration {
         /** Define model provider (Create Models )*/
         builder.setModel(new StaticModel(contextS.getCtxServer().getModelsValue()));
 
-        /** Create and Set DTLS Config */
-        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setRecommendedCipherSuitesOnly(contextS.getCtxServer().isSupportDeprecatedCiphersEnable());
-        builder.setDtlsConfig(dtlsConfig);
-
         /**  Create credentials */
         LwM2MSetSecurityStoreBootstrap(builder, dtlsMode);
+
+        /** Create and Set DTLS Config */
+        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
+        if (dtlsMode==PSK) {
+            dtlsConfig.setRecommendedCipherSuitesOnly(this.contextS.getCtxServer().isRecommendedCiphers());
+            dtlsConfig.setRecommendedSupportedGroupsOnly(this.contextS.getCtxServer().isRecommendedSupportedGroups());
+            dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256);
+        }
+        else  {
+            dtlsConfig.setRecommendedCipherSuitesOnly(this.contextS.getCtxServer().isRecommendedCiphers());
+//            dtlsConfig.setRecommendedSupportedGroupsOnly(false);
+        }
+        builder.setDtlsConfig(dtlsConfig);
+
 
         BootstrapSessionManager sessionManager = new LwM2mDefaultBootstrapSessionManager(lwM2MBootstrapSecurityStore);
         builder.setSessionManager(sessionManager);
@@ -133,6 +149,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
                 break;
             /** Use PSK/RPK  */
             case PSK:
+                break;
             case RPK:
                 setRPK(builder);
                 break;

@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -37,12 +36,16 @@ public class LwM2MTransportServerInitializer {
     private LwM2MTransportServiceImpl service;
 
     @Autowired
-    @Qualifier("LeshanServerCert")
-    private LeshanServer lhServerCert;
+    @Qualifier("leshanServerX509")
+    private LeshanServer lhServerX509;
 
     @Autowired
-    @Qualifier("LeshanServerNoSecPskRpk")
-    private LeshanServer lhServerNoSecPskRpk;
+    @Qualifier("leshanServerPsk")
+    private LeshanServer lhServerPsk;
+
+    @Autowired
+    @Qualifier("leshanServerRpk")
+    private LeshanServer lhServerRpk;
 
     @Autowired
     private LwM2MTransportContextServer context;
@@ -50,39 +53,47 @@ public class LwM2MTransportServerInitializer {
     @PostConstruct
     public void init() {
         if (this.context.getCtxServer().getEnableGenPskRpk()) new LWM2MGenerationPSkRPkECC();
-        if (this.context.getCtxServer().isServerStartAll()) {
-            this.startLhServerCert();
-            this.startLhServerNoSecPskRpk();
-        } else {
-            if (this.context.getCtxServer().getServerDtlsMode() == LwM2MSecurityMode.X509.code) {
-                this.startLhServerCert();
-            } else {
-                this.startLhServerNoSecPskRpk();
-            }
+        if (this.context.getCtxServer().isServerStartPsk()) {
+            this.startLhServerPsk();
+        }
+        if (this.context.getCtxServer().isServerStartRpk()) {
+            this.startLhServerRpk();
+        }
+        if (this.context.getCtxServer().isServerStartX509()) {
+            this.startLhServerX509();
         }
     }
 
-    private void startLhServerCert() {
-        this.lhServerCert.start();
-        LwM2mServerListener lhServerCertListener = new LwM2mServerListener(this.lhServerCert, service);
-        this.lhServerCert.getRegistrationService().addListener(lhServerCertListener.registrationListener);
-        this.lhServerCert.getPresenceService().addListener(lhServerCertListener.presenceListener);
-        this.lhServerCert.getObservationService().addListener(lhServerCertListener.observationListener);
+    private void startLhServerPsk() {
+        this.lhServerPsk.start();
+        LwM2mServerListener lhServerPskListener = new LwM2mServerListener(this.lhServerPsk, service);
+        this.lhServerPsk.getRegistrationService().addListener(lhServerPskListener.registrationListener);
+        this.lhServerPsk.getPresenceService().addListener(lhServerPskListener.presenceListener);
+        this.lhServerPsk.getObservationService().addListener(lhServerPskListener.observationListener);
     }
 
-    private void startLhServerNoSecPskRpk() {
-        this.lhServerNoSecPskRpk.start();
-        LwM2mServerListener lhServerNoSecPskRpkListener = new LwM2mServerListener(this.lhServerNoSecPskRpk, service);
-        this.lhServerNoSecPskRpk.getRegistrationService().addListener(lhServerNoSecPskRpkListener.registrationListener);
-        this.lhServerNoSecPskRpk.getPresenceService().addListener(lhServerNoSecPskRpkListener.presenceListener);
-        this.lhServerNoSecPskRpk.getObservationService().addListener(lhServerNoSecPskRpkListener.observationListener);
+    private void startLhServerRpk() {
+        this.lhServerRpk.start();
+        LwM2mServerListener lhServerRpkListener = new LwM2mServerListener(this.lhServerRpk, service);
+        this.lhServerRpk.getRegistrationService().addListener(lhServerRpkListener.registrationListener);
+        this.lhServerRpk.getPresenceService().addListener(lhServerRpkListener.presenceListener);
+        this.lhServerRpk.getObservationService().addListener(lhServerRpkListener.observationListener);
+    }
+
+    private void startLhServerX509() {
+        this.lhServerX509.start();
+        LwM2mServerListener lhServerCertListener = new LwM2mServerListener(this.lhServerX509, service);
+        this.lhServerX509.getRegistrationService().addListener(lhServerCertListener.registrationListener);
+        this.lhServerX509.getPresenceService().addListener(lhServerCertListener.presenceListener);
+        this.lhServerX509.getObservationService().addListener(lhServerCertListener.observationListener);
     }
 
     @PreDestroy
     public void shutdown() {
         log.info("Stopping LwM2M transport Server!");
-        lhServerCert.destroy();
-        lhServerNoSecPskRpk.destroy();
+        lhServerPsk.destroy();
+        lhServerRpk.destroy();
+        lhServerX509.destroy();
         log.info("LwM2M transport Server stopped!");
     }
 }

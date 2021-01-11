@@ -62,6 +62,8 @@ import java.security.spec.ECPublicKeySpec;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
+import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.PSK;
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.RPK;
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.X509;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getCoapConfig;
@@ -83,24 +85,27 @@ public class LwM2MTransportServerConfiguration {
     private LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
 
     @Primary
-    @Bean(name = "LeshanServerCert")
-    public LeshanServer getLeshanServerCert() {
-        log.info("Starting LwM2M transport ServerCert... PostConstruct");
-        LeshanServer leshanServerCert = getLeshanServer(this.context.getCtxServer().getServerPortCert(), this.context.getCtxServer().getServerSecurePortCert(), X509);
-
-        return  leshanServerCert;
+    @Bean(name = "leshanServerX509")
+    public LeshanServer getLeshanServerX509() {
+        log.info("Starting LwM2M transport ServerX509... PostConstruct");
+        return getLeshanServer(this.context.getCtxServer().getServerPortNoSecX509(), this.context.getCtxServer().getServerPortX509(), X509);
     }
 
-    @Bean(name = "LeshanServerNoSecPskRpk")
-    public LeshanServer getLeshanServerNoSecPskRpk() {
-        log.info("Starting LwM2M transport ServerNoSecPskRpk... PostConstruct");
-        return getLeshanServer(this.context.getCtxServer().getServerPort(), this.context.getCtxServer().getServerSecurePort(), RPK);
+    @Bean(name = "leshanServerPsk")
+    public LeshanServer getLeshanServerPsk() {
+        log.info("Starting LwM2M transport ServerPsk... PostConstruct");
+        return getLeshanServer(this.context.getCtxServer().getServerPortNoSecPsk(), this.context.getCtxServer().getServerPortPsk(), PSK);
     }
 
-    private LeshanServer getLeshanServer(Integer serverPort, Integer serverSecurePort, LwM2MSecurityMode dtlsMode) {
+    @Bean(name = "leshanServerRpk")
+    public LeshanServer getLeshanServerRpk() {
+        log.info("Starting LwM2M transport ServerRpk... PostConstruct");
+        return getLeshanServer(this.context.getCtxServer().getServerPortNoSecRpk(), this.context.getCtxServer().getServerPortRpk(), RPK);
+    }
 
+    private LeshanServer getLeshanServer(Integer serverPortNoSec, Integer serverSecurePort, LwM2MSecurityMode dtlsMode) {
         LeshanServerBuilder builder = new LeshanServerBuilder();
-        builder.setLocalAddress(this.context.getCtxServer().getServerHost(), serverPort);
+        builder.setLocalAddress(this.context.getCtxServer().getServerHost(), serverPortNoSec);
         builder.setLocalSecureAddress(this.context.getCtxServer().getServerSecureHost(), serverSecurePort);
         builder.setEncoder(new DefaultLwM2mNodeEncoder());
         LwM2mNodeDecoder decoder = new DefaultLwM2mNodeDecoder();
@@ -108,43 +113,47 @@ public class LwM2MTransportServerConfiguration {
         builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
 
         /** Create CoAP Config */
-        builder.setCoapConfig(getCoapConfig());
+        builder.setCoapConfig(getCoapConfig(serverPortNoSec, serverSecurePort));
 
         /** Define model provider (Create Models )*/
         LwM2mModelProvider modelProvider = new VersionedModelProvider(this.context.getCtxServer().getModelsValue());
         builder.setObjectModelProvider(modelProvider);
-
-        /** Create DTLS Config */
-        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setRecommendedCipherSuitesOnly(this.context.getCtxServer().isSupportDeprecatedCiphersEnable());
-        /** Set DTLS Config */
-        builder.setDtlsConfig(dtlsConfig);
-
-        /** Use a magic converter to support bad type send by the UI. */
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
 
         /**  Create DTLS security mode
          * There can be only one DTLS security mode
          */
         this.LwM2MSetSecurityStoreServer(builder, dtlsMode);
 
+        /** Create DTLS Config */
+        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
+        if (dtlsMode==PSK) {
+            dtlsConfig.setRecommendedCipherSuitesOnly(this.context.getCtxServer().isRecommendedCiphers());
+            dtlsConfig.setRecommendedSupportedGroupsOnly(this.context.getCtxServer().isRecommendedSupportedGroups());
+            dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256);
+        }
+        else  {
+            dtlsConfig.setRecommendedSupportedGroupsOnly(!this.context.getCtxServer().isRecommendedSupportedGroups());
+            dtlsConfig.setRecommendedCipherSuitesOnly(!this.context.getCtxServer().isRecommendedCiphers());
+        }
+        /** Set DTLS Config */
+        builder.setDtlsConfig(dtlsConfig);
+
+        /** Use a magic converter to support bad type send by the UI. */
+        builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
+
+
         /** Create LWM2M server */
         return builder.build();
     }
 
-    private void LwM2MSetSecurityStoreServer(LeshanServerBuilder builder, LwM2MSecurityMode dtlsMode) {
+    private void  LwM2MSetSecurityStoreServer(LeshanServerBuilder builder, LwM2MSecurityMode dtlsMode) {
         /** Set securityStore with new registrationStore */
         EditableSecurityStore securityStore = lwM2mInMemorySecurityStore;
-
         switch (dtlsMode) {
             /** Use PSK only */
             case PSK:
                 generatePSK_RPK();
-                if (this.privateKey != null && this.privateKey.getEncoded().length > 0) {
-                    builder.setPrivateKey(this.privateKey);
-                    builder.setPublicKey(null);
-                    infoParamsPSK();
-                }
+                infoParamsPSK();
                 break;
             /** Use RPK only */
             case RPK:
@@ -233,7 +242,7 @@ public class LwM2MTransportServerConfiguration {
     private void infoParamsPSK() {
         log.info("\nServer uses PSK -> private key : \n security key : [{}] \n serverSecureURI : [{}]",
                 Hex.encodeHexString(this.privateKey.getEncoded()),
-                this.context.getCtxServer().getServerSecureHost() + ":" + Integer.toString(this.context.getCtxServer().getServerSecurePort()));
+                this.context.getCtxServer().getServerSecureHost() + ":" + Integer.toString(this.context.getCtxServer().getServerPortPsk()));
     }
 
     private void infoParamsRPK() {
@@ -298,6 +307,4 @@ public class LwM2MTransportServerConfiguration {
             log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
         }
     }
-
-
 }

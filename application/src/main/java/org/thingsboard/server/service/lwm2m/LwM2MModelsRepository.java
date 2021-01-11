@@ -150,53 +150,54 @@ public class LwM2MModelsRepository {
      */
     private ServerSecurityConfig getBootstrapServer(boolean bootstrapServerIs, LwM2MSecurityMode mode) {
         ServerSecurityConfig bsServ = new ServerSecurityConfig();
+        bsServ.setBootstrapServerIs(bootstrapServerIs);
         if (bootstrapServerIs) {
+            bsServ.setServerId(contextBootStrap.getBootstrapServerId());
             switch (mode) {
                 case NO_SEC:
                     bsServ.setHost(contextBootStrap.getBootstrapHost());
-                    bsServ.setPort(contextBootStrap.getBootstrapPort());
+                    bsServ.setPort(contextBootStrap.getBootstrapPortNoSecPsk());
                     bsServ.setServerPublicKey("");
                     break;
                 case PSK:
                     bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
-                    bsServ.setPort(contextBootStrap.getBootstrapSecurePort());
+                    bsServ.setPort(contextBootStrap.getBootstrapSecurePortPsk());
                     bsServ.setServerPublicKey("");
                     break;
                 case RPK:
                     bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
-                    bsServ.setPort(contextBootStrap.getBootstrapSecurePort());
+                    bsServ.setPort(contextBootStrap.getBootstrapSecurePortRpk());
                     bsServ.setServerPublicKey(getRPKPublicKey(this.contextBootStrap.getBootstrapPublicX(), this.contextBootStrap.getBootstrapPublicY()));
                     break;
                 case X509:
                     bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
-                    bsServ.setPort(contextBootStrap.getBootstrapSecurePortCert());
+                    bsServ.setPort(contextBootStrap.getBootstrapSecurePortX509());
                     bsServ.setServerPublicKey(getServerPublicKeyX509(contextBootStrap.getBootstrapAlias()));
                     break;
                 default:
                     break;
             }
         } else {
-            bsServ.setBootstrapServerIs(bootstrapServerIs);
-            bsServ.setServerId(123);
+            bsServ.setServerId(contextServer.getServerId());
             switch (mode) {
                 case NO_SEC:
                     bsServ.setHost(contextServer.getServerHost());
-                    bsServ.setPort(contextServer.getServerPort());
+                    bsServ.setPort(contextServer.getServerPortNoSecPsk());
                     bsServ.setServerPublicKey("");
                     break;
                 case PSK:
                     bsServ.setHost(contextServer.getServerSecureHost());
-                    bsServ.setPort(contextServer.getServerSecurePort());
+                    bsServ.setPort(contextServer.getServerPortPsk());
                     bsServ.setServerPublicKey("");
                     break;
                 case RPK:
                     bsServ.setHost(contextServer.getServerSecureHost());
-                    bsServ.setPort(contextServer.getServerSecurePort());
+                    bsServ.setPort(contextServer.getServerPortRpk());
                     bsServ.setServerPublicKey(getRPKPublicKey(this.contextServer.getServerPublicX(), this.contextServer.getServerPublicY()));
                     break;
                 case X509:
                     bsServ.setHost(contextServer.getServerSecureHost());
-                    bsServ.setPort(contextServer.getServerSecurePortCert());
+                    bsServ.setPort(contextServer.getServerPortX509());
                     bsServ.setServerPublicKey(getServerPublicKeyX509(contextServer.getServerAlias()));
                     break;
                 default:

@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.response.LwM2mResponse;
@@ -104,8 +105,8 @@ public class LwM2MClient implements Cloneable {
                 if (objectModel != null) {
                     ((LwM2mObjectInstance)((ReadResponse)resp).getContent()).getResources().forEach((k, v) -> {
                         String rez = pathIds.toString() + "/" + k;
-                        if (objectModel.resources.get(k).multiple){
-                            this.resources.put(rez, new ResourceValue(v.getValues(), null, true));
+                        if (((LwM2mObjectInstance) ((ReadResponse) resp).getContent()).getResource(k) instanceof LwM2mMultipleResource){
+//                            this.resources.put(rez, new ResourceValue(v.getInstances().values(), null, true));
                         }
                         else {
                             this.resources.put(rez, new ResourceValue(null, v.getValue(), false));
@@ -114,6 +115,7 @@ public class LwM2MClient implements Cloneable {
                 }
             }
         });
+        if (this.responses.size() == 0) this.responses = new ConcurrentHashMap<>();
     }
 
     /**

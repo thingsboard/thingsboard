@@ -47,13 +47,6 @@ import java.util.stream.Collectors;
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 public class LwM2MTransportConfigServer {
 
-    @Getter
-    @Value("${transport.lwm2m.timeout:}")
-    private Long timeout;
-
-    @Getter
-    @Value("${transport.sessions.report_timeout}")
-    private long sessionReportTimeout;
 
     @Getter
     private String MODEL_PATH_DEFAULT = "models";
@@ -86,10 +79,6 @@ public class LwM2MTransportConfigServer {
     private String BASE_DIR_PATH = System.getProperty("user.dir");
 
     @Getter
-    @Value("${transport.lwm2m.model_path_file:}")
-    private String modelPathFile;
-
-    @Getter
 //    private String PATH_DATA_MICROSERVICE = "/usr/share/tb-lwm2m-transport/data$";
     private String PATH_DATA = "data";
 
@@ -98,8 +87,44 @@ public class LwM2MTransportConfigServer {
     private List<ObjectModel> modelsValue;
 
     @Getter
-    @Value("${transport.lwm2m.support_deprecated_ciphers_enable:}")
-    private boolean supportDeprecatedCiphersEnable;
+    @Value("${transport.lwm2m.timeout:}")
+    private Long timeout;
+
+    @Getter
+    @Value("${transport.sessions.report_timeout}")
+    private long sessionReportTimeout;
+
+    @Getter
+    @Value("${transport.lwm2m.model_path_file:}")
+    private String modelPathFile;
+
+    @Getter
+    @Value("${transport.lwm2m.recommended_ciphers:}")
+    private boolean recommendedCiphers;
+
+    @Getter
+    @Value("${transport.lwm2m.recommended_supported_groups:}")
+    private boolean recommendedSupportedGroups;
+
+    @Getter
+    @Value("${transport.lwm2m.request_pool_size:}")
+    private int requestPoolSize;
+
+    @Getter
+    @Value("${transport.lwm2m.request_error_pool_size:}")
+    private int requestErrorPoolSize;
+
+    @Getter
+    @Value("${transport.lwm2m.registered_pool_size:}")
+    private int registeredPoolSize;
+
+    @Getter
+    @Value("${transport.lwm2m.update_registered_pool_size:}")
+    private int updateRegisteredPoolSize;
+
+    @Getter
+    @Value("${transport.lwm2m.un_registered_pool_size:}")
+    private int unRegisteredPoolSize;
 
     @Getter
     @Value("${transport.lwm2m.secure.key_store_type:}")
@@ -122,6 +147,18 @@ public class LwM2MTransportConfigServer {
     private String rootAlias;
 
     @Getter
+    @Value("${transport.lwm2m.server.secure.start_psk:}")
+    private boolean serverStartPsk;
+
+    @Getter
+    @Value("${transport.lwm2m.server.secure.start_rpk:}")
+    private boolean serverStartRpk;
+
+    @Getter
+    @Value("${transport.lwm2m.server.secure.start_x509:}")
+    private boolean serverStartX509;
+
+    @Getter
     @Value("${transport.lwm2m.secure.enable_gen_psk_rpk:}")
     private Boolean enableGenPskRpk;
 
@@ -130,32 +167,37 @@ public class LwM2MTransportConfigServer {
     private String serverHost;
 
     @Getter
-    @Value("${transport.lwm2m.server.bind_port:}")
-    private Integer serverPort;
-
-    @Getter
-    @Value("${transport.lwm2m.server.bind_port_cert:}")
-    private Integer serverPortCert;
-
-    @Getter
-    @Value("${transport.lwm2m.server.secure.start_all:}")
-    private boolean serverStartAll;
-
-    @Getter
-    @Value("${transport.lwm2m.server.secure.dtls_mode:}")
-    private Integer serverDtlsMode;
+    @Value("${transport.lwm2m.server.id:}")
+    private Integer serverId;
 
     @Getter
     @Value("${transport.lwm2m.server.secure.bind_address:}")
     private String serverSecureHost;
 
-    @Getter
-    @Value("${transport.lwm2m.server.secure.bind_port:}")
-    private Integer serverSecurePort;
 
     @Getter
-    @Value("${transport.lwm2m.server.secure.bind_port_cert:}")
-    private Integer serverSecurePortCert;
+    @Value("${transport.lwm2m.server.bind_port_no_sec_psk:}")
+    private Integer serverPortNoSecPsk;
+
+    @Getter
+    @Value("${transport.lwm2m.server.bind_port_no_sec_rpk:}")
+    private Integer serverPortNoSecRpk;
+
+    @Getter
+    @Value("${transport.lwm2m.server.bind_port_no_sec_x509:}")
+    private Integer serverPortNoSecX509;
+
+    @Getter
+    @Value("${transport.lwm2m.server.secure.bind_port_psk:}")
+    private Integer serverPortPsk;
+
+    @Getter
+    @Value("${transport.lwm2m.server.secure.bind_port_rpk:}")
+    private Integer serverPortRpk;
+
+    @Getter
+    @Value("${transport.lwm2m.server.secure.bind_port_x509:}")
+    private Integer serverPortX509;
 
     @Getter
     @Value("${transport.lwm2m.server.secure.public_x:}")
@@ -172,10 +214,6 @@ public class LwM2MTransportConfigServer {
     @Getter
     @Value("${transport.lwm2m.server.secure.alias:}")
     private String serverAlias;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.enable:}")
-    private Boolean bootstrapEnable;
 
     @Getter
     @Value("${transport.lwm2m.secure.redis_url:}")

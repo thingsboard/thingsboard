@@ -25,7 +25,7 @@ import {
 import {
   ControlValueAccessor,
   FormBuilder,
-  FormGroup, NG_VALIDATORS,
+  FormGroup,
   NG_VALUE_ACCESSOR, Validators
 } from "@angular/forms";
 import { coerceBooleanProperty } from "@angular/cdk/coercion";

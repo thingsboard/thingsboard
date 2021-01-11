@@ -32,7 +32,7 @@ public interface LwM2MTransportService {
 
     void updatedReg(LeshanServer lwServer, Registration registration);
 
-    void unReg(Registration registration, Collection<Observation> observations);
+    void unReg(LeshanServer lwServer, Registration registration, Collection<Observation> observations);
 
     void onSleepingDev(Registration registration);
 

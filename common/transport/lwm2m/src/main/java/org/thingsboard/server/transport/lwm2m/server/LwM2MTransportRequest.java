@@ -88,12 +88,15 @@ public class LwM2MTransportRequest {
     @Autowired
     LwM2MTransportServiceImpl service;
 
+    @Autowired
+    public LwM2MTransportContextServer context;
+
     @PostConstruct
     public void init() {
         this.converter = LwM2mValueConverterImpl.getInstance();
-        executorResponse = Executors.newFixedThreadPool(10,
+        executorResponse = Executors.newFixedThreadPool(this.context.getCtxServer().getRequestPoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
-        executorResponseError =  Executors.newFixedThreadPool(10,
+        executorResponseError =  Executors.newFixedThreadPool(this.context.getCtxServer().getRequestErrorPoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel response Error", RESPONSE_CHANNEL)));
     }
 

@@ -54,7 +54,6 @@ public class LwM2mServerListener {
         @Override
         public void updated(RegistrationUpdate update, Registration updatedRegistration,
                             Registration previousRegistration) {
-            log.info("updated");
             service.updatedReg(lhServer, updatedRegistration);
         }
 
@@ -64,8 +63,7 @@ public class LwM2mServerListener {
         @Override
         public void unregistered(Registration registration, Collection<Observation> observations, boolean expired,
                                  Registration newReg) {
-            log.info("unregistered");
-            service.unReg(registration, observations);
+            service.unReg(lhServer, registration, observations);
         }
 
     };

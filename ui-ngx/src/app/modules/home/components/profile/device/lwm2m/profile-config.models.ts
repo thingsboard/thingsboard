@@ -25,11 +25,7 @@ export const DEFAULT_ID_SERVER = 123;
 export const DEFAULT_ID_BOOTSTRAP = 111;
 export const DEFAULT_HOST_NAME = "localhost";
 export const DEFAULT_PORT_SERVER_NO_SEC = 5685;
-export const DEFAULT_PORT_SERVER_SEC = 5686;
-export const DEFAULT_PORT_SERVER_SEC_CERT = 5688;
-export const DEFAULT_PORT_BOOTSTRAP_NO_SEC = 5689;
-export const DEFAULT_PORT_BOOTSTRAP_SEC = 5690;
-export const DEFAULT_PORT_BOOTSTRAP_SEC_CERT = 5692;
+export const DEFAULT_PORT_BOOTSTRAP_NO_SEC = 5691;
 export const DEFAULT_CLIENT_HOLD_OFF_TIME = 1;
 export const DEFAULT_LIFE_TIME = 300;
 export const DEFAULT_DEFAULT_MIN_PERIOD = 1;
@@ -118,7 +114,7 @@ export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecu
 export function getDefaultBootstrapServerSecurityConfig(hostname: any): ServerSecurityConfig {
   return {
     host: hostname,
-    port: getDefaultPortBootstrap(),
+    port: DEFAULT_PORT_BOOTSTRAP_NO_SEC,
     bootstrapServerIs: true,
     securityMode: SECURITY_CONFIG_MODE.NO_SEC.toString(),
     serverPublicKey: '',
@@ -131,19 +127,9 @@ export function getDefaultBootstrapServerSecurityConfig(hostname: any): ServerSe
 export function getDefaultLwM2MServerSecurityConfig(hostname): ServerSecurityConfig {
   const DefaultLwM2MServerSecurityConfig = getDefaultBootstrapServerSecurityConfig(hostname);
   DefaultLwM2MServerSecurityConfig.bootstrapServerIs = false;
-  DefaultLwM2MServerSecurityConfig.port = getDefaultPortServer();
+  DefaultLwM2MServerSecurityConfig.port = DEFAULT_PORT_SERVER_NO_SEC;
   DefaultLwM2MServerSecurityConfig.serverId = DEFAULT_ID_SERVER;
   return DefaultLwM2MServerSecurityConfig;
-}
-//ok
-export function getDefaultPortBootstrap(securityMode?: string): number {
-  return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_BOOTSTRAP_NO_SEC :
-    (securityMode === SECURITY_CONFIG_MODE.X509.toString()) ? DEFAULT_PORT_BOOTSTRAP_SEC_CERT : DEFAULT_PORT_BOOTSTRAP_SEC;
-}
-//ok
-export function getDefaultPortServer(securityMode?: string): number {
-  return (!securityMode || securityMode === SECURITY_CONFIG_MODE.NO_SEC.toString()) ? DEFAULT_PORT_SERVER_NO_SEC :
-    (securityMode === SECURITY_CONFIG_MODE.X509.toString()) ? DEFAULT_PORT_SERVER_SEC_CERT : DEFAULT_PORT_SERVER_SEC;
 }
 
 //ok
@@ -195,18 +181,5 @@ export interface ObjectLwM2M {
   multiple?: boolean,
   mandatory?: boolean,
   instances?: Instance []
-}
-
-export function getChangeInstancesIds (): ChangeInstancesIds {
-  let changeInstancesIds: ChangeInstancesIds;
-  changeInstancesIds.add = new Set<number>();
-  changeInstancesIds.del = new Set<number>();
-  return changeInstancesIds;
-
-}
-
-export interface ChangeInstancesIds {
-  add: Set<number>,
-  del: Set<number>
 }
 

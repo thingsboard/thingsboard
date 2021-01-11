@@ -21,7 +21,7 @@ import java.util.Map;
 
 @Data
 public class ResourceValue {
-    Map<Integer, ?> values;
+    Map<Integer, ?>  values;
     Object value;
     boolean multiInstances;
 
