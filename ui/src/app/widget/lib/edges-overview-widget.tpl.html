@@ -17,7 +17,7 @@
 -->
 <div class="tb-absolute-fill tb-edges-overview" layout="column">
     <div ng-show="vm.showData" flex class="tb-absolute-fill" layout="column">
-        <span class="mat-subheader" *ngIf="customerTitle" fxLayout="row">{{ customerTitle }}</span>
+        <span class="mat-subheader" *ngIf="vm.customerTitle" fxLayout="row">{{ vm.customerTitle }}</span>
         <md-toolbar class="md-table-toolbar md-default" ng-show="vm.query.search != null">
             <div class="md-toolbar-tools">
                 <md-button class="md-icon-button" aria-label="{{ 'action.search' | translate }}">

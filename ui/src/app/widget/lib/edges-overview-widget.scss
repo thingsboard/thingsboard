@@ -19,13 +19,6 @@
       min-height: 60px;
       max-height: 60px;
     }
-
-    span {
-      padding: 15px;
-      font-size: 14px;
-      font-weight: 400;
-      opacity: .5;
-    }
   }
 }
 
@@ -33,6 +26,13 @@
   md-toolbar {
     min-height: 39px;
     max-height: 39px;
+  }
+
+  .mat-subheader {
+    padding: 15px;
+    font-size: 14px;
+    font-weight: 400;
+    opacity: .5;
   }
 
   .tb-entities-nav-tree-panel {
