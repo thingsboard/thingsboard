@@ -295,7 +295,7 @@ function EdgesOverviewWidgetController($element, $scope, $q, $timeout, $translat
     function loadNodes(node, cb) {
         var datasource = vm.datasources[0];
         if (node.id === '#' && datasource) {
-            if (datasource.type === types.datasourceType.entity && datasource.entity.id.entityType === types.entityType.edge) {
+            if (datasource.type === types.datasourceType.entity && datasource.entity && datasource.entity.id.entityType === types.entityType.edge) {
                 var selectedEdge = datasource.entity;
                 getCustomerTitle(selectedEdge.id.id);
                 vm.ctx.widgetTitle = selectedEdge.name;
