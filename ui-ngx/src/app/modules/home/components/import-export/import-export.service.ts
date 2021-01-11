@@ -603,7 +603,6 @@ export class ImportExportService {
 
   private editMissingAliases(widgets: Array<Widget>, isSingleWidget: boolean,
                              customTitle: string, missingEntityAliases: EntityAliases): Observable<EntityAliases> {
-    // TODO: voba - double check with Igor/Vlad regarding this approach to hide aliases
     let allowedEntityTypes: Array<EntityType | AliasEntityType> =
       this.entityService.prepareAllowedEntityTypesList(null, true);
 

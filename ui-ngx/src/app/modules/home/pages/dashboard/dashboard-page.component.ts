@@ -313,7 +313,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.window.parent.postMessage(JSON.stringify(message), '*');
     }
 
-    // TODO: voba - double check with Igor/Vlad regarding this approach to hide aliases
     this.allowedEntityTypes = this.entityService.prepareAllowedEntityTypesList(null, true);
   }
 
