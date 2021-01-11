@@ -581,10 +581,10 @@ export default abstract class LeafletMap {
         const marker: Marker = this.markers.get(key);
         const location = this.convertPosition(data);
         marker.updateMarkerPosition(location);
+        marker.setDataSources(data, dataSources);
         if (settings.showTooltip) {
             marker.updateMarkerTooltip(data);
         }
-        marker.setDataSources(data, dataSources);
         marker.updateMarkerIcon(settings);
         return marker;
     }
