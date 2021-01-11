@@ -68,6 +68,7 @@ function EdgesOverviewWidgetController($element, $scope, $q, $timeout, $translat
     };
 
     vm.customerTitle = null;
+    vm.edgeIsDatasource = true;
 
     var edgeGroupsTypes = [
         types.entityType.asset,

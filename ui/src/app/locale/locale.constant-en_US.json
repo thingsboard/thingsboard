@@ -857,7 +857,8 @@
         "missing-related-rule-chains-text": "Assigned to edge rule chain(s) use rule nodes that forward message(s) to rule chain(s) that are not assigned to this edge. <br><br> List of missing rule chain(s): <br> {{missingRuleChains}}",
         "downlinks": "Downlinks",
         "no-downlinks-prompt": "No downlinks found",
-        "assigned-to-customer-widget": "Assigned to: {{customerTitle}}"
+        "assigned-to-customer-widget": "Assigned to: {{customerTitle}}",
+        "widget-datasource-error": "This widget supports only EDGE entity datasource"
     },
     "edge-event": {
       "type-dashboard": "Dashboard",
