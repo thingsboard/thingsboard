@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2020 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -422,7 +422,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
                 long ts = Arrays.stream(v).map(TsValue::getTs).max(Long::compareTo).orElse(0L);
                 log.trace("[{}][{}] Updating key: {} with ts: {}", serviceId, cmdId, k, ts);
                 if (subKey.isPresent()) {
-                    keyStates.put(k, new TbSubscriptionKeyState(ts, subKey.get().getType(), subKey.get().isDataConvertion()));
+                    keyStates.put(k, new TbSubscriptionKeyState(ts, subKey.get().getType(), subKey.get().isDataConversion()));
                 } else {
                     keyStates.put(k, new TbSubscriptionKeyState(ts, EntityKeyType.TIME_SERIES, true));
                 }
@@ -447,7 +447,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
 
     private Map<String, TbSubscriptionKeyState> buildKeyStats(EntityData entityData, EntityKeyType keysType, List<EntityKey> subKeys) {
         Map<String, TbSubscriptionKeyState> keyStates = new HashMap<>();
-        subKeys.forEach(key -> keyStates.put(key.getKey(), new TbSubscriptionKeyState(0L, key.getType(), key.isDataConvertion())));
+        subKeys.forEach(key -> keyStates.put(key.getKey(), new TbSubscriptionKeyState(0L, key.getType(), key.isDataConversion())));
         if (entityData.getLatest() != null) {
             Map<String, TsValue> currentValues = entityData.getLatest().get(keysType);
             if (currentValues != null) {
@@ -455,7 +455,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
                     log.trace("[{}][{}] Updating key: {} with ts: {}", serviceId, cmdId, k, v.getTs());
                     Optional<EntityKey> subKey = subKeys.stream().filter(entityKey -> entityKey.getKey().equals(k)).findFirst();
                     if (subKey.isPresent()) {
-                        keyStates.put(k, new TbSubscriptionKeyState(v.getTs(), subKey.get().getType(), subKey.get().isDataConvertion()));
+                        keyStates.put(k, new TbSubscriptionKeyState(v.getTs(), subKey.get().getType(), subKey.get().isDataConversion()));
                     } else {
                         keyStates.put(k, new TbSubscriptionKeyState(v.getTs(), keysType, true));
                     }

@@ -227,9 +227,9 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                             }
                             BasicTsKvEntry basicTsKvEntry;
                             if (hasKeyState) {
-                                boolean isRestrictConversion = keyStateMap.get(kv.getKey()).isDataConversion();
+                                boolean dataConversion = keyStateMap.get(kv.getKey()).isDataConversion();
                                 EntityKeyType entityKeyType = keyStateMap.get((kv.getKey())).getEntityKeyType();
-                                basicTsKvEntry = new BasicTsKvEntry(kv.getTs(), convertValue(kv, entityKeyType, isRestrictConversion));
+                                basicTsKvEntry = new BasicTsKvEntry(kv.getTs(), convertValue(kv, entityKeyType, dataConversion));
                             } else {
                                 basicTsKvEntry = new BasicTsKvEntry(kv.getTs(), kv);
                             }
@@ -269,9 +269,9 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                             }
                             BasicTsKvEntry basicTsKvEntry;
                             if (hasKeyState) {
-                                boolean isRestrictConversion = keyStateMap.get(kv.getKey()).isDataConversion();
+                                boolean dataConversion = keyStateMap.get(kv.getKey()).isDataConversion();
                                 EntityKeyType entityKeyType = keyStateMap.get((kv.getKey())).getEntityKeyType();
-                                basicTsKvEntry = new BasicTsKvEntry(kv.getLastUpdateTs(), convertValue(kv, entityKeyType, isRestrictConversion));
+                                basicTsKvEntry = new BasicTsKvEntry(kv.getLastUpdateTs(), convertValue(kv, entityKeyType, dataConversion));
                             } else {
                                 basicTsKvEntry = new BasicTsKvEntry(kv.getLastUpdateTs(), kv);
                             }
@@ -296,9 +296,9 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
         callback.onSuccess();
     }
 
-    private KvEntry convertValue(KvEntry kv, EntityKeyType entityKeyType, boolean isRestrictConversion) {
+    private KvEntry convertValue(KvEntry kv, EntityKeyType entityKeyType, boolean dataConversion) {
         if (!entityKeyType.equals(EntityKeyType.ENTITY_FIELD) && kv.getDataType().equals(DataType.STRING)) {
-            if (isRestrictConversion) {
+            if (!dataConversion) {
                 return kv;
             } else {
                 String strVal = kv.getValueAsString();

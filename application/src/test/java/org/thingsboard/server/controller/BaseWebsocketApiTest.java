@@ -651,7 +651,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
     }
 
 //    @Test
-//    public void testEntityDataLatestAttrTypesWsCmdWithRestrictConversion() throws Exception {
+//    public void testEntityDataLatestAttrTypesWsCmdWithDataConversion() throws Exception {
 //        Device device = new Device();
 //        device.setName("Device");
 //        device.setType("default");

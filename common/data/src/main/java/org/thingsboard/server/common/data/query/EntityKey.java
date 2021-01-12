@@ -21,5 +21,5 @@ import lombok.Data;
 public class EntityKey {
     private final EntityKeyType type;
     private final String key;
-    private final boolean dataConvertion;
+    private final boolean dataConversion;
 }
