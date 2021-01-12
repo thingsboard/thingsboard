@@ -339,7 +339,7 @@
   "api-usage": {
     "api-usage": "Api 使用统计",
     "data-points": "数据点",
-    "data-points-storage-days": "数据点存储天数",
+    "data-points-storage-days": "日存储数据点数",
     "email": "Email",
     "email-messages": "Email messages",
     "email-messages-daily-activity": "Email messages daily activity",
@@ -1646,7 +1646,7 @@
       "access-token": "访问令牌",
       "tls": "TLS"
     },
-    "storage": "Storage",
+    "storage": "存储",
     "storage-max-file-records": "文件中的最大记录数",
     "storage-max-files": "最大文件数",
     "storage-max-files-min": "最小值为1。",
@@ -1665,7 +1665,7 @@
     "storage-type": "存储类型",
     "storage-types": {
       "file-storage": "文件存储",
-      "memory-storage": "存储器"
+      "memory-storage": "内存存储"
     },
     "thingsboard": "ThingsBoard",
     "thingsboard-host": "ThingsBoard主机",
@@ -2016,7 +2016,7 @@
     "create-new-tenant-profile": "创建一个新的！",
     "data": "纵断面数据",
     "default": "默认",
-    "default-storage-ttl-days": "默认存储TTL天（0-无限制）",
+    "default-storage-ttl-days": "默认存储 TTL 天数（0-无限制）",
     "default-storage-ttl-days-range": "不能为负存储天数",
     "default-storage-ttl-days-required": "默认存储 TTL 天数必填。",
     "delete": "删除租户配置",
@@ -2027,9 +2027,9 @@
     "description": "说明",
     "edit": "编辑租户配置",
     "idCopiedMessage": "租户配置Id已复制到剪贴板",
-    "max-d-p-storage-days": "最大数据点存储天数（0-无限制）",
-    "max-d-p-storage-days-range": "最大数据点存储天数不能为负数",
-    "max-d-p-storage-days-required": "最大数据点存储天数必填。",
+    "max-d-p-storage-days": "最大日存储数据点数（0-无限制）",
+    "max-d-p-storage-days-range": "最大日存储数据点数不能为负数",
+    "max-d-p-storage-days-required": "最大日存储数据点数必填。",
     "max-emails": "发送的最大电子邮件数（0-无限制）",
     "max-emails-range": "发送的最大电子邮件数不能为负数",
     "max-emails-required": "最大电子邮件发送数必填。",
