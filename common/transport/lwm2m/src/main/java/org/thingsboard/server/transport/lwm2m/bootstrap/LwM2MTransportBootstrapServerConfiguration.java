@@ -61,7 +61,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 
 @Slf4j
 @Component
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true'&& '${transport.lwm2m.bootstrap.enable:false}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true')")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true'&& '${transport.lwm2m.bootstrap.enable:false}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled:false}'=='true'&& '${transport.lwm2m.bootstrap.enable:false}'=='true')")
 public class LwM2MTransportBootstrapServerConfiguration {
     private PublicKey publicKey;
     private PrivateKey privateKey;
@@ -80,18 +80,21 @@ public class LwM2MTransportBootstrapServerConfiguration {
 
     @Primary
     @Bean(name = "leshanBootstrapX509")
+    @ConditionalOnExpression("('${transport.lwm2m.bootstrap.secure.start_x509:false}'=='true')")
     public LeshanBootstrapServer getLeshanBootstrapServerX509() {
         log.info("Prepare and start BootstrapServerX509... PostConstruct");
         return getLeshanBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPortNoSecX509(), this.contextBs.getCtxBootStrap().getBootstrapSecurePortX509(), X509);
     }
 
     @Bean(name = "leshanBootstrapPsk")
+    @ConditionalOnExpression("('${transport.lwm2m.bootstrap.secure.start_psk:false}'=='true')")
     public LeshanBootstrapServer getLeshanBootstrapServerPsk() {
         log.info("Prepare and start BootstrapServerRsk... PostConstruct");
         return getLeshanBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPortNoSecPsk(), this.contextBs.getCtxBootStrap().getBootstrapSecurePortPsk(), PSK);
     }
 
     @Bean(name = "leshanBootstrapRpk")
+    @ConditionalOnExpression("('${transport.lwm2m.bootstrap.secure.start_rpk:false}'=='true')")
     public LeshanBootstrapServer getLeshanBootstrapServerRpk() {
         log.info("Prepare and start BootstrapServerRpk... PostConstruct");
         return getLeshanBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPortNoSecRpk(), this.contextBs.getCtxBootStrap().getBootstrapSecurePortRpk(), RPK);

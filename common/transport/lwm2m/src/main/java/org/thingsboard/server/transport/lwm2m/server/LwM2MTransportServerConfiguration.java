@@ -85,22 +85,25 @@ public class LwM2MTransportServerConfiguration {
     private LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
 
     @Primary
-    @Bean(name = "leshanServerX509")
-    public LeshanServer getLeshanServerX509() {
-        log.info("Starting LwM2M transport ServerX509... PostConstruct");
-        return getLeshanServer(this.context.getCtxServer().getServerPortNoSecX509(), this.context.getCtxServer().getServerPortX509(), X509);
-    }
-
     @Bean(name = "leshanServerPsk")
+    @ConditionalOnExpression("('${transport.lwm2m.server.secure.start_psk:false}'=='true')")
     public LeshanServer getLeshanServerPsk() {
         log.info("Starting LwM2M transport ServerPsk... PostConstruct");
         return getLeshanServer(this.context.getCtxServer().getServerPortNoSecPsk(), this.context.getCtxServer().getServerPortPsk(), PSK);
     }
 
     @Bean(name = "leshanServerRpk")
+    @ConditionalOnExpression("('${transport.lwm2m.server.secure.start_rpk:false}'=='true')")
     public LeshanServer getLeshanServerRpk() {
         log.info("Starting LwM2M transport ServerRpk... PostConstruct");
         return getLeshanServer(this.context.getCtxServer().getServerPortNoSecRpk(), this.context.getCtxServer().getServerPortRpk(), RPK);
+    }
+
+    @Bean(name = "leshanServerX509")
+    @ConditionalOnExpression("('${transport.lwm2m.server.secure.start_x509:false}'=='true')")
+    public LeshanServer getLeshanServerX509() {
+        log.info("Starting LwM2M transport ServerX509... PostConstruct");
+        return getLeshanServer(this.context.getCtxServer().getServerPortNoSecX509(), this.context.getCtxServer().getServerPortX509(), X509);
     }
 
     private LeshanServer getLeshanServer(Integer serverPortNoSec, Integer serverSecurePort, LwM2MSecurityMode dtlsMode) {

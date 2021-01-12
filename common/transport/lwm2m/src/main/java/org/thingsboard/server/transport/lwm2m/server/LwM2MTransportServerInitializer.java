@@ -35,15 +35,15 @@ public class LwM2MTransportServerInitializer {
     @Autowired
     private LwM2MTransportServiceImpl service;
 
-    @Autowired
+    @Autowired(required = false)
     @Qualifier("leshanServerX509")
     private LeshanServer lhServerX509;
 
-    @Autowired
+    @Autowired(required = false)
     @Qualifier("leshanServerPsk")
     private LeshanServer lhServerPsk;
 
-    @Autowired
+    @Autowired(required = false)
     @Qualifier("leshanServerRpk")
     private LeshanServer lhServerRpk;
 

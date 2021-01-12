@@ -635,7 +635,7 @@ transport:
         private_s: "${LWM2M_SERVER_PRIVATE_S_BS:9dbdbb073fc63570693a9aaf1013414e261c571f27e27fc6a8c1c2ad9347875a}"
         # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_BOOTSTRAP:bootstrap}"
-      # Redis
+    # Redis
     redis_url: "${LWM2M_REDIS_URL:''}"
 
 swagger:

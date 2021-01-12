@@ -27,18 +27,18 @@ import javax.annotation.PreDestroy;
 
 @Slf4j
 @Service
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true')")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true'&& '${transport.lwm2m.bootstrap.enable:false}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled:false}'=='true'&& '${transport.lwm2m.bootstrap.enable:false}'=='true')")
 public class LwM2MTransportBootstrapServerInitializer {
 
-    @Autowired
+    @Autowired(required = false)
     @Qualifier("leshanBootstrapX509")
     private LeshanBootstrapServer lhBServerCert;
 
-    @Autowired
+    @Autowired(required = false)
     @Qualifier("leshanBootstrapPsk")
     private LeshanBootstrapServer lhBServerPsk;
 
-    @Autowired
+    @Autowired(required = false)
     @Qualifier("leshanBootstrapRpk")
     private LeshanBootstrapServer lhBServerRpk;
 
