@@ -500,7 +500,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         mainQueue.setTopic("tb_rule_engine.main");
         mainQueue.setPollInterval(25);
         mainQueue.setPartitions(10);
-        mainQueue.setPackProcessingTimeout(60000);
+        mainQueue.setPackProcessingTimeout(2000);
         SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
         mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
         mainQueueSubmitStrategy.setBatchSize(1000);
@@ -520,7 +520,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         highPriorityQueue.setTopic("tb_rule_engine.hp");
         highPriorityQueue.setPollInterval(25);
         highPriorityQueue.setPartitions(10);
-        highPriorityQueue.setPackProcessingTimeout(60000);
+        highPriorityQueue.setPackProcessingTimeout(2000);
         SubmitStrategy highPriorityQueueSubmitStrategy = new SubmitStrategy();
         highPriorityQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
         highPriorityQueueSubmitStrategy.setBatchSize(100);
@@ -540,7 +540,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         sequentialByOriginatorQueue.setTopic("tb_rule_engine.sq");
         sequentialByOriginatorQueue.setPollInterval(25);
         sequentialByOriginatorQueue.setPartitions(10);
-        sequentialByOriginatorQueue.setPackProcessingTimeout(60000);
+        sequentialByOriginatorQueue.setPackProcessingTimeout(2000);
         SubmitStrategy sequentialByOriginatorQueueSubmitStrategy = new SubmitStrategy();
         sequentialByOriginatorQueueSubmitStrategy.setType(SubmitStrategyType.SEQUENTIAL_BY_ORIGINATOR);
         sequentialByOriginatorQueueSubmitStrategy.setBatchSize(100);
