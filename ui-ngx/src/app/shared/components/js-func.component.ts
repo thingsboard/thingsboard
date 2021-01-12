@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
+import { beautifyJs } from '@shared/models/beautify.models';
 
 @Component({
   selector: 'tb-js-func',
@@ -214,9 +215,12 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   }
 
   beautifyJs() {
-    const res = js_beautify(this.modelValue, {indent_size: 4, wrap_line_length: 60});
-    this.jsEditor.setValue(res ? res : '', -1);
-    this.updateView();
+    beautifyJs(this.modelValue, {indent_size: 4, wrap_line_length: 60}).subscribe(
+      (res) => {
+        this.jsEditor.setValue(res ? res : '', -1);
+        this.updateView();
+      }
+    );
   }
 
   validateOnSubmit(): void {

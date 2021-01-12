@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { ContentType, contentTypesMap } from '@shared/models/constants';
 import { getAce } from '@shared/models/ace/ace.models';
+import { Observable } from 'rxjs/internal/Observable';
+import { beautifyJs } from '@shared/models/beautify.models';
+import { of } from 'rxjs';
 
 export interface EventContentDialogData {
   content: string;
@@ -64,33 +67,42 @@ export class EventContentDialogComponent extends DialogComponent<EventContentDia
   createEditor(editorElementRef: ElementRef, content: string) {
     const editorElement = editorElementRef.nativeElement;
     let mode = 'java';
+    let content$: Observable<string> = null;
     if (this.contentType) {
       mode = contentTypesMap.get(this.contentType).code;
       if (this.contentType === ContentType.JSON && content) {
-        content = js_beautify(content, {indent_size: 4});
+        content$ = beautifyJs(content, {indent_size: 4});
       }
     }
-    let editorOptions: Partial<Ace.EditorOptions> = {
-      mode: `ace/mode/${mode}`,
-      theme: 'ace/theme/github',
-      showGutter: false,
-      showPrintMargin: false,
-      readOnly: true
-    };
+    if (!content$) {
+      content$ = of(content);
+    }
 
-    const advancedOptions = {
-      enableSnippets: false,
-      enableBasicAutocompletion: false,
-      enableLiveAutocompletion: false
-    };
+    content$.subscribe(
+      (processedContent) => {
+        let editorOptions: Partial<Ace.EditorOptions> = {
+          mode: `ace/mode/${mode}`,
+          theme: 'ace/theme/github',
+          showGutter: false,
+          showPrintMargin: false,
+          readOnly: true
+        };
 
-    editorOptions = {...editorOptions, ...advancedOptions};
-    getAce().subscribe(
-      (ace) => {
-        const editor = ace.edit(editorElement, editorOptions);
-        editor.session.setUseWrapMode(false);
-        editor.setValue(content, -1);
-        this.updateEditorSize(editorElement, content, editor);
+        const advancedOptions = {
+          enableSnippets: false,
+          enableBasicAutocompletion: false,
+          enableLiveAutocompletion: false
+        };
+
+        editorOptions = {...editorOptions, ...advancedOptions};
+        getAce().subscribe(
+          (ace) => {
+            const editor = ace.edit(editorElement, editorOptions);
+            editor.session.setUseWrapMode(false);
+            editor.setValue(processedContent, -1);
+            this.updateEditorSize(editorElement, processedContent, editor);
+          }
+        );
       }
     );
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,7 +151,7 @@ public class DeviceProfileController extends BaseController {
 
             logEntityAction(savedDeviceProfile.getId(), savedDeviceProfile,
                     null,
-                    savedDeviceProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+                    created ? ActionType.ADDED : ActionType.UPDATED, null);
 
             return savedDeviceProfile;
         } catch (Exception e) {

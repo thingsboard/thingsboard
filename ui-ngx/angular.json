@@ -22,6 +22,7 @@
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
             "tsConfig": "src/tsconfig.app.json",
+            "aot": true,
             "assets": [
               "src/thingsboard.ico",
               "src/assets",
@@ -85,25 +86,9 @@
               ]
             },
             "scripts": [
-              "node_modules/jquery/dist/jquery.min.js",
-              "node_modules/jquery.terminal/js/jquery.terminal.min.js",
-              "node_modules/flot/lib/jquery.colorhelpers.js",
-              "node_modules/flot/src/jquery.flot.js",
-              "node_modules/flot/src/plugins/jquery.flot.time.js",
-              "node_modules/flot/src/plugins/jquery.flot.selection.js",
-              "node_modules/flot/src/plugins/jquery.flot.pie.js",
-              "node_modules/flot/src/plugins/jquery.flot.crosshair.js",
-              "node_modules/flot/src/plugins/jquery.flot.stack.js",
-              "node_modules/flot/src/plugins/jquery.flot.symbol.js",
-              "node_modules/flot.curvedlines/curvedLines.js",
               "node_modules/tinycolor2/dist/tinycolor-min.js",
-              "node_modules/tooltipster/dist/js/tooltipster.bundle.min.js",
-              "node_modules/split.js/dist/split.js",
-              "node_modules/js-beautify/js/lib/beautify.js",
-              "node_modules/js-beautify/js/lib/beautify-css.js",
-              "node_modules/js-beautify/js/lib/beautify-html.js",
-              "node_modules/systemjs/dist/system.js",
-              "node_modules/jstree/dist/jstree.min.js"
+              "node_modules/split.js/dist/split.min.js",
+              "node_modules/systemjs/dist/system.js"
             ],
             "customWebpackConfig": {
               "path": "./extra-webpack.config.js"
@@ -129,7 +114,11 @@
               "tinycolor2",
               "json-schema-defaults",
               "leaflet-providers",
-              "lodash"
+              "lodash",
+              "jquery",
+              "jquery.terminal",
+              "tooltipster",
+              "jstree"
             ]
           },
           "configurations": {
@@ -161,6 +150,7 @@
         "serve": {
           "builder": "@angular-builders/custom-webpack:dev-server",
           "options": {
+            "aot": true,
             "browserTarget": "thingsboard:build",
             "proxyConfig": "proxy.conf.js"
           },
