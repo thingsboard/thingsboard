@@ -28,7 +28,7 @@ import { EntityViewService } from '@core/http/entity-view.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
-import { EdgeService } from "@core/http/edge.service";
+import { EdgeService } from '@core/http/edge.service';
 
 export interface AddEntitiesToCustomerDialogData {
   customerId: string;

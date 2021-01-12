@@ -21,7 +21,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { DeviceService } from '@core/http/device.service';
-import { EdgeService } from "@core/http/edge.service";
+import { EdgeService } from '@core/http/edge.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { forkJoin, Observable } from 'rxjs';
 import { AssetService } from '@core/http/asset.service';
@@ -29,8 +29,8 @@ import { EntityViewService } from '@core/http/entity-view.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
-import { RuleChainService } from "@core/http/rule-chain.service";
-import { ruleChainType } from "@shared/models/rule-chain.models";
+import { RuleChainService } from '@core/http/rule-chain.service';
+import { ruleChainType } from '@shared/models/rule-chain.models';
 
 export interface AddEntitiesToEdgeDialogData {
   edgeId: string;

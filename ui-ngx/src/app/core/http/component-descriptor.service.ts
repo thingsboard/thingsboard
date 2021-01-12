@@ -21,7 +21,7 @@ import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-uti
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { RuleNodeType } from '@shared/models/rule-node.models';
-import { RuleChainType } from "@shared/models/rule-chain.models";
+import { RuleChainType } from '@shared/models/rule-chain.models';
 
 @Injectable({
   providedIn: 'root'

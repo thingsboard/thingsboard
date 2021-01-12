@@ -41,10 +41,10 @@ import {
   getDefaultClientSecurityConfigType,
   LEN_MAX_PSK,
   LEN_MAX_PUBLIC_KEY_RPK
-} from "./security-config.models";
-import {WINDOW} from "@core/services/window.service";
-import {MatTabChangeEvent, MatTabGroup} from "@angular/material/tabs";
-import {MatTab} from "@angular/material/tabs/tab";
+} from './security-config.models';
+import {WINDOW} from '@core/services/window.service';
+import {MatTabChangeEvent, MatTabGroup} from '@angular/material/tabs';
+import {MatTab} from '@angular/material/tabs/tab';
 
 
 @Component({

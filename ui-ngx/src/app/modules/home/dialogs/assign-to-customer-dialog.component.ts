@@ -28,7 +28,7 @@ import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
-import { EdgeService } from "@core/http/edge.service";
+import { EdgeService } from '@core/http/edge.service';
 
 export interface AssignToCustomerDialogData {
   entityIds: Array<EntityId>;

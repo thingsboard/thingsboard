@@ -44,7 +44,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
 import { deepClone, snakeCase } from '@core/utils';
 import { DebugRuleNodeEventBody } from '@app/shared/models/event.models';
-import { Edge } from "@shared/models/edge.models";
+import { Edge } from '@shared/models/edge.models';
 
 @Injectable({
   providedIn: 'root'

@@ -22,12 +22,12 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { EdgeDownlinkTableConfig } from './edge-downlink-table-config';
 import { DialogService } from '@core/services/dialog.service';
-import { RuleChainService } from "@core/http/rule-chain.service";
-import { AttributeService } from "@core/http/attribute.service";
-import { EdgeService } from "@core/http/edge.service";
-import { DeviceService } from "@core/http/device.service";
-import { AssetService } from "@core/http/asset.service";
-import { EntityViewService } from "@core/http/entity-view.service";
+import { RuleChainService } from '@core/http/rule-chain.service';
+import { AttributeService } from '@core/http/attribute.service';
+import { EdgeService } from '@core/http/edge.service';
+import { DeviceService } from '@core/http/device.service';
+import { AssetService } from '@core/http/asset.service';
+import { EntityViewService } from '@core/http/entity-view.service';
 
 @Component({
   selector: 'tb-edge-downlink-table',

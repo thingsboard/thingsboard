@@ -27,7 +27,7 @@ import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { AssetService } from '@core/http/asset.service';
 import { DeviceService } from '@core/http/device.service';
-import { EdgeService } from "@core/http/edge.service";
+import { EdgeService } from '@core/http/edge.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';

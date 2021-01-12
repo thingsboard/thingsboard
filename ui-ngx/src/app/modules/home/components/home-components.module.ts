@@ -119,7 +119,7 @@ import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-s
 import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
 import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
 import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lwm2m/lwm2m-profile-components.module';
-import { EdgeDownlinkTableComponent } from "@home/components/edge/edge-downlink-table.component";
+import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-table.component';
 
 @NgModule({
   declarations:

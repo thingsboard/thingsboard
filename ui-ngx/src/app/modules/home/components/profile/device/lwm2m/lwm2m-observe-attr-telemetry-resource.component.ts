@@ -14,13 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from "@angular/core";
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormArray, FormBuilder,
   FormGroup,
   NG_VALUE_ACCESSOR, Validators
-} from "@angular/forms";
+} from '@angular/forms';
 import {
   CAMEL_CASE_REGEXP,
   ResourceLwM2M

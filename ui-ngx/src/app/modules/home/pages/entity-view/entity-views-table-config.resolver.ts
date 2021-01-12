@@ -56,11 +56,11 @@ import { EntityViewComponent } from '@modules/home/pages/entity-view/entity-view
 import { EntityViewTableHeaderComponent } from '@modules/home/pages/entity-view/entity-view-table-header.component';
 import { EntityViewId } from '@shared/models/id/entity-view-id';
 import { EntityViewTabsComponent } from '@home/pages/entity-view/entity-view-tabs.component';
-import { EdgeService } from "@core/http/edge.service";
+import { EdgeService } from '@core/http/edge.service';
 import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
-} from "@home/dialogs/add-entities-to-edge-dialog.component";
+} from '@home/dialogs/add-entities-to-edge-dialog.component';
 
 @Injectable()
 export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig<EntityViewInfo>> {

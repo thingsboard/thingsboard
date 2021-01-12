@@ -21,9 +21,9 @@ import { HttpClient } from '@angular/common/http';
 import { PageLink, TimePageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
-import { Edge, EdgeEvent, EdgeInfo, EdgeSearchQuery } from "@shared/models/edge.models";
-import { EntityId } from "@shared/models/id/entity-id";
-import { EdgeId } from "@shared/models/id/edge-id";
+import { Edge, EdgeEvent, EdgeInfo, EdgeSearchQuery } from '@shared/models/edge.models';
+import { EntityId } from '@shared/models/id/entity-id';
+
 @Injectable({
   providedIn: 'root'
 })

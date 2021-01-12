@@ -15,11 +15,11 @@
 ///
 
 import { Component } from '@angular/core';
-import { EntityTableHeaderComponent } from "@home/components/entity/entity-table-header.component";
-import { EntityType } from "@shared/models/entity-type.models";
-import { Store } from "@ngrx/store";
-import { AppState } from "@core/core.state";
-import { EdgeInfo } from "@shared/models/edge.models";
+import { EntityTableHeaderComponent } from '@home/components/entity/entity-table-header.component';
+import { EntityType } from '@shared/models/entity-type.models';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { EdgeInfo } from '@shared/models/edge.models';
 
 @Component({
   selector: 'tb-edge-table-header',
