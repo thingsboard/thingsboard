@@ -216,14 +216,29 @@ export default abstract class LeafletMap {
       const dragListener = (e: L.DragEndEvent) => {
         const polygonOffset = this.options.provider === MapProviders.image ? 10 : 0.01;
 
-        if(this.options.provider !== MapProviders.image) {
-          if (latlng1.lng > 180-polygonOffset) {
-            latlng1.lng = 180-polygonOffset;
+        if(this.options.provider === MapProviders.image) {
+          latlng1.lng += polygonOffset;
+          latlng1.lat -= polygonOffset;
+          let convert = this.convertToCustomFormat(latlng1);
+          latlng1.lat = convert['latitude'];
+          latlng1.lng = convert['longitude'];
+
+          if (convert['xPos'] !== 0) {
+            latlng1.lng -= polygonOffset;
+          }
+
+          if (convert['yPos'] !== 0) {
+            latlng1.lat += polygonOffset;
+          }
+        } else {
+          const maxLatitude = Projection.SphericalMercator['MAX_LATITUDE'];
+
+          if (latlng1.lng > 180 - polygonOffset) {
+            latlng1.lng = 180 - polygonOffset;
           } else if (latlng1.lng < -180) {
             latlng1.lng = -180;
           }
 
-          const maxLatitude = Projection.SphericalMercator['MAX_LATITUDE'];
           if(latlng1.lat > maxLatitude){
             latlng1.lat = maxLatitude;
           }else if(latlng1.lat < -maxLatitude + polygonOffset){
@@ -234,25 +249,6 @@ export default abstract class LeafletMap {
         const latlng2 = L.latLng(latlng1.lat, latlng1.lng + polygonOffset);
         const latlng3 = L.latLng(latlng1.lat - polygonOffset, latlng1.lng);
         mousePositionOnMap = [latlng1, latlng2, latlng3];
-
-        if(this.options.provider === MapProviders.image) {
-          for (let i = 0; i < mousePositionOnMap.length; i++) {
-            let convert = this.convertToCustomFormat(mousePositionOnMap[i])
-            mousePositionOnMap[i].lat = convert['latitude'];
-            mousePositionOnMap[i].lng = convert['longitude'];
-            if (convert['xPos']== 1 && (i == 0 || i == 2)) {
-              mousePositionOnMap[i].lng -= 10;
-            } else if (convert['xPos'] == 0 && i == 1) {
-              mousePositionOnMap[i].lng += 10;
-            }
-            if (convert['yPos']== 0 && i == 2) {
-              mousePositionOnMap[i].lat -= 10;
-            } else if (convert['yPos'] == 1 && (i == 0 || i == 1)) {
-              mousePositionOnMap[i].lat += 10;
-            }
-          }
-        }
-
 
         if (e.type === 'dragend' && mousePositionOnMap) {
           const newPolygon = L.polygon(mousePositionOnMap).addTo(this.map);
