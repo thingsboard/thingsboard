@@ -59,9 +59,6 @@ public class EntitiesFieldsAsyncLoader {
             case RULE_CHAIN:
                 return getAsync(ctx.getRuleChainService().findRuleChainByIdAsync(ctx.getTenantId(), (RuleChainId) original),
                         EntityFieldsData::new);
-            case QUEUE_STATS:
-                return getAsync(ctx.getQueueStatsService().findQueueStatsByIdAsync(ctx.getTenantId(), (QueueStatsId) original),
-                        EntityFieldsData::new);
             default:
                 return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original));
         }
