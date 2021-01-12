@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -111,11 +111,32 @@ export class WidgetComponentService {
       const initSubject = new ReplaySubject();
       this.init$ = initSubject.asObservable();
 
-      (window as any).tinycolor = tinycolor;
-      (window as any).cssjs = cssjs;
-      (window as any).moment = moment;
+      const w = (this.window as any);
+
+      w.tinycolor = tinycolor;
+      w.cssjs = cssjs;
+      w.moment = moment;
+      w.$ = $;
+      w.jQuery = $;
 
       const widgetModulesTasks: Observable<any>[] = [];
+      widgetModulesTasks.push(from(import('jquery.terminal')));
+
+      widgetModulesTasks.push(from(import('flot/src/jquery.flot.js')).pipe(
+        mergeMap(() => {
+          const flotJsPluginsTasks: Observable<any>[] = [];
+          flotJsPluginsTasks.push(from(import('flot/lib/jquery.colorhelpers.js')));
+          flotJsPluginsTasks.push(from(import('flot/src/plugins/jquery.flot.time.js')));
+          flotJsPluginsTasks.push(from(import('flot/src/plugins/jquery.flot.selection.js')));
+          flotJsPluginsTasks.push(from(import('flot/src/plugins/jquery.flot.pie.js')));
+          flotJsPluginsTasks.push(from(import('flot/src/plugins/jquery.flot.crosshair.js')));
+          flotJsPluginsTasks.push(from(import('flot/src/plugins/jquery.flot.stack.js')));
+          flotJsPluginsTasks.push(from(import('flot/src/plugins/jquery.flot.symbol.js')));
+          flotJsPluginsTasks.push(from(import('flot.curvedlines/curvedLines.js')));
+          return forkJoin(flotJsPluginsTasks);
+        })
+      ));
+
       widgetModulesTasks.push(from(import('@home/components/widget/lib/flot-widget')).pipe(
         tap((mod) => {
           (window as any).TbFlot = mod.TbFlot;

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,13 @@ module.exports = (config, options) => {
     })
   );
   config.plugins.push(
+    new webpack.ProvidePlugin(
+      {
+        $: "jquery"
+      }
+    )
+  );
+  config.plugins.push(
     new CompressionPlugin({
       filename: "[path][base].gz[query]",
       algorithm: "gzip",
@@ -43,6 +50,9 @@ module.exports = (config, options) => {
       minRatio: 0.8,
       deleteOriginalAssets: false,
     })
+  );
+  config.plugins.push(
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/)
   );
 
   if (config.mode === 'production') {
