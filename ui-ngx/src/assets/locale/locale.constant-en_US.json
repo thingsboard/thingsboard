@@ -793,7 +793,7 @@
         "prev-value-description": "result of the previous function call;",
         "time-prev-description": "timestamp of the previous value;",
         "prev-orig-value-description": "original previous value;",
-        "restrict-value-conversion": "Restrict value of being converted"
+        "data-conversion": "Data conversion"
     },
     "datasource": {
         "type": "Datasource type",

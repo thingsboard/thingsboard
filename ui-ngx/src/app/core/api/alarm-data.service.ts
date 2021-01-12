@@ -71,7 +71,7 @@ export class AlarmDataService {
       const alarmSubscriptionDataKey: AlarmSubscriptionDataKey = {
         name: dataKey.name,
         type: dataKey.type,
-        restrictConversion: dataKey.restrictConversion
+        dataConversion: dataKey.dataConversion
       };
       alarmSubscriptionDataKeys.push(alarmSubscriptionDataKey);
     });

@@ -53,7 +53,7 @@ export interface SubscriptionDataKey {
   type: DataKeyType;
   funcBody: string;
   func?: DataKeyFunction;
-  restrictConversion: boolean;
+  dataConversion: boolean;
   postFuncBody: string;
   postFunc?: DataKeyPostFunction;
   index?: number;
@@ -202,11 +202,11 @@ export class EntityDataSubscription {
       }
 
       this.attrFields = this.entityDataSubscriptionOptions.dataKeys.filter(dataKey => dataKey.type === DataKeyType.attribute).map(
-        dataKey => ({ type: EntityKeyType.ATTRIBUTE, key: dataKey.name, restrictConversion: dataKey.restrictConversion })
+        dataKey => ({ type: EntityKeyType.ATTRIBUTE, key: dataKey.name, restrictConversion: dataKey.dataConversion })
       );
 
       this.tsFields = this.entityDataSubscriptionOptions.dataKeys.filter(dataKey => dataKey.type === DataKeyType.timeseries).map(
-        dataKey => ({ type: EntityKeyType.TIME_SERIES, key: dataKey.name, restrictConversion: dataKey.restrictConversion })
+        dataKey => ({ type: EntityKeyType.TIME_SERIES, key: dataKey.name, restrictConversion: dataKey.dataConversion })
       );
 
       this.latestValues = this.attrFields.concat(this.tsFields);

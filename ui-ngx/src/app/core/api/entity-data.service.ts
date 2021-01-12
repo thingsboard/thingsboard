@@ -127,7 +127,7 @@ export class EntityDataService {
         type: dataKey.type,
         funcBody: dataKey.funcBody,
         postFuncBody: dataKey.postFuncBody,
-        restrictConversion: dataKey.restrictConversion
+        dataConversion: dataKey.dataConversion
       };
       subscriptionDataKeys.push(subscriptionDataKey);
     });

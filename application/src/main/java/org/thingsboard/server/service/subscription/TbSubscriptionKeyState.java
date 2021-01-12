@@ -23,11 +23,11 @@ public class TbSubscriptionKeyState {
 
     private long lastUpdatedTs;
     private EntityKeyType entityKeyType;
-    private boolean restrictConversion;
+    private boolean dataConversion;
 
-    public TbSubscriptionKeyState(long lastUpdatedTs, EntityKeyType entityKeyType, boolean restrictConversion) {
+    public TbSubscriptionKeyState(long lastUpdatedTs, EntityKeyType entityKeyType, boolean dataConversion) {
         this.lastUpdatedTs = lastUpdatedTs;
         this.entityKeyType = entityKeyType;
-        this.restrictConversion = restrictConversion;
+        this.dataConversion = dataConversion;
     }
 }

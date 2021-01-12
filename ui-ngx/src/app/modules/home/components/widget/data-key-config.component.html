@@ -63,8 +63,8 @@
         </mat-form-field>
       </div>
       <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="start center" *ngIf="modelValue.type !== dataKeyTypes.entityField">
-        <mat-checkbox formControlName="restrictConversion">
-          {{ 'datakey.restrict-value-conversion' | translate }}
+        <mat-checkbox formControlName="dataConversion">
+          {{ 'datakey.data-conversion' | translate }}
         </mat-checkbox>
       </div>
       <section fxLayout="column" *ngIf="modelValue.type === dataKeyTypes.function">

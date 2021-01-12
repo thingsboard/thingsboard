@@ -227,7 +227,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                             }
                             BasicTsKvEntry basicTsKvEntry;
                             if (hasKeyState) {
-                                boolean isRestrictConversion = keyStateMap.get(kv.getKey()).isRestrictConversion();
+                                boolean isRestrictConversion = keyStateMap.get(kv.getKey()).isDataConversion();
                                 EntityKeyType entityKeyType = keyStateMap.get((kv.getKey())).getEntityKeyType();
                                 basicTsKvEntry = new BasicTsKvEntry(kv.getTs(), convertValue(kv, entityKeyType, isRestrictConversion));
                             } else {
@@ -269,7 +269,7 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                             }
                             BasicTsKvEntry basicTsKvEntry;
                             if (hasKeyState) {
-                                boolean isRestrictConversion = keyStateMap.get(kv.getKey()).isRestrictConversion();
+                                boolean isRestrictConversion = keyStateMap.get(kv.getKey()).isDataConversion();
                                 EntityKeyType entityKeyType = keyStateMap.get((kv.getKey())).getEntityKeyType();
                                 basicTsKvEntry = new BasicTsKvEntry(kv.getLastUpdateTs(), convertValue(kv, entityKeyType, isRestrictConversion));
                             } else {

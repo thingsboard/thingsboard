@@ -38,7 +38,7 @@ import { simulatedAlarm } from '@shared/models/alarm.models';
 export interface AlarmSubscriptionDataKey {
   name: string;
   type: DataKeyType;
-  restrictConversion: boolean;
+  dataConversion: boolean;
 }
 
 export interface AlarmDataSubscriptionOptions {
@@ -92,7 +92,7 @@ export class AlarmDataSubscription {
 
       const alarmFields: Array<EntityKey> =
         this.alarmDataSubscriptionOptions.dataKeys.filter(dataKey => dataKey.type === DataKeyType.alarm).map(
-          dataKey => ({ type: EntityKeyType.ALARM_FIELD, key: dataKey.name, restrictConversion: dataKey.restrictConversion})
+          dataKey => ({ type: EntityKeyType.ALARM_FIELD, key: dataKey.name, dataConversion: dataKey.dataConversion})
         );
 
       const entityFields: Array<EntityKey> =
@@ -101,10 +101,10 @@ export class AlarmDataSubscription {
         );
 
       const attrFields = this.alarmDataSubscriptionOptions.dataKeys.filter(dataKey => dataKey.type === DataKeyType.attribute).map(
-        dataKey => ({ type: EntityKeyType.ATTRIBUTE, key: dataKey.name, restrictConversion: dataKey.restrictConversion })
+        dataKey => ({ type: EntityKeyType.ATTRIBUTE, key: dataKey.name, dataConversion: dataKey.dataConversion })
       );
       const tsFields = this.alarmDataSubscriptionOptions.dataKeys.filter(dataKey => dataKey.type === DataKeyType.timeseries).map(
-        dataKey => ({ type: EntityKeyType.TIME_SERIES, key: dataKey.name, restrictConversion: dataKey.restrictConversion })
+        dataKey => ({ type: EntityKeyType.TIME_SERIES, key: dataKey.name, dataConversion: dataKey.dataConversion })
       );
       const latestValues = attrFields.concat(tsFields);
 

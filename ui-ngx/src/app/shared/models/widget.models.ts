@@ -237,7 +237,7 @@ export interface DataKey extends KeyInfo {
   pattern?: string;
   settings?: any;
   usePostProcessing?: boolean;
-  restrictConversion?: boolean;
+  dataConversion?: boolean;
   hidden?: boolean;
   inLegend?: boolean;
   isAdditional?: boolean;

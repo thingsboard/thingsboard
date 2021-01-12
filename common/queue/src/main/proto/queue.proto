@@ -435,7 +435,7 @@ message TbSubscriptionKeyStateProto {
   string key = 1;
   int64 ts = 2;
   EntityKeyTypeProto keyType = 3;
-  bool restrictConversion = 4;
+  bool dataConversion = 4;
 }
 
 message TbSubscriptionUpdateValueListProto {

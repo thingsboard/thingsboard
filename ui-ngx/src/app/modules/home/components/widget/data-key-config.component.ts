@@ -138,7 +138,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
       funcBody: [null, []],
       usePostProcessing: [null, []],
       postFuncBody: [null, []],
-      restrictConversion: [null, []]
+      dataConversion: [null, []]
     });
 
     this.dataKeyFormGroup.valueChanges.subscribe(() => {

@@ -133,13 +133,13 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                     TbTimeseriesSubscription tsSub = (TbTimeseriesSubscription) subscription;
                     update.getLatestValues().forEach((key, value) -> tsSub.getKeyStates().put(key,
                             tsSub.getKeyStates().containsKey(key) ? tsSub.getKeyStates().get(key) :
-                                    new TbSubscriptionKeyState(value, EntityKeyType.TIME_SERIES, false)));
+                                    new TbSubscriptionKeyState(value, EntityKeyType.TIME_SERIES, true)));
                     break;
                 case ATTRIBUTES:
                     TbAttributeSubscription attrSub = (TbAttributeSubscription) subscription;
                     update.getLatestValues().forEach((key, value) -> attrSub.getKeyStates().put(key,
                             attrSub.getKeyStates().containsKey(key) ? attrSub.getKeyStates().get(key) :
-                                    new TbSubscriptionKeyState(value, EntityKeyType.ATTRIBUTE, false)));
+                                    new TbSubscriptionKeyState(value, EntityKeyType.ATTRIBUTE, true)));
                     break;
             }
             subscriptionUpdateExecutor.submit(() -> subscription.getUpdateConsumer().accept(sessionId, update));
