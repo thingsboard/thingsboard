@@ -400,7 +400,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
 
     private TbSubscription createAttrSub(EntityData entityData, int subIdx, EntityKeyType keysType, TbAttributeSubscriptionScope scope, List<EntityKey> subKeys) {
         Map<String, TbSubscriptionKeyState> keyStates = buildKeyStats(entityData, keysType, subKeys);
-        log.warn("[{}][{}][{}] Creating attributes subscription for [{}] with keys: {}", serviceId, cmdId, subIdx, entityData.getEntityId(), keyStates);
+        log.trace("[{}][{}][{}] Creating attributes subscription for [{}] with keys: {}", serviceId, cmdId, subIdx, entityData.getEntityId(), keyStates);
         return TbAttributeSubscription.builder()
                 .serviceId(serviceId)
                 .sessionId(sessionRef.getSessionId())
