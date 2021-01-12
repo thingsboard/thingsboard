@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
@@ -130,11 +131,15 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
             switch (subscription.getType()) {
                 case TIMESERIES:
                     TbTimeseriesSubscription tsSub = (TbTimeseriesSubscription) subscription;
-                    update.getLatestValues().forEach((key, value) -> tsSub.getKeyStates().put(key, value));
+                    update.getLatestValues().forEach((key, value) -> tsSub.getKeyStates().put(key,
+                            tsSub.getKeyStates().containsKey(key) ? tsSub.getKeyStates().get(key) :
+                                    new TbSubscriptionKeyState(value, EntityKeyType.TIME_SERIES, false)));
                     break;
                 case ATTRIBUTES:
                     TbAttributeSubscription attrSub = (TbAttributeSubscription) subscription;
-                    update.getLatestValues().forEach((key, value) -> attrSub.getKeyStates().put(key, value));
+                    update.getLatestValues().forEach((key, value) -> attrSub.getKeyStates().put(key,
+                            attrSub.getKeyStates().containsKey(key) ? attrSub.getKeyStates().get(key) :
+                                    new TbSubscriptionKeyState(value, EntityKeyType.ATTRIBUTE, false)));
                     break;
             }
             subscriptionUpdateExecutor.submit(() -> subscription.getUpdateConsumer().accept(sessionId, update));

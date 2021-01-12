@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.TenantRateLimitException;
@@ -55,6 +56,7 @@ import org.thingsboard.server.service.subscription.TbEntityDataSubscriptionServi
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.subscription.TbAttributeSubscription;
+import org.thingsboard.server.service.subscription.TbSubscriptionKeyState;
 import org.thingsboard.server.service.subscription.TbTimeseriesSubscription;
 import org.thingsboard.server.service.telemetry.cmd.v1.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.v1.GetHistoryCmd;
@@ -404,9 +406,9 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                 List<TsKvEntry> attributesData = data.stream().map(d -> new BasicTsKvEntry(d.getLastUpdateTs(), d)).collect(Collectors.toList());
                 sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), attributesData));
 
-                Map<String, Long> subState = new HashMap<>(keys.size());
-                keys.forEach(key -> subState.put(key, 0L));
-                attributesData.forEach(v -> subState.put(v.getKey(), v.getTs()));
+                Map<String, TbSubscriptionKeyState> subState = new HashMap<>(keys.size());
+                keys.forEach(key -> subState.put(key, new TbSubscriptionKeyState(0L, EntityKeyType.ATTRIBUTE, false)));
+                attributesData.forEach(v -> subState.put(v.getKey(), new TbSubscriptionKeyState(v.getTs(), EntityKeyType.ATTRIBUTE, false)));
 
                 TbAttributeSubscriptionScope scope = StringUtils.isEmpty(cmd.getScope()) ? TbAttributeSubscriptionScope.ANY_SCOPE : TbAttributeSubscriptionScope.valueOf(cmd.getScope());
 
@@ -504,8 +506,8 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                 List<TsKvEntry> attributesData = data.stream().map(d -> new BasicTsKvEntry(d.getLastUpdateTs(), d)).collect(Collectors.toList());
                 sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), attributesData));
 
-                Map<String, Long> subState = new HashMap<>(attributesData.size());
-                attributesData.forEach(v -> subState.put(v.getKey(), v.getTs()));
+                Map<String, TbSubscriptionKeyState> subState = new HashMap<>(attributesData.size());
+                attributesData.forEach(v -> subState.put(v.getKey(), new TbSubscriptionKeyState(v.getTs(), EntityKeyType.ATTRIBUTE, false)));
 
                 TbAttributeSubscriptionScope scope = StringUtils.isEmpty(cmd.getScope()) ? TbAttributeSubscriptionScope.ANY_SCOPE : TbAttributeSubscriptionScope.valueOf(cmd.getScope());
 
@@ -589,8 +591,8 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
             @Override
             public void onSuccess(List<TsKvEntry> data) {
                 sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));
-                Map<String, Long> subState = new HashMap<>(data.size());
-                data.forEach(v -> subState.put(v.getKey(), v.getTs()));
+                Map<String, TbSubscriptionKeyState> subState = new HashMap<>(data.size());
+                data.forEach(v -> subState.put(v.getKey(), new TbSubscriptionKeyState(v.getTs(), EntityKeyType.TIME_SERIES, false)));
 
                 TbTimeseriesSubscription sub = TbTimeseriesSubscription.builder()
                         .serviceId(serviceId)
@@ -626,9 +628,9 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
             @Override
             public void onSuccess(List<TsKvEntry> data) {
                 sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));
-                Map<String, Long> subState = new HashMap<>(keys.size());
-                keys.forEach(key -> subState.put(key, startTs));
-                data.forEach(v -> subState.put(v.getKey(), v.getTs()));
+                Map<String, TbSubscriptionKeyState> subState = new HashMap<>(keys.size());
+                keys.forEach(key -> subState.put(key, new TbSubscriptionKeyState(startTs, EntityKeyType.TIME_SERIES, false)));
+                data.forEach(v -> subState.put(v.getKey(), new TbSubscriptionKeyState(v.getTs(), EntityKeyType.TIME_SERIES, false)));
 
                 TbTimeseriesSubscription sub = TbTimeseriesSubscription.builder()
                         .serviceId(serviceId)

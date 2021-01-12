@@ -334,7 +334,7 @@ message TbSubscriptionProto {
 message TbTimeSeriesSubscriptionProto {
   TbSubscriptionProto sub = 1;
   bool allKeys = 2;
-  repeated TbSubscriptionKetStateProto keyStates = 3;
+  repeated TbSubscriptionKeyStateProto keyStates = 3;
   int64 startTime = 4;
   int64 endTime = 5;
 }
@@ -342,7 +342,7 @@ message TbTimeSeriesSubscriptionProto {
 message TbAttributeSubscriptionProto {
   TbSubscriptionProto sub = 1;
   bool allKeys = 2;
-  repeated TbSubscriptionKetStateProto keyStates = 3;
+  repeated TbSubscriptionKeyStateProto keyStates = 3;
   string scope = 4;
 }
 
@@ -420,9 +420,22 @@ message TbSubscriptionCloseProto {
   int32 subscriptionId = 2;
 }
 
-message TbSubscriptionKetStateProto {
+enum EntityKeyTypeProto {
+    ATTRIBUTE = 0;
+    CLIENT_ATTRIBUTE = 1;
+    SHARED_ATTRIBUTE = 2;
+    SERVER_ATTRIBUTE = 3;
+    TIME_SERIES = 4;
+    ENTITY_FIELD = 5;
+    ALARM_FIELD = 6;
+}
+
+
+message TbSubscriptionKeyStateProto {
   string key = 1;
   int64 ts = 2;
+  EntityKeyTypeProto keyType = 3;
+  bool restrictConversion = 4;
 }
 
 message TbSubscriptionUpdateValueListProto {

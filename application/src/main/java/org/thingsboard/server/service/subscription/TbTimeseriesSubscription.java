@@ -29,7 +29,7 @@ public class TbTimeseriesSubscription extends TbSubscription<TelemetrySubscripti
     @Getter
     private final boolean allKeys;
     @Getter
-    private final Map<String, Long> keyStates;
+    private final Map<String, TbSubscriptionKeyState> keyStates;
     @Getter
     private final long startTime;
     @Getter
@@ -38,7 +38,7 @@ public class TbTimeseriesSubscription extends TbSubscription<TelemetrySubscripti
     @Builder
     public TbTimeseriesSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,
                                     BiConsumer<String, TelemetrySubscriptionUpdate> updateConsumer,
-                                    boolean allKeys, Map<String, Long> keyStates, long startTime, long endTime) {
+                                    boolean allKeys, Map<String, TbSubscriptionKeyState> keyStates, long startTime, long endTime) {
         super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.TIMESERIES, updateConsumer);
         this.allKeys = allKeys;
         this.keyStates = keyStates;
