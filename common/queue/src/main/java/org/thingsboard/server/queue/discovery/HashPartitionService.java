@@ -92,12 +92,35 @@ public class HashPartitionService implements PartitionService {
 
         List<QueueRoutingInfo> queueRoutingInfoList;
 
-        if ("tb-rule-engine".equals(serviceInfoProvider.getServiceType())) {
+        String serviceType = serviceInfoProvider.getServiceType();
+
+        if ("tb-rule-engine".equals(serviceType)) {
             queueRoutingInfoList = queueRoutingInfoService.getQueuesRoutingInfo(serviceInfoProvider.getIsolatedTenant().orElse(TenantId.SYS_TENANT_ID));
-        } else if ("monolith".equals(serviceInfoProvider.getServiceType())) {
+        } else if ("monolith".equals(serviceType)) {
             queueRoutingInfoList = queueRoutingInfoService.getAllQueuesRoutingInfo();
-        } else {
+        } else if ("tb-core".equals(serviceType)) {
             queueRoutingInfoList = queueRoutingInfoService.getMainQueuesRoutingInfo();
+        } else {
+            int getQueuesRetries = 10;
+            while (true) {
+                if (getQueuesRetries > 0) {
+                    log.info("Try to get queue routing info.");
+                    try {
+                        queueRoutingInfoList = queueRoutingInfoService.getMainQueuesRoutingInfo();
+                        break;
+                    } catch (Exception e) {
+                        log.info("Failed to get queues routing info!");
+                        getQueuesRetries--;
+                    }
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        log.info("Failed to await queues routing info!", e);
+                    }
+                } else {
+                    throw new RuntimeException("Failed to await queues routing info!");
+                }
+            }
         }
 
         queueRoutingInfoList.forEach(queue -> {

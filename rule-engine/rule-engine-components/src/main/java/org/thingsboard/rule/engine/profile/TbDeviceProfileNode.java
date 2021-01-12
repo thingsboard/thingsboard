@@ -125,8 +125,10 @@ public class TbDeviceProfileNode implements TbNode {
                 DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
                 if (msg.getType().equals(DataConstants.ENTITY_UPDATED)) {
                     invalidateDeviceProfileCache(deviceId, msg.getData());
+                    ctx.tellSuccess(msg);
                 } else if (msg.getType().equals(DataConstants.ENTITY_DELETED)) {
                     removeDeviceState(deviceId);
+                    ctx.tellSuccess(msg);
                 } else {
                     DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId, null);
                     if (deviceState != null) {
