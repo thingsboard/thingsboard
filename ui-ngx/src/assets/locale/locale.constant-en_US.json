@@ -627,7 +627,8 @@
         "default-customer-required": "Default customer is required in order to debug dashboard on Tenant level",
         "search": "Search customers",
         "selected-customers": "{ count, plural, 1 {1 customer} other {# customers} } selected",
-        "edges": "Customer edge instances"
+        "edges": "Customer edge instances",
+        "manage-edges": "Manage edges"
     },
     "datetime": {
         "date-from": "Date from",

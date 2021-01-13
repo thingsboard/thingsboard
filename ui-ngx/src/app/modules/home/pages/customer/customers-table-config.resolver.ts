@@ -31,6 +31,9 @@ import { Customer } from '@app/shared/models/customer.model';
 import { CustomerService } from '@app/core/http/customer.service';
 import { CustomerComponent } from '@modules/home/pages/customer/customer.component';
 import { CustomerTabsComponent } from '@home/pages/customer/customer-tabs.component';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 @Injectable()
 export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<Customer>> {
@@ -40,13 +43,15 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
   constructor(private customerService: CustomerService,
               private translate: TranslateService,
               private datePipe: DatePipe,
-              private router: Router) {
+              private router: Router,
+              private store: Store<AppState>) {
 
     this.config.entityType = EntityType.CUSTOMER;
     this.config.entityComponent = CustomerComponent;
     this.config.entityTabsComponent = CustomerTabsComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.CUSTOMER);
     this.config.entityResources = entityTypeResources.get(EntityType.CUSTOMER);
+    const authState = getCurrentAuthState(this.store);
 
     this.config.columns.push(
       new DateEntityTableColumn<Customer>('createdTime', 'common.created-time', this.datePipe, '150px'),
@@ -55,7 +60,6 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
       new EntityTableColumn<Customer>('country', 'contact.country', '25%'),
       new EntityTableColumn<Customer>('city', 'contact.city', '25%')
     );
-
     this.config.cellActionDescriptors.push(
       {
         name: this.translate.instant('customer.manage-customer-users'),
@@ -95,19 +99,22 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
         icon: 'dashboard',
         isEnabled: (customer) => true,
         onAction: ($event, entity) => this.manageCustomerDashboards($event, entity)
-      },
-      {
-        name: this.translate.instant('customer.manage-customer-edges'),
-        nameFunction: (customer) => {
-          return customer.additionalInfo && customer.additionalInfo.isPublic
-            ? this.translate.instant('customer.manage-public-edges')
-            : this.translate.instant('customer.manage-customer-edges');
-        },
-        icon: 'router',
-        isEnabled: (customer) => true,
-        onAction: ($event, entity) => this.manageCustomerEdges($event, entity)
-      },
-    );
+      });
+    if (authState.edgesSupportEnabled) {
+      this.config.cellActionDescriptors.push(
+        {
+          name: this.translate.instant('customer.manage-customer-edges'),
+          nameFunction: (customer) => {
+            return customer.additionalInfo && customer.additionalInfo.isPublic
+              ? this.translate.instant('customer.manage-public-edges')
+              : this.translate.instant('customer.manage-customer-edges');
+          },
+          icon: 'router',
+          isEnabled: (customer) => true,
+          onAction: ($event, entity) => this.manageCustomerEdges($event, entity)
+        }
+      );
+    }
 
     this.config.deleteEntityTitle = customer => this.translate.instant('customer.delete-customer-title', { customerTitle: customer.title });
     this.config.deleteEntityContent = () => this.translate.instant('customer.delete-customer-text');

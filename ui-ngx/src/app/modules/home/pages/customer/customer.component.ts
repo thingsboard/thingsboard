@@ -23,6 +23,7 @@ import { ActionNotificationShow } from '@app/core/notification/notification.acti
 import { TranslateService } from '@ngx-translate/core';
 import { ContactBasedComponent } from '../../components/entity/contact-based.component';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 @Component({
   selector: 'tb-customer',
@@ -76,6 +77,11 @@ export class CustomerComponent extends ContactBasedComponent<Customer> {
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
+  }
+
+  edgesSupportEnabled() {
+    const authState = getCurrentAuthState(this.store);
+    return authState.edgesSupportEnabled;
   }
 
 }
