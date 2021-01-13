@@ -203,7 +203,11 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
           server: [],
           shared: []
         },
-        timeseries: []
+        timeseries: [],
+        edgeLicenseKey: '',
+        cloudEndpoint: '',
+        routingKey: '',
+        secret: ''
       };
       const i = row;
       for (let j = 0; j < parameterColumns.length; j++) {
@@ -243,6 +247,18 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
             break;
           case ImportEntityColumnType.description:
             entityData.description = importData.rows[i][j];
+            break;
+            case ImportEntityColumnType.edgeLicenseKey:
+            entityData.edgeLicenseKey = importData.rows[i][j];
+            break;
+            case ImportEntityColumnType.cloudEndpoint:
+            entityData.cloudEndpoint = importData.rows[i][j];
+            break;
+            case ImportEntityColumnType.routingKey:
+            entityData.routingKey = importData.rows[i][j];
+            break;
+            case ImportEntityColumnType.secret:
+            entityData.secret = importData.rows[i][j];
             break;
         }
       }

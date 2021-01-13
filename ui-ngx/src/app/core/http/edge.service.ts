@@ -104,4 +104,8 @@ export class EdgeService {
   public findMissingToRelatedRuleChains(edgeId: string, config?: RequestConfig): Observable<string> {
     return this.http.get<string>(`/api/edge/missingToRelatedRuleChains/${edgeId}`, defaultHttpOptionsFromConfig(config));
   }
+
+  public findByName(edgeName: string, config?: RequestConfig): Observable<Edge> {
+    return this.http.get<Edge>(`/api/tenant/edges?edgeName=${edgeName}`, defaultHttpOptionsFromConfig(config));
+  }
 }

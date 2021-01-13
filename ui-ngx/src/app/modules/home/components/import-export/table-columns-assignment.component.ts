@@ -93,6 +93,14 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
           { value: ImportEntityColumnType.timeseries }
         );
         break;
+      case EntityType.EDGE:
+        this.columnTypes.push(
+          { value: ImportEntityColumnType.edgeLicenseKey },
+          { value: ImportEntityColumnType.cloudEndpoint },
+          { value: ImportEntityColumnType.routingKey },
+          { value: ImportEntityColumnType.secret }
+        );
+        break;
     }
   }
 

@@ -70,6 +70,7 @@ import {
 import { alarmFields } from '@shared/models/alarm.models';
 import { EdgeService } from "@core/http/edge.service";
 import { ruleChainType } from "@shared/models/rule-chain.models";
+import { Edge } from '@shared/models/edge.models';
 
 @Injectable({
   providedIn: 'root'
@@ -887,6 +888,21 @@ export class EntityService {
           }
         };
         saveEntityObservable = this.assetService.saveAsset(asset, config);
+        break;
+      case EntityType.EDGE:
+        const edge: Edge = {
+          name: entityData.name,
+          type: entityData.type,
+          label: entityData.label,
+          additionalInfo: {
+            description: entityData.description
+          },
+          edgeLicenseKey: entityData.edgeLicenseKey,
+          cloudEndpoint: entityData.cloudEndpoint,
+          routingKey: entityData.routingKey,
+          secret: entityData.secret
+        }
+        saveEntityObservable = this.edgeService.saveEdge(edge, config);
         break;
     }
     return saveEntityObservable.pipe(

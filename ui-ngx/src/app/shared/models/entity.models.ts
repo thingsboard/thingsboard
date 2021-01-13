@@ -43,6 +43,10 @@ export interface ImportEntityData {
     shared: AttributeData[]
   };
   timeseries: AttributeData[];
+  secret: string;
+  routingKey: string;
+  cloudEndpoint: string;
+  edgeLicenseKey: string;
 }
 
 export interface ImportEntitiesResultInfo {
