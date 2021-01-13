@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<mat-tab *ngIf="entity"
-         label="{{ 'device-profile.transport-configuration' | translate }}" #transportType="matTab">
-  <div class="mat-padding" [formGroup]="detailsForm">
+<mat-tab *ngIf="entity" #transportType="matTab"
+         label="{{ 'device-profile.transport-configuration' | translate }}">
+  <div class="mat-padding" [formGroup]="detailsForm" *ngIf="transportType.isActive">
     <mat-form-field class="mat-block">
       <mat-label translate>device-profile.transport-type</mat-label>
       <mat-select formControlName="transportType" required>
@@ -40,19 +40,19 @@
     </div>
   </div>
 </mat-tab>
-<mat-tab *ngIf="entity"
+<mat-tab *ngIf="entity" #alarmRules="matTab"
          label="{{'device-profile.alarm-rules-with-count' | translate:
             {count: entity.profileData?.alarms?.length ? entity.profileData.alarms.length : 0}
-          }}" #alarmRules="matTab">
-  <div class="mat-padding" [formGroup]="detailsForm">
+          }}">
+  <div class="mat-padding" [formGroup]="detailsForm" *ngIf="alarmRules.isActive">
     <div formGroupName="profileData">
       <tb-device-profile-alarms formControlName="alarms" [deviceProfileId]="entity.id"></tb-device-profile-alarms>
     </div>
   </div>
 </mat-tab>
-<mat-tab *ngIf="entity"
-         label="{{ 'device-profile.device-provisioning' | translate }}" #deviceProvisioning="matTab">
-  <div class="mat-padding" [formGroup]="detailsForm">
+<mat-tab *ngIf="entity" #deviceProvisioning="matTab"
+         label="{{ 'device-profile.device-provisioning' | translate }}">
+  <div class="mat-padding" [formGroup]="detailsForm" *ngIf="deviceProvisioning.isActive">
     <div formGroupName="profileData">
       <tb-device-profile-provision-configuration formControlName="provisionConfiguration">
       </tb-device-profile-provision-configuration>
@@ -70,7 +70,7 @@
     </div>
   </div>
 </mat-tab>
-<mat-tab *ngIf="entity && !isEdit"
-         label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
+<mat-tab *ngIf="entity && !isEdit" #auditLogsTab="matTab"
+         label="{{ 'audit-log.audit-logs' | translate }}">
   <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
 </mat-tab>

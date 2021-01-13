@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,21 +39,23 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.audit.sink.AuditLogSink;
+import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateEntityId;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -264,6 +266,32 @@ public class AuditLogServiceImpl implements AuditLogService {
                 if (request != null) {
                     actionData.set("provisionRequest", objectMapper.valueToTree(request));
                 }
+                break;
+            case TIMESERIES_UPDATED:
+                actionData.put("entityId", entityId.toString());
+                List<TsKvEntry> updatedTimeseries = extractParameter(List.class, 0, additionalInfo);
+                if (updatedTimeseries != null) {
+                    ArrayNode result = actionData.putArray("timeseries");
+                    updatedTimeseries.stream()
+                            .collect(Collectors.groupingBy(TsKvEntry::getTs))
+                            .forEach((k, v) -> {
+                                ObjectNode element = objectMapper.createObjectNode();
+                                element.put("ts", k);
+                                ObjectNode values = element.putObject("values");
+                                v.forEach(kvEntry -> values.put(kvEntry.getKey(), kvEntry.getValueAsString()));
+                                result.add(element);
+                            });
+                }
+                break;
+            case TIMESERIES_DELETED:
+                actionData.put("entityId", entityId.toString());
+                List<String> timeseriesKeys = extractParameter(List.class, 0, additionalInfo);
+                if (timeseriesKeys != null) {
+                    ArrayNode timeseriesArrayNode = actionData.putArray("timeseries");
+                    timeseriesKeys.forEach(timeseriesArrayNode::add);
+                }
+                actionData.put("startTs", extractParameter(Long.class, 1, additionalInfo));
+                actionData.put("endTs", extractParameter(Long.class, 2, additionalInfo));
                 break;
         }
         return actionData;

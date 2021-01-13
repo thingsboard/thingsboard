@@ -527,7 +527,9 @@
         "type-assigned-from-tenant": "Assigned from Tenant",
         "type-assigned-to-tenant": "Assigned to Tenant",
         "type-provision-success": "Device provisioned",
-        "type-provision-failure": "Device provisioning was failed"
+        "type-provision-failure": "Device provisioning was failed",
+        "type-timeseries-updated": "Telemetry updated",
+        "type-timeseries-deleted": "Telemetry deleted"
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
@@ -2491,7 +2493,7 @@
             "zh_TW": "繁體中文",
             "en_US": "English",
             "it_IT": "Italiano",
-            "ko_KR": "한글",
+            "ko_KR": "한국어",
             "ru_RU": "Русский",
             "es_ES": "Español",
             "ja_JA": "日本語",
