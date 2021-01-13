@@ -21,12 +21,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -36,16 +38,13 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityData;
-import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
-import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -68,7 +67,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -83,8 +81,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -338,7 +334,6 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     private ListenableFuture<TbEntityDataSubCtx> handleGetTsCmd(TbEntityDataSubCtx ctx, GetTsCmd cmd, boolean subscribe) {
-        // TODO: 13.01.21 fix this method
         List<EntityDataKey> keys = cmd.getKeys();
         List<ReadTsKvQuery> finalTsKvQueryList;
         List<ReadTsKvQuery> tsKvQueryList = cmd.getKeys().stream().map(entityDataKey -> new BaseReadTsKvQuery(
@@ -357,14 +352,24 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 tsService.findAll(ctx.getTenantId(), entityData.getEntityId(), finalTsKvQueryList)));
         return Futures.transform(Futures.allAsList(fetchResultMap.values()), f -> {
             fetchResultMap.forEach((entityData, future) -> {
-                Map<String, List<TsValue>> keyData = new LinkedHashMap<>();
-                cmd.getKeys().forEach(entityDataKey -> keyData.put(entityDataKey.getKey(), new ArrayList<>()));
+                Map<String, List<TsValue>> keyDataMap = new LinkedHashMap<>();
+                Map<String, Boolean> keyDataConversionMap = new HashMap<>();
+                keys.forEach(entityDataKey -> {
+                    keyDataMap.put(entityDataKey.getKey(), new ArrayList<>());
+                    keyDataConversionMap.put(entityDataKey.getKey(), entityDataKey.isDataConversion());
+                });
                 try {
                     List<TsKvEntry> entityTsData = future.get();
                     if (entityTsData != null) {
-                        entityTsData.forEach(entry -> keyData.get(entry.getKey()).add(new TsValue(entry.getTs(), entry.getValueAsString())));
+                        entityTsData.forEach(entry -> {
+                            String valueToReturn = entry.getValueAsString();
+                            if (keyDataConversionMap.get(entry.getKey())) {
+                                valueToReturn = convertValue(entry.getValueAsString());
+                            }
+                            keyDataMap.get(entry.getKey()).add(new TsValue(entry.getTs(), valueToReturn));
+                        });
                     }
-                    keyData.forEach((k, v) -> entityData.getTimeseries().put(k, v.toArray(new TsValue[v.size()])));
+                    keyDataMap.forEach((k, v) -> entityData.getTimeseries().put(k, v.toArray(new TsValue[v.size()])));
                     if (cmd.isFetchLatestPreviousPoint()) {
                         entityData.getTimeseries().values().forEach(dataArray -> {
                             Arrays.sort(dataArray, (o1, o2) -> Long.compare(o2.getTs(), o1.getTs()));
@@ -390,6 +395,28 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             ctx.getData().getData().forEach(ed -> ed.getTimeseries().clear());
             return ctx;
         }, wsCallBackExecutor);
+    }
+
+    private static String convertValue(String strEntryValue) {
+        if (StringUtils.isEmpty(strEntryValue)) {
+            return strEntryValue;
+        } else if (NumberUtils.isParsable(strEntryValue)) {
+            try {
+                long longVal = Long.parseLong(strEntryValue);
+                return Long.toString(longVal);
+            } catch (NumberFormatException ignored) {
+            }
+            try {
+                double dblVal = Double.parseDouble(strEntryValue);
+                if (!Double.isInfinite(dblVal)) {
+                    return Double.toString(dblVal);
+                }
+            } catch (NumberFormatException ignored) {
+            }
+            return strEntryValue;
+        } else {
+            return strEntryValue;
+        }
     }
 
     private void handleLatestCmd(TbEntityDataSubCtx ctx, LatestValueCmd latestCmd) {
