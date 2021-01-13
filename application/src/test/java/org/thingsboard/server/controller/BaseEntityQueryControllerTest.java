@@ -138,10 +138,10 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey("createdTime"), EntityDataSortOrder.Direction.ASC
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
-        List<EntityKey> entityFields = Collections.singletonList(new EntityKey("name"));
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
 
@@ -175,7 +175,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         Assert.assertEquals(deviceNames, loadedNames);
 
         sortOrder = new EntityDataSortOrder(
-                new EntityKey("name"), EntityDataSortOrder.Direction.DESC
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), EntityDataSortOrder.Direction.DESC
         );
 
         pageLink = new EntityDataPageLink(10, 0, "device1", sortOrder);
@@ -219,10 +219,10 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey("createdTime"), EntityDataSortOrder.Direction.ASC
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
-        List<EntityKey> entityFields = Collections.singletonList(new EntityKey("name"));
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
         List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature", true));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);

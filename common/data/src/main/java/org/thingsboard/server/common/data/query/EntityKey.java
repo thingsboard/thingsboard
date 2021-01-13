@@ -32,8 +32,8 @@ public class EntityKey {
         this.dataConversion = dataConversion;
     }
 
-    public EntityKey(String entityKeyField) {
-        this.type = EntityKeyType.ENTITY_FIELD;
+    public EntityKey(EntityKeyType entityKeyType, String entityKeyField) {
+        this.type = entityKeyType;
         this.key = entityKeyField;
         this.dataConversion = false;
     }

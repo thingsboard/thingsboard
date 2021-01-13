@@ -33,7 +33,7 @@ public class EntityKeyDeserializer extends JsonDeserializer<EntityKey> {
         if (node.has("dataConversion")) {
             return new EntityKey(EntityKeyType.valueOf(node.get("type").asText()), node.get("key").asText(), node.get("dataConversion").asBoolean());
         } else {
-            return new EntityKey(node.get("key").asText());
+            return new EntityKey(EntityKeyType.valueOf(node.get("type").asText()), node.get("key").asText());
         }
     }
 
