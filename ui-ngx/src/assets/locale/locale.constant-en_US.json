@@ -1234,6 +1234,8 @@
         "assign-to-customer-text": "Please select the customer to assign the edge(s)",
         "assign-edge-to-customer": "Assign Edge(s) To Customer",
         "assign-edge-to-customer-text": "Please select the edges to assign to the customer",
+        "assignedToCustomer": "Assigned to customer",
+        "edge-public": "Edge is public",
         "assigned-to-customer": "Assigned to: {{customerTitle}}",
         "unassign-from-customer": "Unassign from customer",
         "assign-edges-text": "Assign { count, plural, 1 {1 edge} other {# edges} } to customer",
