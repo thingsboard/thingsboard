@@ -420,3 +420,15 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
     sms_exec varchar(32),
     CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)
 );
+
+CREATE TABLE IF NOT EXISTS entity_config (
+     id uuid NOT NULL CONSTRAINT entity_config_pkey PRIMARY KEY,
+     created_time bigint NOT NULL,
+     entity_id uuid,
+     entity_type varchar(255),
+     tenant_id uuid,
+     version bigint,
+     configuration varchar(10000000),
+     additional_info varchar
+);
+

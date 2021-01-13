@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -24,10 +25,12 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.EntityConfig;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EntityConfigId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -36,6 +39,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entityconfig.EntityConfigService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -43,6 +47,7 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -74,6 +79,21 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         log.trace("Executing findDashboardById [{}]", dashboardId);
         Validator.validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
         return dashboardDao.findById(tenantId, dashboardId.getId());
+    }
+
+    @Override
+    public Dashboard restoreDashboardConfig(TenantId tenantId, DashboardId dashboardId, EntityConfigId entityConfigId, JsonNode additionalInfo) {
+        log.trace("Executing restoreDashboardConfig [{}]", dashboardId);
+        EntityConfig entityConfig = entityConfigService.getEntityConfigById(tenantId, entityConfigId);
+        Dashboard dashboard = findDashboardById(tenantId, dashboardId);
+        if (entityConfig != null) {
+            validateEntityConfig(dashboardId, entityConfig);
+            dashboard.setConfiguration(entityConfig.getConfiguration());
+            dashboardDao.save(tenantId, dashboard);
+            entityConfigService.restoreEntityConfig(tenantId, dashboardId, entityConfigId, additionalInfo);
+            return dashboard;
+        }
+        throw new EntityNotFoundException(String.format("EntityConfig with id [%s] not found", entityConfigId.getId()));
     }
 
     @Override
@@ -172,6 +192,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         Validator.validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
         deleteEntityRelations(tenantId, dashboardId);
         dashboardDao.removeById(tenantId, dashboardId.getId());
+        entityConfigService.deleteEntityConfigsByEntityId(tenantId, dashboardId);
     }
 
     @Override
@@ -225,7 +246,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                 @Override
                 protected void validateCreate(TenantId tenantId, Dashboard data) {
                     DefaultTenantProfileConfiguration profileConfiguration =
-                            (DefaultTenantProfileConfiguration)tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
+                            (DefaultTenantProfileConfiguration) tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
                     long maxDashboards = profileConfiguration.getMaxDashboards();
                     validateNumberOfEntitiesPerTenant(tenantId, dashboardDao, maxDashboards, EntityType.DASHBOARD);
                 }
@@ -249,19 +270,19 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     private PaginatedRemover<TenantId, DashboardInfo> tenantDashboardsRemover =
             new PaginatedRemover<TenantId, DashboardInfo>() {
 
-        @Override
-        protected PageData<DashboardInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-            return dashboardInfoDao.findDashboardsByTenantId(id.getId(), pageLink);
-        }
+                @Override
+                protected PageData<DashboardInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                    return dashboardInfoDao.findDashboardsByTenantId(id.getId(), pageLink);
+                }
 
-        @Override
-        protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
-            deleteDashboard(tenantId, new DashboardId(entity.getUuidId()));
-        }
-    };
-    
+                @Override
+                protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
+                    deleteDashboard(tenantId, new DashboardId(entity.getUuidId()));
+                }
+            };
+
     private class CustomerDashboardsUnassigner extends PaginatedRemover<Customer, DashboardInfo> {
-        
+
         private Customer customer;
 
         CustomerDashboardsUnassigner(Customer customer) {

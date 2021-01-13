@@ -37,7 +37,7 @@ public interface EntityViewDao extends Dao<EntityView> {
      * Find entity view info by id.
      *
      * @param tenantId the tenant id
-     * @param assetId the asset id
+     * @param entityViewId the entity-view id
      * @return the entity view info object
      */
     EntityViewInfo findEntityViewInfoById(TenantId tenantId, UUID entityViewId);

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.EntityConfigId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -219,7 +221,7 @@ public class RuleChainController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/metadata", method = RequestMethod.POST)
     @ResponseBody
-    public RuleChainMetaData saveRuleChainMetaData(@RequestBody RuleChainMetaData ruleChainMetaData) throws ThingsboardException {
+    public RuleChainMetaData saveRuleChainMetaData(@RequestBody RuleChainMetaData ruleChainMetaData, @RequestParam(required = false) String comment) throws ThingsboardException {
         try {
             TenantId tenantId = getTenantId();
             if (debugPerTenantEnabled) {
@@ -229,10 +231,10 @@ public class RuleChainController extends BaseController {
                     debugPerTenantLimits.remove(tenantId, debugTbRateLimits);
                 }
             }
-
+            ObjectNode additionalInfo = getEntityConfigAdditionalInfo(comment);
             RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId(), Operation.WRITE);
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData));
-
+            entityConfigService.saveEntityConfigForEntity(getTenantId(), ruleChain.getId(), json.valueToTree(savedRuleChainMetaData), additionalInfo);
             tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(ruleChain.getId(), ruleChain,
@@ -244,6 +246,46 @@ public class RuleChainController extends BaseController {
 
             logEntityAction(emptyId(EntityType.RULE_CHAIN), null,
                     null, ActionType.UPDATED, e, ruleChainMetaData);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/ruleChain/{ruleChainId}/entityConfig/{entityConfigId}/restore", method = RequestMethod.POST)
+    @ResponseBody
+    public RuleChainMetaData restoreRuleChainMetaData(@PathVariable(RULE_CHAIN_ID) String strRuleChainId,
+                                                      @PathVariable("entityConfigId") String strEntityConfigId,
+                                                      @RequestParam(required = false) String comment) throws ThingsboardException {
+        try {
+            TenantId tenantId = getTenantId();
+            if (debugPerTenantEnabled) {
+                ConcurrentMap<TenantId, DebugTbRateLimits> debugPerTenantLimits = actorContext.getDebugPerTenantLimits();
+                DebugTbRateLimits debugTbRateLimits = debugPerTenantLimits.getOrDefault(tenantId, null);
+                if (debugTbRateLimits != null) {
+                    debugPerTenantLimits.remove(tenantId, debugTbRateLimits);
+                }
+            }
+            checkParameter(RULE_CHAIN_ID, strRuleChainId);
+            checkParameter("entityConfigId", strEntityConfigId);
+
+            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
+            RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
+            EntityConfigId entityConfigId = new EntityConfigId(toUUID(strEntityConfigId));
+            ObjectNode additionalInfo = getEntityConfigAdditionalInfo(comment);
+            RuleChainMetaData ruleChainMetaData = ruleChainService.restoreRuleChainMetaData(getTenantId(), ruleChainId, entityConfigId, additionalInfo);
+            RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData));
+            if (savedRuleChainMetaData != null) {
+                tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
+
+                logEntityAction(ruleChain.getId(), ruleChain,
+                        null,
+                        ActionType.UPDATED, null, savedRuleChainMetaData);
+            }
+            return savedRuleChainMetaData;
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.RULE_CHAIN), null,
+                    null, ActionType.UPDATED, e, null);
 
             throw handleException(e);
         }

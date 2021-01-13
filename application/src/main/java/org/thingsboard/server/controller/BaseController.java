@@ -22,11 +22,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -74,6 +76,7 @@ import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entityconfig.EntityConfigService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -120,7 +123,7 @@ public abstract class BaseController {
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
 
-    private static final ObjectMapper json = new ObjectMapper();
+    protected static final ObjectMapper json = new ObjectMapper();
 
     @Autowired
     private ThingsboardErrorResponseHandler errorResponseHandler;
@@ -214,6 +217,9 @@ public abstract class BaseController {
 
     @Autowired
     protected LwM2MModelsRepository lwM2MModelsRepository;
+
+    @Autowired
+    protected EntityConfigService entityConfigService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -814,4 +820,13 @@ public abstract class BaseController {
         return null;
     }
 
+    protected ObjectNode getEntityConfigAdditionalInfo(String comment) throws ThingsboardException {
+        ObjectNode additionalInfo = json.createObjectNode();
+        if (!org.springframework.util.StringUtils.isEmpty(comment)) {
+            additionalInfo.put("comment", comment);
+        }
+        additionalInfo.put("userId", getCurrentUser().getUuidId().toString());
+        additionalInfo.put("userName", getCurrentUser().getName());
+        return additionalInfo;
+    }
 }
