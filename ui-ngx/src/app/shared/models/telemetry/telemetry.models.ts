@@ -146,7 +146,7 @@ export class GetHistoryCmd implements TelemetryPluginCmd {
 }
 
 export interface EntityHistoryCmd {
-  keys: Array<string>;
+  keys: Array<DataEntityKey>;
   startTs: number;
   endTs: number;
   interval: number;
