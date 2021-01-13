@@ -99,7 +99,7 @@ import { ImportExportService } from '@home/components/import-export/import-expor
 import { AuthState } from '@app/core/auth/auth.models';
 import { FiltersDialogComponent, FiltersDialogData } from '@home/components/filter/filters-dialog.component';
 import { Filters } from '@shared/models/query/query.models';
-import { AliasEntityType, EntityType } from "@shared/models/entity-type.models";
+import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 
 // @dynamic
 @Component({

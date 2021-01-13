@@ -58,11 +58,11 @@ import { AssetId } from '@app/shared/models/id/asset-id';
 import { AssetTabsComponent } from '@home/pages/asset/asset-tabs.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 import { DeviceInfo } from '@shared/models/device.models';
-import { EdgeService } from "@core/http/edge.service";
+import { EdgeService } from '@core/http/edge.service';
 import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
-} from "@home/dialogs/add-entities-to-edge-dialog.component";
+} from '@home/dialogs/add-entities-to-edge-dialog.component';
 
 @Injectable()
 export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<AssetInfo>> {

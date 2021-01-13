@@ -18,13 +18,13 @@ import { Injectable } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
-import { selectAuth, selectAuthUser, selectIsAuthenticated } from '../auth/auth.selectors';
+import { selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
 import { take } from 'rxjs/operators';
 import { HomeSection, MenuSection } from '@core/services/menu.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { guid } from '@core/utils';
-import { AuthState } from "@core/auth/auth.models";
+import { AuthState } from '@core/auth/auth.models';
 
 @Injectable({
   providedIn: 'root'

@@ -43,16 +43,15 @@ import {
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
 import { sortObjectKeys } from '@core/utils';
-import { RuleChainService } from "@core/http/rule-chain.service";
-import { AttributeService } from "@core/http/attribute.service";
-import { AttributeScope } from "@shared/models/telemetry/telemetry.models";
-import { EdgeDownlinkTableHeaderComponent } from "@home/components/edge/edge-downlink-table-header.component";
-import { EdgeService } from "@core/http/edge.service";
-import { map } from "rxjs/operators";
-import { AssetService } from "@core/http/asset.service";
-import { DeviceService } from "@core/http/device.service";
-import { EntityViewService } from "@core/http/entity-view.service";
-import { actionTypeTranslations } from "@shared/models/audit-log.models";
+import { RuleChainService } from '@core/http/rule-chain.service';
+import { AttributeService } from '@core/http/attribute.service';
+import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
+import { EdgeService } from '@core/http/edge.service';
+import { map } from 'rxjs/operators';
+import { AssetService } from '@core/http/asset.service';
+import { DeviceService } from '@core/http/device.service';
+import { EntityViewService } from '@core/http/entity-view.service';
 
 export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePageLink> {
 

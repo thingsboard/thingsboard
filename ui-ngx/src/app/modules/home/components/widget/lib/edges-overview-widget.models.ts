@@ -17,8 +17,8 @@
 import { NavTreeNode } from '@shared/components/nav-tree.component';
 import { Datasource } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { TranslateService } from "@ngx-translate/core";
-import { BaseData, HasId } from "@shared/models/base-data";
+import { TranslateService } from '@ngx-translate/core';
+import { BaseData, HasId } from '@shared/models/base-data';
 
 export interface EntityNodeDatasource extends Datasource {
   nodeId: string;

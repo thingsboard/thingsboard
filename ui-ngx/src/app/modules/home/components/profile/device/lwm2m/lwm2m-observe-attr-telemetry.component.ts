@@ -15,7 +15,7 @@
 ///
 
 
-import { Component, forwardRef, Input, OnInit, Output } from "@angular/core";
+import { Component, forwardRef, Input, OnInit, Output } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -24,10 +24,10 @@ import {
   FormGroup,
   NG_VALUE_ACCESSOR,
   Validators
-} from "@angular/forms";
-import { Store } from "@ngrx/store";
-import { AppState } from "@core/core.state";
-import { coerceBooleanProperty } from "@angular/cdk/coercion";
+} from '@angular/forms';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ATTR,
   Instance,
@@ -35,7 +35,7 @@ import {
   OBSERVE,
   ResourceLwM2M,
   TELEMETRY
-} from "./profile-config.models";
+} from './profile-config.models';
 import { isNotNullOrUndefined } from 'codelyzer/util/isNotNullOrUndefined';
 import { deepClone, isUndefined } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';

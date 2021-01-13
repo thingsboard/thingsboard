@@ -14,12 +14,12 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Inject, Input, OnInit } from "@angular/core";
+import { Component, forwardRef, Inject, Input, OnInit } from '@angular/core';
 
 import {
   ControlValueAccessor,
   FormBuilder, FormGroup, NG_VALUE_ACCESSOR, NgModel, Validators
-} from "@angular/forms";
+} from '@angular/forms';
 import {
   SECURITY_CONFIG_MODE,
   SECURITY_CONFIG_MODE_NAMES,
@@ -32,11 +32,11 @@ import {
   DEFAULT_PORT_SERVER_NO_SEC,
   DEFAULT_CLIENT_HOLD_OFF_TIME,
   DEFAULT_ID_SERVER
-} from "./profile-config.models";
-import { Store } from "@ngrx/store";
-import { AppState } from "@core/core.state";
-import { coerceBooleanProperty } from "@angular/cdk/coercion";
-import { WINDOW } from "../../../../../../core/services/window.service";
+} from './profile-config.models';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { WINDOW } from '../../../../../../core/services/window.service';
 import { pairwise, startWith } from 'rxjs/operators';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 

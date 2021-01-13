@@ -24,7 +24,7 @@ import { DeviceProfile, DeviceProfileInfo, DeviceTransportType } from '@shared/m
 import { isDefinedAndNotNull } from '@core/utils';
 import {
   ObjectLwM2M, ServerSecurityConfig
-} from "../../modules/home/components/profile/device/lwm2m/profile-config.models";
+} from '../../modules/home/components/profile/device/lwm2m/profile-config.models';
 
 @Injectable({
   providedIn: 'root'

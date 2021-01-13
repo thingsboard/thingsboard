@@ -14,12 +14,12 @@
 /// limitations under the License.
 ///
 
-import {Component, forwardRef, Inject, Input, OnInit, ViewChild} from "@angular/core";
+import {Component, forwardRef, Inject, Input, OnInit, ViewChild} from '@angular/core';
 
 import {
   ControlValueAccessor,
   FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators
-} from "@angular/forms";
+} from '@angular/forms';
 import {
   SECURITY_CONFIG_MODE,
   SECURITY_CONFIG_MODE_NAMES,
@@ -28,12 +28,12 @@ import {
   DeviceCredentialsDialogLwm2mData,
   LEN_MAX_PSK,
   LEN_MAX_PRIVATE_KEY, LEN_MAX_PUBLIC_KEY_RPK, KEY_PRIVATE_REGEXP, LEN_MAX_PUBLIC_KEY_X509, KEY_PUBLIC_REGEXP_X509
-} from "@home/pages/device/lwm2m/security-config.models";
-import {Store} from "@ngrx/store";
-import {AppState} from "@core/core.state";
-import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
-import {PageComponent} from "@shared/components/page.component";
-import {MatPaginator} from "@angular/material/paginator";
+} from '@home/pages/device/lwm2m/security-config.models';
+import {Store} from '@ngrx/store';
+import {AppState} from '@core/core.state';
+import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {PageComponent} from '@shared/components/page.component';
+import {MatPaginator} from '@angular/material/paginator';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({

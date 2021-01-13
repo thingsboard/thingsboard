@@ -27,7 +27,7 @@ import { DashboardsTableConfigResolver } from '@modules/home/pages/dashboard/das
 import { DashboardPageComponent } from '@home/pages/dashboard/dashboard-page.component';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { dashboardBreadcumbLabelFunction, DashboardResolver } from '@home/pages/dashboard/dashboard-routing.module';
-import { EdgesTableConfigResolver } from "@home/pages/edge/edges-table-config.resolver";
+import { EdgesTableConfigResolver } from '@home/pages/edge/edges-table-config.resolver';
 
 const routes: Routes = [
   {

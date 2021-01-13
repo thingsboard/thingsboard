@@ -27,7 +27,7 @@ import { BroadcastService } from '@app/core/services/broadcast.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
-import { EdgeService } from "@core/http/edge.service";
+import { EdgeService } from '@core/http/edge.service';
 
 @Component({
   selector: 'tb-entity-subtype-autocomplete',

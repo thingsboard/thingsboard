@@ -38,17 +38,17 @@ import { DialogService } from '@core/services/dialog.service';
 import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { ItemBufferService } from '@core/services/item-buffer.service';
-import { EdgeService } from "@core/http/edge.service";
-import { forkJoin, Observable } from "rxjs";
+import { EdgeService } from '@core/http/edge.service';
+import { forkJoin, Observable } from 'rxjs';
 import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
-} from "@home/dialogs/add-entities-to-edge-dialog.component";
-import { MatDialog } from "@angular/material/dialog";
-import { isUndefined } from "@core/utils";
-import { PageLink } from "@shared/models/page/page-link";
-import { Edge } from "@shared/models/edge.models";
-import { mergeMap } from "rxjs/operators";
+} from '@home/dialogs/add-entities-to-edge-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
+import { isUndefined } from '@core/utils';
+import { PageLink } from '@shared/models/page/page-link';
+import { Edge } from '@shared/models/edge.models';
+import { mergeMap } from 'rxjs/operators';
 
 @Injectable()
 export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {

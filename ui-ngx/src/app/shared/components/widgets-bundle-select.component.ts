@@ -25,7 +25,7 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { WidgetService } from '@core/http/widget.service';
 import { isDefined } from '@core/utils';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { getCurrentAuthState } from "@core/auth/auth.selectors";
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 @Component({
   selector: 'tb-widgets-bundle-select',

@@ -64,11 +64,11 @@ import {
 } from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
 import { DashboardTabsComponent } from '@home/pages/dashboard/dashboard-tabs.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
-import { EdgeService } from "@core/http/edge.service";
+import { EdgeService } from '@core/http/edge.service';
 import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
-} from "@home/dialogs/add-entities-to-edge-dialog.component";
+} from '@home/dialogs/add-entities-to-edge-dialog.component';
 
 @Injectable()
 export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<DashboardInfo | Dashboard>> {

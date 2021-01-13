@@ -25,7 +25,7 @@ import { DeviceService } from '@core/http/device.service';
 import { EntitySubtype, EntityType } from '@app/shared/models/entity-type.models';
 import { BroadcastService } from '@app/core/services/broadcast.service';
 import { AssetService } from '@core/http/asset.service';
-import { EdgeService } from "@core/http/edge.service";
+import { EdgeService } from '@core/http/edge.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 
 @Component({

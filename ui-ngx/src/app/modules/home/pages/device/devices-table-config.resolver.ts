@@ -64,11 +64,11 @@ import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 import { DeviceWizardDialogComponent } from '@home/components/wizard/device-wizard-dialog.component';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { isDefinedAndNotNull } from '@core/utils';
-import { EdgeService } from "@core/http/edge.service";
+import { EdgeService } from '@core/http/edge.service';
 import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
-} from "@home/dialogs/add-entities-to-edge-dialog.component";
+} from '@home/dialogs/add-entities-to-edge-dialog.component';
 
 @Injectable()
 export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<DeviceInfo>> {
