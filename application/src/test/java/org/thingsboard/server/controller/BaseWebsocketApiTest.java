@@ -47,6 +47,7 @@ import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataKey;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
@@ -120,7 +121,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
                 Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
         EntityHistoryCmd historyCmd = new EntityHistoryCmd();
-        historyCmd.setKeys(Arrays.asList("temperature"));
+        historyCmd.setKeys(Arrays.asList(new EntityDataKey("temperature", false)));
         historyCmd.setAgg(Aggregation.NONE);
         historyCmd.setLimit(1000);
         historyCmd.setStartTs(now - TimeUnit.HOURS.toMillis(1));
@@ -194,7 +195,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
 
         TimeSeriesCmd tsCmd = new TimeSeriesCmd();
-        tsCmd.setKeys(Arrays.asList("temperature"));
+        tsCmd.setKeys(Arrays.asList(new EntityDataKey("temperature", false)));
         tsCmd.setAgg(Aggregation.NONE);
         tsCmd.setLimit(1000);
         tsCmd.setStartTs(now - TimeUnit.HOURS.toMillis(1));

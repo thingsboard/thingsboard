@@ -186,7 +186,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
             List<EntityKey> keys = null;
             if (curTsCmd != null) {
                 resultToLatestValues = false;
-                keys = curTsCmd.getKeys().stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key, true)).collect(Collectors.toList());
+                keys = curTsCmd.getKeys().stream().map(entityDataKey -> new EntityKey(EntityKeyType.TIME_SERIES, entityDataKey.getKey(), entityDataKey.isDataConversion())).collect(Collectors.toList());
             } else if (latestValueCmd != null) {
                 resultToLatestValues = true;
                 keys = latestValueCmd.getKeys();

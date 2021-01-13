@@ -55,6 +55,7 @@ import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataKey;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.GetTsCmd;
@@ -338,15 +339,15 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private ListenableFuture<TbEntityDataSubCtx> handleGetTsCmd(TbEntityDataSubCtx ctx, GetTsCmd cmd, boolean subscribe) {
         // TODO: 13.01.21 fix this method
-        List<String> keys = cmd.getKeys();
+        List<EntityDataKey> keys = cmd.getKeys();
         List<ReadTsKvQuery> finalTsKvQueryList;
-        List<ReadTsKvQuery> tsKvQueryList = cmd.getKeys().stream().map(key -> new BaseReadTsKvQuery(
-                key, cmd.getStartTs(), cmd.getEndTs(), cmd.getInterval(), getLimit(cmd.getLimit()), cmd.getAgg()
+        List<ReadTsKvQuery> tsKvQueryList = cmd.getKeys().stream().map(entityDataKey -> new BaseReadTsKvQuery(
+                entityDataKey.getKey(), cmd.getStartTs(), cmd.getEndTs(), cmd.getInterval(), getLimit(cmd.getLimit()), cmd.getAgg()
         )).collect(Collectors.toList());
         if (cmd.isFetchLatestPreviousPoint()) {
             finalTsKvQueryList = new ArrayList<>(tsKvQueryList);
-            finalTsKvQueryList.addAll(cmd.getKeys().stream().map(key -> new BaseReadTsKvQuery(
-                    key, cmd.getStartTs() - TimeUnit.DAYS.toMillis(365), cmd.getStartTs(), cmd.getInterval(), 1, cmd.getAgg()
+            finalTsKvQueryList.addAll(cmd.getKeys().stream().map(entityDataKey -> new BaseReadTsKvQuery(
+                    entityDataKey.getKey(), cmd.getStartTs() - TimeUnit.DAYS.toMillis(365), cmd.getStartTs(), cmd.getInterval(), 1, cmd.getAgg()
             )).collect(Collectors.toList()));
         } else {
             finalTsKvQueryList = tsKvQueryList;
@@ -357,7 +358,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         return Futures.transform(Futures.allAsList(fetchResultMap.values()), f -> {
             fetchResultMap.forEach((entityData, future) -> {
                 Map<String, List<TsValue>> keyData = new LinkedHashMap<>();
-                cmd.getKeys().forEach(key -> keyData.put(key, new ArrayList<>()));
+                cmd.getKeys().forEach(entityDataKey -> keyData.put(entityDataKey.getKey(), new ArrayList<>()));
                 try {
                     List<TsKvEntry> entityTsData = future.get();
                     if (entityTsData != null) {
@@ -384,7 +385,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             }
             wsService.sendWsMsg(ctx.getSessionId(), update);
             if (subscribe) {
-                ctx.createSubscriptions(keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key, true)).collect(Collectors.toList()), false);
+                ctx.createSubscriptions(keys.stream().map(entityDataKey -> new EntityKey(EntityKeyType.TIME_SERIES, entityDataKey.getKey(), entityDataKey.isDataConversion())).collect(Collectors.toList()), false);
             }
             ctx.getData().getData().forEach(ed -> ed.getTimeseries().clear());
             return ctx;

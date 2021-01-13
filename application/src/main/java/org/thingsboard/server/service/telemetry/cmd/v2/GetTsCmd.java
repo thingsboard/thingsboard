@@ -25,7 +25,7 @@ public interface GetTsCmd {
 
     long getEndTs();
 
-    List<String> getKeys();
+    List<EntityDataKey> getKeys();
 
     long getInterval();
 

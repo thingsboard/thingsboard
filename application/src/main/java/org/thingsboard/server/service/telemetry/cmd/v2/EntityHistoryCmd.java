@@ -23,7 +23,7 @@ import java.util.List;
 @Data
 public class EntityHistoryCmd implements GetTsCmd {
 
-    private List<String> keys;
+    private List<EntityDataKey> keys;
     private long startTs;
     private long endTs;
     private long interval;

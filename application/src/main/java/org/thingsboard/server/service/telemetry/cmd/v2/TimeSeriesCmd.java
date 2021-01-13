@@ -24,7 +24,7 @@ import java.util.List;
 @Data
 public class TimeSeriesCmd implements GetTsCmd {
 
-    private List<String> keys;
+    private List<EntityDataKey> keys;
     private long startTs;
     private long timeWindow;
     private long interval;
@@ -36,5 +36,10 @@ public class TimeSeriesCmd implements GetTsCmd {
     @Override
     public long getEndTs() {
         return startTs + timeWindow;
+    }
+
+    @Override
+    public List<EntityDataKey> getKeys() {
+        return keys;
     }
 }
