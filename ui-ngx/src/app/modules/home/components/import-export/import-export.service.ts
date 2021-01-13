@@ -406,6 +406,9 @@ export class ImportExportService {
   public importRuleChain(expectedRuleChainType: RuleChainType): Observable<RuleChainImport> {
     return this.openImportDialog('rulechain.import', 'rulechain.rulechain-file').pipe(
       mergeMap((ruleChainImport: RuleChainImport) => {
+        if (isUndefined(ruleChainImport.ruleChain.type)) {
+          ruleChainImport.ruleChain.type = ruleChainType.core;
+        }
         if (!this.validateImportedRuleChain(ruleChainImport)) {
           this.store.dispatch(new ActionNotificationShow(
             {message: this.translate.instant('rulechain.invalid-rulechain-file-error'),
@@ -468,9 +471,6 @@ export class ImportExportService {
       || isUndefined(ruleChainImport.metadata)
       || isUndefined(ruleChainImport.ruleChain.name)) {
       return false;
-    }
-    if (isUndefined(ruleChainImport.ruleChain.type)) {
-      ruleChainImport.ruleChain.type = ruleChainType.core;
     }
     return true;
   }
