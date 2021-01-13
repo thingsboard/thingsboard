@@ -710,7 +710,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       }
       //backward compatibility
       if(type !== DataKeyType.entityField) {
-        result.dataConversion = this.widgetType === this.widgetTypes.latest;
+        result.dataConversion = this.widgetType === this.widgetTypes.latest || this.widgetType === this.widgetTypes.alarm;
       }
       return result;
     }
