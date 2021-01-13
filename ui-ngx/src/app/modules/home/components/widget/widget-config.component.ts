@@ -67,7 +67,7 @@ import { JsonFormComponentData } from '@shared/components/json-form/json-form-co
 import { WidgetActionsData } from './action/manage-widget-actions.component.models';
 import { DashboardState } from '@shared/models/dashboard.models';
 import { entityFields } from '@shared/models/entity.models';
-import { Filter, Filters } from '@shared/models/query/query.models';
+import {EntityKeyType, Filter, Filters} from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
@@ -707,6 +707,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       }
       if (isDefined(this.modelValue.dataKeySettingsSchema.schema)) {
         result.settings = this.utils.generateObjectFromJsonSchema(this.modelValue.dataKeySettingsSchema.schema);
+      }
+      //backward compatibility
+      if(type !== DataKeyType.entityField) {
+        result.dataConversion = this.widgetType === this.widgetTypes.latest;
       }
       return result;
     }

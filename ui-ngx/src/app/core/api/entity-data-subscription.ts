@@ -17,6 +17,7 @@
 import { DataSet, DataSetHolder, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { AggregationType, SubscriptionTimewindow } from '@shared/models/time/time.models';
 import {
+  DataEntityKey,
   EntityData,
   EntityDataPageLink,
   EntityFilter,
@@ -85,7 +86,7 @@ export class EntityDataSubscription {
   private subsCommand: EntityDataCmd;
 
   private attrFields: Array<EntityKey>;
-  private tsFields: Array<EntityKey>;
+  private tsFields: Array<DataEntityKey>;
   private latestValues: Array<EntityKey>;
 
   private entityDataResolveSubject: Subject<EntityDataLoadResult>;
@@ -341,7 +342,9 @@ export class EntityDataSubscription {
           };
         } else {
           cmd.tsCmd = {
-            keys: this.tsFields.map(key => key.key),
+            keys: this.tsFields.map(key => {
+              return {key: key.key, dataConversion: key.dataConversion}
+            }),
             startTs: this.subsTw.startTs,
             timeWindow: this.subsTw.aggregation.timeWindow,
             interval: this.subsTw.aggregation.interval,
