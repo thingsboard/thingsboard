@@ -25,6 +25,7 @@ import { AfterViewInit, EventEmitter, Inject, OnInit, Directive } from '@angular
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AbstractControl, FormGroup } from '@angular/forms';
+import { RuleChainType } from '@shared/models/rule-chain.models';
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
@@ -313,7 +314,7 @@ export interface FcRuleNode extends FcRuleNodeType {
   error?: string;
   highlighted?: boolean;
   componentClazz?: string;
-  ruleChainType?: string;
+  ruleChainType?: RuleChainType;
 }
 
 export interface FcRuleEdge extends FcEdge {

@@ -31,7 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import { RuleChain, ruleChainType } from '@shared/models/rule-chain.models';
+import { RuleChain, RuleChainType } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainComponent } from '@modules/home/pages/rulechain/rulechain.component';
 import { DialogService } from '@core/services/dialog.service';
@@ -272,7 +272,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     if ($event) {
       $event.stopPropagation();
     }
-    const expectedRuleChainType = this.config.componentsData.ruleChainScope === 'tenant' ? ruleChainType.core : ruleChainType.edge;
+    const expectedRuleChainType = this.config.componentsData.ruleChainScope === 'tenant' ? RuleChainType.core : RuleChainType.edge;
     this.importExport.importRuleChain(expectedRuleChainType).subscribe((ruleChainImport) => {
       if (ruleChainImport) {
         this.itembuffer.storeRuleChainImport(ruleChainImport);
@@ -299,12 +299,12 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   saveRuleChain(ruleChain: RuleChain) {
     if (isUndefined(ruleChain.type)) {
       if (this.config.componentsData.ruleChainScope == 'tenant') {
-        ruleChain.type = ruleChainType.core;
+        ruleChain.type = RuleChainType.core;
       } else if (this.config.componentsData.ruleChainScope == 'edges') {
-        ruleChain.type = ruleChainType.edge;
+        ruleChain.type = RuleChainType.edge;
       } else {
         // safe fallback to default core type
-        ruleChain.type = ruleChainType.core;
+        ruleChain.type = RuleChainType.core;
       }
     }
     return this.ruleChainService.saveRuleChain(ruleChain);
@@ -550,7 +550,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   }
 
   fetchRuleChains(pageLink: PageLink) {
-    return this.ruleChainService.getRuleChains(pageLink, ruleChainType.core);
+    return this.ruleChainService.getRuleChains(pageLink, RuleChainType.core);
   }
 
   fetchEdgeRuleChains(pageLink: PageLink) {
@@ -558,7 +558,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       mergeMap((ruleChains) => {
         this.config.componentsData.autoAssignToEdgeRuleChainIds = [];
         ruleChains.map(ruleChain => this.config.componentsData.autoAssignToEdgeRuleChainIds.push(ruleChain.id.id));
-        return this.ruleChainService.getRuleChains(pageLink, ruleChainType.edge);
+        return this.ruleChainService.getRuleChains(pageLink, RuleChainType.edge);
       })
     );
   }

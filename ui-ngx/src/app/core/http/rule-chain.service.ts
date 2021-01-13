@@ -151,12 +151,8 @@ export class RuleChainService {
     return this.ruleNodeConfigFactories[directive];
   }
 
-  public getRuleNodeComponentByClazz(clazz: string): RuleNodeComponentDescriptor {
-    let mergedRuleNodeComponents: RuleNodeComponentDescriptor[] = [];
-    this.ruleNodeComponentsMap.forEach((value: Array<RuleNodeComponentDescriptor>, key: RuleChainType) => {
-      mergedRuleNodeComponents = mergedRuleNodeComponents.concat(value);
-    });
-    const found = mergedRuleNodeComponents.filter((component) => component.clazz === clazz);
+  public getRuleNodeComponentByClazz(ruleChainType: RuleChainType = RuleChainType.core, clazz: string): RuleNodeComponentDescriptor {
+    const found = this.ruleNodeComponentsMap.get(ruleChainType).filter((component) => component.clazz === clazz);
     if (found && found.length) {
       return found[0];
     } else {

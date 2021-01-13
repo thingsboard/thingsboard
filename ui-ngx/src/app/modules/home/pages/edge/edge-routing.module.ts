@@ -29,7 +29,7 @@ import { dashboardBreadcumbLabelFunction, DashboardResolver } from '@home/pages/
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
-import { ruleChainType } from '@shared/models/rule-chain.models';
+import { RuleChainType } from '@shared/models/rule-chain.models';
 import {
   importRuleChainBreadcumbLabelFunction,
   ResolvedRuleChainMetaDataResolver,
@@ -189,7 +189,7 @@ const routes: Routes = [
               auth: [Authority.TENANT_ADMIN],
               title: 'rulechain.edge-rulechain',
               import: false,
-              ruleChainType: ruleChainType.edge
+              ruleChainType: RuleChainType.edge
             },
             resolve: {
               ruleChain: RuleChainResolver,
@@ -210,7 +210,7 @@ const routes: Routes = [
               auth: [Authority.TENANT_ADMIN],
               title: 'rulechain.edge-rulechain',
               import: true,
-              ruleChainType: ruleChainType.edge
+              ruleChainType: RuleChainType.edge
             },
             resolve: {
               ruleNodeComponents: RuleNodeComponentsResolver

@@ -82,6 +82,13 @@ export class WidgetsBundleSelectComponent implements ControlValueAccessor, OnIni
 
   ngOnInit() {
     this.widgetsBundles$ = this.getWidgetsBundles().pipe(
+      map((widgetsBundles) => {
+        const authState = getCurrentAuthState(this.store);
+        if (!authState.edgesSupportEnabled) {
+          widgetsBundles = widgetsBundles.filter(widgetsBundle => widgetsBundle.alias !== 'edge_widgets');
+        }
+        return widgetsBundles;
+      }),
       tap((widgetsBundles) => {
         this.widgetsBundles = widgetsBundles;
         if (this.selectFirstBundle) {
@@ -94,13 +101,6 @@ export class WidgetsBundleSelectComponent implements ControlValueAccessor, OnIni
             }
           }
         }
-      }),
-      map((widgetsBundles) => {
-        const authState = getCurrentAuthState(this.store);
-        if (!authState.edgesSupportEnabled) {
-          widgetsBundles = widgetsBundles.filter(widgetsBundle => widgetsBundle.alias !== 'edge_widgets');
-        }
-        return widgetsBundles;
       }),
       share()
     );

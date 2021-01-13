@@ -33,8 +33,7 @@ import { Observable } from 'rxjs';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import {
   ResolvedRuleChainMetaData,
-  RuleChain,
-  ruleChainType,
+  RuleChain, RuleChainType
 } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
@@ -145,7 +144,7 @@ const routes: Routes = [
           auth: [Authority.TENANT_ADMIN],
           title: 'rulechain.rulechain',
           import: false,
-          ruleChainType: ruleChainType.core
+          ruleChainType: RuleChainType.core
         },
         resolve: {
           ruleChain: RuleChainResolver,
@@ -166,7 +165,7 @@ const routes: Routes = [
           auth: [Authority.TENANT_ADMIN],
           title: 'rulechain.rulechain',
           import: true,
-          ruleChainType: ruleChainType.core
+          ruleChainType: RuleChainType.core
         },
         resolve: {
           ruleNodeComponents: RuleNodeComponentsResolver

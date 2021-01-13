@@ -24,7 +24,7 @@ import { EdgeInfo } from '@shared/models/edge.models';
 import { TranslateService } from '@ngx-translate/core';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { guid, isUndefined } from '@core/utils';
+import { generateSecret, guid } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { WINDOW } from '@core/services/window.service';
 
@@ -51,7 +51,7 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
   ngOnInit() {
     this.edgeScope = this.entitiesTableConfig.componentsData.edgeScope;
     this.entityForm.patchValue({
-      cloudEndpoint:this.window.location.origin
+      cloudEndpoint: this.window.location.origin
     });
     super.ngOnInit();
   }
@@ -76,8 +76,8 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
         label: [entity ? entity.label : ''],
         cloudEndpoint: [null, [Validators.required]],
         edgeLicenseKey: ['', [Validators.required]],
-        routingKey: this.fb.control({ value: entity ? entity.routingKey : null, disabled: true }),
-        secret: this.fb.control({ value: entity ? entity.secret : null, disabled: true }),
+        routingKey: this.fb.control({value: entity ? entity.routingKey : null, disabled: true}),
+        secret: this.fb.control({value: entity ? entity.secret : null, disabled: true}),
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : '']
@@ -107,14 +107,14 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
 
   updateFormState() {
     super.updateFormState();
-    this.entityForm.get('routingKey').disable({ emitEvent: false });
-    this.entityForm.get('secret').disable({ emitEvent: false });
+    this.entityForm.get('routingKey').disable({emitEvent: false});
+    this.entityForm.get('secret').disable({emitEvent: false});
   }
 
   private checkIsNewEdge(entity: EdgeInfo, form: FormGroup) {
     if (entity && !entity.id) {
-      form.get('routingKey').patchValue(guid(), { emitEvent: false });
-      form.get('secret').patchValue(this.generateSecret(20), { emitEvent: false });
+      form.get('routingKey').patchValue(guid(), {emitEvent: false});
+      form.get('secret').patchValue(generateSecret(20), {emitEvent: false});
     }
   }
 
@@ -127,18 +127,6 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
-  }
-
-  generateSecret(length): string {
-    if (isUndefined(length) || length == null) {
-      length = 1;
-    }
-    var l = length > 10 ? 10 : length;
-    var str = Math.random().toString(36).substr(2, l);
-    if (str.length >= length) {
-      return str;
-    }
-    return str.concat(this.generateSecret(length - str.length));
   }
 
   onEdgeInfoCopied(type: string) {

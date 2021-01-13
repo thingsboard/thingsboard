@@ -69,7 +69,7 @@ import {
 } from '@shared/models/query/query.models';
 import { alarmFields } from '@shared/models/alarm.models';
 import { EdgeService } from "@core/http/edge.service";
-import { ruleChainType } from "@shared/models/rule-chain.models";
+import { RuleChainType } from "@shared/models/rule-chain.models";
 
 @Injectable({
   providedIn: 'root'
@@ -324,7 +324,7 @@ export class EntityService {
           entitiesObservable = this.ruleChainService.getRuleChains(pageLink, subType, config);
         } else {
           // safe fallback to default core type
-          entitiesObservable = this.ruleChainService.getRuleChains(pageLink, ruleChainType.core, config);
+          entitiesObservable = this.ruleChainService.getRuleChains(pageLink, RuleChainType.core, config);
         }
         break;
       case EntityType.DASHBOARD:

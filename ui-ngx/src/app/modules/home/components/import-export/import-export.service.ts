@@ -56,8 +56,7 @@ import {
   RuleChain,
   RuleChainImport,
   RuleChainMetaData,
-  RuleChainType,
-  ruleChainType
+  RuleChainType
 } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import * as JSZip from 'jszip';
@@ -470,7 +469,7 @@ export class ImportExportService {
       return false;
     }
     if (isUndefined(ruleChainImport.ruleChain.type)) {
-      ruleChainImport.ruleChain.type = ruleChainType.core;
+      ruleChainImport.ruleChain.type = RuleChainType.core;
     }
     return true;
   }
