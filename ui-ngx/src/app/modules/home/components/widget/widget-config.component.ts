@@ -709,7 +709,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         result.settings = this.utils.generateObjectFromJsonSchema(this.modelValue.dataKeySettingsSchema.schema);
       }
       //backward compatibility
-      if(type !== DataKeyType.entityField) {
+      if(type !== DataKeyType.entityField && type !== DataKeyType.alarm) {
         result.dataConversion = this.widgetType === this.widgetTypes.latest || this.widgetType === this.widgetTypes.alarm;
       }
       return result;

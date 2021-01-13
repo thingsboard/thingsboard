@@ -181,20 +181,23 @@ export class EntityDataSubscription {
     if (this.datasourceType === DatasourceType.entity) {
       const entityFields: Array<EntityKey> =
         this.entityDataSubscriptionOptions.dataKeys.filter(dataKey => dataKey.type === DataKeyType.entityField).map(
-          dataKey => ({ key: dataKey.name })
+          dataKey => ({ type: EntityKeyType.ENTITY_FIELD, key: dataKey.name })
         );
       if (!entityFields.find(key => key.key === 'name')) {
         entityFields.push({
+          type: EntityKeyType.ENTITY_FIELD,
           key: 'name'
         });
       }
       if (!entityFields.find(key => key.key === 'label')) {
         entityFields.push({
+          type: EntityKeyType.ENTITY_FIELD,
           key: 'label'
         });
       }
       if (!entityFields.find(key => key.key === 'additionalInfo')) {
         entityFields.push({
+          type: EntityKeyType.ENTITY_FIELD,
           key: 'additionalInfo'
         });
       }

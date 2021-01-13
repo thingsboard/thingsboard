@@ -92,12 +92,12 @@ export class AlarmDataSubscription {
 
       const alarmFields: Array<EntityKey> =
         this.alarmDataSubscriptionOptions.dataKeys.filter(dataKey => dataKey.type === DataKeyType.alarm).map(
-          dataKey => ({ type: EntityKeyType.ALARM_FIELD, key: dataKey.name, dataConversion: dataKey.dataConversion})
+          dataKey => ({ type: EntityKeyType.ALARM_FIELD, key: dataKey.name })
         );
 
       const entityFields: Array<EntityKey> =
         this.alarmDataSubscriptionOptions.dataKeys.filter(dataKey => dataKey.type === DataKeyType.entityField).map(
-          dataKey => ({ key: dataKey.name })
+          dataKey => ({ type: EntityKeyType.ENTITY_FIELD, key: dataKey.name })
         );
 
       const attrFields = this.alarmDataSubscriptionOptions.dataKeys.filter(dataKey => dataKey.type === DataKeyType.attribute).map(

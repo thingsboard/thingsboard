@@ -62,7 +62,7 @@
           <input matInput formControlName="decimals" type="number" min="0" max="15" step="1">
         </mat-form-field>
       </div>
-      <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="start center" *ngIf="modelValue.type !== dataKeyTypes.entityField">
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="start center" *ngIf="modelValue.type !== dataKeyTypes.entityField && modelValue.type !== dataKeyTypes.alarm">
         <mat-checkbox formControlName="dataConversion">
           {{ 'datakey.data-conversion' | translate }}
         </mat-checkbox>
