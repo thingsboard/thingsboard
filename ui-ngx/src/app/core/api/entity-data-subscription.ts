@@ -329,7 +329,9 @@ export class EntityDataSubscription {
       if (this.tsFields.length > 0) {
         if (this.history) {
           cmd.historyCmd = {
-            keys: this.tsFields.map(key => key.key),
+            keys: this.tsFields.map(key => {
+              return {key: key.key, dataConversion: key.dataConversion}
+            }),
             startTs: this.subsTw.fixedWindow.startTimeMs,
             endTs: this.subsTw.fixedWindow.endTimeMs,
             interval: this.subsTw.aggregation.interval,
