@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -37,7 +38,8 @@ import java.util.Optional;
 @Slf4j
 public class BaseEventService implements EventService {
 
-    private static final int MAX_DEBUG_EVENT_SYMBOLS = 4 * 1024;
+    @Value("${event.debug.max-symbols:4096}")
+    private int maxDebugEventSymbols;
 
     @Autowired
     public EventDao eventDao;
@@ -69,8 +71,8 @@ public class BaseEventService implements EventService {
         if (event.getType().startsWith("DEBUG") && event.getBody() != null && event.getBody().has("data")) {
             String dataStr = event.getBody().get("data").asText();
             int length = dataStr.length();
-            if (length > MAX_DEBUG_EVENT_SYMBOLS) {
-                ((ObjectNode) event.getBody()).put("data", dataStr.substring(0, MAX_DEBUG_EVENT_SYMBOLS) + "...[truncated " + (length - MAX_DEBUG_EVENT_SYMBOLS) + " symbols]");
+            if (length > maxDebugEventSymbols) {
+                ((ObjectNode) event.getBody()).put("data", dataStr.substring(0, maxDebugEventSymbols) + "...[truncated " + (length - maxDebugEventSymbols) + " symbols]");
                 log.trace("[{}] Event was truncated: {}", event.getId(), dataStr);
             }
         }
