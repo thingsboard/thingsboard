@@ -122,7 +122,7 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         KeyFilter highTempFilter = new KeyFilter();
-        highTempFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature", false));
+        highTempFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature", true));
         highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
         highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
@@ -138,7 +138,7 @@ public class TbDeviceProfileNodeTest {
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
         KeyFilter lowTempFilter = new KeyFilter();
-        lowTempFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature", false));
+        lowTempFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature", true));
         lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
         lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
