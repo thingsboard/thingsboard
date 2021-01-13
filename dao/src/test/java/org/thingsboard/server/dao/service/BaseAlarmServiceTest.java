@@ -396,7 +396,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
         pageLink.setPage(0);
         pageLink.setPageSize(10);
-        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false)));
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey("createdTime")));
 
         pageLink.setStartTs(0L);
         pageLink.setEndTs(System.currentTimeMillis());
@@ -484,7 +484,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
         pageLink.setPage(0);
         pageLink.setPageSize(10);
-        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false)));
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey("createdTime")));
 
         pageLink.setStartTs(0L);
         pageLink.setEndTs(System.currentTimeMillis());

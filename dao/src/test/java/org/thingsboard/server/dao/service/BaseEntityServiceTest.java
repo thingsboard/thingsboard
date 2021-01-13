@@ -211,10 +211,10 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         filter.setFilters(Collections.singletonList(new EntityTypeFilter("Contains", Collections.singletonList(EntityType.DEVICE))));
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false), EntityDataSortOrder.Direction.ASC
+                new EntityKey("createdTime"), EntityDataSortOrder.Direction.ASC
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
-        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false));
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey("name"));
         List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature", false));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
@@ -283,10 +283,10 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         filter.setRelationType("Contains");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false), EntityDataSortOrder.Direction.ASC
+                new EntityKey("createdTime"), EntityDataSortOrder.Direction.ASC
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
-        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false));
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey("name"));
         List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature", false));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
@@ -356,10 +356,10 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         filter.setRelationType("Manages");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false), EntityDataSortOrder.Direction.ASC
+                new EntityKey("createdTime"), EntityDataSortOrder.Direction.ASC
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
-        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false));
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey("name"));
         List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.ATTRIBUTE, "consumption", false));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
@@ -473,10 +473,10 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false), EntityDataSortOrder.Direction.ASC
+                new EntityKey("createdTime"), EntityDataSortOrder.Direction.ASC
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
-        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false));
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey( "name"));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
         PageData<EntityData> data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
@@ -509,7 +509,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Assert.assertEquals(deviceNames, loadedNames);
 
         sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false), EntityDataSortOrder.Direction.DESC
+                new EntityKey("name"), EntityDataSortOrder.Direction.DESC
         );
 
         pageLink = new EntityDataPageLink(10, 0, "device1", sortOrder);
@@ -559,10 +559,10 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false), EntityDataSortOrder.Direction.ASC
+                new EntityKey( "createdTime"), EntityDataSortOrder.Direction.ASC
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
-        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false));
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey("name"));
         for (EntityKeyType currentAttributeKeyType : attributesEntityTypes) {
             List<EntityKey> latestValues = Collections.singletonList(new EntityKey(currentAttributeKeyType, "temperature", false));
             EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
@@ -659,10 +659,10 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false), EntityDataSortOrder.Direction.ASC
+                new EntityKey("createdTime"), EntityDataSortOrder.Direction.ASC
         );
 
-        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false));
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey("name"));
         List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, "temperature", false));
 
         KeyFilter greaterTemperatureFilter = createNumericKeyFilter("temperature", EntityKeyType.CLIENT_ATTRIBUTE, NumericFilterPredicate.NumericOperation.GREATER, 45);
@@ -805,10 +805,10 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false), EntityDataSortOrder.Direction.ASC
+                new EntityKey("createdTime"), EntityDataSortOrder.Direction.ASC
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
-        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false));
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey("name"));
         List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "temperature", false));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
@@ -936,11 +936,11 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false), EntityDataSortOrder.Direction.DESC
+                new EntityKey("createdTime"), EntityDataSortOrder.Direction.DESC
         );
 
-        List<EntityKey> entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false),
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "entityType", false));
+        List<EntityKey> entityFields = Arrays.asList(new EntityKey("name"),
+                new EntityKey("entityType"));
 
         List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, "attributeString", false));
 
@@ -1068,11 +1068,11 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false), EntityDataSortOrder.Direction.DESC
+                new EntityKey("createdTime"), EntityDataSortOrder.Direction.DESC
         );
 
-        List<EntityKey> entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false),
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "entityType", false));
+        List<EntityKey> entityFields = Arrays.asList(new EntityKey("name"),
+                new EntityKey("entityType"));
 
         List<KeyFilter> keyFiltersEqualString = createStringKeyFilters("entityType", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.EQUAL, "device");
         List<KeyFilter> keyFiltersNotEqualString = createStringKeyFilters("entityType", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.NOT_EQUAL, "asset");
@@ -1184,7 +1184,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         filter.setDeviceType("default");
         filter.setDeviceNameFilter("");
 
-        EntityDataSortOrder sortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false), EntityDataSortOrder.Direction.DESC);
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(new EntityKey("name"), EntityDataSortOrder.Direction.DESC);
 
         List<KeyFilter> deviceTypeFilters = createStringKeyFilters("type", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.EQUAL, "default");
 
@@ -1193,8 +1193,8 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
         List<KeyFilter> nameFilters = createStringKeyFilters("name", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.CONTAINS, "Device");
 
-        List<EntityKey> entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false),
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "type", false));
+        List<EntityKey> entityFields = Arrays.asList(new EntityKey("name"),
+                new EntityKey("type"));
 
         // Device type filters
 
@@ -1240,7 +1240,11 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
     private List<KeyFilter> createStringKeyFilters(String key, EntityKeyType keyType, StringFilterPredicate.StringOperation operation, String value){
         KeyFilter filter = new KeyFilter();
-        filter.setKey(new EntityKey(keyType, key, false));
+        if (keyType.equals(EntityKeyType.ENTITY_FIELD)) {
+            filter.setKey(new EntityKey(key));
+        } else {
+            filter.setKey(new EntityKey(keyType, key, true));
+        }
         StringFilterPredicate predicate = new StringFilterPredicate();
         predicate.setValue(FilterPredicateValue.fromString(value));
         predicate.setOperation(operation);

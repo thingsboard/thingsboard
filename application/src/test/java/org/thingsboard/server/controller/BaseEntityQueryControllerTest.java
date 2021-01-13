@@ -151,10 +151,10 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false), EntityDataSortOrder.Direction.ASC
+                new EntityKey("createdTime"), EntityDataSortOrder.Direction.ASC
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
-        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false));
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey("name"));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
 
@@ -188,7 +188,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         Assert.assertEquals(deviceNames, loadedNames);
 
         sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false), EntityDataSortOrder.Direction.DESC
+                new EntityKey("name"), EntityDataSortOrder.Direction.DESC
         );
 
         pageLink = new EntityDataPageLink(10, 0, "device1", sortOrder);
@@ -232,11 +232,11 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime", false), EntityDataSortOrder.Direction.ASC
+                new EntityKey("createdTime"), EntityDataSortOrder.Direction.ASC
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
-        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name", false));
-        List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature", false));
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey("name"));
+        List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature", true));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
         PageData<EntityData> data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
@@ -258,7 +258,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
 
         pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
         KeyFilter highTemperatureFilter = new KeyFilter();
-        highTemperatureFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature", false));
+        highTemperatureFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature", true));
         NumericFilterPredicate predicate = new NumericFilterPredicate();
         predicate.setValue(FilterPredicateValue.fromDouble(45));
         predicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);

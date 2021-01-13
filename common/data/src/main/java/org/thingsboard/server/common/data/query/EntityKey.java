@@ -15,11 +15,37 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import lombok.Data;
 
-@Data
 public class EntityKey {
+
     private final EntityKeyType type;
     private final String key;
     private final boolean dataConversion;
+
+    public EntityKeyType getType() {
+        return type;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public boolean isDataConversion() {
+        return dataConversion;
+    }
+
+    public EntityKey(EntityKeyType type, String key, boolean dataConversion) {
+        this.type = type;
+        this.key = key;
+        this.dataConversion = dataConversion;
+    }
+
+    public EntityKey(String entityKeyField) {
+        this.type = EntityKeyType.ENTITY_FIELD;
+        this.key = entityKeyField;
+        this.dataConversion = false;
+    }
+
+
+
 }

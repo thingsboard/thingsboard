@@ -217,8 +217,8 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                     }
                 }, s -> true, s -> {
                     List<TsKvEntry> subscriptionUpdate = null;
+                    Map<String, TbSubscriptionKeyState> keyStateMap = s.getKeyStates();
                     for (TsKvEntry kv : ts) {
-                        Map<String, TbSubscriptionKeyState> keyStateMap = s.getKeyStates();
                         boolean hasKeyState = keyStateMap.containsKey((kv.getKey()));
                         if (isInTimeRange(s, kv.getTs()) && (s.isAllKeys() || hasKeyState)) {
                             if (subscriptionUpdate == null) {

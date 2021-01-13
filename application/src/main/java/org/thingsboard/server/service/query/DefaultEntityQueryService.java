@@ -127,7 +127,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
         EntityDataSortOrder sortOrder = query.getPageLink().getSortOrder();
         EntityDataSortOrder entitiesSortOrder;
         if (sortOrder == null || sortOrder.getKey().getType().equals(EntityKeyType.ALARM_FIELD)) {
-            entitiesSortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, ModelConstants.CREATED_TIME_PROPERTY, false));
+            entitiesSortOrder = new EntityDataSortOrder(new EntityKey(ModelConstants.CREATED_TIME_PROPERTY));
         } else {
             entitiesSortOrder = sortOrder;
         }

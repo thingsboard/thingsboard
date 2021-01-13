@@ -120,16 +120,15 @@ public class TbSubscriptionUtils {
 
     private static TransportProtos.EntityKeyTypeProto toEntityAttributeKeyTypeProto(EntityKeyType entityKeyType) {
         switch (entityKeyType) {
-            case ATTRIBUTE:
-                return EntityKeyTypeProto.ATTRIBUTE;
             case CLIENT_ATTRIBUTE:
                 return EntityKeyTypeProto.CLIENT_ATTRIBUTE;
             case SHARED_ATTRIBUTE:
                 return EntityKeyTypeProto.SERVER_ATTRIBUTE;
             case SERVER_ATTRIBUTE:
                 return EntityKeyTypeProto.SHARED_ATTRIBUTE;
+            default:
+                return EntityKeyTypeProto.ATTRIBUTE;
         }
-        return EntityKeyTypeProto.ATTRIBUTE;
     }
 
     private static EntityKeyType fromEntityKeyTypeProto(EntityKeyTypeProto entityKeyTypeProto) {
