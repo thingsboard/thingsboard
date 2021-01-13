@@ -37,9 +37,4 @@ public class TimeSeriesCmd implements GetTsCmd {
     public long getEndTs() {
         return startTs + timeWindow;
     }
-
-    @Override
-    public List<EntityDataKey> getKeys() {
-        return keys;
-    }
 }

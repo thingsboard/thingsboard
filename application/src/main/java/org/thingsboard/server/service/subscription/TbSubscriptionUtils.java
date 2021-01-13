@@ -122,9 +122,9 @@ public class TbSubscriptionUtils {
         switch (entityKeyType) {
             case CLIENT_ATTRIBUTE:
                 return EntityKeyTypeProto.CLIENT_ATTRIBUTE;
-            case SHARED_ATTRIBUTE:
-                return EntityKeyTypeProto.SERVER_ATTRIBUTE;
             case SERVER_ATTRIBUTE:
+                return EntityKeyTypeProto.SERVER_ATTRIBUTE;
+            case SHARED_ATTRIBUTE:
                 return EntityKeyTypeProto.SHARED_ATTRIBUTE;
             default:
                 return EntityKeyTypeProto.ATTRIBUTE;
@@ -136,9 +136,9 @@ public class TbSubscriptionUtils {
             case CLIENT_ATTRIBUTE:
                 return EntityKeyType.CLIENT_ATTRIBUTE;
             case SHARED_ATTRIBUTE:
-                return EntityKeyType.SERVER_ATTRIBUTE;
-            case SERVER_ATTRIBUTE:
                 return EntityKeyType.SHARED_ATTRIBUTE;
+            case SERVER_ATTRIBUTE:
+                return EntityKeyType.SERVER_ATTRIBUTE;
             default:
                 return EntityKeyType.ATTRIBUTE;
         }
