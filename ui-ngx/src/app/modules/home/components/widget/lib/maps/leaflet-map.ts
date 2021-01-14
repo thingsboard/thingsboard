@@ -217,18 +217,18 @@ export default abstract class LeafletMap {
       });
 
       const dragListener = (e: L.DragEndEvent) => {
-        const polygonOffset = this.options.provider === MapProviders.image ? 10 : 0.01;
+        if (e.type === 'dragend') {
+          const polygonOffset = this.options.provider === MapProviders.image ? 10 : 0.01;
 
-        let convert = this.convertToCustomFormat(mousePositionOnMap,polygonOffset);
-        mousePositionOnMap.lat = convert[this.options.latKeyName];
-        mousePositionOnMap.lng = convert[this.options.lngKeyName];
+          let convert = this.convertToCustomFormat(mousePositionOnMap,polygonOffset);
+          mousePositionOnMap.lat = convert[this.options.latKeyName];
+          mousePositionOnMap.lng = convert[this.options.lngKeyName];
 
-        const latlng1 = mousePositionOnMap;
-        const latlng2 = L.latLng(mousePositionOnMap.lat, mousePositionOnMap.lng + polygonOffset);
-        const latlng3 = L.latLng(mousePositionOnMap.lat - polygonOffset, mousePositionOnMap.lng);
-        polygonPoints = [latlng1, latlng2, latlng3];
+          const latlng1 = mousePositionOnMap;
+          const latlng2 = L.latLng(mousePositionOnMap.lat, mousePositionOnMap.lng + polygonOffset);
+          const latlng3 = L.latLng(mousePositionOnMap.lat - polygonOffset, mousePositionOnMap.lng);
+          polygonPoints = [latlng1, latlng2, latlng3];
 
-        if (e.type === 'dragend' && polygonPoints) {
           const newPolygon = L.polygon(polygonPoints).addTo(this.map);
           this.addPolygons.push(newPolygon);
           const datasourcesList = document.createElement('div');

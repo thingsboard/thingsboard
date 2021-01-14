@@ -192,7 +192,7 @@ export class ImageMap extends LeafletMap {
             this.updateMarkers(this.markersData);
             if (this.options.draggableMarker && this.addMarkers.length) {
               this.addMarkers.forEach((marker) => {
-                const prevPoint = this.convertToCustomFormat(marker.getLatLng(),null, prevWidth, prevHeight);
+                const prevPoint = this.convertToCustomFormat(marker.getLatLng(), null, prevWidth, prevHeight);
                 marker.setLatLng(this.convertPosition(prevPoint));
               });
             }
