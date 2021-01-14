@@ -112,6 +112,12 @@
             {{ 'widget-action.open-right-layout' | translate }}
           </mat-checkbox>
         </ng-template>
+        <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
+                                     widgetActionFormGroup.get('type').value : ''">
+          <mat-checkbox formControlName="openNewBrowserTab">
+            {{ 'widget-action.open-new-browser-tab' | translate }}
+          </mat-checkbox>
+        </ng-template>
         <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
                                      widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ||
                                      widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
