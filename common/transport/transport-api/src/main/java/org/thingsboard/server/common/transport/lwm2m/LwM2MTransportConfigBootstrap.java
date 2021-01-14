@@ -24,7 +24,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.security.PublicKey;
-import java.security.cert.X509Certificate;
 import java.util.Map;
 
 @Slf4j
@@ -103,10 +102,6 @@ public class LwM2MTransportConfigBootstrap {
     @Getter
     @Value("${transport.lwm2m.bootstrap.secure.alias:}")
     private String bootstrapAlias;
-
-    @Getter
-    @Setter
-    private X509Certificate bootstrapCertificate;
 
     @Getter
     @Setter

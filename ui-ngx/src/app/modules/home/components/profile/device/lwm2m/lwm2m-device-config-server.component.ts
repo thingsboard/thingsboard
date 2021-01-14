@@ -36,7 +36,7 @@ import {
 import { Store } from "@ngrx/store";
 import { AppState } from "@core/core.state";
 import { coerceBooleanProperty } from "@angular/cdk/coercion";
-import { WINDOW } from "../../../../../../core/services/window.service";
+import { WINDOW } from "@core/services/window.service";
 import { pairwise, startWith } from 'rxjs/operators';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 

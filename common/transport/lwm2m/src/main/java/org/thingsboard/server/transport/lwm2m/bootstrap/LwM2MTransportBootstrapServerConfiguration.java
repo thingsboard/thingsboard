@@ -245,8 +245,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
             }
             if (serverCertificate != null) {
                 builder.setCertificateChain(new X509Certificate[]{serverCertificate});
-                this.contextBs.getCtxBootStrap().setBootstrapCertificate(serverCertificate);
-                infoParamsX509(serverCertificate);
+                this.infoParamsX509(serverCertificate);
             }
         } catch (Exception ex) {
             log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());

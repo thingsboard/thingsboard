@@ -16,6 +16,9 @@
 #
 
 # source the properties:
+script_dir=$(dirname $0)
+echo "script_dir: $script_dir"
+cd $script_dir
 . ./lwM2M_keygen.properties
 
 # Generation of the keystore.

@@ -52,6 +52,7 @@ import java.security.KeyFactory;
 import java.security.KeyStoreException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
@@ -306,8 +307,36 @@ public class LwM2MTransportServerConfiguration {
             PrivateKey privateKey = (PrivateKey) this.context.getCtxServer().getKeyStoreValue().getKey(this.context.getCtxServer().getServerAlias(), this.context.getCtxServer().getKeyStorePasswordServer() == null ? null : this.context.getCtxServer().getKeyStorePasswordServer().toCharArray());
             builder.setPrivateKey(privateKey);
             builder.setCertificateChain(new X509Certificate[]{serverCertificate});
+            this.infoParamsX509(serverCertificate, privateKey);
         } catch (Exception ex) {
             log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
+        }
+//        /**
+//         * For deb => KeyStorePathFile == yml or commandline: KEY_STORE_PATH_FILE
+//         * For idea => KeyStorePathResource == common/transport/lwm2m/src/main/resources/credentials: in LwM2MTransportContextServer: credentials/serverKeyStore.jks
+//         */
+//        try {
+//            X509Certificate serverCertificate = (X509Certificate) this.context.getCtxServer().getKeyStoreValue().getCertificate(this.context.getCtxServer().getServerPrivateS());
+//            this.privateKey = (PrivateKey) this.context.getCtxServer().getKeyStoreValue().getKey(this.context.getCtxServer().getServerAlias(), this.context.getCtxServer().getKeyStorePasswordServer() == null ? null : this.context.getCtxServer().getKeyStorePasswordServer().toCharArray());
+//            if (this.privateKey != null && this.privateKey.getEncoded().length > 0) {
+//                builder.setPrivateKey(this.privateKey);
+//            }
+//            if (serverCertificate != null) {
+//                builder.setCertificateChain(new X509Certificate[]{serverCertificate});
+//                this.infoParamsX509(serverCertificate);
+//            }
+//        } catch (Exception ex) {
+//            log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
+//        }
+    }
+
+    private void infoParamsX509(X509Certificate certificate, PrivateKey privateKey) {
+        try {
+            log.info("Server uses X509 : \n X509 Certificate (Hex): [{}] \n Private Key (Hex): [{}]",
+                    Hex.encodeHexString(certificate.getEncoded()),
+                    Hex.encodeHexString(privateKey.getEncoded()));
+        } catch (CertificateEncodingException e) {
+            log.error("", e);
         }
     }
 }

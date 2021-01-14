@@ -233,7 +233,7 @@ public class LwM2MTransportConfigServer {
         } else {
             log.error(" [{}] Read Models", path.getAbsoluteFile());
         }
-        getInKeyStore();
+        this.getInKeyStore();
     }
 
     private File getPathModels() {
