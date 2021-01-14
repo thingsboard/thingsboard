@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -57,6 +58,9 @@ public class EntitiesFieldsAsyncLoader {
                         EntityFieldsData::new);
             case RULE_CHAIN:
                 return getAsync(ctx.getRuleChainService().findRuleChainByIdAsync(ctx.getTenantId(), (RuleChainId) original),
+                        EntityFieldsData::new);
+            case ENTITY_VIEW:
+                return getAsync(ctx.getEntityViewService().findEntityViewByIdAsync(ctx.getTenantId(), (EntityViewId) original),
                         EntityFieldsData::new);
             default:
                 return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original));
