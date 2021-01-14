@@ -30,10 +30,14 @@ public class EntityKeyDeserializer extends JsonDeserializer<EntityKey> {
     public EntityKey deserialize(JsonParser jsonParser, DeserializationContext ctx) throws IOException, JsonProcessingException {
         ObjectCodec oc = jsonParser.getCodec();
         ObjectNode node = oc.readTree(jsonParser);
-        if (node.has("dataConversion")) {
-            return new EntityKey(EntityKeyType.valueOf(node.get("type").asText()), node.get("key").asText(), node.get("dataConversion").asBoolean());
+        if (node.has("type") && node.has("key")) {
+            if (node.has("dataConversion")) {
+                return new EntityKey(EntityKeyType.valueOf(node.get("type").asText()), node.get("key").asText(), node.get("dataConversion").asBoolean());
+            } else {
+                return new EntityKey(EntityKeyType.valueOf(node.get("type").asText()), node.get("key").asText());
+            }
         } else {
-            return new EntityKey(EntityKeyType.valueOf(node.get("type").asText()), node.get("key").asText());
+            throw new IOException("Missing type or key!");
         }
     }
 
