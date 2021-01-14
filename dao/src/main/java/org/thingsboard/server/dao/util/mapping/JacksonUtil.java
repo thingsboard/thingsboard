@@ -71,6 +71,10 @@ public class JacksonUtil {
         return OBJECT_MAPPER.createObjectNode();
     }
 
+    public static ObjectNode newObjectNode(){
+        return OBJECT_MAPPER.createObjectNode();
+    }
+
     public static <T> T clone(T value) {
         return fromString(toString(value), (Class<T>) value.getClass());
     }
