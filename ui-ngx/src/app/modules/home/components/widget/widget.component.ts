@@ -1029,7 +1029,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         } else {
           url = `/dashboards/${targetDashboardId}?state=${state}`;
         }
-        this.router.navigateByUrl(url);
+        if (descriptor.openNewBrowserTab) {
+          window.open(url, '_blank');
+        } else {
+          this.router.navigateByUrl(url);
+        }
         break;
       case WidgetActionType.custom:
         const customFunction = descriptor.customFunction;
