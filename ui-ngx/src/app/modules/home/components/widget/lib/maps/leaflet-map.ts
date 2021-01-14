@@ -206,55 +206,30 @@ export default abstract class LeafletMap {
 
   addPolygonControl() {
     if (this.options.showPolygon && this.options.editablePolygon) {
-      let mousePositionOnMap: L.LatLng[];
+      let polygonPoints: L.LatLng[];
       let addPolygon: L.Control;
-      let latlng1: LatLng;
+      let mousePositionOnMap: LatLng;
       this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
-        latlng1 = e.latlng;
+        mousePositionOnMap = e.latlng;
       });
 
       const dragListener = (e: L.DragEndEvent) => {
         const polygonOffset = this.options.provider === MapProviders.image ? 10 : 0.01;
 
-        if(this.options.provider === MapProviders.image) {
-          latlng1.lng += polygonOffset;
-          latlng1.lat -= polygonOffset;
-          let convert = this.convertToCustomFormat(latlng1);
-          latlng1.lat = convert['latitude'];
-          latlng1.lng = convert['longitude'];
+        let convert = this.convertToCustomFormat(mousePositionOnMap,polygonOffset);
+        mousePositionOnMap.lat = convert[this.options.latKeyName];
+        mousePositionOnMap.lng = convert[this.options.lngKeyName];
 
-          if (convert['xPos'] !== 0) {
-            latlng1.lng -= polygonOffset;
-          }
+        const latlng1 = mousePositionOnMap;
+        const latlng2 = L.latLng(mousePositionOnMap.lat, mousePositionOnMap.lng + polygonOffset);
+        const latlng3 = L.latLng(mousePositionOnMap.lat - polygonOffset, mousePositionOnMap.lng);
+        polygonPoints = [latlng1, latlng2, latlng3];
 
-          if (convert['yPos'] !== 0) {
-            latlng1.lat += polygonOffset;
-          }
-        } else {
-          const maxLatitude = Projection.SphericalMercator['MAX_LATITUDE'];
-
-          if (latlng1.lng > 180 - polygonOffset) {
-            latlng1.lng = 180 - polygonOffset;
-          } else if (latlng1.lng < -180) {
-            latlng1.lng = -180;
-          }
-
-          if(latlng1.lat > maxLatitude){
-            latlng1.lat = maxLatitude;
-          }else if(latlng1.lat < -maxLatitude + polygonOffset){
-            latlng1.lat = -maxLatitude + polygonOffset;
-          }
-        }
-
-        const latlng2 = L.latLng(latlng1.lat, latlng1.lng + polygonOffset);
-        const latlng3 = L.latLng(latlng1.lat - polygonOffset, latlng1.lng);
-        mousePositionOnMap = [latlng1, latlng2, latlng3];
-
-        if (e.type === 'dragend' && mousePositionOnMap) {
-          const newPolygon = L.polygon(mousePositionOnMap).addTo(this.map);
+        if (e.type === 'dragend' && polygonPoints) {
+          const newPolygon = L.polygon(polygonPoints).addTo(this.map);
           this.addPolygons.push(newPolygon);
           const datasourcesList = document.createElement('div');
-          const customLatLng = {[this.options.polygonKeyName]: this.convertToPolygonFormat(mousePositionOnMap)};
+          const customLatLng = {[this.options.polygonKeyName]: this.convertToPolygonFormat(polygonPoints)};
           const header = document.createElement('p');
           header.appendChild(document.createTextNode('Select entity:'));
           header.setAttribute('style', 'font-size: 14px; margin: 8px 0');
@@ -448,12 +423,27 @@ export default abstract class LeafletMap {
         }).filter(el => !!el);
     }
 
-    convertToCustomFormat(position: L.LatLng): object {
-      if (position.lng > 180) {
-        position.lng = 180;
+
+    checkLngLat(position: L.LatLng, polygonOffset: number = 0){
+      const maxLatitude = Projection.SphericalMercator['MAX_LATITUDE'];
+      const minLatitude = -maxLatitude;
+      if (position.lng > 180 - polygonOffset) {
+        position.lng = 180 - polygonOffset;
       } else if (position.lng < -180) {
-        position.lng = -180;
+        position.lng= -180;
       }
+
+      if(position.lat > maxLatitude){
+        position.lat = maxLatitude;
+      }else if(position.lat < minLatitude + polygonOffset){
+        position.lat = minLatitude + polygonOffset;
+      }
+      return position;
+    }
+
+    convertToCustomFormat(position: L.LatLng, polygonOffset: number = 0): object {
+      position = this.checkLngLat(position,polygonOffset)
+
       return {
         [this.options.latKeyName]: position.lat,
         [this.options.lngKeyName]: position.lng
@@ -761,6 +751,11 @@ export default abstract class LeafletMap {
   dragPolygonVertex = (e?, data = {} as FormattedData) => {
     if (e === undefined || (e.type !== 'editable:vertex:dragend' && e.type !== 'editable:vertex:deleted')) {
       return;
+    }
+    if(this.options.provider !== MapProviders.image) {
+      for (let key in e.layer._latlngs[0]) {
+        e.layer._latlngs[0][key] = this.checkLngLat(e.layer._latlngs[0][key]);
+      }
     }
     this.savePolygonLocation({ ...data, ...this.convertPolygonToCustomFormat(e.layer._latlngs) }).subscribe();
   }

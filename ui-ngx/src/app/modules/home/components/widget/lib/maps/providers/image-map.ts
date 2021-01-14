@@ -16,7 +16,7 @@
 
 import L, { LatLngBounds, LatLngLiteral, LatLngTuple } from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { MapImage, PosFuncton, UnitedMapSettings } from '../map-models';
+import {MapImage, MapProviders, PosFuncton, UnitedMapSettings} from '../map-models';
 import { Observable, ReplaySubject } from 'rxjs';
 import { filter, map, mergeMap } from 'rxjs/operators';
 import { aspectCache, calculateNewPointCoordinate, parseFunction } from '@home/components/widget/lib/maps/common-maps-utils';
@@ -187,7 +187,7 @@ export class ImageMap extends LeafletMap {
             this.updateMarkers(this.markersData);
             if (this.options.draggableMarker && this.addMarkers.length) {
               this.addMarkers.forEach((marker) => {
-                const prevPoint = this.convertToCustomFormat(marker.getLatLng(), prevWidth, prevHeight);
+                const prevPoint = this.convertToCustomFormat(marker.getLatLng(),null, prevWidth, prevHeight);
                 marker.setLatLng(this.convertPosition(prevPoint));
               });
             }
@@ -257,11 +257,12 @@ export class ImageMap extends LeafletMap {
         return L.CRS.Simple.latLngToPoint(latLng, maxZoom - 1);
     }
 
-    convertToCustomFormat(position: L.LatLng, width = this.width, height = this.height): object {
+    convertToCustomFormat(position: L.LatLng, polygonOffset: number = 0, width = this.width, height = this.height): object {
+      position.lng += polygonOffset;
+      position.lat -= polygonOffset;
       const point = this.latLngToPoint(position);
       const customX = calculateNewPointCoordinate(point.x, width);
       const customY = calculateNewPointCoordinate(point.y, height);
-
       if (customX === 0) {
         point.x = 0;
       } else if (customX === 1) {
@@ -273,7 +274,16 @@ export class ImageMap extends LeafletMap {
       } else if (customY === 1) {
         point.y = height;
       }
+
       const customLatLng = this.pointToLatLng(point.x, point.y);
+
+      if (customX !== 0) {
+        customLatLng.lng -= polygonOffset;
+      }
+      if (customY !== 0) {
+        customLatLng.lat += polygonOffset;
+        }
+
 
       return {
         [this.options.xPosKeyName]: customX,
