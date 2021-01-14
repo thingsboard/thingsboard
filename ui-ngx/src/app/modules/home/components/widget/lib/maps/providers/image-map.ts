@@ -16,10 +16,15 @@
 
 import L, { LatLngBounds, LatLngLiteral, LatLngTuple } from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import {MapImage, MapProviders, PosFuncton, UnitedMapSettings} from '../map-models';
+import { MapImage, PosFuncton, UnitedMapSettings } from '../map-models';
 import { Observable, ReplaySubject } from 'rxjs';
 import { filter, map, mergeMap } from 'rxjs/operators';
-import { aspectCache, calculateNewPointCoordinate, parseFunction } from '@home/components/widget/lib/maps/common-maps-utils';
+import {
+  aspectCache,
+  calculateNewPointCoordinate,
+  checkLngLat,
+  parseFunction
+} from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -132,9 +137,9 @@ export class ImageMap extends LeafletMap {
     updateBounds(updateImage?: boolean, lastCenterPos?) {
         const w = this.width;
         const h = this.height;
-        let southWest = this.pointToLatLng(0, h);
-        let northEast = this.pointToLatLng(w, 0);
-        const bounds = new L.LatLngBounds(southWest, northEast);
+        this.southWest = this.pointToLatLng(0, h);
+        this.northEast = this.pointToLatLng(w, 0);
+        const bounds = new L.LatLngBounds(this.southWest, this.northEast);
 
         if (updateImage && this.imageOverlay) {
             this.imageOverlay.remove();
@@ -147,8 +152,8 @@ export class ImageMap extends LeafletMap {
             this.imageOverlay = L.imageOverlay(this.imageUrl, bounds).addTo(this.map);
         }
         const padding = 200 * maxZoom;
-        southWest = this.pointToLatLng(-padding, h + padding);
-        northEast = this.pointToLatLng(w + padding, -padding);
+        const southWest = this.pointToLatLng(-padding, h + padding);
+        const northEast = this.pointToLatLng(w + padding, -padding);
         const maxBounds = new L.LatLngBounds(southWest, northEast);
         this.map.setMaxBounds(maxBounds);
         if (lastCenterPos) {
@@ -257,9 +262,7 @@ export class ImageMap extends LeafletMap {
         return L.CRS.Simple.latLngToPoint(latLng, maxZoom - 1);
     }
 
-    convertToCustomFormat(position: L.LatLng, polygonOffset: number = 0, width = this.width, height = this.height): object {
-      position.lng += polygonOffset;
-      position.lat -= polygonOffset;
+    convertToCustomFormat(position: L.LatLng, offset = 0, width = this.width, height = this.height): object {
       const point = this.latLngToPoint(position);
       const customX = calculateNewPointCoordinate(point.x, width);
       const customY = calculateNewPointCoordinate(point.y, height);
@@ -275,15 +278,7 @@ export class ImageMap extends LeafletMap {
         point.y = height;
       }
 
-      const customLatLng = this.pointToLatLng(point.x, point.y);
-
-      if (customX !== 0) {
-        customLatLng.lng -= polygonOffset;
-      }
-      if (customY !== 0) {
-        customLatLng.lat += polygonOffset;
-        }
-
+      const customLatLng = checkLngLat(this.pointToLatLng(point.x, point.y), this.southWest, this.northEast, offset);
 
       return {
         [this.options.xPosKeyName]: customX,

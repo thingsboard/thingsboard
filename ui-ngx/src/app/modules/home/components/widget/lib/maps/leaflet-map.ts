@@ -46,6 +46,7 @@ import {
   createTooltip,
 } from '@home/components/widget/lib/maps/maps-utils';
 import {
+  checkLngLat,
   createLoadingDiv,
   parseArray,
   parseData,
@@ -79,6 +80,8 @@ export default abstract class LeafletMap {
     updatePending = false;
     addMarkers: L.Marker[] = [];
     addPolygons: L.Polygon[] = [];
+    southWest = new L.LatLng(-Projection.SphericalMercator['MAX_LATITUDE'], -180);
+    northEast = new L.LatLng(Projection.SphericalMercator['MAX_LATITUDE'], 180);
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
@@ -423,26 +426,8 @@ export default abstract class LeafletMap {
         }).filter(el => !!el);
     }
 
-
-    checkLngLat(position: L.LatLng, polygonOffset: number = 0){
-      const maxLatitude = Projection.SphericalMercator['MAX_LATITUDE'];
-      const minLatitude = -maxLatitude;
-      if (position.lng > 180 - polygonOffset) {
-        position.lng = 180 - polygonOffset;
-      } else if (position.lng < -180) {
-        position.lng= -180;
-      }
-
-      if(position.lat > maxLatitude){
-        position.lat = maxLatitude;
-      }else if(position.lat < minLatitude + polygonOffset){
-        position.lat = minLatitude + polygonOffset;
-      }
-      return position;
-    }
-
-    convertToCustomFormat(position: L.LatLng, polygonOffset: number = 0): object {
-      position = this.checkLngLat(position,polygonOffset)
+    convertToCustomFormat(position: L.LatLng, offset = 0): object {
+      position = checkLngLat(position, this.southWest, this.northEast, offset);
 
       return {
         [this.options.latKeyName]: position.lat,
@@ -754,7 +739,7 @@ export default abstract class LeafletMap {
     }
     if(this.options.provider !== MapProviders.image) {
       for (let key in e.layer._latlngs[0]) {
-        e.layer._latlngs[0][key] = this.checkLngLat(e.layer._latlngs[0][key]);
+        e.layer._latlngs[0][key] = checkLngLat(e.layer._latlngs[0][key], this.southWest, this.northEast);
       }
     }
     this.savePolygonLocation({ ...data, ...this.convertPolygonToCustomFormat(e.layer._latlngs) }).subscribe();
