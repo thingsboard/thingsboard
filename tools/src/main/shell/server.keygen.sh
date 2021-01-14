@@ -92,8 +92,8 @@ keytool -genkeypair -v \
   -keystore $SERVER_FILE_PREFIX.jks \
   -keypass $SERVER_KEY_PASSWORD \
   -storepass $SERVER_KEYSTORE_PASSWORD \
-  -keyalg RSA \
-  -keysize 2048 \
+  -keyalg $SERVER_KEY_ALG \
+  -keysize $SERVER_KEY_SIZE \
   -validity 9999
 
 status=$?
