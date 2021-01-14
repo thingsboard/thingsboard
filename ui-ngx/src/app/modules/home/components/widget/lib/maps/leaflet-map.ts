@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -581,10 +581,10 @@ export default abstract class LeafletMap {
         const marker: Marker = this.markers.get(key);
         const location = this.convertPosition(data);
         marker.updateMarkerPosition(location);
+        marker.setDataSources(data, dataSources);
         if (settings.showTooltip) {
             marker.updateMarkerTooltip(data);
         }
-        marker.setDataSources(data, dataSources);
         marker.updateMarkerIcon(settings);
         return marker;
     }
