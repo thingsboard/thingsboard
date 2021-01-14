@@ -35,7 +35,11 @@ public class EntityDataKeyDeserializer extends JsonDeserializer<EntityDataKey> {
         boolean isObject = treeNode.isObject();
         if (isObject) {
             ObjectNode node = (ObjectNode) treeNode;
-            return new EntityDataKey(node.get("key").asText(), node.get("dataConversion").asBoolean());
+            if (node.has("key") && node.has("dataConversion")) {
+                return new EntityDataKey(node.get("key").asText(), node.get("dataConversion").asBoolean());
+            } else {
+                throw new IOException("Missing key or dataConversion!");
+            }
         } else {
             return new EntityDataKey(((TextNode) treeNode).asText(""));
         }
