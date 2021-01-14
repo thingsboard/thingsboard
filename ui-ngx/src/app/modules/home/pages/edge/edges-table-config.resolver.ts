@@ -210,31 +210,31 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
           name: this.translate.instant('edge.manage-edge-assets'),
           icon: 'domain',
           isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.openEdgeAssets($event, entity)
+          onAction: ($event, entity) => this.openEdgeEntitiesByType($event, entity, EntityType.ASSET)
         },
         {
           name: this.translate.instant('edge.manage-edge-devices'),
           icon: 'devices_other',
           isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.openEdgeDevices($event, entity)
+          onAction: ($event, entity) => this.openEdgeEntitiesByType($event, entity, EntityType.DEVICE)
         },
         {
           name: this.translate.instant('edge.manage-edge-entity-views'),
           icon: 'view_quilt',
           isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.openEdgeEntityViews($event, entity)
+          onAction: ($event, entity) => this.openEdgeEntitiesByType($event, entity, EntityType.ENTITY_VIEW)
         },
         {
           name: this.translate.instant('edge.manage-edge-dashboards'),
           icon: 'dashboard',
           isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.openEdgeDashboards($event, entity)
+          onAction: ($event, entity) => this.openEdgeEntitiesByType($event, entity, EntityType.DASHBOARD)
         },
         {
           name: this.translate.instant('edge.manage-edge-rulechains'),
           icon: 'settings_ethernet',
           isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.openEdgeRuleChains($event, entity)
+          onAction: ($event, entity) => this.openEdgeEntitiesByType($event, entity, EntityType.RULE_CHAIN)
         }
       );
     }
@@ -260,25 +260,25 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
           name: this.translate.instant('edge.manage-edge-assets'),
           icon: 'domain',
           isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.openEdgeAssets($event, entity)
+          onAction: ($event, entity) => this.openEdgeEntitiesByType($event, entity, EntityType.ASSET)
         },
         {
           name: this.translate.instant('edge.manage-edge-devices'),
           icon: 'devices_other',
           isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.openEdgeDevices($event, entity)
+          onAction: ($event, entity) => this.openEdgeEntitiesByType($event, entity, EntityType.DEVICE)
         },
         {
           name: this.translate.instant('edge.manage-edge-entity-views'),
           icon: 'view_quilt',
           isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.openEdgeEntityViews($event, entity)
+          onAction: ($event, entity) => this.openEdgeEntitiesByType($event, entity, EntityType.ENTITY_VIEW)
         },
         {
           name: this.translate.instant('edge.manage-edge-dashboards'),
           icon: 'dashboard',
           isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.openEdgeDashboards($event, entity)
+          onAction: ($event, entity) => this.openEdgeEntitiesByType($event, entity, EntityType.DASHBOARD)
         }
       );
     }
@@ -392,39 +392,32 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     );
   }
 
-  openEdgeDashboards($event, edge) {
+  openEdgeEntitiesByType($event: Event, edge: Edge, entityType: EntityType) {
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`edges/${edge.id.id}/dashboards`);
-  }
-
-  openEdgeRuleChains($event, edge) {
-    if ($event) {
-      $event.stopPropagation();
+    let suffix: string;
+    switch (entityType) {
+      case EntityType.DEVICE:
+        suffix = 'devices';
+        break;
+      case EntityType.ASSET:
+        suffix = 'assets';
+        break;
+      case EntityType.EDGE:
+        suffix = 'assets';
+        break;
+      case EntityType.ENTITY_VIEW:
+        suffix = 'entityViews';
+        break;
+      case EntityType.DASHBOARD:
+        suffix = 'dashboards';
+        break;
+      case EntityType.RULE_CHAIN:
+        suffix = 'ruleChains';
+        break;
     }
-    this.router.navigateByUrl(`edges/${edge.id.id}/ruleChains`);
-  }
-
-  openEdgeAssets($event: Event, edge: Edge) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.router.navigateByUrl(`edges/${edge.id.id}/assets`);
-  }
-
-  openEdgeDevices($event, edge) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.router.navigateByUrl(`edges/${edge.id.id}/devices`);
-  }
-
-  openEdgeEntityViews($event, edge) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.router.navigateByUrl(`edges/${edge.id.id}/entityViews`);
+    this.router.navigateByUrl(`edges/${edge.id.id}/${suffix}`);
   }
 
   assignToCustomer($event: Event, edgesIds: Array<EdgeId>) {
@@ -537,19 +530,19 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
         this.unassignFromCustomer(action.event, action.entity);
         return true;
       case 'openEdgeAssets':
-        this.openEdgeAssets(action.event, action.entity);
+        this.openEdgeEntitiesByType(action.event, action.entity, EntityType.ASSET);
         return true;
       case 'openEdgeDevices':
-        this.openEdgeDevices(action.event, action.entity);
+        this.openEdgeEntitiesByType(action.event, action.entity, EntityType.DEVICE);
         return true;
       case 'openEdgeEntityViews':
-        this.openEdgeEntityViews(action.event, action.entity);
+        this.openEdgeEntitiesByType(action.event, action.entity, EntityType.ENTITY_VIEW);
         return true;
       case 'openEdgeDashboards':
-        this.openEdgeDashboards(action.event, action.entity);
+        this.openEdgeEntitiesByType(action.event, action.entity, EntityType.DASHBOARD);
         return true;
       case 'openEdgeRuleChains':
-        this.openEdgeRuleChains(action.event, action.entity);
+        this.openEdgeEntitiesByType(action.event, action.entity, EntityType.RULE_CHAIN);
         return true;
       case 'syncEdge':
         this.syncEdge(action.event, action.entity);

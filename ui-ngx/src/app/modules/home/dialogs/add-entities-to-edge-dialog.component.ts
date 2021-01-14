@@ -30,7 +30,7 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { ruleChainType } from '@shared/models/rule-chain.models';
+import { RuleChainType } from '@shared/models/rule-chain.models';
 
 export interface AddEntitiesToEdgeDialogData {
   edgeId: string;
@@ -85,7 +85,7 @@ export class AddEntitiesToEdgeDialogComponent extends
       case EntityType.RULE_CHAIN:
         this.assignToEdgeTitle = 'rulechain.assign-rulechain-to-edge-title';
         this.assignToEdgeText = 'rulechain.assign-rulechain-to-edge-text';
-        this.subType = ruleChainType.edge;
+        this.subType = RuleChainType.edge;
         break;
       case EntityType.ASSET:
         this.assignToEdgeTitle = 'asset.assign-asset-to-edge-title';

@@ -19,7 +19,7 @@ import { Component, OnInit } from '@angular/core';
 import { FcNodeComponent } from 'ngx-flowchart/dist/ngx-flowchart';
 import { FcRuleNode, RuleNodeType } from '@shared/models/rule-node.models';
 import { Router } from '@angular/router';
-import { ruleChainType } from '@app/shared/models/rule-chain.models';
+import { RuleChainType } from '@app/shared/models/rule-chain.models';
 
 @Component({
   // tslint:disable-next-line:component-selector
@@ -49,7 +49,7 @@ export class RuleNodeComponent extends FcNodeComponent implements OnInit {
       $event.stopPropagation();
     }
     if (node.targetRuleChainId) {
-      if (node.ruleChainType === ruleChainType.edge) {
+      if (node.ruleChainType === RuleChainType.edge) {
         this.router.navigateByUrl(`/edges/ruleChains/${node.targetRuleChainId}`);
       } else {
         this.router.navigateByUrl(`/ruleChains/${node.targetRuleChainId}`);

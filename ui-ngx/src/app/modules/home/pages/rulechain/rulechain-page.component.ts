@@ -48,8 +48,7 @@ import {
   RuleChainConnectionInfo,
   RuleChainImport,
   RuleChainMetaData,
-  ruleChainNodeComponent,
-  ruleChainType
+  ruleChainNodeComponent, RuleChainType
 } from '@shared/models/rule-chain.models';
 import { FcItemInfo, FlowchartConstants, NgxFlowchartComponent, UserCallbacks } from 'ngx-flowchart/dist/ngx-flowchart';
 import {
@@ -120,7 +119,7 @@ export class RuleChainPageComponent extends PageComponent
   isDirtyValue: boolean;
   isInvalid = false;
 
-  ruleChainType: string;
+  ruleChainType: RuleChainType;
 
   errorTooltips: {[nodeId: string]: JQueryTooltipster.ITooltipsterInstance} = {};
   isFullscreen = false;
@@ -514,7 +513,7 @@ export class RuleChainPageComponent extends PageComponent
     );
     const nodes: FcRuleNode[] = [];
     this.ruleChainMetaData.nodes.forEach((ruleNode) => {
-      const component = this.ruleChainService.getRuleNodeComponentByClazz(ruleNode.type);
+      const component = this.ruleChainService.getRuleNodeComponentByClazz(this.ruleChainType, ruleNode.type);
       const descriptor = ruleNodeTypeDescriptors.get(component.type);
       let icon = descriptor.icon;
       let iconUrl = null;
@@ -1287,7 +1286,7 @@ export class RuleChainPageComponent extends PageComponent
         if (this.isImport) {
           this.isDirtyValue = false;
           this.isImport = false;
-          if (this.ruleChainType !== ruleChainType.edge) {
+          if (this.ruleChainType !== RuleChainType.edge) {
             this.router.navigateByUrl(`ruleChains/${this.ruleChain.id.id}`);
           } else {
             this.router.navigateByUrl(`edges/ruleChains/${this.ruleChain.id.id}`);
@@ -1514,7 +1513,7 @@ export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeL
 export interface AddRuleNodeDialogData {
   ruleNode: FcRuleNode;
   ruleChainId: string;
-  ruleChainType: string;
+  ruleChainType: RuleChainType;
 }
 
 @Component({
@@ -1530,7 +1529,7 @@ export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialo
 
   ruleNode: FcRuleNode;
   ruleChainId: string;
-  ruleChainType: string;
+  ruleChainType: RuleChainType;
 
   submitted = false;
 
