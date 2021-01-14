@@ -66,10 +66,6 @@ public class JacksonUtil {
             throw new IllegalArgumentException(e);
         }
     }
-    
-    public static ObjectNode newObjectNode(){
-        return OBJECT_MAPPER.createObjectNode();
-    }
 
     public static ObjectNode newObjectNode(){
         return OBJECT_MAPPER.createObjectNode();

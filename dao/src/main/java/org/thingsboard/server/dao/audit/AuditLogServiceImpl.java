@@ -262,7 +262,7 @@ public class AuditLogServiceImpl implements AuditLogService {
             case PROVISION_FAILURE:
                 ProvisionRequest request = extractParameter(ProvisionRequest.class, additionalInfo);
                 if (request != null) {
-                    actionData.set("provisionRequest", objectMapper.valueToTree(request));
+                    actionData.set("provisionRequest", JacksonUtil.valueToTree(request));
                 }
                 break;
             case TIMESERIES_UPDATED:
@@ -273,7 +273,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                     updatedTimeseries.stream()
                             .collect(Collectors.groupingBy(TsKvEntry::getTs))
                             .forEach((k, v) -> {
-                                ObjectNode element = objectMapper.createObjectNode();
+                                ObjectNode element = JacksonUtil.newObjectNode();
                                 element.put("ts", k);
                                 ObjectNode values = element.putObject("values");
                                 v.forEach(kvEntry -> values.put(kvEntry.getKey(), kvEntry.getValueAsString()));
