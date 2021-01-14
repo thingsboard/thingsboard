@@ -114,6 +114,6 @@ export const inputNodeComponent: RuleNodeComponentDescriptor = {
 };
 
 export enum RuleChainType {
-  core = 'CORE',
-  edge = 'EDGE'
+  CORE = 'CORE',
+  EDGE = 'EDGE'
 }

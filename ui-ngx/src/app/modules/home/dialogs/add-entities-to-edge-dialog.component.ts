@@ -85,7 +85,7 @@ export class AddEntitiesToEdgeDialogComponent extends
       case EntityType.RULE_CHAIN:
         this.assignToEdgeTitle = 'rulechain.assign-rulechain-to-edge-title';
         this.assignToEdgeText = 'rulechain.assign-rulechain-to-edge-text';
-        this.subType = RuleChainType.edge;
+        this.subType = RuleChainType.EDGE;
         break;
       case EntityType.ASSET:
         this.assignToEdgeTitle = 'asset.assign-asset-to-edge-title';

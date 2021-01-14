@@ -144,7 +144,7 @@ const routes: Routes = [
           auth: [Authority.TENANT_ADMIN],
           title: 'rulechain.rulechain',
           import: false,
-          ruleChainType: RuleChainType.core
+          ruleChainType: RuleChainType.CORE
         },
         resolve: {
           ruleChain: RuleChainResolver,
@@ -165,7 +165,7 @@ const routes: Routes = [
           auth: [Authority.TENANT_ADMIN],
           title: 'rulechain.rulechain',
           import: true,
-          ruleChainType: RuleChainType.core
+          ruleChainType: RuleChainType.CORE
         },
         resolve: {
           ruleNodeComponents: RuleNodeComponentsResolver

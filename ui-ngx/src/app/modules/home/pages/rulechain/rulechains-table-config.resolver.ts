@@ -272,7 +272,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     if ($event) {
       $event.stopPropagation();
     }
-    const expectedRuleChainType = this.config.componentsData.ruleChainScope === 'tenant' ? RuleChainType.core : RuleChainType.edge;
+    const expectedRuleChainType = this.config.componentsData.ruleChainScope === 'tenant' ? RuleChainType.CORE : RuleChainType.EDGE;
     this.importExport.importRuleChain(expectedRuleChainType).subscribe((ruleChainImport) => {
       if (ruleChainImport) {
         this.itembuffer.storeRuleChainImport(ruleChainImport);
@@ -299,12 +299,12 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   saveRuleChain(ruleChain: RuleChain) {
     if (isUndefined(ruleChain.type)) {
       if (this.config.componentsData.ruleChainScope == 'tenant') {
-        ruleChain.type = RuleChainType.core;
+        ruleChain.type = RuleChainType.CORE;
       } else if (this.config.componentsData.ruleChainScope == 'edges') {
-        ruleChain.type = RuleChainType.edge;
+        ruleChain.type = RuleChainType.EDGE;
       } else {
         // safe fallback to default core type
-        ruleChain.type = RuleChainType.core;
+        ruleChain.type = RuleChainType.CORE;
       }
     }
     return this.ruleChainService.saveRuleChain(ruleChain);
@@ -550,7 +550,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
   }
 
   fetchRuleChains(pageLink: PageLink) {
-    return this.ruleChainService.getRuleChains(pageLink, RuleChainType.core);
+    return this.ruleChainService.getRuleChains(pageLink, RuleChainType.CORE);
   }
 
   fetchEdgeRuleChains(pageLink: PageLink) {
@@ -558,7 +558,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       mergeMap((ruleChains) => {
         this.config.componentsData.autoAssignToEdgeRuleChainIds = [];
         ruleChains.map(ruleChain => this.config.componentsData.autoAssignToEdgeRuleChainIds.push(ruleChain.id.id));
-        return this.ruleChainService.getRuleChains(pageLink, RuleChainType.edge);
+        return this.ruleChainService.getRuleChains(pageLink, RuleChainType.EDGE);
       })
     );
   }

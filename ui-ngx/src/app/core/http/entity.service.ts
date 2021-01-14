@@ -320,11 +320,11 @@ export class EntityService {
         break;
       case EntityType.RULE_CHAIN:
         pageLink.sortOrder.property = 'name';
-        if (subType) {
-          entitiesObservable = this.ruleChainService.getRuleChains(pageLink, subType, config);
+        if (RuleChainType[subType]) {
+          entitiesObservable = this.ruleChainService.getRuleChains(pageLink, subType as RuleChainType, config);
         } else {
           // safe fallback to default core type
-          entitiesObservable = this.ruleChainService.getRuleChains(pageLink, RuleChainType.core, config);
+          entitiesObservable = this.ruleChainService.getRuleChains(pageLink, RuleChainType.CORE, config);
         }
         break;
       case EntityType.DASHBOARD:

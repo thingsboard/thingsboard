@@ -189,7 +189,7 @@ const routes: Routes = [
               auth: [Authority.TENANT_ADMIN],
               title: 'rulechain.edge-rulechain',
               import: false,
-              ruleChainType: RuleChainType.edge
+              ruleChainType: RuleChainType.EDGE
             },
             resolve: {
               ruleChain: RuleChainResolver,
@@ -210,7 +210,7 @@ const routes: Routes = [
               auth: [Authority.TENANT_ADMIN],
               title: 'rulechain.edge-rulechain',
               import: true,
-              ruleChainType: RuleChainType.edge
+              ruleChainType: RuleChainType.EDGE
             },
             resolve: {
               ruleNodeComponents: RuleNodeComponentsResolver

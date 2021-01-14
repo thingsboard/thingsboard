@@ -469,7 +469,7 @@ export class ImportExportService {
       return false;
     }
     if (isUndefined(ruleChainImport.ruleChain.type)) {
-      ruleChainImport.ruleChain.type = RuleChainType.core;
+      ruleChainImport.ruleChain.type = RuleChainType.CORE;
     }
     return true;
   }

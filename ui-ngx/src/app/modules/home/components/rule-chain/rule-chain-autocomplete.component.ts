@@ -190,7 +190,7 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
     this.searchText = searchText;
     // voba: at the moment device profiles are not supported by edge, so 'core' hardcoded
     return this.entityService.getEntitiesByNameFilter(EntityType.RULE_CHAIN, searchText,
-      50, RuleChainType.core, {ignoreLoading: true});
+      50, RuleChainType.CORE, {ignoreLoading: true});
   }
 
   clear() {

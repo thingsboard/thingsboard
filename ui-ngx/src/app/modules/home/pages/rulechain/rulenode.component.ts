@@ -49,7 +49,7 @@ export class RuleNodeComponent extends FcNodeComponent implements OnInit {
       $event.stopPropagation();
     }
     if (node.targetRuleChainId) {
-      if (node.ruleChainType === RuleChainType.edge) {
+      if (node.ruleChainType === RuleChainType.EDGE) {
         this.router.navigateByUrl(`/edges/ruleChains/${node.targetRuleChainId}`);
       } else {
         this.router.navigateByUrl(`/ruleChains/${node.targetRuleChainId}`);
