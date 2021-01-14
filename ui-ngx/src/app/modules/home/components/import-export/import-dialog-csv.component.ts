@@ -248,16 +248,16 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
           case ImportEntityColumnType.description:
             entityData.description = importData.rows[i][j];
             break;
-            case ImportEntityColumnType.edgeLicenseKey:
+          case ImportEntityColumnType.edgeLicenseKey:
             entityData.edgeLicenseKey = importData.rows[i][j];
             break;
-            case ImportEntityColumnType.cloudEndpoint:
+          case ImportEntityColumnType.cloudEndpoint:
             entityData.cloudEndpoint = importData.rows[i][j];
             break;
-            case ImportEntityColumnType.routingKey:
+          case ImportEntityColumnType.routingKey:
             entityData.routingKey = importData.rows[i][j];
             break;
-            case ImportEntityColumnType.secret:
+          case ImportEntityColumnType.secret:
             entityData.secret = importData.rows[i][j];
             break;
         }

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { EMPTY, forkJoin, Observable, of, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -46,7 +46,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { AliasFilterType, EntityAlias, EntityAliasFilter, EntityAliasFilterResult } from '@shared/models/alias.models';
 import { entityFields, EntityInfo, ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
-import { deepClone, isDefined, isDefinedAndNotNull } from '@core/utils';
+import { deepClone, generateSecret, guid, isDefined, isDefinedAndNotNull } from '@core/utils';
 import { Asset } from '@shared/models/asset.models';
 import { Device, DeviceCredentialsType } from '@shared/models/device.models';
 import { AttributeService } from '@core/http/attribute.service';
@@ -71,6 +71,7 @@ import { alarmFields } from '@shared/models/alarm.models';
 import { EdgeService } from "@core/http/edge.service";
 import { ruleChainType } from "@shared/models/rule-chain.models";
 import { Edge } from '@shared/models/edge.models';
+import { WINDOW } from "@core/services/window.service";
 
 @Injectable({
   providedIn: 'root'
@@ -91,7 +92,8 @@ export class EntityService {
     private dashboardService: DashboardService,
     private entityRelationService: EntityRelationService,
     private attributeService: AttributeService,
-    private utils: UtilsService
+    private utils: UtilsService,
+    @Inject(WINDOW) protected window: Window
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -901,6 +903,15 @@ export class EntityService {
           cloudEndpoint: entityData.cloudEndpoint,
           routingKey: entityData.routingKey,
           secret: entityData.secret
+        };
+        if (edge.cloudEndpoint === '') {
+          edge.cloudEndpoint = this.window.location.origin;
+        }
+        if (edge.routingKey === '') {
+          edge.routingKey = guid();
+        }
+        if (edge.secret === '') {
+          edge.secret = generateSecret(20);
         }
         saveEntityObservable = this.edgeService.saveEdge(edge, config);
         break;
@@ -924,30 +935,67 @@ export class EntityService {
             case EntityType.ASSET:
               findEntityObservable = this.assetService.findByName(entityData.name, config);
               break;
+            case EntityType.EDGE:
+              findEntityObservable = this.edgeService.findByName(entityData.name, config);
+              break;
           }
           return findEntityObservable.pipe(
             mergeMap((entity) => {
               const tasks: Observable<any>[] = [];
-              const result: Device | Asset = entity as (Device | Asset);
-              const additionalInfo = result.additionalInfo || {};
-              if (result.label !== entityData.label ||
-                 result.type !== entityData.type ||
-                 additionalInfo.description !== entityData.description ||
-                 (result.id.entityType === EntityType.DEVICE && (additionalInfo.gateway !== entityData.gateway)) ) {
-                result.label = entityData.label;
-                result.type = entityData.type;
-                result.additionalInfo = additionalInfo;
-                result.additionalInfo.description = entityData.description;
-                if (result.id.entityType === EntityType.DEVICE) {
-                  result.additionalInfo.gateway = entityData.gateway;
+              if (entity.id.entityType === EntityType.EDGE) {
+                const result: Edge = entity as Edge;
+                const additionalInfo = result.additionalInfo || {};
+                if (result.label !== entityData.label ||
+                  result.type !== entityData.type ||
+                  result.cloudEndpoint !== entityData.cloudEndpoint ||
+                  result.edgeLicenseKey !== entityData.edgeLicenseKey ||
+                  result.routingKey !== entityData.routingKey ||
+                  result.secret !== entityData.secret ||
+                  additionalInfo.description !== entityData.description) {
+                  result.type = entityData.type;
+                  if (entityData.label !== '') {
+                    result.label = entityData.label;
+                  }
+                  if (entityData.description !== '') {
+                    result.additionalInfo = additionalInfo;
+                    result.additionalInfo.description = entityData.description;
+                  }
+                  if (entityData.cloudEndpoint !== '') {
+                    result.cloudEndpoint = entityData.cloudEndpoint;
+                  }
+                  if (entityData.edgeLicenseKey !== '') {
+                    result.edgeLicenseKey = entityData.edgeLicenseKey;
+                  }
+                  if (entityData.routingKey !== '') {
+                    result.routingKey = entityData.routingKey;
+                  }
+                  if (entityData.cloudEndpoint !== '') {
+                    result.secret = entityData.secret;
+                  }
+                  tasks.push(this.edgeService.saveEdge(result, config));
                 }
-                switch (result.id.entityType) {
-                  case EntityType.DEVICE:
-                    tasks.push(this.deviceService.saveDevice(result, config));
-                    break;
-                  case EntityType.ASSET:
-                    tasks.push(this.assetService.saveAsset(result, config));
-                    break;
+              } else {
+                const result: Device | Asset = entity as (Device | Asset);
+                const additionalInfo = result.additionalInfo || {};
+                if (result.label !== entityData.label ||
+                  result.type !== entityData.type ||
+                  additionalInfo.description !== entityData.description ||
+                  (result.id.entityType === EntityType.DEVICE && (additionalInfo.gateway !== entityData.gateway)) ) {
+                  result.label = entityData.label;
+                  result.type = entityData.type;
+                  result.additionalInfo = additionalInfo;
+                  result.additionalInfo.description = entityData.description;
+                  if (result.id.entityType === EntityType.DEVICE) {
+                    result.additionalInfo.gateway = entityData.gateway;
+                  }
+                  switch (result.id.entityType) {
+                    case EntityType.DEVICE:
+                      tasks.push(this.deviceService.saveDevice(result, config));
+                      break;
+                    case EntityType.ASSET:
+                      tasks.push(this.assetService.saveAsset(result, config));
+                      break;
+                  }
                 }
               }
               tasks.push(this.saveEntityData(entity.id, entityData, config));
