@@ -60,7 +60,6 @@ reference the OMA IPR Policy for patent licensing terms:
 https://www.omaspecworks.org/about/intellectual-property-rights/
 
 -->
--->
 <LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
 	<Object ObjectType="MODefinition">
 		<Name>BinaryAppDataContainer</Name>
