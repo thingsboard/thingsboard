@@ -22,9 +22,7 @@ import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { DeviceProfile, DeviceProfileInfo, DeviceTransportType } from '@shared/models/device.models';
 import { isDefinedAndNotNull } from '@core/utils';
-import {
-  ObjectLwM2M, ServerSecurityConfig
-} from "../../modules/home/components/profile/device/lwm2m/profile-config.models";
+import { ObjectLwM2M, ServerSecurityConfig } from '@home/components/profile/device/lwm2m/profile-config.models';
 
 @Injectable({
   providedIn: 'root'
@@ -43,16 +41,23 @@ export class DeviceProfileService {
     return this.http.get<DeviceProfile>(`/api/deviceProfile/${deviceProfileId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getLwm2mObjects(objectIds: number [], config?: RequestConfig): Observable<ObjectLwM2M[]> {
-    return this.http.get<ObjectLwM2M[]>(`/api/lwm2m/deviceProfile/${objectIds}`, defaultHttpOptionsFromConfig(config));
+  public getLwm2mObjects(objectIds: number[], config?: RequestConfig): Observable<Array<ObjectLwM2M>> {
+    return this.http.get<Array<ObjectLwM2M>>(`/api/lwm2m/deviceProfile/${objectIds}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getLwm2mBootstrapSecurityInfo(securityMode: string, bootstrapServerIs: boolean, config?: RequestConfig): Observable<ServerSecurityConfig> {
-    return this.http.get<ServerSecurityConfig>(`/api/lwm2m/deviceProfile/bootstrap/${securityMode}/${bootstrapServerIs}`, defaultHttpOptionsFromConfig(config));
+  public getLwm2mBootstrapSecurityInfo(securityMode: string, bootstrapServerIs: boolean,
+                                       config?: RequestConfig): Observable<ServerSecurityConfig> {
+    return this.http.get<ServerSecurityConfig>(
+      `/api/lwm2m/deviceProfile/bootstrap/${securityMode}/${bootstrapServerIs}`,
+      defaultHttpOptionsFromConfig(config)
+    );
   }
 
   public getLwm2mObjectsPage(pageLink: PageLink, config?: RequestConfig): Observable<PageData<ObjectLwM2M>> {
-    return this.http.get<PageData<ObjectLwM2M>>(`/api/lwm2m/deviceProfile/objects${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+    return this.http.get<PageData<ObjectLwM2M>>(
+      `/api/lwm2m/deviceProfile/objects${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config)
+    );
   }
 
   public saveDeviceProfile(deviceProfile: DeviceProfile, config?: RequestConfig): Observable<DeviceProfile> {

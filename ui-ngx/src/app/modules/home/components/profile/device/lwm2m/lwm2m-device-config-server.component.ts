@@ -43,7 +43,6 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 @Component({
   selector: 'tb-profile-lwm2m-device-config-server',
   templateUrl: './lwm2m-device-config-server.component.html',
-  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -55,8 +54,8 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 
 export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAccessor, Validators {
 
-  valuePrev = null as any;
   private requiredValue: boolean;
+  valuePrev = null;
   serverFormGroup: FormGroup;
   securityConfigLwM2MType = SECURITY_CONFIG_MODE;
   securityConfigLwM2MTypes = Object.keys(SECURITY_CONFIG_MODE);
@@ -69,7 +68,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   disabled: boolean;
 
   @Input()
-  bootstrapServerIs: boolean
+  bootstrapServerIs: boolean;
 
   get required(): boolean {
     return this.requiredValue;
@@ -107,7 +106,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   }
 
   updateValueFields(serverData: ServerSecurityConfig): void {
-    serverData['bootstrapServerIs'] = this.bootstrapServerIs;
+    serverData.bootstrapServerIs = this.bootstrapServerIs;
     this.serverFormGroup.patchValue(serverData, {emitEvent: false});
     this.serverFormGroup.get('bootstrapServerIs').disable();
     const securityMode = this.serverFormGroup.get('securityMode').value as SECURITY_CONFIG_MODE;
@@ -132,21 +131,22 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
         this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
         break;
     }
-    this.checkValueWithNewValidate();
+    this.serverFormGroup.updateValueAndValidity();
+    // this.checkValueWithNewValidate();
   }
 
-  checkValueWithNewValidate(): void {
-    this.serverFormGroup.patchValue({
-        host: this.serverFormGroup.get('host').value,
-        port: this.serverFormGroup.get('port').value,
-        bootstrapServerIs: this.serverFormGroup.get('bootstrapServerIs').value,
-        serverPublicKey: this.serverFormGroup.get('serverPublicKey').value,
-        clientHoldOffTime: this.serverFormGroup.get('clientHoldOffTime').value,
-        serverId: this.serverFormGroup.get('serverId').value,
-        bootstrapServerAccountTimeout: this.serverFormGroup.get('bootstrapServerAccountTimeout').value,
-      },
-      {emitEvent: true});
-  }
+  // checkValueWithNewValidate(): void {
+  //   this.serverFormGroup.patchValue({
+  //       host: this.serverFormGroup.get('host').value,
+  //       port: this.serverFormGroup.get('port').value,
+  //       bootstrapServerIs: this.serverFormGroup.get('bootstrapServerIs').value,
+  //       serverPublicKey: this.serverFormGroup.get('serverPublicKey').value,
+  //       clientHoldOffTime: this.serverFormGroup.get('clientHoldOffTime').value,
+  //       serverId: this.serverFormGroup.get('serverId').value,
+  //       bootstrapServerAccountTimeout: this.serverFormGroup.get('bootstrapServerAccountTimeout').value,
+  //     },
+  //     {emitEvent: true});
+  // }
 
   writeValue(value: any): void {
     if (value) {
@@ -154,8 +154,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
     }
   }
 
-  private propagateChange = (v: any) => {
-  };
+  private propagateChange = (v: any) => {};
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
@@ -164,8 +163,8 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   private propagateChangeState(value: any): void {
     if (value !== undefined) {
       if (this.valuePrev === null) {
-        this.valuePrev = "init";
-      } else if (this.valuePrev === "init") {
+        this.valuePrev = 'init';
+      } else if (this.valuePrev === 'init') {
         this.valuePrev = value;
       } else if (JSON.stringify(value) !== JSON.stringify(this.valuePrev)) {
         this.valuePrev = value;
@@ -192,7 +191,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   }
 
   getServerGroup(): FormGroup {
-    const port = (this.bootstrapServerIs) ? DEFAULT_PORT_BOOTSTRAP_NO_SEC : DEFAULT_PORT_SERVER_NO_SEC;
+    const port = this.bootstrapServerIs ? DEFAULT_PORT_BOOTSTRAP_NO_SEC : DEFAULT_PORT_SERVER_NO_SEC;
     return this.fb.group({
       host: [this.window.location.hostname, this.required ? [Validators.required] : []],
       port: [port, this.required ? [Validators.required] : []],
@@ -202,7 +201,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
       clientHoldOffTime: [DEFAULT_CLIENT_HOLD_OFF_TIME, this.required ? [Validators.required] : []],
       serverId: [DEFAULT_ID_SERVER, this.required ? [Validators.required] : []],
       bootstrapServerAccountTimeout: ['', this.required ? [Validators.required] : []],
-    })
+    });
   }
 
   getLwm2mBootstrapSecurityInfo(mode: string) {

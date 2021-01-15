@@ -307,7 +307,7 @@ import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lw
     EditAlarmDetailsDialogComponent,
     DeviceProfileProvisionConfigurationComponent,
     AlarmScheduleComponent,
-    Lwm2mProfileComponentsModule,
+    // Lwm2mProfileComponentsModule,
     SmsProviderConfigurationComponent,
     AwsSnsProviderConfigurationComponent,
     TwilioSmsProviderConfigurationComponent

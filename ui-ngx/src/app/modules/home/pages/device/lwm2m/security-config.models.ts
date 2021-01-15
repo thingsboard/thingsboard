@@ -33,7 +33,6 @@ export const KEY_PUBLIC_REGEXP_X509 = /^[0-9a-fA-F]{0,3000}$/;
 export interface DeviceCredentialsDialogLwm2mData {
   jsonAllConfig?: SecurityConfigModels;
   endPoint?: string;
-  isNew?: boolean;
 }
 
 export enum SECURITY_CONFIG_MODE {
