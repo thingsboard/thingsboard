@@ -24,6 +24,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ContactBasedComponent } from '../../components/entity/contact-based.component';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { AuthState } from '@core/auth/auth.models';
 
 @Component({
   selector: 'tb-customer',
@@ -32,6 +33,8 @@ import { getCurrentAuthState } from '@core/auth/auth.selectors';
 export class CustomerComponent extends ContactBasedComponent<Customer> {
 
   isPublic = false;
+
+  authState: AuthState = getCurrentAuthState(this.store);
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -80,8 +83,6 @@ export class CustomerComponent extends ContactBasedComponent<Customer> {
   }
 
   edgesSupportEnabled() {
-    const authState = getCurrentAuthState(this.store);
-    return authState.edgesSupportEnabled;
+    return this.authState.edgesSupportEnabled;
   }
-
 }

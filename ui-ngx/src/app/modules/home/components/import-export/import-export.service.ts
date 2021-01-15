@@ -52,12 +52,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
 import { RequestConfig } from '@core/http/http-utils';
-import {
-  RuleChain,
-  RuleChainImport,
-  RuleChainMetaData,
-  RuleChainType
-} from '@shared/models/rule-chain.models';
+import { RuleChain, RuleChainImport, RuleChainMetaData, RuleChainType } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import * as JSZip from 'jszip';
 import { FiltersInfo } from '@shared/models/query/query.models';
@@ -349,8 +344,13 @@ export class ImportExportService {
     let statisticalInfo: ImportEntitiesResultInfo = {};
     const importEntitiesObservables: Observable<ImportEntitiesResultInfo>[] = [];
     for (let i = 0; i < partSize; i++) {
-      const importEntityPromise =
-        this.entityService.saveEntityParameters(entityType, entitiesData[i], updateData, config).pipe(
+      let saveEntityPromise: Observable<ImportEntitiesResultInfo>;
+      if (entityType === EntityType.EDGE) {
+        saveEntityPromise = this.entityService.saveEdgeParameters(entitiesData[i], updateData, config);
+      } else {
+        saveEntityPromise = this.entityService.saveEntityParameters(entityType, entitiesData[i], updateData, config);
+      }
+      const importEntityPromise = saveEntityPromise.pipe(
           tap((res) => {
             if (importEntityCompleted) {
               importEntityCompleted();

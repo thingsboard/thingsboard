@@ -43,6 +43,9 @@ export interface ImportEntityData {
     shared: AttributeData[]
   };
   timeseries: AttributeData[];
+}
+
+export interface EdgeImportEntityData extends ImportEntityData {
   secret: string;
   routingKey: string;
   cloudEndpoint: string;
