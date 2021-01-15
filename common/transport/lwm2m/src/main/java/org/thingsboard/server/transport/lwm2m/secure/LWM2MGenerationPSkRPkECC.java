@@ -73,15 +73,15 @@ public class LWM2MGenerationPSkRPkECC {
         try {
             kpg = KeyPairGenerator.getInstance(algorithm, provider);
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            log.error("", e);
         } catch (NoSuchProviderException e) {
-            e.printStackTrace();
+            log.error("", e);
         }
         ECGenParameterSpec ecsp = new ECGenParameterSpec(nameParameterSpec);
         try {
             kpg.initialize(ecsp);
         } catch (InvalidAlgorithmParameterException e) {
-            e.printStackTrace();
+            log.error("", e);
         }
 
         KeyPair kp = kpg.genKeyPair();

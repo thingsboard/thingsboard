@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from "@angular/core";
+import { Component, forwardRef, Input, OnInit } from "@angular/core";
 import {
   ControlValueAccessor,
   FormArray, FormBuilder,
@@ -27,7 +27,7 @@ import {
 } from '@home/components/profile/device/lwm2m/profile-config.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { deepClone, isUndefined } from '@core/utils';
+import { deepClone } from '@core/utils';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({

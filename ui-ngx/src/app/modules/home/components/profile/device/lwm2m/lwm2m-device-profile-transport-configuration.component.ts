@@ -34,10 +34,10 @@ import {
   OBSERVE_ATTR,
   TELEMETRY,
   ObjectLwM2M, getDefaultProfileConfig, KEY_NAME, Instance, ProfileConfigModels, ResourceLwM2M
-} from './profile-config.models';
-import { DeviceProfileService } from '../../../../../../core/http/device-profile.service';
-import { deepClone, isUndefined } from '../../../../../../core/utils';
-import { WINDOW } from '../../../../../../core/services/window.service';
+} from "./profile-config.models";
+import { DeviceProfileService } from "@core/http/device-profile.service";
+import { deepClone, isUndefined } from "@core/utils";
+import { WINDOW } from "@core/services/window.service";
 import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
 import { isNotNullOrUndefined } from 'codelyzer/util/isNotNullOrUndefined';
 

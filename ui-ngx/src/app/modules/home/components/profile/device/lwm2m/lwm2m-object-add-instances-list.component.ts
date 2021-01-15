@@ -25,19 +25,19 @@ import {
 import {
   ControlValueAccessor,
   FormBuilder,
-  FormGroup, NG_VALIDATORS,
+  FormGroup,
   NG_VALUE_ACCESSOR, Validators
 } from "@angular/forms";
 import { coerceBooleanProperty } from "@angular/cdk/coercion";
 import { Store } from "@ngrx/store";
-import { AppState } from "../../../../../../core/core.state";
+import { AppState } from "@core/core.state";
 import { MatChipList } from '@angular/material/chips';
 import {
   INSTANCES_ID_VALUE_MAX,
   INSTANCES_ID_VALUE_MIN
 } from "./profile-config.models";
 import { TranslateService } from "@ngx-translate/core";
-import { DeviceProfileService } from "../../../../../../core/http/device-profile.service";
+import { DeviceProfileService } from "@core/http/device-profile.service";
 
 @Component({
   selector: 'tb-profile-lwm2m-object-add-instances-list',

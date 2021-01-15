@@ -44,7 +44,6 @@ import {
   Lwm2mObjectAddInstancesComponent,
   Lwm2mObjectAddInstancesData
 } from '@home/components/profile/device/lwm2m/lwm2m-object-add-instances.component';
-import { Control } from 'leaflet';
 
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry',

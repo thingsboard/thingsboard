@@ -15,17 +15,32 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -69,6 +84,42 @@ public class DeviceLwm2mController extends BaseController {
         try {
             return lwM2MModelsRepository.getBootstrapSecurityInfo(securityMode, bootstrapServerIs);
         } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/lwm2m/device-credentials", method = RequestMethod.POST)
+    @ResponseBody
+    public Device saveDeviceWithCredentials(@RequestBody (required=false) Map<Class<?>, Object> deviceWithDeviceCredentials) throws ThingsboardException {
+        ObjectMapper mapper = new ObjectMapper();
+        Device device = checkNotNull(mapper.convertValue(deviceWithDeviceCredentials.get(Device.class), Device.class));
+        DeviceCredentials credentials = checkNotNull(mapper.convertValue( deviceWithDeviceCredentials.get(DeviceCredentials.class), DeviceCredentials.class));
+        try {
+            device.setTenantId(getCurrentUser().getTenantId());
+            checkEntity(device.getId(), device, Resource.DEVICE);
+            Device savedDevice = deviceService.saveDeviceWithCredentials(device, credentials);
+            checkNotNull(savedDevice);
+
+            tbClusterService.onDeviceChange(savedDevice, null);
+            tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(savedDevice.getTenantId(),
+                    savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
+            tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(),
+                    device.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+
+            logEntityAction(savedDevice.getId(), savedDevice,
+                    savedDevice.getCustomerId(),
+                    device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+
+            if (device.getId() == null) {
+                deviceStateService.onDeviceAdded(savedDevice);
+            } else {
+                deviceStateService.onDeviceUpdated(savedDevice);
+            }
+            return savedDevice;
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.DEVICE), device,
+                    null, device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
         }
     }

@@ -49,34 +49,31 @@ import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceCredentialsProto;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
-import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsgOrBuilder;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionResponseStatus;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
@@ -326,6 +323,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 break;
             case MQTT_BASIC:
             case X509_CERTIFICATE:
+            case LWM2M_CREDENTIALS:
                 provisionResponse.setCredentialsValue(deviceCredentials.getCredentialsValue());
                 break;
         }
