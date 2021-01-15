@@ -16,6 +16,11 @@
 package org.thingsboard.rule.engine.rest.credentials;
 
 import org.thingsboard.rule.engine.credentials.AnonymousCredentials;
+import org.thingsboard.rule.engine.credentials.CredentialsType;
 
 public class HttpAnonymousCredentials extends AnonymousCredentials implements HttpClientCredentials {
+    @Override
+    public CredentialsType getType() {
+        return CredentialsType.ANONYMOUS;
+    }
 }

@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.mqtt.credentials;
+package org.thingsboard.rule.engine.credentials;
 
-import org.thingsboard.mqtt.MqttClientConfig;
-import org.thingsboard.rule.engine.credentials.BasicCredentials;
-import org.thingsboard.rule.engine.credentials.CredentialsType;
+public enum CredentialsType {
+    ANONYMOUS("anonymous"),
+    BASIC("basic"),
+    SAS("sas"),
+    CERT_PEM("cert.PEM");
 
-public class MqttBasicCredentials extends BasicCredentials implements MqttClientCredentials {
-    @Override
-    public CredentialsType getType() {
-        return CredentialsType.BASIC;
-    }
+    private final String label;
 
-    @Override
-    public void configure(MqttClientConfig config) {
-        config.setUsername(getUsername());
-        config.setPassword(getPassword());
+    CredentialsType(String label) {
+        this.label = label;
     }
 }

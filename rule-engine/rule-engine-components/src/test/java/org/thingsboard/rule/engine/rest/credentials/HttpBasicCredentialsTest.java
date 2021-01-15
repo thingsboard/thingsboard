@@ -26,8 +26,8 @@ public class HttpBasicCredentialsTest {
         HttpBasicCredentials credentials = new HttpBasicCredentials();
         credentials.setUsername("testUser");
         credentials.setPassword("testPwd");
-        Optional<String> actualHeaderValue = credentials.getBasicAuthHeaderValue();
-        Optional<String> expectedHeaderValue = Optional.of("Basic dGVzdFVzZXI6dGVzdFB3ZA==");
+        String actualHeaderValue = credentials.getBasicAuthHeaderValue();
+        String expectedHeaderValue = "Basic dGVzdFVzZXI6dGVzdFB3ZA==";
 
         Assert.assertEquals(expectedHeaderValue, actualHeaderValue);
     }

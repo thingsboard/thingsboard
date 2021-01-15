@@ -25,13 +25,12 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.credentials.CredentialsType;
 import org.thingsboard.rule.engine.mqtt.TbMqttNode;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
 import org.thingsboard.rule.engine.mqtt.credentials.MqttCertPemCredentials;
 import org.thingsboard.rule.engine.mqtt.credentials.MqttClientCredentials;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-
-import java.util.Optional;
 
 @Slf4j
 @RuleNode(
@@ -53,7 +52,18 @@ public class TbAzureIotHubNode extends TbMqttNode {
             MqttClientCredentials credentials = mqttNodeConfiguration.getCredentials();
             mqttNodeConfiguration.setCredentials(new MqttClientCredentials() {
                 @Override
-                public Optional<SslContext> initSslContext() {
+                public CredentialsType getType() {
+                    if (credentials instanceof AzureIotHubSasCredentials) {
+                        return CredentialsType.SAS;
+                    } else if (credentials instanceof MqttCertPemCredentials) {
+                        return CredentialsType.CERT_PEM;
+                    } else {
+                        throw new IllegalArgumentException("[" + credentials.getType() + "] is not supported!");
+                    }
+                }
+
+                @Override
+                public SslContext initSslContext() {
                     if (credentials instanceof AzureIotHubSasCredentials) {
                         AzureIotHubSasCredentials sasCredentials = (AzureIotHubSasCredentials) credentials;
                         if (sasCredentials.getCaCert() == null || sasCredentials.getCaCert().isEmpty()) {
@@ -82,5 +92,6 @@ public class TbAzureIotHubNode extends TbMqttNode {
             this.mqttClient = initClient(ctx);
         } catch (Exception e) {
             throw new TbNodeException(e);
-        }    }
+        }
+    }
 }

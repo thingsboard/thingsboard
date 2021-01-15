@@ -49,7 +49,6 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Optional;
 
 @Data
 @Slf4j
@@ -62,7 +61,7 @@ public class CertPemCredentials {
     private String privateKey;
     private String password;
 
-    public Optional<SslContext> initSslContext() {
+    public SslContext initSslContext() {
         try {
             Security.addProvider(new BouncyCastleProvider());
             SslContextBuilder builder = SslContextBuilder.forClient();
@@ -72,7 +71,7 @@ public class CertPemCredentials {
             if (StringUtils.hasLength(cert) && StringUtils.hasLength(privateKey)) {
                 builder.keyManager(createAndInitKeyManagerFactory());
             }
-            return Optional.of(builder.build());
+            return builder.build();
         } catch (Exception e) {
             log.error("[{}:{}] Creating TLS factory failed!", caCert, cert, e);
             throw new RuntimeException("Creating TLS factory failed!", e);

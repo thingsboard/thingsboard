@@ -17,15 +17,19 @@ package org.thingsboard.rule.engine.rest.credentials;
 
 import org.apache.commons.codec.binary.Base64;
 import org.thingsboard.rule.engine.credentials.BasicCredentials;
+import org.thingsboard.rule.engine.credentials.CredentialsType;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 
 public class HttpBasicCredentials extends BasicCredentials implements HttpClientCredentials {
     @Override
-    public Optional<String> getBasicAuthHeaderValue() {
+    public CredentialsType getType() {
+        return CredentialsType.BASIC;
+    }
+
+    public String getBasicAuthHeaderValue() {
         String authString = getUsername() + ":" + getPassword();
         String encodedAuthString = new String(Base64.encodeBase64(authString.getBytes(StandardCharsets.UTF_8)));
-        return Optional.of("Basic " + encodedAuthString);
+        return "Basic " + encodedAuthString;
     }
 }

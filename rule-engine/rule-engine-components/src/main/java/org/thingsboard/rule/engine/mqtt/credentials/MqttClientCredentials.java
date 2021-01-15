@@ -15,13 +15,13 @@
  */
 package org.thingsboard.rule.engine.mqtt.credentials;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.netty.handler.ssl.SslContext;
 import org.thingsboard.mqtt.MqttClientConfig;
+import org.thingsboard.rule.engine.credentials.CredentialsType;
 import org.thingsboard.rule.engine.mqtt.azure.AzureIotHubSasCredentials;
-
-import java.util.Optional;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
@@ -30,8 +30,11 @@ import java.util.Optional;
         @JsonSubTypes.Type(value = AzureIotHubSasCredentials.class, name = "sas"),
         @JsonSubTypes.Type(value = MqttCertPemCredentials.class, name = "cert.PEM")})
 public interface MqttClientCredentials {
-    default Optional<SslContext> initSslContext() {
-        return Optional.empty();
+    @JsonIgnore
+    CredentialsType getType();
+
+    default SslContext initSslContext() {
+        return null;
     }
 
     default void configure(MqttClientConfig config) {

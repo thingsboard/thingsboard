@@ -16,6 +16,11 @@
 package org.thingsboard.rule.engine.mqtt.credentials;
 
 import org.thingsboard.rule.engine.credentials.CertPemCredentials;
+import org.thingsboard.rule.engine.credentials.CredentialsType;
 
 public class MqttCertPemCredentials extends CertPemCredentials implements MqttClientCredentials {
+    @Override
+    public CredentialsType getType() {
+        return CredentialsType.CERT_PEM;
+    }
 }

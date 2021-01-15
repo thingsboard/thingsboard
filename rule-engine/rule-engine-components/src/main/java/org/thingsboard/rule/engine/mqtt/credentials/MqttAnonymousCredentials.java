@@ -16,6 +16,11 @@
 package org.thingsboard.rule.engine.mqtt.credentials;
 
 import org.thingsboard.rule.engine.credentials.AnonymousCredentials;
+import org.thingsboard.rule.engine.credentials.CredentialsType;
 
 public class MqttAnonymousCredentials extends AnonymousCredentials implements MqttClientCredentials {
+    @Override
+    public CredentialsType getType() {
+        return CredentialsType.ANONYMOUS;
+    }
 }

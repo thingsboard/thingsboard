@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,10 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.credentials.CredentialsType;
+import org.thingsboard.rule.engine.rest.credentials.HttpBasicCredentials;
+import org.thingsboard.rule.engine.rest.credentials.HttpCertPemCredentials;
+import org.thingsboard.rule.engine.rest.credentials.HttpClientCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -133,12 +138,24 @@ public class TbHttpClient {
             } else {
                 this.eventLoopGroup = new NioEventLoopGroup();
                 Netty4ClientHttpRequestFactory nettyFactory = new Netty4ClientHttpRequestFactory(this.eventLoopGroup);
-                nettyFactory.setSslContext(config.getCredentials().initSslContext().orElse(SslContextBuilder.forClient().build()));
+                nettyFactory.setSslContext(getSslContext(config.getCredentials()));
                 nettyFactory.setReadTimeout(config.getReadTimeoutMs());
                 httpClient = new AsyncRestTemplate(nettyFactory);
             }
         } catch (SSLException | NoSuchAlgorithmException e) {
             throw new TbNodeException(e);
+        }
+    }
+
+    private SslContext getSslContext(HttpClientCredentials credentials) throws SSLException {
+        switch (credentials.getType()) {
+            case ANONYMOUS:
+            case BASIC:
+                return SslContextBuilder.forClient().build();
+            case CERT_PEM:
+                return ((HttpCertPemCredentials) credentials).initSslContext();
+            default:
+                throw new IllegalArgumentException("[" + credentials.getType() + "] is not supported!");
         }
     }
 
@@ -226,7 +243,7 @@ public class TbHttpClient {
     private HttpHeaders prepareHeaders(TbMsgMetaData metaData) {
         HttpHeaders headers = new HttpHeaders();
         config.getHeaders().forEach((k, v) -> headers.add(TbNodeUtils.processPattern(k, metaData), TbNodeUtils.processPattern(v, metaData)));
-        config.getCredentials().getBasicAuthHeaderValue().ifPresent(v -> headers.add("Authorization", v));
+        addAuthorizationHeader(headers);
         return headers;
     }
 
@@ -258,6 +275,13 @@ public class TbHttpClient {
     private static void checkProxyPort(int proxyPort) throws TbNodeException {
         if (proxyPort < 0 || proxyPort > 65535) {
             throw new TbNodeException("Proxy port out of range:" + proxyPort);
+        }
+    }
+
+    private void addAuthorizationHeader(HttpHeaders headers) {
+        HttpClientCredentials credentials = config.getCredentials();
+        if (CredentialsType.BASIC == credentials.getType()) {
+            headers.add("Authorization", ((HttpBasicCredentials) credentials).getPassword());
         }
     }
 }

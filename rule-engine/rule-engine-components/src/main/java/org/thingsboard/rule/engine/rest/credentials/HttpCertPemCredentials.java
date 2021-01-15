@@ -16,6 +16,11 @@
 package org.thingsboard.rule.engine.rest.credentials;
 
 import org.thingsboard.rule.engine.credentials.CertPemCredentials;
+import org.thingsboard.rule.engine.credentials.CredentialsType;
 
 public class HttpCertPemCredentials extends CertPemCredentials implements HttpClientCredentials {
+    @Override
+    public CredentialsType getType() {
+        return CredentialsType.CERT_PEM;
+    }
 }

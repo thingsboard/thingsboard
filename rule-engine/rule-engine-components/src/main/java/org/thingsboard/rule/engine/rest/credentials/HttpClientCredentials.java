@@ -15,11 +15,10 @@
  */
 package org.thingsboard.rule.engine.rest.credentials;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.netty.handler.ssl.SslContext;
-
-import java.util.Optional;
+import org.thingsboard.rule.engine.credentials.CredentialsType;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
@@ -27,12 +26,7 @@ import java.util.Optional;
         @JsonSubTypes.Type(value = HttpBasicCredentials.class, name = "basic"),
         @JsonSubTypes.Type(value = HttpCertPemCredentials.class, name = "cert.PEM")})
 public interface HttpClientCredentials {
-    default Optional<SslContext> initSslContext() {
-        return Optional.empty();
-    }
-
-    default Optional<String> getBasicAuthHeaderValue() {
-        return Optional.empty();
-    }
+    @JsonIgnore
+    CredentialsType getType();
 }
 
