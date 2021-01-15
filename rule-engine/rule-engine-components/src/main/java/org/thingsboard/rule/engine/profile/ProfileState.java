@@ -64,6 +64,7 @@ class ProfileState {
         alarmSettings.clear();
         alarmCreateKeys.clear();
         alarmClearKeys.clear();
+        entityKeys.clear();
         if (deviceProfile.getProfileData().getAlarms() != null) {
             alarmSettings.addAll(deviceProfile.getProfileData().getAlarms());
             for (DeviceProfileAlarm alarm : deviceProfile.getProfileData().getAlarms()) {
