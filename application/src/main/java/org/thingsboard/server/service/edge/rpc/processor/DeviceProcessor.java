@@ -25,9 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.RpcError;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceRpcCallMsg;
@@ -179,7 +180,8 @@ public class DeviceProcessor extends BaseProcessor {
             log.debug("[{}] Creating device entity [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getName());
             device = new Device();
             device.setTenantId(edge.getTenantId());
-            device.setCustomerId(edge.getCustomerId());
+            // make device private, if edge is public
+            device.setCustomerId(getCustomerId(edge));
             device.setName(deviceName);
             device.setType(deviceUpdateMsg.getType());
             device.setLabel(deviceUpdateMsg.getLabel());
@@ -192,6 +194,18 @@ public class DeviceProcessor extends BaseProcessor {
             deviceCreationLock.unlock();
         }
         return device;
+    }
+
+    private CustomerId getCustomerId(Edge edge) {
+        if (edge.getCustomerId() == null || edge.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+            return edge.getCustomerId();
+        }
+        Customer publicCustomer = customerService.findOrCreatePublicCustomer(edge.getTenantId());
+        if (publicCustomer.getId().equals(edge.getCustomerId())) {
+            return null;
+        } else {
+            return edge.getCustomerId();
+        }
     }
 
     private void createRelationFromEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId) {
