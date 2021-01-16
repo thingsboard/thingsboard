@@ -57,7 +57,7 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
 
     @Getter
     @Setter
-    private SnmpDeviceTransportConfiguration transportConfiguration;
+    private SnmpDeviceTransportConfiguration deviceTransportConfig;
     @Getter
     @Setter
     private SnmpSessionListener snmpSessionListener;
@@ -72,18 +72,18 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
 
     private Snmp snmp;
 
-    public DeviceSessionCtx(SnmpTransportContext transportContext, String token, SnmpDeviceTransportConfiguration transportConfiguration, Snmp snmp, DeviceId deviceId, DeviceProfile deviceProfile) {
+    public DeviceSessionCtx(SnmpTransportContext transportContext, String token, SnmpDeviceTransportConfiguration deviceTransportConfig,
+                            Snmp snmp, DeviceId deviceId, DeviceProfile deviceProfile) {
         super(UUID.randomUUID());
         this.snmpSessionListener = new SnmpSessionListener(transportContext, token);
-        this.transportConfiguration = transportConfiguration;
         super.setDeviceId(deviceId);
         super.setDeviceProfile(deviceProfile);
         if (snmp != null) {
             this.snmp = snmp;
         }
-        SnmpDeviceProfileTransportConfiguration config = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-        initPoolingTask(config);
-        initTarget(config);
+        SnmpDeviceProfileTransportConfiguration profileTransportConfig = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+        initPoolingTask(profileTransportConfig);
+        initTarget(profileTransportConfig, deviceTransportConfig);
     }
 
     private void initPoolingTask(SnmpDeviceProfileTransportConfiguration config) {
@@ -139,7 +139,10 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
         poolingTask.cancel(true);
         if (super.getDeviceProfile() != null && DeviceTransportType.SNMP.equals(super.getDeviceProfile().getTransportType())) {
             snmpSessionListener.getSnmpTransportContext().updateDeviceSessionCtx(device, deviceProfile, null);
-            initPoolingTask((SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration());
+            SnmpDeviceProfileTransportConfiguration profileTransportConfig = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+            SnmpDeviceTransportConfiguration deviceTransportConfig = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
+            initPoolingTask(profileTransportConfig);
+            initTarget(profileTransportConfig, deviceTransportConfig);
         } else {
             //TODO: should the context be removed from the map?
         }
@@ -167,20 +170,22 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
                 });
     }
 
-    private void initTarget(SnmpDeviceProfileTransportConfiguration config) {
+    private void initTarget(SnmpDeviceProfileTransportConfiguration profileTransportConfig, SnmpDeviceTransportConfiguration deviceTransportConfig) {
+        this.deviceTransportConfig = deviceTransportConfig;
         CommunityTarget communityTarget = new CommunityTarget();
-        communityTarget.setAddress(GenericAddress.parse(GenericAddress.TYPE_UDP + ":" + transportConfiguration.getAddress() + "/" + transportConfiguration.getPort()));
-        communityTarget.setVersion(getSnmpVersion(transportConfiguration.getProtocolVersion()));
-        communityTarget.setCommunity(new OctetString(transportConfiguration.getCommunity()));
-        communityTarget.setTimeout(config.getTimeoutMs());
-        communityTarget.setRetries(config.getRetries());
+        communityTarget.setAddress(GenericAddress.parse(GenericAddress.TYPE_UDP + ":" + this.deviceTransportConfig.getAddress() + "/" + this.deviceTransportConfig.getPort()));
+        communityTarget.setVersion(getSnmpVersion(this.deviceTransportConfig.getProtocolVersion()));
+        communityTarget.setCommunity(new OctetString(this.deviceTransportConfig.getCommunity()));
+        communityTarget.setTimeout(profileTransportConfig.getTimeoutMs());
+        communityTarget.setRetries(profileTransportConfig.getRetries());
         this.target = communityTarget;
+        log.info("SNMP target initialized: {}", this.target);
     }
 
     public void sendSnmpRequest() {
         snmpSessionListener.getSnmpTransportContext().getPdusPerProfile().get(deviceProfile.getId()).forEach(pdu -> {
             try {
-                log.info("[{}] Sending SNMP message...", pdu.getRequestID());
+                log.debug("[{}] Sending SNMP message...", pdu.getRequestID());
                 snmp.send(pdu,
                         target,
                         deviceProfile.getId(),

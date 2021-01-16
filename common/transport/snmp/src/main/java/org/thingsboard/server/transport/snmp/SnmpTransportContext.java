@@ -77,7 +77,7 @@ public class SnmpTransportContext extends TransportContext {
     private Optional<SnmpDeviceProfileKvMapping> findMapping(OID responseOid, List<SnmpDeviceProfileKvMapping> mappings) {
         return mappings.stream()
                 .filter(kvMapping -> new OID(kvMapping.getOid()).equals(responseOid))
-                //TODO: OID shouldn't be duplicated in the config, add verification
+                //TODO: OID shouldn't be duplicated in the config, add backend and UI verification
                 .findFirst();
     }
 
@@ -120,6 +120,7 @@ public class SnmpTransportContext extends TransportContext {
                 .collect(Collectors.toList());
     }
 
+    //TODO: Extract SNMP methods to enum
     private int getSnmpMethod(String configMethod) {
         switch (configMethod) {
             case "get":

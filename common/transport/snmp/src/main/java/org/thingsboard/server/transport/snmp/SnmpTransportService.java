@@ -67,6 +67,7 @@ public class SnmpTransportService {
     @PostConstruct
     public void init() {
         log.info("Starting SNMP transport...");
+        //TODO: Set parallelism value in the config
         this.snmpCallbackExecutor = Executors.newWorkStealingPool(20);
         initializeSnmp();
         log.info("SNMP transport started!");
@@ -100,6 +101,7 @@ public class SnmpTransportService {
             this.snmp = new Snmp(new DefaultUdpTransportMapping());
             this.snmp.listen();
         } catch (IOException e) {
+            //TODO: what should be done if transport wasn't initialized?
             log.error(e.getMessage(), e);
         }
     }

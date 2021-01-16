@@ -73,6 +73,7 @@ public class SnmpSessionListener implements ResponseListener {
                         TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
                         new DeviceAuthCallback(snmpTransportContext, sessionInfo -> {
                             try {
+                                log.debug("[{}] Processing SNMP response: {}", response.getRequestID(), response);
                                 transportService.process(sessionInfo,
                                         convertToPostAttributes(kvMapping.getKey(), kvMapping.getType(), vb.toValueString()),
                                         TransportServiceCallback.EMPTY);
