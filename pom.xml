@@ -94,7 +94,7 @@
         </sonar.exclusions>
         <elasticsearch.version>5.0.2</elasticsearch.version>
         <delight-nashorn-sandbox.version>0.1.14</delight-nashorn-sandbox.version>
-        <kafka.version>2.3.0</kafka.version>
+        <kafka.version>2.6.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
         <fst.version>2.57</fst.version>
         <antlr.version>2.7.7</antlr.version>
