@@ -2266,7 +2266,8 @@
         "target-dashboard-state-required": "Target dashboard state is required",
         "set-entity-from-widget": "Set entity from widget",
         "target-dashboard": "Target dashboard",
-        "open-right-layout": "Open right dashboard layout (mobile view)"
+        "open-right-layout": "Open right dashboard layout (mobile view)",
+        "open-new-browser-tab": "Open in a new browser tab"
     },
     "widgets-bundle": {
         "current": "Current bundle",

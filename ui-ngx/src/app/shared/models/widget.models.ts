@@ -344,6 +344,7 @@ export interface WidgetActionDescriptor extends CustomActionDescriptor {
   targetDashboardId?: string;
   targetDashboardStateId?: string;
   openRightLayout?: boolean;
+  openNewBrowserTab?: boolean;
   setEntityId?: boolean;
   stateEntityParamName?: string;
 }
