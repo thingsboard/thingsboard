@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,9 +32,11 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { UserService } from '@core/http/user.service';
 import { AlarmService } from '@core/http/alarm.service';
 import { Router } from '@angular/router';
+import { BroadcastService } from "@core/services/broadcast.service";
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
+   ['broadcastService', BroadcastService],
    ['deviceService', DeviceService],
    ['alarmService', AlarmService],
    ['assetService', AssetService],

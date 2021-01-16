@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -53,7 +53,9 @@ export class Lwm2mObjectAddInstancesListComponent implements ControlValueAccesso
 
   lwm2mObjectListFormGroup: FormGroup;
   private requiredValue: boolean;
-  private instancesIdsList: Set<number> | null;
+  // TODO: voba - check this fix
+  // private instancesIdsList: Set<number> | null;
+  instancesIdsList: Set<number> | null;
   filteredObjectsList: Array<number>;
   private disabled = false as boolean;
   private dirty = false as boolean;

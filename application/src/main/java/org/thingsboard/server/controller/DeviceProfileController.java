@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package org.thingsboard.server.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,9 +38,13 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @TbCoreComponent
@@ -46,11 +52,16 @@ import org.thingsboard.server.service.security.permission.Resource;
 @Slf4j
 public class DeviceProfileController extends BaseController {
 
+    private static final String DEVICE_PROFILE_ID = "deviceProfileId";
+
+    @Autowired
+    private TimeseriesService timeseriesService;
+
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/deviceProfile/{deviceProfileId}", method = RequestMethod.GET)
     @ResponseBody
-    public DeviceProfile getDeviceProfileById(@PathVariable("deviceProfileId") String strDeviceProfileId) throws ThingsboardException {
-        checkParameter("deviceProfileId", strDeviceProfileId);
+    public DeviceProfile getDeviceProfileById(@PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
+        checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         try {
             DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
             return checkDeviceProfileId(deviceProfileId, Operation.READ);
@@ -62,8 +73,8 @@ public class DeviceProfileController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileInfo/{deviceProfileId}", method = RequestMethod.GET)
     @ResponseBody
-    public DeviceProfileInfo getDeviceProfileInfoById(@PathVariable("deviceProfileId") String strDeviceProfileId) throws ThingsboardException {
-        checkParameter("deviceProfileId", strDeviceProfileId);
+    public DeviceProfileInfo getDeviceProfileInfoById(@PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
+        checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         try {
             DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
             return checkNotNull(deviceProfileService.findDeviceProfileInfoById(getTenantId(), deviceProfileId));
@@ -78,6 +89,46 @@ public class DeviceProfileController extends BaseController {
     public DeviceProfileInfo getDefaultDeviceProfileInfo() throws ThingsboardException {
         try {
             return checkNotNull(deviceProfileService.findDefaultDeviceProfileInfo(getTenantId()));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/deviceProfile/devices/keys/timeseries", method = RequestMethod.GET)
+    @ResponseBody
+    public List<String> getTimeseriesKeys(
+            @RequestParam(name = DEVICE_PROFILE_ID, required = false) String deviceProfileIdStr) throws ThingsboardException {
+        DeviceProfileId deviceProfileId;
+        if (StringUtils.isNotEmpty(deviceProfileIdStr)) {
+            deviceProfileId = new DeviceProfileId(UUID.fromString(deviceProfileIdStr));
+            checkDeviceProfileId(deviceProfileId, Operation.READ);
+        } else {
+            deviceProfileId = null;
+        }
+
+        try {
+            return timeseriesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/deviceProfile/devices/keys/attributes", method = RequestMethod.GET)
+    @ResponseBody
+    public List<String> getAttributesKeys(
+            @RequestParam(name = DEVICE_PROFILE_ID, required = false) String deviceProfileIdStr) throws ThingsboardException {
+        DeviceProfileId deviceProfileId;
+        if (StringUtils.isNotEmpty(deviceProfileIdStr)) {
+            deviceProfileId = new DeviceProfileId(UUID.fromString(deviceProfileIdStr));
+            checkDeviceProfileId(deviceProfileId, Operation.READ);
+        } else {
+            deviceProfileId = null;
+        }
+
+        try {
+            return attributesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -101,7 +152,7 @@ public class DeviceProfileController extends BaseController {
 
             logEntityAction(savedDeviceProfile.getId(), savedDeviceProfile,
                     null,
-                    savedDeviceProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+                    created ? ActionType.ADDED : ActionType.UPDATED, null);
 
             sendNotificationMsgToEdgeService(getTenantId(), savedDeviceProfile.getId(), EntityType.DEVICE_PROFILE,
                     deviceProfile.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
@@ -117,8 +168,8 @@ public class DeviceProfileController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/deviceProfile/{deviceProfileId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteDeviceProfile(@PathVariable("deviceProfileId") String strDeviceProfileId) throws ThingsboardException {
-        checkParameter("deviceProfileId", strDeviceProfileId);
+    public void deleteDeviceProfile(@PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
+        checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         try {
             DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
             DeviceProfile deviceProfile = checkDeviceProfileId(deviceProfileId, Operation.DELETE);
@@ -144,8 +195,8 @@ public class DeviceProfileController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/deviceProfile/{deviceProfileId}/default", method = RequestMethod.POST)
     @ResponseBody
-    public DeviceProfile setDefaultDeviceProfile(@PathVariable("deviceProfileId") String strDeviceProfileId) throws ThingsboardException {
-        checkParameter("deviceProfileId", strDeviceProfileId);
+    public DeviceProfile setDefaultDeviceProfile(@PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
+        checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         try {
             DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
             DeviceProfile deviceProfile = checkDeviceProfileId(deviceProfileId, Operation.WRITE);
