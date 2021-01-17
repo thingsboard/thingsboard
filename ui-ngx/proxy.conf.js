@@ -26,15 +26,15 @@ const PROXY_CONFIG = {
     "target": ruleNodeUiforwardUrl,
     "secure": false,
   },
+  "/static/widgets": {
+    "target": forwardUrl,
+    "secure": false,
+  },
   "/oauth2": {
     "target": forwardUrl,
     "secure": false,
   },
   "/login/oauth2": {
-    "target": forwardUrl,
-    "secure": false,
-  },
-  "/static": {
     "target": forwardUrl,
     "secure": false,
   },

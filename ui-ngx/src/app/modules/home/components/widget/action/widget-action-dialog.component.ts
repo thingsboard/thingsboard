@@ -145,6 +145,10 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
           );
           if (type === WidgetActionType.openDashboard) {
             this.actionTypeFormGroup.addControl(
+              'openNewBrowserTab',
+              this.fb.control(action ? action.openNewBrowserTab : false, [])
+            );
+            this.actionTypeFormGroup.addControl(
               'targetDashboardId',
               this.fb.control(action ? action.targetDashboardId : null,
                 [Validators.required])
