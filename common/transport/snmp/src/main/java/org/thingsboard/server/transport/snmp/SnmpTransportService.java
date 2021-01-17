@@ -25,22 +25,26 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.SnmpProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.transport.snmp.session.DeviceSessionCtx;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Service("SnmpTransportService")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.snmp.enabled}'=='true')")
@@ -61,16 +65,17 @@ public class SnmpTransportService {
     @Autowired
     DeviceService deviceService;
 
-    private Snmp snmp;
-
     @Getter
     private ExecutorService snmpCallbackExecutor;
+    private Snmp snmp;
+    private ScheduledExecutorService pollingExecutor;
 
     @PostConstruct
     public void init() {
         log.info("Starting SNMP transport...");
+        pollingExecutor = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("snmp-polling"));
         //TODO: Set parallelism value in the config
-        this.snmpCallbackExecutor = Executors.newWorkStealingPool(20);
+        snmpCallbackExecutor = Executors.newWorkStealingPool(20);
         initializeSnmp();
         log.info("SNMP transport started!");
     }
@@ -78,6 +83,9 @@ public class SnmpTransportService {
     @PreDestroy
     public void shutdown() {
         log.info("Stopping SNMP transport!");
+        if (pollingExecutor != null) {
+            pollingExecutor.shutdownNow();
+        }
         if (snmpCallbackExecutor != null) {
             snmpCallbackExecutor.shutdownNow();
         }
@@ -96,6 +104,7 @@ public class SnmpTransportService {
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
         log.info("Received application ready event. Starting SNMP polling.");
         initSessionCtxList();
+        startPolling();
     }
 
     private void initializeSnmp() {
@@ -114,8 +123,8 @@ public class SnmpTransportService {
             TenantId tenantId = tenant.getTenantId();
             for (DeviceProfile deviceProfile : new PageDataIterable<>(pageLink -> deviceProfileService.findDeviceProfiles(tenantId, pageLink), ENTITY_PACK_LIMIT)) {
                 if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
-                    snmpTransportContext.getDeviceProfileTransportConfig().put(deviceProfile.getId(),
-                            (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration());
+                    snmpTransportContext.getProfileTransportConfig().put(deviceProfile.getId(),
+                            (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration());
                     initDeviceSessions(deviceProfile);
                 }
             }
@@ -127,5 +136,12 @@ public class SnmpTransportService {
         for (DeviceInfo deviceInfo : new PageDataIterable<>(pageLink -> deviceService.findDeviceInfosByTenantIdAndDeviceProfileId(deviceProfile.getTenantId(), deviceProfile.getId(), pageLink), ENTITY_PACK_LIMIT)) {
             snmpTransportContext.updateDeviceSessionCtx(deviceInfo, deviceProfile, snmp);
         }
+    }
+
+    private void startPolling() {
+        //TODO: Get poll period from configuration;
+        int poolPeriodSeconds = 1;
+        pollingExecutor.scheduleAtFixedRate(() -> snmpTransportContext.getDeviceSessions().values().forEach(DeviceSessionCtx::executeSnmpRequest),
+                0, poolPeriodSeconds, TimeUnit.SECONDS);
     }
 }

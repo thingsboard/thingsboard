@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileKvMapping;
-import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.SnmpProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -57,22 +57,22 @@ public class SnmpTransportContext extends TransportContext {
     SnmpTransportService snmpTransportService;
 
     @Getter
-    private final Map<DeviceProfileId, SnmpDeviceProfileTransportConfiguration> deviceProfileTransportConfig = new ConcurrentHashMap<>();
+    private final Map<DeviceProfileId, SnmpProfileTransportConfiguration> profileTransportConfig = new ConcurrentHashMap<>();
     @Getter
     private final Map<DeviceProfileId, List<PDU>> pdusPerProfile = new ConcurrentHashMap<>();
     @Getter
     private final Map<DeviceId, DeviceSessionCtx> deviceSessions = new ConcurrentHashMap<>();
 
     public Optional<SnmpDeviceProfileKvMapping> findAttributesMapping(DeviceProfileId deviceProfileId, OID responseOid) {
-        if (deviceProfileTransportConfig.containsKey(deviceProfileId)) {
-            return findMapping(responseOid, deviceProfileTransportConfig.get(deviceProfileId).getAttributes());
+        if (profileTransportConfig.containsKey(deviceProfileId)) {
+            return findMapping(responseOid, profileTransportConfig.get(deviceProfileId).getAttributes());
         }
         return Optional.empty();
     }
 
     public Optional<SnmpDeviceProfileKvMapping> findTelemetryMapping(DeviceProfileId deviceProfileId, OID responseOid) {
-        if (deviceProfileTransportConfig.containsKey(deviceProfileId)) {
-            return findMapping(responseOid, deviceProfileTransportConfig.get(deviceProfileId).getTelemetry());
+        if (profileTransportConfig.containsKey(deviceProfileId)) {
+            return findMapping(responseOid, profileTransportConfig.get(deviceProfileId).getTelemetry());
         }
         return Optional.empty();
     }
@@ -85,10 +85,10 @@ public class SnmpTransportContext extends TransportContext {
     }
 
     public void initPduListPerProfile() {
-        deviceProfileTransportConfig.forEach(this::updatePduListPerProfile);
+        profileTransportConfig.forEach(this::updatePduListPerProfile);
     }
 
-    public void updatePduListPerProfile(DeviceProfileId id, SnmpDeviceProfileTransportConfiguration config) {
+    public void updatePduListPerProfile(DeviceProfileId id, SnmpProfileTransportConfiguration config) {
         pdusPerProfile.put(id, createPduList(config));
     }
 
@@ -110,7 +110,7 @@ public class SnmpTransportContext extends TransportContext {
         return snmpTransportService.getSnmpCallbackExecutor();
     }
 
-    private List<PDU> createPduList(SnmpDeviceProfileTransportConfiguration deviceProfileConfig) {
+    private List<PDU> createPduList(SnmpProfileTransportConfiguration deviceProfileConfig) {
         Map<String, List<VariableBinding>> varBindingPerMethod = new HashMap<>();
 
         deviceProfileConfig.getKvMappings().forEach(mapping -> varBindingPerMethod

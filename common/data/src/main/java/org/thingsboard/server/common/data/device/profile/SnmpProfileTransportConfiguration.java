@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Data
-public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
+public class SnmpProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
 
     private int poolPeriodMs;
     private int timeoutMs;
