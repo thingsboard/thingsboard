@@ -87,6 +87,7 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
     }
 
     private void initPoolingTask(SnmpDeviceProfileTransportConfiguration config) {
+        //TODO: change scheduling approach
         poolingTask = snmpSessionListener.getSnmpTransportContext().getScheduler().scheduleWithFixedDelay(
                 this::sendSnmpRequest,
                 config.getPoolPeriodMs(), config.getPoolPeriodMs(), TimeUnit.MILLISECONDS);
@@ -120,31 +121,37 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
     @Override
     public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto newSessionInfo, DeviceProfile deviceProfile) {
         super.onDeviceProfileUpdate(sessionInfo, deviceProfile);
-        poolingTask.cancel(true);
-        if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
-            SnmpDeviceProfileTransportConfiguration snmpDeviceProfileTransportConfiguration = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-            snmpSessionListener.getSnmpTransportContext().getDeviceProfileTransportConfig().put(
-                    deviceProfile.getId(),
-                    snmpDeviceProfileTransportConfiguration);
-            snmpSessionListener.getSnmpTransportContext().updatePduListPerProfile(deviceProfile.getId(), snmpDeviceProfileTransportConfiguration);
-            initPoolingTask(snmpDeviceProfileTransportConfiguration);
+        if (poolingTask.cancel(true)) {
+            if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
+                SnmpDeviceProfileTransportConfiguration snmpDeviceProfileTransportConfiguration = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+                snmpSessionListener.getSnmpTransportContext().getDeviceProfileTransportConfig().put(
+                        deviceProfile.getId(),
+                        snmpDeviceProfileTransportConfiguration);
+                snmpSessionListener.getSnmpTransportContext().updatePduListPerProfile(deviceProfile.getId(), snmpDeviceProfileTransportConfiguration);
+                initPoolingTask(snmpDeviceProfileTransportConfiguration);
+            } else {
+                //TODO: should the context be removed from the map?
+            }
         } else {
-            //TODO: should the context be removed from the map?
+            log.error("Failed to cancel task!");
         }
     }
 
     @Override
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         super.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
-        poolingTask.cancel(true);
-        if (super.getDeviceProfile() != null && DeviceTransportType.SNMP.equals(super.getDeviceProfile().getTransportType())) {
-            snmpSessionListener.getSnmpTransportContext().updateDeviceSessionCtx(device, deviceProfile, null);
-            SnmpDeviceProfileTransportConfiguration profileTransportConfig = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-            SnmpDeviceTransportConfiguration deviceTransportConfig = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
-            initPoolingTask(profileTransportConfig);
-            initTarget(profileTransportConfig, deviceTransportConfig);
+        if (poolingTask.cancel(true)) {
+            if (super.getDeviceProfile() != null && DeviceTransportType.SNMP.equals(super.getDeviceProfile().getTransportType())) {
+                snmpSessionListener.getSnmpTransportContext().updateDeviceSessionCtx(device, deviceProfile, null);
+                SnmpDeviceProfileTransportConfiguration profileTransportConfig = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+                SnmpDeviceTransportConfiguration deviceTransportConfig = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
+                initPoolingTask(profileTransportConfig);
+                initTarget(profileTransportConfig, deviceTransportConfig);
+            } else {
+                //TODO: should the context be removed from the map?
+            }
         } else {
-            //TODO: should the context be removed from the map?
+            log.error("Failed to cancel task!");
         }
     }
 

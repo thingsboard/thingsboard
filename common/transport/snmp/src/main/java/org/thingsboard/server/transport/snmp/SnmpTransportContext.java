@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 @Service("SnmpTransportContext")
@@ -52,6 +52,9 @@ import java.util.stream.Collectors;
 public class SnmpTransportContext extends TransportContext {
     @Autowired
     DeviceCredentialsService deviceCredentialsService;
+
+    @Autowired
+    SnmpTransportService snmpTransportService;
 
     @Getter
     private final Map<DeviceProfileId, SnmpDeviceProfileTransportConfiguration> deviceProfileTransportConfig = new ConcurrentHashMap<>();
@@ -101,6 +104,10 @@ public class SnmpTransportContext extends TransportContext {
         } else {
             log.warn("[{}] Expected credentials type is {} but found {}", device.getId(), DeviceCredentialsType.ACCESS_TOKEN, credentials.getCredentialsType());
         }
+    }
+
+    public ExecutorService getSnmpCallbackExecutor() {
+        return snmpTransportService.getSnmpCallbackExecutor();
     }
 
     private List<PDU> createPduList(SnmpDeviceProfileTransportConfiguration deviceProfileConfig) {

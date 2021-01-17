@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.snmp;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.Snmp;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
@@ -62,6 +63,7 @@ public class SnmpTransportService {
 
     private Snmp snmp;
 
+    @Getter
     private ExecutorService snmpCallbackExecutor;
 
     @PostConstruct

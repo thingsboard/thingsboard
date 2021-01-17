@@ -56,15 +56,18 @@ public class SnmpSessionListener implements ResponseListener {
     @Override
     public void onResponse(ResponseEvent event) {
         ((Snmp) event.getSource()).cancel(event.getRequest(), this);
+        snmpTransportContext.getSnmpCallbackExecutor().submit(() -> processSnmpResponse(event));
+    }
 
-        //TODO: Make data processing in another thread pool - parse and save attributes and telemetry
+    private void processSnmpResponse(ResponseEvent event) {
         PDU response = event.getResponse();
         if (event.getError() != null) {
             log.warn("Response error: {}", event.getError().getMessage(), event.getError());
-            return;
         }
 
         if (response != null) {
+            log.debug("[{}] Processing SNMP response: {}", response.getRequestID(), response);
+
             DeviceProfileId deviceProfileId = (DeviceProfileId) event.getUserObject();
             TransportService transportService = snmpTransportContext.getTransportService();
             for (int i = 0; i < response.size(); i++) {
@@ -73,13 +76,12 @@ public class SnmpSessionListener implements ResponseListener {
                         TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
                         new DeviceAuthCallback(snmpTransportContext, sessionInfo -> {
                             try {
-                                log.debug("[{}] Processing SNMP response: {}", response.getRequestID(), response);
                                 transportService.process(sessionInfo,
                                         convertToPostAttributes(kvMapping.getKey(), kvMapping.getType(), vb.toValueString()),
                                         TransportServiceCallback.EMPTY);
                                 reportActivity(sessionInfo);
                             } catch (Exception e) {
-                                log.error("Failed to process SNMP response: {}", e.getMessage(), e);
+                                log.warn("Failed to process SNMP response: {}", e.getMessage(), e);
                             }
                         })));
                 snmpTransportContext.findTelemetryMapping(deviceProfileId, vb.getOid()).ifPresent(kvMapping -> transportService.process(DeviceTransportType.DEFAULT,
@@ -92,7 +94,7 @@ public class SnmpSessionListener implements ResponseListener {
                                 reportActivity(sessionInfo);
 
                             } catch (Exception e) {
-                                log.error("Failed to process SNMP response: {}", e.getMessage(), e);
+                                log.warn("Failed to process SNMP response: {}", e.getMessage(), e);
                             }
                         })));
             }
