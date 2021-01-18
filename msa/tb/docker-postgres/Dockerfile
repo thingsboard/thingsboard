@@ -69,6 +69,12 @@ RUN chown -R ${pkg.user}:${pkg.user} /data
 RUN chown -R ${pkg.user}:${pkg.user} /var/log/${pkg.name}
 RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar
 
+RUN chmod 555 /usr/bin/start-tb.sh
+RUN chmod 555 /usr/bin/upgrade-tb.sh
+RUN chmod 555 /usr/bin/install-tb.sh
+RUN chmod 555 /usr/bin/start-db.sh
+RUN chmod 555 /usr/bin/stop-db.sh
+
 USER ${pkg.user}
 
 EXPOSE 9090

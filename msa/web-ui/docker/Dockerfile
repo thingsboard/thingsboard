@@ -28,6 +28,8 @@ RUN systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || 
 
 RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}
 
+RUN chmod 555 /usr/bin/start-web-ui.sh
+
 USER ${pkg.user}
 
 CMD ["start-web-ui.sh"]

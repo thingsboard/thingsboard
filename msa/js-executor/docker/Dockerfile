@@ -28,6 +28,8 @@ RUN systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || 
 
 RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}
 
+RUN chmod 555 /usr/bin/start-js-executor.sh
+
 USER ${pkg.user}
 
 CMD ["start-js-executor.sh"]
