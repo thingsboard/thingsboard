@@ -254,6 +254,9 @@ public class EdgeController extends BaseController {
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(edge.getTenantId());
             Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(getCurrentUser().getTenantId(), edgeId, publicCustomer.getId()));
 
+            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+                    ComponentLifecycleEvent.UPDATED);
+
             logEntityAction(edgeId, savedEdge,
                     savedEdge.getCustomerId(),
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strEdgeId, publicCustomer.getId().toString(), publicCustomer.getName());
