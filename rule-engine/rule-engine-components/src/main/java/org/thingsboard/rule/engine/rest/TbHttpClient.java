@@ -281,7 +281,7 @@ public class TbHttpClient {
     private void addAuthorizationHeader(HttpHeaders headers) {
         HttpClientCredentials credentials = config.getCredentials();
         if (CredentialsType.BASIC == credentials.getType()) {
-            headers.add("Authorization", ((HttpBasicCredentials) credentials).getPassword());
+            headers.add("Authorization", ((HttpBasicCredentials) credentials).getBasicAuthHeaderValue());
         }
     }
 }
