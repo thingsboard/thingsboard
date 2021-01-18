@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -44,6 +45,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private DeviceProfileProvisionType provisionType;
     private RuleChainId defaultRuleChainId;
     private String defaultQueueName;
+    private TelemetryEntityView deviceViewKeys;
     private transient DeviceProfileData profileData;
     @JsonIgnore
     private byte[] profileDataBytes;
@@ -67,6 +69,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         this.defaultQueueName = deviceProfile.getDefaultQueueName();
         this.setProfileData(deviceProfile.getProfileData());
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
+        this.deviceViewKeys = deviceProfile.getDeviceViewKeys();
     }
 
     @Override

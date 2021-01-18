@@ -19,16 +19,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
+import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
@@ -47,6 +49,7 @@ import java.util.UUID;
 @Entity
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = ModelConstants.DEVICE_PROFILE_COLUMN_FAMILY_NAME)
+@Slf4j
 public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> implements SearchTextEntity<DeviceProfile> {
 
     @Column(name = ModelConstants.DEVICE_PROFILE_TENANT_ID_PROPERTY)
@@ -89,6 +92,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
     @Column(name=ModelConstants.DEVICE_PROFILE_PROVISION_DEVICE_KEY)
     private String provisionDeviceKey;
 
+    @Column(name = ModelConstants.DEVICE_PROFILE_DEVICE_VIEW_KEYS)
+    private String deviceViewKeys;
+
     public DeviceProfileEntity() {
         super();
     }
@@ -113,6 +119,11 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         }
         this.defaultQueueName = deviceProfile.getDefaultQueueName();
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
+        try {
+            this.deviceViewKeys = JacksonUtil.toString(deviceProfile.getDeviceViewKeys());
+        } catch (Exception e) {
+            log.error("Unable to serialize entity view keys!", e);
+        }
     }
 
     @Override
@@ -148,6 +159,11 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         }
         deviceProfile.setDefaultQueueName(defaultQueueName);
         deviceProfile.setProvisionDeviceKey(provisionDeviceKey);
+        try {
+            deviceProfile.setDeviceViewKeys(JacksonUtil.fromString(deviceViewKeys, TelemetryEntityView.class));
+        } catch (Exception e) {
+            log.error("Unable to read entity view keys!", e);
+        }
         return deviceProfile;
     }
 }
