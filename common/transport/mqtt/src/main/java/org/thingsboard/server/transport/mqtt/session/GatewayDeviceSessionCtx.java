@@ -41,7 +41,7 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
         this.parent = parent;
         JsonParser parser = new JsonParser();
         boolean activityTimeFromGatewayDevice = Boolean.FALSE;
-        if ("null".equals(this.parent.getDeviceInfo().getAdditionalInfo())) {
+        if (this.parent.getDeviceInfo().getAdditionalInfo() != null && !"null".equals(this.parent.getDeviceInfo().getAdditionalInfo())) {
             JsonObject additionalInfo = parser.parse(this.parent.getDeviceInfo().getAdditionalInfo()).getAsJsonObject();
             if (additionalInfo.get("activityTimeFromGatewayDevice") != null) {
                 activityTimeFromGatewayDevice = additionalInfo.get("activityTimeFromGatewayDevice").getAsBoolean();
