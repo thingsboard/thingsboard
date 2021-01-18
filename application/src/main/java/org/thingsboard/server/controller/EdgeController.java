@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -272,6 +272,9 @@ public class EdgeController extends BaseController {
             Edge edge = checkEdgeId(edgeId, Operation.ASSIGN_TO_CUSTOMER);
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(edge.getTenantId());
             Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(getCurrentUser().getTenantId(), edgeId, publicCustomer.getId()));
+
+            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+                    ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(edgeId, savedEdge,
                     savedEdge.getCustomerId(),

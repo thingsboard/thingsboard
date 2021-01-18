@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -82,6 +82,22 @@ export class DeviceProfileService {
       url += `&transportType=${transportType}`;
     }
     return this.http.get<PageData<DeviceProfileInfo>>(url, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getDeviceProfileDevicesAttributesKeys(deviceProfileId?: string, config?: RequestConfig): Observable<Array<string>> {
+    let url = `/api/deviceProfile/devices/keys/attributes`;
+    if (isDefinedAndNotNull(deviceProfileId)) {
+      url += `?deviceProfileId=${deviceProfileId}`;
+    }
+    return this.http.get<Array<string>>(url, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getDeviceProfileDevicesTimeseriesKeys(deviceProfileId?: string, config?: RequestConfig): Observable<Array<string>> {
+    let url = `/api/deviceProfile/devices/keys/timeseries`;
+    if (isDefinedAndNotNull(deviceProfileId)) {
+      url += `?deviceProfileId=${deviceProfileId}`;
+    }
+    return this.http.get<Array<string>>(url, defaultHttpOptionsFromConfig(config));
   }
 
 }

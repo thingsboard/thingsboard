@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -61,9 +61,11 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   modelValue: Array<number> | null;
   objectsList: Array<ObjectLwM2M> = [];
   filteredObjectsList: Observable<Array<ObjectLwM2M>>;
-  private disabled = false as boolean;
+  // TODO: voba - check this fix
+  // private disabled = false as boolean;
+  disabled = false as boolean;
   searchText = '' as string;
-  private dirty = false as boolean;
+  private dirty = false as boolean;Lwm2mObjectAddInstancesListComponent
 
   get required(): boolean {
     return this.requiredValue;

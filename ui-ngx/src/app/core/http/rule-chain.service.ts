@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import {
   RuleChainConnectionInfo,
   RuleChainMetaData,
   ruleChainNodeComponent,
+  RuleChainType,
   ruleNodeTypeComponentTypes,
-  unknownNodeComponent,
-  RuleChainType
+  unknownNodeComponent
 } from '@shared/models/rule-chain.models';
 import { ComponentDescriptorService } from './component-descriptor.service';
 import {
@@ -62,7 +62,7 @@ export class RuleChainService {
     private translate: TranslateService
   ) { }
 
-  public getRuleChains(pageLink: PageLink, type: string, config?: RequestConfig): Observable<PageData<RuleChain>> {
+  public getRuleChains(pageLink: PageLink, type: RuleChainType = RuleChainType.CORE, config?: RequestConfig): Observable<PageData<RuleChain>> {
     return this.http.get<PageData<RuleChain>>(`/api/ruleChains${pageLink.toQuery()}&type=${type}`,
       defaultHttpOptionsFromConfig(config));
   }
@@ -151,7 +151,7 @@ export class RuleChainService {
     return this.ruleNodeConfigFactories[directive];
   }
 
-  public getRuleNodeComponentByClazz(ruleChainType: RuleChainType = RuleChainType.core, clazz: string): RuleNodeComponentDescriptor {
+  public getRuleNodeComponentByClazz(ruleChainType: RuleChainType = RuleChainType.CORE, clazz: string): RuleNodeComponentDescriptor {
     const found = this.ruleNodeComponentsMap.get(ruleChainType).filter((component) => component.clazz === clazz);
     if (found && found.length) {
       return found[0];

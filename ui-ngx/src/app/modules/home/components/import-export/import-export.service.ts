@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -59,7 +59,6 @@ import {
   RuleChainType
 } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import * as JSZip from 'jszip';
 import { FiltersInfo } from '@shared/models/query/query.models';
 
 // @dynamic
@@ -431,15 +430,17 @@ export class ImportExportService {
   }
 
   public exportJSZip(data: object, filename: string) {
-    const jsZip = new JSZip();
-    for (const keyName in data) {
-      if (data.hasOwnProperty(keyName)) {
-        const valueData = data[keyName];
-        jsZip.file(keyName, valueData);
+    import('jszip').then((JSZip) => {
+      const jsZip = new JSZip.default();
+      for (const keyName in data) {
+        if (data.hasOwnProperty(keyName)) {
+          const valueData = data[keyName];
+          jsZip.file(keyName, valueData);
+        }
       }
-    }
-    jsZip.generateAsync({type: 'blob'}).then(content => {
-      this.downloadFile(content, filename, ZIP_TYPE);
+      jsZip.generateAsync({type: 'blob'}).then(content => {
+        this.downloadFile(content, filename, ZIP_TYPE);
+      });
     });
   }
 
@@ -469,7 +470,7 @@ export class ImportExportService {
       return false;
     }
     if (isUndefined(ruleChainImport.ruleChain.type)) {
-      ruleChainImport.ruleChain.type = RuleChainType.core;
+      ruleChainImport.ruleChain.type = RuleChainType.CORE;
     }
     return true;
   }

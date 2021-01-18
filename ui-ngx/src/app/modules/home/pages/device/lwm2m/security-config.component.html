@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -63,7 +63,9 @@
                       lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK">
               <mat-form-field class="mat-block">
                 <mat-label>{{ 'device.lwm2m-security-config.client-key' | translate }}</mat-label>
-                <textarea matInput #clientKey maxlength={{lenMinMaxClient}} type="text" rows="3" cols="1"
+                <!-- TODO: voba - check this fix -->
+                <!--<textarea matInput #clientKey maxlength={{lenMinMaxClient}} type="text" rows="3" cols="1" -->
+                <textarea matInput #clientKey maxlength={{lenMaxKeyClient}} type="text" rows="3" cols="1"
                           formControlName="clientKey"
                           [required]="lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.RPK ||
               lwm2mConfigFormGroup.get('securityConfigClientMode').value === securityConfigLwM2MType.PSK"></textarea>

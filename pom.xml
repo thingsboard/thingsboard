@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@
         </sonar.exclusions>
         <elasticsearch.version>5.0.2</elasticsearch.version>
         <delight-nashorn-sandbox.version>0.1.14</delight-nashorn-sandbox.version>
-        <kafka.version>2.3.0</kafka.version>
+        <kafka.version>2.6.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
         <fst.version>2.57</fst.version>
         <antlr.version>2.7.7</antlr.version>
@@ -768,7 +768,8 @@
                             <exclude>src/main/resources/credentials/shell/*.jks</exclude>
                             <exclude>src/main/resources/credentials/shell/*.jks.old</exclude>
                             <exclude>ui/**</exclude>
-                            <exclude>src/browserslist</exclude>
+                            <exclude>src/.browserslistrc</exclude>
+                            <exclude>**/yarn.lock</exclude>
                             <exclude>**/*.raw</exclude>
                             <exclude>**/apache/cassandra/io/**</exclude>
                             <exclude>.run/**</exclude>

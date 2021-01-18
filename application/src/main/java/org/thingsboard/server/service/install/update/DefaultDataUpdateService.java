@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,8 +87,8 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 3.1.1 to 3.2.0 ...");
                 tenantsRootRuleChainUpdater.updateEntities(null);
                 break;
-            case "3.2.0":
-                log.info("Updating data from version 3.2.0 to 3.3.0 ...");
+            case "3.2.1":
+                log.info("Updating data from version 3.2.1 to 3.3.0 ...");
                 tenantsDefaultEdgeRuleChainUpdater.updateEntities(null);
                 break;
             default:

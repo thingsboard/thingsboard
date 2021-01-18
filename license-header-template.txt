@@ -1,4 +1,4 @@
-Copyright © ${project.inceptionYear}-2020 ${owner}
+Copyright © ${project.inceptionYear}-2021 ${owner}
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
