@@ -14,31 +14,28 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Inject, Input, OnInit } from "@angular/core";
+import { Component, forwardRef, Inject, Input, OnInit } from '@angular/core';
 
 import {
   ControlValueAccessor,
-  FormBuilder, FormGroup, NG_VALUE_ACCESSOR, NgModel, Validators
-} from "@angular/forms";
+  FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators
+} from '@angular/forms';
 import {
   SECURITY_CONFIG_MODE,
   SECURITY_CONFIG_MODE_NAMES,
-  KEY_PUBLIC_REGEXP_PSK,
   ServerSecurityConfig,
-  LEN_MAX_PUBLIC_KEY_PSK,
-  LEN_MAX_PUBLIC_KEY_RPK_X509,
-  KEY_PUBLIC_REGEXP_X509,
   DEFAULT_PORT_BOOTSTRAP_NO_SEC,
   DEFAULT_PORT_SERVER_NO_SEC,
   DEFAULT_CLIENT_HOLD_OFF_TIME,
-  DEFAULT_ID_SERVER
-} from "./profile-config.models";
-import { Store } from "@ngrx/store";
-import { AppState } from "@core/core.state";
-import { coerceBooleanProperty } from "@angular/cdk/coercion";
-import { WINDOW } from "@core/services/window.service";
+  DEFAULT_ID_SERVER, LEN_MAX_PUBLIC_KEY_RPK, LEN_MAX_PUBLIC_KEY_X509, KEY_REGEXP_HEX_DEC
+} from './profile-config.models';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { WINDOW } from '@core/services/window.service';
 import { pairwise, startWith } from 'rxjs/operators';
 import { DeviceProfileService } from '@core/http/device-profile.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-config-server',
@@ -55,12 +52,14 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAccessor, Validators {
 
   private requiredValue: boolean;
+
   valuePrev = null;
   serverFormGroup: FormGroup;
   securityConfigLwM2MType = SECURITY_CONFIG_MODE;
   securityConfigLwM2MTypes = Object.keys(SECURITY_CONFIG_MODE);
   credentialTypeLwM2MNamesMap = SECURITY_CONFIG_MODE_NAMES;
-  lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_PSK;
+  lenMinServerPublicKey = 0;
+  lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK;
   currentSecurityMode = null;
 
 
@@ -80,6 +79,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   }
 
   constructor(protected store: Store<AppState>,
+              public translate: TranslateService,
               public fb: FormBuilder,
               private deviceProfileService: DeviceProfileService,
               @Inject(WINDOW) private window: Window) {
@@ -105,7 +105,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   ngOnInit(): void {
   }
 
-  updateValueFields(serverData: ServerSecurityConfig): void {
+  private updateValueFields = (serverData: ServerSecurityConfig): void => {
     serverData.bootstrapServerIs = this.bootstrapServerIs;
     this.serverFormGroup.patchValue(serverData, {emitEvent: false});
     this.serverFormGroup.get('bootstrapServerIs').disable();
@@ -113,40 +113,38 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
     this.updateValidate(securityMode);
   }
 
-  updateValidate(securityMode: SECURITY_CONFIG_MODE): void {
+  private updateValidate = (securityMode: SECURITY_CONFIG_MODE): void => {
     switch (securityMode) {
       case SECURITY_CONFIG_MODE.NO_SEC:
-        this.serverFormGroup.get('serverPublicKey').setValidators([]);
+        this.setValidatorsNoSecPsk();
         break;
       case SECURITY_CONFIG_MODE.PSK:
-        this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_PSK;
-        this.serverFormGroup.get('serverPublicKey').setValidators([]);
+        this.setValidatorsNoSecPsk();
         break;
       case SECURITY_CONFIG_MODE.RPK:
-        this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK_X509;
-        this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_PSK)]);
+        this.lenMinServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK;
+        this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK;
+        this.setValidatorsRpkX509();
         break;
       case SECURITY_CONFIG_MODE.X509:
-        this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK_X509;
-        this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_X509)]);
+        this.lenMinServerPublicKey = 0;
+        this.lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_X509;
+        this.setValidatorsRpkX509();
         break;
     }
     this.serverFormGroup.updateValueAndValidity();
-    // this.checkValueWithNewValidate();
   }
 
-  // checkValueWithNewValidate(): void {
-  //   this.serverFormGroup.patchValue({
-  //       host: this.serverFormGroup.get('host').value,
-  //       port: this.serverFormGroup.get('port').value,
-  //       bootstrapServerIs: this.serverFormGroup.get('bootstrapServerIs').value,
-  //       serverPublicKey: this.serverFormGroup.get('serverPublicKey').value,
-  //       clientHoldOffTime: this.serverFormGroup.get('clientHoldOffTime').value,
-  //       serverId: this.serverFormGroup.get('serverId').value,
-  //       bootstrapServerAccountTimeout: this.serverFormGroup.get('bootstrapServerAccountTimeout').value,
-  //     },
-  //     {emitEvent: true});
-  // }
+  private setValidatorsNoSecPsk = (): void => {
+    this.serverFormGroup.get('serverPublicKey').setValidators([]);
+  }
+
+  private setValidatorsRpkX509 = (): void => {
+    this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required,
+      Validators.pattern(KEY_REGEXP_HEX_DEC),
+      Validators.minLength(this.lenMinServerPublicKey),
+      Validators.maxLength(this.lenMaxServerPublicKey)]);
+  }
 
   writeValue(value: any): void {
     if (value) {
@@ -160,7 +158,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
     this.propagateChange = fn;
   }
 
-  private propagateChangeState(value: any): void {
+  private propagateChangeState = (value: any): void => {
     if (value !== undefined) {
       if (this.valuePrev === null) {
         this.valuePrev = 'init';
@@ -190,7 +188,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   registerOnTouched(fn: any): void {
   }
 
-  getServerGroup(): FormGroup {
+  private getServerGroup = (): FormGroup => {
     const port = this.bootstrapServerIs ? DEFAULT_PORT_BOOTSTRAP_NO_SEC : DEFAULT_PORT_SERVER_NO_SEC;
     return this.fb.group({
       host: [this.window.location.hostname, this.required ? [Validators.required] : []],
@@ -204,7 +202,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
     });
   }
 
-  getLwm2mBootstrapSecurityInfo(mode: string) {
+  private getLwm2mBootstrapSecurityInfo = (mode: string): void => {
     this.deviceProfileService.getLwm2mBootstrapSecurityInfo(mode, this.serverFormGroup.get('bootstrapServerIs').value).subscribe(
       (serverSecurityConfig) => {
         this.serverFormGroup.patchValue({

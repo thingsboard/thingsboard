@@ -15,7 +15,7 @@
 ///
 
 
-import { Component, forwardRef, Input, OnInit, Output } from "@angular/core";
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -24,10 +24,10 @@ import {
   FormGroup,
   NG_VALUE_ACCESSOR,
   Validators
-} from "@angular/forms";
-import { Store } from "@ngrx/store";
-import { AppState } from "@core/core.state";
-import { coerceBooleanProperty } from "@angular/cdk/coercion";
+} from '@angular/forms';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ATTR,
   Instance,
@@ -35,7 +35,7 @@ import {
   OBSERVE,
   ResourceLwM2M,
   TELEMETRY
-} from "./profile-config.models";
+} from './profile-config.models';
 import { isNotNullOrUndefined } from 'codelyzer/util/isNotNullOrUndefined';
 import { deepClone, isUndefined } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
@@ -60,12 +60,13 @@ import {
 
 export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor, OnInit, Validators {
 
+  private requiredValue: boolean;
+
   valuePrev = null as any;
   observeAttrTelemetryFormGroup: FormGroup;
   observe = OBSERVE as string;
   attribute = ATTR as string;
   telemetry = TELEMETRY as string;
-  private requiredValue: boolean;
 
   get required(): boolean {
     return this.requiredValue;
@@ -74,6 +75,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   @Input()
   disabled: boolean;
 
+  // tslint:disable-next-line:adjacent-overload-signatures
   @Input()
   set required(value: boolean) {
     const newVal = coerceBooleanProperty(value);
@@ -86,7 +88,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   constructor(private store: Store<AppState>,
               private fb: FormBuilder,
               private dialog: MatDialog,
-              private translate: TranslateService) {
+              public translate: TranslateService) {
     this.observeAttrTelemetryFormGroup = this.fb.group({
       clientLwM2M: this.fb.array([])
     });
@@ -100,19 +102,18 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   ngOnInit(): void {
   }
 
-  private propagateChange = (v: any) => {
-  };
+  private propagateChange = (v: any) => { };
 
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }
 
-  private propagateChangeState(value: any): void {
+  private propagateChangeState = (value: any): void => {
     if (value) {
       if (this.valuePrev === null) {
-        this.valuePrev = "init";
-      } else if (this.valuePrev === "init") {
+        this.valuePrev = 'init';
+      } else if (this.valuePrev === 'init') {
         this.valuePrev = value;
       } else if (JSON.stringify(value) !== JSON.stringify(this.valuePrev)) {
         this.valuePrev = value;
@@ -138,7 +139,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     }
   }
 
-  getDisabledState(): boolean {
+  getDisabledState = (): boolean => {
     return this.disabled;
   }
 
@@ -146,13 +147,13 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     this.buildClientObjectsLwM2M(value.clientLwM2M);
   }
 
-  private buildClientObjectsLwM2M(objectsLwM2M: ObjectLwM2M []): void {
+  private buildClientObjectsLwM2M = (objectsLwM2M: ObjectLwM2M []): void => {
     this.observeAttrTelemetryFormGroup.setControl('clientLwM2M',
       this.createObjectsLwM2M(objectsLwM2M)
     );
   }
 
-  createObjectsLwM2M(objectsLwM2MJson: ObjectLwM2M []): FormArray {
+  private createObjectsLwM2M = (objectsLwM2MJson: ObjectLwM2M []): FormArray => {
     return this.fb.array(objectsLwM2MJson.map((objectLwM2M) => {
       return this.fb.group({
         id: objectLwM2M.id,
@@ -160,62 +161,62 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         multiple: objectLwM2M.multiple,
         mandatory: objectLwM2M.mandatory,
         instances: this.createInstanceLwM2M(objectLwM2M.instances)
-      })
-    }))
+      });
+    }));
   }
 
-  createInstanceLwM2M(instanceLwM2MJson: Instance []): FormArray {
-    return this.fb.array(instanceLwM2MJson.map((instanceLwM2M, index) => {
+  private createInstanceLwM2M = (instanceLwM2MJson: Instance []): FormArray => {
+    return this.fb.array(instanceLwM2MJson.map((instanceLwM2M) => {
       return this.fb.group({
         id: instanceLwM2M.id,
         [this.observe]: {value: false, disabled: this.disabled},
         [this.attribute]: {value: false, disabled: this.disabled},
         [this.telemetry]: {value: false, disabled: this.disabled},
         resources: {value: instanceLwM2M.resources, disabled: this.disabled}
-      })
-    }))
+      });
+    }));
   }
 
-  clientLwM2MFormArray(formGroup: FormGroup): FormArray {
+  clientLwM2MFormArray = (formGroup: FormGroup): FormArray => {
     return formGroup.get('clientLwM2M') as FormArray;
   }
 
-  instancesLwm2mFormArray(objectLwM2M: AbstractControl): FormArray {
+  instancesLwm2mFormArray = (objectLwM2M: AbstractControl): FormArray => {
     return objectLwM2M.get('instances') as FormArray;
   }
 
-  changeInstanceResourcesCheckBox(value: boolean, instance: AbstractControl, type: string): void {
-    let resources = instance.get('resources').value as ResourceLwM2M []
+  changeInstanceResourcesCheckBox = (value: boolean, instance: AbstractControl, type: string): void => {
+    const resources = instance.get('resources').value as ResourceLwM2M [];
     resources.forEach(resource => resource[type] = value);
     instance.get('resources').patchValue(resources);
     this.propagateChange(this.observeAttrTelemetryFormGroup.value);
   }
 
-  updateValidators() {
+  private updateValidators = (): void => {
     this.observeAttrTelemetryFormGroup.get('clientLwM2M').setValidators(this.required ? [Validators.required] : []);
     this.observeAttrTelemetryFormGroup.get('clientLwM2M').updateValueAndValidity();
   }
 
-  trackByParams(index: number): number {
+  trackByParams = (index: number): number => {
     return index;
   }
 
-  getIndeterminate(instance: AbstractControl, type: string) {
+  getIndeterminate = (instance: AbstractControl, type: string): boolean => {
     const resources = instance.get('resources').value as ResourceLwM2M [];
     if (isNotNullOrUndefined(resources)) {
       const isType = (element) => element[type] === true;
-      let checkedResource = resources.filter(isType);
-      if (checkedResource.length === 0) return false;
+      const checkedResource = resources.filter(isType);
+      if (checkedResource.length === 0) { return false; }
       else if (checkedResource.length === resources.length) {
         instance.patchValue({[type]: true});
         return false;
-      } else return true;
+      } else { return true; }
     }
     return false;
   }
 
 
-  getChecked(instance: AbstractControl, type: string) {
+  getChecked = (instance: AbstractControl, type: string): boolean => {
     const resources = instance.get('resources').value as ResourceLwM2M [];
     if (isNotNullOrUndefined(resources)) {
       return resources.some(resource => resource[type]);
@@ -223,7 +224,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     return false;
   }
 
-  getExpended(objectLwM2M: AbstractControl) {
+  getExpended = (objectLwM2M: AbstractControl): boolean => {
     return this.instancesLwm2mFormArray(objectLwM2M).length === 1;
   }
 
@@ -233,22 +234,24 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
    * 2) Field in object: <Mandatory> == Mandatory/Optional
    * If this field is “Multiple” then the number of Object Instance can be from 0 to many (Object Instance ID MAX_ID=65535).
    * If this field is “Single” then the number of Object Instance can be from 0 to 1. (max count == 1)
-   * If the Object field “Mandatory” is “Mandatory” and the Object field “Instances” is “Single” then, the number of Object Instance MUST be 1.
-   * 1. <MultipleInstances> == Multiple (true), <Mandatory>  == Optional  (false) => Object Instance ID MIN_ID=0 MAX_ID=65535 (может ни одного не быть)
-   * 2. <MultipleInstances> == Multiple (true), <Mandatory>  == Mandatory (true)  => Object Instance ID MIN_ID=0 MAX_ID=65535 (min один обязательный)
-   * 3. <MultipleInstances> == Single   (false), <Mandatory> == Optional  (false) => Object Instance ID cnt_max = 1 cnt_min = 0 (может ни одного не быть)
-   * 4. <MultipleInstances> == Single   (false), <Mandatory> == Mandatory (true)  => Object Instance ID cnt_max = cnt_min = 1 (всегда есть один)
-   * @param $event
-   * @param objectId
-   * @param objectName
+   * If the Object field “Mandatory” is “Mandatory” and the Object field “Instances” is “Single” then -
+   * the number of Object Instance MUST be 1.
+   * 1. <MultipleInstances> == Multiple (true), <Mandatory>  == Optional  (false) -
+   *   Object Instance ID MIN_ID=0 MAX_ID=65535 (может ни одного не быть)
+   * 2. <MultipleInstances> == Multiple (true), <Mandatory>  == Mandatory (true) -
+   *   Object Instance ID MIN_ID=0 MAX_ID=65535 (min один обязательный)
+   * 3. <MultipleInstances> == Single   (false), <Mandatory> == Optional  (false) -
+   *   Object Instance ID cnt_max = 1 cnt_min = 0 (может ни одного не быть)
+   * 4. <MultipleInstances> == Single   (false), <Mandatory> == Mandatory (true) -
+   *   Object Instance ID cnt_max = cnt_min = 1 (всегда есть один)
    */
 
-  addInstances($event: Event, object: ObjectLwM2M): void {
+  addInstances = ($event: Event, object: ObjectLwM2M): void => {
     if ($event) {
       $event.stopPropagation();
       $event.preventDefault();
     }
-    let instancesIds = new Set<number>();
+    const instancesIds = new Set<number>();
     object.instances.forEach(inst => {
       instancesIds.add(inst.id);
     });
@@ -269,21 +272,22 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     );
   }
 
-  updateInstancesIds(data: Lwm2mObjectAddInstancesData) {
-    let valueNew = new Set<number>();
-    let valueOld = new Set<number>();
+  private updateInstancesIds = (data: Lwm2mObjectAddInstancesData): void => {
+    const valueNew = new Set<number>();
+    const valueOld = new Set<number>();
     data.instancesIds.forEach(value => {
       valueNew.add(value);
-    })
-    let oldInstances = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).find(e => e.id == data.objectId).instances;
+    });
+    const oldInstances = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).
+    find(e => e.id === data.objectId).instances;
     oldInstances.forEach(inst => {
       valueOld.add(inst.id);
     });
-    if (JSON.stringify(Array.from(valueOld)) != JSON.stringify(Array.from(valueNew))) {
-      let idsDel = this.diffBetweenSet(valueNew, this.deepCloneSet(valueOld));
-      let idsAdd = this.diffBetweenSet(valueOld, this.deepCloneSet(valueNew));
+    if (JSON.stringify(Array.from(valueOld)) !== JSON.stringify(Array.from(valueNew))) {
+      const idsDel = this.diffBetweenSet(valueNew, this.deepCloneSet(valueOld));
+      const idsAdd = this.diffBetweenSet(valueOld, this.deepCloneSet(valueNew));
       if (idsAdd.size) {
-        this.addInstancesNew(data.objectId, idsAdd)
+        this.addInstancesNew(data.objectId, idsAdd);
       }
       if (idsDel.size) {
         this.delInstances(data.objectId, idsDel);
@@ -291,22 +295,25 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     }
   }
 
-  delInstances(objectId: number, idsDel: Set<number>): void {
-    let isIdIndex = (element) => element.id == objectId;
-    let objectIndex = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).findIndex(isIdIndex);
+  private delInstances = (objectId: number, idsDel: Set<number>): void => {
+    let isIdIndex = (element) => element.id === objectId;
+    const objectIndex = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).findIndex(isIdIndex);
     idsDel.forEach(x => {
-      isIdIndex = (element) => element.value.id == x;
-      let instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls[objectIndex].get("instances") as FormArray);
-      let instanceIndex = instancesFormArray.controls.findIndex(isIdIndex);
+      isIdIndex = (element) => element.value.id === x;
+      const instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray)
+        .controls[objectIndex].get('instances') as FormArray);
+      const instanceIndex = instancesFormArray.controls.findIndex(isIdIndex);
       instancesFormArray.removeAt(instanceIndex);
-    })
+    });
   }
 
-  addInstancesNew(objectId: number, idsAdd: Set<number>): void {
-    let instancesValue = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).find(e => e.id == objectId).instances;
-    let instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls.find(e => e.value.id == objectId).get("instances") as FormArray) as FormArray;
+  private addInstancesNew = (objectId: number, idsAdd: Set<number>): void => {
+    const instancesValue = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M [])
+      .find(e => e.id === objectId).instances;
+    const instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls
+      .find(e => e.value.id === objectId).get('instances') as FormArray) as FormArray;
     idsAdd.forEach(x => {
-      let instanceNew = deepClone(instancesValue[0]) as Instance;
+      const instanceNew = deepClone(instancesValue[0]) as Instance;
       instanceNew.id = x;
       instanceNew.resources.forEach(r => {
         r.attribute = false;
@@ -321,26 +328,26 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         resources: {value: instanceNew.resources, disabled: this.disabled}
       }));
     });
-    (instancesFormArray.controls as FormGroup[]).sort((a,b) => a.value.id - b.value.id);
+    (instancesFormArray.controls as FormGroup[]).sort((a, b) => a.value.id - b.value.id);
   }
 
-  deepCloneSet(oldSet: Set<any>): Set<any> {
-    let newSet = new Set<number>();
+  private deepCloneSet = (oldSet: Set<any>): Set<any> => {
+    const newSet = new Set<number>();
     oldSet.forEach(p => {
       newSet.add(p);
-    })
+    });
     return newSet;
   }
 
-  diffBetweenSet(firstSet: Set<any>, secondSet: Set<any>): Set<any> {
+  private diffBetweenSet = (firstSet: Set<any>, secondSet: Set<any>): Set<any> => {
     firstSet.forEach(p => {
       secondSet.delete(p);
-    })
-    return secondSet
+    });
+    return secondSet;
   }
 
-  setInstancesIds(instances: Instance []): Set<number> {
-    let instancesIds = new Set<number>();
+  private setInstancesIds = (instances: Instance []): Set<number> => {
+    const instancesIds = new Set<number>();
     if (instances && instances.length) {
       instances.forEach(inst => {
         instancesIds.add(inst.id);

@@ -14,13 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from "@angular/core";
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormArray, FormBuilder,
   FormGroup,
   NG_VALUE_ACCESSOR, Validators
-} from "@angular/forms";
+} from '@angular/forms';
 import {
   CAMEL_CASE_REGEXP,
   ResourceLwM2M
@@ -45,10 +45,10 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueAccessor, OnInit, Validators {
 
-  resourceFormGroup : FormGroup;
-
-  disabled = false as boolean;
   private requiredValue: boolean;
+
+  resourceFormGroup: FormGroup;
+  disabled = false as boolean;
 
   get required(): boolean {
     return this.requiredValue;
@@ -63,7 +63,7 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
   }
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
-    this.resourceFormGroup = this.fb.group({'resources': this.fb.array([])});
+    this.resourceFormGroup = this.fb.group({resources: this.fb.array([])});
     this.resourceFormGroup.valueChanges.subscribe(value => {
       if (!this.disabled) {
         this.propagateChangeState(value.resources);
@@ -85,7 +85,7 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
     return this.resourceFormGroup.get('resources') as FormArray;
   }
 
-  resourceLwm2mFormArray(instance: FormGroup): FormArray {
+  resourceLwm2mFormArray = (instance: FormGroup): FormArray => {
     return instance.get('resources') as FormArray;
   }
 
@@ -98,28 +98,28 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
     }
   }
 
-  getDisabledState(): boolean {
+  getDisabledState = (): boolean => {
     return this.disabled;
   }
 
-  updateValueKeyName (event: any, z: number): void {
+  updateValueKeyName = (event: any, z: number): void => {
     this.resourceFormArray.at(z).patchValue( {keyName:  this.keysToCamel(deepClone(event.target.value))} );
   }
 
-  keysToCamel(o: any): string {
-    let val = o.split(" ");
-    let playStore = [];
-    val.forEach(function (item, k){
+  private keysToCamel = (o: any): string => {
+    const val = o.split(' ');
+    const playStore = [];
+    val.forEach((item, k) => {
       item = item.replace(CAMEL_CASE_REGEXP, '');
-      item = (k===0)? item.charAt(0).toLowerCase() + item.substr(1) : item.charAt(0).toUpperCase() + item.substr(1)
+      item = (k === 0) ? item.charAt(0).toLowerCase() + item.substr(1) : item.charAt(0).toUpperCase() + item.substr(1);
       playStore.push(item);
     });
     return playStore.join('');
   }
 
-  createResourceLwM2M(resourcesLwM2MJson: ResourceLwM2M []): void {
-    if(resourcesLwM2MJson.length === this.resourceFormArray.length) {
-      this.resourceFormArray.patchValue(resourcesLwM2MJson, {emitEvent: false})
+  private createResourceLwM2M = (resourcesLwM2MJson: ResourceLwM2M []): void => {
+    if (resourcesLwM2MJson.length === this.resourceFormArray.length) {
+      this.resourceFormArray.patchValue(resourcesLwM2MJson, {emitEvent: false});
     } else {
       this.resourceFormArray.clear();
       resourcesLwM2MJson.forEach(resourceLwM2M => {
@@ -131,18 +131,17 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
           telemetry: resourceLwM2M.telemetry,
           keyName: [resourceLwM2M.keyName, Validators.required]
         }));
-      })
+      });
     }
   }
 
-  private propagateChange = (v: any) => {
-  };
+  private propagateChange = (v: any) => { };
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }
 
-  private propagateChangeState(value: any): void {
+  private propagateChangeState = (value: any): void => {
     if (value && this.resourceFormGroup.valid) {
       this.propagateChange(value);
     } else {
@@ -150,7 +149,7 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
     }
   }
 
-  trackByParams(index: number): number {
+  trackByParams = (index: number): number => {
     return index;
   }
 }

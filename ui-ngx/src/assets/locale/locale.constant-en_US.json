@@ -893,9 +893,8 @@
           "lwm2m-server": "LwM2M Server",
           "client-publicKey-or-id": "Client Public Key or Id",
           "client-secret-key": "Client Secret Key",
-           "config-json-tab": "Json Client Security Config",
-          "pattern_hex_dec_64": "must be hex decimal format and 64 characters",
-          "pattern_hex_dec_182": "must be hex decimal format and 182 characters"
+          "config-json-tab": "Json Client Security Config",
+          "pattern_hex_dec": "{ count, plural, 0 {must be hex decimal format} other {must be # characters} }"
         },
         "client-id": "Client ID",
         "client-id-pattern": "Contains invalid character.",
@@ -1121,10 +1120,7 @@
             "key-name_label": "Key Name in Camel format",
             "required": " value is required.",
             "mode": "Security config mode",
-            "pattern_hex_dec_64": "must be hex decimal format and 64 characters",
-            "pattern_hex_dec_134": "must be hex decimal format and 134 characters",
-            "pattern_hex_dec_182": "must be hex decimal format and 182 characters",
-            "pattern_hex_dec": "must be hex decimal format",
+            "pattern_hex_dec": "{ count, plural, 0 {must be hex decimal format} other {must be # characters} }",
             "bootstrap-tab": "Bootstrap",
             "servers": "Servers",
             "short-id": "Short ID",
