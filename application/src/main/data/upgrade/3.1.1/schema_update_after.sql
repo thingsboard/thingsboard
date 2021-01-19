@@ -26,4 +26,4 @@ ALTER TABLE tenant DROP COLUMN IF EXISTS isolated_tb_rule_engine;
 ALTER TABLE device ALTER COLUMN device_profile_id SET NOT NULL;
 ALTER TABLE device DROP CONSTRAINT IF EXISTS fk_device_profile;
 ALTER TABLE device ADD CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id);
-ALTER TABLE device_profile ADD COLUMN device_view_keys varchar(10000000);
+ALTER TABLE device_profile ADD COLUMN keys varchar(10000000);

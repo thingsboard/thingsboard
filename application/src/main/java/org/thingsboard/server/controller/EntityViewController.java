@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,19 +33,29 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.DeviceInfo;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.objects.AttributesEntityView;
+import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -60,6 +71,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -117,6 +129,9 @@ public class EntityViewController extends BaseController {
             if (entityView.getId() == null) {
                 accessControlService
                         .checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.CREATE, null, entityView);
+
+                Optional<TelemetryEntityView> telemetryEntityView = resolveDefaultKeysIfExists(entityView);
+                telemetryEntityView.ifPresent(view -> mergeExistingKeysAndDefault(entityView, view));
             } else {
                 EntityView existingEntityView = checkEntityViewId(entityView.getId(), Operation.WRITE);
                 if (existingEntityView.getKeys() != null) {
@@ -156,6 +171,83 @@ public class EntityViewController extends BaseController {
                     entityView.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
         }
+    }
+
+    private Optional<TelemetryEntityView> resolveDefaultKeysIfExists(EntityView entityView) throws ThingsboardException {
+        EntityId entityId = entityView.getEntityId();
+        if (EntityType.DEVICE.equals(entityId.getEntityType())) {
+            DeviceId deviceId = (DeviceId) entityId;
+            DeviceInfo deviceInfo = checkDeviceInfoId(deviceId, Operation.READ);
+            DeviceProfileId deviceProfileId = deviceInfo.getDeviceProfileId();
+            DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(getTenantId(), deviceProfileId);
+            if (deviceProfile != null) {
+                TelemetryEntityView keys = deviceProfile.getKeys();
+                return Optional.ofNullable(keys);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private void mergeExistingKeysAndDefault(EntityView entityView, TelemetryEntityView defaultKeys) {
+        TelemetryEntityView keys = entityView.getKeys();
+        if (keys == null) {
+            keys = new TelemetryEntityView(new ArrayList<>(), new AttributesEntityView());
+            entityView.setKeys(keys);
+        }
+
+        List<String> timeseries = keys.getTimeseries();
+        if (timeseries == null) {
+            timeseries = new ArrayList<>();
+            keys.setTimeseries(timeseries);
+        }
+
+        List<String> defaultKeysTimeseries = defaultKeys.getTimeseries();
+        if (!CollectionUtils.isEmpty(defaultKeysTimeseries)) {
+            timeseries.addAll(defaultKeysTimeseries);
+        }
+
+        AttributesEntityView attributes = keys.getAttributes();
+        if (attributes == null) {
+            attributes = new AttributesEntityView();
+            keys.setAttributes(attributes);
+        }
+
+        List<String> cs = attributes.getCs();
+        if (cs == null) {
+            cs = new ArrayList<>();
+            attributes.setCs(cs);
+        }
+
+        List<String> ss = attributes.getSs();
+        if (ss == null) {
+            ss = new ArrayList<>();
+            attributes.setSs(ss);
+        }
+
+        List<String> sh = attributes.getSh();
+        if (sh == null) {
+            sh = new ArrayList<>();
+            attributes.setSh(sh);
+        }
+
+        AttributesEntityView defaultKeysAttributes = defaultKeys.getAttributes();
+        if (defaultKeysAttributes != null) {
+            List<String> defaultKeysAttributesCs = defaultKeysAttributes.getCs();
+            if (!CollectionUtils.isEmpty(defaultKeysAttributesCs)) {
+                attributes.getCs().addAll(defaultKeysAttributesCs);
+            }
+
+            List<String> defaultKeysAttributesSs = defaultKeysAttributes.getSs();
+            if (!CollectionUtils.isEmpty(defaultKeysAttributesSs)) {
+                attributes.getSs().addAll(defaultKeysAttributesSs);
+            }
+
+            List<String> defaultKeysAttributesSh = defaultKeysAttributes.getSh();
+            if (!CollectionUtils.isEmpty(defaultKeysAttributesSh)) {
+                attributes.getSh().addAll(defaultKeysAttributesSh);
+            }
+        }
+
     }
 
     private ListenableFuture<Void> deleteLatestFromEntityView(EntityView entityView, List<String> keys, SecurityUser user) {
@@ -243,7 +335,7 @@ public class EntityViewController extends BaseController {
     private ListenableFuture<List<Void>> copyLatestFromEntityToEntityView(EntityView entityView, SecurityUser user) {
         EntityViewId entityId = entityView.getId();
         List<String> keys = entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null ?
-             entityView.getKeys().getTimeseries() : Collections.emptyList();
+                entityView.getKeys().getTimeseries() : Collections.emptyList();
         long startTs = entityView.getStartTimeMs();
         long endTs = entityView.getEndTimeMs() == 0 ? Long.MAX_VALUE : entityView.getEndTimeMs();
         ListenableFuture<List<String>> keysFuture;

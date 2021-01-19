@@ -45,7 +45,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private DeviceProfileProvisionType provisionType;
     private RuleChainId defaultRuleChainId;
     private String defaultQueueName;
-    private TelemetryEntityView deviceViewKeys;
+    private TelemetryEntityView keys;
     private transient DeviceProfileData profileData;
     @JsonIgnore
     private byte[] profileDataBytes;
@@ -69,7 +69,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         this.defaultQueueName = deviceProfile.getDefaultQueueName();
         this.setProfileData(deviceProfile.getProfileData());
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
-        this.deviceViewKeys = deviceProfile.getDeviceViewKeys();
+        this.keys = deviceProfile.getKeys();
     }
 
     @Override

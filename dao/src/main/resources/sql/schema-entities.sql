@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS device_profile (
     default_rule_chain_id uuid,
     default_queue_name varchar(255),
     provision_device_key varchar,
-    device_view_keys varchar(10000000),
+    keys varchar(10000000),
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
     CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id)

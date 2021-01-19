@@ -92,8 +92,8 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
     @Column(name=ModelConstants.DEVICE_PROFILE_PROVISION_DEVICE_KEY)
     private String provisionDeviceKey;
 
-    @Column(name = ModelConstants.DEVICE_PROFILE_DEVICE_VIEW_KEYS)
-    private String deviceViewKeys;
+    @Column(name = ModelConstants.DEVICE_PROFILE_KEYS)
+    private String keys;
 
     public DeviceProfileEntity() {
         super();
@@ -120,7 +120,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         this.defaultQueueName = deviceProfile.getDefaultQueueName();
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
         try {
-            this.deviceViewKeys = JacksonUtil.toString(deviceProfile.getDeviceViewKeys());
+            this.keys = JacksonUtil.toString(deviceProfile.getKeys());
         } catch (Exception e) {
             log.error("Unable to serialize entity view keys!", e);
         }
@@ -160,7 +160,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         deviceProfile.setDefaultQueueName(defaultQueueName);
         deviceProfile.setProvisionDeviceKey(provisionDeviceKey);
         try {
-            deviceProfile.setDeviceViewKeys(JacksonUtil.fromString(deviceViewKeys, TelemetryEntityView.class));
+            deviceProfile.setKeys(JacksonUtil.fromString(keys, TelemetryEntityView.class));
         } catch (Exception e) {
             log.error("Unable to read entity view keys!", e);
         }
