@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.mqtt;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -137,9 +136,11 @@ public class TbMqttNode implements TbNode {
     }
 
     private SslContext getSslContext() throws SSLException {
-        SslContext sslContext = this.mqttNodeConfiguration.getCredentials().initSslContext();
-        if (this.mqttNodeConfiguration.isSsl() && sslContext == null) {
-            sslContext = SslContextBuilder.forClient().build();
+        ClientCredentials credentials = this.mqttNodeConfiguration.getCredentials();
+        SslContext sslContext = credentials.initSslContext();
+        if (!this.mqttNodeConfiguration.isSsl() &&
+                (credentials.getType() == CredentialsType.ANONYMOUS || credentials.getType() == CredentialsType.BASIC)) {
+            sslContext = null;
         }
         return sslContext;
     }

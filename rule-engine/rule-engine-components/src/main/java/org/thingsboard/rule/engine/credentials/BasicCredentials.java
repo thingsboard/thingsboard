@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.netty.handler.ssl.SslContext;
 import lombok.Data;
 
 @Data
@@ -28,10 +27,5 @@ public class BasicCredentials implements ClientCredentials {
     @Override
     public CredentialsType getType() {
         return CredentialsType.BASIC;
-    }
-
-    @Override
-    public SslContext initSslContext() {
-        return null;
     }
 }

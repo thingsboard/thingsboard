@@ -19,7 +19,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import org.thingsboard.rule.engine.mqtt.azure.AzureIotHubSasCredentials;
+
+import javax.net.ssl.SSLException;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
@@ -32,5 +35,7 @@ public interface ClientCredentials {
     CredentialsType getType();
 
     @JsonIgnore
-    SslContext initSslContext();
+    default SslContext initSslContext() throws SSLException{
+        return SslContextBuilder.forClient().build();
+    }
 }

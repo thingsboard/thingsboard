@@ -30,6 +30,8 @@ import org.thingsboard.rule.engine.mqtt.TbMqttNode;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 
+import javax.net.ssl.SSLException;
+
 @Slf4j
 @RuleNode(
         type = ComponentType.EXTERNAL,
@@ -55,7 +57,7 @@ public class TbAzureIotHubNode extends TbMqttNode {
                 }
 
                 @Override
-                public SslContext initSslContext() {
+                public SslContext initSslContext() throws SSLException {
                     if (credentials instanceof AzureIotHubSasCredentials) {
                         AzureIotHubSasCredentials sasCredentials = (AzureIotHubSasCredentials) credentials;
                         if (sasCredentials.getCaCert() == null || sasCredentials.getCaCert().isEmpty()) {
