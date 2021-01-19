@@ -14,34 +14,20 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  forwardRef,
-  Input,
-  OnInit,
-  ViewChild,
-  ElementRef,
-  Output,
-  EventEmitter
-} from '@angular/core';
-import {
-  ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
-  NG_VALUE_ACCESSOR, Validators
-} from '@angular/forms';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {MatChipList} from '@angular/material/chips';
-import {MatAutocomplete} from '@angular/material/autocomplete';
-import {Observable} from 'rxjs';
-import {filter, map, mergeMap, share, tap} from 'rxjs/operators';
-import {ObjectLwM2M} from './profile-config.models';
-import {TranslateService} from '@ngx-translate/core';
-import {DeviceProfileService} from '@core/http/device-profile.service';
-import {PageLink} from '@shared/models/page/page-link';
-import {Direction} from '@shared/models/page/sort-order';
+import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { MatChipList } from '@angular/material/chips';
+import { MatAutocomplete } from '@angular/material/autocomplete';
+import { Observable } from 'rxjs';
+import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
+import { ObjectLwM2M } from './profile-config.models';
+import { TranslateService } from '@ngx-translate/core';
+import { DeviceProfileService } from '@core/http/device-profile.service';
+import { PageLink } from '@shared/models/page/page-link';
+import { Direction } from '@shared/models/page/sort-order';
 
 @Component({
   selector: 'tb-profile-lwm2m-object-list',
@@ -63,8 +49,8 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   modelValue: Array<number> | null;
   objectsList: Array<ObjectLwM2M> = [];
   filteredObjectsList: Observable<Array<ObjectLwM2M>>;
-  disabled = false as boolean;
-  searchText = '' as string;
+  disabled = false;
+  searchText = '';
 
   get required(): boolean {
     return this.requiredValue;
@@ -210,9 +196,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
       direction: Direction.ASC
     });
     return this.deviceProfileService.getLwm2mObjectsPage(pageLink, {ignoreLoading: true}).pipe(
-      map(pageData => {
-        return pageData.data;
-      })
+      map(pageData => pageData.data)
     );
   }
 

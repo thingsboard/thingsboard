@@ -61,8 +61,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
 
   @Input() editorStyle: { [klass: string]: any };
 
-  // tslint:disable-next-line:ban-types
-  @Input() sort: Function;
+  @Input() sort: (key: string, value: any) => any;
 
   private requiredValue: boolean;
 
@@ -227,10 +226,9 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     try {
 
       if (this.modelValue) {
-        this.contentValue = JSON.stringify(this.modelValue, isUndefined(this.sort) ? null :
-          // tslint:disable-next-line:no-shadowed-variable
-          (key, value) => {
-            return this.sort(key, value);
+        this.contentValue = JSON.stringify(this.modelValue, isUndefined(this.sort) ? undefined :
+          (key, objectValue) => {
+            return this.sort(key, objectValue);
           }, 2);
         this.objectValid = true;
       } else {

@@ -19,7 +19,7 @@
 <section [formGroup]="observeAttrTelemetryFormGroup" class="mat-padding">
   <mat-accordion multi="true" class="mat-body-1" formArrayName="clientLwM2M">
     <mat-expansion-panel
-      *ngFor="let objectLwM2M of clientLwM2MFormArray(observeAttrTelemetryFormGroup).controls; let i = index; trackBy: trackByParams"
+      *ngFor="let objectLwM2M of clientLwM2MFormArray.controls; let i = index; trackBy: trackByParams"
       [formGroupName]="i">
       <mat-expansion-panel-header>
         <mat-panel-title fxLayoutAlign="space-between">
@@ -34,8 +34,8 @@
             </button>
         </mat-panel-title>
       </mat-expansion-panel-header>
-      <div fxLayout="column" fxLayoutGap="8px" formArrayName="instances">
-        <ng-template matExpansionPanelContent>
+      <ng-template matExpansionPanelContent>
+        <div fxLayout="column" fxLayoutGap="8px" formArrayName="instances">
           <mat-expansion-panel
             *ngFor="let instances of instancesLwm2mFormArray(objectLwM2M).controls; let y = index;"
             [formGroupName]="y"
@@ -50,7 +50,7 @@
                     </div>
                     <div class="checkbox-padding" fxFlex="10">
                       <mat-checkbox color="primary"
-                                    [formControlName]="observe"
+                                    [disabled]="this.disabled"
                                     [checked]="getChecked(instances, 'observe')"
                                     (click)="$event.stopPropagation()"
                                     (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'observe')"
@@ -61,7 +61,8 @@
                       </mat-checkbox>
                     </div>
                     <div class="checkbox-padding" fxFlex="10">
-                      <mat-checkbox [formControlName]="attribute" color="warn"
+                      <mat-checkbox color="warn"
+                                    [disabled]="this.disabled"
                                     [checked]="getChecked(instances, 'attribute')"
                                     (click)="$event.stopPropagation()"
                                     (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'attribute')"
@@ -72,7 +73,8 @@
                       </mat-checkbox>
                     </div>
                     <div class="checkbox-padding" fxFlex="10">
-                      <mat-checkbox [formControlName]="telemetry" color="primary"
+                      <mat-checkbox color="primary"
+                                    [disabled]="this.disabled"
                                     [checked]="getChecked(instances, 'telemetry')"
                                     (click)="$event.stopPropagation()"
                                     (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'telemetry')"
@@ -95,8 +97,8 @@
               </tb-profile-lwm2m-observe-attr-telemetry-resource>
             </ng-template>
           </mat-expansion-panel>
-        </ng-template>
-      </div>
+        </div>
+      </ng-template>
     </mat-expansion-panel>
   </mat-accordion>
 </section>

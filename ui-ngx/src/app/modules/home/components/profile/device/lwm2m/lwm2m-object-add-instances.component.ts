@@ -35,7 +35,7 @@ export interface Lwm2mObjectAddInstancesData {
 })
 export class Lwm2mObjectAddInstancesComponent extends DialogComponent<Lwm2mObjectAddInstancesComponent, object> implements OnInit {
 
-  jsonFormGroup: FormGroup;
+  instancesFormGroup: FormGroup;
   submitted = false;
 
   constructor(protected store: Store<AppState>,
@@ -46,9 +46,8 @@ export class Lwm2mObjectAddInstancesComponent extends DialogComponent<Lwm2mObjec
     super(store, router, dialogRef);
   }
 
-
   ngOnInit(): void {
-    this.jsonFormGroup = this.fb.group({
+    this.instancesFormGroup = this.fb.group({
       instancesIds: this.data.instancesIds
     });
   }
@@ -58,7 +57,7 @@ export class Lwm2mObjectAddInstancesComponent extends DialogComponent<Lwm2mObjec
   }
 
   add(): void {
-    this.data.instancesIds = this.jsonFormGroup.get('instancesIds').value;
+    this.data.instancesIds = this.instancesFormGroup.get('instancesIds').value;
     this.dialogRef.close(this.data);
   }
 }

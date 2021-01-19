@@ -14,26 +14,23 @@
 /// limitations under the License.
 ///
 
-import {
-  DeviceProfileTransportConfiguration,
-  DeviceTransportType
-} from '@shared/models/device.models';
-import {
-  Component,
-  forwardRef, Inject,
-  Input,
-  OnInit
-} from '@angular/core';
+import { DeviceProfileTransportConfiguration, DeviceTransportType } from '@shared/models/device.models';
+import { Component, forwardRef, Inject, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ATTR,
+  getDefaultProfileConfig,
+  Instance,
+  KEY_NAME,
+  ObjectLwM2M,
   OBSERVE,
   OBSERVE_ATTR,
-  TELEMETRY,
-  ObjectLwM2M, getDefaultProfileConfig, KEY_NAME, Instance, ProfileConfigModels, ResourceLwM2M
+  ProfileConfigModels,
+  ResourceLwM2M,
+  TELEMETRY
 } from './profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { deepClone, isUndefined } from '@core/utils';
@@ -50,7 +47,7 @@ import { isNotNullOrUndefined } from 'codelyzer/util/isNotNullOrUndefined';
     multi: true
   }]
 })
-export class Lwm2mDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, Validators {
+export class Lwm2mDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, Validators {
 
   private configurationValue: ProfileConfigModels;
   private requiredValue: boolean;
@@ -65,7 +62,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   bootstrapServers: string;
   bootstrapServer: string;
   lwm2mServer: string;
-  sortFunction: {};
+  sortFunction: (key: string, value: object) => object;
 
   get required(): boolean {
     return this.requiredValue;
@@ -99,6 +96,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         this.updateModel();
       }
     });
+    this.sortFunction = this.sortObjectKeyPathJson;
   }
 
   registerOnChange(fn: any): void {
@@ -106,10 +104,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   registerOnTouched(fn: any): void {
-  }
-
-  ngOnInit() {
-    this.sortFunction = this.sortObjectKeyPathJson;
   }
 
   setDisabledState(isDisabled: boolean): void {

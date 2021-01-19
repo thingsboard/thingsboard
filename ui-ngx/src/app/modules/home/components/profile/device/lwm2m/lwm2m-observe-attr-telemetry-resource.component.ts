@@ -14,20 +14,12 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import {
-  ControlValueAccessor,
-  FormArray, FormBuilder,
-  FormGroup,
-  NG_VALUE_ACCESSOR, Validators
-} from '@angular/forms';
-import {
-  CAMEL_CASE_REGEXP,
-  ResourceLwM2M
-} from '@home/components/profile/device/lwm2m/profile-config.models';
+import { Component, forwardRef, Input } from '@angular/core';
+import { ControlValueAccessor, FormArray, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ResourceLwM2M } from '@home/components/profile/device/lwm2m/profile-config.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { deepClone } from '@core/utils';
+import _ from 'lodash';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({
@@ -43,12 +35,12 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
   ]
 })
 
-export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueAccessor, OnInit, Validators {
+export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueAccessor {
 
   private requiredValue: boolean;
 
   resourceFormGroup: FormGroup;
-  disabled = false as boolean;
+  disabled = false;
 
   get required(): boolean {
     return this.requiredValue;
@@ -61,17 +53,17 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
       this.requiredValue = newVal;
     }
   }
+
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
-    this.resourceFormGroup = this.fb.group({resources: this.fb.array([])});
+    this.resourceFormGroup = this.fb.group({
+      resources: this.fb.array([])
+    });
     this.resourceFormGroup.valueChanges.subscribe(value => {
       if (!this.disabled) {
         this.propagateChangeState(value.resources);
       }
     });
-  }
-
-  ngOnInit(): void {
   }
 
   registerOnTouched(fn: any): void {
@@ -85,10 +77,6 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
     return this.resourceFormGroup.get('resources') as FormArray;
   }
 
-  resourceLwm2mFormArray = (instance: FormGroup): FormArray => {
-    return instance.get('resources') as FormArray;
-  }
-
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
@@ -98,31 +86,16 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
     }
   }
 
-  getDisabledState = (): boolean => {
-    return this.disabled;
+  updateValueKeyName = (event: Event, index: number): void => {
+    this.resourceFormArray.at(index).patchValue({keyName: _.camelCase((event.target as HTMLInputElement).value)});
   }
 
-  updateValueKeyName = (event: any, z: number): void => {
-    this.resourceFormArray.at(z).patchValue( {keyName:  this.keysToCamel(deepClone(event.target.value))} );
-  }
-
-  private keysToCamel = (o: any): string => {
-    const val = o.split(' ');
-    const playStore = [];
-    val.forEach((item, k) => {
-      item = item.replace(CAMEL_CASE_REGEXP, '');
-      item = (k === 0) ? item.charAt(0).toLowerCase() + item.substr(1) : item.charAt(0).toUpperCase() + item.substr(1);
-      playStore.push(item);
-    });
-    return playStore.join('');
-  }
-
-  private createResourceLwM2M = (resourcesLwM2MJson: ResourceLwM2M []): void => {
-    if (resourcesLwM2MJson.length === this.resourceFormArray.length) {
-      this.resourceFormArray.patchValue(resourcesLwM2MJson, {emitEvent: false});
+  createResourceLwM2M(resourcesLwM2M: ResourceLwM2M[]): void {
+    if (resourcesLwM2M.length === this.resourceFormArray.length) {
+      this.resourceFormArray.patchValue(resourcesLwM2M, {emitEvent: false});
     } else {
       this.resourceFormArray.clear();
-      resourcesLwM2MJson.forEach(resourceLwM2M => {
+      resourcesLwM2M.forEach(resourceLwM2M => {
         this.resourceFormArray.push(this.fb.group({
           id: resourceLwM2M.id,
           name: resourceLwM2M.name,

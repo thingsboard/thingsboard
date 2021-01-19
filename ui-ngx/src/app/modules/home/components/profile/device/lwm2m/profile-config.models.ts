@@ -33,7 +33,6 @@ export const DEFAULT_BOOTSTRAP_SERVER_ACCOUNT_TIME_OUT = 0;
 export const LEN_MAX_PUBLIC_KEY_RPK = 182;
 export const LEN_MAX_PUBLIC_KEY_X509 = 3000;
 export const KEY_REGEXP_HEX_DEC = /^[-+]?[0-9A-Fa-f]+\.?[0-9A-Fa-f]*?$/;
-export const CAMEL_CASE_REGEXP = /[-_&@.,*+!?^${}()|[\]\\]/g;
 export const INSTANCES_ID_VALUE_MIN = 0;
 export const INSTANCES_ID_VALUE_MAX = 65535;
 
@@ -82,12 +81,14 @@ interface BootstrapSecurityConfig {
 
 export interface ProfileConfigModels {
   bootstrap: BootstrapSecurityConfig;
-  observeAttr: {
-    observe: string [],
-    attribute: string [],
-    telemetry: string [],
-    keyName: []
-  };
+  observeAttr: ObservableAttributes;
+}
+
+export interface ObservableAttributes {
+  observe: string[];
+  attribute: string[];
+  telemetry: string[];
+  keyName: string[];
 }
 
 export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecurityConfig {

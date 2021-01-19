@@ -15,7 +15,7 @@
 ///
 
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -28,16 +28,8 @@ import {
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import {
-  ATTR,
-  Instance,
-  ObjectLwM2M,
-  OBSERVE,
-  ResourceLwM2M,
-  TELEMETRY
-} from './profile-config.models';
-import { isNotNullOrUndefined } from 'codelyzer/util/isNotNullOrUndefined';
-import { deepClone, isUndefined } from '@core/utils';
+import { Instance, ObjectLwM2M, ResourceLwM2M } from './profile-config.models';
+import { deepClone, isDefinedAndNotNull, isEqual, isUndefined } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -58,24 +50,17 @@ import {
   ]
 })
 
-export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor, OnInit, Validators {
+export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor {
 
   private requiredValue: boolean;
 
   valuePrev = null as any;
   observeAttrTelemetryFormGroup: FormGroup;
-  observe = OBSERVE as string;
-  attribute = ATTR as string;
-  telemetry = TELEMETRY as string;
 
   get required(): boolean {
     return this.requiredValue;
   }
 
-  @Input()
-  disabled: boolean;
-
-  // tslint:disable-next-line:adjacent-overload-signatures
   @Input()
   set required(value: boolean) {
     const newVal = coerceBooleanProperty(value);
@@ -84,6 +69,9 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
       this.updateValidators();
     }
   }
+
+  @Input()
+  disabled: boolean;
 
   constructor(private store: Store<AppState>,
               private fb: FormBuilder,
@@ -97,9 +85,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
         this.propagateChangeState(value);
       }
     });
-  }
-
-  ngOnInit(): void {
   }
 
   private propagateChange = (v: any) => { };
@@ -139,10 +124,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     }
   }
 
-  getDisabledState = (): boolean => {
-    return this.disabled;
-  }
-
   writeValue(value: any): void {
     this.buildClientObjectsLwM2M(value.clientLwM2M);
   }
@@ -153,8 +134,8 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     );
   }
 
-  private createObjectsLwM2M = (objectsLwM2MJson: ObjectLwM2M []): FormArray => {
-    return this.fb.array(objectsLwM2MJson.map((objectLwM2M) => {
+  private createObjectsLwM2M = (objectsLwM2M: ObjectLwM2M[]): FormArray => {
+    return this.fb.array(objectsLwM2M.map((objectLwM2M) => {
       return this.fb.group({
         id: objectLwM2M.id,
         name: objectLwM2M.name,
@@ -165,20 +146,17 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     }));
   }
 
-  private createInstanceLwM2M = (instanceLwM2MJson: Instance []): FormArray => {
-    return this.fb.array(instanceLwM2MJson.map((instanceLwM2M) => {
+  private createInstanceLwM2M = (instancesLwM2M: Instance[]): FormArray => {
+    return this.fb.array(instancesLwM2M.map((instanceLwM2M) => {
       return this.fb.group({
         id: instanceLwM2M.id,
-        [this.observe]: {value: false, disabled: this.disabled},
-        [this.attribute]: {value: false, disabled: this.disabled},
-        [this.telemetry]: {value: false, disabled: this.disabled},
         resources: {value: instanceLwM2M.resources, disabled: this.disabled}
       });
     }));
   }
 
-  clientLwM2MFormArray = (formGroup: FormGroup): FormArray => {
-    return formGroup.get('clientLwM2M') as FormArray;
+  get clientLwM2MFormArray(): FormArray {
+    return this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray;
   }
 
   instancesLwm2mFormArray = (objectLwM2M: AbstractControl): FormArray => {
@@ -186,7 +164,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   }
 
   changeInstanceResourcesCheckBox = (value: boolean, instance: AbstractControl, type: string): void => {
-    const resources = instance.get('resources').value as ResourceLwM2M [];
+    const resources = instance.get('resources').value as ResourceLwM2M[];
     resources.forEach(resource => resource[type] = value);
     instance.get('resources').patchValue(resources);
     this.propagateChange(this.observeAttrTelemetryFormGroup.value);
@@ -202,26 +180,18 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   }
 
   getIndeterminate = (instance: AbstractControl, type: string): boolean => {
-    const resources = instance.get('resources').value as ResourceLwM2M [];
-    if (isNotNullOrUndefined(resources)) {
-      const isType = (element) => element[type] === true;
-      const checkedResource = resources.filter(isType);
-      if (checkedResource.length === 0) { return false; }
-      else if (checkedResource.length === resources.length) {
-        instance.patchValue({[type]: true});
-        return false;
-      } else { return true; }
+    const resources = instance.get('resources').value as ResourceLwM2M[];
+    if (isDefinedAndNotNull(resources)) {
+      const checkedResource = resources.filter(resource => resource[type]);
+      return checkedResource.length !== 0 && checkedResource.length !== resources.length;
     }
     return false;
   }
 
 
   getChecked = (instance: AbstractControl, type: string): boolean => {
-    const resources = instance.get('resources').value as ResourceLwM2M [];
-    if (isNotNullOrUndefined(resources)) {
-      return resources.some(resource => resource[type]);
-    }
-    return false;
+    const resources = instance.get('resources').value as ResourceLwM2M[];
+    return isDefinedAndNotNull(resources) && resources.every(resource => resource[type]);
   }
 
   getExpended = (objectLwM2M: AbstractControl): boolean => {
@@ -265,7 +235,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
       }
     }).afterClosed().subscribe(
       (res: Lwm2mObjectAddInstancesData | undefined) => {
-        if (isNotNullOrUndefined(res)) {
+        if (isDefinedAndNotNull(res)) {
           this.updateInstancesIds(res);
         }
       }
@@ -278,43 +248,41 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     data.instancesIds.forEach(value => {
       valueNew.add(value);
     });
-    const oldInstances = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).
-    find(e => e.id === data.objectId).instances;
+    const oldInstances = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M [])
+      .find(e => e.id === data.objectId).instances;
     oldInstances.forEach(inst => {
       valueOld.add(inst.id);
     });
-    if (JSON.stringify(Array.from(valueOld)) !== JSON.stringify(Array.from(valueNew))) {
-      const idsDel = this.diffBetweenSet(valueNew, this.deepCloneSet(valueOld));
-      const idsAdd = this.diffBetweenSet(valueOld, this.deepCloneSet(valueNew));
+    if (!isEqual(valueOld, valueNew)) {
+      const idsDel = this.diffBetweenSet(valueOld, valueNew);
+      const idsAdd = this.diffBetweenSet(valueNew, valueOld);
       if (idsAdd.size) {
         this.addInstancesNew(data.objectId, idsAdd);
       }
       if (idsDel.size) {
-        this.delInstances(data.objectId, idsDel);
+        this.deleteInstances(data.objectId, idsDel);
       }
     }
   }
 
-  private delInstances = (objectId: number, idsDel: Set<number>): void => {
-    let isIdIndex = (element) => element.id === objectId;
-    const objectIndex = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M []).findIndex(isIdIndex);
+  private deleteInstances = (objectId: number, idsDel: Set<number>): void => {
+    const objectIndex = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M[])
+      .findIndex(element => element.id === objectId);
     idsDel.forEach(x => {
-      isIdIndex = (element) => element.value.id === x;
       const instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray)
-        .controls[objectIndex].get('instances') as FormArray);
-      const instanceIndex = instancesFormArray.controls.findIndex(isIdIndex);
+        .at(objectIndex).get('instances') as FormArray);
+      const instanceIndex = instancesFormArray.value.findIndex(element => element.id === x);
       instancesFormArray.removeAt(instanceIndex);
     });
   }
 
   private addInstancesNew = (objectId: number, idsAdd: Set<number>): void => {
     const instancesValue = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M [])
-      .find(e => e.id === objectId).instances;
+      .find(objectLwM2M => objectLwM2M.id === objectId).instances;
     const instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls
       .find(e => e.value.id === objectId).get('instances') as FormArray) as FormArray;
     idsAdd.forEach(x => {
       const instanceNew = deepClone(instancesValue[0]) as Instance;
-      instanceNew.id = x;
       instanceNew.resources.forEach(r => {
         r.attribute = false;
         r.telemetry = false;
@@ -322,28 +290,14 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
       });
       instancesFormArray.push(this.fb.group({
         id: x,
-        [this.observe]: {value: false, disabled: this.disabled},
-        [this.attribute]: {value: false, disabled: this.disabled},
-        [this.telemetry]: {value: false, disabled: this.disabled},
         resources: {value: instanceNew.resources, disabled: this.disabled}
       }));
     });
     (instancesFormArray.controls as FormGroup[]).sort((a, b) => a.value.id - b.value.id);
   }
 
-  private deepCloneSet = (oldSet: Set<any>): Set<any> => {
-    const newSet = new Set<number>();
-    oldSet.forEach(p => {
-      newSet.add(p);
-    });
-    return newSet;
-  }
-
   private diffBetweenSet = (firstSet: Set<any>, secondSet: Set<any>): Set<any> => {
-    firstSet.forEach(p => {
-      secondSet.delete(p);
-    });
-    return secondSet;
+    return new Set([...Array.from(firstSet)].filter(x => !secondSet.has(x)));
   }
 
   private setInstancesIds = (instances: Instance []): Set<number> => {

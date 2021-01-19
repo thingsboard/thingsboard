@@ -49,7 +49,7 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
     multi: true
   }]
 })
-export class Lwm2mObjectAddInstancesListComponent implements ControlValueAccessor, OnInit, Validators {
+export class Lwm2mObjectAddInstancesListComponent implements ControlValueAccessor {
 
   private requiredValue: boolean;
   private disabled = false as boolean;
@@ -101,12 +101,6 @@ export class Lwm2mObjectAddInstancesListComponent implements ControlValueAccesso
   }
 
   registerOnTouched(fn: any): void {
-  }
-
-  ngOnInit() {
-  }
-
-  ngAfterViewInit(): void {
   }
 
   setDisabledState(isDisabled: boolean): void {

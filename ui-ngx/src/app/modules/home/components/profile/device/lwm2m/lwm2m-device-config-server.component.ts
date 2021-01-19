@@ -15,19 +15,18 @@
 ///
 
 import { Component, forwardRef, Inject, Input, OnInit } from '@angular/core';
-
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
-  ControlValueAccessor,
-  FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators
-} from '@angular/forms';
-import {
-  SECURITY_CONFIG_MODE,
-  SECURITY_CONFIG_MODE_NAMES,
-  ServerSecurityConfig,
+  DEFAULT_CLIENT_HOLD_OFF_TIME,
+  DEFAULT_ID_SERVER,
   DEFAULT_PORT_BOOTSTRAP_NO_SEC,
   DEFAULT_PORT_SERVER_NO_SEC,
-  DEFAULT_CLIENT_HOLD_OFF_TIME,
-  DEFAULT_ID_SERVER, LEN_MAX_PUBLIC_KEY_RPK, LEN_MAX_PUBLIC_KEY_X509, KEY_REGEXP_HEX_DEC
+  KEY_REGEXP_HEX_DEC,
+  LEN_MAX_PUBLIC_KEY_RPK,
+  LEN_MAX_PUBLIC_KEY_X509,
+  SECURITY_CONFIG_MODE,
+  SECURITY_CONFIG_MODE_NAMES,
+  ServerSecurityConfig
 } from './profile-config.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
