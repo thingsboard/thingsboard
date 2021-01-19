@@ -24,8 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.thingsboard.common.util.AzureIotHubUtil;
+import org.thingsboard.rule.engine.credentials.CertPemCredentials;
 import org.thingsboard.rule.engine.credentials.CredentialsType;
-import org.thingsboard.rule.engine.mqtt.credentials.MqttClientCredentials;
 
 import javax.net.ssl.TrustManagerFactory;
 import java.io.ByteArrayInputStream;
@@ -37,7 +37,7 @@ import java.security.cert.X509Certificate;
 @Data
 @Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AzureIotHubSasCredentials implements MqttClientCredentials {
+public class AzureIotHubSasCredentials extends CertPemCredentials {
     private String sasKey;
     private String caCert;
     

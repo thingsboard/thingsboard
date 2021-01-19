@@ -15,18 +15,20 @@
  */
 package org.thingsboard.rule.engine.rest.credentials;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.thingsboard.rule.engine.credentials.CredentialsType;
+import org.junit.Assert;
+import org.junit.Test;
+import org.thingsboard.rule.engine.credentials.BasicCredentials;
+import org.thingsboard.rule.engine.rest.TbHttpClient;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = HttpAnonymousCredentials.class, name = "anonymous"),
-        @JsonSubTypes.Type(value = HttpBasicCredentials.class, name = "basic"),
-        @JsonSubTypes.Type(value = HttpCertPemCredentials.class, name = "cert.PEM")})
-public interface HttpClientCredentials {
-    @JsonIgnore
-    CredentialsType getType();
+public class BasicCredentialsTest {
+    @Test
+    public void getBasicAuthHeaderValueTest() {
+        BasicCredentials credentials = new BasicCredentials();
+        credentials.setUsername("testUser");
+        credentials.setPassword("testPwd");
+        String actualHeaderValue = TbHttpClient.getBasicAuthHeaderValue(credentials).get();
+        String expectedHeaderValue = "Basic dGVzdFVzZXI6dGVzdFB3ZA==";
+
+        Assert.assertEquals(expectedHeaderValue, actualHeaderValue);
+    }
 }
-

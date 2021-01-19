@@ -16,7 +16,17 @@
 package org.thingsboard.rule.engine.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.netty.handler.ssl.SslContext;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AnonymousCredentials {
+public class AnonymousCredentials implements ClientCredentials {
+    @Override
+    public CredentialsType getType() {
+        return CredentialsType.ANONYMOUS;
+    }
+
+    @Override
+    public SslContext initSslContext() {
+        return null;
+    }
 }

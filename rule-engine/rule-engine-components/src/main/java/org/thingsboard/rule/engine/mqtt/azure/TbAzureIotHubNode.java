@@ -15,21 +15,19 @@
  */
 package org.thingsboard.rule.engine.mqtt.azure;
 
-import io.netty.handler.codec.mqtt.MqttVersion;
 import io.netty.handler.ssl.SslContext;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.AzureIotHubUtil;
-import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.credentials.CertPemCredentials;
+import org.thingsboard.rule.engine.credentials.ClientCredentials;
 import org.thingsboard.rule.engine.credentials.CredentialsType;
 import org.thingsboard.rule.engine.mqtt.TbMqttNode;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
-import org.thingsboard.rule.engine.mqtt.credentials.MqttCertPemCredentials;
-import org.thingsboard.rule.engine.mqtt.credentials.MqttClientCredentials;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 
 @Slf4j
@@ -49,17 +47,11 @@ public class TbAzureIotHubNode extends TbMqttNode {
             this.mqttNodeConfiguration = TbNodeUtils.convert(configuration, TbMqttNodeConfiguration.class);
             mqttNodeConfiguration.setPort(8883);
             mqttNodeConfiguration.setCleanSession(true);
-            MqttClientCredentials credentials = mqttNodeConfiguration.getCredentials();
-            mqttNodeConfiguration.setCredentials(new MqttClientCredentials() {
+            ClientCredentials credentials = mqttNodeConfiguration.getCredentials();
+            mqttNodeConfiguration.setCredentials(new ClientCredentials() {
                 @Override
                 public CredentialsType getType() {
-                    if (credentials instanceof AzureIotHubSasCredentials) {
-                        return CredentialsType.SAS;
-                    } else if (credentials instanceof MqttCertPemCredentials) {
-                        return CredentialsType.CERT_PEM;
-                    } else {
-                        throw new IllegalArgumentException("[" + credentials.getType() + "] is not supported!");
-                    }
+                    return credentials.getType();
                 }
 
                 @Override
@@ -69,8 +61,8 @@ public class TbAzureIotHubNode extends TbMqttNode {
                         if (sasCredentials.getCaCert() == null || sasCredentials.getCaCert().isEmpty()) {
                             sasCredentials.setCaCert(AzureIotHubUtil.getDefaultCaCert());
                         }
-                    } else if (credentials instanceof MqttCertPemCredentials) {
-                        MqttCertPemCredentials pemCredentials = (MqttCertPemCredentials) credentials;
+                    } else if (credentials instanceof CertPemCredentials) {
+                        CertPemCredentials pemCredentials = (CertPemCredentials) credentials;
                         if (pemCredentials.getCaCert() == null || pemCredentials.getCaCert().isEmpty()) {
                             pemCredentials.setCaCert(AzureIotHubUtil.getDefaultCaCert());
                         }
@@ -78,15 +70,15 @@ public class TbAzureIotHubNode extends TbMqttNode {
                     return credentials.initSslContext();
                 }
 
-                @Override
-                public void configure(MqttClientConfig config) {
-                    config.setProtocolVersion(MqttVersion.MQTT_3_1_1);
-                    config.setUsername(AzureIotHubUtil.buildUsername(mqttNodeConfiguration.getHost(), config.getClientId()));
-                    if (credentials instanceof AzureIotHubSasCredentials) {
-                        AzureIotHubSasCredentials sasCredentials = (AzureIotHubSasCredentials) credentials;
-                        config.setPassword(AzureIotHubUtil.buildSasToken(mqttNodeConfiguration.getHost(), sasCredentials.getSasKey()));
-                    }
-                }
+//                @Override
+//                public void configure(MqttClientConfig config) {
+//                    config.setProtocolVersion(MqttVersion.MQTT_3_1_1);
+//                    config.setUsername(AzureIotHubUtil.buildUsername(mqttNodeConfiguration.getHost(), config.getClientId()));
+//                    if (credentials instanceof AzureIotHubSasCredentials) {
+//                        AzureIotHubSasCredentials sasCredentials = (AzureIotHubSasCredentials) credentials;
+//                        config.setPassword(AzureIotHubUtil.buildSasToken(mqttNodeConfiguration.getHost(), sasCredentials.getSasKey()));
+//                    }
+//                }
             });
 
             this.mqttClient = initClient(ctx);

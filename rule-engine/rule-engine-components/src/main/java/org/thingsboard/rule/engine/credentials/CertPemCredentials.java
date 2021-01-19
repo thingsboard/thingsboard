@@ -53,13 +53,18 @@ import java.security.spec.PKCS8EncodedKeySpec;
 @Data
 @Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CertPemCredentials {
+public class CertPemCredentials implements ClientCredentials {
     private static final String TLS_VERSION = "TLSv1.2";
 
     private String caCert;
     private String cert;
     private String privateKey;
     private String password;
+
+    @Override
+    public CredentialsType getType() {
+        return CredentialsType.CERT_PEM;
+    }
 
     public SslContext initSslContext() {
         try {

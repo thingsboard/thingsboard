@@ -31,6 +31,9 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.credentials.BasicCredentials;
+import org.thingsboard.rule.engine.credentials.ClientCredentials;
+import org.thingsboard.rule.engine.credentials.CredentialsType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -105,7 +108,13 @@ public class TbMqttNode implements TbNode {
             config.setClientId(this.mqttNodeConfiguration.getClientId());
         }
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
-        this.mqttNodeConfiguration.getCredentials().configure(config);
+
+        ClientCredentials credentials = this.mqttNodeConfiguration.getCredentials();
+        if (credentials.getType() == CredentialsType.BASIC) {
+            config.setUsername(((BasicCredentials) credentials).getUsername());
+            config.setPassword(((BasicCredentials) credentials).getPassword());
+        }
+
         MqttClient client = MqttClient.create(config, null);
         client.setEventLoop(ctx.getSharedEventLoop());
         Future<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());

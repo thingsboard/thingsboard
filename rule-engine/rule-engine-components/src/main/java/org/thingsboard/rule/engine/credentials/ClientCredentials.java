@@ -13,31 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.mqtt.credentials;
+package org.thingsboard.rule.engine.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.netty.handler.ssl.SslContext;
-import org.thingsboard.mqtt.MqttClientConfig;
-import org.thingsboard.rule.engine.credentials.CredentialsType;
 import org.thingsboard.rule.engine.mqtt.azure.AzureIotHubSasCredentials;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = MqttAnonymousCredentials.class, name = "anonymous"),
-        @JsonSubTypes.Type(value = MqttBasicCredentials.class, name = "basic"),
+        @JsonSubTypes.Type(value = AnonymousCredentials.class, name = "anonymous"),
+        @JsonSubTypes.Type(value = BasicCredentials.class, name = "basic"),
         @JsonSubTypes.Type(value = AzureIotHubSasCredentials.class, name = "sas"),
-        @JsonSubTypes.Type(value = MqttCertPemCredentials.class, name = "cert.PEM")})
-public interface MqttClientCredentials {
+        @JsonSubTypes.Type(value = CertPemCredentials.class, name = "cert.PEM")})
+public interface ClientCredentials {
     @JsonIgnore
     CredentialsType getType();
 
-    default SslContext initSslContext() {
-        return null;
-    }
-
-    default void configure(MqttClientConfig config) {
-    }
+    @JsonIgnore
+    SslContext initSslContext();
 }
-
