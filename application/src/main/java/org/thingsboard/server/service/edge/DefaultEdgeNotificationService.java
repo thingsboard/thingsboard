@@ -263,19 +263,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             case ADDED:
             case UPDATED:
             case DELETED:
-                TextPageLink pageLink = new TextPageLink(DEFAULT_LIMIT);
-                TextPageData<Edge> pageData;
-                do {
-                    pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
-                    if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                        for (Edge edge : pageData.getData()) {
-                            saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, null);
-                        }
-                        if (pageData.hasNext()) {
-                            pageLink = pageData.getNextPageLink();
-                        }
-                    }
-                } while (pageData != null && pageData.hasNext());
+                processActionForAllEdges(tenantId, type, actionType, entityId);
                 break;
         }
     }
@@ -500,6 +488,22 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                 }
             }, dbCallbackExecutorService);
         }
+    }
+
+    private void processActionForAllEdges(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId) {
+        TextPageLink pageLink = new TextPageLink(DEFAULT_LIMIT);
+        TextPageData<Edge> pageData;
+        do {
+            pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
+            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                for (Edge edge : pageData.getData()) {
+                    saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, null);
+                }
+                if (pageData.hasNext()) {
+                    pageLink = pageData.getNextPageLink();
+                }
+            }
+        } while (pageData != null && pageData.hasNext());
     }
 }
 
