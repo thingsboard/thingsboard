@@ -32,7 +32,7 @@ import {
   CsvToJsonResult,
   ImportEntityColumnType
 } from '@home/components/import-export/import-export.models';
-import { ImportEntitiesResultInfo, ImportEntityData, EdgeImportEntityData } from '@app/shared/models/entity.models';
+import { EdgeImportEntityData, ImportEntitiesResultInfo, ImportEntityData } from '@app/shared/models/entity.models';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { generateSecret, guid } from '@core/utils';
 
