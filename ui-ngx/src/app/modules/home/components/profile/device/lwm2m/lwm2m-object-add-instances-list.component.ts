@@ -80,8 +80,8 @@ export class Lwm2mObjectAddInstancesListComponent implements ControlValueAccesso
   }
 
   add = (): void => {
-    if (this.instancesListFormGroup.get('instanceIdInput').valid) {
-      this.instancesId.add(this.instanceId);
+    if (this.instancesListFormGroup.get('instanceIdInput').valid &&  Number.isFinite(Number(this.instanceId))) {
+      this.instancesId.add(Number(this.instanceId));
       this.instancesListFormGroup.get('instanceIdInput').setValue(null);
       this.propagateChange(this.instancesId);
       this.dirty = true;

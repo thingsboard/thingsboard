@@ -1102,6 +1102,7 @@
             "no-objects-matching": "No objects matching '{{object}}' were found.",
             "valid-id-instance-no-min": "Instance number '{{instance}}' no validated. Min value='{{min}}'",
             "valid-id-instance-no-max": "Instance number '{{instance}}' no validated. Max value='{{max}}'",
+            "valid-id-instance":  "Instance number '{{instance}}' no validated. { count, plural, 1 {Max value='{{max}}'} 2 {Min value='{{min}}'} other {Must be only number} }",
             "model-tab": "LWM2M Model",
             "add-instances-tip": "Add new instances",
             "instances-list": "Instances list",

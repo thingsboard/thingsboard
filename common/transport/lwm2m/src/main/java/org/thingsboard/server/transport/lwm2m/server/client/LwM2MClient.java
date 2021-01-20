@@ -93,7 +93,7 @@ public class LwM2MClient implements Cloneable {
         this.pendingRequests.remove(path);
         if (this.pendingRequests.size() == 0) {
             this.initValue();
-            this.lwM2MTransportServiceImpl.putDelayedUpdateResourcesThingsboard(this);
+//            this.lwM2MTransportServiceImpl.putDelayedUpdateResourcesThingsboard(this);
         }
     }
 

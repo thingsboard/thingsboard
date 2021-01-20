@@ -20,6 +20,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.Link;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mObject;
@@ -153,7 +154,7 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
                     lwM2MClient.setLwM2MTransportServiceImpl(this);
                     lwM2MClient.setSessionUuid(UUID.randomUUID());
                     this.sentLogsToThingsboard(LOG_LW2M_INFO + ": Client  Registered", registration);
-//                    this.setLwM2MClient(lwServer, registration, lwM2MClient);
+//                    this.setLwM2mFromClientValue(lwServer, registration, lwM2MClient);
                     SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration);
                     if (sessionInfo != null) {
                         lwM2MClient.setDeviceUuid(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
@@ -164,6 +165,7 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
                         transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), null);
                         transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), null);
                         this.sentLogsToThingsboard(LOG_LW2M_INFO + ": Client  create after Registration", registration);
+                        this.putDelayedUpdateResourcesThingsboard(lwM2MClient);
                     } else {
                         log.error("Client: [{}] onRegistered [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), null);
                     }
@@ -197,7 +199,6 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
             }
         });
     }
-
 
     /**
      * @param registration - Registration LwM2M Client
@@ -279,33 +280,33 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
      * @param registration - Registration LwM2M Client
      * @param lwM2MClient  - object with All parameters off client
      */
-    private void setLwM2MClient(LeshanServer lwServer, Registration registration, LwM2MClient lwM2MClient) {
-//        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
-//            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
-//            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
-//                // #1
-//                lwM2MClient.getPendingRequests().add(url.getUrl());
-//                // #2
-//                lwM2MTransportRequest.sendAllRequest(lwServer, registration, url.getUrl(), GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
-//                        lwM2MClient, null, null, this.context.getCtxServer().getTimeout(), false);
-//            }
-//        });
+    private void setLwM2mFromClientValue(LeshanServer lwServer, Registration registration, LwM2MClient lwM2MClient) {
+        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
+            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
+                // #1
+                lwM2MClient.getPendingRequests().add(url.getUrl());
+                // #2
+                lwM2MTransportRequest.sendAllRequest(lwServer, registration, url.getUrl(), GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
+                        lwM2MClient, null, null, this.context.getCtxServer().getTimeout(), false);
+            }
+        });
 
-//        // #1
-//        for (Link url : registration.getObjectLinks()) {
-//            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
-//            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
-//                lwM2MClient.getPendingRequests().add(url.getUrl());
-//            }
-//        }
-//        // #2
-//        for (Link url : registration.getObjectLinks()) {
-//            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
-//            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
-//                lwM2MTransportRequest.sendAllRequest(lwServer, registration, url.getUrl(), GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
-//                        lwM2MClient, null, null, this.context.getCtxServer().getTimeout(), false);
-//            }
-//        }
+        // #1
+        for (Link url : registration.getObjectLinks()) {
+            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
+            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
+                lwM2MClient.getPendingRequests().add(url.getUrl());
+            }
+        }
+        // #2
+        for (Link url : registration.getObjectLinks()) {
+            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
+            if (pathIds.isObjectInstance() && !pathIds.isResource()) {
+                lwM2MTransportRequest.sendAllRequest(lwServer, registration, url.getUrl(), GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
+                        lwM2MClient, null, null, this.context.getCtxServer().getTimeout(), false);
+            }
+        }
 
         // #1
         Arrays.stream(registration.getObjectLinks()).forEach(url -> {

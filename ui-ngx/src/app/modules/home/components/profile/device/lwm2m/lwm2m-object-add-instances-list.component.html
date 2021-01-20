@@ -31,9 +31,7 @@
   </mat-form-field>
   <mat-form-field class="mat-block">
     <mat-label>{{ 'device-profile.lwm2m.instances-input' | translate }}</mat-label>
-    <input fxFlexFill matInput type="number"
-           [min]="instanceIdValueMin"
-           [max]="instanceIdValueMax"
+    <input fxFlexFill matInput type='text'
            placeholder="{{'device-profile.lwm2m.instances-input-holder' | translate}}"
            formControlName="instanceIdInput">
     <button mat-icon-button matSuffix
@@ -41,18 +39,18 @@
       <mat-icon>add</mat-icon>
     </button>
     <mat-error *ngIf="instancesListFormGroup.get('instanceIdInput').hasError('min')">
-      {{ translate.get('device-profile.lwm2m.valid-id-instance-no-min', {
-      instance: instanceId, min: instanceIdValueMin
+      {{ translate.get('device-profile.lwm2m.valid-id-instance', {
+      count: 2, instance: instanceId, min: instanceIdValueMin
     }) | async }}
     </mat-error>
     <mat-error *ngIf="instancesListFormGroup.get('instanceIdInput').hasError('max')">
-      {{ translate.get('device-profile.lwm2m.valid-id-instance-no-max', {
-      instance: instanceId, max: instanceIdValueMax
+      {{ translate.get('device-profile.lwm2m.valid-id-instance', {
+      count: 1, instance: instanceId, max: instanceIdValueMax
     }) | async }}
     </mat-error>
     <mat-error *ngIf="instancesListFormGroup.get('instanceIdInput').hasError('pattern')">
-      {{ translate.get('device-profile.lwm2m.instances-input-holder', {
-      instance: instanceId, max: instanceIdValueMax
+      {{ translate.get('device-profile.lwm2m.valid-id-instance', {
+      count: 0, instance: instanceId, max: instanceIdValueMax
     }) | async }}
     </mat-error>
   </mat-form-field>
