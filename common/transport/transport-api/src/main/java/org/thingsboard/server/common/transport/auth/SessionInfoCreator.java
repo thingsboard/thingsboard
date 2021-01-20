@@ -42,8 +42,12 @@ public class SessionInfoCreator {
         if (!"null".equals(msg.getDeviceInfo().getAdditionalInfo())) {
             try {
                 JsonNode infoNode = context.getMapper().readTree(msg.getDeviceInfo().getAdditionalInfo());
-                if (infoNode.get("gateway").asBoolean()) {
-                    builder.setActivityTimeFromGatewayDevice(infoNode.get("activityTimeFromGatewayDevice").asBoolean());
+                if (infoNode.get("gateway").asBoolean(false)) {
+                    boolean activityTimeFromGatewayDevice = false;
+                    if (infoNode.get("activityTimeFromGatewayDevice") != null) {
+                        activityTimeFromGatewayDevice = infoNode.get("activityTimeFromGatewayDevice").asBoolean();
+                    }
+                    builder.setActivityTimeFromGatewayDevice(activityTimeFromGatewayDevice);
                 }
             } catch (IOException e) {
                 log.trace("[{}][{}] Failed to fetch device additional info", sessionId, msg.getDeviceInfo().getDeviceName(), e);
