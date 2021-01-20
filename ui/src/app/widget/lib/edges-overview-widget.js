@@ -60,6 +60,8 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
         types.entityType.rulechain,
     ]
 
+    vm.onNodeSelected = onNodeSelected;
+
     $scope.$watch('vm.ctx', function() {
         if (vm.ctx && vm.ctx.defaultSubscription) {
             vm.settings = vm.ctx.settings;
@@ -69,6 +71,25 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
             updateDatasources();
         }
     });
+
+    function onNodeSelected(node, event) {
+        var nodeId;
+        if (!node) {
+            nodeId = -1;
+        } else {
+            nodeId = node.id;
+        }
+        if (nodeId !== -1) {
+            var selectedNode = vm.entityNodesMap[nodeId];
+            if (selectedNode) {
+                var descriptors = vm.ctx.actionsApi.getActionDescriptors('nodeSelected');
+                if (descriptors.length) {
+                    var entity = selectedNode.data.nodeCtx.entity;
+                    vm.ctx.actionsApi.handleWidgetAction(event, descriptors[0], entity.id, entity.name, { nodeCtx: selectedNode.data.nodeCtx });
+                }
+            }
+        }
+    }
 
     function updateDatasources() {
         vm.loadNodes = loadNodes;
@@ -80,7 +101,7 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
             if (datasource.type === types.datasourceType.entity && datasource.entity && datasource.entity.id.entityType === types.entityType.edge) {
                 var selectedEdge = datasource.entity;
                 vm.customerTitle = getCustomerTitle(selectedEdge.id.id);
-                vm.ctx.widgetTitle = selectedEdge.name;
+                // vm.ctx.widgetTitle = selectedEdge.name;
                 cb(loadNodesForEdge(selectedEdge.id.id, selectedEdge));
             } else if (datasource.type === types.datasourceType.function) {
                 cb(loadNodesForEdge(null, null));

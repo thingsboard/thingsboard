@@ -21,6 +21,7 @@
         <span class="mat-subheader" ng-if="!vm.edgeIsDatasource" translate>edge.widget-datasource-error</span>
         <div flex class="tb-entities-nav-tree-panel">
             <tb-nav-tree
+                    on-node-selected="vm.onNodeSelected(node, event)"
                     load-nodes="vm.loadNodes"
             ></tb-nav-tree>
         </div>
