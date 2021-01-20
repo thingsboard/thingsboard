@@ -14,35 +14,18 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  forwardRef,
-  Input,
-  OnInit,
-  ViewChild,
-  ElementRef,
-} from '@angular/core';
-import {
-  ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
-  NG_VALUE_ACCESSOR, Validators
-} from '@angular/forms';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { Component, forwardRef, } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { MatChipList } from '@angular/material/chips';
-import {
-  INSTANCES_ID_VALUE_MAX,
-  INSTANCES_ID_VALUE_MIN
-} from './profile-config.models';
+import { INSTANCES_ID_VALUE_MAX, INSTANCES_ID_VALUE_MIN, KEY_REGEXP_NUMBER } from './profile-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 
 @Component({
   selector: 'tb-profile-lwm2m-object-add-instances-list',
   templateUrl: './lwm2m-object-add-instances-list.component.html',
-  styleUrls: ['./lwm2m-object-add-instances-list.component.scss'],
+  styleUrls: [],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => Lwm2mObjectAddInstancesListComponent),
@@ -51,31 +34,13 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 })
 export class Lwm2mObjectAddInstancesListComponent implements ControlValueAccessor {
 
-  private requiredValue: boolean;
-  private disabled = false as boolean;
-  private dirty = false as boolean;
+  private disabled = false;
+  private dirty = false;
 
-  lwm2mObjectListFormGroup: FormGroup;
-  instancesIdsList: Set<number> | null;
-  filteredObjectsList: Array<number>;
-  instanceIdValueMin = INSTANCES_ID_VALUE_MIN as number;
-  instanceIdValueMax = INSTANCES_ID_VALUE_MAX as number;
-
-  get required(): boolean {
-    return this.requiredValue;
-  }
-
-  @Input()
-  set required(value: boolean) {
-    const newVal = coerceBooleanProperty(value);
-    if (this.requiredValue !== newVal) {
-      this.requiredValue = newVal;
-      this.updateValidators();
-    }
-  }
-
-  @ViewChild('instanceIdInput') instanceIdInput: ElementRef<HTMLInputElement>;
-  @ViewChild('chipList', {static: true}) chipList: MatChipList;
+  instancesListFormGroup: FormGroup;
+  instancesId = new Set<number>();
+  instanceIdValueMin = INSTANCES_ID_VALUE_MIN;
+  instanceIdValueMax = INSTANCES_ID_VALUE_MAX;
 
   private propagateChange = (v: any) => { };
 
@@ -83,17 +48,12 @@ export class Lwm2mObjectAddInstancesListComponent implements ControlValueAccesso
               public translate: TranslateService,
               private deviceProfileService: DeviceProfileService,
               private fb: FormBuilder) {
-    this.lwm2mObjectListFormGroup = this.fb.group({
-      instancesIdsList: [null],
-      instanceIdInput: [null]
+    this.instancesListFormGroup = this.fb.group({
+      instanceIdInput: [null, [
+        Validators.min(this.instanceIdValueMin),
+        Validators.max(this.instanceIdValueMax),
+        Validators.pattern(KEY_REGEXP_NUMBER)]]
     });
-  }
-
-  private updateValidators = (): void => {
-    this.lwm2mObjectListFormGroup.get('instanceIdInput').setValidators([
-      Validators.min(this.instanceIdValueMin),
-      Validators.max(this.instanceIdValueMax)]);
-    this.lwm2mObjectListFormGroup.get('instanceIdInput').updateValueAndValidity();
   }
 
   registerOnChange(fn: any): void {
@@ -106,68 +66,35 @@ export class Lwm2mObjectAddInstancesListComponent implements ControlValueAccesso
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
-      this.lwm2mObjectListFormGroup.disable({emitEvent: false});
+      this.instancesListFormGroup.disable({emitEvent: false});
     } else {
-      this.lwm2mObjectListFormGroup.enable({emitEvent: false});
+      this.instancesListFormGroup.enable({emitEvent: false});
     }
   }
 
   writeValue(value: Set<number>): void {
-    this.instancesIdsList = new Set<number>();
     if (value && value.size) {
-      value.forEach(item => this.instancesIdsList.add(item));
-      this.lwm2mObjectListFormGroup.get('instancesIdsList').setValue(this.instancesIdsList);
+      this.instancesId = value;
     }
-    this.updateValidators();
     this.dirty = false;
   }
 
-  add = (value: number): void => {
-    if (!isNaN(value) && this.lwm2mObjectListFormGroup.get('instanceIdInput').valid) {
-      this.instancesIdsList.add(value);
-      this.lwm2mObjectListFormGroup.get('instancesIdsList').setValue(this.instancesIdsList);
-      this.propagateChange(this.instancesIdsList);
+  add = (): void => {
+    if (this.instancesListFormGroup.get('instanceIdInput').valid) {
+      this.instancesId.add(this.instanceId);
+      this.instancesListFormGroup.get('instanceIdInput').setValue(null);
+      this.propagateChange(this.instancesId);
       this.dirty = true;
     }
-    this.clear();
   }
 
   remove = (object: number): void => {
-    this.instancesIdsList.delete(object);
-    this.lwm2mObjectListFormGroup.get('instancesIdsList').setValue(this.instancesIdsList);
-    this.propagateChange(this.instancesIdsList);
+    this.instancesId.delete(object);
+    this.propagateChange(this.instancesId);
     this.dirty = true;
-    this.clear();
-  }
-  //
-  // displayFn(object?: number): number | undefined {
-  //   return object ? object : undefined;
-  // }
-
-  private clear = (): void => {
-    this.lwm2mObjectListFormGroup.get('instanceIdInput').patchValue(null, {emitEvent: true});
-    this.instanceIdInput.nativeElement.value = '';
-    setTimeout(() => {
-      this.instanceIdInput.nativeElement.blur();
-      this.instanceIdInput.nativeElement.focus();
-    }, 0);
   }
 
-  onkeydown = (e: KeyboardEvent): boolean => {
-    if (e.keyCode === 189 || e.keyCode === 187 || e.keyCode === 109 || e.keyCode === 107) {
-      return false;
-    } else if (e.keyCode === 8) {
-      if (this.lwm2mObjectListFormGroup.get('instanceIdInput').value == null) {
-        this.clear();
-      }
-      this.instanceIdInput.nativeElement.focus();
-    }
-  }
-
-  onFocus = (): void => {
-    if (this.dirty) {
-      this.lwm2mObjectListFormGroup.get('instanceIdInput').updateValueAndValidity({onlySelf: true, emitEvent: true});
-      this.dirty = false;
-    }
+  get instanceId(): number {
+    return this.instancesListFormGroup.get('instanceIdInput').value;
   }
 }

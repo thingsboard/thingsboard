@@ -30,11 +30,9 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
-      <div class="mat-padding">
-        <tb-profile-lwm2m-object-add-instances-list
-          formControlName="instancesIds">
-        </tb-profile-lwm2m-object-add-instances-list>
-      </div>
+      <tb-profile-lwm2m-object-add-instances-list
+        formControlName="instancesIds">
+      </tb-profile-lwm2m-object-add-instances-list>
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">

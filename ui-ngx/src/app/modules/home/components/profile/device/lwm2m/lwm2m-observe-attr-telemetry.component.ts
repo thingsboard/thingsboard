@@ -171,7 +171,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   private updateValidators = (): void => {
-    this.observeAttrTelemetryFormGroup.get('clientLwM2M').setValidators(this.required ? [Validators.required] : []);
+    this.observeAttrTelemetryFormGroup.get('clientLwM2M').setValidators(this.required ? Validators.required : []);
     this.observeAttrTelemetryFormGroup.get('clientLwM2M').updateValueAndValidity();
   }
 
@@ -187,7 +187,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     }
     return false;
   }
-
 
   getChecked = (instance: AbstractControl, type: string): boolean => {
     const resources = instance.get('resources').value as ResourceLwM2M[];
@@ -221,15 +220,11 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
       $event.stopPropagation();
       $event.preventDefault();
     }
-    const instancesIds = new Set<number>();
-    object.instances.forEach(inst => {
-      instancesIds.add(inst.id);
-    });
     this.dialog.open<Lwm2mObjectAddInstancesComponent, Lwm2mObjectAddInstancesData, object>(Lwm2mObjectAddInstancesComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        instancesIds: this.setInstancesIds(object.instances),
+        instancesIds: this.instancesToSetId(object.instances),
         objectName: object.name,
         objectId: object.id
       }
@@ -243,21 +238,15 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   private updateInstancesIds = (data: Lwm2mObjectAddInstancesData): void => {
-    const valueNew = new Set<number>();
-    const valueOld = new Set<number>();
-    data.instancesIds.forEach(value => {
-      valueNew.add(value);
-    });
-    const oldInstances = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M [])
-      .find(e => e.id === data.objectId).instances;
-    oldInstances.forEach(inst => {
-      valueOld.add(inst.id);
-    });
-    if (!isEqual(valueOld, valueNew)) {
-      const idsDel = this.diffBetweenSet(valueOld, valueNew);
-      const idsAdd = this.diffBetweenSet(valueNew, valueOld);
+    const instances = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M[])
+      .find(objectLwM2M => objectLwM2M.id === data.objectId).instances;
+    const valueOld = this.instancesToSetId(instances);
+
+    if (!isEqual(valueOld, data.instancesIds)) {
+      const idsDel = this.diffBetweenSet(valueOld, data.instancesIds);
+      const idsAdd = this.diffBetweenSet(data.instancesIds, valueOld);
       if (idsAdd.size) {
-        this.addInstancesNew(data.objectId, idsAdd);
+        this.addInstancesNew(data.objectId, idsAdd, instances.find(instance => instance.id === 0));
       }
       if (idsDel.size) {
         this.deleteInstances(data.objectId, idsDel);
@@ -276,13 +265,11 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     });
   }
 
-  private addInstancesNew = (objectId: number, idsAdd: Set<number>): void => {
-    const instancesValue = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M [])
-      .find(objectLwM2M => objectLwM2M.id === objectId).instances;
+  private addInstancesNew = (objectId: number, idsAdd: Set<number>, instance: Instance): void => {
     const instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls
       .find(e => e.value.id === objectId).get('instances') as FormArray) as FormArray;
     idsAdd.forEach(x => {
-      const instanceNew = deepClone(instancesValue[0]) as Instance;
+      const instanceNew = deepClone(instance);
       instanceNew.resources.forEach(r => {
         r.attribute = false;
         r.telemetry = false;
@@ -296,17 +283,11 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     (instancesFormArray.controls as FormGroup[]).sort((a, b) => a.value.id - b.value.id);
   }
 
-  private diffBetweenSet = (firstSet: Set<any>, secondSet: Set<any>): Set<any> => {
+  private diffBetweenSet<T>(firstSet: Set<T>, secondSet: Set<T>): Set<T> {
     return new Set([...Array.from(firstSet)].filter(x => !secondSet.has(x)));
   }
 
-  private setInstancesIds = (instances: Instance []): Set<number> => {
-    const instancesIds = new Set<number>();
-    if (instances && instances.length) {
-      instances.forEach(inst => {
-        instancesIds.add(inst.id);
-      });
-    }
-    return instancesIds;
+  private instancesToSetId = (instances: Instance[]): Set<number> => {
+    return new Set(instances.map(x => x.id));
   }
 }

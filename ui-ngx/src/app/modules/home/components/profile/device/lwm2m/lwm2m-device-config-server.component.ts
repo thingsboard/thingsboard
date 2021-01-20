@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Inject, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Inject, Input } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
   DEFAULT_CLIENT_HOLD_OFF_TIME,
@@ -48,7 +48,7 @@ import { TranslateService } from '@ngx-translate/core';
   ]
 })
 
-export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAccessor, Validators {
+export class Lwm2mDeviceConfigServerComponent implements ControlValueAccessor {
 
   private requiredValue: boolean;
 
@@ -82,7 +82,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
               public fb: FormBuilder,
               private deviceProfileService: DeviceProfileService,
               @Inject(WINDOW) private window: Window) {
-    this.serverFormGroup = this.getServerGroup();
+    this.serverFormGroup = this.initServerGroup();
     this.serverFormGroup.get('securityMode').valueChanges.pipe(
       startWith(null),
       pairwise()
@@ -99,9 +99,6 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
         this.propagateChangeState(value);
       }
     });
-  }
-
-  ngOnInit(): void {
   }
 
   private updateValueFields = (serverData: ServerSecurityConfig): void => {
@@ -187,17 +184,17 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   registerOnTouched(fn: any): void {
   }
 
-  private getServerGroup = (): FormGroup => {
+  private initServerGroup = (): FormGroup => {
     const port = this.bootstrapServerIs ? DEFAULT_PORT_BOOTSTRAP_NO_SEC : DEFAULT_PORT_SERVER_NO_SEC;
     return this.fb.group({
-      host: [this.window.location.hostname, this.required ? [Validators.required] : []],
-      port: [port, this.required ? [Validators.required] : []],
-      bootstrapServerIs: [this.bootstrapServerIs, []],
-      securityMode: [this.fb.control(SECURITY_CONFIG_MODE.NO_SEC), []],
-      serverPublicKey: ['', this.required ? [Validators.required] : []],
-      clientHoldOffTime: [DEFAULT_CLIENT_HOLD_OFF_TIME, this.required ? [Validators.required] : []],
-      serverId: [DEFAULT_ID_SERVER, this.required ? [Validators.required] : []],
-      bootstrapServerAccountTimeout: ['', this.required ? [Validators.required] : []],
+      host: [this.window.location.hostname, this.required ? Validators.required : ''],
+      port: [port, this.required ? Validators.required : ''],
+      bootstrapServerIs: [this.bootstrapServerIs, ''],
+      securityMode: [this.fb.control(SECURITY_CONFIG_MODE.NO_SEC)],
+      serverPublicKey: ['', this.required ? Validators.required : ''],
+      clientHoldOffTime: [DEFAULT_CLIENT_HOLD_OFF_TIME, this.required ? Validators.required : ''],
+      serverId: [DEFAULT_ID_SERVER, this.required ? Validators.required : ''],
+      bootstrapServerAccountTimeout: ['', this.required ? Validators.required : ''],
     });
   }
 

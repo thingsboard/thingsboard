@@ -15,7 +15,7 @@
 ///
 
 import { DeviceProfileTransportConfiguration, DeviceTransportType } from '@shared/models/device.models';
-import { Component, forwardRef, Inject, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Inject, Input } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
@@ -54,11 +54,11 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   private disabled = false;
 
   lwm2mDeviceProfileTransportConfFormGroup: FormGroup;
-  observeAttr = OBSERVE_ATTR as string;
-  observe = OBSERVE as string;
-  attribute = ATTR as string;
-  telemetry = TELEMETRY as string;
-  keyName = KEY_NAME as string;
+  observeAttr = OBSERVE_ATTR;
+  observe = OBSERVE;
+  attribute = ATTR;
+  telemetry = TELEMETRY;
+  keyName = KEY_NAME;
   bootstrapServers: string;
   bootstrapServer: string;
   lwm2mServer: string;
@@ -73,7 +73,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     this.requiredValue = coerceBooleanProperty(value);
   }
 
-  private propagateChange = (v: any) => {  };
+  private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
               private fb: FormBuilder,
@@ -81,7 +81,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
               @Inject(WINDOW) private window: Window) {
     this.lwm2mDeviceProfileTransportConfFormGroup = this.fb.group({
       objectIds: [{}, Validators.required],
-      observeAttrTelemetry: [{clientLwM2M: [] as ObjectLwM2M[]}, Validators.required],
+      observeAttrTelemetry: [{clientLwM2M: []}, Validators.required],
       shortId: [null, Validators.required],
       lifetime: [null, Validators.required],
       defaultMinPeriod: [null, Validators.required],
@@ -116,12 +116,11 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   writeValue(value: any | null): void {
-    value = (Object.keys(value).length === 0) ? getDefaultProfileConfig() : value;
+    this.configurationValue = (Object.keys(value).length === 0) ? getDefaultProfileConfig() : value;
     this.lwm2mDeviceProfileTransportConfFormGroup.patchValue({
-        configurationJson: value
+        configurationJson: this.configurationValue
       },
       {emitEvent: false});
-    this.configurationValue = this.lwm2mDeviceProfileTransportConfFormGroup.getRawValue().configurationJson;
     this.initWriteValue();
   }
 

@@ -16,7 +16,7 @@
 
 -->
 
-<mat-form-field appearance="standard" [formGroup]="lwm2mObjectListFormGroup" class="mat-block">
+<mat-form-field appearance="standard" [formGroup]="lwm2mListFormGroup" class="mat-block">
   <mat-chip-list #chipList formControlName="objectsList">
     <mat-chip
       *ngFor="let objectLwm2m of objectsList"
@@ -49,7 +49,7 @@
       </span>
     </mat-option>
   </mat-autocomplete>
-  <mat-error *ngIf="lwm2mObjectListFormGroup.get('objectsList').hasError('required')">
+  <mat-error *ngIf="lwm2mListFormGroup.get('objectsList').hasError('required')">
     {{ 'device-profile.lwm2m.object-list-empty' | translate }}
   </mat-error>
 </mat-form-field>
