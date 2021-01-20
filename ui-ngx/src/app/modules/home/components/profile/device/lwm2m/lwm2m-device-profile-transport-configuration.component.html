@@ -60,7 +60,8 @@
                       <mat-form-field fxFlex>
                         <mat-label>{{ 'device-profile.lwm2m.lifetime' | translate }}</mat-label>
                         <input matInput type="number" formControlName="lifetime" required>
-                        <mat-error *ngIf="lwm2mDeviceProfileTransportConfFormGroup.get('lifetime').hasError('required')">
+                        <mat-error
+                          *ngIf="lwm2mDeviceProfileTransportConfFormGroup.get('lifetime').hasError('required')">
                           {{ 'device-profile.lwm2m.lifetime' | translate }}
                           <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
                         </mat-error>
@@ -102,13 +103,15 @@
                       class="tb-panel-title">{{ 'device-profile.lwm2m.bootstrap-server' | translate | uppercase }}</div>
                   </mat-panel-title>
                 </mat-expansion-panel-header>
-                <div class="mat-padding">
-                  <tb-profile-lwm2m-device-config-server
-                    [required]="required"
-                    formControlName="bootstrapServer"
-                    [bootstrapServerIs]=true>
-                  </tb-profile-lwm2m-device-config-server>
-                </div>
+                <ng-template matExpansionPanelContent>
+                  <div class="mat-padding">
+                    <tb-profile-lwm2m-device-config-server
+                      [required]="required"
+                      formControlName="bootstrapServer"
+                      [bootstrapServerIs]=true>
+                    </tb-profile-lwm2m-device-config-server>
+                  </div>
+                </ng-template>
               </mat-expansion-panel>
             </mat-accordion>
             <mat-accordion multi="true" class="mat-body-1">
@@ -118,13 +121,15 @@
                     <div class="tb-panel-title">{{ 'device-profile.lwm2m.lwm2m-server' | translate | uppercase }}</div>
                   </mat-panel-title>
                 </mat-expansion-panel-header>
-                <div class="mat-padding">
-                  <tb-profile-lwm2m-device-config-server
-                    [required]="required"
-                    formControlName="lwm2mServer"
-                    [bootstrapServerIs]=false>
-                  </tb-profile-lwm2m-device-config-server>
-                </div>
+                <ng-template matExpansionPanelContent>
+                  <div class="mat-padding">
+                    <tb-profile-lwm2m-device-config-server
+                      [required]="required"
+                      formControlName="lwm2mServer"
+                      [bootstrapServerIs]=false>
+                    </tb-profile-lwm2m-device-config-server>
+                  </div>
+                </ng-template>
               </mat-expansion-panel>
             </mat-accordion>
           </div>

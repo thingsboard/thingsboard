@@ -83,13 +83,15 @@
                   <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('pattern')">
                     {{ 'device.lwm2m-security-config.client-key' | translate }}
                     <strong>{{ translate.get('device.lwm2m-security-config.pattern_hex_dec', {
-                      count: 0 }) | async }}</strong>
+                      count: 0
+                    }) | async }}</strong>
                   </mat-error>
                   <mat-error *ngIf="(lwm2mConfigFormGroup.get('clientKey').hasError('maxlength') ||
                     lwm2mConfigFormGroup.get('clientKey').hasError('minlength'))">
                     {{ 'device.lwm2m-security-config.client-key' | translate }}
                     <strong>{{ translate.get('device.lwm2m-security-config.pattern_hex_dec', {
-                      count: lenMaxKeyClient }) | async }}</strong>
+                      count: lenMaxKeyClient
+                    }) | async }}</strong>
                   </mat-error>
                 </mat-form-field>
               </div>
@@ -112,12 +114,14 @@
                         class="tb-panel-title">{{ 'device.lwm2m-security-config.bootstrap-server' | translate | uppercase }}</div>
                     </mat-panel-title>
                   </mat-expansion-panel-header>
-                  <div class="mat-padding">
-                    <tb-security-config-server-lwm2m
-                      [formControlName]="bootstrapServer"
-                      [serverFormGroup]="bootstrapFormGroup">
-                    </tb-security-config-server-lwm2m>
-                  </div>
+                  <ng-template matExpansionPanelContent>
+                    <div class="mat-padding">
+                      <tb-security-config-server-lwm2m
+                        [formControlName]="bootstrapServer"
+                        [serverFormGroup]="bootstrapFormGroup">
+                      </tb-security-config-server-lwm2m>
+                    </div>
+                  </ng-template>
                 </mat-expansion-panel>
               </mat-accordion>
               <mat-accordion multi="true" class="mat-body-1">
@@ -128,12 +132,14 @@
                         class="tb-panel-title">{{ 'device.lwm2m-security-config.lwm2m-server' | translate | uppercase }}</div>
                     </mat-panel-title>
                   </mat-expansion-panel-header>
-                  <div class="mat-padding">
-                    <tb-security-config-server-lwm2m
-                      [formControlName]="lwm2mServer"
-                      [serverFormGroup]="lwm2mServerFormGroup">
-                    </tb-security-config-server-lwm2m>
-                  </div>
+                  <ng-template matExpansionPanelContent>
+                    <div class="mat-padding">
+                      <tb-security-config-server-lwm2m
+                        [formControlName]="lwm2mServer"
+                        [serverFormGroup]="lwm2mServerFormGroup">
+                      </tb-security-config-server-lwm2m>
+                    </div>
+                  </ng-template>
                 </mat-expansion-panel>
               </mat-accordion>
             </div>
