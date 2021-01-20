@@ -61,6 +61,7 @@ import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
@@ -510,10 +511,9 @@ public class DefaultTransportService implements TransportService {
             long lastActivityTime = sessionMD.getLastActivityTime();
             TransportProtos.SessionInfoProto sessionInfo = sessionMD.getSessionInfo();
             if (sessionInfo.getGwSessionIdMSB() != 0 &&
-                    sessionInfo.getGwSessionIdLSB() != 0 &&
-                    sessionInfo.getActivityTimeFromGatewayDevice()) {
+                    sessionInfo.getGwSessionIdLSB() != 0) {
                 SessionMetaData gwMetaData = sessions.get(new UUID(sessionInfo.getGwSessionIdMSB(), sessionInfo.getGwSessionIdLSB()));
-                if (gwMetaData != null) {
+                if (gwMetaData != null && gwMetaData.getSessionInfo().getActivityTimeFromGatewayDevice()) {
                     lastActivityTime = Math.max(gwMetaData.getLastActivityTime(), lastActivityTime);
                 }
             }
@@ -647,7 +647,40 @@ public class DefaultTransportService implements TransportService {
                     }
                 } else if (EntityType.DEVICE.equals(entityType)) {
                     Optional<Device> deviceOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
-                    deviceOpt.ifPresent(this::onDeviceUpdate);
+                    if (deviceOpt.isPresent()) {
+                        Device device = deviceOpt.get();
+                        if (device.getAdditionalInfo() != null) {
+                            if (device.getAdditionalInfo().get("gateway") != null
+                                    && device.getAdditionalInfo().get("gateway").asBoolean()) {
+                                sessions.forEach((uuid, currentMD) -> {
+                                    if (device.getId().equals(new DeviceId(new UUID(currentMD.getSessionInfo().getDeviceIdMSB(), currentMD.getSessionInfo().getDeviceIdLSB())))) {
+                                        boolean newActivityTimeFromGatewayDevice = device.getAdditionalInfo().get("activityTimeFromGatewayDevice").asBoolean();
+                                        if (currentMD.getSessionInfo().getActivityTimeFromGatewayDevice() != newActivityTimeFromGatewayDevice) {
+                                            SessionInfoProto currentSessionInfo = currentMD.getSessionInfo();
+                                            SessionInfoProto newSessionInfo = SessionInfoProto.newBuilder()
+                                                    .setNodeId(currentSessionInfo.getNodeId())
+                                                    .setSessionIdMSB(currentSessionInfo.getSessionIdMSB())
+                                                    .setSessionIdLSB(currentSessionInfo.getSessionIdLSB())
+                                                    .setDeviceIdMSB(currentSessionInfo.getDeviceIdMSB())
+                                                    .setDeviceIdLSB(currentSessionInfo.getDeviceIdLSB())
+                                                    .setTenantIdMSB(currentSessionInfo.getTenantIdMSB())
+                                                    .setTenantIdLSB(currentSessionInfo.getTenantIdLSB())
+                                                    .setDeviceName(currentSessionInfo.getDeviceName())
+                                                    .setDeviceType(currentSessionInfo.getDeviceType())
+                                                    .setGwSessionIdMSB(currentSessionInfo.getGwSessionIdMSB())
+                                                    .setGwSessionIdLSB(currentSessionInfo.getGwSessionIdLSB())
+                                                    .setDeviceProfileIdMSB(currentSessionInfo.getDeviceProfileIdMSB())
+                                                    .setDeviceProfileIdLSB(currentSessionInfo.getDeviceProfileIdLSB())
+                                                    .setActivityTimeFromGatewayDevice(newActivityTimeFromGatewayDevice)
+                                                    .build();
+                                            currentMD.setSessionInfo(newSessionInfo);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        onDeviceUpdate(device);
+                    }
                 }
             } else if (toSessionMsg.hasEntityDeleteMsg()) {
                 TransportProtos.EntityDeleteMsg msg = toSessionMsg.getEntityDeleteMsg();

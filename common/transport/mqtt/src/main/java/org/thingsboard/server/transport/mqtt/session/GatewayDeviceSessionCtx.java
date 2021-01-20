@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.SessionMsgListener;
@@ -39,14 +37,6 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
                                    DeviceProfile deviceProfile, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
         super(UUID.randomUUID(), mqttQoSMap);
         this.parent = parent;
-        JsonParser parser = new JsonParser();
-        boolean activityTimeFromGatewayDevice = Boolean.FALSE;
-        if (this.parent.getDeviceInfo().getAdditionalInfo() != null && !"null".equals(this.parent.getDeviceInfo().getAdditionalInfo())) {
-            JsonObject additionalInfo = parser.parse(this.parent.getDeviceInfo().getAdditionalInfo()).getAsJsonObject();
-            if (additionalInfo.get("activityTimeFromGatewayDevice") != null) {
-                activityTimeFromGatewayDevice = additionalInfo.get("activityTimeFromGatewayDevice").getAsBoolean();
-            }
-        }
         setSessionInfo(SessionInfoProto.newBuilder()
                 .setNodeId(parent.getNodeId())
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
@@ -61,7 +51,6 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
                 .setGwSessionIdLSB(parent.getSessionId().getLeastSignificantBits())
                 .setDeviceProfileIdMSB(deviceInfo.getDeviceProfileId().getId().getMostSignificantBits())
                 .setDeviceProfileIdLSB(deviceInfo.getDeviceProfileId().getId().getLeastSignificantBits())
-                .setActivityTimeFromGatewayDevice(activityTimeFromGatewayDevice)
                 .build());
         setDeviceInfo(deviceInfo);
         setDeviceProfile(deviceProfile);

@@ -34,7 +34,6 @@ import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -179,8 +178,6 @@ public class GatewaySessionHandler {
     public MqttTransportAdaptor getPayloadAdaptor() {
         return deviceSessionCtx.getPayloadAdaptor();
     }
-
-    public TransportDeviceInfo getDeviceInfo() { return deviceSessionCtx.getDeviceInfo(); }
 
     void deregisterSession(String deviceName) {
         GatewayDeviceSessionCtx deviceSessionCtx = devices.remove(deviceName);
