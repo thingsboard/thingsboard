@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { EMPTY, forkJoin, Observable, of, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -33,7 +33,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
 import { Tenant } from '@shared/models/tenant.model';
-import { catchError, concatMap, expand, map, mergeMap, toArray } from 'rxjs/operators';
+import { catchError, concatMap, expand, map, mergeMap, retry, toArray } from 'rxjs/operators';
 import { Customer } from '@app/shared/models/customer.model';
 import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
@@ -52,7 +52,7 @@ import {
   ImportEntityData
 } from '@shared/models/entity.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
-import { deepClone, generateSecret, guid, isDefined, isDefinedAndNotNull } from '@core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull } from '@core/utils';
 import { Asset } from '@shared/models/asset.models';
 import { Device, DeviceCredentialsType } from '@shared/models/device.models';
 import { AttributeService } from '@core/http/attribute.service';
@@ -74,10 +74,9 @@ import {
   StringOperation
 } from '@shared/models/query/query.models';
 import { alarmFields } from '@shared/models/alarm.models';
-import { EdgeService } from "@core/http/edge.service";
+import { EdgeService } from '@core/http/edge.service';
 import { Edge } from '@shared/models/edge.models';
-import { WINDOW } from "@core/services/window.service";
-import { RuleChainType } from "@shared/models/rule-chain.models";
+import { RuleChainType } from '@shared/models/rule-chain.models';
 
 @Injectable({
   providedIn: 'root'
@@ -98,8 +97,7 @@ export class EntityService {
     private dashboardService: DashboardService,
     private entityRelationService: EntityRelationService,
     private attributeService: AttributeService,
-    private utils: UtilsService,
-    @Inject(WINDOW) protected window: Window
+    private utils: UtilsService
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -867,6 +865,51 @@ export class EntityService {
 
   public saveEntityParameters(entityType: EntityType, entityData: ImportEntityData, update: boolean,
                               config?: RequestConfig): Observable<ImportEntitiesResultInfo> {
+    const saveEntityObservable: Observable<BaseData<EntityId>> = this.getSaveEntityObservable(entityType, entityData, config);
+    return saveEntityObservable.pipe(
+      mergeMap((entity) => {
+        return this.saveEntityData(entity.id, entityData, config).pipe(
+          map(() => {
+            return { create: { entity: 1 } } as ImportEntitiesResultInfo;
+          }),
+          catchError(err => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
+        );
+      }),
+      catchError(err => {
+        if (update) {
+          let findEntityObservable: Observable<BaseData<EntityId>>;
+          switch (entityType) {
+            case EntityType.DEVICE:
+              findEntityObservable = this.deviceService.findByName(entityData.name, config);
+              break;
+            case EntityType.ASSET:
+              findEntityObservable = this.assetService.findByName(entityData.name, config);
+              break;
+            case EntityType.EDGE:
+              findEntityObservable = this.edgeService.findByName(entityData.name, config);
+              break;
+          }
+          return findEntityObservable.pipe(
+            mergeMap((entity) => {
+              const updateEntityTasks: Observable<any>[] = this.getUpdateEntityTasks(entityType, entityData, entity, config);
+              return forkJoin(updateEntityTasks).pipe(
+                map(() => {
+                  return { update: { entity: 1 } } as ImportEntitiesResultInfo;
+                }),
+                catchError(updateError => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
+              );
+            }),
+            catchError(findErr => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
+          );
+        } else {
+          return of({ error: { entity: 1 } } as ImportEntitiesResultInfo);
+        }
+      })
+    );
+  }
+
+  private getSaveEntityObservable(entityType: EntityType, entityData: ImportEntityData,
+                                  config?: RequestConfig): Observable<BaseData<EntityId>> {
     let saveEntityObservable: Observable<BaseData<EntityId>>;
     switch (entityType) {
       case EntityType.DEVICE:
@@ -897,153 +940,96 @@ export class EntityService {
         };
         saveEntityObservable = this.assetService.saveAsset(asset, config);
         break;
+      case EntityType.EDGE:
+        const edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
+        const edge: Edge = {
+          name: edgeEntityData.name,
+          type: edgeEntityData.type,
+          label: edgeEntityData.label,
+          additionalInfo: {
+            description: edgeEntityData.description
+          },
+          edgeLicenseKey: edgeEntityData.edgeLicenseKey,
+          cloudEndpoint: edgeEntityData.cloudEndpoint,
+          routingKey: edgeEntityData.routingKey,
+          secret: edgeEntityData.secret
+        };
+        saveEntityObservable = this.edgeService.saveEdge(edge, config);
+        break;
     }
-    return saveEntityObservable.pipe(
-      mergeMap((entity) => {
-        return this.saveEntityData(entity.id, entityData, config).pipe(
-          map(() => {
-            return { create: { entity: 1 } } as ImportEntitiesResultInfo;
-          }),
-          catchError(err => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
-        );
-      }),
-      catchError(err => {
-        if (update) {
-          let findEntityObservable: Observable<BaseData<EntityId>>;
-          switch (entityType) {
-            case EntityType.DEVICE:
-              findEntityObservable = this.deviceService.findByName(entityData.name, config);
-              break;
-            case EntityType.ASSET:
-              findEntityObservable = this.assetService.findByName(entityData.name, config);
-              break;
-          }
-          return findEntityObservable.pipe(
-            mergeMap((entity) => {
-              const tasks: Observable<any>[] = [];
-              const result: Device | Asset = entity as (Device | Asset);
-              const additionalInfo = result.additionalInfo || {};
-              if (result.label !== entityData.label ||
-                result.type !== entityData.type ||
-                additionalInfo.description !== entityData.description ||
-                (result.id.entityType === EntityType.DEVICE && (additionalInfo.gateway !== entityData.gateway)) ) {
-                result.label = entityData.label;
-                result.type = entityData.type;
-                result.additionalInfo = additionalInfo;
-                result.additionalInfo.description = entityData.description;
-                if (result.id.entityType === EntityType.DEVICE) {
-                  result.additionalInfo.gateway = entityData.gateway;
-                }
-                switch (result.id.entityType) {
-                  case EntityType.DEVICE:
-                    tasks.push(this.deviceService.saveDevice(result, config));
-                    break;
-                  case EntityType.ASSET:
-                    tasks.push(this.assetService.saveAsset(result, config));
-                    break;
-                }
-              }
-              tasks.push(this.saveEntityData(entity.id, entityData, config));
-              return forkJoin(tasks).pipe(
-                map(() => {
-                  return { update: { entity: 1 } } as ImportEntitiesResultInfo;
-                }),
-                catchError(updateError => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
-              );
-            }),
-            catchError(findErr => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
-          );
-        } else {
-          return of({ error: { entity: 1 } } as ImportEntitiesResultInfo);
-        }
-      })
-    );
+    return saveEntityObservable;
+
   }
 
-  public saveEdgeParameters(entityData: ImportEntityData, update: boolean,
-                            config?: RequestConfig): Observable<ImportEntitiesResultInfo> {
-    const edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
-    const edge: Edge = {
-      name: edgeEntityData.name,
-      type: edgeEntityData.type,
-      label: edgeEntityData.label,
-      additionalInfo: {
-        description: edgeEntityData.description
-      },
-      edgeLicenseKey: edgeEntityData.edgeLicenseKey,
-      cloudEndpoint: edgeEntityData.cloudEndpoint,
-      routingKey: edgeEntityData.routingKey,
-      secret: edgeEntityData.secret
-    };
-    if (edge.cloudEndpoint === '') {
-      edge.cloudEndpoint = this.window.location.origin;
-    }
-    if (edge.routingKey === '') {
-      edge.routingKey = guid();
-    }
-    if (edge.secret === '') {
-      edge.secret = generateSecret(20);
-    }
-    return this.edgeService.saveEdge(edge, config).pipe(
-      mergeMap((entity) => {
-        return this.saveEntityData(entity.id, edgeEntityData, config).pipe(
-          map(() => {
-            return { create: { entity: 1 } } as ImportEntitiesResultInfo;
-          }),
-          catchError(err => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
-        );
-      }),
-      catchError(err => {
-        if (update) {
-          return this.edgeService.findByName(edgeEntityData.name, config).pipe(
-            mergeMap((entity) => {
-              const tasks: Observable<any>[] = [];
-              const result: Edge = entity as Edge;
-              const additionalInfo = result.additionalInfo || {};
-              if (result.label !== edgeEntityData.label ||
-                result.type !== edgeEntityData.type ||
-                result.cloudEndpoint !== edgeEntityData.cloudEndpoint ||
-                result.edgeLicenseKey !== edgeEntityData.edgeLicenseKey ||
-                result.routingKey !== edgeEntityData.routingKey ||
-                result.secret !== edgeEntityData.secret ||
-                additionalInfo.description !== edgeEntityData.description) {
-                result.type = edgeEntityData.type;
-                if (edgeEntityData.label !== '') {
-                  result.label = edgeEntityData.label;
-                }
-                if (edgeEntityData.description !== '') {
-                  result.additionalInfo = additionalInfo;
-                  result.additionalInfo.description = edgeEntityData.description;
-                }
-                if (edgeEntityData.cloudEndpoint !== '') {
-                  result.cloudEndpoint = edgeEntityData.cloudEndpoint;
-                }
-                if (edgeEntityData.edgeLicenseKey !== '') {
-                  result.edgeLicenseKey = edgeEntityData.edgeLicenseKey;
-                }
-                if (edgeEntityData.routingKey !== '') {
-                  result.routingKey = edgeEntityData.routingKey;
-                }
-                if (edgeEntityData.cloudEndpoint !== '') {
-                  result.secret = edgeEntityData.secret;
-                }
-                tasks.push(this.edgeService.saveEdge(result, config));
-              }
-              tasks.push(this.saveEntityData(entity.id, edgeEntityData, config));
-              return forkJoin(tasks).pipe(
-                map(() => {
-                  return { update: { entity: 1 } } as ImportEntitiesResultInfo;
-                }),
-                catchError(updateError => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
-              );
-            }),
-            catchError(findErr => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
-          );
-        } else {
-          return of({ error: { entity: 1 } } as ImportEntitiesResultInfo);
+  private getUpdateEntityTasks(entityType: EntityType,  entityData: ImportEntityData | EdgeImportEntityData,
+                               entity: BaseData<EntityId>, config?: RequestConfig): Observable<any>[] {
+    const tasks: Observable<any>[] = [];
+    let result;
+    let additionalInfo;
+    switch (entityType) {
+      case EntityType.EDGE:
+        result = entity as Edge;
+        additionalInfo = result.additionalInfo || {};
+        const edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
+        if (result.label !== edgeEntityData.label ||
+          result.type !== edgeEntityData.type ||
+          result.cloudEndpoint !== edgeEntityData.cloudEndpoint ||
+          result.edgeLicenseKey !== edgeEntityData.edgeLicenseKey ||
+          result.routingKey !== edgeEntityData.routingKey ||
+          result.secret !== edgeEntityData.secret ||
+          additionalInfo.description !== edgeEntityData.description) {
+          result.type = edgeEntityData.type;
+          if (edgeEntityData.label !== '') {
+            result.label = edgeEntityData.label;
+          }
+          if (edgeEntityData.description !== '') {
+            result.additionalInfo = additionalInfo;
+            result.additionalInfo.description = edgeEntityData.description;
+          }
+          if (edgeEntityData.cloudEndpoint !== '') {
+            result.cloudEndpoint = edgeEntityData.cloudEndpoint;
+          }
+          if (edgeEntityData.edgeLicenseKey !== '') {
+            result.edgeLicenseKey = edgeEntityData.edgeLicenseKey;
+          }
+          if (edgeEntityData.routingKey !== '') {
+            result.routingKey = edgeEntityData.routingKey;
+          }
+          if (edgeEntityData.cloudEndpoint !== '') {
+            result.secret = edgeEntityData.secret;
+          }
+          tasks.push(this.edgeService.saveEdge(result, config));
         }
-      })
-    );
+        tasks.push(this.saveEntityData(entity.id, edgeEntityData, config));
+        break;
+      case EntityType.ASSET:
+      case EntityType.DEVICE:
+        result = entity as (Device | Asset);
+        additionalInfo = result.additionalInfo || {};
+        if (result.label !== entityData.label ||
+          result.type !== entityData.type ||
+          additionalInfo.description !== entityData.description ||
+          (result.id.entityType === EntityType.DEVICE && (additionalInfo.gateway !== entityData.gateway)) ) {
+          result.label = entityData.label;
+          result.type = entityData.type;
+          result.additionalInfo = additionalInfo;
+          result.additionalInfo.description = entityData.description;
+          if (result.id.entityType === EntityType.DEVICE) {
+            result.additionalInfo.gateway = entityData.gateway;
+          }
+          switch (result.id.entityType) {
+            case EntityType.DEVICE:
+              tasks.push(this.deviceService.saveDevice(result, config));
+              break;
+            case EntityType.ASSET:
+              tasks.push(this.assetService.saveAsset(result, config));
+              break;
+          }
+        }
+        tasks.push(this.saveEntityData(entity.id, entityData, config));
+        break;
+    }
+    return tasks;
   }
 
   public saveEntityData(entityId: EntityId, entityData: ImportEntityData, config?: RequestConfig): Observable<any> {

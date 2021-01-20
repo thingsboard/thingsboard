@@ -345,11 +345,7 @@ export class ImportExportService {
     const importEntitiesObservables: Observable<ImportEntitiesResultInfo>[] = [];
     for (let i = 0; i < partSize; i++) {
       let saveEntityPromise: Observable<ImportEntitiesResultInfo>;
-      if (entityType === EntityType.EDGE) {
-        saveEntityPromise = this.entityService.saveEdgeParameters(entitiesData[i], updateData, config);
-      } else {
-        saveEntityPromise = this.entityService.saveEntityParameters(entityType, entitiesData[i], updateData, config);
-      }
+      saveEntityPromise = this.entityService.saveEntityParameters(entityType, entitiesData[i], updateData, config);
       const importEntityPromise = saveEntityPromise.pipe(
           tap((res) => {
             if (importEntityCompleted) {
@@ -412,7 +408,7 @@ export class ImportExportService {
           throw new Error('Invalid rule chain file');
         } else if (ruleChainImport.ruleChain.type !== expectedRuleChainType) {
           this.store.dispatch(new ActionNotificationShow(
-            {message: this.translate.instant('rulechain.invalid-rulechain-type-error', { expectedRuleChainType: expectedRuleChainType }),
+            {message: this.translate.instant('rulechain.invalid-rulechain-type-error', {expectedRuleChainType}),
               type: 'error'}));
           throw new Error('Invalid rule chain type');
         } else {
@@ -602,7 +598,7 @@ export class ImportExportService {
 
   private editMissingAliases(widgets: Array<Widget>, isSingleWidget: boolean,
                              customTitle: string, missingEntityAliases: EntityAliases): Observable<EntityAliases> {
-    let allowedEntityTypes: Array<EntityType | AliasEntityType> =
+    const allowedEntityTypes: Array<EntityType | AliasEntityType> =
       this.entityService.prepareAllowedEntityTypesList(null, true);
 
     return this.dialog.open<EntityAliasesDialogComponent, EntityAliasesDialogData,
@@ -615,7 +611,7 @@ export class ImportExportService {
         customTitle,
         isSingleWidget,
         disableAdd: true,
-        allowedEntityTypes: allowedEntityTypes
+        allowedEntityTypes
       }
     }).afterClosed().pipe(
       map((updatedEntityAliases) => {

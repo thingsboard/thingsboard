@@ -34,6 +34,7 @@ import {
 } from '@home/components/import-export/import-export.models';
 import { ImportEntitiesResultInfo, ImportEntityData, EdgeImportEntityData } from '@app/shared/models/entity.models';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { generateSecret, guid } from '@core/utils';
 
 export interface ImportDialogCsvData {
   entityType: EntityType;
@@ -281,11 +282,11 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
       timeseries: []
     };
     if (this.entityType === EntityType.EDGE) {
-      let edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
+      const edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
       edgeEntityData.edgeLicenseKey = '';
-      edgeEntityData.cloudEndpoint = '';
-      edgeEntityData.routingKey = '';
-      edgeEntityData.secret = '';
+      edgeEntityData.cloudEndpoint = window.location.origin;
+      edgeEntityData.routingKey = guid();
+      edgeEntityData.secret = generateSecret(20);
       return edgeEntityData;
     } else {
       return entityData;
