@@ -19,7 +19,7 @@
 <md-button ng-click="onManageAssets({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{ 'customer.manage-assets' | translate }}</md-button>
 <md-button ng-click="onManageDevices({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{ 'customer.manage-devices' | translate }}</md-button>
 <md-button ng-click="onManageDashboards({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{ 'customer.manage-dashboards' | translate }}</md-button>
-<md-button ng-click="onManageEdges({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{ 'customer.manage-edges' | translate }}</md-button>
+<md-button ng-click="onManageEdges({event: $event})" ng-show="!isEdit && vm.isEdgesSupportEnabled" class="md-raised md-primary">{{ 'customer.manage-edges' | translate }}</md-button>
 <md-button ng-click="onDeleteCustomer({event: $event})" ng-show="!isEdit && !isPublic" class="md-raised md-primary">{{ 'customer.delete' | translate }}</md-button>
 
 <div layout="row">

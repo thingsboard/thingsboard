@@ -201,13 +201,15 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
     function getCustomerTitle(edgeId) {
         edgeService.getEdge(edgeId, true).then(
             function success(edge) {
-                customerService.getCustomer(edge.customerId.id, { ignoreErrors: true }).then(
-                    function success(customer) {
-                        vm.customerTitle = $translate.instant('edge.assigned-to-customer-widget', { customerTitle: customer.title });
-                    },
-                    function fail() {
-                    }
-                );
+                if (edge.customerId.id !== types.id.nullUid) {
+                    customerService.getCustomer(edge.customerId.id, { ignoreErrors: true }).then(
+                        function success(customer) {
+                            vm.customerTitle = $translate.instant('edge.assigned-to-customer-widget', { customerTitle: customer.title });
+                        },
+                        function fail() {
+                        }
+                    );
+                }
             },
             function fail() {
             }

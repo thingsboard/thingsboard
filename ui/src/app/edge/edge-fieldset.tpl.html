@@ -58,7 +58,7 @@
     <md-button ngclipboard data-clipboard-action="copy"
                ngclipboard-success="onEdgeInfoCopied('key')"
                data-clipboard-text="{{edge.routingKey}}"
-               ng-show="!isEdit && edgeScope === 'tenant'"
+               ng-show="!isEdit"
                ng-if="isTenantAdmin"
                class="md-raised">
         <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
@@ -67,14 +67,14 @@
     <md-button ngclipboard data-clipboard-action="copy"
                ngclipboard-success="onEdgeInfoCopied('secret')"
                data-clipboard-text="{{edge.secret}}"
-               ng-show="!isEdit && edgeScope === 'tenant'"
+               ng-show="!isEdit"
                ng-if="isTenantAdmin"
                class="md-raised">
         <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
         <span translate>edge.copy-edge-secret</span>
     </md-button>
     <md-button ng-click="onEdgeSync(edge.id)"
-               ng-show="!isEdit && edgeScope === 'tenant'"
+               ng-show="!isEdit"
                ng-if="isTenantAdmin"
                class="md-raised">
         <md-icon md-svg-icon="mdi:sync"></md-icon>
