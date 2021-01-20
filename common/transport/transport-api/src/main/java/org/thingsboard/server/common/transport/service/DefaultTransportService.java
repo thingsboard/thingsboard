@@ -649,10 +649,10 @@ public class DefaultTransportService implements TransportService {
                     Optional<Device> deviceOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
                     if (deviceOpt.isPresent()) {
                         Device device = deviceOpt.get();
-                        if (device.getAdditionalInfo().get("gateway") != null && device.getAdditionalInfo().get("gateway").asBoolean()) {
+                        if (device.getAdditionalInfo().has("gateway") && device.getAdditionalInfo().get("gateway").asBoolean()) {
                             sessions.forEach((uuid, currentMD) -> {
                                 if (device.getId().equals(new DeviceId(new UUID(currentMD.getSessionInfo().getDeviceIdMSB(), currentMD.getSessionInfo().getDeviceIdLSB())))) {
-                                    boolean newActivityTimeFromGatewayDevice = device.getAdditionalInfo().get("activityTimeFromGatewayDevice").asBoolean(false);
+                                    boolean newActivityTimeFromGatewayDevice = device.getAdditionalInfo().get("activityTimeFromGatewayDevice").asBoolean();
                                     if (currentMD.getSessionInfo().getActivityTimeFromGatewayDevice() != newActivityTimeFromGatewayDevice) {
                                         SessionInfoProto currentSessionInfo = currentMD.getSessionInfo();
                                         SessionInfoProto newSessionInfo = SessionInfoProto.newBuilder()

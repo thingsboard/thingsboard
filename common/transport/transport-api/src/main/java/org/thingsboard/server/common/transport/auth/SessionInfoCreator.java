@@ -42,9 +42,9 @@ public class SessionInfoCreator {
         if (!"null".equals(msg.getDeviceInfo().getAdditionalInfo())) {
             try {
                 JsonNode infoNode = context.getMapper().readTree(msg.getDeviceInfo().getAdditionalInfo());
-                if (infoNode.get("gateway").asBoolean(false)) {
+                if (infoNode.get("gateway").asBoolean()) {
                     boolean activityTimeFromGatewayDevice = false;
-                    if (infoNode.get("activityTimeFromGatewayDevice") != null) {
+                    if (infoNode.has("activityTimeFromGatewayDevice")) {
                         activityTimeFromGatewayDevice = infoNode.get("activityTimeFromGatewayDevice").asBoolean();
                     }
                     builder.setActivityTimeFromGatewayDevice(activityTimeFromGatewayDevice);
