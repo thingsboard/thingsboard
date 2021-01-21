@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -462,26 +462,26 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         String clientId = msg.payload().clientIdentifier();
         if (DataConstants.PROVISION.equals(userName) || DataConstants.PROVISION.equals(clientId)) {
             deviceSessionCtx.setProvisionOnly(true);
-            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
+            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED, msg));
         } else {
             X509Certificate cert;
             if (sslHandler != null && (cert = getX509Certificate()) != null) {
-                processX509CertConnect(ctx, cert);
+                processX509CertConnect(ctx, cert, msg);
             } else {
                 processAuthTokenConnect(ctx, msg);
             }
         }
     }
 
-    private void processAuthTokenConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
-        String userName = msg.payload().userName();
+    private void processAuthTokenConnect(ChannelHandlerContext ctx, MqttConnectMessage connectMessage) {
+        String userName = connectMessage.payload().userName();
         log.info("[{}] Processing connect msg for client with user name: {}!", sessionId, userName);
         TransportProtos.ValidateBasicMqttCredRequestMsg.Builder request = TransportProtos.ValidateBasicMqttCredRequestMsg.newBuilder()
-                .setClientId(msg.payload().clientIdentifier());
+                .setClientId(connectMessage.payload().clientIdentifier());
         if (userName != null) {
             request.setUserName(userName);
         }
-        String password = msg.payload().password();
+        String password = connectMessage.payload().password();
         if (password != null) {
             request.setPassword(password);
         }
@@ -489,19 +489,19 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                        onValidateDeviceResponse(msg, ctx);
+                        onValidateDeviceResponse(msg, ctx, connectMessage);
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         log.trace("[{}] Failed to process credentials: {}", address, userName, e);
-                        ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE));
+                        ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE, connectMessage));
                         ctx.close();
                     }
                 });
     }
 
-    private void processX509CertConnect(ChannelHandlerContext ctx, X509Certificate cert) {
+    private void processX509CertConnect(ChannelHandlerContext ctx, X509Certificate cert, MqttConnectMessage connectMessage) {
         try {
             if (!context.isSkipValidityCheckForClientCert()) {
                 cert.checkValidity();
@@ -512,18 +512,18 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
                         @Override
                         public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                            onValidateDeviceResponse(msg, ctx);
+                            onValidateDeviceResponse(msg, ctx, connectMessage);
                         }
 
                         @Override
                         public void onError(Throwable e) {
                             log.trace("[{}] Failed to process credentials: {}", address, sha3Hash, e);
-                            ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE));
+                            ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE, connectMessage));
                             ctx.close();
                         }
                     });
         } catch (Exception e) {
-            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED));
+            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED, connectMessage));
             ctx.close();
         }
     }
@@ -547,11 +547,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         doDisconnect();
     }
 
-    private MqttConnAckMessage createMqttConnAckMsg(MqttConnectReturnCode returnCode) {
+    private MqttConnAckMessage createMqttConnAckMsg(MqttConnectReturnCode returnCode, MqttConnectMessage msg) {
         MqttFixedHeader mqttFixedHeader =
                 new MqttFixedHeader(CONNACK, false, AT_MOST_ONCE, false, 0);
         MqttConnAckVariableHeader mqttConnAckVariableHeader =
-                new MqttConnAckVariableHeader(returnCode, true);
+                new MqttConnAckVariableHeader(returnCode, !msg.variableHeader().isCleanSession());
         return new MqttConnAckMessage(mqttFixedHeader, mqttConnAckVariableHeader);
     }
 
@@ -627,9 +627,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void onValidateDeviceResponse(ValidateDeviceCredentialsResponse msg, ChannelHandlerContext ctx) {
+
+    private void onValidateDeviceResponse(ValidateDeviceCredentialsResponse msg, ChannelHandlerContext ctx, MqttConnectMessage connectMessage) {
         if (!msg.hasDeviceInfo()) {
-            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED));
+            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED, connectMessage));
             ctx.close();
         } else {
             deviceSessionCtx.setDeviceInfo(msg.getDeviceInfo());
@@ -640,7 +641,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 public void onSuccess(Void msg) {
                     transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), MqttTransportHandler.this);
                     checkGatewaySession();
-                    ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
+                    ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED, connectMessage));
                     log.info("[{}] Client connected!", sessionId);
                 }
 
@@ -651,7 +652,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     } else {
                         log.warn("[{}] Failed to submit session event", sessionId, e);
                     }
-                    ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE));
+                    ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE, connectMessage));
                     ctx.close();
                 }
             });

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -120,6 +120,7 @@ import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/tw
 import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
 import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lwm2m/lwm2m-profile-components.module';
 import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-table.component';
+import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
 
 @NgModule({
   declarations:
@@ -133,6 +134,7 @@ import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-
       EventContentDialogComponent,
       EventTableHeaderComponent,
       EventTableComponent,
+      EdgeDownlinkTableHeaderComponent,
       EdgeDownlinkTableComponent,
       RelationTableComponent,
       RelationDialogComponent,
@@ -236,6 +238,7 @@ import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-
     EntityDetailsPanelComponent,
     AuditLogTableComponent,
     EventTableComponent,
+    EdgeDownlinkTableHeaderComponent,
     EdgeDownlinkTableComponent,
     RelationTableComponent,
     RelationFiltersComponent,

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import { AlarmRule, DeviceProfileAlarm, deviceProfileAlarmValidator } from '@sha
 import { MatDialog } from '@angular/material/dialog';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
+import { EntityId } from '@shared/models/id/entity-id';
 
 @Component({
   selector: 'tb-device-profile-alarm',
@@ -59,6 +60,9 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
 
   @Input()
   expanded = false;
+
+  @Input()
+  deviceProfileId: EntityId;
 
   private modelValue: DeviceProfileAlarm;
 

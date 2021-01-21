@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -1286,7 +1286,7 @@ export class RuleChainPageComponent extends PageComponent
         if (this.isImport) {
           this.isDirtyValue = false;
           this.isImport = false;
-          if (this.ruleChainType !== RuleChainType.edge) {
+          if (this.ruleChainType !== RuleChainType.EDGE) {
             this.router.navigateByUrl(`ruleChains/${this.ruleChain.id.id}`);
           } else {
             this.router.navigateByUrl(`edges/ruleChains/${this.ruleChain.id.id}`);

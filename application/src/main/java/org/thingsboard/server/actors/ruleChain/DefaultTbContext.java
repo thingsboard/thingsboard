@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,8 +246,18 @@ class DefaultTbContext implements TbContext {
         if (nodeCtx.getSelf().isDebugMode()) {
             mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, TbRelationTypes.FAILURE, th);
         }
+        String failureMessage;
+        if (th != null) {
+            if (!StringUtils.isEmpty(th.getMessage())) {
+                failureMessage = th.getMessage();
+            } else {
+                failureMessage = th.getClass().getSimpleName();
+            }
+        } else {
+            failureMessage = null;
+        }
         nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getId(), Collections.singleton(TbRelationTypes.FAILURE),
-                msg, th != null ? th.getMessage() : null));
+                msg, failureMessage));
     }
 
     public void updateSelf(RuleNode self) {

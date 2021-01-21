@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,8 +125,10 @@ public class TbDeviceProfileNode implements TbNode {
                 DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
                 if (msg.getType().equals(DataConstants.ENTITY_UPDATED)) {
                     invalidateDeviceProfileCache(deviceId, msg.getData());
+                    ctx.tellSuccess(msg);
                 } else if (msg.getType().equals(DataConstants.ENTITY_DELETED)) {
                     removeDeviceState(deviceId);
+                    ctx.tellSuccess(msg);
                 } else {
                     DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId, null);
                     if (deviceState != null) {

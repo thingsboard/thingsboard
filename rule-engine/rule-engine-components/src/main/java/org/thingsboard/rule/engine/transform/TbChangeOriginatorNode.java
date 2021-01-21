@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.transform;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -33,7 +32,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
 @Slf4j
 @RuleNode(
@@ -65,13 +66,13 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
     }
 
     @Override
-    protected ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg) {
+    protected ListenableFuture<List<TbMsg>> transform(TbContext ctx, TbMsg msg) {
         ListenableFuture<? extends EntityId> newOriginator = getNewOriginator(ctx, msg.getOriginator());
-        return Futures.transform(newOriginator, (Function<EntityId, TbMsg>) n -> {
+        return Futures.transform(newOriginator, n -> {
             if (n == null || n.isNullUid()) {
                 return null;
             }
-            return ctx.transformMsg(msg, msg.getType(), n, msg.getMetaData(), msg.getData());
+            return Collections.singletonList((ctx.transformMsg(msg, msg.getType(), n, msg.getMetaData(), msg.getData())));
         }, ctx.getDbCallbackExecutor());
     }
 

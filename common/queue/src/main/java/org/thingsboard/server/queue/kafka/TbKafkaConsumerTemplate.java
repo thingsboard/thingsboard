@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,24 +45,14 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
     @Builder
     private TbKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
                                     String clientId, String groupId, String topic,
-                                    boolean autoCommit, int autoCommitIntervalMs,
                                     TbQueueAdmin admin) {
         super(topic);
-        Properties props = settings.toProps();
+        Properties props = settings.toConsumerProps();
         props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
         if (groupId != null) {
             props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         }
-        if (settings.getMaxPollIntervalMs() > 0) {
-            props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, settings.getMaxPollIntervalMs());
-        }
-        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, settings.getMaxPollRecords());
-        props.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, settings.getMaxPartitionFetchBytes());
-        props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, settings.getFetchMaxBytes());
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
-        props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, autoCommitIntervalMs);
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+
         this.admin = admin;
         this.consumer = new KafkaConsumer<>(props);
         this.decoder = decoder;
