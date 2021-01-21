@@ -15,7 +15,7 @@
 ///
 
 
-import {Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -24,22 +24,22 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  SECURITY_CONFIG_MODE_NAMES,
-  SECURITY_CONFIG_MODE,
-  SecurityConfigModels,
-  ClientSecurityConfigPSK,
-  ClientSecurityConfigRPK,
-  JSON_ALL_CONFIG,
-  KEY_REGEXP_HEX_DEC,
-  DeviceCredentialsDialogLwm2mData,
   BOOTSTRAP_SERVER,
   BOOTSTRAP_SERVERS,
-  LWM2M_SERVER,
-  ClientSecurityConfigX509,
   ClientSecurityConfigNoSEC,
+  ClientSecurityConfigPSK,
+  ClientSecurityConfigRPK,
+  ClientSecurityConfigX509,
+  DeviceCredentialsDialogLwm2mData,
   getDefaultClientSecurityConfigType,
+  JSON_ALL_CONFIG,
+  KEY_REGEXP_HEX_DEC,
   LEN_MAX_PSK,
-  LEN_MAX_PUBLIC_KEY_RPK
+  LEN_MAX_PUBLIC_KEY_RPK,
+  LWM2M_SERVER,
+  SECURITY_CONFIG_MODE,
+  SECURITY_CONFIG_MODE_NAMES,
+  SecurityConfigModels
 } from './security-config.models';
 import { WINDOW } from '@core/services/window.service';
 import { MatTabChangeEvent } from '@angular/material/tabs';
@@ -65,9 +65,9 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
   bootstrapServer: string;
   lwm2mServer: string;
   jsonObserveData: {};
-  lenMaxKeyClient = LEN_MAX_PSK as number;
+  lenMaxKeyClient = LEN_MAX_PSK;
   tabPrevious: MatTab;
-  tabIndexPrevious = 0 as number;
+  tabIndexPrevious = 0;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -111,23 +111,23 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
   }
 
   private initClientSecurityConfig = (jsonAllConfig: SecurityConfigModels): void =>  {
-    switch (jsonAllConfig.client.securityConfigClientMode.toString()) {
-      case SECURITY_CONFIG_MODE.NO_SEC.toString():
+    switch (jsonAllConfig.client.securityConfigClientMode) {
+      case SECURITY_CONFIG_MODE.NO_SEC:
         break;
-      case SECURITY_CONFIG_MODE.PSK.toString():
+      case SECURITY_CONFIG_MODE.PSK:
         const clientSecurityConfigPSK = jsonAllConfig.client as ClientSecurityConfigPSK;
         this.lwm2mConfigFormGroup.patchValue({
           identityPSK: clientSecurityConfigPSK.identity,
           clientKey: clientSecurityConfigPSK.key,
         }, {emitEvent: false});
         break;
-      case SECURITY_CONFIG_MODE.RPK.toString():
+      case SECURITY_CONFIG_MODE.RPK:
         const clientSecurityConfigRPK = jsonAllConfig.client as ClientSecurityConfigRPK;
         this.lwm2mConfigFormGroup.patchValue({
           clientKey: clientSecurityConfigRPK.key,
         }, {emitEvent: false});
         break;
-      case SECURITY_CONFIG_MODE.X509.toString():
+      case SECURITY_CONFIG_MODE.X509:
         const clientSecurityConfigX509 = jsonAllConfig.client as ClientSecurityConfigX509;
         this.lwm2mConfigFormGroup.patchValue({
           clientCertificate: clientSecurityConfigX509.x509
@@ -295,7 +295,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
 
   private updateIdentityPSK = (): void => {
     const securityMode = 'securityMode';
-    if (this.lwm2mConfigFormGroup.get('bootstrapServer').value[securityMode] === SECURITY_CONFIG_MODE.PSK.toString()) {
+    if (this.lwm2mConfigFormGroup.get('bootstrapServer').value[securityMode] === SECURITY_CONFIG_MODE.PSK) {
       this.lwm2mConfigFormGroup.get('bootstrapFormGroup').patchValue({
         clientPublicKeyOrId: this.lwm2mConfigFormGroup.get('identityPSK').value
       });
@@ -303,7 +303,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
       this.jsonAllConfig.client[identity] = this.lwm2mConfigFormGroup.get('identityPSK').value;
       this.upDateJsonAllConfig();
     }
-    if (this.lwm2mConfigFormGroup.get('lwm2mServer').value[securityMode] === SECURITY_CONFIG_MODE.PSK.toString()) {
+    if (this.lwm2mConfigFormGroup.get('lwm2mServer').value[securityMode] === SECURITY_CONFIG_MODE.PSK) {
       this.lwm2mConfigFormGroup.get('lwm2mServerFormGroup').patchValue({
         clientPublicKeyOrId: this.lwm2mConfigFormGroup.get('identityPSK').value
       });
@@ -316,13 +316,13 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     const key = 'key';
     const securityMode = 'securityMode';
     this.jsonAllConfig.client[key] = this.lwm2mConfigFormGroup.get('clientKey').value;
-    if (this.lwm2mConfigFormGroup.get('bootstrapServer').value[securityMode] === SECURITY_CONFIG_MODE.PSK.toString()) {
+    if (this.lwm2mConfigFormGroup.get('bootstrapServer').value[securityMode] === SECURITY_CONFIG_MODE.PSK) {
       this.lwm2mConfigFormGroup.get('bootstrapServer').patchValue({
         clientSecretKey: this.jsonAllConfig.client[key]
       }, {emitEvent: false});
       this.jsonAllConfig.bootstrap.bootstrapServer.clientSecretKey = this.jsonAllConfig.client[key];
     }
-    if (this.lwm2mConfigFormGroup.get('lwm2mServer').value[securityMode] === SECURITY_CONFIG_MODE.PSK.toString()) {
+    if (this.lwm2mConfigFormGroup.get('lwm2mServer').value[securityMode] === SECURITY_CONFIG_MODE.PSK) {
       this.lwm2mConfigFormGroup.get('lwm2mServer').patchValue({
         clientSecretKey: this.jsonAllConfig.client[key]
       }, {emitEvent: false});

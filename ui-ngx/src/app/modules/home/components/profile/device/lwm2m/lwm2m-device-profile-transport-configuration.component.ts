@@ -73,8 +73,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     this.requiredValue = coerceBooleanProperty(value);
   }
 
-  private propagateChange = (v: any) => {
-  };
+  private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
               private fb: FormBuilder,
@@ -141,7 +140,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private updateWriteValue = (value: any): void => {
-    const objectsList = deepClone(value.objectsList);
+    const objectsList = value.objectsList;
     this.lwm2mDeviceProfileTransportConfFormGroup.patchValue({
         objectIds: value,
         observeAttrTelemetry: {clientLwM2M: this.getObserveAttrTelemetryObjects(objectsList)},
@@ -251,12 +250,12 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private getObserveAttrTelemetryObjects = (listObject: ObjectLwM2M[]): ObjectLwM2M [] => {
-    const clientObserveAttr = deepClone(listObject);
+    const clientObserveAttr = listObject;
     if (this.configurationValue[this.observeAttr]) {
-      const observeArray = this.configurationValue[this.observeAttr][this.observe] as Array<string>;
-      const attributeArray = this.configurationValue[this.observeAttr][this.attribute] as Array<string>;
-      const telemetryArray = this.configurationValue[this.observeAttr][this.telemetry] as Array<string>;
-      const keyNameJson = this.configurationValue[this.observeAttr][this.keyName] as JsonObject;
+      const observeArray = this.configurationValue[this.observeAttr][this.observe];
+      const attributeArray = this.configurationValue[this.observeAttr][this.attribute];
+      const telemetryArray = this.configurationValue[this.observeAttr][this.telemetry];
+      const keyNameJson = this.configurationValue[this.observeAttr][this.keyName];
       if (this.includesInstancesNo(attributeArray, telemetryArray)) {
         this.addInstances(attributeArray, telemetryArray, clientObserveAttr);
       }

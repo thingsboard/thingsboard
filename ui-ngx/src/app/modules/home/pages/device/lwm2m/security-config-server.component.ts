@@ -15,19 +15,17 @@
 ///
 
 import { Component, forwardRef, Inject, Input, OnInit } from '@angular/core';
-
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
-  ControlValueAccessor,
-  FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators
-} from '@angular/forms';
-import {
+  DeviceCredentialsDialogLwm2mData,
+  KEY_REGEXP_HEX_DEC,
+  LEN_MAX_PRIVATE_KEY,
+  LEN_MAX_PSK,
+  LEN_MAX_PUBLIC_KEY_RPK,
+  LEN_MAX_PUBLIC_KEY_X509,
   SECURITY_CONFIG_MODE,
   SECURITY_CONFIG_MODE_NAMES,
-  KEY_REGEXP_HEX_DEC,
-  ServerSecurityConfig,
-  DeviceCredentialsDialogLwm2mData,
-  LEN_MAX_PSK,
-  LEN_MAX_PRIVATE_KEY, LEN_MAX_PUBLIC_KEY_RPK, LEN_MAX_PUBLIC_KEY_X509
+  ServerSecurityConfig
 } from '@home/pages/device/lwm2m/security-config.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
