@@ -72,9 +72,9 @@ export const importEntityColumnTypeTranslations = new Map<ImportEntityColumnType
     [ImportEntityColumnType.accessToken, 'import.column-type.access-token'],
     [ImportEntityColumnType.isGateway, 'import.column-type.isgateway'],
     [ImportEntityColumnType.description, 'import.column-type.description'],
-    [ImportEntityColumnType.edgeLicenseKey, 'import.column-type.edgeLicenseKey'],
-    [ImportEntityColumnType.cloudEndpoint, 'import.column-type.cloudEndpoint'],
-    [ImportEntityColumnType.routingKey, 'import.column-type.routingKey'],
+    [ImportEntityColumnType.edgeLicenseKey, 'import.column-type.edge-license-key'],
+    [ImportEntityColumnType.cloudEndpoint, 'import.column-type.cloud-endpoint'],
+    [ImportEntityColumnType.routingKey, 'import.column-type.routing-key'],
     [ImportEntityColumnType.secret, 'import.column-type.secret']
   ]
 );
