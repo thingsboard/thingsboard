@@ -87,7 +87,7 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
       if (datasource.type === DatasourceType.entity && datasource.entity.id.entityType === EntityType.EDGE) {
         var selectedEdge: BaseData<EntityId> = datasource.entity;
         this.getCustomerTitle(selectedEdge.id.id);
-        this.ctx.widgetTitle = selectedEdge.name;
+        this.ctx.widgetTitle = `${selectedEdge.name} Quick Overview`;
         cb(this.loadNodesForEdge(selectedEdge.id.id, selectedEdge));
       } else if (datasource.type === DatasourceType.function) {
         cb(this.loadNodesForEdge(datasource.entityId, datasource.entity));
