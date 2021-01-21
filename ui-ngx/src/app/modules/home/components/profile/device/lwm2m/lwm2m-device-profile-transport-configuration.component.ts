@@ -73,7 +73,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     this.requiredValue = coerceBooleanProperty(value);
   }
 
-  private propagateChange = (v: any) => { };
+  private propagateChange = (v: any) => {
+  };
 
   constructor(private store: Store<AppState>,
               private fb: FormBuilder,
@@ -403,17 +404,24 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   sortObjectKeyPathJson = (key: string, value: object): object => {
     if (key === 'keyName') {
-      return Object.keys(value).sort((a, b) => {
-        const aLC = Array.from(a.substring(1).split('/'), Number);
-        const bLC = Array.from(b.substring(1).split('/'), Number);
-        return aLC[0] === bLC[0] ? aLC[1] - bLC[1] : aLC[0] - bLC[0];
-      }).reduce((obj, keySort) => {
+      return Object.keys(value).sort(this.sortPath).reduce((obj, keySort) => {
         obj[keySort] = value[keySort];
         return obj;
       }, {});
+    } else if (key === 'observe' || key === 'attribute' || key === 'telemetry') {
+      return Object.values(value).sort(this.sortPath).reduce((arr, arrValue) => {
+        arr.push(arrValue);
+        return arr;
+      }, []);
     } else {
       return value;
     }
+  }
+
+  private sortPath = (a, b): number => {
+    const aLC = Array.from(a.substring(1).split('/'), Number);
+    const bLC = Array.from(b.substring(1).split('/'), Number);
+    return aLC[0] === bLC[0] ? aLC[1] - bLC[1] : aLC[0] - bLC[0];
   }
 
   private updateKeyName = (): void => {

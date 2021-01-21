@@ -89,7 +89,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
 
   private propagateChange = (v: any) => { };
 
-
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }
@@ -164,7 +163,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   changeInstanceResourcesCheckBox = (value: boolean, instance: AbstractControl, type: string): void => {
-    const resources = instance.get('resources').value as ResourceLwM2M[];
+    const resources = deepClone(instance.get('resources').value as ResourceLwM2M[]);
     resources.forEach(resource => resource[type] = value);
     instance.get('resources').patchValue(resources);
     this.propagateChange(this.observeAttrTelemetryFormGroup.value);
@@ -238,49 +237,54 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   private updateInstancesIds = (data: Lwm2mObjectAddInstancesData): void => {
-    const instances = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M[])
-      .find(objectLwM2M => objectLwM2M.id === data.objectId).instances;
-    const valueOld = this.instancesToSetId(instances);
-
+    const objectLwM2MFormGroup = (this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls
+      .find(e => e.value.id === data.objectId) as FormGroup;
+    const instancesArray = objectLwM2MFormGroup.value.instances as Instance [];
+    const instancesFormArray = objectLwM2MFormGroup.get('instances') as FormArray;
+    const instance0 = deepClone(instancesFormArray.at(0).value as Instance);
+    instance0.resources.forEach(r => {
+      r.attribute = false;
+      r.telemetry = false;
+      r.observe = false;
+    });
+    const valueOld = this.instancesToSetId(instancesArray);
     if (!isEqual(valueOld, data.instancesIds)) {
       const idsDel = this.diffBetweenSet(valueOld, data.instancesIds);
       const idsAdd = this.diffBetweenSet(data.instancesIds, valueOld);
       if (idsAdd.size) {
-        this.addInstancesNew(data.objectId, idsAdd, instances.find(instance => instance.id === 0));
+        this.addInstancesNew(idsAdd, objectLwM2MFormGroup, instancesFormArray, instance0);
       }
       if (idsDel.size) {
-        this.deleteInstances(data.objectId, idsDel);
+        this.deleteInstances(idsDel, objectLwM2MFormGroup, instancesFormArray, instance0);
       }
     }
   }
 
-  private deleteInstances = (objectId: number, idsDel: Set<number>): void => {
-    const objectIndex = (this.observeAttrTelemetryFormGroup.get('clientLwM2M').value as ObjectLwM2M[])
-      .findIndex(element => element.id === objectId);
+  private addInstancesNew = (idsAdd: Set<number>, objectLwM2MFormGroup: FormGroup, instancesFormArray: FormArray,
+                             instanceNew: Instance): void => {
+    idsAdd.forEach(x => {
+      this.pushInstance(instancesFormArray, x, instanceNew);
+    });
+    (instancesFormArray.controls as FormGroup[]).sort((a, b) => a.value.id - b.value.id);
+  }
+
+  private deleteInstances = (idsDel: Set<number>, objectLwM2MFormGroup: FormGroup, instancesFormArray: FormArray,
+                             instance0: Instance): void => {
     idsDel.forEach(x => {
-      const instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray)
-        .at(objectIndex).get('instances') as FormArray);
       const instanceIndex = instancesFormArray.value.findIndex(element => element.id === x);
       instancesFormArray.removeAt(instanceIndex);
     });
+    if (instancesFormArray.length === 0) {
+      this.pushInstance(instancesFormArray, 0, instance0);
+    }
+    (instancesFormArray.controls as FormGroup[]).sort((a, b) => a.value.id - b.value.id);
   }
 
-  private addInstancesNew = (objectId: number, idsAdd: Set<number>, instance: Instance): void => {
-    const instancesFormArray = ((this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls
-      .find(e => e.value.id === objectId).get('instances') as FormArray) as FormArray;
-    idsAdd.forEach(x => {
-      const instanceNew = deepClone(instance);
-      instanceNew.resources.forEach(r => {
-        r.attribute = false;
-        r.telemetry = false;
-        r.observe = false;
-      });
-      instancesFormArray.push(this.fb.group({
-        id: x,
-        resources: {value: instanceNew.resources, disabled: this.disabled}
-      }));
-    });
-    (instancesFormArray.controls as FormGroup[]).sort((a, b) => a.value.id - b.value.id);
+  private pushInstance = (instancesFormArray: FormArray, x: number, instanceNew: Instance): void => {
+    instancesFormArray.push(this.fb.group({
+      id: x,
+      resources: {value: instanceNew.resources, disabled: this.disabled}
+    }));
   }
 
   private diffBetweenSet<T>(firstSet: Set<T>, secondSet: Set<T>): Set<T> {
