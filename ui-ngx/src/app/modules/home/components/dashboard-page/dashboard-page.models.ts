@@ -24,6 +24,7 @@ import { DashboardContextMenuItem, WidgetContextMenuItem } from '@home/models/da
 export declare type DashboardPageScope = 'tenant' | 'customer';
 
 export interface DashboardContext {
+  instanceId: string;
   state: string;
   getDashboard: () => Dashboard;
   dashboardTimewindow: Timewindow;

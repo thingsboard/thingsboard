@@ -2258,6 +2258,12 @@
         "set-entity-from-widget": "Set entity from widget",
         "target-dashboard": "Target dashboard",
         "open-right-layout": "Open right dashboard layout (mobile view)",
+        "open-in-separate-dialog": "Open in separate dialog",
+        "dialog-title": "Dialog title",
+        "dialog-hide-dashboard-toolbar": "Hide dashboard toolbar in dialog",
+        "dialog-width": "Dialog width in percents relative to viewport width",
+        "dialog-height": "Dialog height in percents relative to viewport height",
+        "dialog-size-range-error": "Dialog size percent value should be in a range from 1 to 100.",
         "open-new-browser-tab": "Open in a new browser tab"
     },
     "widgets-bundle": {

@@ -15,8 +15,8 @@
 ///
 
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ILayoutController } from '@home/pages/dashboard/layout/layout.models';
-import { DashboardContext, DashboardPageLayoutContext } from '@home/pages/dashboard/dashboard-page.models';
+import { ILayoutController } from '@home/components/dashboard-page/layout/layout.models';
+import { DashboardContext, DashboardPageLayoutContext } from '@home/components/dashboard-page/dashboard-page.models';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
