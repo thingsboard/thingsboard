@@ -48,13 +48,15 @@ import java.util.Map;
 @RequestMapping("/api")
 public class DeviceLwm2mController extends BaseController {
 
-
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/lwm2m/deviceProfile/{objectIds}", method = RequestMethod.GET)
+    @RequestMapping(value = "/lwm2m/deviceProfile",  params = {"objectIds"},  method = RequestMethod.GET)
     @ResponseBody
-    public List<LwM2mObject> getLwm2mListObjects(@PathVariable("objectIds") int[] objectIds) throws ThingsboardException {
+    public List<LwM2mObject> getLwm2mListObjects(@RequestParam int[] objectIds,
+                                                 @RequestParam(required = false) String textSearch,
+                                                 @RequestParam(required = false) String sortProperty,
+                                                 @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
-            return lwM2MModelsRepository.getLwm2mObjects(objectIds, null);
+            return lwM2MModelsRepository.getLwm2mObjects(objectIds, textSearch, sortProperty, sortOrder);
         } catch (Exception e) {
             throw handleException(e);
         }

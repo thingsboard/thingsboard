@@ -23,8 +23,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.lwm2m.*;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.lwm2m.LwM2mInstance;
+import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
+import org.thingsboard.server.common.data.lwm2m.LwM2mResource;
+import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigBootstrap;
@@ -32,17 +35,23 @@ import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigServer;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 
+import java.lang.reflect.Field;
 import java.math.BigInteger;
-import java.security.*;
+import java.security.AlgorithmParameters;
+import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
+import java.security.KeyStoreException;
+import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
-import java.security.spec.ECPublicKeySpec;
 import java.security.spec.ECPoint;
+import java.security.spec.ECPublicKeySpec;
 import java.security.spec.KeySpec;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -70,22 +79,26 @@ public class LwM2MModelsRepository {
      * Filter by Predicate (uses objectIds, if objectIds is null then it uses textSearch,
      * if textSearch is null then it uses AllList from  List<ObjectModel>)
      */
-    public List<LwM2mObject> getLwm2mObjects(int[] objectIds, String textSearch) {
-        return getLwm2mObjects((objectIds != null && objectIds.length > 0) ?
-                (ObjectModel element) -> IntStream.of(objectIds).anyMatch(x -> x == element.id) :
-                (textSearch != null && !textSearch.isEmpty()) ? (ObjectModel element) -> element.name.contains(textSearch) : null);
+    public List<LwM2mObject> getLwm2mObjects(int[] objectIds, String textSearch, String sortProperty, String sortOrder) {
+        return getLwm2mObjects((objectIds != null && objectIds.length > 0 && textSearch != null && !textSearch.isEmpty()) ?
+                        (ObjectModel element) -> IntStream.of(objectIds).anyMatch(x -> x == element.id) || element.name.contains(textSearch) :
+                        (objectIds != null && objectIds.length > 0) ?
+                                (ObjectModel element) -> IntStream.of(objectIds).anyMatch(x -> x == element.id) :
+                                (textSearch != null && !textSearch.isEmpty()) ? (ObjectModel element) -> element.name.contains(textSearch) : null,
+                sortProperty, sortOrder);
     }
 
     /**
      * @param predicate
      * @return list of LwM2mObject
      */
-    private List<LwM2mObject> getLwm2mObjects(Predicate<? super ObjectModel> predicate) {
+    private List<LwM2mObject> getLwm2mObjects(Predicate<? super ObjectModel> predicate, String sortProperty, String sortOrder) {
         List<LwM2mObject> lwM2mObjects = new ArrayList<>();
         List<ObjectModel> listObjects = (predicate == null) ? this.contextServer.getModelsValue() :
                 contextServer.getModelsValue().stream()
                         .filter(predicate)
                         .collect(Collectors.toList());
+
         listObjects.forEach(obj -> {
             LwM2mObject lwM2mObject = new LwM2mObject();
             lwM2mObject.setId(obj.id);
@@ -105,153 +118,177 @@ public class LwM2MModelsRepository {
             lwM2mObject.setInstances(new LwM2mInstance[]{instance});
             lwM2mObjects.add(lwM2mObject);
         });
+        try {
+            Field field = LwM2mObject.class.getField(sortProperty);
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+        switch (sortProperty) {
+            case "name":
+                switch (sortOrder) {
+                    case "ASC":
+                        // ASC
+                        lwM2mObjects.sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
+                        break;
+                    case "DESC":
+                        // DESC
+                        lwM2mObjects.stream().sorted(Comparator.comparing(LwM2mObject::getName).reversed());
+                        break;
+                }
+            case "id":
+                switch (sortOrder) {
+                    case "ASC":
+                        // ASC
+                        lwM2mObjects.sort((o1, o2) -> Long.compare(o1.getId(), o2.getId()));
+                        break;
+                    case "DESC":
+                        // DESC
+                        lwM2mObjects.sort((o1, o2) -> Long.compare(o2.getId(), o1.getId()));
+                }
+        }
         return lwM2mObjects;
     }
 
-    /**
-     * @param tenantId
-     * @param pageLink
-     * @return List of LwM2mObject in PageData format
-     */
-    public PageData<LwM2mObject> findDeviceLwm2mObjects(TenantId tenantId, PageLink pageLink) {
-        log.trace("Executing findDeviceProfileInfos tenantId [{}], pageLink [{}]", tenantId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        Validator.validatePageLink(pageLink);
-        return this.findLwm2mListObjects(pageLink);
-    }
-
-    /**
-     * @param pageLink
-     * @return List of LwM2mObject in PageData format, filter == TextSearch
-     * PageNumber = 1, PageSize = List<LwM2mObject>.size()
-     */
-    public PageData<LwM2mObject> findLwm2mListObjects(PageLink pageLink) {
-        PageImpl page = new PageImpl(getLwm2mObjects(null, pageLink.getTextSearch()));
-        PageData pageData = new PageData(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
-        return pageData;
-    }
-
-    /**
-     *
-     * @param securityMode
-     * @param bootstrapServerIs
-     * @return ServerSecurityConfig more value is default: Important - port, host, publicKey
-     */
-    public ServerSecurityConfig getBootstrapSecurityInfo(String securityMode, boolean bootstrapServerIs) {
-        LwM2MSecurityMode lwM2MSecurityMode = LwM2MSecurityMode.fromSecurityMode(securityMode.toLowerCase());
-        return getBootstrapServer(bootstrapServerIs, lwM2MSecurityMode);
-    }
-
-    /**
-     *
-     * @param bootstrapServerIs
-     * @param mode
-     * @return ServerSecurityConfig more value is default: Important - port, host, publicKey
-     */
-    private ServerSecurityConfig getBootstrapServer(boolean bootstrapServerIs, LwM2MSecurityMode mode) {
-        ServerSecurityConfig bsServ = new ServerSecurityConfig();
-        bsServ.setBootstrapServerIs(bootstrapServerIs);
-        if (bootstrapServerIs) {
-            bsServ.setServerId(contextBootStrap.getBootstrapServerId());
-            switch (mode) {
-                case NO_SEC:
-                    bsServ.setHost(contextBootStrap.getBootstrapHost());
-                    bsServ.setPort(contextBootStrap.getBootstrapPortNoSecPsk());
-                    bsServ.setServerPublicKey("");
-                    break;
-                case PSK:
-                    bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
-                    bsServ.setPort(contextBootStrap.getBootstrapSecurePortPsk());
-                    bsServ.setServerPublicKey("");
-                    break;
-                case RPK:
-                    bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
-                    bsServ.setPort(contextBootStrap.getBootstrapSecurePortRpk());
-                    bsServ.setServerPublicKey(getRPKPublicKey(this.contextBootStrap.getBootstrapPublicX(), this.contextBootStrap.getBootstrapPublicY()));
-                    break;
-                case X509:
-                    bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
-                    bsServ.setPort(contextBootStrap.getBootstrapSecurePortX509());
-                    bsServ.setServerPublicKey(getServerPublicKeyX509(contextBootStrap.getBootstrapAlias()));
-                    break;
-                default:
-                    break;
-            }
-        } else {
-            bsServ.setServerId(contextServer.getServerId());
-            switch (mode) {
-                case NO_SEC:
-                    bsServ.setHost(contextServer.getServerHost());
-                    bsServ.setPort(contextServer.getServerPortNoSecPsk());
-                    bsServ.setServerPublicKey("");
-                    break;
-                case PSK:
-                    bsServ.setHost(contextServer.getServerSecureHost());
-                    bsServ.setPort(contextServer.getServerPortPsk());
-                    bsServ.setServerPublicKey("");
-                    break;
-                case RPK:
-                    bsServ.setHost(contextServer.getServerSecureHost());
-                    bsServ.setPort(contextServer.getServerPortRpk());
-                    bsServ.setServerPublicKey(getRPKPublicKey(this.contextServer.getServerPublicX(), this.contextServer.getServerPublicY()));
-                    break;
-                case X509:
-                    bsServ.setHost(contextServer.getServerSecureHost());
-                    bsServ.setPort(contextServer.getServerPortX509());
-                    bsServ.setServerPublicKey(getServerPublicKeyX509(contextServer.getServerAlias()));
-                    break;
-                default:
-                    break;
-            }
+        /**
+         * @param tenantId
+         * @param pageLink
+         * @return List of LwM2mObject in PageData format
+         */
+        public PageData<LwM2mObject> findDeviceLwm2mObjects (TenantId tenantId, PageLink pageLink){
+            log.trace("Executing findDeviceProfileInfos tenantId [{}], pageLink [{}]", tenantId, pageLink);
+            validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+            Validator.validatePageLink(pageLink);
+            return this.findLwm2mListObjects(pageLink);
         }
-        return bsServ;
-    }
 
-    /**
-     *
-     * @param alias
-     * @return PublicKey format HexString or null
-     */
-    private String getServerPublicKeyX509 (String alias) {
-        try {
-            X509Certificate  serverCertificate = (X509Certificate) contextServer.getKeyStoreValue().getCertificate(alias);
-            return  Hex.encodeHexString(serverCertificate.getEncoded());
-        } catch (CertificateEncodingException | KeyStoreException e) {
-            e.printStackTrace();
+        /**
+         * @param pageLink
+         * @return List of LwM2mObject in PageData format, filter == TextSearch
+         * PageNumber = 1, PageSize = List<LwM2mObject>.size()
+         */
+        public PageData<LwM2mObject> findLwm2mListObjects (PageLink pageLink){
+            PageImpl page = new PageImpl(getLwm2mObjects(null, pageLink.getTextSearch(),  pageLink.getSortOrder().getProperty(),  pageLink.getSortOrder().getDirection().name()));
+            PageData pageData = new PageData(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
+            return pageData;
         }
-        return  null;
-    }
 
-    /**
-     *
-     * @param publicServerX
-     * @param publicServerY
-     * @return  PublicKey format HexString or null
-     */
-    private String getRPKPublicKey(String publicServerX, String publicServerY) {
-        try {
-            /** Get Elliptic Curve Parameter spec for secp256r1 */
-            AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
-            algoParameters.init(new ECGenParameterSpec("secp256r1"));
-            ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
-            if (publicServerX != null && !publicServerX.isEmpty() && publicServerY != null && !publicServerY.isEmpty()) {
-                /** Get point values */
-                byte[] publicX = Hex.decodeHex(publicServerX.toCharArray());
-                byte[] publicY = Hex.decodeHex(publicServerY.toCharArray());
-                /** Create key specs */
-                KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
-                        parameterSpec);
-                /** Get keys */
-                PublicKey  publicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
-                if (publicKey != null && publicKey.getEncoded().length > 0 ) {
-                   return Hex.encodeHexString(publicKey.getEncoded());
+        /**
+         * @param securityMode
+         * @param bootstrapServerIs
+         * @return ServerSecurityConfig more value is default: Important - port, host, publicKey
+         */
+        public ServerSecurityConfig getBootstrapSecurityInfo (String securityMode,boolean bootstrapServerIs){
+            LwM2MSecurityMode lwM2MSecurityMode = LwM2MSecurityMode.fromSecurityMode(securityMode.toLowerCase());
+            return getBootstrapServer(bootstrapServerIs, lwM2MSecurityMode);
+        }
+
+        /**
+         * @param bootstrapServerIs
+         * @param mode
+         * @return ServerSecurityConfig more value is default: Important - port, host, publicKey
+         */
+        private ServerSecurityConfig getBootstrapServer ( boolean bootstrapServerIs, LwM2MSecurityMode mode){
+            ServerSecurityConfig bsServ = new ServerSecurityConfig();
+            bsServ.setBootstrapServerIs(bootstrapServerIs);
+            if (bootstrapServerIs) {
+                bsServ.setServerId(contextBootStrap.getBootstrapServerId());
+                switch (mode) {
+                    case NO_SEC:
+                        bsServ.setHost(contextBootStrap.getBootstrapHost());
+                        bsServ.setPort(contextBootStrap.getBootstrapPortNoSecPsk());
+                        bsServ.setServerPublicKey("");
+                        break;
+                    case PSK:
+                        bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
+                        bsServ.setPort(contextBootStrap.getBootstrapSecurePortPsk());
+                        bsServ.setServerPublicKey("");
+                        break;
+                    case RPK:
+                        bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
+                        bsServ.setPort(contextBootStrap.getBootstrapSecurePortRpk());
+                        bsServ.setServerPublicKey(getRPKPublicKey(this.contextBootStrap.getBootstrapPublicX(), this.contextBootStrap.getBootstrapPublicY()));
+                        break;
+                    case X509:
+                        bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
+                        bsServ.setPort(contextBootStrap.getBootstrapSecurePortX509());
+                        bsServ.setServerPublicKey(getServerPublicKeyX509(contextBootStrap.getBootstrapAlias()));
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                bsServ.setServerId(contextServer.getServerId());
+                switch (mode) {
+                    case NO_SEC:
+                        bsServ.setHost(contextServer.getServerHost());
+                        bsServ.setPort(contextServer.getServerPortNoSecPsk());
+                        bsServ.setServerPublicKey("");
+                        break;
+                    case PSK:
+                        bsServ.setHost(contextServer.getServerSecureHost());
+                        bsServ.setPort(contextServer.getServerPortPsk());
+                        bsServ.setServerPublicKey("");
+                        break;
+                    case RPK:
+                        bsServ.setHost(contextServer.getServerSecureHost());
+                        bsServ.setPort(contextServer.getServerPortRpk());
+                        bsServ.setServerPublicKey(getRPKPublicKey(this.contextServer.getServerPublicX(), this.contextServer.getServerPublicY()));
+                        break;
+                    case X509:
+                        bsServ.setHost(contextServer.getServerSecureHost());
+                        bsServ.setPort(contextServer.getServerPortX509());
+                        bsServ.setServerPublicKey(getServerPublicKeyX509(contextServer.getServerAlias()));
+                        break;
+                    default:
+                        break;
                 }
             }
-        } catch (GeneralSecurityException | IllegalArgumentException e) {
-            log.error("[{}] Failed generate Server RPK for profile", e.getMessage());
-            throw new RuntimeException(e);
+            return bsServ;
         }
-        return null;
+
+        /**
+         * @param alias
+         * @return PublicKey format HexString or null
+         */
+        private String getServerPublicKeyX509 (String alias){
+            try {
+                X509Certificate serverCertificate = (X509Certificate) contextServer.getKeyStoreValue().getCertificate(alias);
+                return Hex.encodeHexString(serverCertificate.getEncoded());
+            } catch (CertificateEncodingException | KeyStoreException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        /**
+         * @param publicServerX
+         * @param publicServerY
+         * @return PublicKey format HexString or null
+         */
+        private String getRPKPublicKey (String publicServerX, String publicServerY){
+            try {
+                /** Get Elliptic Curve Parameter spec for secp256r1 */
+                AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
+                algoParameters.init(new ECGenParameterSpec("secp256r1"));
+                ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
+                if (publicServerX != null && !publicServerX.isEmpty() && publicServerY != null && !publicServerY.isEmpty()) {
+                    /** Get point values */
+                    byte[] publicX = Hex.decodeHex(publicServerX.toCharArray());
+                    byte[] publicY = Hex.decodeHex(publicServerY.toCharArray());
+                    /** Create key specs */
+                    KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
+                            parameterSpec);
+                    /** Get keys */
+                    PublicKey publicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
+                    if (publicKey != null && publicKey.getEncoded().length > 0) {
+                        return Hex.encodeHexString(publicKey.getEncoded());
+                    }
+                }
+            } catch (GeneralSecurityException | IllegalArgumentException e) {
+                log.error("[{}] Failed generate Server RPK for profile", e.getMessage());
+                throw new RuntimeException(e);
+            }
+            return null;
+        }
     }
-}
 

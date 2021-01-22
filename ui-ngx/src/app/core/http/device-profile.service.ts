@@ -23,6 +23,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { DeviceProfile, DeviceProfileInfo, DeviceTransportType } from '@shared/models/device.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { ObjectLwM2M, ServerSecurityConfig } from '@home/components/profile/device/lwm2m/profile-config.models';
+import { SortOrder } from '@shared/models/page/sort-order';
 
 @Injectable({
   providedIn: 'root'
@@ -31,7 +32,8 @@ export class DeviceProfileService {
 
   constructor(
     private http: HttpClient
-  ) { }
+  ) {
+  }
 
   public getDeviceProfiles(pageLink: PageLink, config?: RequestConfig): Observable<PageData<DeviceProfile>> {
     return this.http.get<PageData<DeviceProfile>>(`/api/deviceProfiles${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
@@ -41,8 +43,14 @@ export class DeviceProfileService {
     return this.http.get<DeviceProfile>(`/api/deviceProfile/${deviceProfileId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getLwm2mObjects(objectIds: number[], config?: RequestConfig): Observable<Array<ObjectLwM2M>> {
-    return this.http.get<Array<ObjectLwM2M>>(`/api/lwm2m/deviceProfile/${objectIds}`, defaultHttpOptionsFromConfig(config));
+  public getLwm2mObjects(objectIds?: number[], searchText?: string, sortOrder?: SortOrder, config?: RequestConfig):
+    Observable<Array<ObjectLwM2M>> {
+    // tslint:disable-next-line:no-debugger
+    debugger;
+    return this.http.get<Array<ObjectLwM2M>>
+    (`/api/lwm2m/deviceProfile/?objectIds=${objectIds}&searchText=${searchText}&sortProperty=${sortOrder.property}
+    &sortOrder=${sortOrder.direction}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getLwm2mBootstrapSecurityInfo(securityMode: string, bootstrapServerIs: boolean,

@@ -37,6 +37,7 @@ import { deepClone, isUndefined } from '@core/utils';
 import { WINDOW } from '@core/services/window.service';
 import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
 import { isNotNullOrUndefined } from 'codelyzer/util/isNotNullOrUndefined';
+import { Direction, SortOrder } from '@shared/models/page/sort-order';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-transport-configuration',
@@ -128,7 +129,11 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     const modelValue = {objectIds: null, objectsList: []};
     modelValue.objectIds = this.getObjectsFromJsonAllConfig();
     if (modelValue.objectIds !== null) {
-      this.deviceProfileService.getLwm2mObjects(modelValue.objectIds).subscribe(
+      const sortOrder = {
+        property: 'id',
+        direction: Direction.ASC
+      };
+      this.deviceProfileService.getLwm2mObjects(modelValue.objectIds, null, sortOrder).subscribe(
         (objectsList) => {
           modelValue.objectsList = objectsList;
           this.updateWriteValue(modelValue);
