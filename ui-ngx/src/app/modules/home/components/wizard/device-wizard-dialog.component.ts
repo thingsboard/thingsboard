@@ -108,6 +108,7 @@ export class DeviceWizardDialogComponent extends
         name: ['', Validators.required],
         label: [''],
         gateway: [false],
+        overwriteActivityTime: [false],
         transportType: [DeviceTransportType.DEFAULT, Validators.required],
         addProfileType: [0],
         deviceProfileId: [null, Validators.required],
@@ -314,6 +315,7 @@ export class DeviceWizardDialogComponent extends
       deviceProfileId: profileId,
       additionalInfo: {
         gateway: this.deviceWizardFormGroup.get('gateway').value,
+        overwriteActivityTime: this.deviceWizardFormGroup.get('overwriteActivityTime').value,
         description: this.deviceWizardFormGroup.get('description').value
       },
       customerId: null

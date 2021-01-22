@@ -84,7 +84,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
         additionalInfo: this.fb.group(
           {
             gateway: [entity && entity.additionalInfo ? entity.additionalInfo.gateway : false],
-            overwriteActivityTime: [entity && entity.additionalInfo ? entity.additionalInfo.overwriteActivityTime: false],
+            overwriteActivityTime: [entity && entity.additionalInfo ? entity.additionalInfo.overwriteActivityTime : false],
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
           }
         )
