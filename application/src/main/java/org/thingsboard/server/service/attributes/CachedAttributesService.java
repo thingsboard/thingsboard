@@ -35,7 +35,13 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.service.queue.TbClusterService;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.service.attributes.AttributeUtils.validate;

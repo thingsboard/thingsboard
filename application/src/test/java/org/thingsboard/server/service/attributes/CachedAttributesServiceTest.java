@@ -36,9 +36,20 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.service.queue.TbClusterService;
 
-import java.util.*;
 
-import static org.mockito.Mockito.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
