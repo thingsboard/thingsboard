@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<form [formGroup]="lwm2mDeviceProfileTransportConfFormGroup" style="padding-bottom: 16px;">
-  <div mat-dialog-content>
-    <mat-tab-group dynamicHeight>
-      <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
-        <ng-template matTabContent>
+<section style="padding-bottom: 16px;" mat-dialog-content>
+  <mat-tab-group dynamicHeight>
+    <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
+      <ng-template matTabContent>
+        <section [formGroup]="lwm2mDeviceProfileFormGroup">
           <div class="mat-padding">
             <tb-profile-lwm2m-object-list
               (addList)="addObjectsList($event)"
@@ -34,10 +34,12 @@
               formControlName="observeAttrTelemetry">
             </tb-profile-lwm2m-observe-attr-telemetry>
           </div>
-        </ng-template>
-      </mat-tab>
-      <mat-tab label="{{ 'device-profile.lwm2m.bootstrap-tab' | translate }}">
-        <ng-template matTabContent>
+        </section>
+      </ng-template>
+    </mat-tab>
+    <mat-tab label="{{ 'device-profile.lwm2m.bootstrap-tab' | translate }}">
+      <ng-template matTabContent>
+        <section [formGroup]="lwm2mDeviceProfileFormGroup">
           <div class="mat-padding">
             <mat-accordion multi="true" class="mat-body-1">
               <mat-expansion-panel>
@@ -52,7 +54,7 @@
                       <mat-form-field fxFlex>
                         <mat-label>{{ 'device-profile.lwm2m.short-id' | translate }}</mat-label>
                         <input matInput type="number" formControlName="shortId" required>
-                        <mat-error *ngIf="lwm2mDeviceProfileTransportConfFormGroup.get('shortId').hasError('required')">
+                        <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('shortId').hasError('required')">
                           {{ 'device-profile.lwm2m.short-id' | translate }}
                           <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
                         </mat-error>
@@ -61,7 +63,7 @@
                         <mat-label>{{ 'device-profile.lwm2m.lifetime' | translate }}</mat-label>
                         <input matInput type="number" formControlName="lifetime" required>
                         <mat-error
-                          *ngIf="lwm2mDeviceProfileTransportConfFormGroup.get('lifetime').hasError('required')">
+                          *ngIf="lwm2mDeviceProfileFormGroup.get('lifetime').hasError('required')">
                           {{ 'device-profile.lwm2m.lifetime' | translate }}
                           <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
                         </mat-error>
@@ -72,7 +74,7 @@
                         <mat-label>{{ 'device-profile.lwm2m.default-min-period' | translate }}</mat-label>
                         <input matInput type="number" formControlName="defaultMinPeriod" required>
                         <mat-error
-                          *ngIf="lwm2mDeviceProfileTransportConfFormGroup.get('defaultMinPeriod').hasError('required')">
+                          *ngIf="lwm2mDeviceProfileFormGroup.get('defaultMinPeriod').hasError('required')">
                           {{ 'device-profile.lwm2m.default-min-period' | translate }}
                           <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
                         </mat-error>
@@ -80,7 +82,7 @@
                       <mat-form-field fxFlex>
                         <mat-label>{{ 'device-profile.lwm2m.binding' | translate }}</mat-label>
                         <input matInput type="text" formControlName="binding" required>
-                        <mat-error *ngIf="lwm2mDeviceProfileTransportConfFormGroup.get('binding').hasError('required')">
+                        <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('binding').hasError('required')">
                           {{ 'device-profile.lwm2m.binding' | translate }}
                           <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
                         </mat-error>
@@ -133,20 +135,20 @@
               </mat-expansion-panel>
             </mat-accordion>
           </div>
-        </ng-template>
-      </mat-tab>
-      <mat-tab label="{{ 'device-profile.lwm2m.config-json-tab' | translate }}">
-        <ng-template matTabContent>
-          <div class="mat-padding">
-            <tb-json-object-edit
-              [required]="required"
-              [sort]="sortFunction"
-              label="{{ 'device-profile.transport-type-lwm2m' | translate }}"
-              formControlName="configurationJson">
-            </tb-json-object-edit>
-          </div>
-        </ng-template>
-      </mat-tab>
-    </mat-tab-group>
-  </div>
-</form>
+        </section>
+      </ng-template>
+    </mat-tab>
+    <mat-tab label="{{ 'device-profile.lwm2m.config-json-tab' | translate }}">
+      <ng-template matTabContent>
+        <section [formGroup]="lwm2mDeviceConfigFormGroup" class="mat-padding">
+          <tb-json-object-edit
+            [required]="required"
+            [sort]="sortFunction"
+            label="{{ 'device-profile.transport-type-lwm2m' | translate }}"
+            formControlName="configurationJson">
+          </tb-json-object-edit>
+        </section>
+      </ng-template>
+    </mat-tab>
+  </mat-tab-group>
+</section>

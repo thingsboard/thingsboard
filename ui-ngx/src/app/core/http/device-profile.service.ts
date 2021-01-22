@@ -43,14 +43,16 @@ export class DeviceProfileService {
     return this.http.get<DeviceProfile>(`/api/deviceProfile/${deviceProfileId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getLwm2mObjects(objectIds?: number[], searchText?: string, sortOrder?: SortOrder, config?: RequestConfig):
+  public getLwm2mObjects(objectIds: number[] = [], searchText?: string, sortOrder?: SortOrder, config?: RequestConfig):
     Observable<Array<ObjectLwM2M>> {
-    // tslint:disable-next-line:no-debugger
-    debugger;
-    return this.http.get<Array<ObjectLwM2M>>
-    (`/api/lwm2m/deviceProfile/?objectIds=${objectIds}&searchText=${searchText}&sortProperty=${sortOrder.property}
-    &sortOrder=${sortOrder.direction}`,
-      defaultHttpOptionsFromConfig(config));
+    let url = `/api/lwm2m/deviceProfile/?objectIds=${objectIds}`;
+    if (isDefinedAndNotNull(searchText)) {
+      url += `&searchText=${searchText}`;
+    }
+    if (isDefinedAndNotNull(sortOrder)) {
+      url += `&sortProperty=${sortOrder.property}&sortOrder=${sortOrder.direction}`;
+    }
+    return this.http.get<Array<ObjectLwM2M>>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public getLwm2mBootstrapSecurityInfo(securityMode: string, bootstrapServerIs: boolean,
