@@ -105,8 +105,8 @@
             {{ 'device.is-gateway' | translate }}
           </mat-checkbox>
           <mat-checkbox fxFlex *ngIf="entityForm.get('additionalInfo.gateway').value"
-                        formControlName="activityTimeFromGatewayDevice">
-            {{ 'device.activity-time-from-gateway-device' | translate }}
+                        formControlName="overwriteActivityTime">
+            {{ 'device.overwrite-activity-time' | translate }}
           </mat-checkbox>
         </div>
         <mat-form-field class="mat-block">

@@ -84,7 +84,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
         additionalInfo: this.fb.group(
           {
             gateway: [entity && entity.additionalInfo ? entity.additionalInfo.gateway : false],
-            activityTimeFromGatewayDevice: [entity && entity.additionalInfo ? entity.additionalInfo.activityTimeFromGatewayDevice: false],
+            overwriteActivityTime: [entity && entity.additionalInfo ? entity.additionalInfo.overwriteActivityTime: false],
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
           }
         )
@@ -101,7 +101,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
       additionalInfo:
         {
           gateway: entity.additionalInfo ? entity.additionalInfo.gateway : false,
-          activityTimeFromGatewayDevice: entity.additionalInfo ? entity.additionalInfo.activityTimeFromGatewayDevice : false
+          overwriteActivityTime: entity.additionalInfo ? entity.additionalInfo.overwriteActivityTime : false
         }
     });
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});

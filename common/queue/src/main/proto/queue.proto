@@ -53,7 +53,6 @@ message SessionInfoProto {
   int64 gwSessionIdLSB = 11;
   int64 deviceProfileIdMSB = 12;
   int64 deviceProfileIdLSB = 13;
-  bool activityTimeFromGatewayDevice = 14;
 }
 
 enum SessionEvent {
