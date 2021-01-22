@@ -53,7 +53,7 @@ import {
   ImportEntityData
 } from '@shared/models/entity.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
-import { deepClone, isDefined, isDefinedAndNotNull } from '@core/utils';
+import { deepClone, generateSecret, guid, isDefined, isDefinedAndNotNull } from '@core/utils';
 import { Asset } from '@shared/models/asset.models';
 import { Device, DeviceCredentialsType } from '@shared/models/device.models';
 import { AttributeService } from '@core/http/attribute.service';
@@ -1011,9 +1011,9 @@ export class EntityService {
             description: edgeEntityData.description
           },
           edgeLicenseKey: edgeEntityData.edgeLicenseKey,
-          cloudEndpoint: edgeEntityData.cloudEndpoint,
-          routingKey: edgeEntityData.routingKey,
-          secret: edgeEntityData.secret
+          cloudEndpoint: edgeEntityData.cloudEndpoint !== '' ? edgeEntityData.cloudEndpoint : window.location.origin,
+          routingKey: edgeEntityData.routingKey !== '' ? edgeEntityData.routingKey : guid(),
+          secret: edgeEntityData.secret !== '' ? edgeEntityData.secret : generateSecret(20)
         };
         saveEntityObservable = this.edgeService.saveEdge(edge, config);
         break;
@@ -1028,41 +1028,6 @@ export class EntityService {
     let result;
     let additionalInfo;
     switch (entityType) {
-      case EntityType.EDGE:
-        result = entity as Edge;
-        additionalInfo = result.additionalInfo || {};
-        const edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
-        if (result.label !== edgeEntityData.label ||
-          result.type !== edgeEntityData.type ||
-          result.cloudEndpoint !== edgeEntityData.cloudEndpoint ||
-          result.edgeLicenseKey !== edgeEntityData.edgeLicenseKey ||
-          result.routingKey !== edgeEntityData.routingKey ||
-          result.secret !== edgeEntityData.secret ||
-          additionalInfo.description !== edgeEntityData.description) {
-          result.type = edgeEntityData.type;
-          if (edgeEntityData.label !== '') {
-            result.label = edgeEntityData.label;
-          }
-          if (edgeEntityData.description !== '') {
-            result.additionalInfo = additionalInfo;
-            result.additionalInfo.description = edgeEntityData.description;
-          }
-          if (edgeEntityData.cloudEndpoint !== '') {
-            result.cloudEndpoint = edgeEntityData.cloudEndpoint;
-          }
-          if (edgeEntityData.edgeLicenseKey !== '') {
-            result.edgeLicenseKey = edgeEntityData.edgeLicenseKey;
-          }
-          if (edgeEntityData.routingKey !== '') {
-            result.routingKey = edgeEntityData.routingKey;
-          }
-          if (edgeEntityData.cloudEndpoint !== '') {
-            result.secret = edgeEntityData.secret;
-          }
-          tasks.push(this.edgeService.saveEdge(result, config));
-        }
-        tasks.push(this.saveEntityData(entity.id, edgeEntityData, config));
-        break;
       case EntityType.ASSET:
       case EntityType.DEVICE:
         result = entity as (Device | Asset);
@@ -1088,6 +1053,37 @@ export class EntityService {
           }
         }
         tasks.push(this.saveEntityData(entity.id, entityData, config));
+        break;
+      case EntityType.EDGE:
+        result = entity as Edge;
+        additionalInfo = result.additionalInfo || {};
+        const edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
+        if (result.label !== edgeEntityData.label ||
+          result.type !== edgeEntityData.type ||
+          (edgeEntityData.cloudEndpoint !== '' && result.cloudEndpoint !== edgeEntityData.cloudEndpoint) ||
+          (edgeEntityData.edgeLicenseKey !== '' && result.edgeLicenseKey !== edgeEntityData.edgeLicenseKey) ||
+          (edgeEntityData.routingKey !== '' && result.routingKey !== edgeEntityData.routingKey) ||
+          (edgeEntityData.secret !== '' && result.secret !== edgeEntityData.secret) ||
+          additionalInfo.description !== edgeEntityData.description) {
+          result.label = edgeEntityData.label;
+          result.type = edgeEntityData.type;
+          result.additionalInfo = additionalInfo;
+          result.additionalInfo.description = edgeEntityData.description;
+          if (edgeEntityData.cloudEndpoint !== '') {
+            result.cloudEndpoint = edgeEntityData.cloudEndpoint;
+          }
+          if (edgeEntityData.edgeLicenseKey !== '') {
+            result.edgeLicenseKey = edgeEntityData.edgeLicenseKey;
+          }
+          if (edgeEntityData.routingKey !== '') {
+            result.routingKey = edgeEntityData.routingKey;
+          }
+          if (edgeEntityData.secret !== '') {
+            result.secret = edgeEntityData.secret;
+          }
+          tasks.push(this.edgeService.saveEdge(result, config));
+        }
+        tasks.push(this.saveEntityData(entity.id, edgeEntityData, config));
         break;
     }
     return tasks;
