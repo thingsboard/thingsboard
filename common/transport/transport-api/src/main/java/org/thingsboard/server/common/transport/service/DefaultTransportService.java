@@ -61,6 +61,7 @@ import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
@@ -512,7 +513,7 @@ public class DefaultTransportService implements TransportService {
             if (sessionInfo.getGwSessionIdMSB() != 0 &&
                     sessionInfo.getGwSessionIdLSB() != 0) {
                 SessionMetaData gwMetaData = sessions.get(new UUID(sessionInfo.getGwSessionIdMSB(), sessionInfo.getGwSessionIdLSB()));
-                if (gwMetaData != null) {
+                if (gwMetaData != null && gwMetaData.getSessionInfo().getActivityTimeFromGatewayDevice()) {
                     lastActivityTime = Math.max(gwMetaData.getLastActivityTime(), lastActivityTime);
                 }
             }
@@ -702,13 +703,21 @@ public class DefaultTransportService implements TransportService {
                 } else {
                     newDeviceProfile = null;
                 }
-                TransportProtos.SessionInfoProto newSessionInfo = TransportProtos.SessionInfoProto.newBuilder()
+                TransportProtos.SessionInfoProto.Builder newSessionInfoBuilder = TransportProtos.SessionInfoProto.newBuilder()
                         .mergeFrom(md.getSessionInfo())
                         .setDeviceProfileIdMSB(deviceProfileIdMSB)
                         .setDeviceProfileIdLSB(deviceProfileIdLSB)
                         .setDeviceName(device.getName())
-                        .setDeviceType(device.getType())
-                        .build();
+                        .setDeviceType(device.getType());
+                if (device.getAdditionalInfo().has("gateway")
+                        && device.getAdditionalInfo().get("gateway").asBoolean()
+                        && device.getAdditionalInfo().has("activityTimeFromGatewayDevice")) {
+                    boolean activityTimeFromGatewayDevice = device.getAdditionalInfo().get("activityTimeFromGatewayDevice").asBoolean();
+                    if (md.getSessionInfo().getActivityTimeFromGatewayDevice() != activityTimeFromGatewayDevice) {
+                        newSessionInfoBuilder.setActivityTimeFromGatewayDevice(activityTimeFromGatewayDevice);
+                    }
+                }
+                TransportProtos.SessionInfoProto newSessionInfo = newSessionInfoBuilder.build();
                 md.setSessionInfo(newSessionInfo);
                 transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(newSessionInfo, device, Optional.ofNullable(newDeviceProfile)));
             }
