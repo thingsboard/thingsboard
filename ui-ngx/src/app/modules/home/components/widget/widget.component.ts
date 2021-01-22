@@ -97,7 +97,6 @@ import { AlarmDataService } from '@core/api/alarm-data.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ComponentType } from '@angular/cdk/portal';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
-import { Dashboard } from '@shared/models/dashboard.models';
 
 @Component({
   selector: 'tb-widget',

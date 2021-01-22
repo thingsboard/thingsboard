@@ -95,6 +95,7 @@ const routes: Routes = [
   exports: [RouterModule],
   providers: [
     WidgetEditorDashboardResolver,
+    DashboardResolver,
     {
       provide: MODULES_MAP,
       useValue: modulesMap
