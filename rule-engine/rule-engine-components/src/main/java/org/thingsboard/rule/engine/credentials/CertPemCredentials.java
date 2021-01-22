@@ -66,6 +66,7 @@ public class CertPemCredentials implements ClientCredentials {
         return CredentialsType.CERT_PEM;
     }
 
+    @Override
     public SslContext initSslContext() {
         try {
             Security.addProvider(new BouncyCastleProvider());
@@ -120,7 +121,7 @@ public class CertPemCredentials implements ClientCredentials {
         return keyManagerFactory;
     }
 
-    private TrustManagerFactory createAndInitTrustManagerFactory() throws Exception {
+    protected TrustManagerFactory createAndInitTrustManagerFactory() throws Exception {
         X509Certificate caCertHolder;
         caCertHolder = readCertFile(caCert);
 

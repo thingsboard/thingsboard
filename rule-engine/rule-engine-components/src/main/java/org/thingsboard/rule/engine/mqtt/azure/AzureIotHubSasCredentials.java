@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.credentials.CredentialsType;
 
 import javax.net.ssl.TrustManagerFactory;
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.Security;
 import java.security.cert.CertificateFactory;
@@ -63,29 +64,4 @@ public class AzureIotHubSasCredentials extends CertPemCredentials {
         return CredentialsType.SAS;
     }
 
-    private TrustManagerFactory createAndInitTrustManagerFactory() throws Exception {
-        X509Certificate caCertHolder;
-        caCertHolder = readCertFile(caCert);
-
-        KeyStore caKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        caKeyStore.load(null, null);
-        caKeyStore.setCertificateEntry("caCert-cert", caCertHolder);
-
-        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        trustManagerFactory.init(caKeyStore);
-        return trustManagerFactory;
-    }
-
-    private X509Certificate readCertFile(String fileContent) throws Exception {
-        X509Certificate certificate = null;
-        if (fileContent != null && !fileContent.trim().isEmpty()) {
-            fileContent = fileContent.replace("-----BEGIN CERTIFICATE-----", "")
-                    .replace("-----END CERTIFICATE-----", "")
-                    .replaceAll("\\s", "");
-            byte[] decoded = Base64.decodeBase64(fileContent);
-            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-            certificate = (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(decoded));
-        }
-        return certificate;
-    }
 }

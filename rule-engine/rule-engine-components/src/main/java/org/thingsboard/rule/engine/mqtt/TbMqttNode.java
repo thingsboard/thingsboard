@@ -20,6 +20,7 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.ssl.SslContext;
 import io.netty.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.util.StringUtils;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
@@ -78,14 +79,14 @@ public class TbMqttNode implements TbNode {
         String topic = TbNodeUtils.processPattern(this.mqttNodeConfiguration.getTopicPattern(), msg.getMetaData());
         this.mqttClient.publish(topic, Unpooled.wrappedBuffer(msg.getData().getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE)
                 .addListener(future -> {
-                    if (future.isSuccess()) {
-                        ctx.tellSuccess(msg);
-                    } else {
-                        TbMsg next = processException(ctx, msg, future.cause());
-                        ctx.tellFailure(next, future.cause());
-                    }
-                }
-        );
+                            if (future.isSuccess()) {
+                                ctx.tellSuccess(msg);
+                            } else {
+                                TbMsg next = processException(ctx, msg, future.cause());
+                                ctx.tellFailure(next, future.cause());
+                            }
+                        }
+                );
     }
 
     private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable e) {
@@ -108,12 +109,7 @@ public class TbMqttNode implements TbNode {
         }
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
 
-        ClientCredentials credentials = this.mqttNodeConfiguration.getCredentials();
-        if (credentials.getType() == CredentialsType.BASIC) {
-            config.setUsername(((BasicCredentials) credentials).getUsername());
-            config.setPassword(((BasicCredentials) credentials).getPassword());
-        }
-
+        prepareMqttClientConfig(config);
         MqttClient client = MqttClient.create(config, null);
         client.setEventLoop(ctx.getSharedEventLoop());
         Future<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
@@ -135,14 +131,17 @@ public class TbMqttNode implements TbNode {
         return client;
     }
 
-    private SslContext getSslContext() throws SSLException {
+    protected void prepareMqttClientConfig(MqttClientConfig config) throws SSLException {
         ClientCredentials credentials = this.mqttNodeConfiguration.getCredentials();
-        SslContext sslContext = credentials.initSslContext();
-        if (!this.mqttNodeConfiguration.isSsl() &&
-                (credentials.getType() == CredentialsType.ANONYMOUS || credentials.getType() == CredentialsType.BASIC)) {
-            sslContext = null;
+        if (credentials.getType() == CredentialsType.BASIC) {
+            BasicCredentials basicCredentials = (BasicCredentials) credentials;
+            config.setUsername(basicCredentials.getUsername());
+            config.setPassword(basicCredentials.getPassword());
         }
-        return sslContext;
+    }
+
+    private SslContext getSslContext() throws SSLException {
+        return this.mqttNodeConfiguration.isSsl() ? this.mqttNodeConfiguration.getCredentials().initSslContext() : null;
     }
 
 }

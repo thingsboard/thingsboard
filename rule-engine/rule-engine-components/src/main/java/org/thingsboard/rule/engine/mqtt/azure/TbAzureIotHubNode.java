@@ -15,14 +15,18 @@
  */
 package org.thingsboard.rule.engine.mqtt.azure;
 
+import io.netty.handler.codec.mqtt.MqttVersion;
 import io.netty.handler.ssl.SslContext;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.AzureIotHubUtil;
+import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.credentials.BasicCredentials;
 import org.thingsboard.rule.engine.credentials.CertPemCredentials;
 import org.thingsboard.rule.engine.credentials.ClientCredentials;
 import org.thingsboard.rule.engine.credentials.CredentialsType;
@@ -50,42 +54,24 @@ public class TbAzureIotHubNode extends TbMqttNode {
             mqttNodeConfiguration.setPort(8883);
             mqttNodeConfiguration.setCleanSession(true);
             ClientCredentials credentials = mqttNodeConfiguration.getCredentials();
-            mqttNodeConfiguration.setCredentials(new ClientCredentials() {
-                @Override
-                public CredentialsType getType() {
-                    return credentials.getType();
+            if (CredentialsType.CERT_PEM == credentials.getType()) {
+                CertPemCredentials pemCredentials = (CertPemCredentials) credentials;
+                if (pemCredentials.getCaCert() == null || pemCredentials.getCaCert().isEmpty()) {
+                    pemCredentials.setCaCert(AzureIotHubUtil.getDefaultCaCert());
                 }
-
-                @Override
-                public SslContext initSslContext() throws SSLException {
-                    if (credentials instanceof AzureIotHubSasCredentials) {
-                        AzureIotHubSasCredentials sasCredentials = (AzureIotHubSasCredentials) credentials;
-                        if (sasCredentials.getCaCert() == null || sasCredentials.getCaCert().isEmpty()) {
-                            sasCredentials.setCaCert(AzureIotHubUtil.getDefaultCaCert());
-                        }
-                    } else if (credentials instanceof CertPemCredentials) {
-                        CertPemCredentials pemCredentials = (CertPemCredentials) credentials;
-                        if (pemCredentials.getCaCert() == null || pemCredentials.getCaCert().isEmpty()) {
-                            pemCredentials.setCaCert(AzureIotHubUtil.getDefaultCaCert());
-                        }
-                    }
-                    return credentials.initSslContext();
-                }
-
-//                @Override
-//                public void configure(MqttClientConfig config) {
-//                    config.setProtocolVersion(MqttVersion.MQTT_3_1_1);
-//                    config.setUsername(AzureIotHubUtil.buildUsername(mqttNodeConfiguration.getHost(), config.getClientId()));
-//                    if (credentials instanceof AzureIotHubSasCredentials) {
-//                        AzureIotHubSasCredentials sasCredentials = (AzureIotHubSasCredentials) credentials;
-//                        config.setPassword(AzureIotHubUtil.buildSasToken(mqttNodeConfiguration.getHost(), sasCredentials.getSasKey()));
-//                    }
-//                }
-            });
-
+            }
             this.mqttClient = initClient(ctx);
         } catch (Exception e) {
             throw new TbNodeException(e);
+        }
+    }
+
+    protected void prepareMqttClientConfig(MqttClientConfig config) throws SSLException {
+        config.setProtocolVersion(MqttVersion.MQTT_3_1_1);
+        config.setUsername(AzureIotHubUtil.buildUsername(mqttNodeConfiguration.getHost(), config.getClientId()));
+        ClientCredentials credentials = mqttNodeConfiguration.getCredentials();
+        if (CredentialsType.SAS == credentials.getType()) {
+            config.setPassword(AzureIotHubUtil.buildSasToken(mqttNodeConfiguration.getHost(), ((AzureIotHubSasCredentials) credentials).getSasKey()));
         }
     }
 }
