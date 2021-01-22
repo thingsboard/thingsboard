@@ -113,7 +113,7 @@ public class AssetController extends BaseController {
                     asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
             if (asset.getId() != null) {
-                sendNotificationMsgToEdgeService(savedAsset.getTenantId(), savedAsset.getId(), EntityType.ASSET, EdgeEventActionType.UPDATED);
+                sendEntityNotificationMsg(savedAsset.getTenantId(), savedAsset.getId(), EdgeEventActionType.UPDATED);
             }
 
             return savedAsset;
@@ -141,7 +141,7 @@ public class AssetController extends BaseController {
                     asset.getCustomerId(),
                     ActionType.DELETED, null, strAssetId);
 
-            sendDeleteNotificationMsgToEdgeService(getTenantId(), assetId, EntityType.ASSET, relatedEdgeIds);
+            sendDeleteNotificationMsg(getTenantId(), assetId, relatedEdgeIds);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ASSET),
                     null,
@@ -171,7 +171,7 @@ public class AssetController extends BaseController {
                     savedAsset.getCustomerId(),
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strAssetId, strCustomerId, customer.getName());
 
-            sendNotificationMsgToEdgeService(savedAsset.getTenantId(), savedAsset.getId(),
+            sendEntityAssignToCustomerNotificationMsg(savedAsset.getTenantId(), savedAsset.getId(),
                     customerId, EdgeEventActionType.ASSIGNED_TO_CUSTOMER);
 
             return savedAsset;
@@ -205,7 +205,7 @@ public class AssetController extends BaseController {
                     asset.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strAssetId, customer.getId().toString(), customer.getName());
 
-            sendNotificationMsgToEdgeService(savedAsset.getTenantId(), savedAsset.getId(),
+            sendEntityAssignToCustomerNotificationMsg(savedAsset.getTenantId(), savedAsset.getId(),
                     customer.getId(), EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
 
             return savedAsset;
@@ -442,7 +442,7 @@ public class AssetController extends BaseController {
                     savedAsset.getCustomerId(),
                     ActionType.ASSIGNED_TO_EDGE, null, strAssetId, strEdgeId, edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedAsset.getId(), EntityType.ASSET, EdgeEventActionType.ASSIGNED_TO_EDGE);
+            sendEntityAssignToEdgeNotificationMsg(getTenantId(), edgeId, savedAsset.getId(), EdgeEventActionType.ASSIGNED_TO_EDGE);
 
             return  savedAsset;
         } catch (Exception e) {
@@ -475,7 +475,7 @@ public class AssetController extends BaseController {
                     asset.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_EDGE, null, strAssetId, strEdgeId, edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedAsset.getId(), EntityType.ASSET, EdgeEventActionType.UNASSIGNED_FROM_EDGE);
+            sendEntityAssignToEdgeNotificationMsg(getTenantId(), edgeId, savedAsset.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
 
             return savedAsset;
         } catch (Exception e) {

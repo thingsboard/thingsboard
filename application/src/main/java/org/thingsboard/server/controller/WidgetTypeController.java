@@ -73,7 +73,7 @@ public class WidgetTypeController extends BaseController {
             checkEntity(widgetType.getId(), widgetType, Resource.WIDGET_TYPE);
             WidgetType savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
 
-            sendNotificationMsgToEdgeService(getTenantId(), savedWidgetType.getId(), EntityType.WIDGET_TYPE,
+            sendEntityNotificationMsg(getTenantId(), savedWidgetType.getId(),
                     widgetType.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
 
             return checkNotNull(savedWidgetType);
@@ -92,7 +92,7 @@ public class WidgetTypeController extends BaseController {
             checkWidgetTypeId(widgetTypeId, Operation.DELETE);
             widgetTypeService.deleteWidgetType(getCurrentUser().getTenantId(), widgetTypeId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), widgetTypeId, EntityType.WIDGET_TYPE, EdgeEventActionType.DELETED);
+            sendEntityNotificationMsg(getTenantId(), widgetTypeId, EdgeEventActionType.DELETED);
 
         } catch (Exception e) {
             throw handleException(e);

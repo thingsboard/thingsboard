@@ -1257,6 +1257,7 @@
         "unassign-from-edge": "Unassign from edge",
         "dashboards": "Edge Dashboards",
         "manage-edge-rulechains": "Edge rule chains",
+        "rulechain-template": "Rule chain template",
         "edge-key": "Edge key",
         "copy-edge-key": "Copy Edge key",
         "edge-key-copied-message": "Edge key has been copied to clipboard",
