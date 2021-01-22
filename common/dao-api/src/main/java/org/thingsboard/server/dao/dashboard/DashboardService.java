@@ -25,13 +25,14 @@ import org.thingsboard.server.common.data.id.EntityConfigId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 
 public interface DashboardService {
     
     Dashboard findDashboardById(TenantId tenantId, DashboardId dashboardId);
 
     Dashboard restoreDashboardConfig(TenantId tenantId, DashboardId dashboardId, EntityConfigId entityConfigId, JsonNode additionalInfo);
+
+    Dashboard restoreDashboardAsNew(TenantId tenantId, DashboardId dashboardId, EntityConfigId entityConfigId, String name);
 
     ListenableFuture<Dashboard> findDashboardByIdAsync(TenantId tenantId, DashboardId dashboardId);
 

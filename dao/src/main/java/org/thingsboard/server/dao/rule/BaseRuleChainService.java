@@ -62,6 +62,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -115,20 +116,36 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
 
     @Override
-    public RuleChainMetaData restoreRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId, EntityConfigId entityConfigId, JsonNode additionalInfo) {
-        log.trace("Executing restoreRuleChainMetaData [{}]", ruleChainId);
+    public RuleChainMetaData getRuleChainMetaDataByEntityConfigId(TenantId tenantId, RuleChainId ruleChainId, EntityConfigId entityConfigId) {
+        return getRuleChainMetaDataByEntityConfigId(tenantId, ruleChainId, entityConfigId, true);
+    }
+
+    private RuleChainMetaData getRuleChainMetaDataByEntityConfigId(TenantId tenantId, RuleChainId ruleChainId, EntityConfigId entityConfigId, boolean resetRuleNodeIds) {
+        log.trace("Executing getRuleChainMetaDataByEntityConfigId [{}]", ruleChainId);
         EntityConfig entityConfig = entityConfigService.getEntityConfigById(tenantId, entityConfigId);
         if (entityConfig != null) {
             validateEntityConfig(ruleChainId, entityConfig);
             try {
-                RuleChainMetaData ruleChainMetaData = mapper.treeToValue(entityConfig.getConfiguration(), RuleChainMetaData.class);
-                entityConfigService.restoreEntityConfig(tenantId, ruleChainId, entityConfigId, additionalInfo);
-                return ruleChainMetaData;
+                RuleChainMetaData metaData = mapper.treeToValue(entityConfig.getConfiguration(), RuleChainMetaData.class);
+                if (resetRuleNodeIds) {
+                    resetRuleNodeIds(Collections.singletonList(metaData));
+                }
+                return metaData;
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
         }
         return null;
+    }
+
+    @Override
+    public RuleChainMetaData restoreRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId, EntityConfigId entityConfigId, JsonNode additionalInfo) {
+        log.trace("Executing restoreRuleChainMetaData [{}]", ruleChainId);
+        RuleChainMetaData ruleChainMetaData = getRuleChainMetaDataByEntityConfigId(tenantId, ruleChainId, entityConfigId, false);
+        if (ruleChainMetaData != null) {
+            entityConfigService.restoreEntityConfig(tenantId, ruleChainId, entityConfigId, additionalInfo);
+        }
+        return ruleChainMetaData;
     }
 
     @Override

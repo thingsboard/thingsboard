@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.dashboard;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -50,6 +51,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import javax.persistence.EntityNotFoundException;
 import java.util.concurrent.ExecutionException;
 
+import static org.thingsboard.server.common.data.DataConstants.DEFAULT_RESTORED_ENTITY_NAME_TPL;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
@@ -58,6 +60,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     public static final String INCORRECT_DASHBOARD_ID = "Incorrect dashboardId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+
     @Autowired
     private DashboardDao dashboardDao;
 
@@ -92,6 +95,24 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             dashboardDao.save(tenantId, dashboard);
             entityConfigService.restoreEntityConfig(tenantId, dashboardId, entityConfigId, additionalInfo);
             return dashboard;
+        }
+        throw new EntityNotFoundException(String.format("EntityConfig with id [%s] not found", entityConfigId.getId()));
+    }
+
+    @Override
+    public Dashboard restoreDashboardAsNew(TenantId tenantId, DashboardId dashboardId, EntityConfigId entityConfigId, String title) {
+        log.trace("Executing restoreDashboardAsNew [{}]", dashboardId);
+        EntityConfig entityConfig = entityConfigService.getEntityConfigById(tenantId, entityConfigId);
+        Dashboard dashboard = findDashboardById(tenantId, dashboardId);
+        if (entityConfig != null) {
+            if (title == null) {
+                title = String.format(DEFAULT_RESTORED_ENTITY_NAME_TPL, dashboard.getTitle(), entityConfig.getVersion());
+            }
+            Dashboard newDashboard = new Dashboard();
+            newDashboard.setTenantId(dashboard.getTenantId());
+            newDashboard.setConfiguration(entityConfig.getConfiguration());
+            newDashboard.setTitle(title);
+            return dashboardDao.save(tenantId, newDashboard);
         }
         throw new EntityNotFoundException(String.format("EntityConfig with id [%s] not found", entityConfigId.getId()));
     }

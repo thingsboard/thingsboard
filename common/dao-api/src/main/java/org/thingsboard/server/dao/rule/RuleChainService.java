@@ -44,6 +44,8 @@ public interface RuleChainService {
 
     RuleChainMetaData saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData);
 
+    RuleChainMetaData getRuleChainMetaDataByEntityConfigId(TenantId tenantId, RuleChainId ruleChainId, EntityConfigId entityConfigId);
+
     RuleChainMetaData restoreRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId, EntityConfigId entityConfigId, JsonNode additionalInfo);
 
     RuleChainMetaData loadRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId);
