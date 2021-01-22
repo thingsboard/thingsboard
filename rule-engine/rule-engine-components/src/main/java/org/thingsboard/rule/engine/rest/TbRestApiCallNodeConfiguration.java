@@ -18,6 +18,8 @@ package org.thingsboard.rule.engine.rest;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.credentials.AnonymousCredentials;
+import org.thingsboard.rule.engine.credentials.ClientCredentials;
 
 import java.util.Collections;
 import java.util.Map;
@@ -42,6 +44,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private String proxyUser;
     private String proxyPassword;
     private String proxyScheme;
+    private ClientCredentials credentials;
 
     @Override
     public TbRestApiCallNodeConfiguration defaultConfiguration() {
@@ -55,6 +58,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
         configuration.setUseRedisQueueForMsgPersistence(false);
         configuration.setTrimQueue(false);
         configuration.setEnableProxy(false);
+        configuration.setCredentials(new AnonymousCredentials());
         return configuration;
     }
 }

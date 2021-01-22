@@ -18,22 +18,27 @@ package org.thingsboard.rule.engine.mqtt;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttConnectResult;
-import org.springframework.util.StringUtils;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.credentials.BasicCredentials;
+import org.thingsboard.rule.engine.credentials.ClientCredentials;
+import org.thingsboard.rule.engine.credentials.CredentialsType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.net.ssl.SSLException;
 import java.nio.charset.Charset;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -97,13 +102,18 @@ public class TbMqttNode implements TbNode {
     }
 
     protected MqttClient initClient(TbContext ctx) throws Exception {
-        Optional<SslContext> sslContextOpt = initSslContext();
-        MqttClientConfig config = sslContextOpt.isPresent() ? new MqttClientConfig(sslContextOpt.get()) : new MqttClientConfig();
+        MqttClientConfig config = new MqttClientConfig(getSslContext());
         if (!StringUtils.isEmpty(this.mqttNodeConfiguration.getClientId())) {
             config.setClientId(this.mqttNodeConfiguration.getClientId());
         }
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
-        this.mqttNodeConfiguration.getCredentials().configure(config);
+
+        ClientCredentials credentials = this.mqttNodeConfiguration.getCredentials();
+        if (credentials.getType() == CredentialsType.BASIC) {
+            config.setUsername(((BasicCredentials) credentials).getUsername());
+            config.setPassword(((BasicCredentials) credentials).getPassword());
+        }
+
         MqttClient client = MqttClient.create(config, null);
         client.setEventLoop(ctx.getSharedEventLoop());
         Future<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
@@ -125,12 +135,14 @@ public class TbMqttNode implements TbNode {
         return client;
     }
 
-    private Optional<SslContext> initSslContext() throws SSLException {
-        Optional<SslContext> result = this.mqttNodeConfiguration.getCredentials().initSslContext();
-        if (this.mqttNodeConfiguration.isSsl() && !result.isPresent()) {
-            result = Optional.of(SslContextBuilder.forClient().build());
+    private SslContext getSslContext() throws SSLException {
+        ClientCredentials credentials = this.mqttNodeConfiguration.getCredentials();
+        SslContext sslContext = credentials.initSslContext();
+        if (!this.mqttNodeConfiguration.isSsl() &&
+                (credentials.getType() == CredentialsType.ANONYMOUS || credentials.getType() == CredentialsType.BASIC)) {
+            sslContext = null;
         }
-        return result;
+        return sslContext;
     }
 
 }

@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.mqtt.credentials;
+package org.thingsboard.rule.engine.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import lombok.Data;
@@ -29,7 +28,6 @@ import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.springframework.util.StringUtils;
-import org.thingsboard.mqtt.MqttClientConfig;
 
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
@@ -51,13 +49,11 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Optional;
 
 @Data
 @Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CertPemClientCredentials implements MqttClientCredentials {
-
+public class CertPemCredentials implements ClientCredentials {
     private static final String TLS_VERSION = "TLSv1.2";
 
     private String caCert;
@@ -66,23 +62,25 @@ public class CertPemClientCredentials implements MqttClientCredentials {
     private String password;
 
     @Override
-    public Optional<SslContext> initSslContext() {
+    public CredentialsType getType() {
+        return CredentialsType.CERT_PEM;
+    }
+
+    public SslContext initSslContext() {
         try {
             Security.addProvider(new BouncyCastleProvider());
-            return Optional.of(SslContextBuilder.forClient()
-                    .keyManager(createAndInitKeyManagerFactory())
-                    .trustManager(createAndInitTrustManagerFactory())
-                    .clientAuth(ClientAuth.REQUIRE)
-                    .build());
+            SslContextBuilder builder = SslContextBuilder.forClient();
+            if (StringUtils.hasLength(caCert)) {
+                builder.trustManager(createAndInitTrustManagerFactory());
+            }
+            if (StringUtils.hasLength(cert) && StringUtils.hasLength(privateKey)) {
+                builder.keyManager(createAndInitKeyManagerFactory());
+            }
+            return builder.build();
         } catch (Exception e) {
             log.error("[{}:{}] Creating TLS factory failed!", caCert, cert, e);
             throw new RuntimeException("Creating TLS factory failed!", e);
         }
-    }
-
-    @Override
-    public void configure(MqttClientConfig config) {
-
     }
 
     private KeyManagerFactory createAndInitKeyManagerFactory() throws Exception {

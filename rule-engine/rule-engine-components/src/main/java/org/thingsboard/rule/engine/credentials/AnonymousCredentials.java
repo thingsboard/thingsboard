@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.mqtt.credentials;
+package org.thingsboard.rule.engine.credentials;
 
-import io.netty.handler.ssl.SslContext;
-import org.thingsboard.mqtt.MqttClientConfig;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import java.util.Optional;
-
-public class AnonymousCredentials implements MqttClientCredentials {
-
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class AnonymousCredentials implements ClientCredentials {
     @Override
-    public Optional<SslContext> initSslContext() {
-        return Optional.empty();
-    }
-
-    @Override
-    public void configure(MqttClientConfig config) {
-
+    public CredentialsType getType() {
+        return CredentialsType.ANONYMOUS;
     }
 }
-
