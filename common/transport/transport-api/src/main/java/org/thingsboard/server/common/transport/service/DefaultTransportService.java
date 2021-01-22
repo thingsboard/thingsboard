@@ -647,37 +647,7 @@ public class DefaultTransportService implements TransportService {
                     }
                 } else if (EntityType.DEVICE.equals(entityType)) {
                     Optional<Device> deviceOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
-                    if (deviceOpt.isPresent()) {
-                        Device device = deviceOpt.get();
-                        if (device.getAdditionalInfo().has("gateway") && device.getAdditionalInfo().get("gateway").asBoolean()) {
-                            sessions.forEach((uuid, currentMD) -> {
-                                if (device.getId().equals(new DeviceId(new UUID(currentMD.getSessionInfo().getDeviceIdMSB(), currentMD.getSessionInfo().getDeviceIdLSB())))) {
-                                    boolean newActivityTimeFromGatewayDevice = device.getAdditionalInfo().get("activityTimeFromGatewayDevice").asBoolean();
-                                    if (currentMD.getSessionInfo().getActivityTimeFromGatewayDevice() != newActivityTimeFromGatewayDevice) {
-                                        SessionInfoProto currentSessionInfo = currentMD.getSessionInfo();
-                                        SessionInfoProto newSessionInfo = SessionInfoProto.newBuilder()
-                                                .setNodeId(currentSessionInfo.getNodeId())
-                                                .setSessionIdMSB(currentSessionInfo.getSessionIdMSB())
-                                                .setSessionIdLSB(currentSessionInfo.getSessionIdLSB())
-                                                .setDeviceIdMSB(currentSessionInfo.getDeviceIdMSB())
-                                                .setDeviceIdLSB(currentSessionInfo.getDeviceIdLSB())
-                                                .setTenantIdMSB(currentSessionInfo.getTenantIdMSB())
-                                                .setTenantIdLSB(currentSessionInfo.getTenantIdLSB())
-                                                .setDeviceName(currentSessionInfo.getDeviceName())
-                                                .setDeviceType(currentSessionInfo.getDeviceType())
-                                                .setGwSessionIdMSB(currentSessionInfo.getGwSessionIdMSB())
-                                                .setGwSessionIdLSB(currentSessionInfo.getGwSessionIdLSB())
-                                                .setDeviceProfileIdMSB(currentSessionInfo.getDeviceProfileIdMSB())
-                                                .setDeviceProfileIdLSB(currentSessionInfo.getDeviceProfileIdLSB())
-                                                .setActivityTimeFromGatewayDevice(newActivityTimeFromGatewayDevice)
-                                                .build();
-                                        currentMD.setSessionInfo(newSessionInfo);
-                                    }
-                                }
-                            });
-                        }
-                        onDeviceUpdate(device);
-                    }
+                    deviceOpt.ifPresent(this::onDeviceUpdate);
                 }
             } else if (toSessionMsg.hasEntityDeleteMsg()) {
                 TransportProtos.EntityDeleteMsg msg = toSessionMsg.getEntityDeleteMsg();
@@ -733,13 +703,21 @@ public class DefaultTransportService implements TransportService {
                 } else {
                     newDeviceProfile = null;
                 }
-                TransportProtos.SessionInfoProto newSessionInfo = TransportProtos.SessionInfoProto.newBuilder()
+                TransportProtos.SessionInfoProto.Builder newSessionInfoBuilder = TransportProtos.SessionInfoProto.newBuilder()
                         .mergeFrom(md.getSessionInfo())
                         .setDeviceProfileIdMSB(deviceProfileIdMSB)
                         .setDeviceProfileIdLSB(deviceProfileIdLSB)
                         .setDeviceName(device.getName())
-                        .setDeviceType(device.getType())
-                        .build();
+                        .setDeviceType(device.getType());
+                if (device.getAdditionalInfo().has("gateway")
+                        && device.getAdditionalInfo().get("gateway").asBoolean()
+                        && device.getAdditionalInfo().has("activityTimeFromGatewayDevice")) {
+                    boolean activityTimeFromGatewayDevice = device.getAdditionalInfo().get("activityTimeFromGatewayDevice").asBoolean();
+                    if (md.getSessionInfo().getActivityTimeFromGatewayDevice() != activityTimeFromGatewayDevice) {
+                        newSessionInfoBuilder.setActivityTimeFromGatewayDevice(activityTimeFromGatewayDevice);
+                    }
+                }
+                TransportProtos.SessionInfoProto newSessionInfo = newSessionInfoBuilder.build();
                 md.setSessionInfo(newSessionInfo);
                 transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(newSessionInfo, device, Optional.ofNullable(newDeviceProfile)));
             }
