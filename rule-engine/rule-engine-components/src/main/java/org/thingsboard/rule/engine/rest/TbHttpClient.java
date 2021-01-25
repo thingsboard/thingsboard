@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.handler.ssl.SslContextBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -35,6 +35,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsAsyncClientHttpRequestFactory;
 import org.springframework.http.client.Netty4ClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.util.StringUtils;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
@@ -44,6 +45,9 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.credentials.BasicCredentials;
+import org.thingsboard.rule.engine.credentials.ClientCredentials;
+import org.thingsboard.rule.engine.credentials.CredentialsType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -51,8 +55,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Deque;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 
@@ -129,11 +135,14 @@ public class TbHttpClient {
                 requestFactory.setReadTimeout(config.getReadTimeoutMs());
                 httpClient = new AsyncRestTemplate(requestFactory);
             } else if (config.isUseSimpleClientHttpFactory()) {
+                if (CredentialsType.CERT_PEM == config.getCredentials().getType()) {
+                    throw new TbNodeException("Simple HTTP Factory does not support CERT PEM credentials!");
+                }
                 httpClient = new AsyncRestTemplate();
             } else {
                 this.eventLoopGroup = new NioEventLoopGroup();
                 Netty4ClientHttpRequestFactory nettyFactory = new Netty4ClientHttpRequestFactory(this.eventLoopGroup);
-                nettyFactory.setSslContext(SslContextBuilder.forClient().build());
+                nettyFactory.setSslContext(config.getCredentials().initSslContext());
                 nettyFactory.setReadTimeout(config.getReadTimeoutMs());
                 httpClient = new AsyncRestTemplate(nettyFactory);
             }
@@ -226,6 +235,13 @@ public class TbHttpClient {
     private HttpHeaders prepareHeaders(TbMsgMetaData metaData) {
         HttpHeaders headers = new HttpHeaders();
         config.getHeaders().forEach((k, v) -> headers.add(TbNodeUtils.processPattern(k, metaData), TbNodeUtils.processPattern(v, metaData)));
+        ClientCredentials credentials = config.getCredentials();
+        if (CredentialsType.BASIC == credentials.getType()) {
+            BasicCredentials basicCredentials = (BasicCredentials) credentials;
+            String authString = basicCredentials.getUsername() + ":" + basicCredentials.getPassword();
+            String encodedAuthString = new String(Base64.encodeBase64(authString.getBytes(StandardCharsets.UTF_8)));
+            headers.add("Authorization", "Basic " + encodedAuthString);
+        }
         return headers;
     }
 
@@ -259,4 +275,5 @@ public class TbHttpClient {
             throw new TbNodeException("Proxy port out of range:" + proxyPort);
         }
     }
+
 }

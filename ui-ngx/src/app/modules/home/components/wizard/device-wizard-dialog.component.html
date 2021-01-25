@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@
                   [required]="!createProfile"
                   [transportType]="deviceWizardFormGroup.get('transportType').value"
                   formControlName="deviceProfileId"
-                  [ngClass]="{invisible: deviceWizardFormGroup.get('addProfileType').value !== 0}"                              
+                  [ngClass]="{invisible: deviceWizardFormGroup.get('addProfileType').value !== 0}"
                   (deviceProfileChanged)="$event?.transportType ? deviceWizardFormGroup.get('transportType').patchValue($event?.transportType) : {}"
                   [addNewProfile]="false"
                   [selectDefaultProfile]="true"
@@ -108,9 +108,15 @@
                 </tb-queue-type-list>
               </div>
             </div>
-            <mat-checkbox formControlName="gateway" style="padding-bottom: 16px;">
-              {{ 'device.is-gateway' | translate }}
-            </mat-checkbox>
+            <div fxLayout="row" fxLayoutGap="16px" style="padding-bottom: 16px;">
+              <mat-checkbox formControlName="gateway">
+                {{ 'device.is-gateway' | translate }}
+              </mat-checkbox>
+              <mat-checkbox *ngIf="deviceWizardFormGroup.get('gateway').value"
+                            formControlName="overwriteActivityTime">
+                {{ 'device.overwrite-activity-time' | translate }}
+              </mat-checkbox>
+            </div>
             <mat-form-field class="mat-block">
               <mat-label translate>device.description</mat-label>
               <textarea matInput formControlName="description" rows="2"></textarea>
@@ -133,7 +139,8 @@
             {count: alarmRulesFormGroup.get('alarms').value ?
                 alarmRulesFormGroup.get('alarms').value.length : 0} }}</ng-template>
           <tb-device-profile-alarms
-            formControlName="alarms">
+            formControlName="alarms"
+            [deviceProfileId]="null">
           </tb-device-profile-alarms>
         </form>
       </mat-step>

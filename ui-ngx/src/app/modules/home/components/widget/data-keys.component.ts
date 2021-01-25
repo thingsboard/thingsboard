@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import {
     Validators
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
-import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
+import { filter, map, mergeMap, publishReplay, refCount, share, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -142,6 +142,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
 
   searchText = '';
   private latestSearchTextResult: Array<DataKey> = null;
+  private fetchObservable$: Observable<Array<DataKey>> = null;
 
   private dirty = false;
 
@@ -260,6 +261,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
       if (!change.firstChange && change.currentValue !== change.previousValue) {
         if (propName === 'entityAliasId') {
           this.searchText = '';
+          this.fetchObservable$ = null;
           this.latestSearchTextResult = null;
           this.dirty = true;
         } else if (['widgetType', 'datasourceType'].includes(propName)) {
@@ -405,14 +407,24 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     return key ? key.name : undefined;
   }
 
-  fetchKeys(searchText?: string): Observable<Array<DataKey>> {
-    if (this.latestSearchTextResult === null || this.searchText !== searchText) {
+  private fetchKeys(searchText?: string): Observable<Array<DataKey>> {
+    if (this.searchText !== searchText || this.latestSearchTextResult === null) {
       this.searchText = searchText;
-      let fetchObservable: Observable<Array<DataKey>> = null;
+      const dataKeyFilter = this.createDataKeyFilter(this.searchText);
+      return this.getKeys().pipe(
+        map(name => name.filter(dataKeyFilter)),
+        tap(res => this.latestSearchTextResult = res)
+      );
+    }
+    return of(this.latestSearchTextResult);
+  }
+
+  private getKeys(): Observable<Array<DataKey>> {
+    if (this.fetchObservable$ === null) {
+      let fetchObservable: Observable<Array<DataKey>>;
       if (this.datasourceType === DatasourceType.function) {
-        const dataKeyFilter = this.createDataKeyFilter(this.searchText);
         const targetKeysList = this.widgetType === widgetType.alarm ? this.alarmKeys : this.functionTypeKeys;
-        fetchObservable = of(targetKeysList.filter(dataKeyFilter));
+        fetchObservable = of(targetKeysList);
       } else {
         if (this.entityAliasId) {
           const dataKeyTypes = [DataKeyType.timeseries];
@@ -420,24 +432,25 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
             dataKeyTypes.push(DataKeyType.attribute);
             dataKeyTypes.push(DataKeyType.entityField);
             if (this.widgetType === widgetType.alarm) {
-                dataKeyTypes.push(DataKeyType.alarm);
+              dataKeyTypes.push(DataKeyType.alarm);
             }
           }
-          fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, this.searchText, dataKeyTypes);
+          fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, dataKeyTypes);
         } else {
           fetchObservable = of([]);
         }
       }
-      return fetchObservable.pipe(
-        tap(res => this.latestSearchTextResult = res)
+      this.fetchObservable$ = fetchObservable.pipe(
+        publishReplay(1),
+        refCount()
       );
     }
-    return of(this.latestSearchTextResult);
+    return this.fetchObservable$;
   }
 
   private createDataKeyFilter(query: string): (key: DataKey) => boolean {
     const lowercaseQuery = query.toLowerCase();
-    return key => key.name.toLowerCase().indexOf(lowercaseQuery) === 0;
+    return key => key.name.toLowerCase().startsWith(lowercaseQuery);
   }
 
   textIsNotEmpty(text: string): boolean {

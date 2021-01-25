@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import {
 import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
 import { RuleChainsTableConfigResolver } from '@modules/home/pages/rulechain/rulechains-table-config.resolver';
-import { Observable } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import { ResolvedRuleChainMetaData, RuleChain } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
@@ -72,6 +72,17 @@ export class RuleNodeComponentsResolver implements Resolve<Array<RuleNodeCompone
 
   resolve(route: ActivatedRouteSnapshot): Observable<Array<RuleNodeComponentDescriptor>> {
     return this.ruleChainService.getRuleNodeComponents(this.modulesMap);
+  }
+}
+
+@Injectable()
+export class TooltipsterResolver implements Resolve<any> {
+
+  constructor() {
+  }
+
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
+    return from(import('tooltipster'));
   }
 }
 
@@ -144,7 +155,8 @@ const routes: Routes = [
         resolve: {
           ruleChain: RuleChainResolver,
           ruleChainMetaData: ResolvedRuleChainMetaDataResolver,
-          ruleNodeComponents: RuleNodeComponentsResolver
+          ruleNodeComponents: RuleNodeComponentsResolver,
+          tooltipster: TooltipsterResolver
         }
       },
       {
@@ -162,7 +174,8 @@ const routes: Routes = [
           import: true
         },
         resolve: {
-          ruleNodeComponents: RuleNodeComponentsResolver
+          ruleNodeComponents: RuleNodeComponentsResolver,
+          tooltipster: TooltipsterResolver
         }
       }
     ]
@@ -178,6 +191,7 @@ const routes: Routes = [
     RuleChainResolver,
     ResolvedRuleChainMetaDataResolver,
     RuleNodeComponentsResolver,
+    TooltipsterResolver,
     RuleChainImportGuard
   ]
 })
