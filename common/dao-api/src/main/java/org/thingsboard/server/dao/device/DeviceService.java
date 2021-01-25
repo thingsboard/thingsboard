@@ -93,7 +93,7 @@ public interface DeviceService {
 
     Device unassignDeviceFromEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId);
 
-    PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
+    PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
 
-    PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, TimePageLink pageLink);
+    PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink);
 }

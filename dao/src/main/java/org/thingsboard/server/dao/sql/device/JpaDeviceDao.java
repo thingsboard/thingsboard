@@ -239,7 +239,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink) {
+    public PageData<Device> findDevicesByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink) {
         log.debug("Try to find devices by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
         return DaoUtil.toPageData(deviceRepository
                 .findByTenantIdAndEdgeId(
@@ -250,7 +250,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, TimePageLink pageLink) {
+    public PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink) {
         log.debug("Try to find devices by tenantId [{}], edgeId [{}], type [{}] and pageLink [{}]", tenantId, edgeId, type, pageLink);
         return DaoUtil.toPageData(deviceRepository
                 .findByTenantIdAndEdgeIdAndType(

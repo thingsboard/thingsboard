@@ -382,7 +382,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     }
 
     @Override
-    public PageData<EntityView> findEntityViewsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
+    public PageData<EntityView> findEntityViewsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
         log.trace("Executing findEntityViewsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
@@ -391,7 +391,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     }
 
     @Override
-    public PageData<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, TimePageLink pageLink) {
+    public PageData<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink) {
         log.trace("Executing findEntityViewsByTenantIdAndEdgeIdAndType, tenantId [{}], edgeId [{}], type [{}], pageLink [{}]", tenantId, edgeId, type, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(edgeId, INCORRECT_EDGE_ID + edgeId);

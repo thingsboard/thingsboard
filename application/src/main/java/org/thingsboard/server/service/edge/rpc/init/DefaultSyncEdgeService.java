@@ -55,7 +55,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -170,7 +170,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     private void syncRuleChains(TenantId tenantId, Edge edge) {
         log.trace("[{}] syncRuleChains [{}]", tenantId, edge.getName());
         try {
-            TimePageLink pageLink = new TimePageLink(DEFAULT_LIMIT);
+            PageLink pageLink = new PageLink(DEFAULT_LIMIT);
             PageData<RuleChain> pageData;
             do {
                 pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
@@ -192,7 +192,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     private void syncDevices(TenantId tenantId, Edge edge) {
         log.trace("[{}] syncDevices [{}]", tenantId, edge.getName());
         try {
-            TimePageLink pageLink = new TimePageLink(DEFAULT_LIMIT);
+            PageLink pageLink = new PageLink(DEFAULT_LIMIT);
             PageData<Device> pageData;
             do {
                 pageData = deviceService.findDevicesByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
@@ -214,7 +214,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     private void syncDeviceProfiles(TenantId tenantId, Edge edge) {
         log.trace("[{}] syncDeviceProfiles [{}]", tenantId, edge.getName());
         try {
-            TimePageLink pageLink = new TimePageLink(DEFAULT_LIMIT);
+            PageLink pageLink = new PageLink(DEFAULT_LIMIT);
             PageData<DeviceProfile> pageData;
             do {
                 pageData = deviceProfileService.findDeviceProfiles(tenantId, pageLink);
@@ -236,7 +236,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     private void syncAssets(TenantId tenantId, Edge edge) {
         log.trace("[{}] syncAssets [{}]", tenantId, edge.getName());
         try {
-            TimePageLink pageLink = new TimePageLink(DEFAULT_LIMIT);
+            PageLink pageLink = new PageLink(DEFAULT_LIMIT);
             PageData<Asset> pageData;
             do {
                 pageData = assetService.findAssetsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
@@ -258,7 +258,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     private void syncEntityViews(TenantId tenantId, Edge edge) {
         log.trace("[{}] syncEntityViews [{}]", tenantId, edge.getName());
         try {
-            TimePageLink pageLink = new TimePageLink(DEFAULT_LIMIT);
+            PageLink pageLink = new PageLink(DEFAULT_LIMIT);
             PageData<EntityView> pageData;
             do {
                 pageData = entityViewService.findEntityViewsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
@@ -280,7 +280,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     private void syncDashboards(TenantId tenantId, Edge edge) {
         log.trace("[{}] syncDashboards [{}]", tenantId, edge.getName());
         try {
-            TimePageLink pageLink = new TimePageLink(DEFAULT_LIMIT);
+            PageLink pageLink = new PageLink(DEFAULT_LIMIT);
             PageData<DashboardInfo> pageData;
             do {
                 pageData = dashboardService.findDashboardsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
@@ -302,7 +302,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     private void syncUsers(TenantId tenantId, Edge edge) {
         log.trace("[{}] syncUsers [{}]", tenantId, edge.getName());
         try {
-            TimePageLink pageLink = new TimePageLink(DEFAULT_LIMIT);
+            PageLink pageLink = new PageLink(DEFAULT_LIMIT);
             PageData<User> pageData;
             do {
                 pageData = userService.findTenantAdmins(tenantId, pageLink);
@@ -320,7 +320,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
     private void syncCustomerUsers(TenantId tenantId, Edge edge) {
         if (edge.getCustomerId() != null && !EntityId.NULL_UUID.equals(edge.getCustomerId().getId())) {
             saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.CUSTOMER, EdgeEventActionType.ADDED, edge.getCustomerId(), null);
-            TimePageLink pageLink = new TimePageLink(DEFAULT_LIMIT);
+            PageLink pageLink = new PageLink(DEFAULT_LIMIT);
             PageData<User> pageData;
             do {
                 pageData = userService.findCustomerUsers(tenantId, edge.getCustomerId(), pageLink);

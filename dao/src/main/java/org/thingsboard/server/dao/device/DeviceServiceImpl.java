@@ -564,7 +564,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
+    public PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
@@ -573,7 +573,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, TimePageLink pageLink) {
+    public PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndEdgeIdAndType, tenantId [{}], edgeId [{}], type [{}] pageLink [{}]", tenantId, edgeId, type, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(edgeId, INCORRECT_EDGE_ID + edgeId);

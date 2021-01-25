@@ -373,7 +373,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     }
 
     private void updateDependentRuleChains(TenantId tenantId, RuleChainId processingRuleChainId, EdgeId edgeId) {
-        TimePageLink pageLink = new TimePageLink(DEFAULT_LIMIT);
+        PageLink pageLink = new PageLink(DEFAULT_LIMIT);
         PageData<RuleChain> pageData;
         do {
             pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);

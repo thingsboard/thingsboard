@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -262,7 +261,6 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Assert.assertEquals(2, count);
     }
 
-    @NotNull
     private Edge createEdge(int i, String type) {
         Edge edge = new Edge();
         edge.setTenantId(tenantId);
