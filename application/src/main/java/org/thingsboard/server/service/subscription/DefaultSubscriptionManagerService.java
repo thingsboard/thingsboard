@@ -434,7 +434,9 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
             if (curTs > value) {
                 long startTs = subscription.getStartTime() > 0 ? Math.max(subscription.getStartTime(), value + 1L) : (value + 1L);
                 long endTs = subscription.getEndTime() > 0 ? Math.min(subscription.getEndTime(), curTs) : curTs;
-                queries.add(new BaseReadTsKvQuery(key, startTs, endTs, 0, 1000, Aggregation.NONE));
+                if (startTs > 1) {
+                    queries.add(new BaseReadTsKvQuery(key, startTs, endTs, 0, 1000, Aggregation.NONE));
+                }
             }
         });
         if (!queries.isEmpty()) {
