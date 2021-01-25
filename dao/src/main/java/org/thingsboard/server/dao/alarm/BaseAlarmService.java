@@ -320,17 +320,29 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         boolean hasNext = true;
         AlarmSeverity highestSeverity = null;
         AlarmQuery query;
-        while (hasNext && AlarmSeverity.CRITICAL != highestSeverity) {
+        while (hasNext) {
             query = new AlarmQuery(entityId, nextPageLink, alarmSearchStatus, alarmStatus, false, null);
             PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, query);
+
+            if(alarms.getData().isEmpty()) {
+                return null;
+            }
             if (alarms.hasNext()) {
                 nextPageLink = nextPageLink.nextPageLink();
+            } else {
+                hasNext = false;
             }
+
             AlarmSeverity severity = detectHighestSeverity(alarms.getData());
             if (severity == null) {
                 continue;
             }
-            if (severity == AlarmSeverity.CRITICAL || highestSeverity == null) {
+
+            if(severity == AlarmSeverity.CRITICAL) {
+                return severity;
+            }
+
+            if (highestSeverity == null) {
                 highestSeverity = severity;
             } else {
                 highestSeverity = highestSeverity.compareTo(severity) < 0 ? highestSeverity : severity;
