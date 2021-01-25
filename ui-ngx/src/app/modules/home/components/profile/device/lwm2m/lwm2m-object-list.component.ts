@@ -19,12 +19,11 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Valida
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { Observable } from 'rxjs';
-import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { filter, mergeMap, share, tap } from 'rxjs/operators';
 import { ObjectLwM2M } from './profile-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DeviceProfileService } from '@core/http/device-profile.service';
-import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 
 @Component({
@@ -115,6 +114,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     this.disabled = isDisabled;
     if (isDisabled) {
       this.lwm2mListFormGroup.disable({emitEvent: false});
+      this.clear();
     } else {
       this.lwm2mListFormGroup.enable({emitEvent: false});
     }
@@ -168,16 +168,14 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     return object ? object.name : undefined;
   }
 
-  // @TODO: add support page size
-  // @TODO: filter for id + name
   private fetchListObjects = (searchText?: string): Observable<Array<ObjectLwM2M>> => {
     this.searchText = searchText;
-    const pageLink = new PageLink(50, 0, searchText, {
+    const sortOrder = {
       property: 'name',
       direction: Direction.ASC
-    });
-    return this.deviceProfileService.getLwm2mObjectsPage(pageLink, {ignoreLoading: true}).pipe(
-      map(pageData => pageData.data)
+    };
+    return this.deviceProfileService.getLwm2mObjects(sortOrder, null, searchText).pipe(
+      mergeMap(objectsList => of(objectsList))
     );
   }
 

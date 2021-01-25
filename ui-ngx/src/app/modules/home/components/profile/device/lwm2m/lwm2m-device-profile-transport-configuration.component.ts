@@ -74,7 +74,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     this.requiredValue = coerceBooleanProperty(value);
   }
 
-  private propagateChange = (v: any) => { };
+  private propagateChange = (v: any) => {
+  };
 
   constructor(private store: Store<AppState>,
               private fb: FormBuilder,
@@ -130,8 +131,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   writeValue(value: any | null): void {
     this.configurationValue = (Object.keys(value).length === 0) ? getDefaultProfileConfig() : value;
     this.lwm2mDeviceConfigFormGroup.patchValue({
-        configurationJson: this.configurationValue
-      }, {emitEvent: false});
+      configurationJson: this.configurationValue
+    }, {emitEvent: false});
     this.initWriteValue();
   }
 
@@ -143,7 +144,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         property: 'id',
         direction: Direction.ASC
       };
-      this.deviceProfileService.getLwm2mObjects(modelValue.objectIds, null, sortOrder).subscribe(
+      this.deviceProfileService.getLwm2mObjects(sortOrder, modelValue.objectIds, null).subscribe(
         (objectsList) => {
           modelValue.objectsList = objectsList;
           this.updateWriteValue(modelValue);
@@ -300,9 +301,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   private addInstances = (attribute: string[], telemetry: string[], clientObserveAttrTelemetry: ObjectLwM2M[]): void => {
     const instancesPath = attribute.concat(telemetry)
-                                   .filter(instance => !instance.includes('/0/'))
-                                   .map(instance => this.convertPathToInstance(instance))
-                                   .sort();
+      .filter(instance => !instance.includes('/0/'))
+      .map(instance => this.convertPathToInstance(instance))
+      .sort();
 
     new Set(instancesPath).forEach(path => {
       const pathParameter = Array.from(path.split('/'), Number);

@@ -81,10 +81,14 @@ public class LwM2MModelsRepository {
      * if textSearch is null then it uses AllList from  List<ObjectModel>)
      */
     public List<LwM2mObject> getLwm2mObjects(int[] objectIds, String textSearch, String sortProperty, String sortOrder) {
-        return getLwm2mObjects((objectIds.length > 0 && textSearch != null && !textSearch.isEmpty()) ?
-                        (ObjectModel element) -> IntStream.of(objectIds).anyMatch(x -> x == element.id) || element.name.contains(textSearch) :
-                        (objectIds.length > 0) ?
-                                (ObjectModel element) -> IntStream.of(objectIds).anyMatch(x -> x == element.id) :
+        if (objectIds == null && textSearch != null && !textSearch.isEmpty()) {
+             objectIds = getObjectIdFromTextSearch(textSearch);
+        }
+        int[] finalObjectIds = objectIds;
+        return getLwm2mObjects((objectIds != null && objectIds.length > 0  && textSearch != null && !textSearch.isEmpty()) ?
+                        (ObjectModel element) -> IntStream.of(finalObjectIds).anyMatch(x -> x == element.id) || element.name.toLowerCase().contains(textSearch.toLowerCase()) :
+                        (objectIds != null && objectIds.length > 0) ?
+                                (ObjectModel element) -> IntStream.of(finalObjectIds).anyMatch(x -> x == element.id) :
                                 (textSearch != null && !textSearch.isEmpty()) ?
                                         (ObjectModel element) -> element.name.contains(textSearch) :
                                         null,
@@ -165,7 +169,10 @@ public class LwM2MModelsRepository {
      * PageNumber = 1, PageSize = List<LwM2mObject>.size()
      */
     public PageData<LwM2mObject> findLwm2mListObjects(PageLink pageLink) {
-        PageImpl page = new PageImpl(getLwm2mObjects(getObjectIdFromTextSearch(pageLink.getTextSearch()), pageLink.getTextSearch(), pageLink.getSortOrder().getProperty(), pageLink.getSortOrder().getDirection().name()));
+        PageImpl page = new PageImpl(getLwm2mObjects(getObjectIdFromTextSearch(pageLink.getTextSearch()),
+                                                                               pageLink.getTextSearch(),
+                                                                               pageLink.getSortOrder().getProperty(),
+                                                                               pageLink.getSortOrder().getDirection().name()));
         PageData pageData = new PageData(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
         return pageData;
     }

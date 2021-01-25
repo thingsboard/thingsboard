@@ -49,14 +49,15 @@ import java.util.Map;
 public class DeviceLwm2mController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/lwm2m/deviceProfile",  params = {"objectIds"},  method = RequestMethod.GET)
+    @RequestMapping(value = "/lwm2m/deviceProfile",  params = {"sortOrder", "sortProperty"},  method = RequestMethod.GET)
     @ResponseBody
-    public List<LwM2mObject> getLwm2mListObjects(@RequestParam int[] objectIds,
-                                                 @RequestParam(required = false) String textSearch,
-                                                 @RequestParam(required = false) String sortProperty,
-                                                 @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+    public List<LwM2mObject> getLwm2mListObjects(@RequestParam String sortOrder,
+                                                 @RequestParam String sortProperty,
+                                                 @RequestParam(required = false) int[] objectIds,
+                                                 @RequestParam(required = false) String searchText)
+                                                 throws ThingsboardException {
         try {
-            return lwM2MModelsRepository.getLwm2mObjects(objectIds, textSearch, sortProperty, sortOrder);
+            return lwM2MModelsRepository.getLwm2mObjects(objectIds, searchText, sortProperty, sortOrder);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -67,11 +68,11 @@ public class DeviceLwm2mController extends BaseController {
     @ResponseBody
     public PageData<LwM2mObject> getLwm2mListObjects(@RequestParam int pageSize,
                                                      @RequestParam int page,
-                                                     @RequestParam(required = false) String textSearch,
+                                                     @RequestParam(required = false) String searchText,
                                                      @RequestParam(required = false) String sortProperty,
                                                      @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            PageLink pageLink = createPageLink(pageSize, page, searchText, sortProperty, sortOrder);
             return checkNotNull(lwM2MModelsRepository.findDeviceLwm2mObjects(getTenantId(), pageLink));
         } catch (Exception e) {
             throw handleException(e);

@@ -21,7 +21,7 @@ import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { DeviceProfile, DeviceProfileInfo, DeviceTransportType } from '@shared/models/device.models';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, isEmptyStr } from '@core/utils';
 import { ObjectLwM2M, ServerSecurityConfig } from '@home/components/profile/device/lwm2m/profile-config.models';
 import { SortOrder } from '@shared/models/page/sort-order';
 
@@ -43,14 +43,14 @@ export class DeviceProfileService {
     return this.http.get<DeviceProfile>(`/api/deviceProfile/${deviceProfileId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getLwm2mObjects(objectIds: number[] = [], searchText?: string, sortOrder?: SortOrder, config?: RequestConfig):
+  public getLwm2mObjects(sortOrder: SortOrder, objectIds?: number[], searchText?: string, config?: RequestConfig):
     Observable<Array<ObjectLwM2M>> {
-    let url = `/api/lwm2m/deviceProfile/?objectIds=${objectIds}`;
-    if (isDefinedAndNotNull(searchText)) {
-      url += `&searchText=${searchText}`;
+    let url = `/api/lwm2m/deviceProfile/?sortProperty=${sortOrder.property}&sortOrder=${sortOrder.direction}`;
+    if (isDefinedAndNotNull(objectIds) && objectIds.length > 0) {
+      url += `&objectIds=${objectIds}`;
     }
-    if (isDefinedAndNotNull(sortOrder)) {
-      url += `&sortProperty=${sortOrder.property}&sortOrder=${sortOrder.direction}`;
+    if (isDefinedAndNotNull(searchText) && !isEmptyStr(searchText)) {
+      url += `&searchText=${searchText}`;
     }
     return this.http.get<Array<ObjectLwM2M>>(url, defaultHttpOptionsFromConfig(config));
   }
