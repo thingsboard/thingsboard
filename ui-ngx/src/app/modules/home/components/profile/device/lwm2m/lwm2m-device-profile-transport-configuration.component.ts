@@ -75,15 +75,15 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private propagateChange = (v: any) => {
-  };
+  }
 
   constructor(private store: Store<AppState>,
               private fb: FormBuilder,
               private deviceProfileService: DeviceProfileService,
               @Inject(WINDOW) private window: Window) {
     this.lwm2mDeviceProfileFormGroup = this.fb.group({
-      objectIds: [{}, Validators.required],
-      observeAttrTelemetry: [{clientLwM2M: []}, Validators.required],
+      objectIds: [[], Validators.required],
+      observeAttrTelemetry: [null, Validators.required],
       shortId: [null, Validators.required],
       lifetime: [null, Validators.required],
       defaultMinPeriod: [null, Validators.required],
@@ -95,10 +95,10 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     this.lwm2mDeviceConfigFormGroup = this.fb.group({
       configurationJson: [null, Validators.required]
     });
-    this.lwm2mDeviceProfileFormGroup.valueChanges.subscribe(() => {
+    this.lwm2mDeviceProfileFormGroup.valueChanges.subscribe((value) => {
       console.warn('main form');
       if (!this.disabled) {
-        this.updateModel();
+        this.updateDeviceProfileValue(value);
       }
     });
     this.lwm2mDeviceConfigFormGroup.valueChanges.subscribe(() => {
@@ -159,7 +159,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     const objectsList = value.objectsList;
     this.lwm2mDeviceProfileFormGroup.patchValue({
         objectIds: value,
-        observeAttrTelemetry: {clientLwM2M: this.getObserveAttrTelemetryObjects(objectsList)},
+        observeAttrTelemetry: this.getObserveAttrTelemetryObjects(objectsList),
         shortId: this.configurationValue.bootstrap.servers.shortId,
         lifetime: this.configurationValue.bootstrap.servers.lifetime,
         defaultMinPeriod: this.configurationValue.bootstrap.servers.defaultMinPeriod,
@@ -173,9 +173,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   private updateModel = (): void => {
     let configuration: DeviceProfileTransportConfiguration = null;
-    if (this.lwm2mDeviceConfigFormGroup.valid) {
-      this.upDateValueToJson();
-      configuration = this.lwm2mDeviceConfigFormGroup.getRawValue().configurationJson;
+    if (this.lwm2mDeviceConfigFormGroup.valid && this.lwm2mDeviceProfileFormGroup.valid) {
+      configuration = this.lwm2mDeviceConfigFormGroup.value.configurationJson;
       configuration.type = DeviceTransportType.LWM2M;
     }
     this.propagateChange(configuration);
@@ -183,89 +182,31 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   private updateObserveAttrTelemetryObjectFormGroup = (objectsList: ObjectLwM2M[]): void => {
     this.lwm2mDeviceProfileFormGroup.patchValue({
-        observeAttrTelemetry: {clientLwM2M: this.getObserveAttrTelemetryObjects(objectsList)}
+        observeAttrTelemetry: this.getObserveAttrTelemetryObjects(objectsList)
       },
       {emitEvent: false});
-    this.lwm2mDeviceProfileFormGroup.get('observeAttrTelemetry').markAsPristine({
-      onlySelf: true
-    });
+    // this.lwm2mDeviceProfileFormGroup.get('observeAttrTelemetry').markAsPristine({
+    //   onlySelf: true
+    // });
   }
 
-  private upDateValueToJson = (): void => {
-    this.upDateValueToJsonTab0();
-    this.upDateValueToJsonTab1();
-  }
-
-  private upDateValueToJsonTab0 = (): void => {
-    if (!this.lwm2mDeviceProfileFormGroup.get('observeAttrTelemetry').pristine) {
-      this.upDateObserveAttrTelemetryFromGroupToJson(
-        this.lwm2mDeviceProfileFormGroup.get('observeAttrTelemetry').value.clientLwM2M
-      );
-      this.lwm2mDeviceProfileFormGroup.get('observeAttrTelemetry').markAsPristine({
-        onlySelf: true
-      });
+  private updateDeviceProfileValue(config): void {
+    if (this.lwm2mDeviceProfileFormGroup.valid) {
+      this.upDateObserveAttrTelemetryFromGroupToJson(config.observeAttrTelemetry.clientLwM2M);
+      this.configurationValue.bootstrap.bootstrapServer = config.bootstrapServer;
+      this.configurationValue.bootstrap.lwm2mServer = config.lwm2mServer;
+      const bootstrapServers = this.configurationValue.bootstrap.servers;
+      bootstrapServers.shortId = config.shortId;
+      bootstrapServers.lifetime = config.lifetime;
+      bootstrapServers.defaultMinPeriod = config.defaultMinPeriod;
+      bootstrapServers.notifIfDisabled = config.notifIfDisabled;
+      bootstrapServers.binding = config.binding;
       this.upDateJsonAllConfig();
-    }
-  }
-
-  private upDateValueToJsonTab1 = (): void => {
-    this.upDateValueServersToJson();
-    if (!this.lwm2mDeviceProfileFormGroup.get('bootstrapServer').pristine) {
-      this.configurationValue.bootstrap.bootstrapServer = this.lwm2mDeviceProfileFormGroup.get('bootstrapServer').value;
-      this.lwm2mDeviceProfileFormGroup.get('bootstrapServer').markAsPristine({
-        onlySelf: true
-      });
-      this.upDateJsonAllConfig();
-    }
-    if (!this.lwm2mDeviceProfileFormGroup.get('lwm2mServer').pristine) {
-      this.configurationValue.bootstrap.lwm2mServer = this.lwm2mDeviceProfileFormGroup.get('lwm2mServer').value;
-      this.lwm2mDeviceProfileFormGroup.get('lwm2mServer').markAsPristine({
-        onlySelf: true
-      });
-      this.upDateJsonAllConfig();
+      this.updateModel();
     }
   }
 
-  private upDateValueServersToJson = (): void => {
-    const bootstrapServers = this.configurationValue.bootstrap.servers;
-    if (!this.lwm2mDeviceProfileFormGroup.get('shortId').pristine) {
-      bootstrapServers.shortId = this.lwm2mDeviceProfileFormGroup.get('shortId').value;
-      this.lwm2mDeviceProfileFormGroup.get('shortId').markAsPristine({
-        onlySelf: true
-      });
-      this.upDateJsonAllConfig();
-    }
-    if (!this.lwm2mDeviceProfileFormGroup.get('lifetime').pristine) {
-      bootstrapServers.lifetime = this.lwm2mDeviceProfileFormGroup.get('lifetime').value;
-      this.lwm2mDeviceProfileFormGroup.get('lifetime').markAsPristine({
-        onlySelf: true
-      });
-      this.upDateJsonAllConfig();
-    }
-    if (!this.lwm2mDeviceProfileFormGroup.get('defaultMinPeriod').pristine) {
-      bootstrapServers.defaultMinPeriod = this.lwm2mDeviceProfileFormGroup.get('defaultMinPeriod').value;
-      this.lwm2mDeviceProfileFormGroup.get('defaultMinPeriod').markAsPristine({
-        onlySelf: true
-      });
-      this.upDateJsonAllConfig();
-    }
-    if (!this.lwm2mDeviceProfileFormGroup.get('notifIfDisabled').pristine) {
-      bootstrapServers.notifIfDisabled = this.lwm2mDeviceProfileFormGroup.get('notifIfDisabled').value;
-      this.lwm2mDeviceProfileFormGroup.get('notifIfDisabled').markAsPristine({
-        onlySelf: true
-      });
-      this.upDateJsonAllConfig();
-    }
-    if (!this.lwm2mDeviceProfileFormGroup.get('binding').pristine) {
-      bootstrapServers.binding = this.lwm2mDeviceProfileFormGroup.get('binding').value;
-      this.lwm2mDeviceProfileFormGroup.get('binding').markAsPristine({
-        onlySelf: true
-      });
-      this.upDateJsonAllConfig();
-    }
-  }
-
-  private getObserveAttrTelemetryObjects = (listObject: ObjectLwM2M[]): ObjectLwM2M [] => {
+  private getObserveAttrTelemetryObjects = (listObject: ObjectLwM2M[]): object => {
     const clientObserveAttrTelemetry = listObject;
     if (this.configurationValue[this.observeAttr]) {
       const observeArray = this.configurationValue[this.observeAttr][this.observe];
@@ -291,7 +232,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     clientObserveAttrTelemetry.forEach(obj => {
       obj.instances.sort((a, b) => a.id - b.id);
     });
-    return clientObserveAttrTelemetry;
+    return {clientLwM2M: clientObserveAttrTelemetry};
   }
 
   private includesNotZeroInstance = (attribute: string[], telemetry: string[]): boolean => {
@@ -480,7 +421,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     return pathParameterIndexes;
   }
 
-  private getObjectsFromJsonAllConfig = (): number [] => {
+  private getObjectsFromJsonAllConfig = (): number[] => {
     const objectsIds = new Set<number>();
     if (this.configurationValue[this.observeAttr]) {
       if (this.configurationValue[this.observeAttr][this.observe]) {
@@ -503,20 +444,17 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private upDateJsonAllConfig = (): void => {
-    this.lwm2mDeviceProfileFormGroup.patchValue({
+    this.lwm2mDeviceConfigFormGroup.patchValue({
       configurationJson: this.configurationValue
     }, {emitEvent: false});
-    this.lwm2mDeviceProfileFormGroup.markAsPristine({
-      onlySelf: true
-    });
   }
 
   addObjectsList = (value: ObjectLwM2M[]): void => {
-    this.updateObserveAttrTelemetryObjectFormGroup(deepClone(value));
+    this.updateObserveAttrTelemetryObjectFormGroup(value);
   }
 
   removeObjectsList = (value: ObjectLwM2M): void => {
-    const objectsOld = deepClone(this.lwm2mDeviceProfileFormGroup.get('observeAttrTelemetry').value.clientLwM2M);
+    const objectsOld = this.lwm2mDeviceProfileFormGroup.get('observeAttrTelemetry').value.clientLwM2M;
     const isIdIndex = (element) => element.id === value.id;
     const index = objectsOld.findIndex(isIdIndex);
     if (index >= 0) {
@@ -526,25 +464,23 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     this.removeObserveAttrTelemetryFromJson(this.observe, value.id);
     this.removeObserveAttrTelemetryFromJson(this.telemetry, value.id);
     this.removeObserveAttrTelemetryFromJson(this.attribute, value.id);
-    this.removeObserveAttrTelemetryFromJson(this.attribute, value.id);
     this.removeKeyNameFromJson(value.id);
     this.upDateJsonAllConfig();
   }
 
   private removeObserveAttrTelemetryFromJson = (observeAttrTel: string, id: number): void => {
-    const isIdIndex = (element) => Array.from(element.substring(1).split('/'), Number)[0] === id;
+    const isIdIndex = (element: string) => element.startsWith(`/${id}`);
     let index = this.configurationValue[this.observeAttr][observeAttrTel].findIndex(isIdIndex);
     while (index >= 0) {
       this.configurationValue[this.observeAttr][observeAttrTel].splice(index, 1);
-      index = this.configurationValue[this.observeAttr][observeAttrTel].findIndex(isIdIndex);
+      index = this.configurationValue[this.observeAttr][observeAttrTel].findIndex(isIdIndex, index);
     }
   }
 
   private removeKeyNameFromJson = (id: number): void => {
     const keyNameJson = this.configurationValue[this.observeAttr][this.keyName];
     Object.keys(keyNameJson).forEach(key => {
-      const idKey = Array.from(key.substring(1).split('/'), Number)[0];
-      if (idKey === id) {
+      if (key.startsWith(`/${id}`)) {
         delete keyNameJson[key];
       }
     });

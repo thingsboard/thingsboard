@@ -124,7 +124,9 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   writeValue(value: any): void {
-    this.buildClientObjectsLwM2M(value.clientLwM2M);
+    if (isDefinedAndNotNull(value)) {
+      this.buildClientObjectsLwM2M(value.clientLwM2M);
+    }
   }
 
   private buildClientObjectsLwM2M = (objectsLwM2M: ObjectLwM2M []): void => {

@@ -25,6 +25,7 @@ import { ObjectLwM2M } from './profile-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { Direction } from '@shared/models/page/sort-order';
+import { isDefined } from '@core/utils';
 
 @Component({
   selector: 'tb-profile-lwm2m-object-list',
@@ -114,7 +115,9 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     this.disabled = isDisabled;
     if (isDisabled) {
       this.lwm2mListFormGroup.disable({emitEvent: false});
-      this.clear();
+      if (isDefined(this.objectInput)) {
+        this.clear();
+      }
     } else {
       this.lwm2mListFormGroup.enable({emitEvent: false});
     }
@@ -144,7 +147,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
       this.lwm2mListFormGroup.get('objectsList').setValue(this.objectsList);
       this.addList.next(this.objectsList);
     }
-    this.propagateChange(this.modelValue);
+    // this.propagateChange(this.modelValue);
     this.clear();
   }
 
@@ -159,7 +162,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
       if (!this.modelValue.length) {
         this.modelValue = null;
       }
-      this.propagateChange(this.modelValue);
+      // this.propagateChange(this.modelValue);
       this.clear();
     }
   }
