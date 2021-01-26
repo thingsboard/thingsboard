@@ -20,12 +20,12 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Observable, of } from 'rxjs';
-import { filter, mergeMap, share, tap } from 'rxjs/operators';
+import { filter, map, mergeMap, tap } from 'rxjs/operators';
 import { ObjectLwM2M } from './profile-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { Direction } from '@shared/models/page/sort-order';
-import { isDefined } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, isEmptyStr } from '@core/utils';
 
 @Component({
   selector: 'tb-profile-lwm2m-object-list',
@@ -42,6 +42,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
 
   private requiredValue: boolean;
   private dirty = false;
+  private allObjectsList: Observable<Array<ObjectLwM2M>>;
 
   lwm2mListFormGroup: FormGroup;
   modelValue: Array<number> | null;
@@ -71,7 +72,8 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
 
   @ViewChild('objectInput') objectInput: ElementRef<HTMLInputElement>;
 
-  private propagateChange = (v: any) => { };
+  private propagateChange = (v: any) => {
+  };
 
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
@@ -106,8 +108,8 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
           }
         }),
         filter((value) => typeof value === 'string'),
-        mergeMap(name => this.fetchListObjects(name)),
-        share()
+        // map(value => value ? value : ''),
+        mergeMap(searchText => this.fetchListObjects(searchText))
       );
   }
 
@@ -147,7 +149,6 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
       this.lwm2mListFormGroup.get('objectsList').setValue(this.objectsList);
       this.addList.next(this.objectsList);
     }
-    // this.propagateChange(this.modelValue);
     this.clear();
   }
 
@@ -162,7 +163,6 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
       if (!this.modelValue.length) {
         this.modelValue = null;
       }
-      // this.propagateChange(this.modelValue);
       this.clear();
     }
   }
@@ -173,14 +173,33 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
 
   private fetchListObjects = (searchText?: string): Observable<Array<ObjectLwM2M>> => {
     this.searchText = searchText;
-    const sortOrder = {
-      property: 'name',
-      direction: Direction.ASC
-    };
-    return this.deviceProfileService.getLwm2mObjects(sortOrder, null, searchText).pipe(
-      mergeMap(objectsList => of(objectsList))
+    const filters = {names: [], ids: []};
+    if (isDefinedAndNotNull(searchText) && !isEmptyStr(searchText)) {
+      const ids = searchText.match(/\d+/g);
+      filters.ids = isDefinedAndNotNull(ids) ? ids.map(Number) as [] : filters.ids;
+      const names = searchText.trim().split(" ") as [];
+      filters.names = names;
+    }
+    const predicate = objectLwM2M => filters.names.filter(word => objectLwM2M.name.toUpperCase().includes(word.toUpperCase())).length>0
+      || filters.ids.includes(objectLwM2M.id);
+    return this.getListModels().pipe(
+      map(objectLwM2Ms => searchText ? objectLwM2Ms.filter(predicate) : objectLwM2Ms)
     );
   }
+
+  private getListModels(): Observable<Array<ObjectLwM2M>> {
+    if (!this.allObjectsList) {
+      const sortOrder = {
+        property: 'name',
+        direction: Direction.ASC
+      };
+      this.allObjectsList = this.deviceProfileService.getLwm2mObjects(sortOrder, null, null).pipe(
+        mergeMap(objectsList => of(objectsList))
+      );
+    }
+    return this.allObjectsList;
+  }
+
 
   onFocus = (): void => {
     if (this.dirty) {

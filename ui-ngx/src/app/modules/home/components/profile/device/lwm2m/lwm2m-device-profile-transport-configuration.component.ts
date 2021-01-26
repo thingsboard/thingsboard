@@ -96,7 +96,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       configurationJson: [null, Validators.required]
     });
     this.lwm2mDeviceProfileFormGroup.valueChanges.subscribe((value) => {
-      console.warn('main form');
       if (!this.disabled) {
         this.updateDeviceProfileValue(value);
       }
@@ -185,9 +184,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         observeAttrTelemetry: this.getObserveAttrTelemetryObjects(objectsList)
       },
       {emitEvent: false});
-    // this.lwm2mDeviceProfileFormGroup.get('observeAttrTelemetry').markAsPristine({
-    //   onlySelf: true
-    // });
   }
 
   private updateDeviceProfileValue(config): void {
