@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.service.attributes;
 
-import com.google.common.base.Ticker;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Ticker;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -31,16 +31,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-@ConditionalOnExpression("'${cache.attributes.enabled}'=='true' && '${cache.attributes.type:caffeine}'=='guava'")
+@ConditionalOnExpression("'${cache.attributes.enabled}'=='true' && '${cache.attributes.type:caffeine}'=='caffeine'")
 @Service
-public class GoogleTbAttributesCache implements TbAttributesCache {
+public class CaffeineTbAttributesCache implements TbAttributesCache {
     private final Map<TenantId, Cache<AttributesKey, AttributeCacheEntry>> tenantsCache = new ConcurrentHashMap<>();
 
     private final AttributesCacheConfiguration cacheConfiguration;
     private final TbCacheStatsService<Cache<AttributesKey, AttributeCacheEntry>> cacheStatsService;
 
-    public GoogleTbAttributesCache(AttributesCacheConfiguration cacheConfiguration,
-                                   @Qualifier("GuavaCacheStats") TbCacheStatsService<Cache<AttributesKey, AttributeCacheEntry>> cacheStatsService) {
+    public CaffeineTbAttributesCache(AttributesCacheConfiguration cacheConfiguration,
+                                     @Qualifier("CaffeineCacheStats") TbCacheStatsService<Cache<AttributesKey, AttributeCacheEntry>> cacheStatsService) {
         this.cacheConfiguration = cacheConfiguration;
         this.cacheStatsService = cacheStatsService;
     }
@@ -48,7 +48,7 @@ public class GoogleTbAttributesCache implements TbAttributesCache {
     private Cache<AttributesKey, AttributeCacheEntry> getTenantCache(TenantId tenantId) {
         return tenantsCache.computeIfAbsent(tenantId,
                 id -> {
-                    CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder()
+                    Caffeine<Object, Object> cacheBuilder = Caffeine.newBuilder()
                             .maximumSize(cacheConfiguration.getMaxSizePerTenant())
                             .expireAfterAccess(cacheConfiguration.getExpireAfterAccessInMinutes(), TimeUnit.MINUTES);
                     if (customTicker != null){

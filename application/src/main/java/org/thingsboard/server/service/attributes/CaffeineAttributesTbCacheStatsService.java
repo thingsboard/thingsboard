@@ -15,26 +15,26 @@
  */
 package org.thingsboard.server.service.attributes;
 
-import com.google.common.cache.Cache;
+import com.github.benmanes.caffeine.cache.Cache;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.TenantId;
 
 
 @Service
-@Qualifier("GuavaCacheStats")
-public class GoogleAttributesTbCacheStatsService extends AbstractAttributesTbCacheStatsService<Cache<AttributesKey, AttributeCacheEntry>> {
-    private static final String CACHE_MANAGER = "GuavaCacheManager";
+@Qualifier("CaffeineCacheStats")
+public class CaffeineAttributesTbCacheStatsService extends AbstractAttributesTbCacheStatsService<Cache<AttributesKey, AttributeCacheEntry>> {
+    private static final String CACHE_MANAGER = "CaffeineCacheManager";
 
-    public GoogleAttributesTbCacheStatsService(MeterRegistry meterRegistry) {
+    public CaffeineAttributesTbCacheStatsService(MeterRegistry meterRegistry) {
         super(meterRegistry);
     }
 
     @Override
     public void registerCacheStats(Cache<AttributesKey, AttributeCacheEntry> cache, TenantId tenantId) {
-        GuavaCacheMetrics.monitor(meterRegistry, cache, CACHE_STATS_NAME,
+        CaffeineCacheMetrics.monitor(meterRegistry, cache, CACHE_STATS_NAME,
                 "cacheManager", CACHE_MANAGER,
                 "name", tenantId.getId().toString());
     }

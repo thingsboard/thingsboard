@@ -22,8 +22,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -36,8 +36,8 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.service.queue.TbClusterService;
 
-
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -52,7 +52,7 @@ import static org.mockito.Mockito.when;
 
 
 @Slf4j
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(Parameterized.class)
 public class CachedAttributesServiceTest {
     private static final String scope = "scope";
     private static final String key = "testKey";
@@ -65,21 +65,35 @@ public class CachedAttributesServiceTest {
     private static final CustomerId customerId = new CustomerId(UUID.randomUUID());
     private static final DeviceId deviceId = new DeviceId(UUID.randomUUID());
 
-    private GoogleTbAttributesCache attributesCache;
+    private final TbAttributesCache attributesCache;
     private TbClusterService clusterService;
     private PartitionService partitionService;
     private AttributesService daoAttributesService;
     private CachedAttributesService cachedAttributesService;
 
-    @Before
-    public void before(){
-        AttributesCacheConfiguration cacheConfiguration =  AttributesCacheConfiguration.builder()
+    public CachedAttributesServiceTest(TbAttributesCache attributesCache) {
+        this.attributesCache = attributesCache;
+    }
+
+    @Parameterized.Parameters
+    public static Collection data() {
+        AttributesCacheConfiguration cacheConfiguration = AttributesCacheConfiguration.builder()
                 .expireAfterAccessInMinutes(1)
                 .maxSizePerTenant(10)
                 .build();
-        TbCacheStatsService<Cache<AttributesKey, AttributeCacheEntry>> mockedStatsService = mock(TbCacheStatsService.class);
+        TbCacheStatsService<?> mockedStatsService = mock(TbCacheStatsService.class);
         when(mockedStatsService.areCacheStatsEnabled()).thenReturn(false);
-        this.attributesCache = new GoogleTbAttributesCache(cacheConfiguration, mockedStatsService);
+        Object[][] data = new Object[][] {
+                {new GoogleTbAttributesCache(cacheConfiguration, (TbCacheStatsService<Cache<AttributesKey, AttributeCacheEntry>>) mockedStatsService)},
+                {new CaffeineTbAttributesCache(cacheConfiguration, (TbCacheStatsService<com.github.benmanes.caffeine.cache.Cache<AttributesKey, AttributeCacheEntry>>) mockedStatsService)}
+        };
+        return Arrays.asList(data);
+    }
+
+    @Before
+    public void before(){
+
+        this.attributesCache.invalidateAll();
 
         this.clusterService = mock(TbClusterService.class);
         this.partitionService = mock(PartitionService.class);
