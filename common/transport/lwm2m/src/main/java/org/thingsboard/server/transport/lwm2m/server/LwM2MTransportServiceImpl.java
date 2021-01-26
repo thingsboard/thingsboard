@@ -154,7 +154,7 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
                     lwM2MClient.setLwM2MTransportServiceImpl(this);
                     lwM2MClient.setSessionUuid(UUID.randomUUID());
                     this.sentLogsToThingsboard(LOG_LW2M_INFO + ": Client  Registered", registration);
-//                    this.setLwM2mFromClientValue(lwServer, registration, lwM2MClient);
+                    this.setLwM2mFromClientValue(lwServer, registration, lwM2MClient);
                     SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration);
                     if (sessionInfo != null) {
                         lwM2MClient.setDeviceUuid(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));

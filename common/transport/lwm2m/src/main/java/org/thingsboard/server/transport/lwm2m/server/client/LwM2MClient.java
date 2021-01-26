@@ -93,7 +93,7 @@ public class LwM2MClient implements Cloneable {
         this.pendingRequests.remove(path);
         if (this.pendingRequests.size() == 0) {
             this.initValue();
-//            this.lwM2MTransportServiceImpl.putDelayedUpdateResourcesThingsboard(this);
+            this.lwM2MTransportServiceImpl.putDelayedUpdateResourcesThingsboard(this);
         }
     }
 
@@ -106,7 +106,7 @@ public class LwM2MClient implements Cloneable {
                     ((LwM2mObjectInstance)((ReadResponse)resp).getContent()).getResources().forEach((k, v) -> {
                         String rez = pathIds.toString() + "/" + k;
                         if (((LwM2mObjectInstance) ((ReadResponse) resp).getContent()).getResource(k) instanceof LwM2mMultipleResource){
-//                            this.resources.put(rez, new ResourceValue(v.getInstances().values(), null, true));
+                            this.resources.put(rez, new ResourceValue(v.getValues(), null, true));
                         }
                         else {
                             this.resources.put(rez, new ResourceValue(null, v.getValue(), false));

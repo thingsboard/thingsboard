@@ -271,6 +271,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     const observeArray: Array<string> = [];
     const attributeArray: Array<string> = [];
     const telemetryArray: Array<string> = [];
+    const keyNameNew = {};
     const observeJson: ObjectLwM2M[] = JSON.parse(JSON.stringify(val));
     const paths = new Set<string>();
     let pathObj;
@@ -293,17 +294,21 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
                   const resourcesJson = instanceValue as ResourceLwM2M[];
                   if (resourcesJson.length > 0) {
                     resourcesJson.forEach(res => {
-                      for (const [resourceKey, idResource] of Object.entries(res)) {
+                      for (const [resourceKey, value] of Object.entries(res)) {
                         if (resourceKey === 'id') {
-                          pathRes = `/${pathObj}/${pathInst}/${idResource}`;
-                        } else if (resourceKey === 'observe' && idResource) {
+                          pathRes = `/${pathObj}/${pathInst}/${value}`;
+                        } else if (resourceKey === 'observe' && value) {
                           observeArray.push(pathRes);
-                        } else if (resourceKey === 'attribute' && idResource) {
+                        } else if (resourceKey === 'attribute' && value) {
                           attributeArray.push(pathRes);
                           paths.add(pathRes);
-                        } else if (resourceKey === 'telemetry' && idResource) {
+                        } else if (resourceKey === 'telemetry' && value) {
                           telemetryArray.push(pathRes);
                           paths.add(pathRes);
+                        }
+                        else if (resourceKey === this.keyName && paths.has(pathRes)) {
+                          console.warn(pathRes, value);
+                          keyNameNew[pathRes] = value;
                         }
                       }
                     });
@@ -326,7 +331,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       this.configurationValue[this.observeAttr][this.attribute] = attributeArray;
       this.configurationValue[this.observeAttr][this.telemetry] = telemetryArray;
     }
-    this.updateKeyName(paths);
+    this.configurationValue[this.observeAttr][this.keyName] = this.sortObjectKeyPathJson('keyName', keyNameNew);
   }
 
   sortObjectKeyPathJson = (key: string, value: object): object => {
@@ -350,41 +355,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       numeric: true,
       sensitivity: 'base'
     });
-  }
-
-  private updateKeyName = (paths: Set<string>): void => {
-    const keyNameNew = {};
-    paths.forEach(path => {
-      const pathParameter = this.findIndexesForIds(path);
-      if (pathParameter.length === 3) {
-        keyNameNew[path] = this.lwm2mDeviceProfileFormGroup.get('observeAttrTelemetry').value
-          .clientLwM2M[pathParameter[0]].instances[pathParameter[1]].resources[pathParameter[2]][this.keyName];
-      }
-    });
-    this.configurationValue[this.observeAttr][this.keyName] = this.sortObjectKeyPathJson('keyName', keyNameNew);
-  }
-
-  private findIndexesForIds = (path: string): number[] => {
-    const [objectId, instanceId, resourceId] = Array.from(path.substring(1).split('/'), Number);
-    // TODO: All paths to map
-    const pathParameterIndexes: number[] = [];
-    const objectsOld = this.lwm2mDeviceProfileFormGroup.get('observeAttrTelemetry').value.clientLwM2M as ObjectLwM2M[];
-    let isIdIndex = (element) => element.id === objectId;
-    const objIndex = objectsOld.findIndex(isIdIndex);
-    if (objIndex >= 0) {
-      pathParameterIndexes.push(objIndex);
-      isIdIndex = (element) => element.id === instanceId;
-      const instIndex = objectsOld[objIndex].instances.findIndex(isIdIndex);
-      if (instIndex >= 0) {
-        pathParameterIndexes.push(instIndex);
-        isIdIndex = (element) => element.id === resourceId;
-        const resIndex = objectsOld[objIndex].instances[instIndex].resources.findIndex(isIdIndex);
-        if (resIndex >= 0) {
-          pathParameterIndexes.push(resIndex);
-        }
-      }
-    }
-    return pathParameterIndexes;
   }
 
   private getObjectsFromJsonAllConfig = (): number[] => {
