@@ -628,8 +628,12 @@ export default abstract class LeafletMap {
     }
     for (const pointsList of pointsData) {
       pointsList.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
+		let pointColor = this.options.pointColor;
+		if (this.options.useColorPointFunction) {
+          pointColor = safeExecute(this.options.colorPointFunction,[data, pointsData, data.dsIndex]);
+        }
         const point = L.circleMarker(this.convertPosition(data), {
-          color: this.options.pointColor,
+          color: pointColor,
           radius: this.options.pointSize
         });
         if (!this.options.pointTooltipOnRightPanel) {
