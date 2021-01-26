@@ -16,23 +16,24 @@
 
 -->
 
-<section [formGroup]="observeAttrTelemetryFormGroup" class="mat-padding">
+<section [formGroup]="observeAttrTelemetryFormGroup">
   <mat-accordion multi="true" class="mat-body-1" formArrayName="clientLwM2M">
     <mat-expansion-panel
-      *ngFor="let objectLwM2M of clientLwM2MFormArray.controls; let i = index; trackBy: trackByParams"
+      *ngFor="let objectLwM2M of clientLwM2MFormArray.controls; let i = index;"
       [formGroupName]="i">
       <mat-expansion-panel-header>
-        <mat-panel-title fxLayoutAlign="space-between">
-          <div class="tb-panel-title"><b><i>{{ objectLwM2M.get('name').value}}</i></b> (object [<b>{{ objectLwM2M.get('id').value}}</b>])</div>
-            <button type="button"
-                    *ngIf="!disabled"
-                    [fxShow]="objectLwM2M.get('multiple').value"
-                    mat-button mat-icon-button (click)="addInstances($event, objectLwM2M.value)"
-                    matTooltip="{{'device-profile.lwm2m.add-instances-tip' | translate}}"
-                    matTooltipPosition="above">
-              <mat-icon class="material-icons">{{'add'}}</mat-icon>
-            </button>
+        <mat-panel-title fxLayoutAlign="start center">
+          <b><i>{{ objectLwM2M.get('name').value}}</i></b>&nbsp;&lt;id: {{ objectLwM2M.get('id').value}}>
         </mat-panel-title>
+        <mat-panel-description fxLayoutAlign="end center" *ngIf="!disabled">
+          <button type="button"
+                  [fxShow]="objectLwM2M.get('multiple').value"
+                  mat-button mat-icon-button (click)="addInstances($event, objectLwM2M.value)"
+                  matTooltip="{{'device-profile.lwm2m.add-instances-tip' | translate}}"
+                  matTooltipPosition="above">
+            <mat-icon class="material-icons">{{'add'}}</mat-icon>
+          </button>
+        </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div fxLayout="column" fxLayoutGap="8px" formArrayName="instances">

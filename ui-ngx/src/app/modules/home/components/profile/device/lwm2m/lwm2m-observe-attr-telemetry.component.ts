@@ -176,7 +176,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     this.observeAttrTelemetryFormGroup.get('clientLwM2M').updateValueAndValidity();
   }
 
-  trackByParams = (index: number): number => {
+  trackByParams = (index: number, element: any): number => {
     return index;
   }
 
