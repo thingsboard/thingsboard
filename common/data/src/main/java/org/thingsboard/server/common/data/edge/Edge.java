@@ -62,6 +62,7 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
         this.customerId = edge.getCustomerId();
         this.rootRuleChainId = edge.getRootRuleChainId();
         this.type = edge.getType();
+        this.label = edge.getLabel();
         this.name = edge.getName();
         this.routingKey = edge.getRoutingKey();
         this.secret = edge.getSecret();
