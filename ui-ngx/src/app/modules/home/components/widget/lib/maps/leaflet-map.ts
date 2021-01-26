@@ -626,7 +626,7 @@ export default abstract class LeafletMap {
       }
       this.points = new FeatureGroup();
     }
-	let pointColor = this.options.pointColor;
+	  let pointColor = this.options.pointColor;
     for (const pointsList of pointsData) {
       pointsList.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
         if (this.options.useColorPointFunction) {
