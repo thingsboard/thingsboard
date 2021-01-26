@@ -15,8 +15,19 @@
  */
 package org.thingsboard.server.common.data.sms.config;
 
-public enum SmsProviderType {
-    AWS_SNS,
-    TWILIO,
-    ALIYUN
+import lombok.Data;
+
+@Data
+public class AliyunSmsProviderConfiguration implements SmsProviderConfiguration {
+
+    private String accessKeyId;
+    private String accessKeySecret;
+    private String signName;
+    private String templateCode;
+
+    @Override
+    public SmsProviderType getType() {
+        return SmsProviderType.ALIYUN;
+    }
+
 }

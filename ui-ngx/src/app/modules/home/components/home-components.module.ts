@@ -118,6 +118,7 @@ import { TenantProfileConfigurationComponent } from '@home/components/profile/te
 import { SmsProviderConfigurationComponent } from '@home/components/sms/sms-provider-configuration.component';
 import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-sns-provider-configuration.component';
 import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
+import { AliyunSmsProviderConfigurationComponent } from '@home/components/sms/aliyun-sms-provider-configuration.component';
 import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
 
 @NgModule({
@@ -220,7 +221,8 @@ import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-dev
       EditAlarmDetailsDialogComponent,
       SmsProviderConfigurationComponent,
       AwsSnsProviderConfigurationComponent,
-      TwilioSmsProviderConfigurationComponent
+      TwilioSmsProviderConfigurationComponent,
+      AliyunSmsProviderConfigurationComponent
     ],
   imports: [
     CommonModule,
@@ -309,7 +311,8 @@ import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-dev
     DeviceProfileProvisionConfigurationComponent,
     SmsProviderConfigurationComponent,
     AwsSnsProviderConfigurationComponent,
-    TwilioSmsProviderConfigurationComponent
+    TwilioSmsProviderConfigurationComponent,
+    AliyunSmsProviderConfigurationComponent
   ],
   providers: [
     WidgetComponentService,

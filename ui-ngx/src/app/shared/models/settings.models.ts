@@ -68,13 +68,15 @@ export const phoneNumberPattern = /^\+[1-9]\d{1,14}$/;
 
 export enum SmsProviderType {
   AWS_SNS = 'AWS_SNS',
-  TWILIO = 'TWILIO'
+  TWILIO = 'TWILIO',
+  ALIYUN = 'ALIYUN'
 }
 
 export const smsProviderTypeTranslationMap = new Map<SmsProviderType, string>(
   [
     [SmsProviderType.AWS_SNS, 'admin.sms-provider-type-aws-sns'],
-    [SmsProviderType.TWILIO, 'admin.sms-provider-type-twilio']
+    [SmsProviderType.TWILIO, 'admin.sms-provider-type-twilio'],
+    [SmsProviderType.ALIYUN, 'admin.sms-provider-type-aliyun']
   ]
 );
 
@@ -90,7 +92,14 @@ export interface TwilioSmsProviderConfiguration {
   numberFrom?: string;
 }
 
-export type SmsProviderConfigurations = AwsSnsSmsProviderConfiguration & TwilioSmsProviderConfiguration;
+export interface AliyunSmsProviderConfiguration {
+  accessKeyId?: string;
+  accessKeySecret?: string;
+  signName?: string;
+  templateCode?: string;
+}
+
+export type SmsProviderConfigurations = AwsSnsSmsProviderConfiguration & TwilioSmsProviderConfiguration & AliyunSmsProviderConfiguration;
 
 export interface SmsProviderConfiguration extends SmsProviderConfigurations {
   type: SmsProviderType;
@@ -113,6 +122,11 @@ export function smsProviderConfigurationValidator(required: boolean): ValidatorF
             const twilioConfiguration: TwilioSmsProviderConfiguration = configuration;
             valid = isNotEmptyStr(twilioConfiguration.numberFrom) && isNotEmptyStr(twilioConfiguration.accountSid)
               && isNotEmptyStr(twilioConfiguration.accountToken);
+            break;
+          case SmsProviderType.ALIYUN:
+            const aliyunConfiguration: AliyunSmsProviderConfiguration = configuration;
+            valid = isNotEmptyStr(aliyunConfiguration.accessKeyId) && isNotEmptyStr(aliyunConfiguration.accessKeySecret)
+              && isNotEmptyStr(aliyunConfiguration.signName) && isNotEmptyStr(aliyunConfiguration.templateCode);
             break;
         }
       }
@@ -151,6 +165,15 @@ export function createSmsProviderConfiguration(type: SmsProviderType): SmsProvid
           accountToken: ''
         };
         smsProviderConfiguration = {...twilioSmsProviderConfiguration, type: SmsProviderType.TWILIO};
+        break;
+      case SmsProviderType.ALIYUN:
+        const aliyunSmsProviderConfiguration: AliyunSmsProviderConfiguration = {
+          accessKeyId: '',
+          accessKeySecret: '',
+          signName: '',
+          templateCode: ''
+        };
+        smsProviderConfiguration = {...aliyunSmsProviderConfiguration, type: SmsProviderType.ALIYUN};
         break;
     }
   }

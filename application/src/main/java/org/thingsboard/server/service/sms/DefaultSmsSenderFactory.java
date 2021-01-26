@@ -21,8 +21,10 @@ import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.common.data.sms.config.AwsSnsSmsProviderConfiguration;
 import org.thingsboard.server.common.data.sms.config.SmsProviderConfiguration;
 import org.thingsboard.server.common.data.sms.config.TwilioSmsProviderConfiguration;
+import org.thingsboard.server.common.data.sms.config.AliyunSmsProviderConfiguration;
 import org.thingsboard.server.service.sms.aws.AwsSmsSender;
 import org.thingsboard.server.service.sms.twilio.TwilioSmsSender;
+import org.thingsboard.server.service.sms.aliyun.AliyunSmsSender;
 
 @Component
 public class DefaultSmsSenderFactory implements SmsSenderFactory {
@@ -34,6 +36,8 @@ public class DefaultSmsSenderFactory implements SmsSenderFactory {
                 return new AwsSmsSender((AwsSnsSmsProviderConfiguration)config);
             case TWILIO:
                 return new TwilioSmsSender((TwilioSmsProviderConfiguration)config);
+            case ALIYUN:
+                return new AliyunSmsSender((AliyunSmsProviderConfiguration)config);
             default:
                 throw new RuntimeException("Unknown SMS provider type " + config.getType());
         }

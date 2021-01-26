@@ -109,6 +109,8 @@
         <protobuf-dynamic.version>1.0.2TB</protobuf-dynamic.version>
         <wire-schema.version>3.4.0</wire-schema.version>
         <twilio.version>7.54.2</twilio.version>
+        <aliyun-core.version>4.0.6</aliyun-core.version>
+        <aliyun-dysmsapi.version>1.1.0</aliyun-dysmsapi.version>
     </properties>
 
     <modules>
@@ -1389,6 +1391,16 @@
                 <artifactId>wire-schema</artifactId>
                 <version>${wire-schema.version}</version>
             </dependency>
+            <dependency>
+				<groupId>com.aliyun</groupId>
+				<artifactId>aliyun-java-sdk-core</artifactId>
+				<version>${aliyun-core.version}</version>
+			</dependency>			
+			<dependency>
+				<groupId>com.aliyun</groupId>
+				<artifactId>aliyun-java-sdk-dysmsapi</artifactId>
+				<version>${aliyun-dysmsapi.version}</version>
+			</dependency>
             <dependency>
                 <groupId>com.twilio.sdk</groupId>
                 <artifactId>twilio</artifactId>

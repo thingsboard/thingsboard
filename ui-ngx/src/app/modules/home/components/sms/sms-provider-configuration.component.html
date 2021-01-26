@@ -40,5 +40,11 @@
         formControlName="configuration">
       </tb-twilio-sms-provider-configuration>
     </ng-template>
+    <ng-template [ngSwitchCase]="smsProviderType.ALIYUN">
+      <tb-aliyun-sms-provider-configuration
+        [required]="required"
+        formControlName="configuration">
+      </tb-aliyun-sms-provider-configuration>
+    </ng-template>
   </div>
 </div>
