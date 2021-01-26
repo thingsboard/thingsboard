@@ -112,7 +112,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.settings.pointAsAnchorFunction = parseFunction(this.settings.pointAsAnchorFunction, ['data', 'dsData', 'dsIndex']);
     this.settings.tooltipFunction = parseFunction(this.settings.tooltipFunction, ['data', 'dsData', 'dsIndex']);
     this.settings.labelFunction = parseFunction(this.settings.labelFunction, ['data', 'dsData', 'dsIndex']);
-	this.settings.colorPointFunction = parseFunction(this.settings.colorPointFunction, ['data', 'dsData', 'dsIndex']);
+	  this.settings.colorPointFunction = parseFunction(this.settings.colorPointFunction, ['data', 'dsData', 'dsIndex']);
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.defaultSubscription;
     subscription.callbacks.onDataUpdated = () => {
@@ -179,11 +179,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
       if (this.settings.showPolygon) {
         this.mapWidget.map.updatePolygons(this.interpolatedTimeData);
       }
-      if (this.settings.showPoints) {
+      if (this.settings.showPoints || this.settings.useColorPointFunction) {
         this.mapWidget.map.updatePoints(formattedInterpolatedTimeData.map(ds => _.union(ds)), this.calcTooltip);
-      }
-	  if (this.settings.useColorPointFunction) {
-        this.mapWidget.map.updatePoints(_.values(_.union(this.interpolatedTimeData)[0]), this.calcTooltip);
       }
       this.mapWidget.map.updateMarkers(currentPosition, true, (trip) => {
         this.activeTrip = trip;
