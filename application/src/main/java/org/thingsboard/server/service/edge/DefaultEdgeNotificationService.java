@@ -288,6 +288,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                         }
                     }
                 } while (pageData != null && pageData.hasNext());
+                break;
             case DELETED:
                 EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
                 saveEdgeEvent(tenantId, edgeId, type, actionType, customerId, null);
