@@ -201,7 +201,7 @@ export type TripAnimationSettings = {
     pointAsAnchorFunction: GenericFunction;
     tooltipFunction: GenericFunction;
     labelFunction: GenericFunction;
-	useColorPointFunction: boolean;
+    useColorPointFunction: boolean;
     colorPointFunction: GenericFunction;
 };
 
