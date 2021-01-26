@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 
 import java.util.List;
@@ -44,6 +45,8 @@ public interface DeviceService {
     Device saveDevice(Device device);
 
     Device saveDeviceWithAccessToken(Device device, String accessToken);
+
+    Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials);
 
     Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, CustomerId customerId);
 

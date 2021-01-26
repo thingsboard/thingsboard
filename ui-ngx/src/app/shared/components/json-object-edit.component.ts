@@ -61,7 +61,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
 
   @Input() editorStyle: { [klass: string]: any };
 
-  @Input() sort: Function;
+  @Input() sort: (key: string, value: any) => any;
 
   private requiredValue: boolean;
 
@@ -227,8 +227,8 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
 
       if (this.modelValue) {
         this.contentValue = JSON.stringify(this.modelValue, isUndefined(this.sort) ? undefined :
-          (key, value) => {
-            return this.sort(key, value)
+          (key, objectValue) => {
+            return this.sort(key, objectValue);
           }, 2);
         this.objectValid = true;
       } else {

@@ -16,11 +16,23 @@
 package org.thingsboard.server.transport.lwm2m.server.client;
 
 import lombok.Data;
+
 import java.util.Map;
 
 @Data
 public class ResourceValue {
-    Map<Integer, ?> values;
+    Map<Integer, ?>  values;
     Object value;
     boolean multiInstances;
+
+    public ResourceValue(Map<Integer, ?> values, Object value, boolean multiInstances) {
+        this.values = values;
+        this.value = value;
+        this.multiInstances = multiInstances;
+    }
+
+    public Object getResourceValue() {
+        return this.multiInstances ? this.values : this.value;
+    }
+
 }

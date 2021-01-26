@@ -25,6 +25,7 @@ import java.util.concurrent.ScheduledFuture;
  * Created by ashvayka on 15.10.18.
  */
 @Data
+public
 class SessionMetaData {
 
     private volatile TransportProtos.SessionInfoProto sessionInfo;

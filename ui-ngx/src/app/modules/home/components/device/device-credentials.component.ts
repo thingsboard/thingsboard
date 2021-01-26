@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Inject, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -41,8 +41,7 @@ import {
   DeviceCredentialsDialogLwm2mData,
   END_POINT,
   getDefaultSecurityConfig,
-  JSON_ALL_CONFIG,
-  SecurityConfigModels
+  JSON_ALL_CONFIG
 } from '@home/pages/device/lwm2m/security-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
@@ -197,6 +196,7 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
         this.deviceCredentialsFormGroup.get('credentialsBasic').disable({emitEvent: false});
         break;
       case DeviceCredentialsType.X509_CERTIFICATE:
+      case DeviceCredentialsType.LWM2M_CREDENTIALS:
         this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([Validators.required]);
         this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity({emitEvent: false});
         this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
@@ -210,13 +210,6 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
         this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([]);
         this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity({emitEvent: false});
-        break;
-      case DeviceCredentialsType.LWM2M_CREDENTIALS:
-        this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([Validators.required]);
-        this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity({emitEvent: false});
-        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
-        this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
-        this.deviceCredentialsFormGroup.get('credentialsBasic').disable({emitEvent: false});
         break;
     }
   }
@@ -245,27 +238,39 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     });
   }
 
-  openSecurityInfoLwM2mDialog($event: Event, value: string, id: string): void {
+  openSecurityInfoLwM2mDialog($event: Event): void {
     if ($event) {
       $event.stopPropagation();
       $event.preventDefault();
     }
+    let credentialsValue = this.deviceCredentialsFormGroup.get('credentialsValue').value;
+    if (credentialsValue === null || credentialsValue.length === 0) {
+      credentialsValue = getDefaultSecurityConfig();
+    } else {
+      credentialsValue = JSON.parse(credentialsValue);
+    }
+    const credentialsId = this.deviceCredentialsFormGroup.get('credentialsId').value || DEFAULT_END_POINT;
     this.dialog.open<SecurityConfigComponent, DeviceCredentialsDialogLwm2mData, object>(SecurityConfigComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        jsonAllConfig: (value === null || value.length === 0) ? getDefaultSecurityConfig() as SecurityConfigModels : JSON.parse(value) as SecurityConfigModels,
-        endPoint: (id === null) ? DEFAULT_END_POINT : id,
-        isNew: (id === null || value === null || value.length === 0)
+        jsonAllConfig: credentialsValue,
+        endPoint: credentialsId
       }
     }).afterClosed().subscribe(
       (res) => {
         if (res) {
-          this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res[JSON_ALL_CONFIG]).length === 0 || JSON.stringify(res[JSON_ALL_CONFIG]) === "[{}]") ? null : JSON.stringify(res[JSON_ALL_CONFIG]));
-          this.deviceCredentialsFormGroup.get('credentialsId').patchValue((Object.keys(res[END_POINT]).length === 0 || JSON.stringify(res[END_POINT]) === "[{}]") ? null : JSON.stringify(res[END_POINT]).split('\"').join(''));
+          this.deviceCredentialsFormGroup.patchValue({
+            credentialsValue: this.isDefautLw2mResponse(res[JSON_ALL_CONFIG]) ? null : JSON.stringify(res[JSON_ALL_CONFIG]),
+            credentialsId: this.isDefautLw2mResponse(res[END_POINT]) ? null : JSON.stringify(res[END_POINT]).split('\"').join('')
+          });
           this.deviceCredentialsFormGroup.get('credentialsValue').markAsDirty();
         }
       }
     );
+  }
+
+  private isDefautLw2mResponse(response: object): boolean {
+    return Object.keys(response).length === 0 || JSON.stringify(response) === '[{}]';
   }
 }
