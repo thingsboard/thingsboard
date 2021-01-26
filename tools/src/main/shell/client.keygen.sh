@@ -16,7 +16,7 @@
 #
 
 usage() {
-    echo "This script generates client public/private rey pair, extracts them to a no-password RSA pem file,"
+    echo "This script generates client public/private key pair, extracts them to a no-password pem file,"
     echo "and imports server public key to client keystore"
     echo "usage: ./client.keygen.sh [-p file]"
     echo "    -p | --props | --properties file  Properties file. default value is ./keygen.properties"
@@ -70,6 +70,20 @@ while :
     done
 fi
 
+OPENSSL_CMD=""
+case $CLIENT_KEY_ALG in
+RSA)
+	OPENSSL_CMD="rsa"
+	;;
+EC)
+	OPENSSL_CMD="ec"
+	;;
+esac
+if [ -z "$OPENSSL_CMD" ]; then
+	echo "Unexpected CLIENT_KEY_ALG. Exiting."
+	exit 0
+fi
+
 echo "Generating SSL Key Pair..."
 
 keytool -genkeypair -v \
@@ -77,8 +91,8 @@ keytool -genkeypair -v \
   -keystore $CLIENT_FILE_PREFIX.jks \
   -keypass $CLIENT_KEY_PASSWORD \
   -storepass $CLIENT_KEYSTORE_PASSWORD \
-  -keyalg RSA \
-  -keysize 2048 \
+  -keyalg $CLIENT_KEY_ALG \
+  -keysize $CLIENT_KEY_SIZE\
   -validity 9999 \
   -dname "CN=$DOMAIN_SUFFIX, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE"
 
@@ -110,7 +124,7 @@ keytool --importcert \
    -noprompt
 
 echo "Exporting no-password pem certificate"
-openssl rsa -in $CLIENT_FILE_PREFIX.pem -out $CLIENT_FILE_PREFIX.nopass.pem -passin pass:$CLIENT_KEY_PASSWORD
+openssl $OPENSSL_CMD -in $CLIENT_FILE_PREFIX.pem -out $CLIENT_FILE_PREFIX.nopass.pem -passin pass:$CLIENT_KEY_PASSWORD
 tail -n +$(($(grep -m1 -n -e '-----BEGIN CERTIFICATE' $CLIENT_FILE_PREFIX.pem | cut -d: -f1) )) \
   $CLIENT_FILE_PREFIX.pem >> $CLIENT_FILE_PREFIX.nopass.pem
 

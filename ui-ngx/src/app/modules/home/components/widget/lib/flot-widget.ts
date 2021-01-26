@@ -388,7 +388,7 @@ export class TbFlot {
         item.settings = {};
       });
       subscription.datasources.forEach((item) => {
-        let datasource: Datasource = {
+        const datasource: Datasource = {
           type: item.type,
           entityType: item.entityType,
           entityId: item.entityId,
@@ -829,7 +829,7 @@ export class TbFlot {
       useDashboardTimewindow: false,
       type: widgetType.latest,
       callbacks: {
-        onDataUpdated: (subscription) => {this.thresholdsSourcesDataUpdated(subscription.data)}
+        onDataUpdated: (subscription) => this.thresholdsSourcesDataUpdated(subscription.data)
       }
     };
     this.ctx.subscriptionApi.createSubscription(thresholdsSourcesSubscriptionOptions, true).subscribe(
@@ -896,7 +896,7 @@ export class TbFlot {
       type: widgetType.latest,
       callbacks: {
         onDataUpdated: (subscription) => {
-          this.labelPatternsParamsDataUpdated(subscription.data)
+          this.labelPatternsParamsDataUpdated(subscription.data);
         }
       }
     };
@@ -918,22 +918,22 @@ export class TbFlot {
   }
 
   private substituteLabelPatterns(series: TbFlotSeries, seriesIndex: number) {
-    let seriesLabelPatternsSourcesData = this.labelPatternsSourcesData.filter((item) => {
+    const seriesLabelPatternsSourcesData = this.labelPatternsSourcesData.filter((item) => {
       return item.datasource.entityId === series.datasource.entityId;
     });
     let label = createLabelFromDatasource(series.datasource, series.dataKey.pattern);
     for (let i = 0; i < seriesLabelPatternsSourcesData.length; i++) {
-      let keyData = seriesLabelPatternsSourcesData[i];
+      const keyData = seriesLabelPatternsSourcesData[i];
       if (keyData && keyData.data && keyData.data[0]) {
-        let attrValue = keyData.data[0][1];
-        let attrName = keyData.dataKey.name;
+        const attrValue = keyData.data[0][1];
+        const attrName = keyData.dataKey.name;
         if (isDefined(attrValue) && (attrValue !== null)) {
           label = insertVariable(label, attrName, attrValue);
         }
       }
     }
     if (isDefined(this.subscription.legendData)) {
-      let targetLegendKeyIndex = this.subscription.legendData.keys.findIndex((key) => {
+      const targetLegendKeyIndex = this.subscription.legendData.keys.findIndex((key) => {
         return key.dataIndex === seriesIndex;
       });
       if (targetLegendKeyIndex !== -1) {
@@ -1098,7 +1098,7 @@ export class TbFlot {
               flex: '1'
             });
             let columnContent = '';
-            for (let i = c*maxRows; i < (c+1)*maxRows; i++) {
+            for (let i = c * maxRows; i < (c + 1) * maxRows; i++) {
               if (i >= hoverData.seriesHover.length) {
                 break;
               }
@@ -1287,7 +1287,7 @@ export class TbFlot {
     let minTimeHistorical: any;
     let hoverData: TbFlotSeriesHoverInfo;
     let value: any;
-    let lastValue: any;
+    let lastValue = 0;
     let minDistanceHistorical: number;
     const results: TbFlotHoverInfo[] = [{
       seriesHover: []

@@ -393,7 +393,9 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private Set<EntityId> getPropagationEntityIds(Alarm alarm) {
         if (alarm.isPropagate()) {
             List<EntityRelation> relations = relationService.findByTo(alarm.getTenantId(), alarm.getId(), RelationTypeGroup.ALARM);
-            return relations.stream().map(EntityRelation::getFrom).collect(Collectors.toSet());
+            Set<EntityId> propagationEntityIds = relations.stream().map(EntityRelation::getFrom).collect(Collectors.toSet());
+            propagationEntityIds.add(alarm.getOriginator());
+            return propagationEntityIds;
         } else {
             return Collections.singleton(alarm.getOriginator());
         }
