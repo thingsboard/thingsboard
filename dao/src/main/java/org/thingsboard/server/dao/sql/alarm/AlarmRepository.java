@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.model.sql.AlarmInfoEntity;
@@ -74,5 +75,13 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                                      @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
+
+    @Query("SELECT alarm.severity FROM AlarmEntity alarm" +
+            " WHERE alarm.tenantId = :tenantId" +
+            " AND alarm.originatorId = :entityId" +
+            " AND ((:status) IS NULL OR alarm.status in (:status))")
+    List<AlarmSeverity> findHighestAlarmSeverity(@Param("tenantId") UUID tenantId,
+                                                 @Param("entityId") UUID entityId,
+                                                 @Param("status") Set<AlarmStatus> status);
 
 }

@@ -28,26 +28,43 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.alarm.*;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.query.AlarmData;
+import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
-import org.thingsboard.server.common.data.relation.*;
+import org.thingsboard.server.common.data.query.DeviceTypeFilter;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.sql.alarm.AlarmRepository;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -71,6 +88,9 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Autowired
     private EntityService entityService;
+
+    @Autowired
+    private AlarmRepository alarmRepository;
 
     protected ExecutorService readResultsProcessingExecutor;
 
@@ -300,35 +320,23 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     @Override
     public AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
                                                   AlarmStatus alarmStatus) {
-        TimePageLink nextPageLink = new TimePageLink(100);
-        boolean hasNext = true;
-        AlarmSeverity highestSeverity = null;
-        AlarmQuery query;
-        while (hasNext && AlarmSeverity.CRITICAL != highestSeverity) {
-            query = new AlarmQuery(entityId, nextPageLink, alarmSearchStatus, alarmStatus, false, null);
-            PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, query);
-
-            if (alarms.hasNext()) {
-                nextPageLink = nextPageLink.nextPageLink();
-            } else {
-                hasNext = false;
-            }
-
-            AlarmSeverity severity = detectHighestSeverity(alarms.getData());
-            if (severity == null) {
-                continue;
-            }
-
-            if (severity == AlarmSeverity.CRITICAL || highestSeverity == null) {
-                highestSeverity = severity;
-            } else {
-                highestSeverity = highestSeverity.compareTo(severity) < 0 ? highestSeverity : severity;
-            }
+        Set<AlarmStatus> statusList = null;
+        if (alarmSearchStatus != null) {
+            statusList = alarmSearchStatus.getStatuses();
+        } else if (alarmStatus != null) {
+            statusList = Collections.singleton(alarmStatus);
         }
-        return highestSeverity;
+
+        List<AlarmSeverity> alarmSeverities = alarmRepository.findHighestAlarmSeverity(tenantId.getId(), entityId.getId(), statusList);
+
+        return alarmSeverities.stream().min(AlarmSeverity::compareTo).orElse(null);
     }
 
-    private AlarmSeverity detectHighestSeverity(List<AlarmInfo> alarms) {
+    private AlarmDataQuery toQuery(AlarmDataPageLink pageLink) {
+        return new AlarmDataQuery(new DeviceTypeFilter(), pageLink, null, null, null, Collections.EMPTY_LIST);
+    }
+
+    private AlarmSeverity detectHighestSeverity(List<AlarmData> alarms) {
         if (!alarms.isEmpty()) {
             List<AlarmInfo> sorted = new ArrayList(alarms);
             sorted.sort(Comparator.comparing(Alarm::getSeverity));
