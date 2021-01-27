@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,20 +31,25 @@ import {
   routeMapSettingsSchema
 } from './schemes';
 import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
-import { addCondition, addGroupInfo, addToSchema, initSchema, mergeSchemes } from '@core/schema-utils';
+import {
+  addCondition,
+  addGroupInfo,
+  addToSchema,
+  initSchema,
+  mergeSchemes
+} from '@core/schema-utils';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import { getDefCenterPosition, parseFunction, parseWithTranslation } from './maps-utils';
+import { getDefCenterPosition, getProviderSchema, parseFunction, parseWithTranslation } from './common-maps-utils';
 import { Datasource, DatasourceData, JsonSettingsSchema, WidgetActionDescriptor } from '@shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
-import _ from 'lodash';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { isDefined } from '@core/utils';
 import { forkJoin, Observable, of } from 'rxjs';
-import { providerSets } from '@home/components/widget/lib/maps/providers';
+import { providerClass } from '@home/components/widget/lib/maps/providers';
 
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {
@@ -70,7 +75,7 @@ export class MapWidgetController implements MapWidgetInterface {
         this.settings.markerClick = this.getDescriptors('markerClick');
         this.settings.polygonClick = this.getDescriptors('polygonClick');
 
-        const MapClass = providerSets[this.provider]?.MapClass;
+        const MapClass = providerClass[this.provider];
         if (!MapClass) {
             return;
         }
@@ -101,19 +106,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     public static getProvidersSchema(mapProvider: MapProviders, ignoreImageMap = false) {
-        const providerSchema = _.cloneDeep(mapProviderSchema);
-        if (mapProvider) {
-          providerSchema.schema.properties.provider.default = mapProvider;
-        }
-        if (ignoreImageMap) {
-            providerSchema.form[0].items = providerSchema.form[0]?.items.filter(item => item.value !== 'image-map');
-        }
-        return mergeSchemes([providerSchema,
-            ...Object.keys(providerSets)?.map(
-                (key: string) => {
-                    const setting = providerSets[key];
-                    return addCondition(setting?.schema, `model.provider === '${setting.name}'`);
-                })]);
+       return getProviderSchema(mapProvider, ignoreImageMap);
     }
 
     public static settingsSchema(mapProvider: MapProviders, drawRoutes: boolean): JsonSettingsSchema {

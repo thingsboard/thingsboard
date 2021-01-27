@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1475,7 +1475,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("relationTypeGroup", relationTypeGroup.name());
 
         return restTemplate.exchange(
-                baseURL + "/api/relations?toId={toId}&toType={toType}&relationTypeGroup={relationTypeGroup}",
+                baseURL + "/api/relations/info?toId={toId}&toType={toType}&relationTypeGroup={relationTypeGroup}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntityRelationInfo>>() {
@@ -1510,7 +1510,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public List<EntityRelationInfo> findInfoByQuery(EntityRelationsQuery query) {
         return restTemplate.exchange(
-                baseURL + "/api/relations",
+                baseURL + "/api/relations/info",
                 HttpMethod.POST,
                 new HttpEntity<>(query),
                 new ParameterizedTypeReference<List<EntityRelationInfo>>() {
