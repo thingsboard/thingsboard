@@ -327,10 +327,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         return alarmSeverities.stream().min(AlarmSeverity::compareTo).orElse(null);
     }
 
-    private AlarmDataQuery toQuery(AlarmDataPageLink pageLink) {
-        return new AlarmDataQuery(new DeviceTypeFilter(), pageLink, null, null, null, Collections.EMPTY_LIST);
-    }
-
     private void deleteRelation(TenantId tenantId, EntityRelation alarmRelation) {
         log.debug("Deleting Alarm relation: {}", alarmRelation);
         relationService.deleteRelation(tenantId, alarmRelation);
