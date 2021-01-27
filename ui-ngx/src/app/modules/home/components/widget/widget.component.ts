@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import {
   ComponentFactoryResolver,
   ComponentRef,
   ElementRef,
+  Inject,
   Injector,
   Input,
   NgZone,
@@ -54,7 +55,7 @@ import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { UtilsService } from '@core/services/utils.service';
 import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
-import { deepClone, isDefined, objToBase64URI } from '@core/utils';
+import { deepClone, insertVariable, isDefined, objToBase64, objToBase64URI } from '@core/utils';
 import {
   IDynamicWidgetComponent,
   WidgetContext,
@@ -93,6 +94,9 @@ import { EntityDataService } from '@core/api/entity-data.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NotificationType } from '@core/notification/notification.models';
 import { AlarmDataService } from '@core/api/alarm-data.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ComponentType } from '@angular/cdk/portal';
+import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 
 @Component({
   selector: 'tb-widget',
@@ -161,6 +165,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private componentFactoryResolver: ComponentFactoryResolver,
               private elementRef: ElementRef,
               private injector: Injector,
+              private dialog: MatDialog,
+              @Inject(EMBED_DASHBOARD_DIALOG_TOKEN) private embedDashboardDialogComponent: ComponentType<any>,
               private widgetService: WidgetService,
               private resources: ResourcesService,
               private timeService: TimeService,
@@ -1007,7 +1013,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         const params = deepClone(this.widgetContext.stateController.getStateParams());
         this.updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
         if (type === WidgetActionType.openDashboardState) {
-          this.widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
+          if (descriptor.openInSeparateDialog) {
+            this.openDashboardStateInDialog(descriptor, entityId, entityName, additionalParams, entityLabel);
+          } else {
+            this.widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
+          }
         } else {
           this.widgetContext.stateController.updateState(targetDashboardStateId, params, descriptor.openRightLayout);
         }
@@ -1029,7 +1039,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         } else {
           url = `/dashboards/${targetDashboardId}?state=${state}`;
         }
-        this.router.navigateByUrl(url);
+        if (descriptor.openNewBrowserTab) {
+          window.open(url, '_blank');
+        } else {
+          this.router.navigateByUrl(url);
+        }
         break;
       case WidgetActionType.custom:
         const customFunction = descriptor.customFunction;
@@ -1077,6 +1091,61 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         );
         break;
     }
+  }
+
+  private openDashboardStateInDialog(descriptor: WidgetActionDescriptor,
+                                     entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) {
+    const dashboard = deepClone(this.widgetContext.stateController.dashboardCtrl.dashboardCtx.getDashboard());
+    const stateObject: StateObject = {};
+    stateObject.params = {};
+    const targetEntityParamName = descriptor.stateEntityParamName;
+    const targetDashboardStateId = descriptor.targetDashboardStateId;
+    let targetEntityId: EntityId;
+    if (descriptor.setEntityId) {
+      targetEntityId = entityId;
+    }
+    this.updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
+    if (targetDashboardStateId) {
+      stateObject.id = targetDashboardStateId;
+    }
+    let title = descriptor.dialogTitle;
+    if (!title) {
+      if (targetDashboardStateId && dashboard.configuration.states) {
+        const dashboardState = dashboard.configuration.states[targetDashboardStateId];
+        if (dashboardState) {
+          title = dashboardState.name;
+        }
+      }
+    }
+    if (!title) {
+      title = dashboard.title;
+    }
+    title = this.utils.customTranslation(title, title);
+    const params = stateObject.params;
+    const paramsEntityName = params && params.entityName ? params.entityName : '';
+    const paramsEntityLabel = params && params.entityLabel ? params.entityLabel : '';
+    title = insertVariable(title, 'entityName', paramsEntityName);
+    title = insertVariable(title, 'entityLabel', paramsEntityLabel);
+    for (const prop of Object.keys(params)) {
+      if (params[prop] && params[prop].entityName) {
+        title = insertVariable(title, prop + ':entityName', params[prop].entityName);
+      }
+      if (params[prop] && params[prop].entityLabel) {
+        title = insertVariable(title, prop + ':entityLabel', params[prop].entityLabel);
+      }
+    }
+    this.dialog.open(this.embedDashboardDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        dashboard,
+        state: objToBase64([ stateObject ]),
+        title,
+        hideToolbar: descriptor.dialogHideDashboardToolbar,
+        width: descriptor.dialogWidth,
+        height: descriptor.dialogHeight
+      }
+    });
   }
 
   private elementClick($event: Event) {

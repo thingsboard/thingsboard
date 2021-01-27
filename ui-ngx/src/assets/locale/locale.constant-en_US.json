@@ -527,7 +527,9 @@
         "type-assigned-from-tenant": "Assigned from Tenant",
         "type-assigned-to-tenant": "Assigned to Tenant",
         "type-provision-success": "Device provisioned",
-        "type-provision-failure": "Device provisioning was failed"
+        "type-provision-failure": "Device provisioning was failed",
+        "type-timeseries-updated": "Telemetry updated",
+        "type-timeseries-deleted": "Telemetry deleted"
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
@@ -928,6 +930,7 @@
         "unable-delete-device-alias-title": "Unable to delete device alias",
         "unable-delete-device-alias-text": "Device alias '{{deviceAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
         "is-gateway": "Is gateway",
+        "overwrite-activity-time": "Overwrite activity time for connected device",
         "public": "Public",
         "device-public": "Device is public",
         "select-device": "Select device",
@@ -1791,6 +1794,7 @@
             "entity-field": "Entity field",
             "access-token": "Access token",
             "isgateway": "Is Gateway",
+            "activity-time-from-gateway-device": "Activity time from gateway device",
             "description": "Description"
         },
         "stepper-text":{
@@ -2327,7 +2331,14 @@
         "target-dashboard-state-required": "Target dashboard state is required",
         "set-entity-from-widget": "Set entity from widget",
         "target-dashboard": "Target dashboard",
-        "open-right-layout": "Open right dashboard layout (mobile view)"
+        "open-right-layout": "Open right dashboard layout (mobile view)",
+        "open-in-separate-dialog": "Open in separate dialog",
+        "dialog-title": "Dialog title",
+        "dialog-hide-dashboard-toolbar": "Hide dashboard toolbar in dialog",
+        "dialog-width": "Dialog width in percents relative to viewport width",
+        "dialog-height": "Dialog height in percents relative to viewport height",
+        "dialog-size-range-error": "Dialog size percent value should be in a range from 1 to 100.",
+        "open-new-browser-tab": "Open in a new browser tab"
     },
     "widgets-bundle": {
         "current": "Current bundle",
@@ -2554,7 +2565,7 @@
             "zh_TW": "繁體中文",
             "en_US": "English",
             "it_IT": "Italiano",
-            "ko_KR": "한글",
+            "ko_KR": "한국어",
             "ru_RU": "Русский",
             "es_ES": "Español",
             "ja_JA": "日本語",
@@ -2566,7 +2577,8 @@
             "ro_RO": "Română",
             "lv_LV": "Latviešu",
             "ka_GE": "ქართული",
-            "pt_BR": "Português do Brasil"
+            "pt_BR": "Português do Brasil",
+            "sl_SI": "Slovenščina"
         }
     }
 }

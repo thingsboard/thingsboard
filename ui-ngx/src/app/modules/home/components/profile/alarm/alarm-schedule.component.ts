@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,11 +32,14 @@ import {
   AlarmSchedule,
   AlarmScheduleType,
   AlarmScheduleTypeTranslationMap,
-  dayOfWeekTranslations, getAlarmScheduleRangeText, timeOfDayToUTCTimestamp, utcTimestampToTimeOfDay
+  dayOfWeekTranslations,
+  getAlarmScheduleRangeText,
+  timeOfDayToUTCTimestamp,
+  utcTimestampToTimeOfDay
 } from '@shared/models/device.models';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
-import * as _moment from 'moment-timezone';
 import { MatCheckboxChange } from '@angular/material/checkbox';
+import { getDefaultTimezone } from '@shared/models/time/time.models';
 
 @Component({
   selector: 'tb-alarm-schedule',
@@ -57,8 +60,6 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
   disabled: boolean;
 
   alarmScheduleForm: FormGroup;
-
-  defaultTimezone = _moment.tz.guess();
 
   alarmScheduleTypes = Object.keys(AlarmScheduleType);
   alarmScheduleType = AlarmScheduleType;
@@ -93,9 +94,11 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
       items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)), this.validateItems)
     });
     this.alarmScheduleForm.get('type').valueChanges.subscribe((type) => {
-      this.alarmScheduleForm.reset({type, items: this.defaultItems, timezone: this.defaultTimezone}, {emitEvent: false});
-      this.updateValidators(type, true);
-      this.alarmScheduleForm.updateValueAndValidity();
+      getDefaultTimezone().subscribe((defaultTimezone) => {
+        this.alarmScheduleForm.reset({type, items: this.defaultItems, timezone: defaultTimezone}, {emitEvent: false});
+        this.updateValidators(type, true);
+        this.alarmScheduleForm.updateValueAndValidity();
+      });
     });
     this.alarmScheduleForm.valueChanges.subscribe(() => {
       this.updateModel();

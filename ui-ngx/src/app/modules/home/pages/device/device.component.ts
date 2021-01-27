@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -84,6 +84,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
         additionalInfo: this.fb.group(
           {
             gateway: [entity && entity.additionalInfo ? entity.additionalInfo.gateway : false],
+            overwriteActivityTime: [entity && entity.additionalInfo ? entity.additionalInfo.overwriteActivityTime : false],
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
           }
         )
@@ -96,8 +97,13 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
     this.entityForm.patchValue({deviceProfileId: entity.deviceProfileId});
     this.entityForm.patchValue({label: entity.label});
     this.entityForm.patchValue({deviceData: entity.deviceData});
-    this.entityForm.patchValue({additionalInfo:
-        {gateway: entity.additionalInfo ? entity.additionalInfo.gateway : false}});
+    this.entityForm.patchValue({
+      additionalInfo:
+        {
+          gateway: entity.additionalInfo ? entity.additionalInfo.gateway : false,
+          overwriteActivityTime: entity.additionalInfo ? entity.additionalInfo.overwriteActivityTime : false
+        }
+    });
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
   }
 
