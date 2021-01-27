@@ -368,6 +368,9 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         customerDevice.setCustomerId(customer.getId());
         customerDevice = deviceService.saveDevice(customerDevice);
 
+        // no one alarms was created
+        Assert.assertNull(alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, null));
+
         Alarm alarm1 = Alarm.builder()
                 .tenantId(tenantId)
                 .originator(customerDevice.getId())
