@@ -368,38 +368,35 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         customerDevice.setCustomerId(customer.getId());
         customerDevice = deviceService.saveDevice(customerDevice);
 
-        long ts = System.currentTimeMillis();
         Alarm alarm1 = Alarm.builder()
                 .tenantId(tenantId)
                 .originator(customerDevice.getId())
                 .type(TEST_ALARM)
                 .severity(AlarmSeverity.MAJOR)
                 .status(AlarmStatus.ACTIVE_UNACK)
-                .startTs(ts)
+                .startTs(System.currentTimeMillis())
                 .build();
         alarm1 = alarmService.createOrUpdateAlarm(alarm1).getAlarm();
         alarmService.clearAlarm(tenantId, alarm1.getId(), null, System.currentTimeMillis()).get();
 
-        ts = System.currentTimeMillis();
         Alarm alarm2 = Alarm.builder()
                 .tenantId(tenantId)
                 .originator(customerDevice.getId())
                 .type(TEST_ALARM)
                 .severity(AlarmSeverity.MINOR)
                 .status(AlarmStatus.ACTIVE_ACK)
-                .startTs(ts)
+                .startTs(System.currentTimeMillis())
                 .build();
         alarm2 = alarmService.createOrUpdateAlarm(alarm2).getAlarm();
         alarmService.clearAlarm(tenantId, alarm2.getId(), null, System.currentTimeMillis()).get();
 
-        ts = System.currentTimeMillis();
         Alarm alarm3 = Alarm.builder()
                 .tenantId(tenantId)
                 .originator(customerDevice.getId())
                 .type(TEST_ALARM)
                 .severity(AlarmSeverity.CRITICAL)
                 .status(AlarmStatus.ACTIVE_ACK)
-                .startTs(ts)
+                .startTs(System.currentTimeMillis())
                 .build();
         alarm3 = alarmService.createOrUpdateAlarm(alarm3).getAlarm();
 

@@ -52,7 +52,6 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.sql.alarm.AlarmRepository;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
@@ -61,7 +60,6 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -88,9 +86,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Autowired
     private EntityService entityService;
-
-    @Autowired
-    private AlarmRepository alarmRepository;
 
     protected ExecutorService readResultsProcessingExecutor;
 
@@ -327,23 +322,13 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             statusList = Collections.singleton(alarmStatus);
         }
 
-        List<AlarmSeverity> alarmSeverities = alarmRepository.findHighestAlarmSeverity(tenantId.getId(), entityId.getId(), statusList);
+        Set<AlarmSeverity> alarmSeverities = alarmDao.findAlarmSeverities(tenantId, entityId, statusList);
 
         return alarmSeverities.stream().min(AlarmSeverity::compareTo).orElse(null);
     }
 
     private AlarmDataQuery toQuery(AlarmDataPageLink pageLink) {
         return new AlarmDataQuery(new DeviceTypeFilter(), pageLink, null, null, null, Collections.EMPTY_LIST);
-    }
-
-    private AlarmSeverity detectHighestSeverity(List<AlarmData> alarms) {
-        if (!alarms.isEmpty()) {
-            List<AlarmInfo> sorted = new ArrayList(alarms);
-            sorted.sort(Comparator.comparing(Alarm::getSeverity));
-            return sorted.get(0).getSeverity();
-        } else {
-            return null;
-        }
     }
 
     private void deleteRelation(TenantId tenantId, EntityRelation alarmRelation) {

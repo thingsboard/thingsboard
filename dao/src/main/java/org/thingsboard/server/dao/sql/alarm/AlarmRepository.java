@@ -80,7 +80,7 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
             " WHERE alarm.tenantId = :tenantId" +
             " AND alarm.originatorId = :entityId" +
             " AND ((:status) IS NULL OR alarm.status in (:status))")
-    List<AlarmSeverity> findHighestAlarmSeverity(@Param("tenantId") UUID tenantId,
+    Set<AlarmSeverity> findAlarmSeverities(@Param("tenantId") UUID tenantId,
                                                  @Param("entityId") UUID entityId,
                                                  @Param("status") Set<AlarmStatus> status);
 
