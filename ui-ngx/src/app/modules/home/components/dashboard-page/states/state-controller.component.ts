@@ -14,13 +14,13 @@
 /// limitations under the License.
 ///
 
-import { IStateControllerComponent, StateControllerState } from '@home/pages/dashboard/states/state-controller.models';
+import { IStateControllerComponent, StateControllerState } from '@home/components/dashboard-page/states/state-controller.models';
 import { IDashboardController } from '../dashboard-page.models';
 import { DashboardState } from '@app/shared/models/dashboard.models';
 import { Subscription } from 'rxjs';
 import { NgZone, OnDestroy, OnInit, Directive } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { StatesControllerService } from '@home/pages/dashboard/states/states-controller.service';
+import { StatesControllerService } from '@home/components/dashboard-page/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { StateObject, StateParams } from '@app/core/api/widget-api.models';
 
@@ -30,6 +30,8 @@ export abstract class StateControllerComponent implements IStateControllerCompon
   stateObject: StateControllerState = [];
   dashboardCtrl: IDashboardController;
   preservedState: any;
+
+  stateControllerInstanceId: string;
 
   isMobileValue: boolean;
   set isMobile(val: boolean) {
@@ -139,7 +141,7 @@ export abstract class StateControllerComponent implements IStateControllerCompon
   }
 
   public preserveState() {
-    this.statesControllerService.preserveStateControllerState(this.stateControllerId(), this.stateObject);
+    this.statesControllerService.preserveStateControllerState(this.stateControllerInstanceId, this.stateObject);
   }
 
   public cleanupPreservedStates() {

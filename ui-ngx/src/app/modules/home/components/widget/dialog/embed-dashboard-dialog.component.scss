@@ -13,30 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.mqtt.credentials;
-
-import io.netty.handler.ssl.SslContext;
-import lombok.Data;
-import org.thingsboard.mqtt.MqttClientConfig;
-
-import java.util.Optional;
-
-@Data
-public class BasicCredentials implements MqttClientCredentials {
-
-    private String username;
-    private String password;
-
-    @Override
-    public Optional<SslContext> initSslContext() {
-        return Optional.empty();
+:host {
+  .dashboard-state-dialog {
+    .mat-dialog-content.dashboard-state-dialog-content {
+      max-height: 100%;
     }
 
-    @Override
-    public void configure(MqttClientConfig config) {
-        config.setUsername(username);
-        config.setPassword(password);
+    @media screen and (max-width: 599px) {
+      width: 100% !important;
+      height: 100% !important;
     }
 
+    @media screen and (min-width: 600px) {
+      width: 480px;
+      height: 600px;
+    }
+
+    @media screen and (min-width: 960px) {
+      width: 768px;
+      height: 600px;
+    }
+
+    @media screen and (min-width: 1280px) {
+      width: 1000px;
+      height: 800px;
+    }
+  }
 }
-

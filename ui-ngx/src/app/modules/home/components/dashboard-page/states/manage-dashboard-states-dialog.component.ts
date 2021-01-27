@@ -27,7 +27,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import {
   DashboardStateInfo,
   DashboardStatesDatasource
-} from '@home/pages/dashboard/states/manage-dashboard-states-dialog.component.models';
+} from '@home/components/dashboard-page/states/manage-dashboard-states-dialog.component.models';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -39,7 +39,7 @@ import { deepClone, isUndefined } from '@core/utils';
 import {
   DashboardStateDialogComponent,
   DashboardStateDialogData
-} from '@home/pages/dashboard/states/dashboard-state-dialog.component';
+} from '@home/components/dashboard-page/states/dashboard-state-dialog.component';
 
 export interface ManageDashboardStatesDialogData {
   states: {[id: string]: DashboardState };

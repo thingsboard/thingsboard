@@ -291,4 +291,11 @@ class AlarmState {
         }
         return updated;
     }
+
+    public void processAckAlarm(Alarm alarm) {
+        if (currentAlarm != null && currentAlarm.getId().equals(alarm.getId())) {
+            currentAlarm.setStatus(alarm.getStatus());
+            currentAlarm.setAckTs(alarm.getAckTs());
+        }
+    }
 }

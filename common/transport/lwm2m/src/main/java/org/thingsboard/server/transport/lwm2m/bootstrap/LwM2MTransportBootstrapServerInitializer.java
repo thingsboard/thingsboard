@@ -14,57 +14,56 @@
  * limitations under the License.
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap;
+
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 @Slf4j
 @Service
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true'&& '${transport.lwm2m.bootstrap.enable}'=='true')")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true'&& '${transport.lwm2m.bootstrap.enable:false}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled:false}'=='true'&& '${transport.lwm2m.bootstrap.enable:false}'=='true')")
 public class LwM2MTransportBootstrapServerInitializer {
 
-    @Autowired
-    @Qualifier("leshanBootstrapCert")
+    @Autowired(required = false)
+    @Qualifier("leshanBootstrapX509")
     private LeshanBootstrapServer lhBServerCert;
 
-    @Autowired
-    @Qualifier("leshanBootstrapRPK")
-    private LeshanBootstrapServer lhBServerRPK;
+    @Autowired(required = false)
+    @Qualifier("leshanBootstrapPsk")
+    private LeshanBootstrapServer lhBServerPsk;
+
+    @Autowired(required = false)
+    @Qualifier("leshanBootstrapRpk")
+    private LeshanBootstrapServer lhBServerRpk;
 
     @Autowired
     private LwM2MTransportContextBootstrap contextBS;
 
     @PostConstruct
     public void init() {
-        if (this.contextBS.getCtxBootStrap().isBootstrapStartAll()) {
-            this.lhBServerCert.start();
-            this.lhBServerRPK.start();
+        if (this.contextBS.getCtxBootStrap().getBootstrapStartPsk()) {
+            this.lhBServerPsk.start();
         }
-        else {
-            if (this.contextBS.getCtxBootStrap().getBootStrapDtlsMode() == LwM2MSecurityMode.X509.code) {
-                this.lhBServerCert.start();
-            }
-            else {
-                this.lhBServerRPK.start();
-            }
+        if (this.contextBS.getCtxBootStrap().getBootstrapStartRpk()) {
+            this.lhBServerRpk.start();
+        }
+        if (this.contextBS.getCtxBootStrap().getBootstrapStartX509()) {
+            this.lhBServerCert.start();
         }
     }
 
     @PreDestroy
     public void shutdown() throws InterruptedException {
         log.info("Stopping LwM2M transport Bootstrap Server!");
-        try {
-            lhBServerCert.destroy();
-            lhBServerRPK.destroy();
-        } finally {
-        }
+        lhBServerPsk.destroy();
+        lhBServerRpk.destroy();
+        lhBServerCert.destroy();
         log.info("LwM2M transport Bootstrap Server stopped!");
     }
 }

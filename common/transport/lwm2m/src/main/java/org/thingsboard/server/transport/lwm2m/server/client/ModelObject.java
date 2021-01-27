@@ -21,7 +21,7 @@ import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import java.util.Map;
 
 @Data
-public class ModelObject {
+public class ModelObject  implements Cloneable {
     /**
      * model one on all instance
      * for each instance only id resource with parameters of resources (observe, attr, telemetry)
@@ -37,5 +37,9 @@ public class ModelObject {
     public boolean removeInstance (int id ) {
         LwM2mObjectInstance instance = this.instances.get(id);
          return this.instances.remove(id, instance);
+    }
+
+    public ModelObject clone() throws CloneNotSupportedException {
+        return (ModelObject) super.clone();
     }
 }

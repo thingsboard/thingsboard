@@ -49,7 +49,6 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
         this.securityChecker = securityChecker;
     }
 
-    @Override
     public BootstrapSession begin(String endpoint, Identity clientIdentity) {
         boolean authorized;
         if (bsSecurityStore != null) {

@@ -82,15 +82,10 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
-        <!--  lechan start -->
         <dependency>
             <groupId>org.eclipse.leshan</groupId>
             <artifactId>leshan-server-cf</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.eclipse.leshan</groupId>-->
-<!--            <artifactId>leshan-server-cf</artifactId>-->
-<!--        </dependency>   -->
         <dependency>
             <groupId>org.eclipse.leshan</groupId>
             <artifactId>leshan-client-cf</artifactId>
@@ -100,12 +95,6 @@
             <groupId>org.eclipse.leshan</groupId>
             <artifactId>leshan-server-redis</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.eclipse.californium</groupId>-->
-<!--            <artifactId>californium-core</artifactId>-->
-<!--        </dependency>-->
-        <!--  leshan finish -->
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -124,14 +113,20 @@
         <dependency>
             <groupId>org.eclipse.californium</groupId>
             <artifactId>californium-core</artifactId>
-            <version>${californium.version}</version>
-            <type>test-jar</type>
+             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.californium</groupId>
+            <artifactId>californium-core</artifactId>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.eclipse.californium</groupId>-->
+<!--            <artifactId>scandium</artifactId>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>org.eclipse.californium</groupId>
             <artifactId>element-connector</artifactId>
-            <version>${californium.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>

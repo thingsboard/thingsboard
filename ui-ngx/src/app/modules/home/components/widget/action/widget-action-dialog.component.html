@@ -136,6 +136,41 @@
             </mat-form-field>
           </div>
         </ng-template>
+        <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ?
+                                     widgetActionFormGroup.get('type').value : ''">
+          <mat-checkbox formControlName="openInSeparateDialog">
+            {{ 'widget-action.open-in-separate-dialog' | translate }}
+          </mat-checkbox>
+          <section fxLayout="column" *ngIf="actionTypeFormGroup.get('openInSeparateDialog').value">
+            <mat-form-field class="mat-block">
+              <mat-label translate>widget-action.dialog-title</mat-label>
+              <input matInput formControlName="dialogTitle">
+            </mat-form-field>
+            <mat-checkbox formControlName="dialogHideDashboardToolbar">
+              {{ 'widget-action.dialog-hide-dashboard-toolbar' | translate }}
+            </mat-checkbox>
+            <mat-form-field class="mat-block">
+              <mat-label translate>widget-action.dialog-width</mat-label>
+              <input type="number" min="1" max="100" step="1" matInput formControlName="dialogWidth">
+              <mat-error *ngIf="actionTypeFormGroup.get('dialogWidth').hasError('min')">
+                {{ 'widget-action.dialog-size-range-error' | translate }}
+              </mat-error>
+              <mat-error *ngIf="actionTypeFormGroup.get('dialogWidth').hasError('max')">
+                {{ 'widget-action.dialog-size-range-error' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field class="mat-block">
+              <mat-label translate>widget-action.dialog-height</mat-label>
+              <input type="number" min="1" max="100" step="1" matInput formControlName="dialogHeight">
+              <mat-error *ngIf="actionTypeFormGroup.get('dialogHeight').hasError('min')">
+                {{ 'widget-action.dialog-size-range-error' | translate }}
+              </mat-error>
+              <mat-error *ngIf="actionTypeFormGroup.get('dialogHeight').hasError('max')">
+                {{ 'widget-action.dialog-size-range-error' | translate }}
+              </mat-error>
+            </mat-form-field>
+          </section>
+        </ng-template>
         <ng-template [ngSwitchCase]="widgetActionType.custom">
           <tb-js-func
             formControlName="customFunction"

@@ -25,9 +25,9 @@ import {
   ViewContainerRef
 } from '@angular/core';
 import { DashboardState } from '@shared/models/dashboard.models';
-import { IDashboardController } from '@home/pages/dashboard/dashboard-page.models';
-import { StatesControllerService } from '@home/pages/dashboard/states/states-controller.service';
-import { IStateControllerComponent } from '@home/pages/dashboard/states/state-controller.models';
+import { IDashboardController } from '@home/components/dashboard-page/dashboard-page.models';
+import { StatesControllerService } from '@home/components/dashboard-page/states/states-controller.service';
+import { IStateControllerComponent } from '@home/components/dashboard-page/states/state-controller.models';
 
 @Directive({
   // tslint:disable-next-line:directive-selector
@@ -49,6 +49,9 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
 
   @Input()
   state: string;
+
+  @Input()
+  currentState: string;
 
   @Input()
   isMobile: boolean;
@@ -84,6 +87,8 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
           this.stateControllerComponent.isMobile = this.isMobile;
         } else if (propName === 'state') {
           this.stateControllerComponent.state = this.state;
+        } else if (propName === 'currentState') {
+          this.stateControllerComponent.currentState = this.currentState;
         }
       }
     }
@@ -103,14 +108,17 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
     if (!stateControllerData) {
       stateControllerData = this.statesControllerService.getStateController('default');
     }
-    const preservedState = this.statesControllerService.withdrawStateControllerState(this.statesControllerId);
+    const stateControllerInstanceId = this.dashboardCtrl.dashboardCtx.instanceId + '_' +  this.statesControllerId;
+    const preservedState = this.statesControllerService.withdrawStateControllerState(stateControllerInstanceId);
     const stateControllerFactory = stateControllerData.factory;
     this.stateControllerComponentRef = this.viewContainerRef.createComponent(stateControllerFactory);
     this.stateControllerComponent = this.stateControllerComponentRef.instance;
     this.dashboardCtrl.dashboardCtx.stateController = this.stateControllerComponent;
     this.stateControllerComponent.preservedState = preservedState;
     this.stateControllerComponent.dashboardCtrl = this.dashboardCtrl;
+    this.stateControllerComponent.stateControllerInstanceId = stateControllerInstanceId;
     this.stateControllerComponent.state = this.state;
+    this.stateControllerComponent.currentState = this.currentState;
     this.stateControllerComponent.isMobile = this.isMobile;
     this.stateControllerComponent.states = this.states;
     this.stateControllerComponent.dashboardId = this.dashboardId;

@@ -16,17 +16,18 @@
 
 import { ComponentFactory, ComponentFactoryResolver, Injectable, Type } from '@angular/core';
 import { deepClone } from '@core/utils';
-import { IStateControllerComponent } from '@home/pages/dashboard/states/state-controller.models';
+import { IStateControllerComponent } from '@home/components/dashboard-page/states/state-controller.models';
 
 export interface StateControllerData {
   factory: ComponentFactory<IStateControllerComponent>;
-  state?: any;
 }
 
 @Injectable()
 export class StatesControllerService {
 
   statesControllers: {[stateControllerId: string]: StateControllerData} = {};
+
+  statesControllerStates: {[stateControllerInstanceId: string]: any} = {};
 
   constructor(private componentFactoryResolver: ComponentFactoryResolver) {
   }
@@ -46,19 +47,17 @@ export class StatesControllerService {
     return this.statesControllers[stateControllerId];
   }
 
-  public preserveStateControllerState(stateControllerId: string, state: any) {
-    this.statesControllers[stateControllerId].state = deepClone(state);
+  public preserveStateControllerState(stateControllerInstanceId: string, state: any) {
+    this.statesControllerStates[stateControllerInstanceId] = deepClone(state);
   }
 
-  public withdrawStateControllerState(stateControllerId: string): any {
-    const state = this.statesControllers[stateControllerId].state;
-    this.statesControllers[stateControllerId].state = null;
+  public withdrawStateControllerState(stateControllerInstanceId: string): any {
+    const state = this.statesControllerStates[stateControllerInstanceId];
+    delete this.statesControllerStates[stateControllerInstanceId];
     return state;
   }
 
   public cleanupPreservedStates() {
-    for (const stateControllerId of Object.keys(this.statesControllers)) {
-      this.statesControllers[stateControllerId].state = null;
-    }
+    this.statesControllerStates = {};
   }
 }

@@ -59,7 +59,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -429,6 +428,8 @@ public class JsonConverter {
                     break;
                 case MQTT_BASIC:
                     result.add("credentialsValue", JSON_PARSER.parse(payload.getCredentialsValue()).getAsJsonObject());
+                    break;
+                case LWM2M_CREDENTIALS:
                     break;
             }
             result.addProperty("credentialsType", payload.getCredentialsType().name());

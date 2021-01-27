@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host ::ng-deep {
-  mat-form-field.lwm2m-instances-list {
-    & > .mat-form-field-wrapper > .mat-form-field-underline {
-      display: none;
+package org.thingsboard.rule.engine.credentials;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class AnonymousCredentials implements ClientCredentials {
+    @Override
+    public CredentialsType getType() {
+        return CredentialsType.ANONYMOUS;
     }
-  }
 }

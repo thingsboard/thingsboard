@@ -30,7 +30,7 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import {
   DashboardSettingsDialogComponent,
   DashboardSettingsDialogData
-} from '@home/pages/dashboard/dashboard-settings-dialog.component';
+} from '@home/components/dashboard-page/dashboard-settings-dialog.component';
 
 export interface ManageDashboardLayoutsDialogData {
   layouts: DashboardStateLayouts;
