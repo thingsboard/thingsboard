@@ -347,7 +347,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         widgetsBundlesToPush.addAll(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(tenantId));
         widgetsBundlesToPush.addAll(widgetsBundleService.findSystemWidgetsBundles(tenantId));
         try {
-            for (WidgetsBundle widgetsBundle: widgetsBundlesToPush) {
+            for (WidgetsBundle widgetsBundle : widgetsBundlesToPush) {
                 saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.WIDGETS_BUNDLE, EdgeEventActionType.ADDED, widgetsBundle.getId(), null);
             }
         } catch (Exception e) {
@@ -361,10 +361,10 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         widgetsBundlesToPush.addAll(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(tenantId));
         widgetsBundlesToPush.addAll(widgetsBundleService.findSystemWidgetsBundles(tenantId));
         try {
-            for (WidgetsBundle widgetsBundle: widgetsBundlesToPush) {
+            for (WidgetsBundle widgetsBundle : widgetsBundlesToPush) {
                 List<WidgetType> widgetTypesToPush =
                         widgetTypeService.findWidgetTypesByTenantIdAndBundleAlias(widgetsBundle.getTenantId(), widgetsBundle.getAlias());
-                for (WidgetType widgetType: widgetTypesToPush) {
+                for (WidgetType widgetType : widgetTypesToPush) {
                     saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.WIDGET_TYPE, EdgeEventActionType.ADDED, widgetType.getId(), null);
                 }
             }
@@ -394,7 +394,7 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         Pattern startPattern = Pattern.compile("<div class=\"content\".*?>");
         Pattern endPattern = Pattern.compile("<div class=\"footer\".*?>");
         File[] files = new DefaultResourceLoader().getResource("classpath:/templates/").getFile().listFiles();
-        for (File file: files) {
+        for (File file : files) {
             Map<String, String> mailTemplate = new HashMap<>();
             String name = validateName(file.getName());
             String stringTemplate = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
@@ -477,52 +477,52 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
             String scope = attributesRequestMsg.getScope();
             ListenableFuture<List<AttributeKvEntry>> ssAttrFuture = attributesService.findAll(tenantId, entityId, scope);
             Futures.addCallback(ssAttrFuture, new FutureCallback<List<AttributeKvEntry>>() {
-                        @Override
-                        public void onSuccess(@Nullable List<AttributeKvEntry> ssAttributes) {
-                            if (ssAttributes != null && !ssAttributes.isEmpty()) {
-                                try {
-                                    Map<String, Object> entityData = new HashMap<>();
-                                    ObjectNode attributes = mapper.createObjectNode();
-                                    for (AttributeKvEntry attr : ssAttributes) {
-                                        if (attr.getDataType() == DataType.BOOLEAN && attr.getBooleanValue().isPresent()) {
-                                            attributes.put(attr.getKey(), attr.getBooleanValue().get());
-                                        } else if (attr.getDataType() == DataType.DOUBLE && attr.getDoubleValue().isPresent()) {
-                                            attributes.put(attr.getKey(), attr.getDoubleValue().get());
-                                        } else if (attr.getDataType() == DataType.LONG && attr.getLongValue().isPresent()) {
-                                            attributes.put(attr.getKey(), attr.getLongValue().get());
-                                        } else {
-                                            attributes.put(attr.getKey(), attr.getValueAsString());
-                                        }
-                                    }
-                                    entityData.put("kv", attributes);
-                                    entityData.put("scope", scope);
-                                    JsonNode body = mapper.valueToTree(entityData);
-                                    log.debug("Sending attributes data msg, entityId [{}], attributes [{}]", entityId, body);
-                                    saveEdgeEvent(tenantId,
-                                            edge.getId(),
-                                            type,
-                                            EdgeEventActionType.ATTRIBUTES_UPDATED,
-                                            entityId,
-                                            body);
-                                } catch (Exception e) {
-                                    log.error("[{}] Failed to send attribute updates to the edge", edge.getName(), e);
-                                    throw new RuntimeException("[" + edge.getName() + "] Failed to send attribute updates to the edge", e);
+                @Override
+                public void onSuccess(@Nullable List<AttributeKvEntry> ssAttributes) {
+                    if (ssAttributes != null && !ssAttributes.isEmpty()) {
+                        try {
+                            Map<String, Object> entityData = new HashMap<>();
+                            ObjectNode attributes = mapper.createObjectNode();
+                            for (AttributeKvEntry attr : ssAttributes) {
+                                if (attr.getDataType() == DataType.BOOLEAN && attr.getBooleanValue().isPresent()) {
+                                    attributes.put(attr.getKey(), attr.getBooleanValue().get());
+                                } else if (attr.getDataType() == DataType.DOUBLE && attr.getDoubleValue().isPresent()) {
+                                    attributes.put(attr.getKey(), attr.getDoubleValue().get());
+                                } else if (attr.getDataType() == DataType.LONG && attr.getLongValue().isPresent()) {
+                                    attributes.put(attr.getKey(), attr.getLongValue().get());
+                                } else {
+                                    attributes.put(attr.getKey(), attr.getValueAsString());
                                 }
-                            } else {
-                                log.trace("[{}][{}] No attributes found for entity {} [{}]", tenantId,
-                                        edge.getName(),
-                                        entityId.getEntityType(),
-                                        entityId.getId());
                             }
-                            futureToSet.set(null);
+                            entityData.put("kv", attributes);
+                            entityData.put("scope", scope);
+                            JsonNode body = mapper.valueToTree(entityData);
+                            log.debug("Sending attributes data msg, entityId [{}], attributes [{}]", entityId, body);
+                            saveEdgeEvent(tenantId,
+                                    edge.getId(),
+                                    type,
+                                    EdgeEventActionType.ATTRIBUTES_UPDATED,
+                                    entityId,
+                                    body);
+                        } catch (Exception e) {
+                            log.error("[{}] Failed to send attribute updates to the edge", edge.getName(), e);
+                            throw new RuntimeException("[" + edge.getName() + "] Failed to send attribute updates to the edge", e);
                         }
+                    } else {
+                        log.trace("[{}][{}] No attributes found for entity {} [{}]", tenantId,
+                                edge.getName(),
+                                entityId.getEntityType(),
+                                entityId.getId());
+                    }
+                    futureToSet.set(null);
+                }
 
-                        @Override
-                        public void onFailure(Throwable t) {
-                            log.error("Can't save attributes [{}]", attributesRequestMsg, t);
-                            futureToSet.setException(t);
-                        }
-                    }, dbCallbackExecutorService);
+                @Override
+                public void onFailure(Throwable t) {
+                    log.error("Can't save attributes [{}]", attributesRequestMsg, t);
+                    futureToSet.setException(t);
+                }
+            }, dbCallbackExecutorService);
             return futureToSet;
         } else {
             log.warn("[{}] Type doesn't supported {}", tenantId, entityId.getEntityType());
@@ -543,44 +543,44 @@ public class DefaultSyncEdgeService implements SyncEdgeService {
         ListenableFuture<List<List<EntityRelation>>> relationsListFuture = Futures.allAsList(futures);
         SettableFuture<Void> futureToSet = SettableFuture.create();
         Futures.addCallback(relationsListFuture, new FutureCallback<List<List<EntityRelation>>>() {
-                    @Override
-                    public void onSuccess(@Nullable List<List<EntityRelation>> relationsList) {
-                        try {
-                            if (relationsList != null && !relationsList.isEmpty()) {
-                                for (List<EntityRelation> entityRelations : relationsList) {
-                                    log.trace("[{}] [{}] [{}] relation(s) are going to be pushed to edge.", edge.getId(), entityId, entityRelations.size());
-                                    for (EntityRelation relation : entityRelations) {
-                                        try {
-                                            if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
-                                                    !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
-                                                saveEdgeEvent(tenantId,
-                                                        edge.getId(),
-                                                        EdgeEventType.RELATION,
-                                                        EdgeEventActionType.ADDED,
-                                                        null,
-                                                        mapper.valueToTree(relation));
-                                            }
-                                        } catch (Exception e) {
-                                            log.error("Exception during loading relation [{}] to edge on sync!", relation, e);
-                                            futureToSet.setException(e);
-                                            return;
-                                        }
+            @Override
+            public void onSuccess(@Nullable List<List<EntityRelation>> relationsList) {
+                try {
+                    if (relationsList != null && !relationsList.isEmpty()) {
+                        for (List<EntityRelation> entityRelations : relationsList) {
+                            log.trace("[{}] [{}] [{}] relation(s) are going to be pushed to edge.", edge.getId(), entityId, entityRelations.size());
+                            for (EntityRelation relation : entityRelations) {
+                                try {
+                                    if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
+                                            !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
+                                        saveEdgeEvent(tenantId,
+                                                edge.getId(),
+                                                EdgeEventType.RELATION,
+                                                EdgeEventActionType.ADDED,
+                                                null,
+                                                mapper.valueToTree(relation));
                                     }
+                                } catch (Exception e) {
+                                    log.error("Exception during loading relation [{}] to edge on sync!", relation, e);
+                                    futureToSet.setException(e);
+                                    return;
                                 }
                             }
-                            futureToSet.set(null);
-                        } catch (Exception e) {
-                            log.error("Exception during loading relation(s) to edge on sync!", e);
-                            futureToSet.setException(e);
                         }
                     }
+                    futureToSet.set(null);
+                } catch (Exception e) {
+                    log.error("Exception during loading relation(s) to edge on sync!", e);
+                    futureToSet.setException(e);
+                }
+            }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.error("[{}] Can't find relation by query. Entity id [{}]", tenantId, entityId, t);
-                        futureToSet.setException(t);
-                    }
-                }, dbCallbackExecutorService);
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("[{}] Can't find relation by query. Entity id [{}]", tenantId, entityId, t);
+                futureToSet.setException(t);
+            }
+        }, dbCallbackExecutorService);
         return futureToSet;
     }
 
