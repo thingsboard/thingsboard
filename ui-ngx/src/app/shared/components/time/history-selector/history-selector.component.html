@@ -24,7 +24,7 @@
             <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">skip_previous</mat-icon>
         </button>
         <div fxLayout="column" fxFlex="100">
-            <mat-slider [(ngModel)]="index" [min]="minTimeIndex" [max]="maxTimeIndex" (change)="changeIndex()">
+            <mat-slider [(ngModel)]="index" [min]="minTimeIndex" [max]="maxTimeIndex" (input)="changeIndex($event.value)">
             </mat-slider>
             <div class="panel-timer">
                 <span *ngIf="this.currentTime">{{ this.currentTime | date:'medium'}}</span>
@@ -47,7 +47,7 @@
                 pause_circle_outline
             </mat-icon>
         </button>
-        <mat-select [(ngModel)]="speed" (selectionChange)="reeneble()" class="speed-select" aria-label="Speed selector">
+        <mat-select [(ngModel)]="speed" (selectionChange)="reInit()" class="speed-select" aria-label="Speed selector">
             <mat-option [value]="speedValue" *ngFor="let speedValue of speeds">{{speedValue}} </mat-option>
         </mat-select>
     </div>

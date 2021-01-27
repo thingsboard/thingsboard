@@ -61,6 +61,7 @@ import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
@@ -106,6 +107,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @TbTransportComponent
 public class DefaultTransportService implements TransportService {
+
+    public static final String OVERWRITE_ACTIVITY_TIME = "overwriteActivityTime";
 
     @Value("${transport.sessions.inactivity_timeout}")
     private long sessionInactivityTimeout;
@@ -232,8 +235,10 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public void registerAsyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener) {
-        sessions.putIfAbsent(toSessionId(sessionInfo), new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, listener));
+    public SessionMetaData registerAsyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener) {
+        SessionMetaData newValue = new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, listener);
+        SessionMetaData oldValue = sessions.putIfAbsent(toSessionId(sessionInfo), newValue);
+        return oldValue != null ? oldValue : newValue;
     }
 
     @Override
@@ -512,7 +517,7 @@ public class DefaultTransportService implements TransportService {
             if (sessionInfo.getGwSessionIdMSB() != 0 &&
                     sessionInfo.getGwSessionIdLSB() != 0) {
                 SessionMetaData gwMetaData = sessions.get(new UUID(sessionInfo.getGwSessionIdMSB(), sessionInfo.getGwSessionIdLSB()));
-                if (gwMetaData != null) {
+                if (gwMetaData != null && gwMetaData.isOverwriteActivityTime()) {
                     lastActivityTime = Math.max(gwMetaData.getLastActivityTime(), lastActivityTime);
                 }
             }
@@ -546,7 +551,7 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public void registerSyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener, long timeout) {
+    public SessionMetaData registerSyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener, long timeout) {
         SessionMetaData currentSession = new SessionMetaData(sessionInfo, TransportProtos.SessionType.SYNC, listener);
         sessions.putIfAbsent(toSessionId(sessionInfo), currentSession);
 
@@ -556,6 +561,7 @@ public class DefaultTransportService implements TransportService {
         }, timeout, TimeUnit.MILLISECONDS);
 
         currentSession.setScheduledFuture(executorFuture);
+        return currentSession;
     }
 
     @Override
@@ -707,8 +713,13 @@ public class DefaultTransportService implements TransportService {
                         .setDeviceProfileIdMSB(deviceProfileIdMSB)
                         .setDeviceProfileIdLSB(deviceProfileIdLSB)
                         .setDeviceName(device.getName())
-                        .setDeviceType(device.getType())
-                        .build();
+                        .setDeviceType(device.getType()).build();
+                if (device.getAdditionalInfo().has("gateway")
+                        && device.getAdditionalInfo().get("gateway").asBoolean()
+                        && device.getAdditionalInfo().has(OVERWRITE_ACTIVITY_TIME)
+                        && device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).isBoolean()) {
+                    md.setOverwriteActivityTime(device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).asBoolean());
+                }
                 md.setSessionInfo(newSessionInfo);
                 transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(newSessionInfo, device, Optional.ofNullable(newDeviceProfile)));
             }

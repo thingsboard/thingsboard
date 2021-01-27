@@ -13,30 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.mqtt.credentials;
+package org.thingsboard.rule.engine.credentials;
 
-import io.netty.handler.ssl.SslContext;
-import lombok.Data;
-import org.thingsboard.mqtt.MqttClientConfig;
+public enum CredentialsType {
+    ANONYMOUS("anonymous"),
+    BASIC("basic"),
+    SAS("sas"),
+    CERT_PEM("cert.PEM");
 
-import java.util.Optional;
+    private final String label;
 
-@Data
-public class BasicCredentials implements MqttClientCredentials {
-
-    private String username;
-    private String password;
-
-    @Override
-    public Optional<SslContext> initSslContext() {
-        return Optional.empty();
+    CredentialsType(String label) {
+        this.label = label;
     }
-
-    @Override
-    public void configure(MqttClientConfig config) {
-        config.setUsername(username);
-        config.setPassword(password);
-    }
-
 }
-

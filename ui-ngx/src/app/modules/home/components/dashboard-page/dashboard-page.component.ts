@@ -78,23 +78,23 @@ import {
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { EntityAliases } from '@app/shared/models/alias.models';
-import { EditWidgetComponent } from '@home/pages/dashboard/edit-widget.component';
+import { EditWidgetComponent } from '@home/components/dashboard-page/edit-widget.component';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { AddWidgetDialogComponent, AddWidgetDialogData } from '@home/pages/dashboard/add-widget-dialog.component';
+import { AddWidgetDialogComponent, AddWidgetDialogData } from '@home/components/dashboard-page/add-widget-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
   ManageDashboardLayoutsDialogComponent,
   ManageDashboardLayoutsDialogData
-} from '@home/pages/dashboard/layout/manage-dashboard-layouts-dialog.component';
+} from '@home/components/dashboard-page/layout/manage-dashboard-layouts-dialog.component';
 import { SelectTargetLayoutDialogComponent } from '@home/components/dashboard/select-target-layout-dialog.component';
 import {
   DashboardSettingsDialogComponent,
   DashboardSettingsDialogData
-} from '@home/pages/dashboard/dashboard-settings-dialog.component';
+} from '@home/components/dashboard-page/dashboard-settings-dialog.component';
 import {
   ManageDashboardStatesDialogComponent,
   ManageDashboardStatesDialogData
-} from '@home/pages/dashboard/states/manage-dashboard-states-dialog.component';
+} from '@home/components/dashboard-page/states/manage-dashboard-states-dialog.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { AuthState } from '@app/core/auth/auth.models';
 import { FiltersDialogComponent, FiltersDialogData } from '@home/components/filter/filters-dialog.component';
@@ -116,6 +116,12 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   @Input()
   embedded = false;
+
+  @Input()
+  currentState: string;
+
+  @Input()
+  hideToolbar: boolean;
 
   @Input()
   dashboard: Dashboard;
@@ -159,6 +165,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
 
   dashboardCtx: DashboardContext = {
+    instanceId: this.utils.guid(),
     getDashboard: () => this.dashboard,
     dashboardTimewindow: null,
     state: null,
@@ -218,7 +225,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   private rxSubscriptions = new Array<Subscription>();
 
   get toolbarOpened(): boolean {
-    return !this.widgetEditMode &&
+    return !this.widgetEditMode && !this.hideToolbar &&
       (this.toolbarAlwaysOpen() || this.isToolbarOpened || this.isEdit || this.showRightLayoutSwitch());
   }
   set toolbarOpened(toolbarOpened: boolean) {

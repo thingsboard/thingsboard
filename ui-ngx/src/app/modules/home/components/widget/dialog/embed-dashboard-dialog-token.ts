@@ -14,23 +14,9 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { SharedModule } from '@app/shared/shared.module';
-import { HomeComponentsModule } from '@modules/home/components/home-components.module';
-import { ApiUsageComponent } from '@home/pages/api-usage/api-usage.component';
-import { ApiUsageRoutingModule } from '@home/pages/api-usage/api-usage-routing.module';
+import { InjectionToken } from '@angular/core';
+import { ComponentType } from '@angular/cdk/portal';
 
-@NgModule({
-  declarations:
-    [
-      ApiUsageComponent
-    ],
-  imports: [
-    CommonModule,
-    SharedModule,
-    HomeComponentsModule,
-    ApiUsageRoutingModule
-  ]
-})
-export class ApiUsageModule { }
+export const EMBED_DASHBOARD_DIALOG_TOKEN: InjectionToken<ComponentType<any>> =
+  new InjectionToken<ComponentType<any>>('EMBED_DASHBOARD_DIALOG_TOKEN');
+

@@ -120,6 +120,19 @@ import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-s
 import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
 import { AliyunSmsProviderConfigurationComponent } from '@home/components/sms/aliyun-sms-provider-configuration.component';
 import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
+import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
+import { DashboardToolbarComponent } from '@home/components/dashboard-page/dashboard-toolbar.component';
+import { StatesControllerModule } from '@home/components/dashboard-page/states/states-controller.module';
+import { DashboardLayoutComponent } from '@home/components/dashboard-page/layout/dashboard-layout.component';
+import { EditWidgetComponent } from '@home/components/dashboard-page/edit-widget.component';
+import { DashboardWidgetSelectComponent } from '@home/components/dashboard-page/dashboard-widget-select.component';
+import { AddWidgetDialogComponent } from '@home/components/dashboard-page/add-widget-dialog.component';
+import { ManageDashboardLayoutsDialogComponent } from '@home/components/dashboard-page/layout/manage-dashboard-layouts-dialog.component';
+import { DashboardSettingsDialogComponent } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
+import { ManageDashboardStatesDialogComponent } from '@home/components/dashboard-page/states/manage-dashboard-states-dialog.component';
+import { DashboardStateDialogComponent } from '@home/components/dashboard-page/states/dashboard-state-dialog.component';
+import { EmbedDashboardDialogComponent } from '@home/components/widget/dialog/embed-dashboard-dialog.component';
+import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 
 @NgModule({
   declarations:
@@ -222,12 +235,24 @@ import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-dev
       SmsProviderConfigurationComponent,
       AwsSnsProviderConfigurationComponent,
       TwilioSmsProviderConfigurationComponent,
-      AliyunSmsProviderConfigurationComponent
+      AliyunSmsProviderConfigurationComponent,
+      DashboardToolbarComponent,
+      DashboardPageComponent,
+      DashboardLayoutComponent,
+      EditWidgetComponent,
+      DashboardWidgetSelectComponent,
+      AddWidgetDialogComponent,
+      ManageDashboardLayoutsDialogComponent,
+      DashboardSettingsDialogComponent,
+      ManageDashboardStatesDialogComponent,
+      DashboardStateDialogComponent,
+      EmbedDashboardDialogComponent
     ],
   imports: [
     CommonModule,
     SharedModule,
-    SharedHomeComponentsModule
+    SharedHomeComponentsModule,
+    StatesControllerModule
   ],
   exports: [
     EntitiesTableComponent,
@@ -312,12 +337,24 @@ import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-dev
     SmsProviderConfigurationComponent,
     AwsSnsProviderConfigurationComponent,
     TwilioSmsProviderConfigurationComponent,
-    AliyunSmsProviderConfigurationComponent
+    AliyunSmsProviderConfigurationComponent,    
+    DashboardToolbarComponent,
+    DashboardPageComponent,
+    DashboardLayoutComponent,
+    EditWidgetComponent,
+    DashboardWidgetSelectComponent,
+    AddWidgetDialogComponent,
+    ManageDashboardLayoutsDialogComponent,
+    DashboardSettingsDialogComponent,
+    ManageDashboardStatesDialogComponent,
+    DashboardStateDialogComponent,
+    EmbedDashboardDialogComponent
   ],
   providers: [
     WidgetComponentService,
     CustomDialogService,
-    ImportExportService
+    ImportExportService,
+    {provide: EMBED_DASHBOARD_DIALOG_TOKEN, useValue: EmbedDashboardDialogComponent}
   ]
 })
 export class HomeComponentsModule { }

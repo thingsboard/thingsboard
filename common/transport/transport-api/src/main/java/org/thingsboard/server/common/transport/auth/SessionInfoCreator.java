@@ -15,16 +15,17 @@
  */
 package org.thingsboard.server.common.transport.auth;
 
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.UUID;
 
+@Slf4j
 public class SessionInfoCreator {
 
     public static TransportProtos.SessionInfoProto create(ValidateDeviceCredentialsResponse msg, TransportContext context, UUID sessionId) {
-        return TransportProtos.SessionInfoProto.newBuilder()
-                .setNodeId(context.getNodeId())
+        return TransportProtos.SessionInfoProto.newBuilder().setNodeId(context.getNodeId())
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
                 .setDeviceIdMSB(msg.getDeviceInfo().getDeviceId().getId().getMostSignificantBits())

@@ -21,7 +21,7 @@
   <section class="tb-dashboard-toolbar"
            [ngClass]="{ 'tb-dashboard-toolbar-opened': toolbarOpened,
                         'tb-dashboard-toolbar-closed': !toolbarOpened }">
-    <tb-dashboard-toolbar [fxShow]="!widgetEditMode" [forceFullscreen]="forceFullscreen"
+    <tb-dashboard-toolbar [fxShow]="!widgetEditMode && !hideToolbar" [forceFullscreen]="forceFullscreen"
                           [toolbarOpened]="toolbarOpened" (triggerClick)="openToolbar()">
       <div class="tb-dashboard-action-panels" fxLayout="column" fxLayout.gt-sm="row"
            fxLayoutAlign="center stretch" fxLayoutAlign.gt-sm="space-between center">
@@ -52,6 +52,7 @@
                                [dashboardId]="dashboard.id ? dashboard.id.id : ''"
                                [isMobile]="isMobile"
                                [state]="dashboardCtx.state"
+                               [currentState]="currentState"
                                [states]="dashboardConfiguration.states">
           </tb-states-component>
         </div>
@@ -183,11 +184,12 @@
           </mat-drawer-content>
         </mat-drawer-container>
         <section fxLayout="row" class="layout-wrap tb-footer-buttons" fxLayoutAlign="start end">
-          <tb-footer-fab-buttons [fxShow]="!isAddingWidget && isEdit && !widgetEditMode"
+          <tb-footer-fab-buttons *ngIf="!embedded"
+                                 [fxShow]="!isAddingWidget && isEdit && !widgetEditMode"
                                  relative
                                  [footerFabButtons]="addWidgetFabButtons">
           </tb-footer-fab-buttons>
-          <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen"
+          <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen && !embedded"
                   mat-fab color="accent" class="tb-btn-footer"
                   [ngClass]="{'tb-hide': !isEdit || isAddingWidget}"
                   [disabled]="isLoading$ | async"

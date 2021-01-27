@@ -20,7 +20,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, Observable, of } from 'rxjs';
 import { StateControllerState } from './state-controller.models';
 import { StateControllerComponent } from './state-controller.component';
-import { StatesControllerService } from '@home/pages/dashboard/states/states-controller.service';
+import { StatesControllerService } from '@home/components/dashboard-page/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { UtilsService } from '@core/services/utils.service';
 import { base64toObj, insertVariable, isEmpty, objToBase64URI } from '@app/core/utils';
