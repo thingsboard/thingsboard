@@ -1170,7 +1170,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public List<EntitySubtype> getDeviceTypes() {
         return restTemplate.exchange(
-                baseURL + "/api/devices",
+                baseURL + "/api/device/types",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntitySubtype>>() {
