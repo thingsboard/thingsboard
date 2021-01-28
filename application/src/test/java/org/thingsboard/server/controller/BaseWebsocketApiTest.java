@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
@@ -46,6 +47,7 @@ import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataKey;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
@@ -119,7 +121,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
                 Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
         EntityHistoryCmd historyCmd = new EntityHistoryCmd();
-        historyCmd.setKeys(Arrays.asList("temperature"));
+        historyCmd.setKeys(Arrays.asList(new EntityDataKey("temperature", false)));
         historyCmd.setAgg(Aggregation.NONE);
         historyCmd.setLimit(1000);
         historyCmd.setStartTs(now - TimeUnit.HOURS.toMillis(1));
@@ -193,7 +195,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
 
         TimeSeriesCmd tsCmd = new TimeSeriesCmd();
-        tsCmd.setKeys(Arrays.asList("temperature"));
+        tsCmd.setKeys(Arrays.asList(new EntityDataKey("temperature", false)));
         tsCmd.setAgg(Aggregation.NONE);
         tsCmd.setLimit(1000);
         tsCmd.setStartTs(now - TimeUnit.HOURS.toMillis(1));
@@ -244,6 +246,148 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
     }
 
     @Test
+    public void testEntityDataHistoryWsCmdWithDataConversion() throws Exception {
+        Device device = new Device();
+        device.setName("Device");
+        device.setType("default");
+        device.setLabel("testLabel" + (int) (Math.random() * 1000));
+        device = doPost("/api/device", device, Device.class);
+
+        long now = System.currentTimeMillis();
+
+        DeviceTypeFilter dtf = new DeviceTypeFilter();
+        dtf.setDeviceNameFilter("D");
+        dtf.setDeviceType("default");
+        EntityDataQuery edq = new EntityDataQuery(dtf,
+                new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+
+        EntityHistoryCmd historyCmd = new EntityHistoryCmd();
+        historyCmd.setKeys(Arrays.asList(new EntityDataKey("SerialNumber", true)));
+        historyCmd.setAgg(Aggregation.NONE);
+        historyCmd.setLimit(1000);
+        historyCmd.setStartTs(now - TimeUnit.HOURS.toMillis(1));
+        historyCmd.setEndTs(now);
+        EntityDataCmd cmd = new EntityDataCmd(1, edq, historyCmd, null, null);
+
+        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        String msg = wsClient.waitForReply();
+        EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        PageData<EntityData> pageData = update.getData();
+        Assert.assertNotNull(pageData);
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+        Assert.assertEquals(0, pageData.getData().get(0).getTimeseries().get("SerialNumber").length);
+
+        TsKvEntry dataPoint1 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(1), new StringDataEntry("SerialNumber", "12345678912345678912"));
+        TsKvEntry dataPoint2 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(2), new StringDataEntry("SerialNumber", "12345678912345678934"));
+        TsKvEntry dataPoint3 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(3), new StringDataEntry("SerialNumber", "12345678912345678956"));
+        List<TsKvEntry> tsData = Arrays.asList(dataPoint1, dataPoint2, dataPoint3);
+
+        sendTelemetry(device, tsData);
+        Thread.sleep(100);
+
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        msg = wsClient.waitForReply();
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        List<EntityData> dataList = update.getUpdate();
+        Assert.assertNotNull(dataList);
+        Assert.assertEquals(1, dataList.size());
+        Assert.assertEquals(device.getId(), dataList.get(0).getEntityId());
+        TsValue[] tsArray = dataList.get(0).getTimeseries().get("SerialNumber");
+        Assert.assertEquals(3, tsArray.length);
+        Assert.assertEquals(new TsValue(dataPoint1.getTs(), "1.234567891234568E19"), tsArray[0]);
+        Assert.assertEquals(new TsValue(dataPoint2.getTs(), "1.234567891234568E19"), tsArray[1]);
+        Assert.assertEquals(new TsValue(dataPoint3.getTs(), "1.234567891234568E19"), tsArray[2]);
+    }
+
+    @Test
+    public void testEntityDataTimeSeriesWsCmdWithDataConversion() throws Exception {
+        Device device = new Device();
+        device.setName("Device");
+        device.setType("default");
+        device.setLabel("testLabel" + (int) (Math.random() * 1000));
+        device = doPost("/api/device", device, Device.class);
+
+        long now = System.currentTimeMillis();
+
+        DeviceTypeFilter dtf = new DeviceTypeFilter();
+        dtf.setDeviceNameFilter("D");
+        dtf.setDeviceType("default");
+        EntityDataQuery edq = new EntityDataQuery(dtf, new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+
+        EntityDataCmd cmd = new EntityDataCmd(1, edq, null, null, null);
+
+        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        String msg = wsClient.waitForReply();
+        EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        PageData<EntityData> pageData = update.getData();
+        Assert.assertNotNull(pageData);
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+
+        TimeSeriesCmd tsCmd = new TimeSeriesCmd();
+        tsCmd.setKeys(Arrays.asList(new EntityDataKey("SerialNumber", true)));
+        tsCmd.setAgg(Aggregation.NONE);
+        tsCmd.setLimit(1000);
+        tsCmd.setStartTs(now - TimeUnit.HOURS.toMillis(1));
+        tsCmd.setTimeWindow(TimeUnit.HOURS.toMillis(1));
+
+        TsKvEntry dataPoint1 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(1), new StringDataEntry("SerialNumber", "12345678912345678912"));
+        TsKvEntry dataPoint2 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(2), new StringDataEntry("SerialNumber", "12345678912345678934"));
+        TsKvEntry dataPoint3 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(3), new StringDataEntry("SerialNumber", "12345678912345678956"));
+        List<TsKvEntry> tsData = Arrays.asList(dataPoint1, dataPoint2, dataPoint3);
+
+        sendTelemetry(device, tsData);
+        Thread.sleep(100);
+
+        cmd = new EntityDataCmd(1, null, null, null, tsCmd);
+        wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        msg = wsClient.waitForReply();
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        List<EntityData> listData = update.getUpdate();
+        Assert.assertNotNull(listData);
+        Assert.assertEquals(1, listData.size());
+        Assert.assertEquals(device.getId(), listData.get(0).getEntityId());
+        TsValue[] tsArray = listData.get(0).getTimeseries().get("SerialNumber");
+        Assert.assertEquals(3, tsArray.length);
+        Assert.assertEquals(new TsValue(dataPoint1.getTs(), "1.234567891234568E19"), tsArray[0]);
+        Assert.assertEquals(new TsValue(dataPoint2.getTs(), "1.234567891234568E19"), tsArray[1]);
+        Assert.assertEquals(new TsValue(dataPoint3.getTs(), "1.234567891234568E19"), tsArray[2]);
+
+        now = System.currentTimeMillis();
+        TsKvEntry dataPoint4 = new BasicTsKvEntry(now, new StringDataEntry("SerialNumber", "12345678912345678978"));
+        wsClient.registerWaitForUpdate();
+        Thread.sleep(100);
+        sendTelemetry(device, Arrays.asList(dataPoint4));
+        msg = wsClient.waitForUpdate();
+
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        List<EntityData> eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getTimeseries());
+        TsValue[] tsValues = eData.get(0).getTimeseries().get("SerialNumber");
+        Assert.assertNotNull(tsValues);
+        Assert.assertEquals(new TsValue(dataPoint4.getTs(), "1.234567891234568E19"), tsValues[0]);
+    }
+
+    @Test
     public void testEntityDataLatestWidgetFlow() throws Exception {
         Device device = new Device();
         device.setName("Device");
@@ -257,7 +401,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         dtf.setDeviceNameFilter("D");
         dtf.setDeviceType("default");
         EntityDataQuery edq = new EntityDataQuery(dtf, new EntityDataPageLink(1, 0, null, null), Collections.emptyList(),
-                Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "temperature")), Collections.emptyList());
+                Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "temperature", true)), Collections.emptyList());
 
         EntityDataCmd cmd = new EntityDataCmd(1, edq, null, null, null);
 
@@ -283,7 +427,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         Thread.sleep(100);
 
         LatestValueCmd latestCmd = new LatestValueCmd();
-        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "temperature")));
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "temperature", true)));
         cmd = new EntityDataCmd(1, null, null, latestCmd, null);
         wrapper = new TelemetryPluginCmdsWrapper();
         wrapper.setEntityDataCmds(Collections.singletonList(cmd));
@@ -348,7 +492,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         EntityDataQuery edq = new EntityDataQuery(dtf, new EntityDataPageLink(1, 0, null, null), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
         LatestValueCmd latestCmd = new LatestValueCmd();
-        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "temperature")));
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "temperature", true)));
         EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
 
         TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
@@ -421,7 +565,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
     }
 
     @Test
-    public void testEntityDataLatestAttrWsCmd() throws Exception {
+    public void testEntityDataLatestWsCmd() throws Exception {
         Device device = new Device();
         device.setName("Device");
         device.setType("default");
@@ -437,7 +581,7 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
                 Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
         LatestValueCmd latestCmd = new LatestValueCmd();
-        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "serverAttributeKey")));
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "serverAttributeKey", true)));
         EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
 
         TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
@@ -529,10 +673,11 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
 
         LatestValueCmd latestCmd = new LatestValueCmd();
         List<EntityKey> keys = new ArrayList<>();
-        keys.add(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "serverAttributeKey"));
-        keys.add(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, "clientAttributeKey"));
-        keys.add(new EntityKey(EntityKeyType.SHARED_ATTRIBUTE, "sharedAttributeKey"));
-        keys.add(new EntityKey(EntityKeyType.ATTRIBUTE, "anyAttributeKey"));
+        boolean dataConversion = true;
+        keys.add(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "serverAttributeKey", dataConversion));
+        keys.add(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, "clientAttributeKey", dataConversion));
+        keys.add(new EntityKey(EntityKeyType.SHARED_ATTRIBUTE, "sharedAttributeKey", dataConversion));
+        keys.add(new EntityKey(EntityKeyType.ATTRIBUTE, "anyAttributeKey", dataConversion));
         latestCmd.setKeys(keys);
         EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
 
@@ -647,6 +792,173 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE));
         attrValue = eData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey");
         Assert.assertEquals(new TsValue(dataPoint5.getLastUpdateTs(), dataPoint5.getValueAsString()), attrValue);
+    }
+
+    @Test
+    public void testEntityDataLatestAttrWsCmdWithDataConversion() throws Exception {
+        testEntityDataLatestWsCmd(true, "1.234567891234568E19", "1.2345678998765433E19");
+    }
+
+    @Test
+    public void testEntityDataLatestAttrWsCmdWithoutDataConversion() throws Exception {
+        testEntityDataLatestWsCmd(false, "12345678912345678912", "12345678998765432112");
+    }
+
+    private void testEntityDataLatestWsCmd(boolean dataConversion, String dataResult, String updateResult) throws Exception {
+        Device device = new Device();
+        device.setName("Device");
+        device.setType("default");
+        device.setLabel("testLabel" + (int) (Math.random() * 1000));
+        device = doPost("/api/device", device, Device.class);
+
+        long now = System.currentTimeMillis();
+
+        DeviceTypeFilter dtf = new DeviceTypeFilter();
+        dtf.setDeviceNameFilter("D");
+        dtf.setDeviceType("default");
+
+        AttributeKvEntry dataPoint = new BaseAttributeKvEntry(now, new StringDataEntry("serverAttributeKey", "12345678912345678912"));
+        AttributeKvEntry dataPoint1 = new BaseAttributeKvEntry(now, new StringDataEntry("clientAttributeKey", "12345678912345678912"));
+        AttributeKvEntry dataPoint2 = new BaseAttributeKvEntry(now, new StringDataEntry("sharedAttributeKey", "12345678912345678912"));
+        AttributeKvEntry dataPoint3 = new BaseAttributeKvEntry(now, new StringDataEntry("anyAttributeKey", "12345678912345678912"));
+
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Collections.singletonList(dataPoint));
+        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, Collections.singletonList(dataPoint1));
+        sendAttributes(device, TbAttributeSubscriptionScope.SHARED_SCOPE, Arrays.asList(dataPoint2, dataPoint3));
+
+        TsKvEntry dataPoint8 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(1), new StringDataEntry("timeseriesKey", "12345678912345678912"));
+        List<TsKvEntry> tsData = Collections.singletonList(dataPoint8);
+        sendTelemetry(device, tsData);
+
+        EntityDataQuery edq = new EntityDataQuery(dtf, new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+
+        LatestValueCmd latestCmd = new LatestValueCmd();
+        List<EntityKey> keys = Arrays.asList(
+                new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "serverAttributeKey", dataConversion),
+                new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, "clientAttributeKey", dataConversion),
+                new EntityKey(EntityKeyType.SHARED_ATTRIBUTE, "sharedAttributeKey", dataConversion),
+                new EntityKey(EntityKeyType.ATTRIBUTE, "anyAttributeKey", dataConversion),
+                new EntityKey(EntityKeyType.TIME_SERIES, "timeseriesKey", dataConversion)
+        );
+        latestCmd.setKeys(keys);
+        EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
+
+        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        String msg = wsClient.waitForReply();
+        EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        PageData<EntityData> pageData = update.getData();
+        Assert.assertNotNull(pageData);
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey"));
+        Assert.assertEquals(now, pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getTs());
+        Assert.assertEquals(dataResult, pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getValue());
+
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey"));
+        Assert.assertEquals(now, pageData.getData().get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey").getTs());
+        Assert.assertEquals(dataResult, pageData.getData().get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey").getValue());
+
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey"));
+        Assert.assertEquals(now, pageData.getData().get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey").getTs());
+        Assert.assertEquals(dataResult, pageData.getData().get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey").getValue());
+
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey"));
+        Assert.assertEquals(now, pageData.getData().get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey").getTs());
+        Assert.assertEquals(dataResult, pageData.getData().get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey").getValue());
+
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("timeseriesKey"));
+        Assert.assertEquals(dataPoint8.getTs(), pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("timeseriesKey").getTs());
+        Assert.assertEquals(dataResult, pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("timeseriesKey").getValue());
+
+        wsClient.registerWaitForUpdate();
+
+        Thread.sleep(100);
+
+        AttributeKvEntry dataPoint4 = new BaseAttributeKvEntry(now, new StringDataEntry("serverAttributeKey", "12345678998765432112"));
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Collections.singletonList(dataPoint4));
+
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        Assert.assertNotNull(msg);
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        List<EntityData> updateData = update.getUpdate();
+        Assert.assertNotNull(updateData);
+        Assert.assertEquals(1, updateData.size());
+        Assert.assertEquals(device.getId(), updateData.get(0).getEntityId());
+        Assert.assertNotNull(updateData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE));
+        TsValue attrValue = updateData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey");
+        Assert.assertEquals(new TsValue(dataPoint4.getLastUpdateTs(), updateResult), attrValue);
+
+        wsClient.registerWaitForUpdate();
+        AttributeKvEntry dataPoint5 = new BaseAttributeKvEntry(now, new StringDataEntry("clientAttributeKey", "12345678998765432112"));
+        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, Collections.singletonList(dataPoint5));
+
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        Assert.assertNotNull(msg);
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        updateData = update.getUpdate();
+        Assert.assertNotNull(updateData);
+        Assert.assertEquals(1, updateData.size());
+        Assert.assertEquals(device.getId(), updateData.get(0).getEntityId());
+        Assert.assertNotNull(updateData.get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE));
+        attrValue = updateData.get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey");
+        Assert.assertEquals(new TsValue(dataPoint5.getLastUpdateTs(), updateResult), attrValue);
+
+        wsClient.registerWaitForUpdate();
+        AttributeKvEntry dataPoint6 = new BaseAttributeKvEntry(now, new StringDataEntry("sharedAttributeKey", "12345678998765432112"));
+        sendAttributes(device, TbAttributeSubscriptionScope.SHARED_SCOPE, Collections.singletonList(dataPoint6));
+
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        Assert.assertNotNull(msg);
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        updateData = update.getUpdate();
+        Assert.assertNotNull(updateData);
+        Assert.assertEquals(1, updateData.size());
+        Assert.assertEquals(device.getId(), updateData.get(0).getEntityId());
+        Assert.assertNotNull(updateData.get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE));
+        attrValue = updateData.get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey");
+        Assert.assertEquals(new TsValue(dataPoint6.getLastUpdateTs(), updateResult), attrValue);
+
+        wsClient.registerWaitForUpdate();
+        AttributeKvEntry dataPoint7 = new BaseAttributeKvEntry(now, new StringDataEntry("anyAttributeKey", "12345678998765432112"));
+        sendAttributes(device, TbAttributeSubscriptionScope.ANY_SCOPE, Collections.singletonList(dataPoint7));
+
+        msg = wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        Assert.assertNotNull(msg);
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        updateData = update.getUpdate();
+        Assert.assertNotNull(updateData);
+        Assert.assertEquals(1, updateData.size());
+        Assert.assertEquals(device.getId(), updateData.get(0).getEntityId());
+        Assert.assertNotNull(updateData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE));
+        attrValue = updateData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey");
+        Assert.assertEquals(new TsValue(dataPoint7.getLastUpdateTs(), updateResult), attrValue);
+
+        wsClient.registerWaitForUpdate();
+        now = System.currentTimeMillis();
+        TsKvEntry dataPoint9 = new BasicTsKvEntry(now, new StringDataEntry("timeseriesKey", "12345678998765432112"));
+        tsData = Collections.singletonList(dataPoint9);
+        sendTelemetry(device, tsData);
+        msg = wsClient.waitForUpdate();
+
+        update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        updateData = update.getUpdate();
+        Assert.assertNotNull(updateData);
+        Assert.assertEquals(1, updateData.size());
+        Assert.assertEquals(device.getId(), updateData.get(0).getEntityId());
+        Assert.assertNotNull(updateData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        TsValue tsValue = updateData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("timeseriesKey");
+        Assert.assertEquals(new TsValue(dataPoint9.getTs(), updateResult), tsValue);
     }
 
     private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {

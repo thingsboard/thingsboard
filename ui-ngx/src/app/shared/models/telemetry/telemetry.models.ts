@@ -23,7 +23,7 @@ import { map } from 'rxjs/operators';
 import { NgZone } from '@angular/core';
 import {
   AlarmData,
-  AlarmDataQuery,
+  AlarmDataQuery, DataEntityKey,
   EntityData,
   EntityDataQuery,
   EntityKey,
@@ -146,7 +146,7 @@ export class GetHistoryCmd implements TelemetryPluginCmd {
 }
 
 export interface EntityHistoryCmd {
-  keys: Array<string>;
+  keys: Array<DataEntityKey>;
   startTs: number;
   endTs: number;
   interval: number;
@@ -160,7 +160,7 @@ export interface LatestValueCmd {
 }
 
 export interface TimeSeriesCmd {
-  keys: Array<string>;
+  keys: Array<DataEntityKey>;
   startTs: number;
   timeWindow: number;
   interval: number;

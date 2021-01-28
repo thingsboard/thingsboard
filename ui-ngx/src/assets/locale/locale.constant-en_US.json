@@ -792,7 +792,8 @@
         "value-description": "the current value;",
         "prev-value-description": "result of the previous function call;",
         "time-prev-description": "timestamp of the previous value;",
-        "prev-orig-value-description": "original previous value;"
+        "prev-orig-value-description": "original previous value;",
+        "data-conversion": "Use data conversion"
     },
     "datasource": {
         "type": "Datasource type",

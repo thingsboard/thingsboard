@@ -78,8 +78,12 @@ export function dataKeyTypeToEntityKeyType(dataKeyType: DataKeyType): EntityKeyT
 }
 
 export interface EntityKey {
-  type: EntityKeyType;
+  type?: EntityKeyType;
   key: string;
+}
+
+export interface DataEntityKey extends EntityKey {
+  dataConversion: boolean;
 }
 
 export function dataKeyToEntityKey(dataKey: DataKey): EntityKey {

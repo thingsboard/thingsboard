@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.telemetry.cmd.v2;
+package org.thingsboard.server.service.subscription;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.kv.Aggregation;
-
-import java.util.List;
+import org.thingsboard.server.common.data.query.EntityKeyType;
 
 @Data
-public class EntityHistoryCmd implements GetTsCmd {
+public class TbSubscriptionKeyState {
 
-    private List<EntityDataKey> keys;
-    private long startTs;
-    private long endTs;
-    private long interval;
-    private int limit;
-    private Aggregation agg;
-    private boolean fetchLatestPreviousPoint;
+    private long lastUpdatedTs;
+    private EntityKeyType entityKeyType;
+    private boolean dataConversion;
 
+    public TbSubscriptionKeyState(long lastUpdatedTs, EntityKeyType entityKeyType, boolean dataConversion) {
+        this.lastUpdatedTs = lastUpdatedTs;
+        this.entityKeyType = entityKeyType;
+        this.dataConversion = dataConversion;
+    }
 }

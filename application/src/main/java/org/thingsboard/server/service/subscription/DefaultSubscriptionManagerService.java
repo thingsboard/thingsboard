@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.subscription;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
@@ -31,9 +32,14 @@ import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -211,12 +217,22 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                     }
                 }, s -> true, s -> {
                     List<TsKvEntry> subscriptionUpdate = null;
+                    Map<String, TbSubscriptionKeyState> keyStateMap = s.getKeyStates();
                     for (TsKvEntry kv : ts) {
-                        if (isInTimeRange(s, kv.getTs()) && (s.isAllKeys() || s.getKeyStates().containsKey((kv.getKey())))) {
+                        boolean hasKeyState = keyStateMap.containsKey((kv.getKey()));
+                        if (isInTimeRange(s, kv.getTs()) && (s.isAllKeys() || hasKeyState)) {
                             if (subscriptionUpdate == null) {
                                 subscriptionUpdate = new ArrayList<>();
                             }
-                            subscriptionUpdate.add(kv);
+                            BasicTsKvEntry basicTsKvEntry;
+                            if (hasKeyState) {
+                                boolean dataConversion = keyStateMap.get(kv.getKey()).isDataConversion();
+                                EntityKeyType entityKeyType = keyStateMap.get((kv.getKey())).getEntityKeyType();
+                                basicTsKvEntry = new BasicTsKvEntry(kv.getTs(), convertValue(kv, entityKeyType, dataConversion));
+                            } else {
+                                basicTsKvEntry = new BasicTsKvEntry(kv.getTs(), kv);
+                            }
+                            subscriptionUpdate.add(basicTsKvEntry);
                         }
                     }
                     return subscriptionUpdate;
@@ -242,12 +258,22 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
                 s -> (TbAttributeSubscriptionScope.ANY_SCOPE.equals(s.getScope()) || scope.equals(s.getScope().name())),
                 s -> {
                     List<TsKvEntry> subscriptionUpdate = null;
+                    Map<String, TbSubscriptionKeyState> keyStateMap = s.getKeyStates();
                     for (AttributeKvEntry kv : attributes) {
-                        if (s.isAllKeys() || s.getKeyStates().containsKey(kv.getKey())) {
+                        boolean hasKeyState = keyStateMap.containsKey(kv.getKey());
+                        if (s.isAllKeys() || hasKeyState) {
                             if (subscriptionUpdate == null) {
                                 subscriptionUpdate = new ArrayList<>();
                             }
-                            subscriptionUpdate.add(new BasicTsKvEntry(kv.getLastUpdateTs(), kv));
+                            BasicTsKvEntry basicTsKvEntry;
+                            if (hasKeyState) {
+                                boolean dataConversion = keyStateMap.get(kv.getKey()).isDataConversion();
+                                EntityKeyType entityKeyType = keyStateMap.get((kv.getKey())).getEntityKeyType();
+                                basicTsKvEntry = new BasicTsKvEntry(kv.getLastUpdateTs(), convertValue(kv, entityKeyType, dataConversion));
+                            } else {
+                                basicTsKvEntry = new BasicTsKvEntry(kv.getLastUpdateTs(), kv);
+                            }
+                            subscriptionUpdate.add(basicTsKvEntry);
                         }
                     }
                     return subscriptionUpdate;
@@ -266,6 +292,35 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
             }
         }
         callback.onSuccess();
+    }
+
+    private KvEntry convertValue(KvEntry kv, EntityKeyType entityKeyType, boolean dataConversion) {
+        if (!entityKeyType.equals(EntityKeyType.ENTITY_FIELD) && kv.getDataType().equals(DataType.STRING)) {
+            if (!dataConversion) {
+                return kv;
+            } else {
+                String strVal = kv.getValueAsString();
+                if (strVal.length() > 0 && NumberUtils.isParsable(strVal)) {
+                    try {
+                        long longVal = Long.parseLong(strVal);
+                        return new LongDataEntry(kv.getKey(), longVal);
+                    } catch (NumberFormatException ignored) {
+                    }
+                    try {
+                        double dblVal = Double.parseDouble(strVal);
+                        if (!Double.isInfinite(dblVal)) {
+                            return new DoubleDataEntry(kv.getKey(), dblVal);
+                        }
+                    } catch (NumberFormatException ignored) {
+                    }
+                    return kv;
+                } else {
+                    return kv;
+                }
+            }
+        } else {
+            return kv;
+        }
     }
 
     @Override
@@ -401,11 +456,11 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
         log.trace("[{}][{}][{}] Processing remote attribute subscription for entity [{}]",
                 serviceId, subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
 
-        final Map<String, Long> keyStates = subscription.getKeyStates();
+        final Map<String, TbSubscriptionKeyState> keyStates = subscription.getKeyStates();
         DonAsynchron.withCallback(attrService.find(subscription.getTenantId(), subscription.getEntityId(), DataConstants.CLIENT_SCOPE, keyStates.keySet()), values -> {
                     List<TsKvEntry> missedUpdates = new ArrayList<>();
                     values.forEach(latestEntry -> {
-                        if (latestEntry.getLastUpdateTs() > keyStates.get(latestEntry.getKey())) {
+                        if (latestEntry.getLastUpdateTs() > keyStates.get(latestEntry.getKey()).getLastUpdatedTs()) {
                             missedUpdates.add(new BasicTsKvEntry(latestEntry.getLastUpdateTs(), latestEntry));
                         }
                     });
@@ -430,8 +485,8 @@ public class DefaultSubscriptionManagerService implements SubscriptionManagerSer
         long curTs = System.currentTimeMillis();
         List<ReadTsKvQuery> queries = new ArrayList<>();
         subscription.getKeyStates().forEach((key, value) -> {
-            if (curTs > value) {
-                long startTs = subscription.getStartTime() > 0 ? Math.max(subscription.getStartTime(), value + 1L) : (value + 1L);
+            if (curTs > value.getLastUpdatedTs()) {
+                long startTs = subscription.getStartTime() > 0 ? Math.max(subscription.getStartTime(), value.getLastUpdatedTs() + 1L) : (value.getLastUpdatedTs() + 1L);
                 long endTs = subscription.getEndTime() > 0 ? Math.min(subscription.getEndTime(), curTs) : curTs;
                 queries.add(new BaseReadTsKvQuery(key, startTs, endTs, 0, 1000, Aggregation.NONE));
             }

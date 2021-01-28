@@ -15,10 +15,27 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 
+@JsonDeserialize(using = EntityKeyDeserializer.class)
 @Data
 public class EntityKey {
+
     private final EntityKeyType type;
     private final String key;
+    private final boolean dataConversion;
+
+    public EntityKey(EntityKeyType type, String key, boolean dataConversion) {
+        this.type = type;
+        this.key = key;
+        this.dataConversion = dataConversion;
+    }
+
+    public EntityKey(EntityKeyType entityKeyType, String entityKeyField) {
+        this.type = entityKeyType;
+        this.key = entityKeyField;
+        this.dataConversion = false;
+    }
+
 }

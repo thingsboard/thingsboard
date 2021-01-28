@@ -70,7 +70,8 @@ export class AlarmDataService {
     alarmSource.dataKeys.forEach((dataKey) => {
       const alarmSubscriptionDataKey: AlarmSubscriptionDataKey = {
         name: dataKey.name,
-        type: dataKey.type
+        type: dataKey.type,
+        dataConversion: dataKey.dataConversion
       };
       alarmSubscriptionDataKeys.push(alarmSubscriptionDataKey);
     });

@@ -24,7 +24,7 @@ import java.util.List;
 @Data
 public class TimeSeriesCmd implements GetTsCmd {
 
-    private List<String> keys;
+    private List<EntityDataKey> keys;
     private long startTs;
     private long timeWindow;
     private long interval;
