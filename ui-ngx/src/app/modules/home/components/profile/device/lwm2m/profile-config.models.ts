@@ -14,9 +14,14 @@
 /// limitations under the License.
 ///
 
-export const OBSERVE_ATTR = 'observeAttr';
+import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
+
+export const ID = 'id';
+export const INSTANCES = 'instances';
+export const RESOURCES = 'resources';
+export const OBSERVE_ATTR_TELEMETRY = 'observeAttrTelemetry';
 export const OBSERVE = 'observe';
-export const ATTR = 'attribute';
+export const ATTRIBUTE = 'attribute';
 export const TELEMETRY = 'telemetry';
 export const KEY_NAME = 'keyName';
 export const DEFAULT_ID_SERVER = 123;
@@ -89,7 +94,7 @@ export interface ObservableAttributes {
   observe: string[];
   attribute: string[];
   telemetry: string[];
-  keyName: string[];
+  keyName: {};
 }
 
 export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecurityConfig {
@@ -138,7 +143,7 @@ export function getDefaultProfileConfig(hostname?: any): ProfileConfigModels {
       observe: [],
       attribute: [],
       telemetry: [],
-      keyName: []
+      keyName: {}
     }
   };
 }

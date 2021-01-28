@@ -51,6 +51,7 @@ import { TranslateService } from '@ngx-translate/core';
 export class Lwm2mDeviceConfigServerComponent implements ControlValueAccessor {
 
   private requiredValue: boolean;
+  private disabled = false;
 
   valuePrev = null;
   serverFormGroup: FormGroup;
@@ -60,10 +61,6 @@ export class Lwm2mDeviceConfigServerComponent implements ControlValueAccessor {
   lenMinServerPublicKey = 0;
   lenMaxServerPublicKey = LEN_MAX_PUBLIC_KEY_RPK;
   currentSecurityMode = null;
-
-
-  @Input()
-  disabled: boolean;
 
   @Input()
   bootstrapServerIs: boolean;
