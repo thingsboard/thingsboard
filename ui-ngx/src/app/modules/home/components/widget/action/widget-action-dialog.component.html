@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -112,6 +112,12 @@
             {{ 'widget-action.open-right-layout' | translate }}
           </mat-checkbox>
         </ng-template>
+        <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
+                                     widgetActionFormGroup.get('type').value : ''">
+          <mat-checkbox formControlName="openNewBrowserTab">
+            {{ 'widget-action.open-new-browser-tab' | translate }}
+          </mat-checkbox>
+        </ng-template>
         <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
                                      widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ||
                                      widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
@@ -129,6 +135,41 @@
                      formControlName="stateEntityParamName">
             </mat-form-field>
           </div>
+        </ng-template>
+        <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ?
+                                     widgetActionFormGroup.get('type').value : ''">
+          <mat-checkbox formControlName="openInSeparateDialog">
+            {{ 'widget-action.open-in-separate-dialog' | translate }}
+          </mat-checkbox>
+          <section fxLayout="column" *ngIf="actionTypeFormGroup.get('openInSeparateDialog').value">
+            <mat-form-field class="mat-block">
+              <mat-label translate>widget-action.dialog-title</mat-label>
+              <input matInput formControlName="dialogTitle">
+            </mat-form-field>
+            <mat-checkbox formControlName="dialogHideDashboardToolbar">
+              {{ 'widget-action.dialog-hide-dashboard-toolbar' | translate }}
+            </mat-checkbox>
+            <mat-form-field class="mat-block">
+              <mat-label translate>widget-action.dialog-width</mat-label>
+              <input type="number" min="1" max="100" step="1" matInput formControlName="dialogWidth">
+              <mat-error *ngIf="actionTypeFormGroup.get('dialogWidth').hasError('min')">
+                {{ 'widget-action.dialog-size-range-error' | translate }}
+              </mat-error>
+              <mat-error *ngIf="actionTypeFormGroup.get('dialogWidth').hasError('max')">
+                {{ 'widget-action.dialog-size-range-error' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field class="mat-block">
+              <mat-label translate>widget-action.dialog-height</mat-label>
+              <input type="number" min="1" max="100" step="1" matInput formControlName="dialogHeight">
+              <mat-error *ngIf="actionTypeFormGroup.get('dialogHeight').hasError('min')">
+                {{ 'widget-action.dialog-size-range-error' | translate }}
+              </mat-error>
+              <mat-error *ngIf="actionTypeFormGroup.get('dialogHeight').hasError('max')">
+                {{ 'widget-action.dialog-size-range-error' | translate }}
+              </mat-error>
+            </mat-form-field>
+          </section>
         </ng-template>
         <ng-template [ngSwitchCase]="widgetActionType.custom">
           <tb-js-func

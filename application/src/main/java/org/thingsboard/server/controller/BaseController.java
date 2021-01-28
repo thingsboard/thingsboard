@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,8 @@ import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -107,9 +109,11 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -713,6 +717,12 @@ public abstract class BaseController {
             case PROVISION_FAILURE:
                 msgType = DataConstants.PROVISION_FAILURE;
                 break;
+            case TIMESERIES_UPDATED:
+                msgType = DataConstants.TIMESERIES_UPDATED;
+                break;
+            case TIMESERIES_DELETED:
+                msgType = DataConstants.TIMESERIES_DELETED;
+                break;
         }
         if (!StringUtils.isEmpty(msgType)) {
             try {
@@ -757,17 +767,7 @@ public abstract class BaseController {
                         metaData.putValue("scope", scope);
                         if (attributes != null) {
                             for (AttributeKvEntry attr : attributes) {
-                                if (attr.getDataType() == DataType.BOOLEAN) {
-                                    entityNode.put(attr.getKey(), attr.getBooleanValue().get());
-                                } else if (attr.getDataType() == DataType.DOUBLE) {
-                                    entityNode.put(attr.getKey(), attr.getDoubleValue().get());
-                                } else if (attr.getDataType() == DataType.LONG) {
-                                    entityNode.put(attr.getKey(), attr.getLongValue().get());
-                                } else if (attr.getDataType() == DataType.JSON) {
-                                    entityNode.set(attr.getKey(), json.readTree(attr.getJsonValue().get()));
-                                } else {
-                                    entityNode.put(attr.getKey(), attr.getValueAsString());
-                                }
+                                addKvEntry(entityNode, attr);
                             }
                         }
                     } else if (actionType == ActionType.ATTRIBUTES_DELETED) {
@@ -778,6 +778,17 @@ public abstract class BaseController {
                         if (keys != null) {
                             keys.forEach(attrsArrayNode::add);
                         }
+                    } else if (actionType == ActionType.TIMESERIES_UPDATED) {
+                        List<TsKvEntry> timeseries = extractParameter(List.class, 0, additionalInfo);
+                        addTimeseries(entityNode, timeseries);
+                    } else if (actionType == ActionType.TIMESERIES_DELETED) {
+                        List<String> keys = extractParameter(List.class, 0, additionalInfo);
+                        if (keys != null) {
+                            ArrayNode timeseriesArrayNode = entityNode.putArray("timeseries");
+                            keys.forEach(timeseriesArrayNode::add);
+                        }
+                        entityNode.put("startTs", extractParameter(Long.class, 1, additionalInfo));
+                        entityNode.put("endTs", extractParameter(Long.class, 2, additionalInfo));
                     }
                 }
                 TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
@@ -791,6 +802,22 @@ public abstract class BaseController {
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }
+        }
+    }
+
+    private void addKvEntry(ObjectNode entityNode, KvEntry kvEntry) throws Exception {
+        if (kvEntry.getDataType() == DataType.BOOLEAN) {
+            kvEntry.getBooleanValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
+        } else if (kvEntry.getDataType() == DataType.DOUBLE) {
+            kvEntry.getDoubleValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
+        } else if (kvEntry.getDataType() == DataType.LONG) {
+            kvEntry.getLongValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
+        } else if (kvEntry.getDataType() == DataType.JSON) {
+            if (kvEntry.getJsonValue().isPresent()) {
+                entityNode.set(kvEntry.getKey(), json.readTree(kvEntry.getJsonValue().get()));
+            }
+        } else {
+            entityNode.put(kvEntry.getKey(), kvEntry.getValueAsString());
         }
     }
 
@@ -814,4 +841,20 @@ public abstract class BaseController {
         return null;
     }
 
+    private void addTimeseries(ObjectNode entityNode, List<TsKvEntry> timeseries) throws Exception {
+        if (timeseries != null && !timeseries.isEmpty()) {
+            ArrayNode result = entityNode.putArray("timeseries");
+            Map<Long, List<TsKvEntry>> groupedTelemetry = timeseries.stream()
+                    .collect(Collectors.groupingBy(TsKvEntry::getTs));
+            for (Map.Entry<Long, List<TsKvEntry>> entry : groupedTelemetry.entrySet()) {
+                ObjectNode element = json.createObjectNode();
+                element.put("ts", entry.getKey());
+                ObjectNode values = element.putObject("values");
+                for (TsKvEntry tsKvEntry : entry.getValue()) {
+                    addKvEntry(values, tsKvEntry);
+                }
+                result.add(element);
+            }
+        }
+    }
 }

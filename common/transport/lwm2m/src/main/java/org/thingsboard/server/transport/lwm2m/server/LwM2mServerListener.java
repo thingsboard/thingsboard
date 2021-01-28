@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,11 @@ import java.util.Collection;
 
 @Slf4j
 public class LwM2mServerListener {
-    private LeshanServer lhServer;
-    private LwM2MTransportService service;
 
-    public LwM2mServerListener(LeshanServer lhServer, LwM2MTransportService service) {
+    private final LeshanServer lhServer;
+    private final LwM2MTransportServiceImpl service;
+
+    public LwM2mServerListener(LeshanServer lhServer, LwM2MTransportServiceImpl service) {
         this.lhServer = lhServer;
         this.service = service;
     }
@@ -43,9 +44,8 @@ public class LwM2mServerListener {
          */
         @Override
         public void registered(Registration registration, Registration previousReg,
-                               Collection<Observation> previousObsersations) {
-
-            service.onRegistered(lhServer, registration, previousObsersations);
+                               Collection<Observation> previousObservations) {
+            service.onRegistered(lhServer, registration, previousObservations);
         }
 
         /**
@@ -63,7 +63,7 @@ public class LwM2mServerListener {
         @Override
         public void unregistered(Registration registration, Collection<Observation> observations, boolean expired,
                                  Registration newReg) {
-            service.unReg(registration, observations);
+            service.unReg(lhServer, registration, observations);
         }
 
     };
@@ -71,11 +71,13 @@ public class LwM2mServerListener {
     public final PresenceListener presenceListener = new PresenceListener() {
         @Override
         public void onSleeping(Registration registration) {
+            log.info("onSleeping");
             service.onSleepingDev(registration);
         }
 
         @Override
         public void onAwake(Registration registration) {
+            log.info("onAwake");
             service.onAwakeDev(registration);
         }
     };
@@ -92,8 +94,9 @@ public class LwM2mServerListener {
             if (registration != null) {
                 try {
                     service.onObservationResponse(registration, observation.getPath().toString(), response);
-                } catch (java.lang.NullPointerException e) {
-                    log.error(e.toString());
+                } catch (Exception e) {
+                    log.error("[{}] onResponse", e.toString());
+
                 }
             }
         }
@@ -108,4 +111,5 @@ public class LwM2mServerListener {
             log.info("Received newObservation from [{}] endpoint  [{}] ", observation.getPath(), registration.getEndpoint());
         }
     };
+
 }

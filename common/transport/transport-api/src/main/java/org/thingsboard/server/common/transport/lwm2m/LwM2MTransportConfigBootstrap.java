@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.security.PublicKey;
-import java.security.cert.X509Certificate;
 import java.util.Map;
 
 @Slf4j
@@ -32,39 +31,57 @@ import java.util.Map;
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 public class LwM2MTransportConfigBootstrap {
 
+    @Getter
+    @Value("${transport.lwm2m.bootstrap.enable:}")
+    private Boolean bootstrapEnable;
+
+    @Getter
+    @Value("${transport.lwm2m.bootstrap.id:}")
+    private Integer bootstrapServerId;
+
+    @Getter
+    @Value("${transport.lwm2m.bootstrap.secure.start_psk:}")
+    private Boolean bootstrapStartPsk;
+
+    @Getter
+    @Value("${transport.lwm2m.bootstrap.secure.start_rpk:}")
+    private Boolean bootstrapStartRpk;
+
+    @Getter
+    @Value("${transport.lwm2m.bootstrap.secure.start_x509:}")
+    private Boolean bootstrapStartX509;
 
     @Getter
     @Value("${transport.lwm2m.bootstrap.bind_address:}")
     private String bootstrapHost;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.bind_port:}")
-    private Integer bootstrapPort;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.bind_port_cert:}")
-    private Integer bootstrapPortCert;
-
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.start_all:}")
-    private boolean bootstrapStartAll;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.dtls_mode:}")
-    private Integer bootStrapDtlsMode;
-
-    @Getter
     @Value("${transport.lwm2m.bootstrap.secure.bind_address:}")
     private String bootstrapSecureHost;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_port:}")
-    private Integer bootstrapSecurePort;
+    @Value("${transport.lwm2m.bootstrap.bind_port_no_sec_psk:}")
+    private Integer bootstrapPortNoSecPsk;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_port_cert:}")
-    private Integer bootstrapSecurePortCert;
+    @Value("${transport.lwm2m.bootstrap.bind_port_no_sec_rpk:}")
+    private Integer bootstrapPortNoSecRpk;
+
+    @Getter
+    @Value("${transport.lwm2m.bootstrap.bind_port_no_sec_x509:}")
+    private Integer bootstrapPortNoSecX509;
+
+    @Getter
+    @Value("${transport.lwm2m.bootstrap.secure.bind_port_psk:}")
+    private Integer bootstrapSecurePortPsk;
+
+    @Getter
+    @Value("${transport.lwm2m.bootstrap.secure.bind_port_rpk:}")
+    private Integer bootstrapSecurePortRpk;
+
+    @Getter
+    @Value("${transport.lwm2m.bootstrap.secure.bind_port_x509:}")
+    private Integer bootstrapSecurePortX509;
 
     @Getter
     @Value("${transport.lwm2m.bootstrap.secure.public_x:}")
@@ -85,10 +102,6 @@ public class LwM2MTransportConfigBootstrap {
     @Getter
     @Value("${transport.lwm2m.bootstrap.secure.alias:}")
     private String bootstrapAlias;
-
-    @Getter
-    @Setter
-    private X509Certificate bootstrapCertificate;
 
     @Getter
     @Setter

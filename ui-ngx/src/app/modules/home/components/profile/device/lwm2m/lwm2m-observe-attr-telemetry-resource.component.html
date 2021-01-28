@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@
 -->
 <section [formGroup]="resourceFormGroup" class="mat-padding">
   <div fxLayout="row" fxFill formArrayName="resources"
-       *ngFor="let resourceLwM2M of resourceLwm2mFormArray(resourceFormGroup).controls; let z = index; trackBy: trackByParams">
-    <div class="vertical-padding" fxLayout="column" fxFill [formGroupName]="z">
-      <div fxLayout="row" fxFill [fxShow]="!z">
-        <div fxFlex="55">
-          <!--                    <mat-label translate>device-profile.lwm2m.resource-label</mat-label>-->
-        </div>
+       *ngFor="let resourceLwM2M of resourceFormArray.controls; let i = index; trackBy: trackByParams">
+    <div class="vertical-padding" fxLayout="column" fxFill [formGroupName]="i">
+      <div fxLayout="row" fxFill [fxShow]="!i">
+        <div fxFlex="55"></div>
         <div fxFlex="10" fxLayoutAlign="start center">
           <b>
             <mat-label translate>device-profile.lwm2m.observe-label</mat-label>
@@ -72,10 +70,9 @@
             {{ 'device-profile.lwm2m.key-name_label' | translate }}</mat-label>
           <input matInput type="text" formControlName="keyName" required
                  matTooltip="{{'device-profile.lwm2m.key-name-tip' | translate}}"
-                 (input)="updateValueKeyName($event, z)"
+                 (input)="updateValueKeyName($event, i)"
                  matTooltipPosition="above">
           <mat-error *ngIf="resourceLwM2M.get('keyName').hasError('required')">
-
             {{ 'device-profile.lwm2m.key-name' | translate }}
             <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
           </mat-error>
