@@ -264,59 +264,27 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     const telemetryArray: Array<string> = [];
     const keyNameNew = {};
     const observeJson: ObjectLwM2M[] = JSON.parse(JSON.stringify(val));
-    const paths = new Set<string>();
-    let pathObj;
-    let pathInst;
-    let pathRes;
     observeJson.forEach(obj => {
-      for (const [key, value] of Object.entries(obj)) {
-        if (key === ID) {
-          pathObj = value;
-        }
-        if (key === INSTANCES) {
-          const instancesJson = value as Instance[];
-          if (instancesJson.length > 0) {
-            instancesJson.forEach(instance => {
-              for (const [instanceKey, instanceValue] of Object.entries(instance)) {
-                if (instanceKey === ID) {
-                  pathInst = instanceValue;
-                }
-                if (instanceKey === RESOURCES) {
-                  const resourcesJson = instanceValue as ResourceLwM2M[];
-                  if (resourcesJson.length > 0) {
-                    resourcesJson.forEach(res => {
-                      for (const [resourceKey, value] of Object.entries(res)) {
-                        if (resourceKey === ID) {
-                          pathRes = `/${pathObj}/${pathInst}/${value}`;
-                        } else if (resourceKey === ATTRIBUTE && value) {
-                          attributeArray.push(pathRes);
-                          paths.add(pathRes);
-                        } else if (resourceKey === TELEMETRY && value) {
-                          telemetryArray.push(pathRes);
-                          paths.add(pathRes);
-                        }
-                      }
-                    });
-                    /**
-                     * only if these paths are marked in ATTRIBUTE or TELEMETRY
-                     */
-                    resourcesJson.forEach(res => {
-                      for (const [resourceKey, value] of Object.entries(res)) {
-                        if (resourceKey === ID) {
-                          pathRes = `/${pathObj}/${pathInst}/${value}`;
-                        } else if (resourceKey === OBSERVE && paths.has(pathRes) && value) {
-                          observeArray.push(pathRes);
-                        } else if (resourceKey === KEY_NAME && paths.has(pathRes)) {
-                          keyNameNew[pathRes] = value;
-                        }
-                      }
-                    });
-                  }
+      if (obj.hasOwnProperty(INSTANCES) && Array.isArray(obj.instances)) {
+        obj.instances.forEach(instance => {
+          if (instance.hasOwnProperty(RESOURCES) && Array.isArray(instance.resources)) {
+            instance.resources.forEach(resource => {
+              let pathRes = `/${obj.id}/${instance.id}/${resource.id}`;
+              if (resource.attribute) {
+                attributeArray.push(pathRes);
+              }
+              if (resource.telemetry) {
+                telemetryArray.push(pathRes);
+              }
+              if (resource.attribute || resource.telemetry) {
+                keyNameNew[pathRes] = resource.keyName;
+                if (resource.observe) {
+                  observeArray.push(pathRes);
                 }
               }
-            });
+            })
           }
-        }
+        })
       }
     });
     if (isUndefined(this.configurationValue.observeAttr)) {
