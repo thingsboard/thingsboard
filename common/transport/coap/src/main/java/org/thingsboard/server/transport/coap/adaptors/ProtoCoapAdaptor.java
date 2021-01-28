@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.transport.coap.adaptors;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.JsonFormat;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Request;
@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.CoapTransportResource;
 
@@ -38,25 +39,23 @@ import static org.thingsboard.server.transport.coap.adaptors.CoapAdaptorUtils.to
 
 @Component
 @Slf4j
-public class JsonCoapAdaptor implements CoapTransportAdaptor {
+public class ProtoCoapAdaptor implements CoapTransportAdaptor {
 
     @Override
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(UUID sessionId, Request inbound, Descriptors.Descriptor telemetryMsgDescriptor) throws AdaptorException {
-        String payload = validatePayload(sessionId, inbound, false);
         try {
-            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(payload));
-        } catch (IllegalStateException | JsonSyntaxException ex) {
-            throw new AdaptorException(ex);
+            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(dynamicMsgToJson(inbound.getPayload(), telemetryMsgDescriptor)));
+        } catch (Exception e) {
+            throw new AdaptorException(e);
         }
     }
 
     @Override
     public TransportProtos.PostAttributeMsg convertToPostAttributes(UUID sessionId, Request inbound, Descriptors.Descriptor attributesMsgDescriptor) throws AdaptorException {
-        String payload = validatePayload(sessionId, inbound, false);
         try {
-            return JsonConverter.convertToAttributesProto(new JsonParser().parse(payload));
-        } catch (IllegalStateException | JsonSyntaxException ex) {
-            throw new AdaptorException(ex);
+            return JsonConverter.convertToAttributesProto(new JsonParser().parse(dynamicMsgToJson(inbound.getPayload(), attributesMsgDescriptor)));
+        } catch (Exception e) {
+            throw new AdaptorException(e);
         }
     }
 
@@ -68,55 +67,53 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     @Override
     public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(UUID sessionId, Request inbound) throws AdaptorException {
         Optional<Integer> requestId = CoapTransportResource.getRequestId(inbound);
-        String payload = validatePayload(sessionId, inbound, false);
-        JsonObject response = new JsonParser().parse(payload).getAsJsonObject();
         return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId.orElseThrow(() -> new AdaptorException("Request id is missing!")))
-                .setPayload(response.toString()).build();
+                .setPayload(inbound.getPayloadString()).build();
     }
 
     @Override
     public TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(UUID sessionId, Request inbound) throws AdaptorException {
-        String payload = validatePayload(sessionId, inbound, false);
-        return JsonConverter.convertToServerRpcRequest(new JsonParser().parse(payload), 0);
+        try {
+            return ProtoConverter.convertToServerRpcRequest(inbound.getPayload(), 0);
+        } catch (InvalidProtocolBufferException ex) {
+            throw new AdaptorException(ex);
+        }
     }
 
     @Override
     public TransportProtos.ClaimDeviceMsg convertToClaimDevice(UUID sessionId, Request inbound, TransportProtos.SessionInfoProto sessionInfo) throws AdaptorException {
         DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
-        String payload = validatePayload(sessionId, inbound, true);
         try {
-            return JsonConverter.convertToClaimDeviceProto(deviceId, payload);
-        } catch (IllegalStateException | JsonSyntaxException ex) {
+            return ProtoConverter.convertToClaimDeviceProto(deviceId, inbound.getPayload());
+        } catch (InvalidProtocolBufferException ex) {
             throw new AdaptorException(ex);
         }
     }
 
     @Override
-    public Response convertToPublish(CoapTransportResource.CoapSessionListener session, TransportProtos.AttributeUpdateNotificationMsg msg) throws AdaptorException {
-        return getObserveNotification(session.getNextSeqNumber(), session.getExchange().advanced().getRequest().isConfirmable(), JsonConverter.toJson(msg));
+    public TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(UUID sessionId, Request inbound) throws AdaptorException {
+        try {
+            return ProtoConverter.convertToProvisionRequestMsg(inbound.getBytes());
+        } catch (InvalidProtocolBufferException ex) {
+            throw new AdaptorException(ex);
+        }
     }
 
     @Override
-    public Response convertToPublish(CoapTransportResource.CoapSessionListener session, TransportProtos.ToDeviceRpcRequestMsg msg) throws AdaptorException {
-        return getObserveNotification(session.getNextSeqNumber(), session.getExchange().advanced().getRequest().isConfirmable(), JsonConverter.toJson(msg, true));
+    public Response convertToPublish(CoapTransportResource.CoapSessionListener coapSessionListener, TransportProtos.AttributeUpdateNotificationMsg msg) throws AdaptorException {
+        return getObserveNotification(coapSessionListener.getNextSeqNumber(), coapSessionListener.getExchange().advanced().getRequest().isConfirmable(), msg.toByteArray());
+    }
+
+    @Override
+    public Response convertToPublish(CoapTransportResource.CoapSessionListener coapSessionListener, TransportProtos.ToDeviceRpcRequestMsg msg) throws AdaptorException {
+        return getObserveNotification(coapSessionListener.getNextSeqNumber(), coapSessionListener.getExchange().advanced().getRequest().isConfirmable(), msg.toByteArray());
     }
 
     @Override
     public Response convertToPublish(CoapTransportResource.CoapSessionListener coapSessionListener, TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
-        JsonElement result = JsonConverter.toJson(msg);
-        response.setPayload(result.toString());
+        response.setPayload(msg.toByteArray());
         return response;
-    }
-
-    @Override
-    public TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(UUID sessionId, Request inbound) throws AdaptorException {
-        String payload = validatePayload(sessionId, inbound, false);
-        try {
-            return JsonConverter.convertToProvisionRequestMsg(payload);
-        } catch (IllegalStateException | JsonSyntaxException ex) {
-            throw new AdaptorException(ex);
-        }
     }
 
     @Override
@@ -125,30 +122,22 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
             return new Response(CoAP.ResponseCode.NOT_FOUND);
         } else {
             Response response = new Response(CoAP.ResponseCode.CONTENT);
-            JsonObject result = JsonConverter.toJson(msg);
-            response.setPayload(result.toString());
+            response.setPayload(msg.toByteArray());
             return response;
         }
     }
 
-    private Response getObserveNotification(int seqNumber, boolean confirmable, JsonElement json) {
+    private Response getObserveNotification(int seqNumber, boolean confirmable, byte[] notification) {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         response.getOptions().setObserve(seqNumber);
-        response.setPayload(json.toString());
+        response.setPayload(notification);
         response.setConfirmable(confirmable);
-        log.info("response is confirmable: {}", response.isConfirmable());
         return response;
     }
 
-    private String validatePayload(UUID sessionId, Request inbound, boolean isEmptyPayloadAllowed) throws AdaptorException {
-        String payload = inbound.getPayloadString();
-        if (payload == null) {
-            log.warn("[{}] Payload is empty!", sessionId);
-            if (!isEmptyPayloadAllowed) {
-                throw new AdaptorException(new IllegalArgumentException("Payload is empty!"));
-            }
-        }
-        return payload;
+    private String dynamicMsgToJson(byte[] bytes, Descriptors.Descriptor descriptor) throws InvalidProtocolBufferException {
+        DynamicMessage dynamicMessage = DynamicMessage.parseFrom(descriptor, bytes);
+        return JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
     }
 
 }

@@ -23,6 +23,7 @@ import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.transport.coap.efento.CoapEfentoTransportResource;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -37,7 +38,8 @@ public class CoapTransportService {
 
     private static final String V1 = "v1";
     private static final String API = "api";
-
+    private static final String EFENTO = "efento";
+    private static final String MEASUREMENTS = "m";
     @Autowired
     private CoapTransportContext coapTransportContext;
 
@@ -59,7 +61,13 @@ public class CoapTransportService {
     private void createResources() {
         CoapResource api = new CoapResource(API);
         api.add(new CoapTransportResource(coapTransportContext, V1));
+
+        CoapResource efento = new CoapResource(EFENTO);
+        CoapEfentoTransportResource efentoMeasurementsTransportResource = new CoapEfentoTransportResource(coapTransportContext, MEASUREMENTS);
+        efento.add(efentoMeasurementsTransportResource);
+
         server.add(api);
+        server.add(efento);
     }
 
     @PreDestroy

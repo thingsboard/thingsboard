@@ -65,7 +65,7 @@
         <jackson-annotations.version>2.12.1</jackson-annotations.version>
         <jackson-core.version>2.12.1</jackson-core.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
-        <californium.version>1.0.2</californium.version>
+        <californium.version>2.6.0</californium.version>
         <gson.version>2.6.2</gson.version>
         <freemarker.version>2.3.30</freemarker.version>
         <mail.version>1.6.2</mail.version>
