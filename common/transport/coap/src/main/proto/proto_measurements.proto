@@ -1,0 +1,121 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+import "proto_measurement_types.proto";
+
+option java_package = "org.thingsboard.server.gen.transport.coap";
+option java_outer_classname = "MeasurementsProtos";
+
+message ProtoChannel{
+    /* Type of channel                                                                                                          */
+    MeasurementType type = 1;
+
+    /* Timestamp of the first sample (the oldest one) in seconds since UNIX EPOCH 01-01-1970                                    */
+    int32 timestamp = 2;
+
+    /* Only used for 'Continuous' sensor types. Value used as the starting point for calculating the values of all              */
+    /* measurements in the package.                                                                                             */
+    /* Format defined by 'MeasurementType' field                                                                                */
+    sint32 start_point = 4;
+
+    /* 'Continuous' sensor types                                                                                                */
+    /* Value of the offset from the 'start_point' for each measurement in the package. The oldest sample first ([0]).           */
+    /* 'sample_offsets' format defined by 'MeasurementType' field.                                                              */
+    /* Example: MeasurementType = 1 (temperature), start_point = 100, sample_offsets[0] = 15, sample_offsets[1] = 20            */
+    /* 1st sample in the package temperature value = 11.5 °C, 2nd sample in the package temperature value = 12 °C               */
+    /* Calculating timestamps of the measurements: timestamp = 1606391700, measurement_period_base = 60,                        */
+    /* measurement_period_factor = 1. Timestamp of the 1st sample = 1606391700, timestamp of the 2nd sample = 1606391760        */
+    /* 'Binary' sensor types:                                                                                                   */
+    /* Absolute value of the 'sample_offsets' field indicates the offset in seconds from 'timestamp' field.                     */
+    /* Sign (- or +) indicates the state of measurements depend of sensor type.                                                 */
+    /* Value of this field equals to '1' or '-1' indicates the state at the 'timestamp'. Other values                           */
+    /* indicate the state of the relay at the time (in seconds) equal to 'timestamp' + value.                                   */
+    /* Values of this field are incremented starting from 1 (1->0: state at the time                                            */
+    /* of 'timestamp', 2->1: state at the time equal to 'timestamp' + 1 s, 3->2 :                                               */
+    /* state at the time equal to 'timestamp' + 2 s, etc.). The first and the last sample define the time range of the          */
+    /* measurements. Only state changes in the time range are included in the 'sample_offsets' field                            */
+    /* Examples: if 'timestamp' value is 1553518060 and 'sample_offsets' equals '1', it means that at 1553518060 the state      */
+    /* was high, if 'timestamp' value is 1553518060 and 'sample_offsets' equals '-9', it means at 1553518068 the state was low  */
+    repeated sint32 sample_offsets = 5 [packed=true];
+
+    /* Deprecated - configuration is sent to endpoint 'c'                                                                       */
+    //int32 lo_threshold = 6;
+
+    /* Deprecated - configuration is sent to endpoint 'c'                                                                       */
+    //int32 hi_threshold = 7;
+
+    /* Deprecated - configurationis sent to endpoint 'c'                                                                        */
+    //int32 diff_threshold = 8;
+  }
+
+message ProtoMeasurements {
+
+    /* serial number of the device                                                                                              */
+    bytes serial_num = 1;
+
+    /* true - battery ok, false - battery low                                                                                   */
+    bool battery_status = 2;
+
+    /* 'Measurement_period_base' and 'measurement_period_factor' define how often the measurements are taken.                   */
+    /* Sensors of 'Continuous' type take measurement each Measurement_period_base * measurement_period_factor.                  */
+    /* Sensors of 'Binary' type take measurement each Measurement_period_base.                                                  */
+    /* For backward compatibility with versions 5.x in case of binary/mixed sensors, if the 'measurement_period_factor' is      */
+    /* not sent (equal to 0), then the default value '14' shall be used for period calculation.                                 */
+    /* For backward compatibility with versions 5.x in case of continues sensors, if the measurement_period_factor is           */
+    /* not sent (equal to 0), then the default value '1' shall be used for period calculation.                                  */
+    /* measurement period base in seconds                                                                                       */
+    uint32 measurement_period_base = 3;
+
+    /* Measurement period factor                                                                                                */
+    uint32 measurement_period_factor = 8;
+
+    repeated ProtoChannel channels = 4;
+
+    /* Timestamp of the next scheduled transmission. If the device will not send data until this time,                          */
+    /* it should be considered as 'lost'                                                                                        */
+    uint32 next_transmission_at = 5;
+
+    /* reason of transmission - unsigned integer where each bit indicates different                                             */
+    /* possible communication reason. Can be more than one                                                                      */
+    /*  - bit 0: first message after sensor reset                                                                               */
+    /*  - bit 1: user button triggered                                                                                          */
+    /*  - bit 2: user BLE triggered                                                                                             */
+    /*  - bit 3-7: number of retries -> incremented after each unsuccessful transmission. Max value 4.                          */
+    /*                         Set to 0 after a successful transmission.                                                        */
+    /*  - bit 8: channel 1 lower threshold exceeded                                                                             */
+    /*  - bit 9: channel 1 lower threshold returned                                                                             */
+    /*  - bit 10: channel 1 higher threshold exceeded                                                                           */
+    /*  - bit 11: channel 1 higher threshold returned                                                                           */
+    /*  - bit 12: channel 1 differential threshold crossed                                                                      */
+    /*  - bits 13-17: channel 2 thresholds (same as for channel 1)                                                              */
+    /*  - bits 18-22: channel 3 thresholds (same as for channel 1)                                                              */
+    /*  - bits 23-27: channel 4 or 5 or 6 thresholds (same as for channel 1)                                                    */
+    uint32 transfer_reason = 6;
+
+    /* Signal strength level mapped from RSSI                                                                                   */
+    /*  - 0     : 113 dBm or less                                                                                               */
+    /*  - 1     : 111 dBm                                                                                                       */
+    /*  - 2...30  : 109...-53 dBm                                                                                               */
+    /*  - 31    : -51 dBm or greater                                                                                            */
+    /*  - 99    : Not known or not detectable                                                                                   */
+    uint32 signal = 7;
+
+    /* Hash of the current configuration. Hash value changes each time a device receives a new configuration                    */
+    uint32 hash = 9;
+
+    /* Optional string up to 36 bytes long. Can be set to any user define value or hold device's IMEI                           */
+    string cloud_token = 16;
+}

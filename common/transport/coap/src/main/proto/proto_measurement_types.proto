@@ -1,0 +1,97 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+option java_package = "org.thingsboard.server.gen.transport.coap";
+option java_outer_classname = "MeasurementTypeProtos";
+
+enum MeasurementType {
+    NO_SENSOR = 0;
+    
+    /* [°C] - Celsius degree. Resolution 0.1°C. Range [-273.2-4000.0]. Type: Continuous                                     */
+    TEMPERATURE = 1;
+    
+    /* [% RH] - Relative humidity. Resolution 1%. Range [0-100]. Type: Continuous                                           */
+    HUMIDITY = 2;
+    
+    /* [hPa] - Hectopascal (1hPa = 100Pa). Resolution 0.1hPa. Range: [1.0-2000.0]. Type: Continuous                         */
+    ATMOSPHERIC_PRESSURE = 3;
+    
+    /* [Pa] - Pascal. Resolution 1Pa. Range [-10000-10000]Type: Continuous                                                  */
+    DIFFERENTIAL_PRESSURE = 4;
+    
+    /* Sign indicates state: (+) ALARM, (-) OK. Type: Binary                                                                */
+    OK_ALARM = 5;
+    
+    /* [IAQ] - Iaq index. Resolution 1IAQ. Range [0-500]. Sensor return also calibration status                             */
+    /* as offset to measured value:                                                                                         */
+    /*  - offset 3000: Sensor not stabilized (always returns 25 IAQ value)                                                  */
+    /*  - offset 2000: Calibration required (sensor returns not accurate values)                                            */
+    /*  - offset 1000: Calibration on-going (sensor returns not accurate values)                                            */
+    /*  - offset 0: Calibration done (best accuracy of IAQ sensor)                                                          */
+    /* Type: Continuous                                                                                                     */
+    IAQ = 6;
+    
+    /* Sign indicates water presence: (+) water not detected, (-) water detected. Type: Binary                              */
+    FLOODING = 7;
+    
+    /* [NB] Number of pulses. Resolution 1 pulse. Range [0-16711679]. Type: Continuous                                      */
+    PULSE_CNT = 8;
+    
+    /* [Wh] - Watthour; Resolution 1Wh. Range [0-16711679]. Number of Watthours in a single period. Type: Continuous        */
+    ELECTRICITY_METER = 9;
+    
+    /* [l] - Liter. Resolution 1l. Range [0-16711679]. Number of litres in a single period. Type: Continuous                */
+    WATER_METER = 10;
+    
+    /* [kPa] - Kilopascal (1kPa = 1000Pa); Resolution 1kPa. Range [-1000-0]. Soil moisture (tension). Type: Continuous       */
+    SOIL_MOISTURE = 11;
+    
+    /* [ppm] - Parts per million. Resolution 1ppm. Range [0-1000000]. Carbon monoxide concentration. Type: Continuous       */
+    CO_GAS = 12;
+    
+    /* [ppm] - Parts per million. Resolution 0.01ppm. Range [0-1000000.00]. Nitrogen dioxide concentration. Type: Continuous*/
+    NO2_GAS = 13;
+    
+    /* [ppm] - Parts per million. Resolution 1ppm. Range [0-1000000]. Hydrogen sulfide concentration. Type: Continuous      */
+    H2S_GAS = 14;
+    
+    /* [lx] - Illuminance. Resolution 0.1lx. Range [0-100000.0]. Type: Continuous                                           */
+    AMBIENT_LIGHT = 15;
+    
+    /* [µg/m^3] - Micro gram per cubic meter. Resolution 1µg/m^3 Range [0-1000].                                            */
+    /* particles with an aerodynamic diameter less than 1 micrometer. Type: Continuous                                      */
+    PM_1_0 = 16; // µg/m^3
+    
+    /* [µg/m^3] - Micro gram per cubic meter. Resolution 1µg/m^3 Range [0-1000].                                            */
+    /* particles with an aerodynamic diameter less than 2.5 micrometers. Type: Continuous                                   */
+    PM_2_5 = 17; // µg/m^3
+    
+    /* [µg/m^3] - Micro gram per cubic meter. Resolution 1µg/m^3 Range [0-1000].                                            */
+    /* particles with an aerodynamic diameter less than 10 micrometers. Type: Continuous                                    */
+    PM_10_0 = 18; // µg/m^3
+    
+    /* [dB] - Decibels. Resolution 0.1 dB. Range: [0-130.0]. Noise level. Type: Continuous                                  */
+    NOISE_LEVEL = 19; // 0.1 dB
+    
+    /* [ppm] - Parts per million. Resolution 1ppm. Range [0-1000000]. Ammonia concentration. Type: Continuous               */
+    NH3_GAS = 20;
+    
+    /* [ppm] - Parts per million. Resolution 1ppm. Range [0-1000000]. Methane concentration. Type: Continuous               */
+    CH4_GAS = 21;
+}
+
+
