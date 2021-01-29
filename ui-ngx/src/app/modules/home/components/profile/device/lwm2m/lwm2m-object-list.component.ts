@@ -21,7 +21,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Observable } from 'rxjs';
 import { filter, map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
-import { ObjectLwM2M } from './profile-config.models';
+import { ModelValue, ObjectLwM2M } from './profile-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { Direction } from '@shared/models/page/sort-order';
@@ -120,7 +120,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     }
   }
 
-  writeValue(value: any): void {
+  writeValue(value: ModelValue): void {
     this.searchText = '';
     if (isDefinedAndNotNull(value)) {
       if (Array.isArray(value.objectIds)) {
@@ -192,7 +192,6 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     }
     return this.lw2mModels;
   }
-
 
   onFocus = (): void => {
     if (!this.dirty) {

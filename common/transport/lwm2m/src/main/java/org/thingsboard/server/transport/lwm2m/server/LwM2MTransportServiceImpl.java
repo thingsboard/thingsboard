@@ -148,7 +148,7 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
     public void onRegistered(LeshanServer lwServer, Registration registration, Collection<Observation> previousObsersations) {
         executorRegistered.submit(() -> {
             try {
-//                log.warn("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
+                log.warn("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
                 LwM2MClient lwM2MClient = lwM2mInMemorySecurityStore.updateInSessionsLwM2MClient(lwServer, registration);
                 if (lwM2MClient != null) {
                     lwM2MClient.setLwM2MTransportServiceImpl(this);

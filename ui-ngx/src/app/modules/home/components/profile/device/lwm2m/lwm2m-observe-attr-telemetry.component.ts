@@ -28,7 +28,7 @@ import {
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { Instance, ObjectLwM2M, ResourceLwM2M } from './profile-config.models';
+import { CLIENT_LWM2M, Instance, INSTANCES, ObjectLwM2M, ResourceLwM2M, RESOURCES } from './profile-config.models';
 import { deepClone, isDefinedAndNotNull, isEqual, isUndefined } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
@@ -78,7 +78,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
               private dialog: MatDialog,
               public translate: TranslateService) {
     this.observeAttrTelemetryFormGroup = this.fb.group({
-      clientLwM2M: this.fb.array([])
+      [CLIENT_LWM2M]: this.fb.array([])
     });
     this.observeAttrTelemetryFormGroup.valueChanges.subscribe(value => {
       if (isUndefined(this.disabled) || !this.disabled) {
@@ -87,7 +87,8 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     });
   }
 
-  private propagateChange = (v: any) => { };
+  private propagateChange = (v: any) => {
+  };
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
@@ -123,14 +124,14 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     }
   }
 
-  writeValue(value: any): void {
+  writeValue(value: {}): void {
     if (isDefinedAndNotNull(value)) {
-      this.buildClientObjectsLwM2M(value.clientLwM2M);
+      this.buildClientObjectsLwM2M(value[CLIENT_LWM2M]);
     }
   }
 
   private buildClientObjectsLwM2M = (objectsLwM2M: ObjectLwM2M []): void => {
-    this.observeAttrTelemetryFormGroup.setControl('clientLwM2M',
+    this.observeAttrTelemetryFormGroup.setControl(CLIENT_LWM2M,
       this.createObjectsLwM2M(objectsLwM2M)
     );
   }
@@ -157,23 +158,23 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   get clientLwM2MFormArray(): FormArray {
-    return this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray;
+    return this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M) as FormArray;
   }
 
   instancesLwm2mFormArray = (objectLwM2M: AbstractControl): FormArray => {
-    return objectLwM2M.get('instances') as FormArray;
+    return objectLwM2M.get(INSTANCES) as FormArray;
   }
 
   changeInstanceResourcesCheckBox = (value: boolean, instance: AbstractControl, type: string): void => {
-    const resources = deepClone(instance.get('resources').value as ResourceLwM2M[]);
+    const resources = deepClone(instance.get(RESOURCES).value as ResourceLwM2M[]);
     resources.forEach(resource => resource[type] = value);
-    instance.get('resources').patchValue(resources);
+    instance.get(RESOURCES).patchValue(resources);
     this.propagateChange(this.observeAttrTelemetryFormGroup.value);
   }
 
   private updateValidators = (): void => {
-    this.observeAttrTelemetryFormGroup.get('clientLwM2M').setValidators(this.required ? Validators.required : []);
-    this.observeAttrTelemetryFormGroup.get('clientLwM2M').updateValueAndValidity();
+    this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M).setValidators(this.required ? Validators.required : []);
+    this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M).updateValueAndValidity();
   }
 
   trackByParams = (index: number, element: any): number => {
@@ -181,7 +182,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   getIndeterminate = (instance: AbstractControl, type: string): boolean => {
-    const resources = instance.get('resources').value as ResourceLwM2M[];
+    const resources = instance.get(RESOURCES).value as ResourceLwM2M[];
     if (isDefinedAndNotNull(resources)) {
       const checkedResource = resources.filter(resource => resource[type]);
       return checkedResource.length !== 0 && checkedResource.length !== resources.length;
@@ -190,7 +191,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   getChecked = (instance: AbstractControl, type: string): boolean => {
-    const resources = instance.get('resources').value as ResourceLwM2M[];
+    const resources = instance.get(RESOURCES).value as ResourceLwM2M[];
     return isDefinedAndNotNull(resources) && resources.every(resource => resource[type]);
   }
 
@@ -239,10 +240,10 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   private updateInstancesIds = (data: Lwm2mObjectAddInstancesData): void => {
-    const objectLwM2MFormGroup = (this.observeAttrTelemetryFormGroup.get('clientLwM2M') as FormArray).controls
+    const objectLwM2MFormGroup = (this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M) as FormArray).controls
       .find(e => e.value.id === data.objectId) as FormGroup;
     const instancesArray = objectLwM2MFormGroup.value.instances as Instance [];
-    const instancesFormArray = objectLwM2MFormGroup.get('instances') as FormArray;
+    const instancesFormArray = objectLwM2MFormGroup.get(INSTANCES) as FormArray;
     const instance0 = deepClone(instancesFormArray.at(0).value as Instance);
     instance0.resources.forEach(r => {
       r.attribute = false;
