@@ -56,14 +56,14 @@ public class EventDeduplicationExecutor<P> {
                             log.info("[{}] Executing task: {}", name, params);
                             function.accept(params);
                         } catch (Throwable e) {
-                            log.warn("Failed to process task with parameters: {}", params, e);
+                            log.warn("[{}] Failed to process task with parameters: {}", name, params, e);
                             throw e;
                         } finally {
                             unlockAndProcessIfAny();
                         }
                     });
                 } catch (Throwable e) {
-                    log.warn("Failed to submit task with parameters: {}", params, e);
+                    log.warn("[{}] Failed to submit task with parameters: {}", name, params, e);
                     unlockAndProcessIfAny();
                     throw e;
                 }

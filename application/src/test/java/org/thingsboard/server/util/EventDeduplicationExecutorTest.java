@@ -41,15 +41,24 @@ public class EventDeduplicationExecutorTest {
         periodicFlow(MoreExecutors.newDirectExecutorService());
     }
 
+    @Test
+    public void testExceptionFlowSameThread() throws InterruptedException {
+        exceptionFlow(MoreExecutors.newDirectExecutorService());
+    }
 
     @Test
     public void testSimpleFlowSingleThread() throws InterruptedException {
-        simpleFlow(Executors.newFixedThreadPool(1));
+        simpleFlow(Executors.newSingleThreadExecutor());
     }
 
     @Test
     public void testPeriodicFlowSingleThread() throws InterruptedException {
-        periodicFlow(Executors.newFixedThreadPool(1));
+        periodicFlow(Executors.newSingleThreadExecutor());
+    }
+
+    @Test
+    public void testExceptionFlowSingleThread() throws InterruptedException {
+        exceptionFlow(Executors.newSingleThreadExecutor());
     }
 
     @Test
@@ -60,6 +69,11 @@ public class EventDeduplicationExecutorTest {
     @Test
     public void testPeriodicFlowMultiThread() throws InterruptedException {
         periodicFlow(Executors.newFixedThreadPool(3));
+    }
+
+    @Test
+    public void testExceptionFlowMultiThread() throws InterruptedException {
+        exceptionFlow(Executors.newFixedThreadPool(3));
     }
 
     private void simpleFlow(ExecutorService executorService) throws InterruptedException {
@@ -98,6 +112,28 @@ public class EventDeduplicationExecutorTest {
             executor.submit(params3);
             Thread.sleep(500);
             Mockito.verify(function).accept(params1);
+            Mockito.verify(function).accept(params2);
+            Mockito.verify(function).accept(params3);
+        } finally {
+            executorService.shutdownNow();
+        }
+    }
+
+    private void exceptionFlow(ExecutorService executorService) throws InterruptedException {
+        try {
+            Consumer<String> function = Mockito.spy(StringConsumer.class);
+            EventDeduplicationExecutor<String> executor = new EventDeduplicationExecutor<>(EventDeduplicationExecutorTest.class.getSimpleName(), executorService, function);
+
+            String params1 = "params1";
+            String params2 = "params2";
+            String params3 = "params3";
+
+            Mockito.doThrow(new RuntimeException()).when(function).accept("params1");
+            executor.submit(params1);
+            executor.submit(params2);
+            Thread.sleep(500);
+            executor.submit(params3);
+            Thread.sleep(500);
             Mockito.verify(function).accept(params2);
             Mockito.verify(function).accept(params3);
         } finally {
