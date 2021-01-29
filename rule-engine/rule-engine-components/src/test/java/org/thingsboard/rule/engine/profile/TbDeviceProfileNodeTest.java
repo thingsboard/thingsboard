@@ -48,6 +48,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.Collections;
@@ -71,6 +72,8 @@ public class TbDeviceProfileNodeTest {
     private TimeseriesService timeseriesService;
     @Mock
     private RuleEngineAlarmService alarmService;
+    @Mock
+    private DeviceService deviceService;
 
     private TenantId tenantId = new TenantId(UUID.randomUUID());
     private DeviceId deviceId = new DeviceId(UUID.randomUUID());
@@ -188,6 +191,7 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.getDeviceProfileCache()).thenReturn(cache);
         Mockito.when(ctx.getTimeseriesService()).thenReturn(timeseriesService);
         Mockito.when(ctx.getAlarmService()).thenReturn(alarmService);
+        Mockito.when(ctx.getDeviceService()).thenReturn(deviceService);
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.createObjectNode());
         node = new TbDeviceProfileNode();
         node.init(ctx, nodeConfiguration);
