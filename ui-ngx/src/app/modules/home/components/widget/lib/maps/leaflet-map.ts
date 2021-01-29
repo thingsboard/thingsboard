@@ -626,11 +626,11 @@ export default abstract class LeafletMap {
       }
       this.points = new FeatureGroup();
     }
-	  let pointColor = this.options.pointColor;
+    let pointColor = this.options.pointColor;
     for (const pointsList of pointsData) {
       pointsList.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
         if (this.options.useColorPointFunction) {
-          pointColor = safeExecute(this.options.colorPointFunction,[data, pointsData, data.dsIndex]);
+          pointColor = safeExecute(this.options.colorPointFunction, [data, pointsData, data.dsIndex]);
         }
         const point = L.circleMarker(this.convertPosition(data), {
           color: pointColor,
