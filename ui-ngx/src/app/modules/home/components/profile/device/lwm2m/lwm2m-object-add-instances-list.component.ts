@@ -25,7 +25,6 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 @Component({
   selector: 'tb-profile-lwm2m-object-add-instances-list',
   templateUrl: './lwm2m-object-add-instances-list.component.html',
-  styleUrls: [],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => Lwm2mObjectAddInstancesListComponent),

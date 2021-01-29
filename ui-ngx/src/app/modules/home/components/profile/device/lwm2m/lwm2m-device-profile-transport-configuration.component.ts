@@ -21,12 +21,11 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
-  ID, INSTANCES, RESOURCES, OBSERVE_ATTR_TELEMETRY, OBSERVE, ATTRIBUTE, TELEMETRY, KEY_NAME,
+  INSTANCES, RESOURCES, OBSERVE_ATTR_TELEMETRY, OBSERVE, ATTRIBUTE, TELEMETRY, KEY_NAME,
   getDefaultProfileConfig,
-  Instance,
   ObjectLwM2M,
   ProfileConfigModels,
-  ResourceLwM2M
+  ModelValue
 } from './profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { deepClone, isDefinedAndNotNull, isUndefined } from '@core/utils';
@@ -113,7 +112,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     }
   }
 
-  writeValue(value: any | null): void {
+  writeValue(value: ProfileConfigModels | null): void {
     this.configurationValue = (Object.keys(value).length === 0) ? getDefaultProfileConfig() : value;
     this.lwm2mDeviceConfigFormGroup.patchValue({
       configurationJson: this.configurationValue
@@ -122,7 +121,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private initWriteValue = (): void => {
-    const modelValue = {objectIds: null, objectsList: []};
+    const modelValue = {objectIds: null, objectsList: []} as ModelValue;
     modelValue.objectIds = this.getObjectsFromJsonAllConfig();
     if (modelValue.objectIds !== null) {
       const sortOrder = {
@@ -140,11 +139,10 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     }
   }
 
-  private updateWriteValue = (value: any): void => {
-    const objectsList = value.objectsList;
+  private updateWriteValue = (value: ModelValue): void => {
     this.lwm2mDeviceProfileFormGroup.patchValue({
         objectIds: value,
-        observeAttrTelemetry: this.getObserveAttrTelemetryObjects(objectsList),
+        observeAttrTelemetry: this.getObserveAttrTelemetryObjects(value['objectsList']),
         shortId: this.configurationValue.bootstrap.servers.shortId,
         lifetime: this.configurationValue.bootstrap.servers.lifetime,
         defaultMinPeriod: this.configurationValue.bootstrap.servers.defaultMinPeriod,

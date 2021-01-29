@@ -139,7 +139,7 @@ export class Lwm2mDeviceConfigServerComponent implements ControlValueAccessor {
       Validators.maxLength(this.lenMaxServerPublicKey)]);
   }
 
-  writeValue(value: any): void {
+  writeValue(value: ServerSecurityConfig): void {
     if (value) {
       this.updateValueFields(value);
     }

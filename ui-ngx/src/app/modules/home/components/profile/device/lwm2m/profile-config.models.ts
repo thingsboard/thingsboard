@@ -16,7 +16,6 @@
 
 import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
 
-export const ID = 'id';
 export const INSTANCES = 'instances';
 export const RESOURCES = 'resources';
 export const OBSERVE_ATTR_TELEMETRY = 'observeAttrTelemetry';
@@ -24,6 +23,7 @@ export const OBSERVE = 'observe';
 export const ATTRIBUTE = 'attribute';
 export const TELEMETRY = 'telemetry';
 export const KEY_NAME = 'keyName';
+export const CLIENT_LWM2M = 'clientLwM2M';
 export const DEFAULT_ID_SERVER = 123;
 export const DEFAULT_ID_BOOTSTRAP = 111;
 export const DEFAULT_HOST_NAME = 'localhost';
@@ -57,6 +57,11 @@ export const SECURITY_CONFIG_MODE_NAMES = new Map<SECURITY_CONFIG_MODE, string>(
     [SECURITY_CONFIG_MODE.NO_SEC, 'No Security'],
   ]
 );
+
+export interface ModelValue {
+  objectIds: number[] | null,
+  objectsList: ObjectLwM2M[]
+}
 
 export interface BootstrapServersSecurityConfig {
   shortId: number;
