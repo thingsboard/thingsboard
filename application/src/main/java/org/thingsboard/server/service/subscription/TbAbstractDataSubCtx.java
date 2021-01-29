@@ -107,7 +107,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
     public void setAndResolveQuery(T query) {
         dynamicValues.clear();
         this.query = query;
-        if (query.getKeyFilters() != null) {
+        if (query != null && query.getKeyFilters() != null) {
             for (KeyFilter filter : query.getKeyFilters()) {
                 registerDynamicValues(filter.getPredicate());
             }
