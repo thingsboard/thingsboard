@@ -61,4 +61,12 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
         configuration.setCredentials(new AnonymousCredentials());
         return configuration;
     }
+
+    public ClientCredentials getCredentials() {
+        if (this.credentials == null) {
+            return new AnonymousCredentials();
+        } else {
+            return this.credentials;
+        }
+    }
 }
