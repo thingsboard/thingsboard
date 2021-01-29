@@ -201,6 +201,8 @@ export type TripAnimationSettings = {
     pointAsAnchorFunction: GenericFunction;
     tooltipFunction: GenericFunction;
     labelFunction: GenericFunction;
+    useColorPointFunction: boolean;
+    colorPointFunction: GenericFunction;
 };
 
 export type actionsHandler = ($event: Event, datasource: Datasource) => void;
