@@ -25,7 +25,9 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -42,7 +44,11 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.user.UserDao;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -65,6 +71,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Autowired
     private CustomerDao customerDao;
 
+    @Autowired
+    private UserDao userDao;
+
+    @Autowired
+    private DashboardService dashboardService;
     @Autowired
     @Lazy
     private TbTenantProfileCache tenantProfileCache;
@@ -170,6 +181,31 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     public void deleteDashboard(TenantId tenantId, DashboardId dashboardId) {
         log.trace("Executing deleteDashboard [{}]", dashboardId);
         Validator.validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
+
+        Dashboard dashboard = dashboardService.findDashboardById(tenantId, dashboardId);
+        Set<ShortCustomerInfo> customers = dashboard.getAssignedCustomers();
+
+        List<User> users = new ArrayList<>();
+        PageLink page = new PageLink(100);
+        for(ShortCustomerInfo customer : customers) {
+            PageData<User> temp = userDao.findCustomerUsers(tenantId.getId(), customer.getCustomerId().getId(), page);
+            if(temp != null) {
+                users.addAll(temp.getData());
+            }
+        }
+
+        for(User user : users) {
+            if(user.getAdditionalInfo().get("defaultDashboardFullscreen") != null) {
+                if(user.getAdditionalInfo().get("defaultDashboardFullscreen").asText().equals("true")) {
+                    throw new DataValidationException("One of a customers have enabled full screen mode");
+                }
+            }
+
+            if(user.getAdditionalInfo().get("defaultDashboardId") != null) {
+                throw new DataValidationException("One of a customers have this dashboard as Default");
+            }
+        }
+
         deleteEntityRelations(tenantId, dashboardId);
         dashboardDao.removeById(tenantId, dashboardId.getId());
     }
