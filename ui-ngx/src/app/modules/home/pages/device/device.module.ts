@@ -34,6 +34,7 @@ import { DefaultDeviceTransportConfigurationComponent } from './data/default-dev
 import { DeviceTransportConfigurationComponent } from './data/device-transport-configuration.component';
 import { MqttDeviceTransportConfigurationComponent } from './data/mqtt-device-transport-configuration.component';
 import { Lwm2mDeviceTransportConfigurationComponent } from './data/lwm2m-device-transport-configuration.component';
+import { CoapDeviceTransportConfigurationComponent } from './data/coap-device-transport-configuration.component';
 
 @NgModule({
   declarations: [
@@ -42,6 +43,7 @@ import { Lwm2mDeviceTransportConfigurationComponent } from './data/lwm2m-device-
     DefaultDeviceTransportConfigurationComponent,
     MqttDeviceTransportConfigurationComponent,
     Lwm2mDeviceTransportConfigurationComponent,
+    CoapDeviceTransportConfigurationComponent,
     DeviceTransportConfigurationComponent,
     DeviceDataComponent,
     DeviceComponent,
