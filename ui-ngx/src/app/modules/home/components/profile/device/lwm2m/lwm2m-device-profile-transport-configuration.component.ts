@@ -269,18 +269,18 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         obj.instances.forEach(instance => {
           if (instance.hasOwnProperty(RESOURCES) && Array.isArray(instance.resources)) {
             instance.resources.forEach(resource => {
-              let pathRes = `/${obj.id}/${instance.id}/${resource.id}`;
-              if (resource.attribute) {
-                attributeArray.push(pathRes);
-              }
-              if (resource.telemetry) {
-                telemetryArray.push(pathRes);
-              }
               if (resource.attribute || resource.telemetry) {
-                keyNameNew[pathRes] = resource.keyName;
+                let pathRes = `/${obj.id}/${instance.id}/${resource.id}`;
                 if (resource.observe) {
                   observeArray.push(pathRes);
                 }
+                if (resource.attribute) {
+                  attributeArray.push(pathRes);
+                }
+                if (resource.telemetry) {
+                  telemetryArray.push(pathRes);
+                }
+                keyNameNew[pathRes] = resource.keyName;
               }
             })
           }
