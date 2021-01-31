@@ -17,10 +17,11 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.node.LwM2mResource;
+import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.californium.LeshanServer;
@@ -35,7 +36,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Data
@@ -44,7 +44,7 @@ public class LwM2MClient implements Cloneable {
     private String deviceProfileName;
     private String endPoint;
     private String identity;
-    private SecurityInfo info;
+    private SecurityInfo securityInfo;
     private UUID deviceUuid;
     private UUID sessionUuid;
     private UUID profileUuid;
@@ -59,15 +59,16 @@ public class LwM2MClient implements Cloneable {
     private Set<Integer> delayedRequestsId;
     private Map<String, LwM2mResponse> responses;
     private final LwM2mValueConverterImpl converter;
+    private boolean clientUpdateValueAfterConnect;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
 
-    public LwM2MClient(String endPoint, String identity, SecurityInfo info, ValidateDeviceCredentialsResponseMsg credentialsResponse, UUID profileUuid) {
+    public LwM2MClient(String endPoint, String identity, SecurityInfo securityInfo, ValidateDeviceCredentialsResponseMsg credentialsResponse, UUID profileUuid) {
         this.endPoint = endPoint;
         this.identity = identity;
-        this.info = info;
+        this.securityInfo = securityInfo;
         this.credentialsResponse = credentialsResponse;
         this.attributes = new ConcurrentHashMap<>();
         this.pendingRequests = ConcurrentHashMap.newKeySet();
@@ -98,28 +99,33 @@ public class LwM2MClient implements Cloneable {
     }
 
     private void initValue() {
-        this.responses.forEach((key, resp) -> {
+        this.responses.forEach((key, lwM2mResponse) -> {
             LwM2mPath pathIds = new LwM2mPath(key);
-            if (pathIds.isObject() || pathIds.isObjectInstance() || pathIds.isResource()) {
-                ObjectModel objectModel = this.lwServer.getModelProvider().getObjectModel(registration).getObjectModels().stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0);
-                if (objectModel != null) {
-                    ((LwM2mObjectInstance)((ReadResponse)resp).getContent()).getResources().forEach((k, v) -> {
-                        String rez = pathIds.toString() + "/" + k;
-                        if (((LwM2mObjectInstance) ((ReadResponse) resp).getContent()).getResource(k) instanceof LwM2mMultipleResource){
-                            this.resources.put(rez, new ResourceValue(v.getValues(), null, true));
-                        }
-                        else {
-                            this.resources.put(rez, new ResourceValue(null, v.getValue(), false));
-                        }
-                    });
-                }
+            if (pathIds.isObjectInstance()) {
+                ((LwM2mObjectInstance) ((ReadResponse) lwM2mResponse).getContent()).getResources().forEach((k, v) -> {
+                    String pathRez = pathIds.toString() + "/" + k;
+                    this.updateResourceValue(pathRez, v);
+                });
+            }
+            else if (pathIds.isResource()) {
+                this.updateResourceValue(pathIds.toString(), ((LwM2mResource) ((ReadResponse) lwM2mResponse).getContent()));
             }
         });
         if (this.responses.size() == 0) this.responses = new ConcurrentHashMap<>();
     }
 
+    private void updateResourceValue(String pathRez, LwM2mResource rez) {
+        if (rez instanceof LwM2mMultipleResource){
+            this.resources.put(pathRez, new ResourceValue(rez.getValues(), null, true));
+        }
+        else if (rez instanceof LwM2mSingleResource) {
+            this.resources.put(pathRez, new ResourceValue(null, rez.getValue(), false));
+        }
+    }
+
     /**
      * if path != null
+     *
      * @param path
      */
     public void onSuccessOrErrorDelayedRequests(String path) {
