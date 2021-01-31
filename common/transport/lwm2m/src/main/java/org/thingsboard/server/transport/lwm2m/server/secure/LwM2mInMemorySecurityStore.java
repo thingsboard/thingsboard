@@ -77,7 +77,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         try {
             String registrationId = this.getByRegistrationId(endPoint, null);
             return (registrationId != null && sessions.size() > 0 && sessions.get(registrationId) != null) ?
-                    sessions.get(registrationId).getInfo() : this.addLwM2MClientToSession(endPoint);
+                    sessions.get(registrationId).getSecurityInfo() : this.addLwM2MClientToSession(endPoint);
         } finally {
             readLock.unlock();
         }
@@ -93,7 +93,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         readLock.lock();
         try {
             String integrationId = this.getByRegistrationId(null, identity);
-            return (integrationId != null) ? sessions.get(integrationId).getInfo() : this.addLwM2MClientToSession(identity);
+            return (integrationId != null) ? sessions.get(integrationId).getSecurityInfo() : this.addLwM2MClientToSession(identity);
         } finally {
             readLock.unlock();
         }
@@ -103,7 +103,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     public Collection<SecurityInfo> getAll() {
         readLock.lock();
         try {
-            return Collections.unmodifiableCollection(this.sessions.values().stream().map(LwM2MClient::getInfo).collect(Collectors.toList()));
+            return Collections.unmodifiableCollection(this.sessions.values().stream().map(LwM2MClient::getSecurityInfo).collect(Collectors.toList()));
         } finally {
             readLock.unlock();
         }
@@ -119,7 +119,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
             LwM2MClient lwM2MClient = (sessions.get(registrationId) != null) ? sessions.get(registrationId) : null;
             if (lwM2MClient != null) {
                 if (listener != null) {
-                    listener.securityInfoRemoved(INFOS_ARE_COMPROMISED, lwM2MClient.getInfo());
+                    listener.securityInfoRemoved(INFOS_ARE_COMPROMISED, lwM2MClient.getSecurityInfo());
                 }
                 sessions.remove(registrationId);
             }

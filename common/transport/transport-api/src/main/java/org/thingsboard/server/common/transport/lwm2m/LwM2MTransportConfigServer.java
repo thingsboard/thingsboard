@@ -119,6 +119,10 @@ public class LwM2MTransportConfigServer {
     private int registeredPoolSize;
 
     @Getter
+    @Value("${transport.lwm2m.client_update_value_after_connect:}")
+    private boolean clientUpdateValueAfterConnect;
+
+    @Getter
     @Value("${transport.lwm2m.update_registered_pool_size:}")
     private int updateRegisteredPoolSize;
 
