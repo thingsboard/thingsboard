@@ -347,9 +347,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
         for(User user : users) {
             if(user.getAdditionalInfo().get("defaultDashboardId") != null) {
-                ObjectNode objectNode = null;
-
-                objectNode = JacksonUtil.fromString(user.getAdditionalInfo().toString(), ObjectNode.class);
+                ObjectNode objectNode = JacksonUtil.fromString(user.getAdditionalInfo().toString(), ObjectNode.class);
 
                 if (objectNode != null) {
                     if (user.getAdditionalInfo().get("defaultDashboardId") != null) {
