@@ -191,7 +191,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                     getUsersAssignedToCustomerDashboard(tenantId, customers)
             );
 
-            if(CollectionUtils.isEmpty(users))
+            if(!CollectionUtils.isEmpty(users))
                 users.forEach(user -> userService.saveUser(user));
         }
 
@@ -328,18 +328,25 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     private List<User> getUsersAssignedToCustomerDashboard(TenantId tenantId, Set<ShortCustomerInfo> customers)  {
         List<User> allUsers = new ArrayList<>();
-        PageLink page = new PageLink(100);
+        PageLink page = new PageLink(1);
+        PageData<User> pageData;
+        boolean hasNext = true;
         for(ShortCustomerInfo customer : customers) {
-            PageData<User> pageData = userService.findCustomerUsers(tenantId, customer.getCustomerId(), page);
-            if(pageData != null) {
+            do {
+                pageData = userService.findCustomerUsers(tenantId, customer.getCustomerId(), page);
                 allUsers.addAll(pageData.getData());
-            }
+                if(pageData.hasNext()) {
+                    page = page.nextPageLink();
+                } else {
+                    hasNext = false;
+                }
+            } while (hasNext);
         }
         return allUsers;
     }
 
     private List<User> deleteDefaultDashboardFromUser(List<User> users) {
-        if(users == null || users.isEmpty()) {
+        if(CollectionUtils.isEmpty(users)) {
             return null;
         }
 
