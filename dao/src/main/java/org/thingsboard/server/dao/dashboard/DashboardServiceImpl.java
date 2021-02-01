@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -47,7 +46,8 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.server.dao.user.UserDao;
+import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,10 +75,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     private CustomerDao customerDao;
 
     @Autowired
-    private UserDao userDao;
+    private UserService userService;
 
-    @Autowired
-    private DashboardService dashboardService;
     @Autowired
     @Lazy
     private TbTenantProfileCache tenantProfileCache;
@@ -185,16 +183,16 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         log.trace("Executing deleteDashboard [{}]", dashboardId);
         Validator.validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
 
-        Dashboard dashboard = dashboardService.findDashboardById(tenantId, dashboardId);
+        Dashboard dashboard = findDashboardById(tenantId, dashboardId);
         Set<ShortCustomerInfo> customers = dashboard.getAssignedCustomers();
 
-        if(customers != null && !customers.isEmpty()) {
-            List<User> users = cleanDefaultDashboardForUser(
-                    getUsersByTenantIdAndAssignedToDashboardCustomers(tenantId, customers)
+        if(!CollectionUtils.isEmpty(customers)) {
+            List<User> users = deleteDefaultDashboardFromUser(
+                    getUsersAssignedToCustomerDashboard(tenantId, customers)
             );
 
-            if(users != null && !users.isEmpty())
-                users.forEach(user -> userDao.save(tenantId, user));
+            if(CollectionUtils.isEmpty(users))
+                users.forEach(user -> userService.saveUser(user));
         }
 
         deleteEntityRelations(tenantId, dashboardId);
@@ -328,19 +326,19 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
 
-    private List<User> getUsersByTenantIdAndAssignedToDashboardCustomers(TenantId tenantId, Set<ShortCustomerInfo> customers)  {
+    private List<User> getUsersAssignedToCustomerDashboard(TenantId tenantId, Set<ShortCustomerInfo> customers)  {
         List<User> allUsers = new ArrayList<>();
         PageLink page = new PageLink(100);
         for(ShortCustomerInfo customer : customers) {
-            PageData<User> temp = userDao.findCustomerUsers(tenantId.getId(), customer.getCustomerId().getId(), page);
-            if(temp != null) {
-                allUsers.addAll(temp.getData());
+            PageData<User> pageData = userService.findCustomerUsers(tenantId, customer.getCustomerId(), page);
+            if(pageData != null) {
+                allUsers.addAll(pageData.getData());
             }
         }
         return allUsers;
     }
 
-    private List<User> cleanDefaultDashboardForUser(List<User> users) {
+    private List<User> deleteDefaultDashboardFromUser(List<User> users) {
         if(users == null || users.isEmpty()) {
             return null;
         }
@@ -349,14 +347,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
         for(User user : users) {
             if(user.getAdditionalInfo().get("defaultDashboardId") != null) {
-                ObjectMapper mapper = new ObjectMapper();
                 ObjectNode objectNode = null;
 
-                try {
-                    objectNode = mapper.readValue(user.getAdditionalInfo().toString(), ObjectNode.class);
-                } catch (JsonProcessingException ex) {
-                    log.error(ex.getMessage());
-                }
+                objectNode = JacksonUtil.fromString(user.getAdditionalInfo().toString(), ObjectNode.class);
 
                 if (objectNode != null) {
                     if (user.getAdditionalInfo().get("defaultDashboardId") != null) {
