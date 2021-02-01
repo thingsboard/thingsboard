@@ -14,16 +14,15 @@
 /// limitations under the License.
 ///
 
-import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
-
 export const INSTANCES = 'instances';
 export const RESOURCES = 'resources';
+export const CLIENT_LWM2M = 'clientLwM2M';
+export const CLIENT_LWM2M_SETTINGS = 'clientLwM2mSettings';
 export const OBSERVE_ATTR_TELEMETRY = 'observeAttrTelemetry';
 export const OBSERVE = 'observe';
 export const ATTRIBUTE = 'attribute';
 export const TELEMETRY = 'telemetry';
 export const KEY_NAME = 'keyName';
-export const CLIENT_LWM2M = 'clientLwM2M';
 export const DEFAULT_ID_SERVER = 123;
 export const DEFAULT_ID_BOOTSTRAP = 111;
 export const DEFAULT_HOST_NAME = 'localhost';
@@ -91,10 +90,15 @@ interface BootstrapSecurityConfig {
 }
 
 export interface ProfileConfigModels {
-  bootstrap: BootstrapSecurityConfig;
+  clientLwM2mSettings: ClientLwM2mSettings;
   observeAttr: ObservableAttributes;
+  bootstrap: BootstrapSecurityConfig;
+
 }
 
+export interface ClientLwM2mSettings {
+  clientUpdateValueAfterConnect: false;
+}
 export interface ObservableAttributes {
   observe: string[];
   attribute: string[];
@@ -143,13 +147,16 @@ function getDefaultProfileBootstrapSecurityConfig(hostname: any): BootstrapSecur
 
 export function getDefaultProfileConfig(hostname?: any): ProfileConfigModels {
   return {
-    bootstrap: getDefaultProfileBootstrapSecurityConfig((hostname) ? hostname : DEFAULT_HOST_NAME),
+    clientLwM2mSettings: {
+      clientUpdateValueAfterConnect: false
+    },
     observeAttr: {
       observe: [],
       attribute: [],
       telemetry: [],
       keyName: {}
-    }
+    },
+    bootstrap: getDefaultProfileBootstrapSecurityConfig((hostname) ? hostname : DEFAULT_HOST_NAME)
   };
 }
 
