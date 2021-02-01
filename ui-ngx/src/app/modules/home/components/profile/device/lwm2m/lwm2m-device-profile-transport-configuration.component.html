@@ -20,7 +20,16 @@
     <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
       <ng-template matTabContent>
         <section [formGroup]="lwm2mDeviceProfileFormGroup">
-          <div class="mat-padding">
+          <div class="mat-padding" style="padding-bottom: 0px">
+            <mat-checkbox formControlName="clientUpdateValueAfterConnect" color="primary"
+                          matTooltip="{{ translate.get('device-profile.lwm2m.client-update-value-after-connect-tip',
+                          { count: +lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value,
+                           value: lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value }) | async }}"
+                          matTooltipPosition="above">
+              {{ 'device-profile.lwm2m.client-update-value-after-connect' | translate }}
+            </mat-checkbox>
+          </div>
+          <div class="mat-padding" style="padding-top: 0">
             <tb-profile-lwm2m-object-list
               (addList)="addObjectsList($event)"
               (removeList)="removeObjectsList($event)"

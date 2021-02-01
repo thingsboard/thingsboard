@@ -32,6 +32,7 @@ import { deepClone, isDefinedAndNotNull, isUndefined } from '@core/utils';
 import { WINDOW } from '@core/services/window.service';
 import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
 import { Direction } from '@shared/models/page/sort-order';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-transport-configuration',
@@ -68,10 +69,12 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   constructor(private store: Store<AppState>,
+              public translate: TranslateService,
               private fb: FormBuilder,
               private deviceProfileService: DeviceProfileService,
               @Inject(WINDOW) private window: Window) {
     this.lwm2mDeviceProfileFormGroup = this.fb.group({
+      clientUpdateValueAfterConnect: [false, []],
       objectIds: [null, Validators.required],
       observeAttrTelemetry: [null, Validators.required],
       shortId: [null, Validators.required],
@@ -141,6 +144,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   private updateWriteValue = (value: ModelValue): void => {
     this.lwm2mDeviceProfileFormGroup.patchValue({
+        clientUpdateValueAfterConnect: this.configurationValue.clientLwM2mSettings.clientUpdateValueAfterConnect,
         objectIds: value,
         observeAttrTelemetry: this.getObserveAttrTelemetryObjects(value['objectsList']),
         shortId: this.configurationValue.bootstrap.servers.shortId,
@@ -172,6 +176,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   private updateDeviceProfileValue(config): void {
     if (this.lwm2mDeviceProfileFormGroup.valid) {
+      this.configurationValue.clientLwM2mSettings.clientUpdateValueAfterConnect =
+        config.clientUpdateValueAfterConnect;
       this.updateObserveAttrTelemetryFromGroupToJson(config.observeAttrTelemetry.clientLwM2M);
       this.configurationValue.bootstrap.bootstrapServer = config.bootstrapServer;
       this.configurationValue.bootstrap.lwm2mServer = config.lwm2mServer;
