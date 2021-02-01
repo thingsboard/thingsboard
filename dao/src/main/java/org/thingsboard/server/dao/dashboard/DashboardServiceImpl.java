@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -185,25 +188,13 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         Dashboard dashboard = dashboardService.findDashboardById(tenantId, dashboardId);
         Set<ShortCustomerInfo> customers = dashboard.getAssignedCustomers();
 
-        List<User> users = new ArrayList<>();
-        PageLink page = new PageLink(100);
-        for(ShortCustomerInfo customer : customers) {
-            PageData<User> temp = userDao.findCustomerUsers(tenantId.getId(), customer.getCustomerId().getId(), page);
-            if(temp != null) {
-                users.addAll(temp.getData());
-            }
-        }
+        if(customers != null && !customers.isEmpty()) {
+            List<User> users = cleanDefaultDashboardForUser(
+                    getUsersByTenantIdAndAssignedToDashboardCustomers(tenantId, customers)
+            );
 
-        for(User user : users) {
-            if(user.getAdditionalInfo().get("defaultDashboardFullscreen") != null) {
-                if(user.getAdditionalInfo().get("defaultDashboardFullscreen").asText().equals("true")) {
-                    throw new DataValidationException("One of a customers have enabled full screen mode");
-                }
-            }
-
-            if(user.getAdditionalInfo().get("defaultDashboardId") != null) {
-                throw new DataValidationException("One of a customers have this dashboard as Default");
-            }
+            if(users != null && !users.isEmpty())
+                users.forEach(user -> userDao.save(tenantId, user));
         }
 
         deleteEntityRelations(tenantId, dashboardId);
@@ -334,6 +325,55 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             updateAssignedCustomer(customer.getTenantId(), new DashboardId(entity.getUuidId()), this.customer);
         }
 
+    }
+
+
+    private List<User> getUsersByTenantIdAndAssignedToDashboardCustomers(TenantId tenantId, Set<ShortCustomerInfo> customers)  {
+        List<User> allUsers = new ArrayList<>();
+        PageLink page = new PageLink(100);
+        for(ShortCustomerInfo customer : customers) {
+            PageData<User> temp = userDao.findCustomerUsers(tenantId.getId(), customer.getCustomerId().getId(), page);
+            if(temp != null) {
+                allUsers.addAll(temp.getData());
+            }
+        }
+        return allUsers;
+    }
+
+    private List<User> cleanDefaultDashboardForUser(List<User> users) {
+        if(users == null || users.isEmpty()) {
+            return null;
+        }
+
+        List<User> resultUsers = new ArrayList<>();
+
+        for(User user : users) {
+            if(user.getAdditionalInfo().get("defaultDashboardId") != null) {
+                ObjectMapper mapper = new ObjectMapper();
+                ObjectNode objectNode = null;
+
+                try {
+                    objectNode = mapper.readValue(user.getAdditionalInfo().toString(), ObjectNode.class);
+                } catch (JsonProcessingException ex) {
+                    log.error(ex.getMessage());
+                }
+
+                if (objectNode != null) {
+                    if (user.getAdditionalInfo().get("defaultDashboardId") != null) {
+                        objectNode.remove("defaultDashboardId");
+                    }
+
+                    if (user.getAdditionalInfo().get("defaultDashboardFullscreen") != null) {
+                        objectNode.remove("defaultDashboardFullscreen");
+                    }
+                }
+
+                user.setAdditionalInfo(objectNode);
+                resultUsers.add(user);
+            }
+        }
+
+        return resultUsers;
     }
 
 }
