@@ -26,7 +26,9 @@
                           { count: +lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value,
                            value: lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value }) | async }}"
                           matTooltipPosition="above">
-              {{ 'device-profile.lwm2m.client-update-value-after-connect' | translate }}
+              {{ translate.get('device-profile.lwm2m.client-update-value-after-connect',
+              { count: +lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value,
+                value: lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value }) | async }}
             </mat-checkbox>
           </div>
           <div class="mat-padding" style="padding-top: 0">

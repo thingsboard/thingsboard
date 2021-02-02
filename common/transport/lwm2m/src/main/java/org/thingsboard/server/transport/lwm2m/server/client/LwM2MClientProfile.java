@@ -20,7 +20,14 @@ import com.google.gson.JsonObject;
 import lombok.Data;
 
 @Data
-public class AttrTelemetryObserveValue {
+public class LwM2MClientProfile {
+    /**
+     * {"clientLwM2mSettings": {
+     *      clientUpdateValueAfterConnect: false;
+     *       }
+    **/
+    JsonObject postClientLwM2mSettings;
+
     /**
      * {"keyName": {
      *       "/3/0/1": "modelNumber",

@@ -36,7 +36,7 @@ import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.transport.lwm2m.server.client.AttrTelemetryObserveValue;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientProfile;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 
 import java.io.File;
@@ -70,7 +70,8 @@ public class LwM2MTransportHandler {
 
     public static final long DEFAULT_TIMEOUT = 2 * 60 * 1000L; // 2min in ms
     public static final String OBSERVE_ATTRIBUTE_TELEMETRY = "observeAttr";
-    public static final String KEYNAME = "keyName";
+    public static final String CLIENT_LWM2M_SETTINGS = "clientLwM2mSettings";
+    public static final String KEY_NAME = "keyName";
     public static final String OBSERVE = "observe";
     public static final String BOOTSTRAP = "bootstrap";
     public static final String SERVERS = "servers";
@@ -187,18 +188,22 @@ public class LwM2MTransportHandler {
         return null;
     }
 
-    public static AttrTelemetryObserveValue getNewProfileParameters(JsonObject profilesConfigData) {
-        AttrTelemetryObserveValue attrTelemetryObserveValue = new AttrTelemetryObserveValue();
-        attrTelemetryObserveValue.setPostKeyNameProfile(profilesConfigData.get(KEYNAME).getAsJsonObject());
-        attrTelemetryObserveValue.setPostAttributeProfile(profilesConfigData.get(ATTRIBUTE).getAsJsonArray());
-        attrTelemetryObserveValue.setPostTelemetryProfile(profilesConfigData.get(TELEMETRY).getAsJsonArray());
-        attrTelemetryObserveValue.setPostObserveProfile(profilesConfigData.get(OBSERVE).getAsJsonArray());
-        return attrTelemetryObserveValue;
+    public static LwM2MClientProfile getNewProfileParameters(JsonObject profilesConfigData) {
+        LwM2MClientProfile lwM2MClientProfile = new LwM2MClientProfile();
+        lwM2MClientProfile.setPostClientLwM2mSettings(profilesConfigData.get(CLIENT_LWM2M_SETTINGS).getAsJsonObject());
+        lwM2MClientProfile.setPostKeyNameProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEY_NAME).getAsJsonObject());
+        lwM2MClientProfile.setPostAttributeProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).getAsJsonArray());
+        lwM2MClientProfile.setPostTelemetryProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).getAsJsonArray());
+        lwM2MClientProfile.setPostObserveProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE).getAsJsonArray());
+        return lwM2MClientProfile;
     }
 
     /**
      * @return deviceProfileBody with Observe&Attribute&Telemetry From Thingsboard
-     * Example: with pathResource (use only pathResource)
+     * Example: 
+     * property: {"clientLwM2mSettings": {
+     *      clientUpdateValueAfterConnect: false;
+     *       }
      * property: "observeAttr"
      * {"keyName": {
      * "/3/0/1": "modelNumber",
@@ -209,15 +214,14 @@ public class LwM2MTransportHandler {
      * "telemetry":["/1/0/1","/2/0/1","/6/0/1"],
      * "observe":["/2/0","/2/0/0","/4/0/2"]}
      */
-    public static JsonObject getObserveAttrTelemetryFromThingsboard(DeviceProfile deviceProfile) {
+    public static LwM2MClientProfile getLwM2MClientProfileFromThingsboard(DeviceProfile deviceProfile) {
         if (deviceProfile != null && ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
-//            Lwm2mDeviceProfileTransportConfiguration lwm2mDeviceProfileTransportConfiguration = (Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-            Object observeAttr = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
+            Object profile = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
             try {
                 ObjectMapper mapper = new ObjectMapper();
-                String observeAttrStr = mapper.writeValueAsString(observeAttr);
-                JsonObject objectMsg = (observeAttrStr != null) ? validateJson(observeAttrStr) : null;
-                return (getValidateCredentialsBodyFromThingsboard(objectMsg)) ? objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject() : null;
+                String profileStr = mapper.writeValueAsString(profile);
+                JsonObject profileJson = (profileStr  != null) ? validateJson(profileStr) : null;
+                return (getValidateCredentialsBodyFromThingsboard(profileJson)) ? LwM2MTransportHandler.getNewProfileParameters(profileJson) : null;
             } catch (IOException e) {
                 log.error("", e);
             }
@@ -240,15 +244,23 @@ public class LwM2MTransportHandler {
         return null;
     }
 
+    public static boolean getClientUpdateValueAfterConnect (LwM2MClientProfile profile) {
+        return profile.getPostClientLwM2mSettings().getAsJsonObject().has("clientUpdateValueAfterConnect") &&
+                profile.getPostClientLwM2mSettings().getAsJsonObject().get("clientUpdateValueAfterConnect").getAsBoolean();
+    }
+
     private static boolean getValidateCredentialsBodyFromThingsboard(JsonObject objectMsg) {
         return (objectMsg != null &&
                 !objectMsg.isJsonNull() &&
+                objectMsg.has(CLIENT_LWM2M_SETTINGS) &&
+                !objectMsg.get(CLIENT_LWM2M_SETTINGS).isJsonNull() &&
+                objectMsg.get(CLIENT_LWM2M_SETTINGS).isJsonObject() &&
                 objectMsg.has(OBSERVE_ATTRIBUTE_TELEMETRY) &&
                 !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonNull() &&
                 objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonObject() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(KEYNAME) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEYNAME).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEYNAME).isJsonObject() &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(KEY_NAME) &&
+                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEY_NAME).isJsonNull() &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEY_NAME).isJsonObject() &&
                 objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(ATTRIBUTE) &&
                 !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).isJsonNull() &&
                 objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).isJsonArray() &&

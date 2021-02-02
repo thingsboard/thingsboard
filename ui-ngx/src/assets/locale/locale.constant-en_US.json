@@ -1103,8 +1103,8 @@
         "schedule-time-to": "To",
         "schedule-days-of-week-required": "At least one day of week should be selected.",
         "lwm2m": {
-            "client-update-value-after-connect": "Query client resource values after connecting ",
-            "client-update-value-after-connect-tip": "{ count, plural, 1 {After connecting the Client, we get All resource values for all objects} other {Once connected to the client, requests are sent to the observer from the profile configuration.} }",
+            "client-update-value-after-connect": "{ count, plural, 1 {Request to the client after registration for All resource values} other {Request to the client after registration to read values only as attributes or telemetry} }",
+            "client-update-value-after-connect-tip": "{ count, plural, 1 {Request to the client after registration to read all resource values for all objects} other {Request to the client after registration to read the values of the resources marked as attribute or telemetry from the profile configuration.} }",
             "object-list": "Object list",
             "object-list-empty": "No objects selected.",
             "no-objects-matching": "No objects matching '{{object}}' were found.",
