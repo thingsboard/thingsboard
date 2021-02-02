@@ -581,7 +581,6 @@ transport:
     request_pool_size: "${LWM2M_REQUEST_POOL_SIZE:100}"
     request_error_pool_size: "${LWM2M_REQUEST_ERROR_POOL_SIZE:10}"
     registered_pool_size: "${LWM2M_REGISTERED_POOL_SIZE:10}"
-    client_update_value_after_connect: "${CLIENT_UPDATE_VALUE_AFTER_CONNECT:false}"
     update_registered_pool_size: "${LWM2M_UPDATE_REGISTERED_POOL_SIZE:10}"
     un_registered_pool_size: "${LWM2M_UN_REGISTERED_POOL_SIZE:10}"
     secure:

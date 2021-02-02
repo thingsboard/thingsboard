@@ -226,7 +226,7 @@ public class LwM2MTransportRequest {
                 String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: Resource path - %s msg  No  SendRequest to Client", target);
                 service.sentLogsToThingsboard(msg, registration);
                 log.error("[{}] - [{}] No SendRequest", target);
-                this.handleResponseError(registration, target, lwM2MClient, isDelayedUpdate);
+                this.handleResponseError(registration, target, lwM2MClient, true);
 
             }
         }

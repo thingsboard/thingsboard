@@ -59,7 +59,6 @@ public class LwM2MClient implements Cloneable {
     private Set<Integer> delayedRequestsId;
     private Map<String, LwM2mResponse> responses;
     private final LwM2mValueConverterImpl converter;
-    private boolean clientUpdateValueAfterConnect;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
@@ -114,7 +113,7 @@ public class LwM2MClient implements Cloneable {
         if (this.responses.size() == 0) this.responses = new ConcurrentHashMap<>();
     }
 
-    private void updateResourceValue(String pathRez, LwM2mResource rez) {
+    public void updateResourceValue(String pathRez, LwM2mResource rez) {
         if (rez instanceof LwM2mMultipleResource){
             this.resources.put(pathRez, new ResourceValue(rez.getValues(), null, true));
         }
