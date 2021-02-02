@@ -50,6 +50,7 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -146,6 +147,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (customer == null) {
             throw new DataValidationException("Can't unassign dashboard from non-existent customer!");
         }
+
+        updateUsers(
+                deleteDefaultDashboardFromUser(
+                        getUsersAssignedToCustomerDashboard(tenantId, Collections.singleton(dashboard.getAssignedCustomerInfo(customer.getId()))), dashboardId));
+
         if (dashboard.removeAssignedCustomer(customer)) {
             try {
                 deleteRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD));
@@ -187,12 +193,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         Set<ShortCustomerInfo> customers = dashboard.getAssignedCustomers();
 
         if(!CollectionUtils.isEmpty(customers)) {
-            List<User> users = deleteDefaultDashboardFromUser(
-                    getUsersAssignedToCustomerDashboard(tenantId, customers)
-            );
-
-            if(!CollectionUtils.isEmpty(users))
-                users.forEach(user -> userService.saveUser(user));
+            updateUsers(deleteDefaultDashboardFromUser(getUsersAssignedToCustomerDashboard(tenantId, customers), dashboardId));
         }
 
         deleteEntityRelations(tenantId, dashboardId);
@@ -325,13 +326,24 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     }
 
+    private void updateUsers(List<User> users) {
+        if(!CollectionUtils.isEmpty(users)) {
+            users.forEach(userService::saveUser);
+        }
+    }
 
     private List<User> getUsersAssignedToCustomerDashboard(TenantId tenantId, Set<ShortCustomerInfo> customers)  {
+        if(CollectionUtils.isEmpty(customers)) {
+            return null;
+        }
+
         List<User> allUsers = new ArrayList<>();
-        PageLink page = new PageLink(1);
+        PageLink page;
         PageData<User> pageData;
-        boolean hasNext = true;
+        boolean hasNext;
         for(ShortCustomerInfo customer : customers) {
+            hasNext = true;
+            page = new PageLink(1);
             do {
                 pageData = userService.findCustomerUsers(tenantId, customer.getCustomerId(), page);
                 allUsers.addAll(pageData.getData());
@@ -345,19 +357,21 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         return allUsers;
     }
 
-    private List<User> deleteDefaultDashboardFromUser(List<User> users) {
+    private List<User> deleteDefaultDashboardFromUser(List<User> users, DashboardId dashboardId) {
         if(CollectionUtils.isEmpty(users)) {
             return null;
         }
 
         List<User> resultUsers = new ArrayList<>();
-
+        String userDefaultDashboard;
         for(User user : users) {
-            if(user.getAdditionalInfo().get("defaultDashboardId") != null) {
+            userDefaultDashboard = user.getAdditionalInfo().get("defaultDashboardId").asText();
+
+            if(userDefaultDashboard != null) {
                 ObjectNode objectNode = JacksonUtil.fromString(user.getAdditionalInfo().toString(), ObjectNode.class);
 
                 if (objectNode != null) {
-                    if (user.getAdditionalInfo().get("defaultDashboardId") != null) {
+                    if(userDefaultDashboard.equals(dashboardId.getId().toString())) {
                         objectNode.remove("defaultDashboardId");
                     }
 
