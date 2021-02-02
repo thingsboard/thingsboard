@@ -18,12 +18,8 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
-import org.eclipse.leshan.core.node.LwM2mObjectInstance;
-import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
-import org.eclipse.leshan.core.response.LwM2mResponse;
-import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
@@ -33,7 +29,6 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportServiceImpl;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -54,10 +49,10 @@ public class LwM2MClient implements Cloneable {
     private ValidateDeviceCredentialsResponseMsg credentialsResponse;
     private Map<String, String> attributes;
     private Map<String, ResourceValue> resources;
-    private Set<String> pendingRequests;
+    //    private Set<String> pendingRequests;
     private Map<String, TransportProtos.TsKvProto> delayedRequests;
-    private Set<Integer> delayedRequestsId;
-    private Map<String, LwM2mResponse> responses;
+//    private Set<Integer> delayedRequestsId;
+//    private Map<String, LwM2mResponse> responses;
     private final LwM2mValueConverterImpl converter;
 
     public Object clone() throws CloneNotSupportedException {
@@ -70,69 +65,76 @@ public class LwM2MClient implements Cloneable {
         this.securityInfo = securityInfo;
         this.credentialsResponse = credentialsResponse;
         this.attributes = new ConcurrentHashMap<>();
-        this.pendingRequests = ConcurrentHashMap.newKeySet();
+//        this.pendingRequests = ConcurrentHashMap.newKeySet();
         this.delayedRequests = new ConcurrentHashMap<>();
         this.resources = new ConcurrentHashMap<>();
-        this.delayedRequestsId = ConcurrentHashMap.newKeySet();
+//        this.delayedRequestsId = ConcurrentHashMap.newKeySet();
         this.profileUuid = profileUuid;
         /**
          * Key <objectId>, response<Value -> instance -> resources: value...>
          */
-        this.responses = new ConcurrentHashMap<>();
+//        this.responses = new ConcurrentHashMap<>();
         this.converter = LwM2mValueConverterImpl.getInstance();
     }
 
-    /**
-     * Fill with data -> Model client
-     *
-     * @param path     -
-     * @param response -
-     */
-    public void onSuccessHandler(String path, LwM2mResponse response) {
-        this.responses.put(path, response);
-        this.pendingRequests.remove(path);
-        if (this.pendingRequests.size() == 0) {
-            this.initValue();
-            this.lwM2MTransportServiceImpl.putDelayedUpdateResourcesThingsboard(this);
-        }
-    }
+//    /**
+//     * Fill with data -> Model client
+//     *
+//     * @param path     -
+//     * @param response -
+//     */
+//    public void onSuccessHandler(String path, LwM2mResponse response) {
+//        this.responses.put(path, response);
+//        this.pendingRequests.remove(path);
+//        if (this.pendingRequests.size() == 0) {
+//            this.initValue();
+//            this.lwM2MTransportServiceImpl.putDelayedUpdateResourcesThingsboard(this);
+//        }
+//    }
+//
+//    private void initValue() {
+//        this.responses.forEach((key, lwM2mResponse) -> {
+//            LwM2mPath pathIds = new LwM2mPath(key);
+//            if (pathIds.isObjectInstance()) {
+//                ((LwM2mObjectInstance) ((ReadResponse) lwM2mResponse).getContent()).getResources().forEach((k, v) -> {
+//                    String pathRez = pathIds.toString() + "/" + k;
+//                    this.updateResourceValue(pathRez, v);
+//                });
+//            }
+//            else if (pathIds.isResource()) {
+//                this.updateResourceValue(pathIds.toString(), ((LwM2mResource) ((ReadResponse) lwM2mResponse).getContent()));
+//            }
+//        });
+//        if (this.responses.size() == 0) this.responses = new ConcurrentHashMap<>();
+//    }
 
-    private void initValue() {
-        this.responses.forEach((key, lwM2mResponse) -> {
-            LwM2mPath pathIds = new LwM2mPath(key);
-            if (pathIds.isObjectInstance()) {
-                ((LwM2mObjectInstance) ((ReadResponse) lwM2mResponse).getContent()).getResources().forEach((k, v) -> {
-                    String pathRez = pathIds.toString() + "/" + k;
-                    this.updateResourceValue(pathRez, v);
-                });
-            }
-            else if (pathIds.isResource()) {
-                this.updateResourceValue(pathIds.toString(), ((LwM2mResource) ((ReadResponse) lwM2mResponse).getContent()));
-            }
-        });
-        if (this.responses.size() == 0) this.responses = new ConcurrentHashMap<>();
-    }
+//    public void updateObjectInstanceResourceValue(String pathInst, LwM2mObjectInstance instance) {
+//        LwM2mPath pathIds = new LwM2mPath(pathInst);
+//        instance.getResources().forEach((k, v) -> {
+//            String pathRez = pathIds.toString() + "/" + k;
+//            this.updateResourceValue(pathRez, v);
+//        });
+//    }
 
     public void updateResourceValue(String pathRez, LwM2mResource rez) {
-        if (rez instanceof LwM2mMultipleResource){
+        if (rez instanceof LwM2mMultipleResource) {
             this.resources.put(pathRez, new ResourceValue(rez.getValues(), null, true));
-        }
-        else if (rez instanceof LwM2mSingleResource) {
+        } else if (rez instanceof LwM2mSingleResource) {
             this.resources.put(pathRez, new ResourceValue(null, rez.getValue(), false));
         }
     }
 
-    /**
-     * if path != null
-     *
-     * @param path
-     */
-    public void onSuccessOrErrorDelayedRequests(String path) {
-        if (path != null) this.delayedRequests.remove(path);
-        if (this.delayedRequests.size() == 0 && this.getDelayedRequestsId().size() == 0) {
-            this.lwM2MTransportServiceImpl.updatesAndSentModelParameter(this);
-        }
-    }
+//    /**
+//     * if path != null
+//     *
+//     * @param path
+//     */
+//    public void onSuccessOrErrorDelayedRequests(String path) {
+//        if (path != null) this.delayedRequests.remove(path);
+//        if (this.delayedRequests.size() == 0 && this.getDelayedRequestsId().size() == 0) {
+//            this.lwM2MTransportServiceImpl.updatesAndSentModelParameter(this);
+//        }
+//    }
 
 }
 
