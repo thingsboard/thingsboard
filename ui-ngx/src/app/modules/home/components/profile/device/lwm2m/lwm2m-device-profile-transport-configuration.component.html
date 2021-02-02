@@ -21,14 +21,20 @@
       <ng-template matTabContent>
         <section [formGroup]="lwm2mDeviceProfileFormGroup">
           <div class="mat-padding" style="padding-bottom: 0px">
-            <mat-checkbox formControlName="clientUpdateValueAfterConnect" color="primary"
+            <mat-checkbox formControlName="clientOnlyObserveAfterConnect" color="primary"
+                          matTooltip="{{ translate.get('device-profile.lwm2m.client-only-observe-after-connect-tip',
+                          { count: +lwm2mDeviceProfileFormGroup.get('clientOnlyObserveAfterConnect').value }) | async }}"
+                          matTooltipPosition="above">
+              {{ translate.get('device-profile.lwm2m.client-only-observe-after-connect',
+              { count: +lwm2mDeviceProfileFormGroup.get('clientOnlyObserveAfterConnect').value }) | async }}
+            </mat-checkbox>
+            <mat-checkbox *ngIf="!lwm2mDeviceProfileFormGroup.get('clientOnlyObserveAfterConnect').value"
+                          formControlName="clientUpdateValueAfterConnect" color="primary"
                           matTooltip="{{ translate.get('device-profile.lwm2m.client-update-value-after-connect-tip',
-                          { count: +lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value,
-                           value: lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value }) | async }}"
+                          { count: +lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value }) | async }}"
                           matTooltipPosition="above">
               {{ translate.get('device-profile.lwm2m.client-update-value-after-connect',
-              { count: +lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value,
-                value: lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value }) | async }}
+              { count: +lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value }) | async }}
             </mat-checkbox>
           </div>
           <div class="mat-padding" style="padding-top: 0">

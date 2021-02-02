@@ -249,6 +249,11 @@ public class LwM2MTransportHandler {
                 profile.getPostClientLwM2mSettings().getAsJsonObject().get("clientUpdateValueAfterConnect").getAsBoolean();
     }
 
+    public static boolean getClientOnlyObserveAfterConnect (LwM2MClientProfile profile) {
+        return profile.getPostClientLwM2mSettings().getAsJsonObject().has("clientOnlyObserveAfterConnect") &&
+                profile.getPostClientLwM2mSettings().getAsJsonObject().get("clientOnlyObserveAfterConnect").getAsBoolean();
+    }
+
     private static boolean getValidateCredentialsBodyFromThingsboard(JsonObject objectMsg) {
         return (objectMsg != null &&
                 !objectMsg.isJsonNull() &&

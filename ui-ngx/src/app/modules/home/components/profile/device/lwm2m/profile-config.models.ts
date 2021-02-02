@@ -97,7 +97,8 @@ export interface ProfileConfigModels {
 }
 
 export interface ClientLwM2mSettings {
-  clientUpdateValueAfterConnect: false;
+  clientOnlyObserveAfterConnect: boolean;
+  clientUpdateValueAfterConnect: boolean;
 }
 export interface ObservableAttributes {
   observe: string[];
@@ -145,17 +146,26 @@ function getDefaultProfileBootstrapSecurityConfig(hostname: any): BootstrapSecur
   };
 }
 
+function getDefaultProfileObserveAttrConfig(): ObservableAttributes {
+  return {
+    observe: [],
+    attribute: [],
+    telemetry: [],
+    keyName: {}
+  };
+}
+
+function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSettings {
+  return {
+    clientOnlyObserveAfterConnect: true,
+    clientUpdateValueAfterConnect: false
+  };
+}
+
 export function getDefaultProfileConfig(hostname?: any): ProfileConfigModels {
   return {
-    clientLwM2mSettings: {
-      clientUpdateValueAfterConnect: false
-    },
-    observeAttr: {
-      observe: [],
-      attribute: [],
-      telemetry: [],
-      keyName: {}
-    },
+    clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig(),
+    observeAttr: getDefaultProfileObserveAttrConfig(),
     bootstrap: getDefaultProfileBootstrapSecurityConfig((hostname) ? hostname : DEFAULT_HOST_NAME)
   };
 }

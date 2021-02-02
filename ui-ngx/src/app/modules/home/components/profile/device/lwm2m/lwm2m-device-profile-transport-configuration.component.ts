@@ -74,6 +74,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
               private deviceProfileService: DeviceProfileService,
               @Inject(WINDOW) private window: Window) {
     this.lwm2mDeviceProfileFormGroup = this.fb.group({
+      clientOnlyObserveAfterConnect: [true, []],
       clientUpdateValueAfterConnect: [false, []],
       objectIds: [null, Validators.required],
       observeAttrTelemetry: [null, Validators.required],
@@ -144,6 +145,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   private updateWriteValue = (value: ModelValue): void => {
     this.lwm2mDeviceProfileFormGroup.patchValue({
+        clientOnlyObserveAfterConnect: this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect,
         clientUpdateValueAfterConnect: this.configurationValue.clientLwM2mSettings.clientUpdateValueAfterConnect,
         objectIds: value,
         observeAttrTelemetry: this.getObserveAttrTelemetryObjects(value['objectsList']),
@@ -176,6 +178,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   private updateDeviceProfileValue(config): void {
     if (this.lwm2mDeviceProfileFormGroup.valid) {
+      this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect =
+        config.clientOnlyObserveAfterConnect;
       this.configurationValue.clientLwM2mSettings.clientUpdateValueAfterConnect =
         config.clientUpdateValueAfterConnect;
       this.updateObserveAttrTelemetryFromGroupToJson(config.observeAttrTelemetry.clientLwM2M);
