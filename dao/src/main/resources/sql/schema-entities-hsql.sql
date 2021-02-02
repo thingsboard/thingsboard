@@ -232,6 +232,7 @@ CREATE TABLE IF NOT EXISTS tb_user (
     id uuid NOT NULL CONSTRAINT tb_user_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     additional_info varchar,
+    default_dashboard uuid,
     authority varchar(255),
     customer_id uuid,
     email varchar(255) UNIQUE,

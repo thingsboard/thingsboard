@@ -28,8 +28,10 @@ import org.thingsboard.server.dao.model.sql.UserEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.user.UserDao;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -95,5 +97,10 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
     @Override
     public Long countByTenantId(TenantId tenantId) {
         return userRepository.countByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public List<User> findUserByDefaultDashboardId(UUID defaultDashboardId) {
+        return userRepository.findUserByDefaultDashboardId(defaultDashboardId).stream().map(DaoUtil::getData).collect(Collectors.toList());
     }
 }

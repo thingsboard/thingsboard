@@ -25,6 +25,7 @@ import { map } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
 import { isUndefined } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import {DashboardId} from "@shared/models/id/dashboard-id";
 
 @Component({
   selector: 'tb-user',
@@ -34,6 +35,7 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 export class UserComponent extends EntityComponent<User> {
 
   authority = Authority;
+  private defaultDashboardId: string;
 
   loginAsUserEnabled$ = this.store.pipe(
     select(selectAuth),
@@ -64,20 +66,21 @@ export class UserComponent extends EntityComponent<User> {
   }
 
   buildForm(entity: User): FormGroup {
-    return this.fb.group(
+    const newUserFrom = this.fb.group(
       {
         email: [entity ? entity.email : '', [Validators.required, Validators.email]],
         firstName: [entity ? entity.firstName : ''],
         lastName: [entity ? entity.lastName : ''],
+        defaultDashboardId: [entity ? entity.defaultDashboardId.id : null],
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
-            defaultDashboardId: [entity && entity.additionalInfo ? entity.additionalInfo.defaultDashboardId : null],
             defaultDashboardFullscreen: [entity && entity.additionalInfo ? entity.additionalInfo.defaultDashboardFullscreen : false],
           }
         )
       }
     );
+    return newUserFrom;
   }
 
   updateForm(entity: User) {
@@ -85,10 +88,16 @@ export class UserComponent extends EntityComponent<User> {
     this.entityForm.patchValue({firstName: entity.firstName});
     this.entityForm.patchValue({lastName: entity.lastName});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
-    this.entityForm.patchValue({additionalInfo:
-        {defaultDashboardId: entity.additionalInfo ? entity.additionalInfo.defaultDashboardId : null}});
+    // this.entityForm.patchValue({additionalInfo:
+    //     {defaultDashboardId: entity.additionalInfo ? entity.additionalInfo.defaultDashboardId : null}});
+    this.entityForm.patchValue({defaultDashboardId: entity.defaultDashboardId ? entity.defaultDashboardId.id : null});
     this.entityForm.patchValue({additionalInfo:
         {defaultDashboardFullscreen: entity.additionalInfo ? entity.additionalInfo.defaultDashboardFullscreen : false}});
+  }
+
+  prepareFormValue(formValue: any): any {
+    formValue.defaultDashboardId = new DashboardId(formValue.defaultDashboardId);
+    return super.prepareFormValue(formValue);
   }
 
 }

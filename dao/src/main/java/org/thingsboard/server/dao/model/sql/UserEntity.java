@@ -22,6 +22,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
@@ -69,6 +70,9 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
     @Column(name = ModelConstants.USER_LAST_NAME_PROPERTY)
     private String lastName;
 
+    @Column(name = ModelConstants.USER_DEFAULT_DASHBOARD_ID)
+    private UUID defaultDashboardId;
+
     @Type(type = "json")
     @Column(name = ModelConstants.USER_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
@@ -92,6 +96,9 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.additionalInfo = user.getAdditionalInfo();
+        if(user.getDefaultDashboardId() != null) {
+            this.defaultDashboardId = user.getDefaultDashboardId().getId();
+        }
     }
 
     @Override
@@ -114,6 +121,9 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
         }
         if (customerId != null) {
             user.setCustomerId(new CustomerId(customerId));
+        }
+        if (defaultDashboardId != null) {
+            user.setDefaultDashboardId(new DashboardId(defaultDashboardId));
         }
         user.setEmail(email);
         user.setFirstName(firstName);
