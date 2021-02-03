@@ -25,7 +25,6 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry-resource',
   templateUrl: './lwm2m-observe-attr-telemetry-resource.component.html',
-  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
