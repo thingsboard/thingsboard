@@ -92,7 +92,7 @@
             [customerId]="entity?.customerId?.id"
             [selectFirstDashboard]="false"
           ></tb-dashboard-autocomplete>
-          <div formGroupName="additionalInfo">
+          <div fxFlex fxLayout="column" formGroupName="additionalInfo">
             <mat-checkbox fxFlex formControlName="defaultDashboardFullscreen">
               {{ 'user.always-fullscreen' | translate }}
             </mat-checkbox>

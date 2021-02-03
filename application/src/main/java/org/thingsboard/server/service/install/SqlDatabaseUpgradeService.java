@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.install;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,8 +28,14 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.model.sql.UserEntity;
+import org.thingsboard.server.dao.sql.dashboard.DashboardRepository;
+import org.thingsboard.server.dao.sql.user.UserRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
+import org.thingsboard.server.dao.user.UserDao;
+import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
 import java.nio.charset.Charset;
@@ -43,6 +50,9 @@ import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
 import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
@@ -100,6 +110,17 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     @Autowired
     private ApiUsageStateService apiUsageStateService;
 
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private UserDao userDao;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private DashboardRepository dashboardRepository;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -428,6 +449,40 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         conn.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_device_device_profile_id ON device(tenant_id, device_profile_id);");
                         conn.createStatement().execute("ALTER TABLE dashboard ALTER COLUMN configuration TYPE varchar;");
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3002001;");
+                    } catch (Exception e) {
+                        log.error("Failed updating schema!!!", e);
+                    }
+                    log.info("Schema updated.");
+                }
+                break;
+
+            case "3.2.1":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    try {
+                        conn.createStatement().execute("ALTER TABLE tb_user ADD COLUMN default_dashboard uuid;");
+
+                        List<UserEntity> users = StreamSupport.stream(
+                                userRepository.findAll().spliterator(), false).collect(Collectors.toList()
+                        );
+                        for(UserEntity user : users) {
+                            ObjectNode addInfo = JacksonUtil.fromString(user.getAdditionalInfo().toString(), ObjectNode.class);
+                            if(addInfo != null && addInfo.get("defaultDashboardId") != null) {
+                                String dashboardId = addInfo.get("defaultDashboardId").asText();
+                                addInfo.remove("defaultDashboardId");
+                                if(!dashboardId.equals("null") && dashboardRepository.findById(UUID.fromString(dashboardId)).isPresent()) {
+                                    user.setDefaultDashboardId(UUID.fromString(dashboardId));
+                                } else {
+                                    if(addInfo.get("defaultDashboardFullscreen") != null) {
+                                        addInfo.remove("defaultDashboardFullscreen");
+                                    }
+                                }
+                                user.setAdditionalInfo(addInfo);
+                                userRepository.save(user);
+                            }
+                        }
+
+                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3003000;");
                     } catch (Exception e) {
                         log.error("Failed updating schema!!!", e);
                     }
