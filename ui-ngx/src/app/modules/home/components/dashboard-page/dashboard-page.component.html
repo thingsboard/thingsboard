@@ -49,7 +49,7 @@
           <tb-states-component fxFlex.lt-md
                                [statesControllerId]="isEdit ? 'default' : dashboardConfiguration.settings.stateControllerId"
                                [dashboardCtrl]="this"
-                               [dashboardId]="dashboard.id ? dashboard.id.id : ''"
+                               [dashboardId]="(!embedded && dashboard.id) ? dashboard.id.id : ''"
                                [isMobile]="isMobile"
                                [state]="dashboardCtx.state"
                                [currentState]="currentState"
@@ -78,7 +78,7 @@
                   (click)="isFullscreen = !isFullscreen">
             <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
           </button>
-          <button [fxShow]="isEdit || displayExport()" mat-icon-button
+          <button [fxShow]="currentDashboardId && (isEdit || displayExport())" mat-icon-button
                   matTooltip="{{'dashboard.export' | translate}}"
                   matTooltipPosition="below"
                   (click)="exportDashboard($event)">
@@ -118,7 +118,7 @@
                   (click)="openDashboardSettings($event)">
             <mat-icon>settings</mat-icon>
           </button>
-          <tb-dashboard-select [fxShow]="!isEdit && !widgetEditMode && displayDashboardsSelect()"
+          <tb-dashboard-select [fxShow]="!isEdit && !widgetEditMode && !embedded && displayDashboardsSelect()"
                                [(ngModel)]="currentDashboardId"
                                (ngModelChange)="currentDashboardIdChanged(currentDashboardId)"
                                [customerId]="currentCustomerId"

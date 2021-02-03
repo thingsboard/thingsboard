@@ -524,7 +524,7 @@ public class DashboardController extends BaseController {
             JsonNode additionalInfo = tenant.getAdditionalInfo();
             DashboardId dashboardId = null;
             boolean hideDashboardToolbar = true;
-            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID)) {
+            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID) && !additionalInfo.get(HOME_DASHBOARD_ID).isNull()) {
                 String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
                 dashboardId = new DashboardId(toUUID(strDashboardId));
                 if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
@@ -566,7 +566,7 @@ public class DashboardController extends BaseController {
 
     private HomeDashboard extractHomeDashboardFromAdditionalInfo(JsonNode additionalInfo) {
         try {
-            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID)) {
+            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID) && !additionalInfo.get(HOME_DASHBOARD_ID).isNull()) {
                 String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
                 DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
                 Dashboard dashboard = checkDashboardId(dashboardId, Operation.READ);
