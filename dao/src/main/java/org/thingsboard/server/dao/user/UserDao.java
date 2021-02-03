@@ -72,4 +72,8 @@ public interface UserDao extends Dao<User>, TenantEntityDao {
     PageData<User> findCustomerUsers(UUID tenantId, UUID customerId, PageLink pageLink);
 
     List<User> findUserByDefaultDashboardId(UUID defaultDashboardId);
+
+    List<User> findUserByDefaultDashboardIdAndCustomerId(UUID defaultDashboardId, UUID customerId);
+
+    List<User> findAllUsers();
 }

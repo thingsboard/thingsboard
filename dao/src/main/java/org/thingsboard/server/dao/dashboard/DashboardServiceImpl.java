@@ -144,9 +144,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (customer == null) {
             throw new DataValidationException("Can't unassign dashboard from non-existent customer!");
         }
-        updateUsersDeletingDashboard(tenantId,
-                cleanUsersDashboardRecords(
-                        filterUsersByCustomerId(userDao.findUserByDefaultDashboardId(dashboardId.getId()), customerId)));
+
+        List<User> users = userDao.findUserByDefaultDashboardIdAndCustomerId(dashboardId.getId(), customerId.getId());
+        cleanUsersDashboardRecords(users);
+        users.forEach(user -> userDao.save(tenantId, user));
+
         if (dashboard.removeAssignedCustomer(customer)) {
             try {
                 deleteRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD));
@@ -158,10 +160,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         } else {
             return dashboard;
         }
-    }
-
-    private List<User> filterUsersByCustomerId(List<User> users, CustomerId customerId) {
-        return users.stream().filter(user -> user.getCustomerId().getId().equals(customerId.getId())).collect(Collectors.toList());
     }
 
     private Dashboard updateAssignedCustomer(TenantId tenantId, DashboardId dashboardId, Customer customer) {
@@ -188,7 +186,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         log.trace("Executing deleteDashboard [{}]", dashboardId);
         Validator.validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
 
-        updateUsersDeletingDashboard(tenantId, cleanUsersDashboardRecords(userDao.findUserByDefaultDashboardId(dashboardId.getId())));
+        List<User> users = userDao.findUserByDefaultDashboardId(dashboardId.getId());
+        cleanUsersDashboardRecords(users);
+        users.forEach(user -> userDao.save(tenantId, user));
 
         deleteEntityRelations(tenantId, dashboardId);
         dashboardDao.removeById(tenantId, dashboardId.getId());
@@ -240,26 +240,15 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         new CustomerDashboardsUpdater(customer).removeEntities(tenantId, customer);
     }
 
-    private void updateUsersDeletingDashboard(TenantId tenantId, List<User> users) {
-        if(!CollectionUtils.isEmpty(users)) {
-            users.forEach(user -> userDao.save(tenantId, user));
-        }
-    }
-
-    private List<User> cleanUsersDashboardRecords(List<User> users) {
-        if(!CollectionUtils.isEmpty(users)) {
-            users.forEach(user -> user.setDefaultDashboardId(null));
-            users.forEach(user -> {
-                ObjectNode alwaysFullScreen = JacksonUtil.fromString(user.getAdditionalInfo().toString(), ObjectNode.class);
-                if(alwaysFullScreen != null) {
-                    alwaysFullScreen.remove("defaultDashboardFullscreen");
-                    user.setAdditionalInfo(alwaysFullScreen);
-                }
-            });
-
-            return users;
-        }
-        return null;
+    private void cleanUsersDashboardRecords(List<User> users) {
+        users.forEach(user -> {
+            user.setDefaultDashboardId(null);
+            ObjectNode alwaysFullScreen = JacksonUtil.convertValue(user.getAdditionalInfo(), ObjectNode.class);
+            if(alwaysFullScreen != null) {
+                alwaysFullScreen.remove("defaultDashboardFullscreen");
+                user.setAdditionalInfo(alwaysFullScreen);
+            }
+        });
     }
 
     private DataValidator<Dashboard> dashboardValidator =

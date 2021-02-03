@@ -23,6 +23,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -111,7 +113,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private ApiUsageStateService apiUsageStateService;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserDao userDao;
 
     @Autowired
     private DashboardRepository dashboardRepository;
@@ -456,23 +458,21 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     try {
                         conn.createStatement().execute("ALTER TABLE tb_user ADD COLUMN default_dashboard uuid;");
 
-                        List<UserEntity> users = StreamSupport.stream(
-                                userRepository.findAll().spliterator(), false).collect(Collectors.toList()
-                        );
-                        for(UserEntity user : users) {
-                            ObjectNode addInfo = JacksonUtil.fromString(user.getAdditionalInfo().toString(), ObjectNode.class);
-                            if(addInfo != null && addInfo.get("defaultDashboardId") != null) {
+                        List<User> users = userDao.findAllUsers();
+                        for(User user : users) {
+                            ObjectNode addInfo = JacksonUtil.convertValue(user.getAdditionalInfo(), ObjectNode.class);
+                            if(addInfo != null && addInfo.has("defaultDashboardId")) {
                                 String dashboardId = addInfo.get("defaultDashboardId").asText();
                                 addInfo.remove("defaultDashboardId");
                                 if(!dashboardId.equals("null") && dashboardRepository.findById(UUID.fromString(dashboardId)).isPresent()) {
-                                    user.setDefaultDashboardId(UUID.fromString(dashboardId));
+                                    user.setDefaultDashboardId(new DashboardId(UUID.fromString(dashboardId)));
                                 } else {
                                     if(addInfo.get("defaultDashboardFullscreen") != null) {
                                         addInfo.remove("defaultDashboardFullscreen");
                                     }
                                 }
                                 user.setAdditionalInfo(addInfo);
-                                userRepository.save(user);
+                                userDao.save(user.getTenantId(), user);
                             }
                         }
 

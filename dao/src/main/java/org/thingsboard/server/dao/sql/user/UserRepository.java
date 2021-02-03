@@ -50,5 +50,7 @@ public interface UserRepository extends PagingAndSortingRepository<UserEntity, U
 
     List<UserEntity> findUserByDefaultDashboardId(UUID defaultDashboardId);
 
+    List<UserEntity> findUserByDefaultDashboardIdAndCustomerId(UUID defaultDashboardId, UUID customerId);
+
     Long countByTenantId(UUID tenantId);
 }
