@@ -197,7 +197,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         generalSettings.setKey("general");
         ObjectNode node = objectMapper.createObjectNode();
         node.put("baseUrl", "http://localhost:8080");
-        node.put("prohibitDifferentUrl", true);
+        node.put("prohibitDifferentUrl", false);
         generalSettings.setJsonValue(node);
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, generalSettings);
 
@@ -438,6 +438,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         this.deleteSystemWidgetBundle("input_widgets");
         this.deleteSystemWidgetBundle("date");
         this.deleteSystemWidgetBundle("entity_admin_widgets");
+        this.deleteSystemWidgetBundle("navigation_widgets");
         installScripts.loadSystemWidgets();
     }
 

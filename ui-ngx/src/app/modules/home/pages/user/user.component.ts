@@ -23,7 +23,7 @@ import { User } from '@shared/models/user.model';
 import { selectAuth } from '@core/auth/auth.selectors';
 import { map } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
-import { isUndefined } from '@core/utils';
+import { isDefinedAndNotNull, isUndefined } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import {DashboardId} from "@shared/models/id/dashboard-id";
 
@@ -76,6 +76,9 @@ export class UserComponent extends EntityComponent<User> {
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
             defaultDashboardFullscreen: [entity && entity.additionalInfo ? entity.additionalInfo.defaultDashboardFullscreen : false],
+            homeDashboardId: [entity && entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null],
+            homeDashboardHideToolbar: [entity && entity.additionalInfo &&
+            isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true]
           }
         )
       }
@@ -93,6 +96,11 @@ export class UserComponent extends EntityComponent<User> {
     this.entityForm.patchValue({defaultDashboardId: entity.defaultDashboardId ? entity.defaultDashboardId.id : null});
     this.entityForm.patchValue({additionalInfo:
         {defaultDashboardFullscreen: entity.additionalInfo ? entity.additionalInfo.defaultDashboardFullscreen : false}});
+    this.entityForm.patchValue({additionalInfo:
+        {homeDashboardId: entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null}});
+    this.entityForm.patchValue({additionalInfo:
+        {homeDashboardHideToolbar: entity.additionalInfo &&
+          isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true}});
   }
 
   prepareFormValue(formValue: any): any {

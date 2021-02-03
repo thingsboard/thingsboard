@@ -195,7 +195,8 @@
                    [length]="dataSource.total() | async"
                    [pageIndex]="pageLink.page"
                    [pageSize]="pageLink.pageSize"
-                   [pageSizeOptions]="[10, 20, 30]"></mat-paginator>
+                   [pageSizeOptions]="[10, 20, 30]"
+                   showFirstLastButtons></mat-paginator>
     <ngx-hm-carousel fxFlex *ngIf="mode === 'widget' && widgetsList.length > 0"
                      #carousel
                      [(ngModel)]="widgetsCarouselIndex"

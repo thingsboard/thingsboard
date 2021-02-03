@@ -14,7 +14,17 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Inject, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+  Component,
+  forwardRef,
+  Inject,
+  Injector,
+  Input,
+  OnInit,
+  StaticProvider,
+  ViewChild,
+  ViewContainerRef
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
@@ -32,7 +42,7 @@ import { CdkOverlayOrigin, ConnectedPosition, Overlay, OverlayConfig, OverlayRef
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { DOCUMENT } from '@angular/common';
 import { WINDOW } from '@core/services/window.service';
-import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
+import { ComponentPortal } from '@angular/cdk/portal';
 import {
   DASHBOARD_SELECT_PANEL_DATA,
   DashboardSelectPanelComponent,
@@ -186,12 +196,12 @@ export class DashboardSelectComponent implements ControlValueAccessor, OnInit {
     overlayRef.attach(new ComponentPortal(DashboardSelectPanelComponent, this.viewContainerRef, injector));
   }
 
-  private _createDashboardSelectPanelInjector(overlayRef: OverlayRef, data: DashboardSelectPanelData): PortalInjector {
-    const injectionTokens = new WeakMap<any, any>([
-      [DASHBOARD_SELECT_PANEL_DATA, data],
-      [OverlayRef, overlayRef]
-    ]);
-    return new PortalInjector(this.viewContainerRef.injector, injectionTokens);
+  private _createDashboardSelectPanelInjector(overlayRef: OverlayRef, data: DashboardSelectPanelData): Injector {
+    const providers: StaticProvider[] = [
+      {provide: DASHBOARD_SELECT_PANEL_DATA, useValue: data},
+      {provide: OverlayRef, useValue: overlayRef}
+    ];
+    return Injector.create({parent: this.viewContainerRef.injector, providers});
   }
 
   private updateView() {
