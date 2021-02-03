@@ -189,9 +189,6 @@ public class ThingsboardInstallService {
                             log.info("Upgrading ThingsBoard from version 3.2.1 to 3.3.0 ...");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
-                            break;
-                        case "3.2.1":
-                            log.info("Upgrading ThingsBoard from version 3.2.0 to 3.2.1 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.2.1");
                             break;
                         default:

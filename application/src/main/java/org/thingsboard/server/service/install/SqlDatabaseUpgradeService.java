@@ -111,12 +111,6 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private ApiUsageStateService apiUsageStateService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
-    private UserDao userDao;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
