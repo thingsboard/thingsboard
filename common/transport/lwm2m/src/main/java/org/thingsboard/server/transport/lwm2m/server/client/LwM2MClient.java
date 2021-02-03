@@ -28,6 +28,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCreden
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportServiceImpl;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,72 +50,29 @@ public class LwM2MClient implements Cloneable {
     private ValidateDeviceCredentialsResponseMsg credentialsResponse;
     private Map<String, String> attributes;
     private Map<String, ResourceValue> resources;
-    //    private Set<String> pendingRequests;
     private Map<String, TransportProtos.TsKvProto> delayedRequests;
-//    private Set<Integer> delayedRequestsId;
-//    private Map<String, LwM2mResponse> responses;
+    private ArrayList<String> pendingRequests;
+    private boolean init;
     private final LwM2mValueConverterImpl converter;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
 
-    public LwM2MClient(String endPoint, String identity, SecurityInfo securityInfo, ValidateDeviceCredentialsResponseMsg credentialsResponse, UUID profileUuid) {
+    public LwM2MClient(String endPoint, String identity, SecurityInfo securityInfo, ValidateDeviceCredentialsResponseMsg credentialsResponse, UUID profileUuid, UUID sessionUuid) {
         this.endPoint = endPoint;
         this.identity = identity;
         this.securityInfo = securityInfo;
         this.credentialsResponse = credentialsResponse;
         this.attributes = new ConcurrentHashMap<>();
-//        this.pendingRequests = ConcurrentHashMap.newKeySet();
         this.delayedRequests = new ConcurrentHashMap<>();
+        this.pendingRequests = new ArrayList<>();
         this.resources = new ConcurrentHashMap<>();
-//        this.delayedRequestsId = ConcurrentHashMap.newKeySet();
         this.profileUuid = profileUuid;
-        /**
-         * Key <objectId>, response<Value -> instance -> resources: value...>
-         */
-//        this.responses = new ConcurrentHashMap<>();
+        this.sessionUuid = sessionUuid;
         this.converter = LwM2mValueConverterImpl.getInstance();
+        this.init = false;
     }
-
-//    /**
-//     * Fill with data -> Model client
-//     *
-//     * @param path     -
-//     * @param response -
-//     */
-//    public void onSuccessHandler(String path, LwM2mResponse response) {
-//        this.responses.put(path, response);
-//        this.pendingRequests.remove(path);
-//        if (this.pendingRequests.size() == 0) {
-//            this.initValue();
-//            this.lwM2MTransportServiceImpl.putDelayedUpdateResourcesThingsboard(this);
-//        }
-//    }
-//
-//    private void initValue() {
-//        this.responses.forEach((key, lwM2mResponse) -> {
-//            LwM2mPath pathIds = new LwM2mPath(key);
-//            if (pathIds.isObjectInstance()) {
-//                ((LwM2mObjectInstance) ((ReadResponse) lwM2mResponse).getContent()).getResources().forEach((k, v) -> {
-//                    String pathRez = pathIds.toString() + "/" + k;
-//                    this.updateResourceValue(pathRez, v);
-//                });
-//            }
-//            else if (pathIds.isResource()) {
-//                this.updateResourceValue(pathIds.toString(), ((LwM2mResource) ((ReadResponse) lwM2mResponse).getContent()));
-//            }
-//        });
-//        if (this.responses.size() == 0) this.responses = new ConcurrentHashMap<>();
-//    }
-
-//    public void updateObjectInstanceResourceValue(String pathInst, LwM2mObjectInstance instance) {
-//        LwM2mPath pathIds = new LwM2mPath(pathInst);
-//        instance.getResources().forEach((k, v) -> {
-//            String pathRez = pathIds.toString() + "/" + k;
-//            this.updateResourceValue(pathRez, v);
-//        });
-//    }
 
     public void updateResourceValue(String pathRez, LwM2mResource rez) {
         if (rez instanceof LwM2mMultipleResource) {
@@ -124,17 +82,18 @@ public class LwM2MClient implements Cloneable {
         }
     }
 
-//    /**
-//     * if path != null
-//     *
-//     * @param path
-//     */
-//    public void onSuccessOrErrorDelayedRequests(String path) {
-//        if (path != null) this.delayedRequests.remove(path);
-//        if (this.delayedRequests.size() == 0 && this.getDelayedRequestsId().size() == 0) {
-//            this.lwM2MTransportServiceImpl.updatesAndSentModelParameter(this);
-//        }
-//    }
+    public void initValue(LwM2MTransportServiceImpl lwM2MTransportService, String path) {
+        if (path != null) {
+            this.pendingRequests.remove(path);
+        }
+        if (this.pendingRequests.size() == 0) {
+            this.init = true;
+            lwM2MTransportService.putDelayedUpdateResourcesThingsboard(this);
+        }
+    }
 
+    public LwM2MClient copy() {
+        return new LwM2MClient(this.endPoint, this.identity, this.securityInfo, this.credentialsResponse, this.profileUuid, this.sessionUuid);
+    }
 }
 

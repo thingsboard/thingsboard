@@ -165,7 +165,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
             if (this.sessions.get(registration.getEndpoint()) == null) {
                 this.addLwM2MClientToSession(registration.getEndpoint());
             }
-            LwM2MClient lwM2MClient = this.sessions.get(registration.getEndpoint());
+            LwM2MClient lwM2MClient = this.sessions.get(registration.getEndpoint()).copy();
             lwM2MClient.setLwServer(lwServer);
             lwM2MClient.setRegistration(registration);
             lwM2MClient.setAttributes(registration.getAdditionalRegistrationAttributes());
@@ -203,9 +203,9 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
             UUID profileUuid = (store.getDeviceProfile() != null && addUpdateProfileParameters(store.getDeviceProfile())) ? store.getDeviceProfile().getUuidId() : null;
             if (store.getSecurityInfo() != null && profileUuid != null) {
                 String endpoint = store.getSecurityInfo().getEndpoint();
-                sessions.put(endpoint, new LwM2MClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getMsg(), profileUuid));
+                sessions.put(endpoint, new LwM2MClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getMsg(), profileUuid, UUID.randomUUID()));
             } else if (store.getSecurityMode() == NO_SEC.code && profileUuid != null) {
-                sessions.put(identity, new LwM2MClient(identity, null, null, store.getMsg(), profileUuid));
+                sessions.put(identity, new LwM2MClient(identity, null, null, store.getMsg(), profileUuid, UUID.randomUUID()));
             } else {
                     log.error("Registration failed: FORBIDDEN/profileUuid/device [{}] , endpointId: [{}]", profileUuid, identity);
                     /**
