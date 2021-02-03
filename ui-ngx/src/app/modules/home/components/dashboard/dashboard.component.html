@@ -150,7 +150,7 @@
               </button>
             </div>
           </div>
-          <div fxFlex fxLayout="column" class="tb-widget-content">
+          <div fxFlex fxLayout="column" class="tb-widget-content" [ngClass]="{'tb-no-interaction': disableWidgetInteraction}">
             <tb-widget fxFlex
                        #widgetComponent
                        [dashboardWidget]="widget"

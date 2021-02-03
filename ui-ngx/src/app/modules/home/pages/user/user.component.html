@@ -95,6 +95,20 @@
               {{ 'user.always-fullscreen' | translate }}
             </mat-checkbox>
           </section>
+          <section fxFlex fxLayout="column" fxLayout.gt-sm="row">
+            <tb-dashboard-autocomplete
+              fxFlex
+              placeholder="{{ 'dashboard.home-dashboard' | translate }}"
+              formControlName="homeDashboardId"
+              [dashboardsScope]="entity?.authority === authority.TENANT_ADMIN ? 'tenant' : 'customer'"
+              [tenantId]="entity?.tenantId?.id"
+              [customerId]="entity?.customerId?.id"
+              [selectFirstDashboard]="false"
+            ></tb-dashboard-autocomplete>
+            <mat-checkbox fxFlex formControlName="homeDashboardHideToolbar">
+              {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
+            </mat-checkbox>
+          </section>
         </section>
       </div>
     </fieldset>

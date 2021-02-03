@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../scss/constants';
+@import '../../../../../../scss/constants';
 
 :host {
   width: 100%;
@@ -21,7 +21,7 @@
 }
 
 :host ::ng-deep {
-  .tb-home-links {
+  .tb-navigation-cards {
     .mat-headline {
       font-size: 20px;
       @media #{$mat-gt-xmd} {
