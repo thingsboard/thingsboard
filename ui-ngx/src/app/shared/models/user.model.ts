@@ -19,7 +19,7 @@ import { UserId } from './id/user-id';
 import { CustomerId } from './id/customer-id';
 import { Authority } from './authority.enum';
 import { TenantId } from './id/tenant-id';
-import {DashboardId} from "@shared/models/id/dashboard-id";
+import { DashboardId } from '@shared/models/id/dashboard-id';
 
 export interface User extends BaseData<UserId> {
   tenantId: TenantId;

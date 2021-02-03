@@ -25,7 +25,7 @@ import { map } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
 import { isDefinedAndNotNull, isUndefined } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
-import {DashboardId} from "@shared/models/id/dashboard-id";
+import { DashboardId } from '@shared/models/id/dashboard-id';
 
 @Component({
   selector: 'tb-user',
@@ -91,8 +91,6 @@ export class UserComponent extends EntityComponent<User> {
     this.entityForm.patchValue({firstName: entity.firstName});
     this.entityForm.patchValue({lastName: entity.lastName});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
-    // this.entityForm.patchValue({additionalInfo:
-    //     {defaultDashboardId: entity.additionalInfo ? entity.additionalInfo.defaultDashboardId : null}});
     this.entityForm.patchValue({defaultDashboardId: entity.defaultDashboardId ? entity.defaultDashboardId.id : null});
     this.entityForm.patchValue({additionalInfo:
         {defaultDashboardFullscreen: entity.additionalInfo ? entity.additionalInfo.defaultDashboardFullscreen : false}});

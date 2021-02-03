@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -108,10 +107,5 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
     @Override
     public List<User> findUserByDefaultDashboardIdAndCustomerId(UUID dashboardId, UUID customerId) {
         return userRepository.findUserByDefaultDashboardIdAndCustomerId(dashboardId, customerId).stream().map(DaoUtil::getData).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<User> findAllUsers() {
-        return StreamSupport.stream(userRepository.findAll().spliterator(), false).map(DaoUtil::getData).collect(Collectors.toList());
     }
 }

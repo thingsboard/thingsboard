@@ -22,7 +22,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -50,7 +49,6 @@ import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -145,9 +143,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             throw new DataValidationException("Can't unassign dashboard from non-existent customer!");
         }
 
-        List<User> users = userDao.findUserByDefaultDashboardIdAndCustomerId(dashboardId.getId(), customerId.getId());
-        cleanUsersDashboardRecords(users);
-        users.forEach(user -> userDao.save(tenantId, user));
+        cleanUsersDashboardRecords(userDao.findUserByDefaultDashboardIdAndCustomerId(dashboardId.getId(), customerId.getId()));
 
         if (dashboard.removeAssignedCustomer(customer)) {
             try {
@@ -186,9 +182,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         log.trace("Executing deleteDashboard [{}]", dashboardId);
         Validator.validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
 
-        List<User> users = userDao.findUserByDefaultDashboardId(dashboardId.getId());
-        cleanUsersDashboardRecords(users);
-        users.forEach(user -> userDao.save(tenantId, user));
+        cleanUsersDashboardRecords(userDao.findUserByDefaultDashboardId(dashboardId.getId()));
 
         deleteEntityRelations(tenantId, dashboardId);
         dashboardDao.removeById(tenantId, dashboardId.getId());
@@ -248,6 +242,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                 alwaysFullScreen.remove("defaultDashboardFullscreen");
                 user.setAdditionalInfo(alwaysFullScreen);
             }
+            userDao.save(user.getTenantId(), user);
         });
     }
 
