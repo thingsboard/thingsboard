@@ -865,6 +865,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           typeAlias: widgetTypeInfo.alias,
           type: widgetTypeInfo.type,
           title: 'New widget',
+          image: null,
+          description: null,
           sizeX: widgetTypeInfo.sizeX,
           sizeY: widgetTypeInfo.sizeY,
           config,
@@ -1110,5 +1112,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       }
     }
     return widgetContextActions;
+  }
+
+  widgetBundleSelected(bundle: WidgetsBundle){
+    this.widgetsBundle = bundle;
   }
 }

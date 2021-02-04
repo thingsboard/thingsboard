@@ -25,7 +25,6 @@ import {
   Injector,
   Input,
   OnDestroy,
-  OnInit,
   Output,
   QueryList,
   ViewChild,
@@ -52,7 +51,7 @@ import { deepClone } from '@core/utils';
   styleUrls: ['./entity-details-panel.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EntityDetailsPanelComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
+export class EntityDetailsPanelComponent extends PageComponent implements AfterViewInit, OnDestroy {
 
   @Output()
   closeEntityDetails = new EventEmitter<void>();
@@ -138,10 +137,6 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
 
   get isEdit() {
     return this.isEditValue;
-  }
-
-  ngOnInit(): void {
-    this.init();
   }
 
   private init() {

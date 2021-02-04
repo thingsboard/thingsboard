@@ -135,6 +135,7 @@ import { EntityGatewaySelectComponent } from '@shared/components/entity/entity-g
 import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list.component';
 import { ContactComponent } from '@shared/components/contact.component';
 import { TimezoneSelectComponent } from '@shared/components/time/timezone-select.component';
+import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 
 @NgModule({
   providers: [
@@ -144,6 +145,7 @@ import { TimezoneSelectComponent } from '@shared/components/time/timezone-select
     HighlightPipe,
     TruncatePipe,
     TbJsonPipe,
+    FileSizePipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -217,6 +219,7 @@ import { TimezoneSelectComponent } from '@shared/components/time/timezone-select
     HighlightPipe,
     TruncatePipe,
     TbJsonPipe,
+    FileSizePipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
     JsonObjectEditDialogComponent,
@@ -381,6 +384,7 @@ import { TimezoneSelectComponent } from '@shared/components/time/timezone-select
     TruncatePipe,
     TbJsonPipe,
     KeyboardShortcutPipe,
+    FileSizePipe,
     TranslateModule,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,

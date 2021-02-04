@@ -253,7 +253,7 @@
                                         fxFlex
                                         required
                                         [selectFirstBundle]="false"
-                                        [ngModel]="widgetsBundle"
+                                        [(ngModel)]="widgetsBundle"
                                         (ngModelChange)="widgetsBundle = $event">
               </tb-widgets-bundle-select>
             </div>
@@ -261,6 +261,7 @@
           <tb-dashboard-widget-select *ngIf="isAddingWidget"
                                       [aliasController]="dashboardCtx.aliasController"
                                       [widgetsBundle]="widgetsBundle"
+                                      (widgetsBundleSelected)="widgetBundleSelected($event)"
                                       (widgetSelected)="addWidgetFromType($event)">
           </tb-dashboard-widget-select>
         </tb-details-panel>

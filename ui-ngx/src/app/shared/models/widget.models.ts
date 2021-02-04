@@ -63,7 +63,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
     [
       widgetType.latest,
       {
-        name: 'widget.latest-values',
+        name: 'widget.latest',
         icon: 'track_changes',
         configHelpLinkId: 'widgetsConfigLatest',
         template: {
@@ -169,6 +169,8 @@ export interface WidgetType extends BaseData<WidgetTypeId> {
   bundleAlias: string;
   alias: string;
   name: string;
+  image: string;
+  description: string;
   descriptor: WidgetTypeDescriptor;
 }
 
@@ -408,6 +410,8 @@ export interface Widget {
   sizeY: number;
   row: number;
   col: number;
+  image: string;
+  description: string;
   config: WidgetConfig;
 }
 
@@ -426,7 +430,7 @@ export interface JsonSchema {
 export interface JsonSettingsSchema {
   schema?: JsonSchema;
   form?: any[];
-  groupInfoes?: GroupInfo[]
+  groupInfoes?: GroupInfo[];
 }
 
 export interface WidgetPosition {

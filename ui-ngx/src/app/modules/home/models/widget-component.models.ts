@@ -347,6 +347,8 @@ export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescri
   alias: string;
   typeSettingsSchema?: string | any;
   typeDataKeySettingsSchema?: string | any;
+  image: string;
+  description: string;
   componentFactory?: ComponentFactory<IDynamicWidgetComponent>;
 }
 
@@ -375,6 +377,8 @@ export const MissingWidgetType: WidgetInfo = {
   controllerScript: 'self.onInit = function() {}',
   settingsSchema: '{}\n',
   dataKeySettingsSchema: '{}\n',
+  image: null,
+  description: null,
   defaultConfig: '{\n' +
     '"title": "Widget type not found",\n' +
     '"datasources": [],\n' +
@@ -398,6 +402,8 @@ export const ErrorWidgetType: WidgetInfo = {
   controllerScript: 'self.onInit = function() {}',
   settingsSchema: '{}\n',
   dataKeySettingsSchema: '{}\n',
+  image: null,
+  description: null,
   defaultConfig: '{\n' +
     '"title": "Widget failed to load",\n' +
     '"datasources": [],\n' +
@@ -424,6 +430,8 @@ export interface WidgetTypeInstance {
 export function toWidgetInfo(widgetTypeEntity: WidgetType): WidgetInfo {
   return {
     widgetName: widgetTypeEntity.name,
+    image: widgetTypeEntity.image,
+    description: widgetTypeEntity.description,
     alias: widgetTypeEntity.alias,
     type: widgetTypeEntity.descriptor.type,
     sizeX: widgetTypeEntity.descriptor.sizeX,
@@ -457,6 +465,8 @@ export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
     bundleAlias,
     alias: widgetInfo.alias,
     name: widgetInfo.widgetName,
+    image: widgetInfo.image,
+    description: widgetInfo.description,
     descriptor
   };
 }

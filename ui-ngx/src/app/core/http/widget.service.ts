@@ -144,6 +144,8 @@ export class WidgetService {
             typeAlias: widgetTypeInfo.alias,
             type: widgetTypeInfo.type,
             title: widgetTypeInfo.widgetName,
+            image: widgetTypeInfo.image,
+            description: widgetTypeInfo.description,
             sizeX,
             sizeY,
             row: top,

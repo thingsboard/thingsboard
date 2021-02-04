@@ -1463,7 +1463,7 @@
         "timeseries": "Time series",
         "search-data": "Cerca dati",
         "no-data-found": "Nessun dato trovato",
-        "latest-values": "Ultimi valori",
+        "latest": "Ultimi valori",
         "rpc": "Control widget",
         "alarm": "Alarm widget",
         "static": "Static widget",

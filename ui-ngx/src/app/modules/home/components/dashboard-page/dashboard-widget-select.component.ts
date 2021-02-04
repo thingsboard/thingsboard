@@ -19,9 +19,10 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { IAliasController } from '@core/api/widget-api.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetService } from '@core/http/widget.service';
-import { Widget, widgetType } from '@shared/models/widget.models';
+import { Widget } from '@shared/models/widget.models';
 import { toWidgetInfo } from '@home/models/widget-component.models';
-import { DashboardCallbacks } from '../../models/dashboard-component.models';
+import { share } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'tb-dashboard-widget-select',
@@ -39,20 +40,20 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
   @Output()
   widgetSelected: EventEmitter<Widget> = new EventEmitter<Widget>();
 
-  timeseriesWidgetTypes: Array<Widget> = [];
-  latestWidgetTypes: Array<Widget> = [];
-  rpcWidgetTypes: Array<Widget> = [];
-  alarmWidgetTypes: Array<Widget> = [];
-  staticWidgetTypes: Array<Widget> = [];
+  @Output()
+  widgetsBundleSelected: EventEmitter<WidgetsBundle> = new EventEmitter<WidgetsBundle>();
 
-  callbacks: DashboardCallbacks = {
-    onWidgetClicked: this.onWidgetClicked.bind(this)
-  };
+  widgets: Array<Widget> = [];
+
+  widgetsBundles$: Observable<Array<WidgetsBundle>>;
 
   constructor(private widgetsService: WidgetService) {
   }
 
   ngOnInit(): void {
+    this.widgetsBundles$ = this.widgetsService.getAllWidgetsBundles().pipe(
+      share()
+    );
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -67,11 +68,7 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
   }
 
   private loadLibrary() {
-    this.timeseriesWidgetTypes.length = 0;
-    this.latestWidgetTypes.length = 0;
-    this.rpcWidgetTypes.length = 0;
-    this.alarmWidgetTypes.length = 0;
-    this.staticWidgetTypes.length = 0;
+    this.widgets.length = 0;
     const bundleAlias = this.widgetsBundle.alias;
     const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
     this.widgetsService.getBundleWidgetTypes(bundleAlias,
@@ -88,6 +85,8 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
             typeAlias: widgetTypeInfo.alias,
             type: widgetTypeInfo.type,
             title: widgetTypeInfo.widgetName,
+            image: widgetTypeInfo.image,
+            description: widgetTypeInfo.description,
             sizeX: widgetTypeInfo.sizeX,
             sizeY: widgetTypeInfo.sizeY,
             row: top,
@@ -95,39 +94,35 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
             config: JSON.parse(widgetTypeInfo.defaultConfig)
           };
           widget.config.title = widgetTypeInfo.widgetName;
-          switch (widgetTypeInfo.type) {
-            case widgetType.timeseries:
-              this.timeseriesWidgetTypes.push(widget);
-              break;
-            case widgetType.latest:
-              this.latestWidgetTypes.push(widget);
-              break;
-            case widgetType.rpc:
-              this.rpcWidgetTypes.push(widget);
-              break;
-            case widgetType.alarm:
-              this.alarmWidgetTypes.push(widget);
-              break;
-            case widgetType.static:
-              this.staticWidgetTypes.push(widget);
-              break;
-          }
+          this.widgets.push(widget);
           top += widget.sizeY;
         });
       }
     );
   }
 
-  hasWidgetTypes() {
-    return this.timeseriesWidgetTypes.length > 0 ||
-           this.latestWidgetTypes.length > 0 ||
-           this.rpcWidgetTypes.length > 0 ||
-           this.alarmWidgetTypes.length > 0 ||
-           this.staticWidgetTypes.length > 0;
+  hasWidgetTypes(): boolean {
+    return this.widgets.length > 0;
   }
 
-  private onWidgetClicked($event: Event, widget: Widget, index: number): void {
+  onWidgetClicked($event: Event, widget: Widget): void {
     this.widgetSelected.emit(widget);
+  }
+
+  isSystem(item: WidgetsBundle): boolean {
+    return item && item.tenantId.id === NULL_UUID;
+  }
+
+  selectBundle($event: Event, bundle: WidgetsBundle) {
+    $event.preventDefault();
+    this.widgetsBundle = bundle;
+    this.widgetsBundleSelected.emit(bundle);
+  }
+
+  backToSelectWidgetsBundle() {
+    this.widgetsBundle = null;
+    this.widgets.length = 0;
+    this.widgetsBundleSelected.emit(null);
   }
 
 }
