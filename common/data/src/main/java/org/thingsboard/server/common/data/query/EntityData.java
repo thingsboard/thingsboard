@@ -15,12 +15,16 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.Map;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor(force = true)
 public class EntityData {
 
     private final EntityId entityId;

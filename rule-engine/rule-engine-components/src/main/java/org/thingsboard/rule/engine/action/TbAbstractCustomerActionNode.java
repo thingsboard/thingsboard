@@ -48,7 +48,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadCustomerNodeActionConfig(configuration);
-        CacheBuilder cacheBuilder = CacheBuilder.newBuilder();
+        CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
         if (this.config.getCustomerCacheExpiration() > 0) {
             cacheBuilder.expireAfterWrite(this.config.getCustomerCacheExpiration(), TimeUnit.SECONDS);
         }

@@ -15,9 +15,13 @@
  */
 package org.thingsboard.server.service.telemetry.cmd.v2;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor(force = true)
 public class EntityDataUnsubscribeCmd implements UnsubscribeCmd {
 
     private final int cmdId;

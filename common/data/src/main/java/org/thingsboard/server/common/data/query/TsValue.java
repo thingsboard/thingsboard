@@ -15,9 +15,13 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor(force = true)
 public class TsValue {
 
     private final long ts;

@@ -17,10 +17,12 @@ package org.thingsboard.server.common.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.id.DashboardId;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class HomeDashboardInfo {
     private DashboardId dashboardId;
     private boolean hideDashboardToolbar;

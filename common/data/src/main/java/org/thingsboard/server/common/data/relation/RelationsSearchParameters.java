@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.relation;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -28,6 +29,7 @@ import java.util.UUID;
  */
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class RelationsSearchParameters {
 
     private UUID rootId;

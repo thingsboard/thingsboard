@@ -15,9 +15,13 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor(force = true)
 public class EntityKey {
     private final EntityKeyType type;
     private final String key;
