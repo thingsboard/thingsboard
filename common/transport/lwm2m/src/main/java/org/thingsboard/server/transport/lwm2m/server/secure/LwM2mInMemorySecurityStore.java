@@ -165,12 +165,12 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
             if (this.sessions.get(registration.getEndpoint()) == null) {
                 this.addLwM2MClientToSession(registration.getEndpoint());
             }
-            LwM2MClient lwM2MClient = this.sessions.get(registration.getEndpoint()).copy();
+            LwM2MClient lwM2MClient = this.sessions.get(registration.getEndpoint());
             lwM2MClient.setLwServer(lwServer);
             lwM2MClient.setRegistration(registration);
             lwM2MClient.setAttributes(registration.getAdditionalRegistrationAttributes());
-            this.sessions.put(registration.getId(), lwM2MClient);
             this.sessions.remove(registration.getEndpoint());
+            this.sessions.put(registration.getId(), lwM2MClient);
             return lwM2MClient;
         } finally {
             writeLock.unlock();
@@ -248,7 +248,8 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         LwM2MClientProfile lwM2MClientProfile = LwM2MTransportHandler.getLwM2MClientProfileFromThingsboard(deviceProfile);
         if (lwM2MClientProfile != null) {
             profiles.put(deviceProfile.getUuidId(), lwM2MClientProfile);
+            return true;
         }
-        return (lwM2MClientProfile != null);
+        return false;
     }
 }
