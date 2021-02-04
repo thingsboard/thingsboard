@@ -223,7 +223,7 @@ class AlarmState {
             currentAlarm.setType(alarmDefinition.getAlarmType());
             currentAlarm.setStatus(AlarmStatus.ACTIVE_UNACK);
             currentAlarm.setSeverity(severity);
-            currentAlarm.setStartTs(System.currentTimeMillis());
+            currentAlarm.setStartTs(dataSnapshot.getTs());
             currentAlarm.setEndTs(currentAlarm.getStartTs());
             currentAlarm.setDetails(createDetails(ruleState));
             currentAlarm.setOriginator(originator);
