@@ -79,7 +79,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
     protected abstract void doProcessCustomerAction(TbContext ctx, TbMsg msg, CustomerId customerId);
 
     protected ListenableFuture<CustomerId> getCustomer(TbContext ctx, TbMsg msg) {
-        String customerTitle = TbNodeUtils.processPattern(this.config.getCustomerNamePattern(), msg.getMetaData());
+        String customerTitle = TbNodeUtils.processPattern(this.config.getCustomerNamePattern(), msg);
         CustomerKey key = new CustomerKey(customerTitle);
         return ctx.getDbCallbackExecutor().executeAsync(() -> {
             Optional<CustomerId> customerId = customerIdCache.get(key);
