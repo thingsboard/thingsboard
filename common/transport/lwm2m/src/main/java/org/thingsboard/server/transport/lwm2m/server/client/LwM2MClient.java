@@ -28,10 +28,11 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCreden
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportServiceImpl;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
 @Data
@@ -51,7 +52,7 @@ public class LwM2MClient implements Cloneable {
     private Map<String, String> attributes;
     private Map<String, ResourceValue> resources;
     private Map<String, TransportProtos.TsKvProto> delayedRequests;
-    private ArrayList<String> pendingRequests;
+    private List<String> pendingRequests;
     private boolean init;
     private final LwM2mValueConverterImpl converter;
 
@@ -66,7 +67,7 @@ public class LwM2MClient implements Cloneable {
         this.credentialsResponse = credentialsResponse;
         this.attributes = new ConcurrentHashMap<>();
         this.delayedRequests = new ConcurrentHashMap<>();
-        this.pendingRequests = new ArrayList<>();
+        this.pendingRequests = new CopyOnWriteArrayList<>();
         this.resources = new ConcurrentHashMap<>();
         this.profileUuid = profileUuid;
         this.sessionUuid = sessionUuid;

@@ -236,7 +236,9 @@ public class LwM2MTransportRequest {
     private void sendRequest(LeshanServer lwServer, Registration registration, DownlinkRequest request, long timeoutInMs) {
         LwM2MClient lwM2MClient = this.service.lwM2mInMemorySecurityStore.getLwM2MClientWithReg(registration, null);
         lwServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
-            if (!lwM2MClient.isInit()) lwM2MClient.initValue(this.service, request.getPath().toString());
+            if (!lwM2MClient.isInit()) {
+                lwM2MClient.initValue(this.service, request.getPath().toString());
+            }
             if (isSuccess(((Response) response.getCoapResponse()).getCode())) {
                 this.handleResponse(registration, request.getPath().toString(), response, request);
                 if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest()) {
@@ -254,7 +256,9 @@ public class LwM2MTransportRequest {
                 log.error("[{}] - [{}] [{}] error SendRequest", ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString());
             }
         }, e -> {
-            if (!lwM2MClient.isInit()) lwM2MClient.initValue(this.service, request.getPath().toString());
+            if (!lwM2MClient.isInit()) {
+                lwM2MClient.initValue(this.service, request.getPath().toString());
+            }
             String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: Resource path - %s msg error - %s  SendRequest to Client",
                     request.getPath().toString(), e.toString());
             service.sentLogsToThingsboard(msg, registration);
