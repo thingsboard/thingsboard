@@ -22,7 +22,6 @@ import { AppState } from '@core/core.state';
 import { Observable } from 'rxjs';
 import { filter, map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
 import { ModelValue, ObjectLwM2M } from './profile-config.models';
-import { TranslateService } from '@ngx-translate/core';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { Direction } from '@shared/models/page/sort-order';
 import { isDefined, isDefinedAndNotNull, isEmptyStr, isString } from '@core/utils';
@@ -72,7 +71,6 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   }
 
   constructor(private store: Store<AppState>,
-              public translate: TranslateService,
               private deviceProfileService: DeviceProfileService,
               private fb: FormBuilder) {
     this.lwm2mListFormGroup = this.fb.group({

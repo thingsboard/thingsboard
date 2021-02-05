@@ -109,15 +109,15 @@
                               (serverFormGroup.get('securityMode').value === securityConfigLwM2MType.RPK ||
                               serverFormGroup.get('securityMode').value === securityConfigLwM2MType.X509)">
             {{ 'device-profile.lwm2m.server-public-key' | translate }}
-            <strong>{{ translate.get('device-profile.lwm2m.pattern_hex_dec', {
-              count: 0}) | async }}</strong>
+            <strong>{{ 'device-profile.lwm2m.pattern_hex_dec' | translate: {
+              count: 0} }}</strong>
           </mat-error>
           <mat-error *ngIf="(serverFormGroup.get('serverPublicKey').hasError('maxlength') ||
                     serverFormGroup.get('serverPublicKey').hasError('minlength')) &&
                               serverFormGroup.get('securityMode').value === securityConfigLwM2MType.RPK">
             {{ 'device-profile.lwm2m.server-public-key' | translate }}
-            <strong>{{ translate.get('device-profile.lwm2m.pattern_hex_dec', {
-              count: lenMaxServerPublicKey }) | async }}</strong>
+            <strong>{{ 'device-profile.lwm2m.pattern_hex_dec' | translate: {
+              count: lenMaxServerPublicKey } }}</strong>
           </mat-error>
         </mat-form-field>
       </div>

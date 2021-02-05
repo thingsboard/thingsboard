@@ -32,7 +32,6 @@ import { deepClone, isDefinedAndNotNull, isUndefined } from '@core/utils';
 import { WINDOW } from '@core/services/window.service';
 import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
 import { Direction } from '@shared/models/page/sort-order';
-import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-transport-configuration',
@@ -69,7 +68,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   constructor(private store: Store<AppState>,
-              public translate: TranslateService,
               private fb: FormBuilder,
               private deviceProfileService: DeviceProfileService,
               @Inject(WINDOW) private window: Window) {

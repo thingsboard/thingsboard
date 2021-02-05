@@ -34,7 +34,6 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { WINDOW } from '@core/services/window.service';
 import { pairwise, startWith } from 'rxjs/operators';
 import { DeviceProfileService } from '@core/http/device-profile.service';
-import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-config-server',
@@ -75,7 +74,6 @@ export class Lwm2mDeviceConfigServerComponent implements ControlValueAccessor {
   }
 
   constructor(protected store: Store<AppState>,
-              public translate: TranslateService,
               public fb: FormBuilder,
               private deviceProfileService: DeviceProfileService,
               @Inject(WINDOW) private window: Window) {

@@ -39,19 +39,19 @@
       <mat-icon>add</mat-icon>
     </button>
     <mat-error *ngIf="instancesListFormGroup.get('instanceIdInput').hasError('min')">
-      {{ translate.get('device-profile.lwm2m.valid-id-instance', {
+      {{ 'device-profile.lwm2m.valid-id-instance' | translate: {
       count: 2, instance: instanceId, min: instanceIdValueMin
-    }) | async }}
+    } }}
     </mat-error>
     <mat-error *ngIf="instancesListFormGroup.get('instanceIdInput').hasError('max')">
-      {{ translate.get('device-profile.lwm2m.valid-id-instance', {
+      {{ 'device-profile.lwm2m.valid-id-instance' | translate: {
       count: 1, instance: instanceId, max: instanceIdValueMax
-    }) | async }}
+    } }}
     </mat-error>
     <mat-error *ngIf="instancesListFormGroup.get('instanceIdInput').hasError('pattern')">
-      {{ translate.get('device-profile.lwm2m.valid-id-instance', {
+      {{ 'device-profile.lwm2m.valid-id-instance' | translate: {
       count: 0, instance: instanceId, max: instanceIdValueMax
-    }) | async }}
+    } }}
     </mat-error>
   </mat-form-field>
 </section>
