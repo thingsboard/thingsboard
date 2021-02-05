@@ -50,7 +50,24 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.service.install.DatabaseHelper.*;
+import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
+import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
+import static org.thingsboard.server.service.install.DatabaseHelper.CONFIGURATION;
+import static org.thingsboard.server.service.install.DatabaseHelper.CUSTOMER_ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.DASHBOARD;
+import static org.thingsboard.server.service.install.DatabaseHelper.END_TS;
+import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_TYPE;
+import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_VIEW;
+import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_VIEWS;
+import static org.thingsboard.server.service.install.DatabaseHelper.ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.KEYS;
+import static org.thingsboard.server.service.install.DatabaseHelper.NAME;
+import static org.thingsboard.server.service.install.DatabaseHelper.SEARCH_TEXT;
+import static org.thingsboard.server.service.install.DatabaseHelper.START_TS;
+import static org.thingsboard.server.service.install.DatabaseHelper.TENANT_ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.TITLE;
+import static org.thingsboard.server.service.install.DatabaseHelper.TYPE;
 
 @Service
 @Profile("install")
