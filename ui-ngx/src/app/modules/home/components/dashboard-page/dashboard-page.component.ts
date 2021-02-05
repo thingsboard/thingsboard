@@ -124,6 +124,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   hideToolbar: boolean;
 
   @Input()
+  syncStateWithQueryParam = true;
+
+  @Input()
   dashboard: Dashboard;
   dashboardConfiguration: DashboardConfiguration;
 
@@ -266,9 +269,12 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.rxSubscriptions.push(this.route.data.subscribe(
       (data) => {
         if (this.embedded) {
-          data.dashboard = this.dashboard;
+          data.dashboard = this.dashboardUtils.validateAndUpdateDashboard(this.dashboard);
+          data.currentDashboardId = this.dashboard.id ? this.dashboard.id.id : null;
           data.widgetEditMode = false;
           data.singlePageMode = false;
+        } else {
+          data.currentDashboardId = this.route.snapshot.params.dashboardId;
         }
         this.init(data);
         this.runChangeDetection();
@@ -286,7 +292,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
     this.reset();
 
-    this.currentDashboardId = this.route.snapshot.params.dashboardId;
+    this.currentDashboardId = data.currentDashboardId;
 
     if (this.route.snapshot.params.customerId) {
       this.currentCustomerId = this.route.snapshot.params.customerId;

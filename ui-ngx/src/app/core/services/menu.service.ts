@@ -223,6 +223,7 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
+        notExact: true,
         icon: 'home'
       },
       {
@@ -409,6 +410,7 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
+        notExact: true,
         icon: 'home'
       },
       {
