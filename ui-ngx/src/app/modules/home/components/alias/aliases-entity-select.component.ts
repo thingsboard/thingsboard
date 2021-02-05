@@ -14,14 +14,23 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+  Component,
+  Injector,
+  Input,
+  OnDestroy,
+  OnInit,
+  StaticProvider,
+  ViewChild,
+  ViewContainerRef
+} from '@angular/core';
 import { TooltipPosition } from '@angular/material/tooltip';
 import { AliasInfo, IAliasController } from '@core/api/widget-api.models';
 import { CdkOverlayOrigin, ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
+import { ComponentPortal } from '@angular/cdk/portal';
 import {
   ALIASES_ENTITY_SELECT_PANEL_DATA,
   AliasesEntitySelectPanelComponent,
@@ -136,12 +145,12 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
     overlayRef.attach(new ComponentPortal(AliasesEntitySelectPanelComponent, this.viewContainerRef, injector));
   }
 
-  private _createAliasesEntitySelectPanelInjector(overlayRef: OverlayRef, data: AliasesEntitySelectPanelData): PortalInjector {
-    const injectionTokens = new WeakMap<any, any>([
-      [ALIASES_ENTITY_SELECT_PANEL_DATA, data],
-      [OverlayRef, overlayRef]
-    ]);
-    return new PortalInjector(this.viewContainerRef.injector, injectionTokens);
+  private _createAliasesEntitySelectPanelInjector(overlayRef: OverlayRef, data: AliasesEntitySelectPanelData): Injector {
+    const providers: StaticProvider[] = [
+      {provide: ALIASES_ENTITY_SELECT_PANEL_DATA, useValue: data},
+      {provide: OverlayRef, useValue: overlayRef}
+    ];
+    return Injector.create({parent: this.viewContainerRef.injector, providers});
   }
 
   private updateDisplayValue() {
