@@ -39,7 +39,6 @@ import org.eclipse.leshan.core.response.DeleteResponse;
 import org.eclipse.leshan.core.response.DiscoverResponse;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.LwM2mResponse;
-import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.ResponseCallback;
 import org.eclipse.leshan.core.response.WriteAttributesResponse;
@@ -242,15 +241,15 @@ public class LwM2MTransportRequest {
             if (isSuccess(((Response) response.getCoapResponse()).getCode())) {
                 this.handleResponse(registration, request.getPath().toString(), response, request);
                 if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest()) {
-                    String msg = String.format(LOG_LW2M_INFO + ": sendRequest Replace: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
-                            ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString(),
+                    String msg = String.format("%s: sendRequest Replace: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
+                            LOG_LW2M_INFO, ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString(),
                             ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue().toString());
                     service.sentLogsToThingsboard(msg, registration);
                     log.info("[{}] [{}] - [{}] [{}] Update SendRequest[{}]", registration.getEndpoint(), ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString(),
                             ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue());
                 }
             } else {
-                String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: CoapCode - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client",
+                String msg = String.format("%s: sendRequest: CoapCode - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client", LOG_LW2M_ERROR,
                         ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString());
                 service.sentLogsToThingsboard(msg, registration);
                 log.error("[{}] - [{}] [{}] error SendRequest", ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString());
@@ -259,8 +258,8 @@ public class LwM2MTransportRequest {
             if (!lwM2MClient.isInit()) {
                 lwM2MClient.initValue(this.service, request.getPath().toString());
             }
-            String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: Resource path - %s msg error - %s  SendRequest to Client",
-                    request.getPath().toString(), e.toString());
+            String msg = String.format("%s: sendRequest: Resource path - %s msg error - %s  SendRequest to Client",
+                    LOG_LW2M_ERROR, request.getPath().toString(), e.toString());
             service.sentLogsToThingsboard(msg, registration);
             log.error("[{}] - [{}] error SendRequest", request.getPath().toString(), e.toString());
         });
@@ -314,7 +313,7 @@ public class LwM2MTransportRequest {
      * @param response -
      */
     private void sendResponse(Registration registration, String path, LwM2mResponse response, DownlinkRequest request) {
-        if (response instanceof ObserveResponse || response instanceof ReadResponse) {
+        if (response instanceof ReadResponse) {
             service.onObservationResponse(registration, path, (ReadResponse) response);
         } else if (response instanceof CancelObservationResponse) {
             log.info("[{}] Path [{}] CancelObservationResponse 3_Send", path, response);
