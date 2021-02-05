@@ -47,6 +47,8 @@ public class ModelConstants {
     public static final String SEARCH_TEXT_PROPERTY = "search_text";
     public static final String ADDITIONAL_INFO_PROPERTY = "additional_info";
     public static final String ENTITY_TYPE_PROPERTY = "entity_type";
+    public static final String USER_DEFAULT_DASHBOARD_ID = "default_dashboard";
+    public static final String USER_HOME_DASHBOARD_ID = "home_dashboard";
 
     public static final String ENTITY_TYPE_COLUMN = ENTITY_TYPE_PROPERTY;
     public static final String TENANT_ID_COLUMN = "tenant_id";

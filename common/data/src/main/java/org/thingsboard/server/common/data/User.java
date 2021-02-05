@@ -19,12 +19,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 @EqualsAndHashCode(callSuper = true)
 public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId {
@@ -37,6 +36,8 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
     private Authority authority;
     private String firstName;
     private String lastName;
+    private DashboardId defaultDashboardId;
+    private DashboardId homeDashboardId;
 
     public User() {
         super();
@@ -54,6 +55,8 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.authority = user.getAuthority();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
+        this.defaultDashboardId = user.getDefaultDashboardId();
+        this.homeDashboardId = user.getHomeDashboardId();
     }
 
     public TenantId getTenantId() {
@@ -113,6 +116,22 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
     @Override
     public String getSearchText() {
         return getEmail();
+    }
+
+    public DashboardId getDefaultDashboardId() {
+        return defaultDashboardId;
+    }
+
+    public void setDefaultDashboardId(DashboardId defaultDashboardId) {
+        this.defaultDashboardId = defaultDashboardId;
+    }
+
+    public DashboardId getHomeDashboardId() {
+        return homeDashboardId;
+    }
+
+    public void setHomeDashboardId(DashboardId homeDashboardId) {
+        this.homeDashboardId = homeDashboardId;
     }
 
     @Override

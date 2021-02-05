@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 
@@ -29,6 +30,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
     private String title;
     private String region;
     private TenantProfileId tenantProfileId;
+    private DashboardId homeDashboardId;
 
     public Tenant() {
         super();
@@ -43,6 +45,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
         this.title = tenant.getTitle();
         this.region = tenant.getRegion();
         this.tenantProfileId = tenant.getTenantProfileId();
+        this.homeDashboardId = tenant.getHomeDashboardId();
     }
 
     public String getTitle() {
@@ -84,6 +87,14 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
     @Override
     public String getSearchText() {
         return getTitle();
+    }
+
+    public DashboardId getHomeDashboardId() {
+        return homeDashboardId;
+    }
+
+    public void setHomeDashboardId(DashboardId homeDashboardId) {
+        this.homeDashboardId = homeDashboardId;
     }
 
     @Override

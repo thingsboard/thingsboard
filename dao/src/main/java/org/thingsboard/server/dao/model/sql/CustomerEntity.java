@@ -22,6 +22,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -73,6 +74,9 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> implements Sea
     @Column(name = ModelConstants.EMAIL_PROPERTY)
     private String email;
 
+    @Column(name = ModelConstants.USER_HOME_DASHBOARD_ID)
+    private UUID homeDashboardId;
+
     @Type(type = "json")
     @Column(name = ModelConstants.CUSTOMER_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
@@ -97,6 +101,9 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> implements Sea
         this.phone = customer.getPhone();
         this.email = customer.getEmail();
         this.additionalInfo = customer.getAdditionalInfo();
+        if(customer.getHomeDashboardId() != null) {
+            this.homeDashboardId = customer.getHomeDashboardId().getId();
+        }
     }
 
     @Override
@@ -124,6 +131,9 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> implements Sea
         customer.setPhone(phone);
         customer.setEmail(email);
         customer.setAdditionalInfo(additionalInfo);
+        if(this.homeDashboardId != null) {
+            customer.setHomeDashboardId(new DashboardId(homeDashboardId));
+        }
         return customer;
     }
 

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,6 +30,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId {
     
     private String title;
     private TenantId tenantId;
+    private DashboardId homeDashboardId;
 
     public Customer() {
         super();
@@ -42,6 +44,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId {
         super(customer);
         this.tenantId = customer.getTenantId();
         this.title = customer.getTitle();
+        this.homeDashboardId = customer.getHomeDashboardId();
     }
 
     public TenantId getTenantId() {
@@ -83,6 +86,14 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId {
     @Override
     public String getSearchText() {
         return getTitle();
+    }
+
+    public DashboardId getHomeDashboardId() {
+        return homeDashboardId;
+    }
+
+    public void setHomeDashboardId(DashboardId homeDashboardId) {
+        this.homeDashboardId = homeDashboardId;
     }
 
     @Override

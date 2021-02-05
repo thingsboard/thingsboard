@@ -44,7 +44,6 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -494,21 +493,18 @@ public class DashboardController extends BaseController {
                 return null;
             }
             User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
-            JsonNode additionalInfo = user.getAdditionalInfo();
-            HomeDashboard homeDashboard;
-            homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
-            if (homeDashboard == null) {
-                if (securityUser.isCustomerUser()) {
+            HomeDashboard homeDashboard = prepareHomeDashboard(user.getAdditionalInfo(), user.getHomeDashboardId());
+
+            if(homeDashboard == null) {
+                if (securityUser.isCustomerUser() && securityUser.getHomeDashboardId() != null) {
                     Customer customer = customerService.findCustomerById(securityUser.getTenantId(), securityUser.getCustomerId());
-                    additionalInfo = customer.getAdditionalInfo();
-                    homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
-                }
-                if (homeDashboard == null) {
+                    homeDashboard = prepareHomeDashboard(customer.getAdditionalInfo(), customer.getHomeDashboardId());
+                } else {
                     Tenant tenant = tenantService.findTenantById(securityUser.getTenantId());
-                    additionalInfo = tenant.getAdditionalInfo();
-                    homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
+                    homeDashboard = prepareHomeDashboard(tenant.getAdditionalInfo(), tenant.getHomeDashboardId());
                 }
             }
+
             return homeDashboard;
         } catch (Exception e) {
             throw handleException(e);
@@ -519,22 +515,17 @@ public class DashboardController extends BaseController {
     @RequestMapping(value = "/tenant/dashboard/home/info", method = RequestMethod.GET)
     @ResponseBody
     public HomeDashboardInfo getTenantHomeDashboardInfo() throws ThingsboardException {
-        try {
-            Tenant tenant = tenantService.findTenantById(getTenantId());
-            JsonNode additionalInfo = tenant.getAdditionalInfo();
-            DashboardId dashboardId = null;
-            boolean hideDashboardToolbar = true;
-            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID)) {
-                String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
-                dashboardId = new DashboardId(toUUID(strDashboardId));
-                if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
-                    hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
-                }
+        Tenant tenant = tenantService.findTenantById(getTenantId());
+        JsonNode additionalInfo = tenant.getAdditionalInfo();
+        DashboardId dashboardId = null;
+        boolean hideDashboardToolbar = true;
+        if (additionalInfo != null && tenant.getHomeDashboardId() != null) {
+            dashboardId = tenant.getHomeDashboardId();
+            if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
+                hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
             }
-            return new HomeDashboardInfo(dashboardId, hideDashboardToolbar);
-        } catch (Exception e) {
-            throw handleException(e);
         }
+        return new HomeDashboardInfo(dashboardId, hideDashboardToolbar);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -551,32 +542,33 @@ public class DashboardController extends BaseController {
                 additionalInfo = JacksonUtil.OBJECT_MAPPER.createObjectNode();
             }
             if (homeDashboardInfo.getDashboardId() != null) {
-                ((ObjectNode) additionalInfo).put(HOME_DASHBOARD_ID, homeDashboardInfo.getDashboardId().getId().toString());
                 ((ObjectNode) additionalInfo).put(HOME_DASHBOARD_HIDE_TOOLBAR, homeDashboardInfo.isHideDashboardToolbar());
             } else {
-                ((ObjectNode) additionalInfo).remove(HOME_DASHBOARD_ID);
                 ((ObjectNode) additionalInfo).remove(HOME_DASHBOARD_HIDE_TOOLBAR);
             }
             tenant.setAdditionalInfo(additionalInfo);
+            tenant.setHomeDashboardId(homeDashboardInfo.getDashboardId());
             tenantService.saveTenant(tenant);
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
-    private HomeDashboard extractHomeDashboardFromAdditionalInfo(JsonNode additionalInfo) {
-        try {
-            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID)) {
-                String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
-                DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-                Dashboard dashboard = checkDashboardId(dashboardId, Operation.READ);
-                boolean hideDashboardToolbar = true;
-                if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
-                    hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
-                }
-                return new HomeDashboard(dashboard, hideDashboardToolbar);
-            }
-        } catch (Exception e) {}
-        return null;
+    private boolean extractHideDashboardToolbar(JsonNode additionalInfo) {
+        boolean hideDashboardToolbar = true;
+        if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
+            hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
+        }
+        return hideDashboardToolbar;
+    }
+
+
+    private HomeDashboard prepareHomeDashboard(JsonNode additionalInfo, DashboardId homeDashboardId) throws ThingsboardException {
+        if(homeDashboardId == null || additionalInfo == null) {
+            return null;
+        }
+        boolean hideDashboardToolbar = extractHideDashboardToolbar(additionalInfo);
+        Dashboard dashboard = checkDashboardId(homeDashboardId, Operation.READ);
+        return new HomeDashboard(dashboard, hideDashboardToolbar);
     }
 }

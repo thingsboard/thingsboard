@@ -21,7 +21,7 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -30,9 +30,7 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.persistence.MappedSuperclass;
-import javax.persistence.Table;
 import java.util.UUID;
 
 @Data
@@ -81,6 +79,9 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
     @Column(name = ModelConstants.TENANT_TENANT_PROFILE_ID_PROPERTY, columnDefinition = "uuid")
     private UUID tenantProfileId;
 
+    @Column(name = ModelConstants.USER_HOME_DASHBOARD_ID)
+    private UUID homeDashboardId;
+
     public AbstractTenantEntity() {
         super();
     }
@@ -104,6 +105,9 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
         if (tenant.getTenantProfileId() != null) {
             this.tenantProfileId = tenant.getTenantProfileId().getId();
         }
+        if(tenant.getHomeDashboardId() != null) {
+            this.homeDashboardId = tenant.getHomeDashboardId().getId();
+        }
     }
 
     public AbstractTenantEntity(TenantEntity tenantEntity) {
@@ -121,6 +125,7 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
         this.email = tenantEntity.getEmail();
         this.additionalInfo = tenantEntity.getAdditionalInfo();
         this.tenantProfileId = tenantEntity.getTenantProfileId();
+        this.homeDashboardId = tenantEntity.getHomeDashboardId();
     }
 
     @Override
@@ -153,6 +158,9 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
         tenant.setAdditionalInfo(additionalInfo);
         if (tenantProfileId != null) {
             tenant.setTenantProfileId(new TenantProfileId(tenantProfileId));
+        }
+        if(homeDashboardId != null) {
+            tenant.setHomeDashboardId(new DashboardId(homeDashboardId));
         }
         return tenant;
     }

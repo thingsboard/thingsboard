@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.install;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,13 +23,17 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.model.sql.UserEntity;
+import org.thingsboard.server.dao.sql.user.UserRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
 import java.nio.charset.Charset;
@@ -43,25 +48,9 @@ import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.List;
+import java.util.UUID;
 
-import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
-import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
-import static org.thingsboard.server.service.install.DatabaseHelper.CONFIGURATION;
-import static org.thingsboard.server.service.install.DatabaseHelper.CUSTOMER_ID;
-import static org.thingsboard.server.service.install.DatabaseHelper.DASHBOARD;
-import static org.thingsboard.server.service.install.DatabaseHelper.END_TS;
-import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_ID;
-import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_TYPE;
-import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_VIEW;
-import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_VIEWS;
-import static org.thingsboard.server.service.install.DatabaseHelper.ID;
-import static org.thingsboard.server.service.install.DatabaseHelper.KEYS;
-import static org.thingsboard.server.service.install.DatabaseHelper.NAME;
-import static org.thingsboard.server.service.install.DatabaseHelper.SEARCH_TEXT;
-import static org.thingsboard.server.service.install.DatabaseHelper.START_TS;
-import static org.thingsboard.server.service.install.DatabaseHelper.TENANT_ID;
-import static org.thingsboard.server.service.install.DatabaseHelper.TITLE;
-import static org.thingsboard.server.service.install.DatabaseHelper.TYPE;
+import static org.thingsboard.server.service.install.DatabaseHelper.*;
 
 @Service
 @Profile("install")
@@ -100,6 +89,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     @Autowired
     private ApiUsageStateService apiUsageStateService;
 
+    @Autowired
+    private UserRepository userRepository;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -430,6 +421,46 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3002001;");
                     } catch (Exception e) {
                         log.error("Failed updating schema!!!", e);
+                    }
+                    log.info("Schema updated.");
+                }
+                break;
+
+            case "3.2.1":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    if(isOldSchema(conn, 3002001)) {
+                        try {
+                            conn.createStatement().execute("ALTER TABLE tb_user ADD COLUMN default_dashboard uuid;");
+                            conn.createStatement().execute("ALTER TABLE tb_user ADD COLUMN home_dashboard uuid;");
+                            conn.createStatement().execute("ALTER TABLE tenant ADD COLUMN home_dashboard uuid;");
+                            conn.createStatement().execute("ALTER TABLE customer ADD COLUMN home_dashboard uuid;");
+
+                            conn.createStatement().execute("ALTER TABLE tb_user ADD CONSTRAINT fk_default_dashboard FOREIGN KEY (default_dashboard) REFERENCES dashboard(id) ON DELETE SET NULL");
+                            conn.createStatement().execute("ALTER TABLE tb_user ADD CONSTRAINT fk_home_dashboard FOREIGN KEY (home_dashboard) REFERENCES dashboard(id) ON DELETE SET NULL");
+                            conn.createStatement().execute("ALTER TABLE tenant ADD CONSTRAINT fk_tenant_home_dashboard FOREIGN KEY (home_dashboard) REFERENCES dashboard(id) ON DELETE SET NULL;");
+                            conn.createStatement().execute("ALTER TABLE customer ADD CONSTRAINT fk_customer_home_dashboard FOREIGN KEY (home_dashboard) REFERENCES dashboard(id) ON DELETE SET NULL;");
+
+
+                            for (UserEntity user : userRepository.findAll()) {
+                                if (user.getCustomerId() != null && !CustomerId.NULL_UUID.equals(user.getCustomerId())) {
+                                    ObjectNode addInfo = JacksonUtil.convertValue(user.getAdditionalInfo(), ObjectNode.class);
+                                    if (addInfo != null && addInfo.has("defaultDashboardId")) {
+                                        String dashboardId = addInfo.get("defaultDashboardId").asText();
+                                        addInfo.remove("defaultDashboardId");
+                                        if (!dashboardId.equals("null")) {
+                                            user.setDefaultDashboardId(UUID.fromString(dashboardId));
+                                        }
+                                        user.setAdditionalInfo(addInfo);
+                                        userRepository.save(user);
+                                    }
+                                }
+                            }
+
+                            conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3003000;");
+                        } catch (Exception e) {
+                            log.error("Failed updating schema!!!", e);
+                        }
                     }
                     log.info("Schema updated.");
                 }

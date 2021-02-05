@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -42,7 +44,10 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.user.UserDao;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -64,6 +69,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Autowired
     private CustomerDao customerDao;
+
+    @Autowired
+    private UserDao userDao;
 
     @Autowired
     @Lazy
@@ -134,6 +142,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (customer == null) {
             throw new DataValidationException("Can't unassign dashboard from non-existent customer!");
         }
+
+        cleanUsersDashboardRecords(userDao.findUserByDefaultDashboardIdAndCustomerId(dashboardId.getId(), customerId.getId()));
+
         if (dashboard.removeAssignedCustomer(customer)) {
             try {
                 deleteRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD));
@@ -218,6 +229,18 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             throw new DataValidationException("Can't update dashboards for non-existent customer!");
         }
         new CustomerDashboardsUpdater(customer).removeEntities(tenantId, customer);
+    }
+
+    private void cleanUsersDashboardRecords(List<User> users) {
+        users.forEach(user -> {
+            user.setDefaultDashboardId(null);
+            ObjectNode alwaysFullScreen = JacksonUtil.convertValue(user.getAdditionalInfo(), ObjectNode.class);
+            if(alwaysFullScreen != null) {
+                alwaysFullScreen.remove("defaultDashboardFullscreen");
+                user.setAdditionalInfo(alwaysFullScreen);
+            }
+            userDao.save(user.getTenantId(), user);
+        });
     }
 
     private DataValidator<Dashboard> dashboardValidator =
