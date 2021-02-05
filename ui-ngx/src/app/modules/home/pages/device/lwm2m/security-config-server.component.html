@@ -52,16 +52,16 @@
           </mat-error>
           <mat-error *ngIf="serverFormGroup.get('clientPublicKeyOrId').hasError('pattern')">
             {{ 'device.lwm2m-security-config.client-key' | translate }}
-            <strong>{{ translate.get('device.lwm2m-security-config.pattern_hex_dec', {
+            <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec' | translate: {
               count: 0
-            }) | async }}</strong>
+            } }}</strong>
           </mat-error>
           <mat-error *ngIf="(serverFormGroup.get('clientPublicKeyOrId').hasError('maxlength') ||
                 serverFormGroup.get('clientPublicKeyOrId').hasError('minlength'))">
             {{ 'device.lwm2m-security-config.client-key' | translate }}
-            <strong>{{ translate.get('device.lwm2m-security-config.pattern_hex_dec', {
+            <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec' | translate: {
               count: lenMaxClientPublicKeyOrId
-            }) | async }}</strong>
+            } }}</strong>
           </mat-error>
         </mat-form-field>
         <mat-form-field class="mat-block">
@@ -83,16 +83,16 @@
           </mat-error>
           <mat-error *ngIf="serverFormGroup.get('clientSecretKey').hasError('pattern')">
             {{ 'device.lwm2m-security-config.client-key' | translate }}
-            <strong>{{ translate.get('device.lwm2m-security-config.pattern_hex_dec', {
+            <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec' | translate: {
               count: 0
-            }) | async }}</strong>
+            } }}</strong>
           </mat-error>
           <mat-error *ngIf="(serverFormGroup.get('clientSecretKey').hasError('maxlength') ||
                 serverFormGroup.get('clientSecretKey').hasError('minlength'))">
             {{ 'device.lwm2m-security-config.client-key' | translate }}
-            <strong>{{ translate.get('device.lwm2m-security-config.pattern_hex_dec', {
+            <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec' | translate: {
               count: lenMaxClientSecretKey
-            }) | async }}</strong>
+            } }}</strong>
           </mat-error>
         </mat-form-field>
       </div>

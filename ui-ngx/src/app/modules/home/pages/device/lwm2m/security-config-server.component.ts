@@ -31,7 +31,6 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { PageComponent } from '@shared/components/page.component';
-import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-security-config-server-lwm2m',
@@ -61,7 +60,6 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
   constructor(protected store: Store<AppState>,
               @Inject(MAT_DIALOG_DATA) public data: DeviceCredentialsDialogLwm2mData,
               public dialogRef: MatDialogRef<SecurityConfigServerComponent, object>,
-              public translate: TranslateService,
               public fb: FormBuilder) {
     super(store);
   }
