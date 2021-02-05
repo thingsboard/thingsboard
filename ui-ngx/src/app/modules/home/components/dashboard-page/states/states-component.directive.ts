@@ -54,6 +54,9 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
   currentState: string;
 
   @Input()
+  syncStateWithQueryParam: boolean;
+
+  @Input()
   isMobile: boolean;
 
   stateControllerComponentRef: ComponentRef<IStateControllerComponent>;
@@ -89,6 +92,8 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
           this.stateControllerComponent.state = this.state;
         } else if (propName === 'currentState') {
           this.stateControllerComponent.currentState = this.currentState;
+        } else if (propName === 'syncStateWithQueryParam') {
+          this.stateControllerComponent.syncStateWithQueryParam = this.syncStateWithQueryParam;
         }
       }
     }
@@ -119,6 +124,7 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
     this.stateControllerComponent.stateControllerInstanceId = stateControllerInstanceId;
     this.stateControllerComponent.state = this.state;
     this.stateControllerComponent.currentState = this.currentState;
+    this.stateControllerComponent.syncStateWithQueryParam = this.syncStateWithQueryParam;
     this.stateControllerComponent.isMobile = this.isMobile;
     this.stateControllerComponent.states = this.states;
     this.stateControllerComponent.dashboardId = this.dashboardId;
