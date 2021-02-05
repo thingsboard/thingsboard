@@ -300,12 +300,14 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
                                 ContentFormat.TLV.getName(), null, value, this.context.getCtxServer().getTimeout());
                     } else {
                         log.error("Resource path - [{}] value - [{}] is not Writable and cannot be updated", path, value);
-                        String logMsg = String.format(LOG_LW2M_ERROR + ": attributeUpdate: Resource path - %s value - %s is not Writable and cannot be updated", path, value);
+                        String logMsg = String.format("%s: attributeUpdate: Resource path - %s value - %s is not Writable and cannot be updated",
+                                LOG_LW2M_ERROR, path, value);
                         this.sentLogsToThingsboard(logMsg, lwM2MClient.getRegistration());
                     }
                 } else {
                     log.error("Attribute name - [{}] value - [{}] is not present as attribute in profile and cannot be updated", de.getKey(), value);
-                    String logMsg = String.format(LOG_LW2M_ERROR + ": attributeUpdate: attribute name - %s value - %s is not present as attribute in profile and cannot be updated", de.getKey(), value);
+                    String logMsg = String.format("%s: attributeUpdate: attribute name - %s value - %s is not present as attribute in profile and cannot be updated",
+                            LOG_LW2M_ERROR, de.getKey(), value);
                     this.sentLogsToThingsboard(logMsg, lwM2MClient.getRegistration());
                 }
             });
@@ -581,7 +583,8 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
      * Start observe/read: Attr/Telemetry
      * #1 - Analyze:
      * #1.1 path in resource profile == client resource
-     *  @param lwServer     -
+     *
+     * @param lwServer     -
      * @param registration -
      */
     private void initReadAttrTelemetryObserveToClient(LeshanServer lwServer, Registration registration, LwM2MClient lwM2MClient, String typeOper) {
@@ -592,8 +595,7 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
             if (GET_TYPE_OPER_READ.equals(typeOper)) {
                 result = new ObjectMapper().readValue(lwM2MClientProfile.getPostAttributeProfile().getAsJsonArray().toString().getBytes(), Set.class);
                 result.addAll(new ObjectMapper().readValue(lwM2MClientProfile.getPostTelemetryProfile().getAsJsonArray().toString().getBytes(), Set.class));
-            }
-            else {
+            } else {
                 result = new ObjectMapper().readValue(lwM2MClientProfile.getPostObserveProfile().getAsJsonArray().toString().getBytes(), Set.class);
             }
             Set<String> pathSent = ConcurrentHashMap.newKeySet();

@@ -168,7 +168,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
             LwM2MClient lwM2MClient = this.sessions.get(registration.getEndpoint());
             lwM2MClient.setLwServer(lwServer);
             lwM2MClient.setRegistration(registration);
-            lwM2MClient.setAttributes(registration.getAdditionalRegistrationAttributes());
+            lwM2MClient.getAttributes().putAll(registration.getAdditionalRegistrationAttributes());
             this.sessions.remove(registration.getEndpoint());
             this.sessions.put(registration.getId(), lwM2MClient);
             return lwM2MClient;

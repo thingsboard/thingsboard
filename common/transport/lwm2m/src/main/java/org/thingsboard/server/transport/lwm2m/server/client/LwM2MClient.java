@@ -49,10 +49,10 @@ public class LwM2MClient implements Cloneable {
     private LwM2MTransportServiceImpl lwM2MTransportServiceImpl;
     private Registration registration;
     private ValidateDeviceCredentialsResponseMsg credentialsResponse;
-    private Map<String, String> attributes;
-    private Map<String, ResourceValue> resources;
-    private Map<String, TransportProtos.TsKvProto> delayedRequests;
-    private List<String> pendingRequests;
+    private final Map<String, String> attributes;
+    private final Map<String, ResourceValue> resources;
+    private final Map<String, TransportProtos.TsKvProto> delayedRequests;
+    private final List<String> pendingRequests;
     private boolean init;
     private final LwM2mValueConverterImpl converter;
 
