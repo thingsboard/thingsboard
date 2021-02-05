@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -175,7 +175,7 @@ public class EntityViewController extends BaseController {
 
     private Optional<TelemetryEntityView> resolveDefaultKeysIfExists(EntityView entityView) throws ThingsboardException {
         EntityId entityId = entityView.getEntityId();
-        if (EntityType.DEVICE.equals(entityId.getEntityType())) {
+        if (entityId != null && EntityType.DEVICE.equals(entityId.getEntityType())) {
             DeviceId deviceId = (DeviceId) entityId;
             DeviceInfo deviceInfo = checkDeviceInfoId(deviceId, Operation.READ);
             DeviceProfileId deviceProfileId = deviceInfo.getDeviceProfileId();
