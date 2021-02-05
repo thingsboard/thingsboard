@@ -17,7 +17,6 @@ package org.thingsboard.server.common.data.relation;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
 
 import java.util.List;
@@ -27,7 +26,6 @@ import java.util.List;
  */
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
 public class EntityTypeFilter {
 
     private String relationType;

@@ -61,9 +61,9 @@
         <commons-lang3.version>3.4</commons-lang3.version>
         <commons-io.version>2.5</commons-io.version>
         <commons-csv.version>1.4</commons-csv.version>
-        <jackson.version>2.11.3</jackson.version>
-        <jackson-annotations.version>2.11.3</jackson-annotations.version>
-        <jackson-core.version>2.11.3</jackson-core.version>
+        <jackson.version>2.12.1</jackson.version>
+        <jackson-annotations.version>2.12.1</jackson-annotations.version>
+        <jackson-core.version>2.12.1</jackson-core.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
         <californium.version>1.0.2</californium.version>
         <gson.version>2.6.2</gson.version>
@@ -554,6 +554,13 @@
                             <arg>-Xlint:removal</arg>
                             <arg>-Xlint:unchecked</arg>
                         </compilerArgs>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
                 </plugin>
                 <plugin>

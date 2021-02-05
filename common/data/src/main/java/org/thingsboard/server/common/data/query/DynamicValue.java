@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.Getter;
 
@@ -31,12 +29,5 @@ public class DynamicValue<T> {
     private final DynamicValueSourceType sourceType;
     @Getter
     private final String sourceAttribute;
-
-    @JsonCreator
-    public DynamicValue(@JsonProperty("sourceType") DynamicValueSourceType sourceType,
-                        @JsonProperty("sourceAttribute") String sourceAttribute) {
-        this.sourceType = sourceType;
-        this.sourceAttribute = sourceAttribute;
-    }
 
 }

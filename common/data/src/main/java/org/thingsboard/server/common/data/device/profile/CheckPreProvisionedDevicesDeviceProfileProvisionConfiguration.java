@@ -15,14 +15,10 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor(force = true)
 public class CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration implements DeviceProfileProvisionConfiguration {
 
     private final String provisionDeviceSecret;

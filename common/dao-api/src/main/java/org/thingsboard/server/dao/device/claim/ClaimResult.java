@@ -18,11 +18,9 @@ package org.thingsboard.server.dao.device.claim;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.Device;
 
 @AllArgsConstructor
-@NoArgsConstructor
 @Data
 public class ClaimResult {
 

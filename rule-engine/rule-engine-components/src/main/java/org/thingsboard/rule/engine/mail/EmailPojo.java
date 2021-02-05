@@ -15,15 +15,11 @@
  */
 package org.thingsboard.rule.engine.mail;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor(force = true)
 class EmailPojo {
 
     private final String from;

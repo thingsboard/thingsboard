@@ -15,13 +15,9 @@
  */
 package org.thingsboard.server.common.data;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor(force = true)
 public class ClaimRequest {
 
     private final String secretKey;

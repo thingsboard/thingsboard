@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk8
+FROM thingsboard/openjdk11
 
 RUN apt-get update
 RUN apt-get install -y curl nmap procps

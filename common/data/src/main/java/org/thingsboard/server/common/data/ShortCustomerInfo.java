@@ -17,7 +17,6 @@ package org.thingsboard.server.common.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.thingsboard.server.common.data.id.CustomerId;
 
@@ -26,7 +25,6 @@ import org.thingsboard.server.common.data.id.CustomerId;
  */
 
 @AllArgsConstructor
-@NoArgsConstructor
 public class ShortCustomerInfo {
 
     @Getter @Setter
