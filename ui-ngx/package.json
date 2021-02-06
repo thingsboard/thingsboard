@@ -1,6 +1,6 @@
 {
   "name": "thingsboard",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "scripts": {
     "ng": "ng",
     "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --host 0.0.0.0 --open",
@@ -100,6 +100,7 @@
     "@angular/cli": "^10.1.5",
     "@angular/compiler-cli": "^10.1.5",
     "@angular/language-service": "^10.1.5",
+    "@ngtools/webpack": "10.1.5",
     "@types/canvas-gauges": "^2.1.2",
     "@types/flot": "^0.0.31",
     "@types/jasmine": "^3.5.12",

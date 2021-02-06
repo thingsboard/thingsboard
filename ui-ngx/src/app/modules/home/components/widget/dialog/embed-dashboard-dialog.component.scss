@@ -1,0 +1,27 @@
+:host {
+  .dashboard-state-dialog {
+    .mat-dialog-content.dashboard-state-dialog-content {
+      max-height: 100%;
+    }
+
+    @media screen and (max-width: 599px) {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    @media screen and (min-width: 600px) {
+      width: 480px;
+      height: 600px;
+    }
+
+    @media screen and (min-width: 960px) {
+      width: 768px;
+      height: 600px;
+    }
+
+    @media screen and (min-width: 1280px) {
+      width: 1000px;
+      height: 800px;
+    }
+  }
+}

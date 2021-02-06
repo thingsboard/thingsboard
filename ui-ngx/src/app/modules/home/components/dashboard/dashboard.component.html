@@ -73,7 +73,7 @@
                     matTooltipPosition="above"
                     class="mat-subheading-2 title">
                 <mat-icon *ngIf="widget.showTitleIcon" [ngStyle]="widget.titleIconStyle">{{widget.titleIcon}}</mat-icon>
-                {{widget.title}}
+                {{widget.customTranslatedTitle}}
               </span>
               <tb-timewindow *ngIf="widget.hasTimewindow"
                              #timewindowComponent

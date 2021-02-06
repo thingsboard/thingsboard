@@ -11,8 +11,12 @@
             </button>
         </div>
         <div class="trip-animation-tooltip md-whiteframe-z4" fxLayout="column"
-            [ngClass]="{'trip-animation-tooltip-hidden':!visibleTooltip}" [innerHTML]="mainTooltip"
-            [ngStyle]="{'background-color': settings.tooltipColor, 'opacity': settings.tooltipOpacity, 'color': settings.tooltipFontColor}">
+             [ngClass]="{'trip-animation-tooltip-hidden':!visibleTooltip}"
+             [ngStyle]="{'background-color': settings.tooltipColor, 'opacity': settings.tooltipOpacity, 'color': settings.tooltipFontColor}">
+          <div *ngFor="let mainTooltip of mainTooltips"
+               [innerHTML]="mainTooltip"
+               style="padding: 10px 0">
+          </div>
         </div>
     </div>
   <tb-history-selector *ngIf="historicalData"

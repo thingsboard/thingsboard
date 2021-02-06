@@ -1,27 +1,27 @@
 <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="filterPredicateValueFormGroup">
   <div fxFlex fxLayout="column" [fxShow]="!dynamicMode">
-    <div fxFlex fxLayout="column" [ngSwitch]="valueType">
+    <div fxLayout="column" [ngSwitch]="valueType">
       <ng-template [ngSwitchCase]="valueTypeEnum.STRING">
-        <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
           <mat-label></mat-label>
           <input matInput formControlName="defaultValue" placeholder="{{'filter.value' | translate}}">
         </mat-form-field>
       </ng-template>
       <ng-template [ngSwitchCase]="valueTypeEnum.NUMERIC">
-        <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
           <mat-label></mat-label>
           <input required type="number" matInput formControlName="defaultValue"
                  placeholder="{{'filter.value' | translate}}">
         </mat-form-field>
       </ng-template>
       <ng-template [ngSwitchCase]="valueTypeEnum.DATE_TIME">
-        <tb-datetime fxFlex formControlName="defaultValue"
+        <tb-datetime formControlName="defaultValue"
                      dateText="filter.date"
                      timeText="filter.time"
                      required [showLabel]="false"></tb-datetime>
       </ng-template>
       <ng-template [ngSwitchCase]="valueTypeEnum.BOOLEAN">
-        <mat-checkbox fxFlex formControlName="defaultValue">
+        <mat-checkbox formControlName="defaultValue">
           {{ (filterPredicateValueFormGroup.get('defaultValue').value ? 'value.true' : 'value.false') | translate }}
         </mat-checkbox>
       </ng-template>
@@ -29,9 +29,9 @@
     <div class="tb-hint" translate>filter.default-value</div>
   </div>
   <div fxFlex fxLayout="column" [fxShow]="dynamicMode">
-    <div fxFlex formGroupName="dynamicValue" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+    <div formGroupName="dynamicValue" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
       <div fxFlex fxLayout="column">
-        <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
           <mat-label></mat-label>
           <mat-select formControlName="sourceType" placeholder="{{'filter.dynamic-source-type' | translate}}">
             <mat-option [value]="null">
@@ -45,7 +45,7 @@
         <div class="tb-hint" translate>filter.dynamic-source-type</div>
       </div>
       <div fxFlex fxLayout="column">
-        <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
+        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
           <mat-label></mat-label>
           <input matInput formControlName="sourceAttribute" placeholder="{{'filter.source-attribute' | translate}}">
         </mat-form-field>

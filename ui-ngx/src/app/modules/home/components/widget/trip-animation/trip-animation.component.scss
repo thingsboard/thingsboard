@@ -1,4 +1,3 @@
-
 .trip-animation-widget {
   position: relative;
   width: 100%;
@@ -58,6 +57,9 @@
     }
 
     .trip-animation-tooltip {
+      display: flex;
+      overflow: auto;
+      max-height: 90%;
       position: absolute;
       top: 30px;
       right: 0;

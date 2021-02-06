@@ -1,6 +1,4 @@
-/* You can add global styles to this file, and also import other style files */
 
-@import '~material-design-icons/iconfont/material-icons.css';
 @import '~typeface-roboto/index.css';
 @import '~font-awesome/css/font-awesome.min.css';
 @import 'theme.scss';
@@ -26,7 +24,7 @@ body, html {
 body {
   margin: 0;
   padding: 0;
-  background-color: rgb(250,250,250);
+  background-color: #eee;
   overflow: hidden;
 }
 

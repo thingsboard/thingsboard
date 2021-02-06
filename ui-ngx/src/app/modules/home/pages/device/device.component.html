@@ -83,9 +83,15 @@
         required>
       </tb-device-data>
       <div formGroupName="additionalInfo" fxLayout="column">
-        <mat-checkbox fxFlex formControlName="gateway" style="padding-bottom: 16px;">
-          {{ 'device.is-gateway' | translate }}
-        </mat-checkbox>
+        <div fxLayout="row" fxLayout.xs="column" style="padding-bottom: 16px;">
+          <mat-checkbox fxFlex.gt-sm="30" fxFlex formControlName="gateway">
+            {{ 'device.is-gateway' | translate }}
+          </mat-checkbox>
+          <mat-checkbox fxFlex *ngIf="entityForm.get('additionalInfo.gateway').value"
+                        formControlName="overwriteActivityTime">
+            {{ 'device.overwrite-activity-time' | translate }}
+          </mat-checkbox>
+        </div>
         <mat-form-field class="mat-block">
           <mat-label translate>device.description</mat-label>
           <textarea matInput formControlName="description" rows="2"></textarea>

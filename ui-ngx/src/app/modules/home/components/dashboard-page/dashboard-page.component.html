@@ -1,0 +1,253 @@
+<div class="tb-dashboard-page mat-content" style="padding-top: 150px;"
+     fxFlex tb-fullscreen [fullscreen]="widgetEditMode || iframeMode || forceFullscreen || isFullscreen">
+  <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
+  <section class="tb-dashboard-toolbar"
+           [ngClass]="{ 'tb-dashboard-toolbar-opened': toolbarOpened,
+                        'tb-dashboard-toolbar-closed': !toolbarOpened }">
+    <tb-dashboard-toolbar [fxShow]="!widgetEditMode && !hideToolbar" [forceFullscreen]="forceFullscreen"
+                          [toolbarOpened]="toolbarOpened" (triggerClick)="openToolbar()">
+      <div class="tb-dashboard-action-panels" fxLayout="column" fxLayout.gt-sm="row"
+           fxLayoutAlign="center stretch" fxLayoutAlign.gt-sm="space-between center">
+        <div class="tb-dashboard-action-panel" fxFlex="auto" fxLayout="row-reverse"
+             fxLayoutAlign.gt-sm="end center" fxLayoutAlign="space-between center" fxLayoutGap="12px">
+          <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" fxHide.gt-sm displayUserInfo="true">
+          </tb-user-menu>
+          <div [fxShow]="isEdit"
+               fxFlex.lt-md fxLayout="row"
+               fxLayoutAlign.gt-sm="start center"
+               fxLayoutAlign="end center" fxLayoutGap="12px">
+            <button mat-icon-button
+                    matTooltip="{{'dashboard.manage-states' | translate}}"
+                    matTooltipPosition="below"
+                    (click)="manageDashboardStates($event)">
+              <mat-icon>layers</mat-icon>
+            </button>
+            <button mat-icon-button
+                    matTooltip="{{'layout.manage' | translate}}"
+                    matTooltipPosition="below"
+                    (click)="manageDashboardLayouts($event)">
+              <mat-icon>view_compact</mat-icon>
+            </button>
+          </div>
+          <tb-states-component fxFlex.lt-md
+                               [statesControllerId]="isEdit ? 'default' : dashboardConfiguration.settings.stateControllerId"
+                               [dashboardCtrl]="this"
+                               [dashboardId]="dashboard.id ? dashboard.id.id : ''"
+                               [isMobile]="isMobile"
+                               [state]="dashboardCtx.state"
+                               [currentState]="currentState"
+                               [states]="dashboardConfiguration.states">
+          </tb-states-component>
+        </div>
+        <div class="tb-dashboard-action-panel" fxFlex="1 0 auto" fxLayout="row-reverse"
+             fxLayoutAlign.gt-sm="start center" fxLayoutAlign="space-between center" fxLayoutGap="12px">
+          <button [fxShow]="showCloseToolbar()" mat-icon-button class="close-action"
+                  matTooltip="{{ 'dashboard.close-toolbar' | translate }}"
+                  matTooltipPosition="below"
+                  (click)="closeToolbar()">
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+          <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" fxHide.lt-md displayUserInfo="true">
+          </tb-user-menu>
+          <button [fxShow]="showRightLayoutSwitch()" mat-icon-button
+                  matTooltip="{{ (isRightLayoutOpened ? 'dashboard.hide-details' : 'dashboard.show-details') | translate }}"
+                  matTooltipPosition="below"
+                  (click)="toggleLayouts()">
+            <mat-icon>{{isRightLayoutOpened ? 'arrow_back' : 'menu'}}</mat-icon>
+          </button>
+          <button [fxShow]="!hideFullscreenButton()" mat-icon-button
+                  matTooltip="{{(isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+                  matTooltipPosition="below"
+                  (click)="isFullscreen = !isFullscreen">
+            <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+          </button>
+          <button [fxShow]="isEdit || displayExport()" mat-icon-button
+                  matTooltip="{{'dashboard.export' | translate}}"
+                  matTooltipPosition="below"
+                  (click)="exportDashboard($event)">
+            <mat-icon>file_download</mat-icon>
+          </button>
+          <tb-timewindow [fxShow]="isEdit || displayDashboardTimewindow()"
+                         isToolbar="true"
+                         [isEdit]="isEdit"
+                         direction="left"
+                         tooltipPosition="below"
+                         aggregation="true"
+                         [(ngModel)]="dashboardCtx.dashboardTimewindow">
+          </tb-timewindow>
+          <tb-filters-edit [fxShow]="!isEdit && displayFilters()"
+                           tooltipPosition="below"
+                           [aliasController]="dashboardCtx.aliasController">
+          </tb-filters-edit>
+          <tb-aliases-entity-select [fxShow]="!isEdit && displayEntitiesSelect()"
+                                    tooltipPosition="below"
+                                    [aliasController]="dashboardCtx.aliasController">
+          </tb-aliases-entity-select>
+          <button [fxShow]="isEdit" mat-icon-button
+                  matTooltip="{{ 'filter.filters' | translate }}"
+                  matTooltipPosition="below"
+                  (click)="openFilters($event)">
+            <mat-icon>filter_list</mat-icon>
+          </button>
+          <button [fxShow]="isEdit" mat-icon-button
+                  matTooltip="{{ 'entity.aliases' | translate }}"
+                  matTooltipPosition="below"
+                  (click)="openEntityAliases($event)">
+            <mat-icon>devices_other</mat-icon>
+          </button>
+          <button [fxShow]="isEdit" mat-icon-button
+                  matTooltip="{{ 'dashboard.settings' | translate }}"
+                  matTooltipPosition="below"
+                  (click)="openDashboardSettings($event)">
+            <mat-icon>settings</mat-icon>
+          </button>
+          <tb-dashboard-select [fxShow]="!isEdit && !widgetEditMode && displayDashboardsSelect()"
+                               [(ngModel)]="currentDashboardId"
+                               (ngModelChange)="currentDashboardIdChanged(currentDashboardId)"
+                               [customerId]="currentCustomerId"
+                               [dashboardsScope]="currentDashboardScope">
+          </tb-dashboard-select>
+        </div>
+      </div>
+    </tb-dashboard-toolbar>
+  </section>
+  <section class="tb-dashboard-container tb-absolute-fill"
+           [ngClass]="{ 'is-fullscreen': forceFullscreen,
+           'tb-dashboard-toolbar-opened': toolbarOpened,
+           'tb-dashboard-toolbar-animated': isToolbarOpenedAnimate,
+           'tb-dashboard-toolbar-closed': !toolbarOpened }">
+    <mat-drawer-container hasBackdrop="false" class="tb-absolute-fill tb-dashboard-drawer-container">
+      <mat-drawer-content fxLayout="column" fxLayoutAlign="center start">
+        <section *ngIf="!widgetEditMode" class="tb-dashboard-title"
+                 [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
+          <h3 [fxShow]="!isEdit && displayTitle()">{{ dashboard.title }}</h3>
+          <mat-form-field [fxShow]="isEdit" class="mat-block">
+            <mat-label translate [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">dashboard.title</mat-label>
+            <input matInput class="tb-dashboard-title"
+                   [ngStyle]="{'color': dashboard.configuration.settings.titleColor}"
+                   required name="title" [(ngModel)]="dashboard.title">
+          </mat-form-field>
+        </section>
+        <mat-drawer-container class="tb-dashboard-layouts" fxFlex
+                              [ngClass]="{ 'tb-shrinked' : isEditingWidget }">
+          <mat-drawer *ngIf="layouts.right.show"
+                      id="tb-right-layout"
+                      [ngStyle]="{minWidth: rightLayoutWidth(),
+                                  maxWidth: rightLayoutWidth(),
+                                  height: rightLayoutHeight(),
+                                  borderLeft: 'none'}"
+              disableClose="true"
+              [@.disabled]="!isMobile"
+              position="end"
+              [mode]="isMobile ? 'over' : 'side'"
+              [(opened)]="rightLayoutOpened">
+            <tb-dashboard-layout style="height: 100%;"
+              [dashboardCheatSheet]="cheatSheetComponent"
+              [layoutCtx]="layouts.right.layoutCtx"
+              [dashboardCtx]="dashboardCtx"
+              [isEdit]="isEdit"
+              [isEditingWidget]="isEditingWidget"
+              [isMobile]="forceDashboardMobileMode"
+              [widgetEditMode]="widgetEditMode">
+            </tb-dashboard-layout>
+          </mat-drawer>
+          <mat-drawer-content [fxShow]="layouts.main.show"
+                              id="tb-main-layout"
+                              [ngStyle]="{width: mainLayoutWidth(),
+                              height: mainLayoutHeight()}">
+            <tb-dashboard-layout
+              [dashboardCheatSheet]="cheatSheetComponent"
+              [layoutCtx]="layouts.main.layoutCtx"
+              [dashboardCtx]="dashboardCtx"
+              [isEdit]="isEdit"
+              [isEditingWidget]="isEditingWidget"
+              [isMobile]="forceDashboardMobileMode"
+              [widgetEditMode]="widgetEditMode">
+            </tb-dashboard-layout>
+          </mat-drawer-content>
+        </mat-drawer-container>
+        <section fxLayout="row" class="layout-wrap tb-footer-buttons" fxLayoutAlign="start end">
+          <tb-footer-fab-buttons *ngIf="!embedded"
+                                 [fxShow]="!isAddingWidget && isEdit && !widgetEditMode"
+                                 relative
+                                 [footerFabButtons]="addWidgetFabButtons">
+          </tb-footer-fab-buttons>
+          <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen && !embedded"
+                  mat-fab color="accent" class="tb-btn-footer"
+                  [ngClass]="{'tb-hide': !isEdit || isAddingWidget}"
+                  [disabled]="isLoading$ | async"
+                  (click)="saveDashboard()"
+                  matTooltip="{{ 'action.apply-changes' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>done</mat-icon>
+          </button>
+          <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen && !embedded"
+                  mat-fab color="accent" class="tb-btn-footer"
+                  [ngClass]="{'tb-hide': isAddingWidget || (isLoading$ | async)}"
+                  [disabled]="isLoading$ | async"
+                  (click)="toggleDashboardEditMode()"
+                  matTooltip="{{ (isEdit ? 'action.decline-changes': 'action.enter-edit-mode') | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>{{ isEdit ? 'close' : 'edit' }}</mat-icon>
+          </button>
+        </section>
+        <section class="tb-powered-by-footer" [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
+          <span>Powered by V-Sensor v.{{ thingsboardVersion }}</span>
+        </section>
+      </mat-drawer-content>
+      <mat-drawer class="tb-details-drawer"
+                  [opened]="isEditingWidget || isAddingWidget"
+                  (openedStart)="detailsDrawerOpenedStart()"
+                  (opened)="detailsDrawerOpened()"
+                  (closedStart)="detailsDrawerClosedStart()"
+                  (closed)="detailsDrawerClosed()"
+                  mode="over"
+                  position="end">
+        <tb-details-panel *ngIf="!isEditingWidgetClosed" fxFlex
+                          headerTitle="{{editingWidget?.config.title}}"
+                          headerSubtitle="{{ editingWidgetSubtitle }}"
+                          [isReadOnly]="false"
+                          [isAlwaysEdit]="true"
+                          (closeDetails)="onEditWidgetClosed()"
+                          (toggleDetailsEditMode)="onRevertWidgetEdit()"
+                          (applyDetails)="saveWidget()"
+                          [theForm]="tbEditWidget.widgetFormGroup">
+          <div class="details-buttons">
+            <div [tb-help]="helpLinkIdForWidgetType()"></div>
+          </div>
+          <tb-edit-widget #tbEditWidget
+                          [dashboard]="dashboard"
+                          [aliasController]="dashboardCtx.aliasController"
+                          [widgetEditMode]="widgetEditMode"
+                          [widget]="editingWidget"
+                          [widgetLayout]="editingWidgetLayout">
+          </tb-edit-widget>
+        </tb-details-panel>
+        <tb-details-panel *ngIf="!isAddingWidgetClosed && !widgetEditMode" fxFlex
+                          headerTitle="{{'dashboard.select-widget-title' | translate}}"
+                          headerHeightPx="120"
+                          [isReadOnly]="true"
+                          [isEdit]="false"
+                          (closeDetails)="onAddWidgetClosed()">
+          <div class="header-pane" *ngIf="isAddingWidget">
+            <div fxLayout="row">
+              <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>
+              <tb-widgets-bundle-select fxFlexOffset="5"
+                                        fxFlex
+                                        required
+                                        [selectFirstBundle]="false"
+                                        [ngModel]="widgetsBundle"
+                                        (ngModelChange)="widgetsBundle = $event">
+              </tb-widgets-bundle-select>
+            </div>
+          </div>
+          <tb-dashboard-widget-select *ngIf="isAddingWidget"
+                                      [aliasController]="dashboardCtx.aliasController"
+                                      [widgetsBundle]="widgetsBundle"
+                                      (widgetSelected)="addWidgetFromType($event)">
+          </tb-dashboard-widget-select>
+        </tb-details-panel>
+      </mat-drawer>
+    </mat-drawer-container>
+  </section>
+</div>
