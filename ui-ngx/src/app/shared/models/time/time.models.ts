@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 import { TimeService } from '@core/services/time.service';
 import { deepClone, isDefined, isUndefined } from '@app/core/utils';
 import * as moment_ from 'moment';
+import { Observable } from 'rxjs/internal/Observable';
+import { from, of } from 'rxjs';
+import { map, mergeMap, tap } from 'rxjs/operators';
 
 const moment = moment_;
 
@@ -481,3 +484,71 @@ export const timeUnitTranslationMap = new Map<TimeUnit, string>(
     [TimeUnit.DAYS, 'timeunit.days']
   ]
 );
+
+export interface TimezoneInfo {
+  id: string;
+  name: string;
+  offset: string;
+  nOffset: number;
+}
+
+let timezones: TimezoneInfo[] = null;
+let defaultTimezone: string = null;
+
+export function getTimezones(): Observable<TimezoneInfo[]> {
+  if (timezones) {
+    return of(timezones);
+  } else {
+    return from(import('moment-timezone')).pipe(
+      map((monentTz) => {
+        return monentTz.tz.names().map((zoneName) => {
+          const tz = monentTz.tz(zoneName);
+          return {
+            id: zoneName,
+            name: zoneName.replace(/_/g, ' '),
+            offset: `UTC${tz.format('Z')}`,
+            nOffset: tz.utcOffset()
+          };
+        });
+      }),
+      tap((zones) => {
+        timezones = zones;
+      })
+    );
+  }
+}
+
+export function getTimezoneInfo(timezoneId: string, defaultTimezoneId?: string, userTimezoneByDefault?: boolean): Observable<TimezoneInfo> {
+  return getTimezones().pipe(
+    mergeMap((timezoneList) => {
+      let foundTimezone = timezoneList.find(timezoneInfo => timezoneInfo.id === timezoneId);
+      if (!foundTimezone) {
+        if (userTimezoneByDefault) {
+          return getDefaultTimezone().pipe(
+            map((userTimezone) => {
+              return timezoneList.find(timezoneInfo => timezoneInfo.id === userTimezone);
+            })
+          );
+        } else if (defaultTimezoneId) {
+          foundTimezone = timezoneList.find(timezoneInfo => timezoneInfo.id === defaultTimezoneId);
+        }
+      }
+      return of(foundTimezone);
+    })
+  );
+}
+
+export function getDefaultTimezone(): Observable<string> {
+  if (defaultTimezone) {
+    return of(defaultTimezone);
+  } else {
+    return from(import('moment-timezone')).pipe(
+      map((monentTz) => {
+        return monentTz.tz.guess();
+      }),
+      tap((zone) => {
+        defaultTimezone = zone;
+      })
+    );
+  }
+}

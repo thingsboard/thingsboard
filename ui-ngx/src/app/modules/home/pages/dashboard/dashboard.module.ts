@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,44 +24,19 @@ import { DashboardRoutingModule } from './dashboard-routing.module';
 import { MakeDashboardPublicDialogComponent } from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { DashboardTabsComponent } from '@home/pages/dashboard/dashboard-tabs.component';
-import { DashboardPageComponent } from '@home/pages/dashboard/dashboard-page.component';
-import { DashboardToolbarComponent } from './dashboard-toolbar.component';
-import { StatesControllerModule } from '@home/pages/dashboard/states/states-controller.module';
-import { DashboardLayoutComponent } from './layout/dashboard-layout.component';
-import { EditWidgetComponent } from './edit-widget.component';
-import { DashboardWidgetSelectComponent } from './dashboard-widget-select.component';
-import { AddWidgetDialogComponent } from './add-widget-dialog.component';
-import { ManageDashboardLayoutsDialogComponent } from './layout/manage-dashboard-layouts-dialog.component';
-import { DashboardSettingsDialogComponent } from './dashboard-settings-dialog.component';
-import { ManageDashboardStatesDialogComponent } from './states/manage-dashboard-states-dialog.component';
-import { DashboardStateDialogComponent } from './states/dashboard-state-dialog.component';
 
 @NgModule({
   declarations: [
     DashboardFormComponent,
     DashboardTabsComponent,
     ManageDashboardCustomersDialogComponent,
-    MakeDashboardPublicDialogComponent,
-    DashboardToolbarComponent,
-    DashboardPageComponent,
-    DashboardLayoutComponent,
-    EditWidgetComponent,
-    DashboardWidgetSelectComponent,
-    AddWidgetDialogComponent,
-    ManageDashboardLayoutsDialogComponent,
-    DashboardSettingsDialogComponent,
-    ManageDashboardStatesDialogComponent,
-    DashboardStateDialogComponent
-  ],
-  exports: [
-    DashboardPageComponent
+    MakeDashboardPublicDialogComponent
   ],
   imports: [
     CommonModule,
     SharedModule,
     HomeComponentsModule,
     HomeDialogsModule,
-    StatesControllerModule,
     DashboardRoutingModule
   ]
 })

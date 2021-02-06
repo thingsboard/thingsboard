@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,9 +195,11 @@ public class HashPartitionService implements PartitionService {
         if (current.getServiceTypesList().contains(serviceType.name())) {
             result.add(current.getServiceId());
         }
-        for (ServiceInfo serviceInfo : currentOtherServices) {
-            if (serviceInfo.getServiceTypesList().contains(serviceType.name())) {
-                result.add(serviceInfo.getServiceId());
+        if (currentOtherServices != null) {
+            for (ServiceInfo serviceInfo : currentOtherServices) {
+                if (serviceInfo.getServiceTypesList().contains(serviceType.name())) {
+                    result.add(serviceInfo.getServiceId());
+                }
             }
         }
         return result;
