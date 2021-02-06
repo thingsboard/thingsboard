@@ -22,7 +22,7 @@
 <head>
 	<meta name="viewport" content="width=device-width"/>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-	<title>Thingsboard - Api Usage State</title>
+	<title>V-Sensor - Api Usage State</title>
 
 
 	<style type="text/css">
@@ -113,17 +113,17 @@
 					<td class="content-block" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #348eda; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0px; padding: 0px; height: 110px;" valign="top"><img src="https://media.thingsboard.io/email/head.png" alt="" width="598" height="91" /></td>
 				</tr>
 				<tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 16px; margin: 0;">
-					<td class="content-block" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #000000; box-sizing: border-box; font-size: 16px; margin: 0px; padding: 0px 32px; height: 66px; vertical-align: middle;" valign="middle">Your ThingsBoard account feature was <strong>enabled</strong></td>
+					<td class="content-block" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #000000; box-sizing: border-box; font-size: 16px; margin: 0px; padding: 0px 32px; height: 66px; vertical-align: middle;" valign="middle">Your V-Sensor account feature was <strong>enabled</strong></td>
 				</tr>
 				<tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; line-height: 24px; margin: 0;">
 					<td class="content-block" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0px; padding: 0px 32px; height: 93px; vertical-align: top;" valign="top">
 						<div style="padding: 16px; margin-bottom: 24px; border: solid 2px #27AE60; border-radius: 6px; background: rgba(39, 174, 96, 0.05);"><img style="vertical-align: middle; padding-right: 6px;" src="https://media.thingsboard.io/email/confirm.png" alt="" width="20" height="20" />
-							<div style="display: inline; vertical-align: middle;">We have enabled the ${apiFeature} for your account and ThingsBoard is already able to ${apiLabel} messages.</div>
+							<div style="display: inline; vertical-align: middle;">We have enabled the ${apiFeature} for your account and V-Sensor is already able to ${apiLabel} messages.</div>
 						</div>
 					</td>
 				</tr>
 				<tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
-					<td class="content-block" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0px; padding: 0px 32px; height: 40px;" valign="top">&mdash; The ThingsBoard</td>
+					<td class="content-block" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0px; padding: 0px 32px; height: 40px;" valign="top">&mdash; The V-Sensor</td>
 				</tr>
 				</tbody>
 			</table>
@@ -134,7 +134,7 @@
 <table style="color: #999999; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; box-sizing: border-box; margin: 0px auto; height: 64px; background-color: #f6f6f6; width: 100%;" cellpadding="0px 0px 20px">
 	<tbody>
 	<tr style="box-sizing: border-box; margin: 0px;">
-		<td class="aligncenter content-block" style="box-sizing: border-box; font-size: 12px; margin: 0px; padding: 0px 0px 20px; width: 600px; text-align: center; vertical-align: middle;" align="center" valign="top">This email was sent to&nbsp;<a style="box-sizing: border-box; color: #999999; margin: 0px;" href="mailto:${targetEmail}">${targetEmail}</a>&nbsp;by ThingsBoard.</td>
+		<td class="aligncenter content-block" style="box-sizing: border-box; font-size: 12px; margin: 0px; padding: 0px 0px 20px; width: 600px; text-align: center; vertical-align: middle;" align="center" valign="top">This email was sent to&nbsp;<a style="box-sizing: border-box; color: #999999; margin: 0px;" href="mailto:${targetEmail}">${targetEmail}</a>&nbsp;by V-Sensor.</td>
 	</tr>
 	</tbody>
 </table>
