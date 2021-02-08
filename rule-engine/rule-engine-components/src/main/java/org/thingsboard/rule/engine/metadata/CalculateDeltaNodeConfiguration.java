@@ -32,8 +32,8 @@ public class CalculateDeltaNodeConfiguration implements NodeConfiguration<Calcul
     @Override
     public CalculateDeltaNodeConfiguration defaultConfiguration() {
         CalculateDeltaNodeConfiguration configuration = new CalculateDeltaNodeConfiguration();
-        configuration.setInputValueKey("value");
-        configuration.setOutputValueKey("valueDelta");
+        configuration.setInputValueKey("pulseCounter");
+        configuration.setOutputValueKey("delta");
         configuration.setUseCache(true);
         configuration.setAddPeriodBetweenMsgs(false);
         configuration.setPeriodValueKey("periodInMs");
