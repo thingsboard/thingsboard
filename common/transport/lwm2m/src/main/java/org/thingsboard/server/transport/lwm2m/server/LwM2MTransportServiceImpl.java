@@ -741,7 +741,12 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
                 (String) this.converter.convertValue(resourceValue.getResourceValue(), this.context.getCtxServer().getResourceModelType(lwM2MClient.getRegistration(), pathIds), ResourceModel.Type.STRING, pathIds);
     }
 
-
+    /**
+     *
+     * @param lwM2MClient -
+     * @param pathIds -
+     * @return - return value of Resource by idPath
+     */
     private ResourceValue returnResourceValueFromLwM2MClient(LwM2MClient lwM2MClient, LwM2mPath pathIds) {
         ResourceValue resourceValue = null;
         if (pathIds.isResource()) {
