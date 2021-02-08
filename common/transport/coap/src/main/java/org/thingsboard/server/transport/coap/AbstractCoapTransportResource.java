@@ -143,7 +143,6 @@ public abstract class AbstractCoapTransportResource extends CoapResource {
 
         @Override
         public void onSuccess(Void msg) {
-            log.info("Successfully registered observation!");
         }
 
         @Override

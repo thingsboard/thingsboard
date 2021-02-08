@@ -101,12 +101,12 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
 
     @Override
     public Response convertToPublish(CoapTransportResource.CoapSessionListener coapSessionListener, TransportProtos.AttributeUpdateNotificationMsg msg) throws AdaptorException {
-        return getObserveNotification(coapSessionListener.getNextSeqNumber(), coapSessionListener.getExchange().advanced().getRequest().isConfirmable(), msg.toByteArray());
+        return getObserveNotification(coapSessionListener.getExchange().advanced().getRequest().isConfirmable(), msg.toByteArray());
     }
 
     @Override
     public Response convertToPublish(CoapTransportResource.CoapSessionListener coapSessionListener, TransportProtos.ToDeviceRpcRequestMsg msg) throws AdaptorException {
-        return getObserveNotification(coapSessionListener.getNextSeqNumber(), coapSessionListener.getExchange().advanced().getRequest().isConfirmable(), msg.toByteArray());
+        return getObserveNotification(coapSessionListener.getExchange().advanced().getRequest().isConfirmable(), msg.toByteArray());
     }
 
     @Override
@@ -127,9 +127,8 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
         }
     }
 
-    private Response getObserveNotification(int seqNumber, boolean confirmable, byte[] notification) {
+    private Response getObserveNotification(boolean confirmable, byte[] notification) {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
-        response.getOptions().setObserve(seqNumber);
         response.setPayload(notification);
         response.setConfirmable(confirmable);
         return response;

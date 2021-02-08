@@ -22,9 +22,10 @@ import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.CoAP.ResponseCode;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.network.Exchange;
-import org.eclipse.californium.core.network.ExchangeObserver;
+import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
+import org.eclipse.californium.core.server.resources.ResourceObserver;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -50,11 +51,9 @@ import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class CoapTransportResource extends AbstractCoapTransportResource {
@@ -68,22 +67,11 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
     public CoapTransportResource(CoapTransportContext context, String name) {
         super(context, name);
+//        this.setObservable(false); // disable observing
         this.setObservable(true); // enable observing
 //        this.setObserveType(CoAP.Type.CON); // configure the notification type to CONs
 //        this.getAttributes().setObservable(); // mark observable in the Link-Format
-        // TODO: 27.01.21 add observer to handle when relation removed and deregister session for this relation.
-//        this.addObserver();
-//      schedule a periodic update task, otherwise let events call changed()
-//        Timer timer = new Timer();
-//        timer.schedule(new UpdateTask(), 0, 5000);
-    }
-
-    private class UpdateTask extends TimerTask {
-        @Override
-        public void run() {
-            // .. periodic update of the resource
-            changed(); // notify all observers
-        }
+        this.addObserver(new CoapResourceObserver());
     }
 
     @Override
@@ -183,7 +171,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                                 transportService.process(sessionInfo,
                                         coapTransportAdaptor.convertToPostAttributes(sessionId, request,
                                                 transportConfigurationContainer.getAttributesMsgDescriptor()),
-                                        new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, ResponseCode.INTERNAL_SERVER_ERROR));
+                                        new CoapOkCallback( exchange, CoAP.ResponseCode.VALID, ResponseCode.INTERNAL_SERVER_ERROR));
                                 reportActivity(sessionInfo, attributeSubscriptions.contains(sessionId), rpcSubscriptions.contains(sessionId));
                                 break;
                             case POST_TELEMETRY_REQUEST:
@@ -199,15 +187,17 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                                         new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, ResponseCode.INTERNAL_SERVER_ERROR));
                                 break;
                             case SUBSCRIBE_ATTRIBUTES_REQUEST:
-                                log.info("SUBSCRIBE_ATTRIBUTES_REQUEST: {}", request);
-                                attributeSubscriptions.add(sessionId);
-                                // TODO: 27.01.21 add observer to handle when relation removed and deregister session for this relation.
-                                registerAsyncCoapSession(exchange, sessionInfo, coapTransportAdaptor, getTokenFromRequest(request));
-                                transportService.process(sessionInfo,
-                                        TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(),
-                                        request.isConfirmable() ?
-                                                new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, ResponseCode.INTERNAL_SERVER_ERROR) :
-                                                new CoapNoOpCallback(exchange));
+                                String tokenFromRequest = getTokenFromRequest(request);
+                                TransportProtos.SessionInfoProto currentSession = tokenToSessionIdMap.get(tokenFromRequest);
+                                if (currentSession == null) {
+                                    attributeSubscriptions.add(sessionId);
+                                    registerAsyncCoapSession(exchange, sessionInfo, coapTransportAdaptor, tokenFromRequest);
+                                    transportService.process(sessionInfo,
+                                            TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), new CoapNoOpCallback(exchange));
+                                } else {
+                                    UUID attrSessionId = new UUID(currentSession.getSessionIdMSB(), currentSession.getSessionIdLSB());
+                                    reportActivity(currentSession, attributeSubscriptions.contains(attrSessionId), rpcSubscriptions.contains(attrSessionId));
+                                }
                                 break;
                             case UNSUBSCRIBE_ATTRIBUTES_REQUEST:
                                 TransportProtos.SessionInfoProto attrSession = lookupAsyncSessionInfo(getTokenFromRequest(request));
@@ -222,7 +212,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                                 break;
                             case SUBSCRIBE_RPC_COMMANDS_REQUEST:
                                 rpcSubscriptions.add(sessionId);
-                                // TODO: 27.01.21 add observer to handle when relation removed and deregister session for this relation.
                                 registerAsyncCoapSession(exchange, sessionInfo, coapTransportAdaptor, getTokenFromRequest(request));
                                 transportService.process(sessionInfo,
                                         TransportProtos.SubscribeToRPCMsg.getDefaultInstance(),
@@ -271,12 +260,11 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         return tokenToSessionIdMap.remove(token);
     }
 
-    private String registerAsyncCoapSession(CoapExchange exchange, TransportProtos.SessionInfoProto sessionInfo, CoapTransportAdaptor coapTransportAdaptor, String token) {
+    private void registerAsyncCoapSession(CoapExchange exchange, TransportProtos.SessionInfoProto sessionInfo, CoapTransportAdaptor coapTransportAdaptor, String token) {
         tokenToSessionIdMap.putIfAbsent(token, sessionInfo);
         CoapSessionListener attrListener = new CoapSessionListener(exchange, coapTransportAdaptor);
         transportService.registerAsyncSession(sessionInfo, attrListener);
         transportService.process(sessionInfo, getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
-        return token;
     }
 
     private String getTokenFromRequest(Request request) {
@@ -342,11 +330,10 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    public class CoapSessionListener implements SessionMsgListener {
+    public static class CoapSessionListener implements SessionMsgListener {
 
         private final CoapExchange exchange;
         private final CoapTransportAdaptor coapTransportAdaptor;
-        private final AtomicInteger seqNumber = new AtomicInteger(2);
 
         CoapSessionListener(CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor) {
             this.exchange = exchange;
@@ -398,33 +385,49 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
             }
         }
 
-        public int getNextSeqNumber() {
-            return seqNumber.getAndIncrement();
-        }
-
         public CoapExchange getExchange() {
             return exchange;
         }
-
     }
 
-    public class CoapExchangeObserverProxy implements ExchangeObserver {
+    public class CoapResourceObserver implements ResourceObserver {
 
-        private final ExchangeObserver proxy;
-        private final String token;
-
-        CoapExchangeObserverProxy(ExchangeObserver proxy, String token) {
-            super();
-            this.proxy = proxy;
-            this.token = token;
+        @Override
+        public void changedName(String old) {
+            //do nothing
         }
 
         @Override
-        public void completed(Exchange exchange) {
-            proxy.completed(exchange);
-            TransportProtos.SessionInfoProto session = tokenToSessionIdMap.remove(token);
-            if (session != null) {
-                closeAndDeregister(session);
+        public void changedPath(String old) {
+            //do nothing
+        }
+
+        @Override
+        public void addedChild(Resource child) {
+            //do nothing
+        }
+
+        @Override
+        public void removedChild(Resource child) {
+            //do nothing
+        }
+
+        @Override
+        public void addedObserveRelation(ObserveRelation relation) {
+            if (log.isTraceEnabled()) {
+                Request request = relation.getExchange().getRequest();
+                log.trace("Added Observe relation for token: {}", getTokenFromRequest(request));
+            }
+        }
+
+        @Override
+        public void removedObserveRelation(ObserveRelation relation) {
+            Request request = relation.getExchange().getRequest();
+            String tokenFromRequest = getTokenFromRequest(request);
+            log.info("Relation removed for token: {}", tokenFromRequest);
+            TransportProtos.SessionInfoProto sessionInfoToRemove = lookupAsyncSessionInfo(tokenFromRequest);
+            if (sessionInfoToRemove != null) {
+                closeAndDeregister(sessionInfoToRemove, new UUID(sessionInfoToRemove.getSessionIdMSB(), sessionInfoToRemove.getDeviceIdLSB()));
             }
         }
     }

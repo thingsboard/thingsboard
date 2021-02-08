@@ -93,12 +93,12 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
 
     @Override
     public Response convertToPublish(CoapTransportResource.CoapSessionListener session, TransportProtos.AttributeUpdateNotificationMsg msg) throws AdaptorException {
-        return getObserveNotification(session.getNextSeqNumber(), session.getExchange().advanced().getRequest().isConfirmable(), JsonConverter.toJson(msg));
+        return getObserveNotification(session.getExchange().advanced().getRequest().isConfirmable(), JsonConverter.toJson(msg));
     }
 
     @Override
     public Response convertToPublish(CoapTransportResource.CoapSessionListener session, TransportProtos.ToDeviceRpcRequestMsg msg) throws AdaptorException {
-        return getObserveNotification(session.getNextSeqNumber(), session.getExchange().advanced().getRequest().isConfirmable(), JsonConverter.toJson(msg, true));
+        return getObserveNotification(session.getExchange().advanced().getRequest().isConfirmable(), JsonConverter.toJson(msg, true));
     }
 
     @Override
@@ -131,12 +131,10 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
         }
     }
 
-    private Response getObserveNotification(int seqNumber, boolean confirmable, JsonElement json) {
+    private Response getObserveNotification(boolean confirmable, JsonElement json) {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
-        response.getOptions().setObserve(seqNumber);
         response.setPayload(json.toString());
         response.setConfirmable(confirmable);
-        log.info("response is confirmable: {}", response.isConfirmable());
         return response;
     }
 
