@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -104,6 +104,15 @@ export interface DashboardConfiguration {
 
 export interface Dashboard extends DashboardInfo {
   configuration?: DashboardConfiguration;
+}
+
+export interface HomeDashboard extends Dashboard {
+  hideDashboardToolbar: boolean;
+}
+
+export interface HomeDashboardInfo {
+  dashboardId: DashboardId;
+  hideDashboardToolbar: boolean;
 }
 
 export function isPublicDashboard(dashboard: DashboardInfo): boolean {

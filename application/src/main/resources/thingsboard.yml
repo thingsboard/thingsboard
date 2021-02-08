@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2020 The Thingsboard Authors
+# Copyright © 2016-2021 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -192,8 +192,9 @@ cassandra:
     read_consistency_level: "${CASSANDRA_READ_CONSISTENCY_LEVEL:ONE}"
     write_consistency_level: "${CASSANDRA_WRITE_CONSISTENCY_LEVEL:ONE}"
     default_fetch_size: "${CASSANDRA_DEFAULT_FETCH_SIZE:2000}"
-    # Specify partitioning size for timestamp key-value storage. Example: MINUTES, HOURS, DAYS, MONTHS,INDEFINITE
+    # Specify partitioning size for timestamp key-value storage. Example: MINUTES, HOURS, DAYS, MONTHS, INDEFINITE
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
+    ts_key_value_partitions_max_cache_size: "${TS_KV_PARTITIONS_MAX_CACHE_SIZE:100000}"
     ts_key_value_ttl: "${TS_KV_TTL:0}"
     events_ttl: "${TS_EVENTS_TTL:0}"
     # Specify TTL of debug log in seconds. The current value corresponds to one week
@@ -755,6 +756,10 @@ queue:
     # For high priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"
     poll_interval: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_POLL_INTERVAL_MS:25}"
+
+event:
+  debug:
+    max-symbols: "${TB_MAX_DEBUG_EVENT_SYMBOLS:4096}"
 
 service:
   type: "${TB_SERVICE_TYPE:monolith}" # monolith or tb-core or tb-rule-engine

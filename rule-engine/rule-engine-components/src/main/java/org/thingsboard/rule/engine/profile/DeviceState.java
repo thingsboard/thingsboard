@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,6 +140,8 @@ class DeviceState {
             stateChanged = processAttributesDeleteNotification(ctx, msg);
         } else if (msg.getType().equals(DataConstants.ALARM_CLEAR)) {
             stateChanged = processAlarmClearNotification(ctx, msg);
+        } else if (msg.getType().equals(DataConstants.ALARM_ACK)) {
+            processAlarmAckNotification(ctx, msg);
         } else {
             ctx.tellSuccess(msg);
         }
@@ -159,6 +161,16 @@ class DeviceState {
         }
         ctx.tellSuccess(msg);
         return stateChanged;
+    }
+
+    private void processAlarmAckNotification(TbContext ctx, TbMsg msg) {
+        Alarm alarmNf = JacksonUtil.fromString(msg.getData(), Alarm.class);
+        for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
+            AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
+                    a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+            alarmState.processAckAlarm(alarmNf);
+        }
+        ctx.tellSuccess(msg);
     }
 
     private boolean processAttributesUpdateNotification(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {

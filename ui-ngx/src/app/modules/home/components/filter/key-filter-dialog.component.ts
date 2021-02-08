@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -220,7 +220,7 @@ export class KeyFilterDialogComponent extends
       let keyNameObservable: Observable<Array<string>>;
       switch (this.keyFilterFormGroup.get('key.type').value) {
         case EntityKeyType.ENTITY_FIELD:
-          keyNameObservable = of(Object.values(entityFields).map(entityField => entityField.keyName).sort());
+          keyNameObservable = of(Object.keys(entityFields).map(itm => entityFields[itm]).map(entityField => entityField.keyName).sort());
           break;
         case EntityKeyType.ATTRIBUTE:
           keyNameObservable = this.deviceProfileService.getDeviceProfileDevicesAttributesKeys(

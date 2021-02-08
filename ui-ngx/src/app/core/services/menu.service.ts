@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -223,6 +223,7 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
+        notExact: true,
         icon: 'home'
       },
       {
@@ -281,6 +282,13 @@ export class MenuService {
         type: 'link',
         path: '/dashboards',
         icon: 'dashboards'
+      },
+      {
+        id: guid(),
+        name: 'admin.home-settings',
+        type: 'link',
+        path: '/settings/home',
+        icon: 'settings_applications'
       },
       {
         id: guid(),
@@ -402,6 +410,7 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
+        notExact: true,
         icon: 'home'
       },
       {

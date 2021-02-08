@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import {
   KeyLabelItem
 } from '@shared/components/json-form/react/json-form.models';
 import { Mode } from 'rc-select/lib/interface';
+import { deepClone } from '@core/utils';
 
 interface ThingsboardRcSelectState extends JsonFormFieldState {
   currentValue: KeyLabelItem | KeyLabelItem[];
@@ -151,10 +152,14 @@ class ThingsboardRcSelect extends React.Component<JsonFormFieldProps, Thingsboar
             labelClass += ' tb-focused';
         }
         let mode: Mode;
-        if (this.props.form.tags) {
-          mode = 'tags';
-        } else if (this.props.form.multiple) {
-          mode = 'multiple';
+        let value = this.state.currentValue;
+        if (this.props.form.tags || this.props.form.multiple) {
+          value = deepClone(value);
+          if (this.props.form.tags) {
+            mode = 'tags';
+          } else if (this.props.form.multiple) {
+            mode = 'multiple';
+          }
         }
 
         const dropdownStyle = {...this.props.form.dropdownStyle, ...{zIndex: 100001}};
@@ -176,12 +181,13 @@ class ThingsboardRcSelect extends React.Component<JsonFormFieldProps, Thingsboar
                     maxTagTextLength={this.props.form.maxTagTextLength}
                     disabled={this.props.form.readonly}
                     optionLabelProp='children'
-                    value={this.state.currentValue}
+                    value={value}
                     labelInValue={true}
                     onSelect={this.onSelect}
                     onDeselect={this.onDeselect}
                     onFocus={this.onFocus}
                     onBlur={this.onBlur}
+                    placeholder={this.props.form.placeholder}
                     style={this.props.form.style || {width: '100%'}}>
                     {options}
                 </Select>

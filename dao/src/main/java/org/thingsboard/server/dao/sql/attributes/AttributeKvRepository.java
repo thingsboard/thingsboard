@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,5 +56,8 @@ public interface AttributeKvRepository extends CrudRepository<AttributeKvEntity,
             "AND entity_id in (SELECT id FROM device WHERE tenant_id = :tenantId limit 100) ORDER BY attribute_key", nativeQuery = true)
     List<String> findAllKeysByTenantId(@Param("tenantId") UUID tenantId);
 
+    @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE entity_type = :entityType " +
+            "AND entity_id in :entityIds ORDER BY attribute_key", nativeQuery = true)
+    List<String> findAllKeysByEntityIds(@Param("entityType") String entityType, @Param("entityIds") List<UUID> entityIds);
 }
 

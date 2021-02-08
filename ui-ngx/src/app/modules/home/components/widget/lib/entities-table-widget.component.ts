@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  Injector,
   Input,
   NgZone,
   OnInit,
+  StaticProvider,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
@@ -70,7 +72,7 @@ import {
   widthStyle
 } from '@home/components/widget/lib/table-widget.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
-import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
+import { ComponentPortal } from '@angular/cdk/portal';
 import {
   DISPLAY_COLUMNS_PANEL_DATA,
   DisplayColumnsPanelComponent,
@@ -422,17 +424,23 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       };
     });
 
-    const injectionTokens = new WeakMap<any, any>([
-      [DISPLAY_COLUMNS_PANEL_DATA, {
-        columns,
-        columnsUpdated: (newColumns) => {
-          this.displayedColumns = newColumns.filter(column => column.display).map(column => column.def);
-          this.displayedColumns.push('actions');
-        }
-      } as DisplayColumnsPanelData],
-      [OverlayRef, overlayRef]
-    ]);
-    const injector = new PortalInjector(this.viewContainerRef.injector, injectionTokens);
+    const providers: StaticProvider[] = [
+      {
+        provide: DISPLAY_COLUMNS_PANEL_DATA,
+        useValue: {
+          columns,
+          columnsUpdated: (newColumns) => {
+            this.displayedColumns = newColumns.filter(column => column.display).map(column => column.def);
+            this.displayedColumns.push('actions');
+          }
+        } as DisplayColumnsPanelData
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
     overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
       this.viewContainerRef, injector));
     this.ctx.detectChanges();

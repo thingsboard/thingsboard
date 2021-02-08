@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -446,8 +446,12 @@ export class AuthService {
         const refreshTokenValid = AuthService.isTokenValid('refresh_token');
         this.setUserFromJwtToken(null, null, false);
         if (!refreshTokenValid) {
-          this.refreshTokenSubject.error(new Error(this.translate.instant('access.refresh-token-expired')));
-          this.refreshTokenSubject = null;
+          this.translate.get('access.refresh-token-expired').subscribe(
+            (translation) => {
+              this.refreshTokenSubject.error(new Error(translation));
+              this.refreshTokenSubject = null;
+            }
+          );
         } else {
           const refreshTokenRequest = {
             refreshToken
