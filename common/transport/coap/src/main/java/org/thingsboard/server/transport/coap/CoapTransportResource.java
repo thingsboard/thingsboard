@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.transport.coap;
 
+import com.google.gson.JsonParseException;
 import com.google.protobuf.Descriptors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.CoAP.ResponseCode;
 import org.eclipse.californium.core.coap.Request;
@@ -29,6 +31,7 @@ import org.eclipse.californium.core.server.resources.ResourceObserver;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultCoapDeviceTypeConfiguration;
@@ -137,11 +140,21 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
     }
 
     private void processProvision(CoapExchange exchange) {
-        log.trace("Processing {}", exchange.advanced().getRequest());
         exchange.accept();
         try {
-            transportService.process(transportContext.getJsonCoapAdaptor().convertToProvisionRequestMsg(UUID.randomUUID(), exchange.advanced().getRequest()),
-                    new DeviceProvisionCallback(exchange));
+            UUID sessionId = UUID.randomUUID();
+            log.trace("[{}] Processing provision publish msg [{}]!", sessionId, exchange.advanced().getRequest());
+            TransportProtos.ProvisionDeviceRequestMsg provisionRequestMsg;
+            try {
+                provisionRequestMsg = transportContext.getJsonCoapAdaptor().convertToProvisionRequestMsg(sessionId, exchange.advanced().getRequest());
+            } catch (Exception e) {
+                if (e instanceof JsonParseException || (e.getCause() != null && e.getCause() instanceof JsonParseException)) {
+                    provisionRequestMsg = transportContext.getProtoCoapAdaptor().convertToProvisionRequestMsg(sessionId, exchange.advanced().getRequest());
+                } else {
+                    throw new AdaptorException(e);
+                }
+            }
+            transportService.process(provisionRequestMsg, new DeviceProvisionCallback(exchange));
         } catch (AdaptorException e) {
             log.trace("Failed to decode message: ", e);
             exchange.respond(ResponseCode.BAD_REQUEST);
