@@ -59,6 +59,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
+import org.thingsboard.server.utils.EventDeduplicationExecutor;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -126,13 +127,13 @@ public class DefaultDeviceStateService implements DeviceStateService {
     @Getter
     private int initFetchPackSize;
 
-    private volatile boolean clusterUpdatePending = false;
-
     private ListeningScheduledExecutorService queueExecutor;
     private final ConcurrentMap<TopicPartitionInfo, Set<DeviceId>> partitionedDevices = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, Long> deviceLastReportedActivity = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, Long> deviceLastSavedActivity = new ConcurrentHashMap<>();
+    private volatile EventDeduplicationExecutor<Set<TopicPartitionInfo>> deduplicationExecutor;
+
 
     public DefaultDeviceStateService(TenantService tenantService, DeviceService deviceService,
                                      AttributesService attributesService, TimeseriesService tsService,
@@ -155,6 +156,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         // Should be always single threaded due to absence of locks.
         queueExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("device-state")));
         queueExecutor.scheduleAtFixedRate(this::updateState, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
+        deduplicationExecutor = new EventDeduplicationExecutor<>(DefaultDeviceStateService.class.getSimpleName(), queueExecutor, this::initStateFromDB);
     }
 
     @PreDestroy
@@ -292,25 +294,14 @@ public class DefaultDeviceStateService implements DeviceStateService {
         }
     }
 
-    volatile Set<TopicPartitionInfo> pendingPartitions;
-
     @Override
     public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
-            synchronized (this) {
-                pendingPartitions = partitionChangeEvent.getPartitions();
-                if (!clusterUpdatePending) {
-                    clusterUpdatePending = true;
-                    queueExecutor.submit(() -> {
-                        clusterUpdatePending = false;
-                        initStateFromDB();
-                    });
-                }
-            }
+            deduplicationExecutor.submit(partitionChangeEvent.getPartitions());
         }
     }
 
-    private void initStateFromDB() {
+    private void initStateFromDB(Set<TopicPartitionInfo> pendingPartitions) {
         try {
             log.info("CURRENT PARTITIONS: {}", partitionedDevices.keySet());
             log.info("NEW PARTITIONS: {}", pendingPartitions);

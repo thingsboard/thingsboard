@@ -32,6 +32,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { OAuth2Service } from '@core/http/oauth2.service';
 import { UserProfileResolver } from '@home/pages/profile/profile-routing.module';
 import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
+import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -48,7 +49,7 @@ const routes: Routes = [
   {
     path: 'settings',
     data: {
-      auth: [Authority.SYS_ADMIN],
+      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       breadcrumb: {
         label: 'admin.system-settings',
         icon: 'settings'
@@ -57,8 +58,13 @@ const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: 'general',
-        pathMatch: 'full'
+        data: {
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+          redirectTo: {
+            SYS_ADMIN: '/settings/general',
+            TENANT_ADMIN: '/settings/home'
+          }
+        }
       },
       {
         path: 'general',
@@ -126,6 +132,19 @@ const routes: Routes = [
         },
         resolve: {
           loginProcessingUrl: OAuth2LoginProcessingUrlResolver
+        }
+      },
+      {
+        path: 'home',
+        component: HomeSettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'admin.home-settings',
+          breadcrumb: {
+            label: 'admin.home-settings',
+            icon: 'settings_applications'
+          }
         }
       }
     ]

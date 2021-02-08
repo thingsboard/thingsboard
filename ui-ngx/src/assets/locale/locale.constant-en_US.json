@@ -74,6 +74,7 @@
     "admin": {
         "general": "General",
         "general-settings": "General Settings",
+        "home-settings": "Home Settings",
         "outgoing-mail": "Mail Server",
         "outgoing-mail-settings": "Outgoing Mail Server Settings",
         "system-settings": "System Settings",
@@ -764,7 +765,9 @@
         "select-state": "Select target state",
         "state-controller": "State controller",
         "search": "Search dashboards",
-        "selected-dashboards": "{ count, plural, 1 {1 dashboard} other {# dashboards} } selected"
+        "selected-dashboards": "{ count, plural, 1 {1 dashboard} other {# dashboards} } selected",
+        "home-dashboard": "Home dashboard",
+        "home-dashboard-hide-toolbar": "Hide home dashboard toolbar"
     },
     "datakey": {
         "settings": "Settings",

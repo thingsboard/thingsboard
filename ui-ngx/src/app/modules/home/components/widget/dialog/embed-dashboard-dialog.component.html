@@ -27,7 +27,8 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div class="dashboard-state-dialog-content" mat-dialog-content fxFlex fxLayout="column" style="padding: 8px;">
-    <tb-dashboard-page [embedded]="true" [hideToolbar]="hideToolbar" [currentState]="state" [dashboard]="dashboard" style="width: 100%; height: 100%;"></tb-dashboard-page>
+    <tb-dashboard-page [embedded]="true" [syncStateWithQueryParam]="false" [hideToolbar]="hideToolbar"
+                       [currentState]="state" [dashboard]="dashboard" style="width: 100%; height: 100%;"></tb-dashboard-page>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button color="primary"
