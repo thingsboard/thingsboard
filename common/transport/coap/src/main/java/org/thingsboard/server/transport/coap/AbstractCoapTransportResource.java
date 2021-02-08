@@ -121,11 +121,7 @@ public abstract class AbstractCoapTransportResource extends CoapResource {
 
         @Override
         public void onSuccess(Void msg) {
-            Response response = new Response(onSuccessResponse);
-            response.setConfirmable(true);
-            response.setAcknowledged(true);
-            exchange.respond(response);
-            //exchange.respond(onSuccessResponse);
+            exchange.respond(onSuccessResponse);
         }
 
         @Override
